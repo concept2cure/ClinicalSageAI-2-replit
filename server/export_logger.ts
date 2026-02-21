@@ -1,5 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const LOGS_DIRECTORY = path.join(__dirname, '..', 'logs');
 const EXPORT_LOG_FILE = path.join(LOGS_DIRECTORY, 'export_actions.jsonl');

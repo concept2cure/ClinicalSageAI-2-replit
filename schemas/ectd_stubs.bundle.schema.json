@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clinicalsage.ai/schemas/ectd_stubs.bundle.schema.json",
+  "title": "eCTD Stubs Bundle Schema",
+  "description": "Bundle schema for validating all eCTD stub artifacts in a proof pack ZIP. Validates the DATA payload (ectd-stubs/ectd_stubs.bundle.json), not just the schema artifact. This is the single schema file hashed by compute_schema_hash() in contract_hashes.py.",
+  "type": "object",
+  "required": [
+    "version",
+    "bundle_hash",
+    "schemas",
+    "proof_pack_layout",
+    "leaf_map",
+    "sequence_plan",
+    "m1_index"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Bundle version — changed whenever any sub-schema changes",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "const": "1.0.0"
+    },
+    "bundle_hash": {
+      "type": "string",
+      "description": "SHA-256 of the canonical JSON of all sub-schema contents, sorted by key. Used for contract_hashes.compute_schema_hash().",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "schemas": {
+      "type": "object",
+      "description": "Map of schema ID to schema definition",
+      "required": ["leaf_map", "sequence_plan", "m1_index"],
+      "properties": {
+        "leaf_map": {
+          "type": "object",
+          "description": "Leaf map schema — maps artifacts to eCTD leaves",
+          "required": ["$ref", "version"],
+          "properties": {
+            "$ref": {
+              "type": "string",
+              "const": "leaf_map.schema.json"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        },
+        "sequence_plan": {
+          "type": "object",
+          "description": "Sequence plan schema — defines eCTD sequence lifecycle",
+          "required": ["$ref", "version"],
+          "properties": {
+            "$ref": {
+              "type": "string",
+              "const": "sequence_plan.schema.json"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        },
+        "m1_index": {
+          "type": "object",
+          "description": "Module 1 index schema — administrative entries",
+          "required": ["$ref", "version"],
+          "properties": {
+            "$ref": {
+              "type": "string",
+              "const": "m1_index.schema.json"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "proof_pack_layout": {
+      "type": "object",
+      "description": "Expected directory structure inside proof-pack ZIP",
+      "required": ["root_prefix", "required_dirs", "required_files"],
+      "properties": {
+        "root_prefix": {
+          "type": "string",
+          "const": "proof-pack/"
+        },
+        "required_dirs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "required_files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      }
+    },
+    "leaf_map": {
+      "$ref": "https://clinicalsage.ai/schemas/leaf_map.schema.json"
+    },
+    "sequence_plan": {
+      "$ref": "https://clinicalsage.ai/schemas/sequence_plan.schema.json"
+    },
+    "m1_index": {
+      "$ref": "https://clinicalsage.ai/schemas/m1_index.schema.json"
+    }
+  }
+}

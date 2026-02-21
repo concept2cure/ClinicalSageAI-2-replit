@@ -67,8 +67,9 @@ const AIAssistantPanel = ({ isOpen, onClose, activeModule }) => {
 
       switch (activeModule) {
         case 'ind-wizard':
+        case 'ectd-coauthor':
           moduleMessage =
-            "I see you're using the IND Wizard module. I can help with IND preparation, form filling, and submission strategies.";
+            "I see you're using the eCTD Co-Author module. I can help with IND preparation, eCTD assembly, and submission strategies.";
           break;
         case 'trial-vault':
           moduleMessage =

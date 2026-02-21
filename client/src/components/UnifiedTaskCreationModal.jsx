@@ -1,6 +1,6 @@
 /**
  * Unified Task Creation Modal
- * 
+ *
  * Production-ready modal for creating tasks from any module in the system.
  * Includes proper form validation, module selection, and API integration.
  */
@@ -27,11 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -61,7 +57,7 @@ const MODULES = [
   },
   {
     id: 'IND',
-    name: 'IND Wizard',
+    name: 'eCTD Co-Author (IND)',
     icon: FileText,
     color: 'bg-green-500',
     textColor: 'text-green-700',
@@ -127,7 +123,7 @@ export default function UnifiedTaskCreationModal({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   const [formData, setFormData] = useState({
     moduleType: defaultModule || '',
     title: '',
@@ -147,7 +143,7 @@ export default function UnifiedTaskCreationModal({
 
   // Create task mutation
   const createTaskMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async data => {
       return apiRequest('/api/regulatory/tasks/unified', {
         method: 'POST',
         body: JSON.stringify({
@@ -159,26 +155,26 @@ export default function UnifiedTaskCreationModal({
         }),
       });
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       toast({
         title: 'Task Created Successfully',
         description: `Task "${formData.title}" has been added to ${formData.moduleType} module`,
       });
-      
+
       // Invalidate queries to refresh the dashboard
       queryClient.invalidateQueries({ queryKey: ['/api/regulatory/tasks/all'] });
       queryClient.invalidateQueries({ queryKey: ['/api/regulatory/dashboard/unified'] });
-      
+
       // Call callback if provided
       if (onTaskCreated) {
         onTaskCreated(data.task);
       }
-      
+
       // Reset form and close
       resetForm();
       onClose();
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Failed to Create Task',
         description: error.message || 'Please check your input and try again',
@@ -207,19 +203,19 @@ export default function UnifiedTaskCreationModal({
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.moduleType) {
       newErrors.moduleType = 'Please select a module';
     }
-    
+
     if (!formData.title || formData.title.trim().length < 3) {
       newErrors.title = 'Title must be at least 3 characters';
     }
-    
+
     if (formData.estimatedHours && isNaN(parseFloat(formData.estimatedHours))) {
       newErrors.estimatedHours = 'Must be a valid number';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -228,7 +224,7 @@ export default function UnifiedTaskCreationModal({
     if (!validateForm()) {
       return;
     }
-    
+
     createTaskMutation.mutate(formData);
   };
 
@@ -242,7 +238,7 @@ export default function UnifiedTaskCreationModal({
     }
   };
 
-  const handleRemoveTag = (tagToRemove) => {
+  const handleRemoveTag = tagToRemove => {
     setFormData({
       ...formData,
       tags: formData.tags.filter(tag => tag !== tagToRemove),
@@ -270,7 +266,7 @@ export default function UnifiedTaskCreationModal({
             <Label htmlFor="module">Module *</Label>
             <Select
               value={formData.moduleType}
-              onValueChange={(value) => {
+              onValueChange={value => {
                 setFormData({ ...formData, moduleType: value, category: '' });
                 setErrors({ ...errors, moduleType: undefined });
               }}
@@ -286,7 +282,7 @@ export default function UnifiedTaskCreationModal({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {MODULES.map((module) => (
+                {MODULES.map(module => (
                   <SelectItem key={module.id} value={module.id}>
                     <div className="flex items-center gap-2">
                       <module.icon className="w-4 h-4" />
@@ -310,7 +306,7 @@ export default function UnifiedTaskCreationModal({
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => {
+              onChange={e => {
                 setFormData({ ...formData, title: e.target.value });
                 setErrors({ ...errors, title: undefined });
               }}
@@ -331,13 +327,13 @@ export default function UnifiedTaskCreationModal({
               <Label htmlFor="category">Category</Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                onValueChange={value => setFormData({ ...formData, category: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {selectedModule.categories.map((cat) => (
+                  {selectedModule.categories.map(cat => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
                     </SelectItem>
@@ -353,7 +349,7 @@ export default function UnifiedTaskCreationModal({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               placeholder="Provide task details..."
               rows={3}
             />
@@ -365,13 +361,13 @@ export default function UnifiedTaskCreationModal({
               <Label htmlFor="taskType">Task Type</Label>
               <Select
                 value={formData.taskType}
-                onValueChange={(value) => setFormData({ ...formData, taskType: value })}
+                onValueChange={value => setFormData({ ...formData, taskType: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TASK_TYPES.map((type) => (
+                  {TASK_TYPES.map(type => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
                     </SelectItem>
@@ -384,13 +380,13 @@ export default function UnifiedTaskCreationModal({
               <Label htmlFor="priority">Priority</Label>
               <Select
                 value={formData.priority}
-                onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                onValueChange={value => setFormData({ ...formData, priority: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRIORITIES.map((priority) => (
+                  {PRIORITIES.map(priority => (
                     <SelectItem key={priority.value} value={priority.value}>
                       <span className={`px-2 py-1 rounded-full text-xs ${priority.color}`}>
                         {priority.label}
@@ -408,10 +404,7 @@ export default function UnifiedTaskCreationModal({
               <Label>Due Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formData.dueDate ? format(formData.dueDate, 'PPP') : 'Select date'}
                   </Button>
@@ -420,7 +413,7 @@ export default function UnifiedTaskCreationModal({
                   <Calendar
                     mode="single"
                     selected={formData.dueDate}
-                    onSelect={(date) => setFormData({ ...formData, dueDate: date })}
+                    onSelect={date => setFormData({ ...formData, dueDate: date })}
                     initialFocus
                   />
                 </PopoverContent>
@@ -433,7 +426,7 @@ export default function UnifiedTaskCreationModal({
                 id="estimatedHours"
                 type="number"
                 value={formData.estimatedHours}
-                onChange={(e) => {
+                onChange={e => {
                   setFormData({ ...formData, estimatedHours: e.target.value });
                   setErrors({ ...errors, estimatedHours: undefined });
                 }}
@@ -452,7 +445,7 @@ export default function UnifiedTaskCreationModal({
             <Input
               id="assignee"
               value={formData.assigneeName}
-              onChange={(e) => setFormData({ ...formData, assigneeName: e.target.value })}
+              onChange={e => setFormData({ ...formData, assigneeName: e.target.value })}
               placeholder="Enter assignee name..."
             />
           </div>
@@ -463,8 +456,8 @@ export default function UnifiedTaskCreationModal({
             <div className="flex gap-2">
               <Input
                 value={currentTag}
-                onChange={(e) => setCurrentTag(e.target.value)}
-                onKeyPress={(e) => {
+                onChange={e => setCurrentTag(e.target.value)}
+                onKeyPress={e => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     handleAddTag();
@@ -478,7 +471,7 @@ export default function UnifiedTaskCreationModal({
             </div>
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {formData.tags.map((tag) => (
+                {formData.tags.map(tag => (
                   <Badge
                     key={tag}
                     variant="secondary"
@@ -497,10 +490,7 @@ export default function UnifiedTaskCreationModal({
           <Button variant="outline" onClick={onClose} disabled={createTaskMutation.isPending}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={createTaskMutation.isPending}
-          >
+          <Button onClick={handleSubmit} disabled={createTaskMutation.isPending}>
             {createTaskMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -54,6 +54,8 @@ import {
   AlertCircle,
   ArrowRight,
   Eye,
+  Package,
+  GitBranch,
 } from 'lucide-react';
 import {
   useCandidates,
@@ -64,7 +66,15 @@ import {
   useGenerateDefensePreview,
   useSuggestPredicates,
   useGenerateSEMatrix,
+  useToxicDetail,
+  useToxicityProfile,
+  useLineageGraph,
 } from '@/hooks/use-predicate-intelligence';
+import { SEMatrixV2Panel } from '@/components/predicate/SEMatrixV2Panel';
+import { DefensePacketPanel } from '@/components/predicate/DefensePacketPanel';
+import { PredicateRadarPlot } from '@/components/predicate/PredicateRadarPlot';
+import { ProofStrip } from '@/components/predicate/ProofStrip';
+import { LineageGraphPanel } from '@/components/predicate/LineageGraphPanel';
 import type {
   PredicateCandidate,
   EquivalenceStatus,
@@ -74,6 +84,7 @@ import type {
   StrategyRecommendation,
   SEMatrixComparisonRow,
   DiffSeverity,
+  ToxicityBadge as ToxicityBadgeType,
 } from '../../shared/types/predicate-intelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -110,7 +121,6 @@ const STRATEGY_COLORS: Record<StrategyRecommendation, string> = {
   CONSERVATIVE: 'bg-blue-100 text-blue-800 border-blue-200',
   AGGRESSIVE: 'bg-purple-100 text-purple-800 border-purple-200',
   BALANCED: 'bg-green-100 text-green-800 border-green-200',
-  RISKY: 'bg-orange-100 text-orange-800 border-orange-200',
   AVOID: 'bg-red-100 text-red-900 border-red-300',
 };
 
@@ -118,7 +128,6 @@ const STRATEGY_ICONS: Record<StrategyRecommendation, typeof CheckCircle> = {
   CONSERVATIVE: Shield,
   AGGRESSIVE: Zap,
   BALANCED: ShieldCheck,
-  RISKY: AlertCircle,
   AVOID: AlertTriangle,
 };
 
@@ -140,7 +149,42 @@ function StrategyBadge({ recommendation }: { recommendation: StrategyRecommendat
   );
 }
 
-function ToxicityBadge({ score }: { score: number }) {
+function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeType | null }) {
+  // F.1: If server provides a discrete badge, use it (TOXIC / RISKY_FAMILY / CLEAN)
+  if (badge === 'TOXIC') {
+    return (
+      <Badge variant="destructive" data-testid="toxicity-badge-toxic">
+        <AlertTriangle className="h-3 w-3 mr-1" />
+        TOXIC ({(score * 100).toFixed(0)}%)
+      </Badge>
+    );
+  }
+  if (badge === 'RISKY_FAMILY') {
+    return (
+      <Badge
+        variant="outline"
+        className="bg-orange-50 text-orange-700 border-orange-300"
+        data-testid="toxicity-badge-risky-family"
+      >
+        <ShieldAlert className="h-3 w-3 mr-1" />
+        RISKY FAMILY ({(score * 100).toFixed(0)}%)
+      </Badge>
+    );
+  }
+  if (badge === 'CLEAN') {
+    return (
+      <Badge
+        variant="outline"
+        className="bg-green-50 text-green-700 border-green-300"
+        data-testid="toxicity-badge-clean"
+      >
+        <ShieldCheck className="h-3 w-3 mr-1" />
+        Clean ({(score * 100).toFixed(0)}%)
+      </Badge>
+    );
+  }
+
+  // Fallback: score-based thresholds (pre-F.1 compat)
   if (score <= TOXICITY_THRESHOLDS.safe) {
     return (
       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
@@ -235,15 +279,18 @@ function ReadinessMeter({ score, size = 'lg' }: { score: number; size?: 'sm' | '
 function PredicateRadarTab({
   programId,
   onSelectCandidate,
+  onToxicDetail,
 }: {
   programId: string;
   onSelectCandidate: (c: PredicateCandidate) => void;
+  onToxicDetail?: (kNumber: string) => void;
 }) {
   const { data: candidates, isLoading } = useCandidates(programId);
   const analyzeMut = useAnalyze(programId);
   const addMut = useCreateCandidate(programId);
   const suggestMut = useSuggestPredicates(programId);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedCandidateInTab, setSelectedCandidateInTab] = useState<string | null>(null);
   const [searchDevice, setSearchDevice] = useState('');
   const [searchCode, setSearchCode] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
@@ -251,6 +298,9 @@ function PredicateRadarTab({
   const [technology, setTechnology] = useState('');
   const [materials, setMaterials] = useState('');
   const [energySource, setEnergySource] = useState('');
+  const [tissueContact, setTissueContact] = useState('');
+  const [duration, setDuration] = useState('');
+  const [softwarePresent, setSoftwarePresent] = useState(false);
   const [addKNumber, setAddKNumber] = useState('');
   const [addDeviceName, setAddDeviceName] = useState('');
   const [addManufacturer, setAddManufacturer] = useState('');
@@ -266,17 +316,38 @@ function PredicateRadarTab({
   const handleAnalyze = useCallback(() => {
     if (!searchDevice.trim()) return;
     analyzeMut.mutate({ device_name: searchDevice, product_code: searchCode });
-    // Also trigger strategy engine if intended use is provided
+    // Trigger v2 predicate suggestion engine
     if (intendedUse.trim() && searchCode.trim()) {
       suggestMut.mutate({
         product_code: searchCode,
+        device_name: searchDevice,
         intended_use: intendedUse,
-        technology: technology || undefined,
-        materials: materials || undefined,
+        technology_description: technology || searchDevice,
+        materials: materials
+          ? materials
+              .split(',')
+              .map(m => m.trim())
+              .filter(Boolean)
+          : undefined,
         energy_source: energySource || undefined,
+        tissue_contact: tissueContact || undefined,
+        duration: duration || undefined,
+        software_present: softwarePresent || undefined,
       });
     }
-  }, [searchDevice, searchCode, intendedUse, technology, materials, energySource, analyzeMut, suggestMut]);
+  }, [
+    searchDevice,
+    searchCode,
+    intendedUse,
+    technology,
+    materials,
+    energySource,
+    tissueContact,
+    duration,
+    softwarePresent,
+    analyzeMut,
+    suggestMut,
+  ]);
 
   const handleAdd = useCallback(() => {
     if (!addKNumber.trim() || !addDeviceName.trim()) return;
@@ -324,7 +395,10 @@ function PredicateRadarTab({
                 placeholder="e.g. DQA, NBW"
               />
             </div>
-            <Button onClick={handleAnalyze} disabled={!searchDevice.trim() || analyzeMut.isPending || suggestMut.isPending}>
+            <Button
+              onClick={handleAnalyze}
+              disabled={!searchDevice.trim() || analyzeMut.isPending || suggestMut.isPending}
+            >
               {analyzeMut.isPending || suggestMut.isPending ? (
                 <>
                   <Search className="h-4 w-4 mr-2 animate-spin" /> Analyzing…
@@ -405,13 +479,14 @@ function PredicateRadarTab({
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="text-xs text-muted-foreground"
           >
-            {showAdvanced ? '▼ Hide' : '► Show'} Strategy Engine Fields (Materials, Energy, Technology)
+            {showAdvanced ? '▼ Hide' : '► Show'} Strategy Engine Fields (Materials, Energy,
+            Technology)
           </Button>
 
           {showAdvanced && (
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="text-sm font-medium mb-1 block">Technology</label>
+                <label className="text-sm font-medium mb-1 block">Technology Description</label>
                 <Input
                   value={technology}
                   onChange={e => setTechnology(e.target.value)}
@@ -419,7 +494,9 @@ function PredicateRadarTab({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Materials</label>
+                <label className="text-sm font-medium mb-1 block">
+                  Materials (comma-separated)
+                </label>
                 <Input
                   value={materials}
                   onChange={e => setMaterials(e.target.value)}
@@ -434,65 +511,235 @@ function PredicateRadarTab({
                   placeholder="e.g. Battery (3.7V Li-ion)"
                 />
               </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Tissue Contact</label>
+                <select
+                  value={tissueContact}
+                  onChange={e => setTissueContact(e.target.value)}
+                  className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                >
+                  <option value="">Select…</option>
+                  <option value="none">None</option>
+                  <option value="intact_skin">Intact Skin</option>
+                  <option value="breached">Breached / Mucosal</option>
+                  <option value="blood">Blood Path</option>
+                  <option value="implant">Implant</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Duration (ISO 10993)</label>
+                <select
+                  value={duration}
+                  onChange={e => setDuration(e.target.value)}
+                  className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                >
+                  <option value="">Select…</option>
+                  <option value="transient">&le;24h (Transient)</option>
+                  <option value="short">24h–30d (Short)</option>
+                  <option value="long">&gt;30d (Long / Permanent)</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 h-10">
+                  <input
+                    type="checkbox"
+                    checked={softwarePresent}
+                    onChange={e => setSoftwarePresent(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium">Software Present</span>
+                </label>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Strategy Engine Results */}
+      {/* Shadow Reviewer Scorecard Results */}
       {suggestMut.data && suggestMut.data.suggestions.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-purple-600" /> Strategy Engine Results
+              <Zap className="h-5 w-5 text-purple-600" /> Predicate Intelligence — Shadow Reviewer
             </CardTitle>
             <CardDescription>
-              {suggestMut.data.total_candidates_evaluated} candidates evaluated — showing top{' '}
-              {suggestMut.data.suggestions.length} ranked by regulatory strategy score
+              {suggestMut.data.total_candidates_scanned} candidates scanned — showing top{' '}
+              {suggestMut.data.suggestions.length} ranked by similarity + defense readiness
+              {suggestMut.data.cached && (
+                <Badge variant="outline" className="ml-2 text-xs">
+                  cached
+                </Badge>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {suggestMut.data.suggestions.map((s: PredicateSuggestion) => (
                 <div
                   key={s.k_number}
                   className={`p-4 rounded-lg border ${
                     s.strategy_recommendation === 'AVOID'
                       ? 'border-red-300 bg-red-50/50'
-                      : s.strategy_recommendation === 'RISKY'
-                        ? 'border-orange-200 bg-orange-50/30'
-                        : s.strategy_recommendation === 'CONSERVATIVE'
-                          ? 'border-blue-200 bg-blue-50/30'
-                          : s.strategy_recommendation === 'AGGRESSIVE'
-                            ? 'border-purple-200 bg-purple-50/30'
-                            : 'border-green-200 bg-green-50/30'
+                      : s.strategy_recommendation === 'CONSERVATIVE'
+                        ? 'border-blue-200 bg-blue-50/30'
+                        : s.strategy_recommendation === 'AGGRESSIVE'
+                          ? 'border-purple-200 bg-purple-50/30'
+                          : 'border-green-200 bg-green-50/30'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
+                    <div className="flex-1 space-y-2">
+                      {/* Header row */}
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-mono text-sm font-semibold">{s.k_number}</span>
-                        <StrategyBadge recommendation={s.strategy_recommendation as StrategyRecommendation} />
-                        <ToxicityBadge score={s.toxicity_score} />
+                        <StrategyBadge
+                          recommendation={s.strategy_recommendation as StrategyRecommendation}
+                        />
+                        {s.risk_flags?.map((f: any, idx: number) => {
+                          const code = typeof f === 'string' ? f : f.code;
+                          const sev = typeof f === 'string' ? 'MEDIUM' : f.severity;
+                          const sevColor =
+                            sev === 'HIGH'
+                              ? 'text-red-700 border-red-300'
+                              : sev === 'MEDIUM'
+                                ? 'text-orange-700 border-orange-300'
+                                : 'text-yellow-700 border-yellow-300';
+                          return (
+                            <Badge
+                              key={`${code}-${idx}`}
+                              variant="outline"
+                              className={`text-[10px] ${sevColor}`}
+                              title={typeof f === 'object' ? f.message : ''}
+                            >
+                              {code.replace(/_/g, ' ')}
+                            </Badge>
+                          );
+                        })}
                       </div>
                       <p className="font-medium">{s.device_name}</p>
                       {s.applicant && (
                         <p className="text-sm text-muted-foreground">{s.applicant}</p>
                       )}
-                      <p className="text-sm text-muted-foreground mt-2 italic">{s.reasoning}</p>
-                    </div>
-                    <div className="text-right space-y-1">
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Similarity:</span>{' '}
-                        <span className="font-semibold">{(s.similarity_score * 100).toFixed(0)}%</span>
-                      </div>
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Composite:</span>{' '}
-                        <span className="font-semibold">{s.composite_score.toFixed(2)}</span>
-                      </div>
-                      {s.clearance_date && (
-                        <div className="text-xs text-muted-foreground">{s.clearance_date}</div>
+                      <p className="text-sm text-muted-foreground italic">{s.reasoning}</p>
+
+                      {/* Match Snippets (B1) */}
+                      {s.match_snippets && s.match_snippets.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase">
+                            Matched Excerpts
+                          </p>
+                          {s.match_snippets.map(
+                            (snip: { text: string; source: string }, i: number) => (
+                              <div
+                                key={i}
+                                className="text-xs bg-muted/40 rounded px-2 py-1 border-l-2 border-purple-300"
+                              >
+                                &ldquo;{snip.text}&rdquo;
+                              </div>
+                            )
+                          )}
+                        </div>
                       )}
+
+                      {/* Anticipated Objections (B3) */}
+                      {s.anticipated_objections && s.anticipated_objections.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase">
+                            Anticipated Objections ({s.anticipated_objections.length})
+                          </p>
+                          {s.anticipated_objections.slice(0, 3).map((obj: any, i: number) => (
+                            <div
+                              key={i}
+                              className="text-xs rounded px-2 py-1 border bg-orange-50/50 border-orange-200"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] ${
+                                    obj.severity === 'High'
+                                      ? 'text-red-700 border-red-300'
+                                      : obj.severity === 'Med'
+                                        ? 'text-orange-700 border-orange-300'
+                                        : 'text-yellow-700 border-yellow-300'
+                                  }`}
+                                >
+                                  {obj.severity}
+                                </Badge>
+                                <span className="font-mono text-[10px] text-muted-foreground">
+                                  {obj.trigger}
+                                </span>
+                              </div>
+                              <p className="mt-0.5">{obj.question}</p>
+                              <p className="text-muted-foreground mt-0.5">
+                                Fix: {obj.recommended_fix}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right column: scores */}
+                    <div className="text-right space-y-2 min-w-[120px]">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Similarity</div>
+                        <div className="text-lg font-bold">
+                          {(s.similarity_score * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Defense Readiness</div>
+                        <div
+                          className={`text-lg font-bold ${
+                            s.defense_readiness_score >= 70
+                              ? 'text-green-600'
+                              : s.defense_readiness_score >= 50
+                                ? 'text-yellow-600'
+                                : 'text-red-600'
+                          }`}
+                        >
+                          {s.defense_readiness_score.toFixed(0)}/100
+                        </div>
+                      </div>
+                      {/* F.1: Toxicity badge from safety signals */}
+                      {s.toxicity_score != null && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">Safety</div>
+                          <button
+                            type="button"
+                            className="cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => onToxicDetail?.(s.k_number)}
+                            title="Click to view safety signal details"
+                          >
+                            <ToxicityBadge score={s.toxicity_score} badge={s.badge} />
+                          </button>
+                        </div>
+                      )}
+                      {s.decision_date && (
+                        <div className="text-xs text-muted-foreground">{s.decision_date}</div>
+                      )}
+                      {s.recency_years != null && (
+                        <div className="text-xs text-muted-foreground">
+                          {s.recency_years.toFixed(1)}y ago
+                        </div>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={() => {
+                          onSelectCandidate({
+                            id: s.k_number,
+                            program_id: programId,
+                            k_number: s.k_number,
+                            device_name: s.device_name,
+                            manufacturer: s.applicant || '',
+                            similarity_score: s.similarity_score,
+                          } as any);
+                        }}
+                      >
+                        Select <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -502,81 +749,16 @@ function PredicateRadarTab({
         </Card>
       )}
 
-      {/* Scatter Plot Visualization (Similarity vs Toxicity) */}
+      {/* Scatter Plot Visualization (Similarity vs Toxicity) — Phase 6.6.D SVG Radar */}
       {sorted.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" /> Predicate Radar
-            </CardTitle>
-            <CardDescription>
-              Similarity (X) vs. Safety (Y). Green = recommended. Red = toxic. Click a point for
-              details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative w-full h-64 border rounded-lg bg-muted/10 overflow-hidden">
-              {/* Axis labels */}
-              <span className="absolute bottom-1 right-2 text-[10px] text-muted-foreground">
-                Similarity →
-              </span>
-              <span className="absolute top-1 left-2 text-[10px] text-muted-foreground">
-                ← Safe
-              </span>
-              <span className="absolute bottom-1 left-2 text-[10px] text-muted-foreground">
-                Toxic →
-              </span>
-              {/* Quadrant shading */}
-              <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-green-50/50" />
-              <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-red-50/50" />
-              {/* Data points */}
-              {sorted.map(c => {
-                const x = c.similarity_score * 100;
-                const y = (1 - c.toxicity_score) * 100; // invert: low toxicity = top
-                const dotColor = c.recommended
-                  ? 'bg-green-500 ring-green-300'
-                  : c.toxicity_score > TOXICITY_THRESHOLDS.danger
-                    ? 'bg-red-500 ring-red-300'
-                    : c.toxicity_score > TOXICITY_THRESHOLDS.caution
-                      ? 'bg-orange-400 ring-orange-200'
-                      : 'bg-yellow-400 ring-yellow-200';
-                return (
-                  <TooltipProvider key={c.id}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          className={`absolute w-4 h-4 rounded-full ring-2 cursor-pointer hover:scale-125 transition-transform ${dotColor}`}
-                          style={{
-                            left: `calc(${x}% - 8px)`,
-                            bottom: `calc(${y}% - 8px)`,
-                          }}
-                          onClick={() => onSelectCandidate(c)}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="text-xs">
-                          <p className="font-semibold">{c.device_name}</p>
-                          <p>
-                            {c.k_number} — {c.manufacturer}
-                          </p>
-                          <p>
-                            Similarity: {(c.similarity_score * 100).toFixed(0)}% | Toxicity:{' '}
-                            {(c.toxicity_score * 100).toFixed(0)}%
-                          </p>
-                          {c.enforcement_events.length > 0 && (
-                            <p className="text-red-600">
-                              ⚠ {c.enforcement_events.length} enforcement event(s)
-                            </p>
-                          )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        <PredicateRadarPlot
+          candidates={sorted}
+          selectedCandidate={sorted.find(c => c.id === selectedCandidateInTab) ?? null}
+          onSelectCandidate={c => {
+            setSelectedCandidateInTab(c.id);
+            onSelectCandidate(c);
+          }}
+        />
       )}
 
       {/* Candidate Table */}
@@ -641,7 +823,14 @@ function PredicateRadarTab({
                       <SimilarityBar score={c.similarity_score} />
                     </TableCell>
                     <TableCell>
-                      <ToxicityBadge score={c.toxicity_score} />
+                      <button
+                        type="button"
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => onToxicDetail?.(c.k_number)}
+                        title="Click to view safety signal details"
+                      >
+                        <ToxicityBadge score={c.toxicity_score} />
+                      </button>
                     </TableCell>
                     <TableCell>
                       {c.enforcement_events.length > 0 ? (
@@ -781,10 +970,7 @@ function SEMatrixTab({
               />
             </div>
           </div>
-          <Button
-            onClick={handleGenerateSEMatrix}
-            disabled={generateMut.isPending}
-          >
+          <Button onClick={handleGenerateSEMatrix} disabled={generateMut.isPending}>
             {generateMut.isPending ? (
               <>
                 <Zap className="h-4 w-4 mr-2 animate-pulse" /> Generating…
@@ -804,9 +990,7 @@ function SEMatrixTab({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-purple-800">
-                  Auto-Generated SE Matrix
-                </p>
+                <p className="font-semibold text-purple-800">Auto-Generated SE Matrix</p>
                 <p className="text-sm text-purple-600 mt-1">
                   {generateMut.data.row_count} comparison rows •{' '}
                   {generateMut.data.discussion_required_count} require discussion
@@ -822,11 +1006,10 @@ function SEMatrixTab({
       {displayRows && displayRows.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>
-              Generated Substantial Equivalence Matrix
-            </CardTitle>
+            <CardTitle>Generated Substantial Equivalence Matrix</CardTitle>
             <CardDescription>
-              Evidence-linked comparison with regulatory intelligence — generated by Phase 6.6.C engine
+              Evidence-linked comparison with regulatory intelligence — generated by Phase 6.6.C
+              engine
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -849,7 +1032,9 @@ function SEMatrixTab({
                   const StatusIcon = EQUIVALENCE_ICONS[row.equivalence_status] || AlertCircle;
                   return (
                     <TableRow key={row.sort_order}>
-                      <TableCell className="text-xs text-muted-foreground">{row.sort_order}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {row.sort_order}
+                      </TableCell>
                       <TableCell className="font-medium">{row.characteristic}</TableCell>
                       <TableCell>{row.subject_value.value}</TableCell>
                       <TableCell>
@@ -1159,6 +1344,147 @@ function DefenseMeterTab({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Toxic Detail Drill-Down Dialog (Phase 6.6.F)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ToxicDetailDialog({
+  programId,
+  kNumber,
+  onClose,
+}: {
+  programId: string;
+  kNumber: string;
+  onClose: () => void;
+}) {
+  const { data, isLoading, isError } = useToxicDetail(programId, kNumber);
+
+  return (
+    <Dialog open onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            Safety Signal Details — <span className="font-mono">{kNumber}</span>
+          </DialogTitle>
+          <DialogDescription>
+            Detailed toxicity breakdown and safety signal citations for this predicate.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading && (
+          <div className="space-y-3 py-4">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <p className="text-sm text-muted-foreground py-4">
+            Failed to load toxic detail for {kNumber}.
+          </p>
+        )}
+
+        {data && (
+          <div className="space-y-4 py-2">
+            {/* Summary badges */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <ToxicityBadge score={data.toxicity_score} badge={data.badge} />
+              <Badge variant="outline" className="text-xs">
+                MDR: {data.mdr_rate_bucket}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                Family Recalls: {data.family_recall_count}
+              </Badge>
+            </div>
+
+            {/* Toxic reasons */}
+            {data.toxic_because.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  Why this predicate is flagged
+                </p>
+                <ul className="list-disc list-inside space-y-0.5 text-sm">
+                  {data.toxic_because.map((reason, i) => (
+                    <li key={i}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Signal citations */}
+            {data.signals.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  Safety Signals ({data.signals.length})
+                </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Severity</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.signals.map((sig, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {sig.signal_type.replace(/_/g, ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {sig.signal_date || '—'}
+                        </TableCell>
+                        <TableCell className="text-sm max-w-xs truncate">
+                          {sig.description}
+                          {sig.recall_number && (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              (#{sig.recall_number})
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            className={`text-sm font-medium ${
+                              sig.severity_score >= 0.7
+                                ? 'text-red-600'
+                                : sig.severity_score >= 0.4
+                                  ? 'text-orange-600'
+                                  : 'text-yellow-600'
+                            }`}
+                          >
+                            {(sig.severity_score * 100).toFixed(0)}%
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {data.signals.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No safety signals on record for this device.
+              </p>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Main Page
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1177,18 +1503,35 @@ export default function PredicateIntelligencePage({
   const [inputProgramId, setInputProgramId] = useState('');
   const programId = propProgramId || urlProgramId || inputProgramId;
   const [selectedCandidate, setSelectedCandidate] = useState<PredicateCandidate | null>(null);
+  const [toxicDetailK, setToxicDetailK] = useState<string | null>(null);
 
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Radar className="h-6 w-6" /> Predicate Intelligence
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Find the safest, most defensible predicate — not just the most similar. Toxic Predicate
-          Detection + Shadow 510(k) Review + Defense Readiness Scoring.
-        </p>
+      {/* Toxic Detail Drill-Down Dialog (F.1) */}
+      {toxicDetailK && (
+        <ToxicDetailDialog
+          programId={programId}
+          kNumber={toxicDetailK}
+          onClose={() => setToxicDetailK(null)}
+        />
+      )}
+      {/* Header + Proof Strip (top-right) */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Radar className="h-6 w-6" /> Predicate Intelligence
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Find the safest, most defensible predicate — not just the most similar. Toxic Predicate
+            Detection + Shadow 510(k) Review + Defense Readiness Scoring.
+          </p>
+        </div>
+        {/* E1: Proof Strip — zero-drift compliance badges (top-right) */}
+        {programId && (
+          <div className="flex-shrink-0">
+            <ProofStrip programId={programId} subjectHash={selectedCandidate?.k_number || ''} />
+          </div>
+        )}
       </div>
 
       {/* Program ID selector (fallback if no prop or URL param) */}
@@ -1229,10 +1572,23 @@ export default function PredicateIntelligencePage({
             <TabsTrigger value="defense" className="flex items-center gap-1">
               <Shield className="h-4 w-4" /> Defense Meter
             </TabsTrigger>
+            <TabsTrigger value="se-matrix-v2" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" /> SE Matrix V2
+            </TabsTrigger>
+            <TabsTrigger value="defense-packet" className="flex items-center gap-1">
+              <Package className="h-4 w-4" /> Defense Packet
+            </TabsTrigger>
+            <TabsTrigger value="lineage" className="flex items-center gap-1">
+              <GitBranch className="h-4 w-4" /> Lineage
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="radar" className="mt-4">
-            <PredicateRadarTab programId={programId} onSelectCandidate={setSelectedCandidate} />
+            <PredicateRadarTab
+              programId={programId}
+              onSelectCandidate={setSelectedCandidate}
+              onToxicDetail={setToxicDetailK}
+            />
           </TabsContent>
 
           <TabsContent value="strategy" className="mt-4">
@@ -1245,6 +1601,36 @@ export default function PredicateIntelligencePage({
 
           <TabsContent value="defense" className="mt-4">
             <DefenseMeterTab programId={programId} selectedCandidate={selectedCandidate} />
+          </TabsContent>
+
+          <TabsContent value="se-matrix-v2" className="mt-4">
+            <SEMatrixV2Panel programId={programId} predicateKNumber={selectedCandidate?.k_number} />
+          </TabsContent>
+
+          <TabsContent value="defense-packet" className="mt-4">
+            <DefensePacketPanel
+              programId={programId}
+              predicateKNumber={selectedCandidate?.k_number}
+              initialSubjectDevice={{}}
+            />
+          </TabsContent>
+
+          <TabsContent value="lineage" className="mt-4">
+            {selectedCandidate?.k_number ? (
+              <LineageGraphPanel programId={programId} kNumber={selectedCandidate.k_number} />
+            ) : (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center text-muted-foreground">
+                    <GitBranch className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>Select a predicate candidate to view its family lineage.</p>
+                    <p className="text-sm mt-1">
+                      Use the Predicate Radar or Strategy Engine tab to select a candidate first.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       )}
@@ -1265,26 +1651,52 @@ function StrategyTab({
 }) {
   const suggestMut = useSuggestPredicates(programId);
   const [productCode, setProductCode] = useState('');
+  const [deviceName, setDeviceName] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
   const [technology, setTechnology] = useState('');
   const [materials, setMaterials] = useState('');
   const [energySource, setEnergySource] = useState('');
   const [tissueContact, setTissueContact] = useState('');
+  const [duration, setDuration] = useState('');
+  const [softwarePresent, setSoftwarePresent] = useState(false);
   const [sterilization, setSterilization] = useState('');
+  const [patientPopulation, setPatientPopulation] = useState('');
 
   const handleSuggest = useCallback(() => {
-    if (!productCode.trim() || !intendedUse.trim()) return;
+    if (!productCode.trim() || !deviceName.trim() || !intendedUse.trim() || !technology.trim()) {
+      return;
+    }
+    const materialList = materials
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
     suggestMut.mutate({
       product_code: productCode,
+      device_name: deviceName,
       intended_use: intendedUse,
-      technology: technology || undefined,
-      materials: materials || undefined,
+      technology_description: technology,
+      materials: materialList.length ? materialList : undefined,
       energy_source: energySource || undefined,
       tissue_contact: tissueContact || undefined,
+      duration: duration || undefined,
+      software_present: softwarePresent || undefined,
       sterilization: sterilization || undefined,
-      max_results: 10,
+      patient_population: patientPopulation || undefined,
     });
-  }, [productCode, intendedUse, technology, materials, energySource, tissueContact, sterilization, suggestMut]);
+  }, [
+    productCode,
+    deviceName,
+    intendedUse,
+    technology,
+    materials,
+    energySource,
+    tissueContact,
+    duration,
+    softwarePresent,
+    sterilization,
+    patientPopulation,
+    suggestMut,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -1295,19 +1707,26 @@ function StrategyTab({
             <Zap className="h-5 w-5 text-purple-600" /> Regulatory Strategy Engine
           </CardTitle>
           <CardDescription>
-            Enter your subject device details to find the safest, most defensible predicate.
-            The strategy engine scores predicates on toxicity, lineage safety, recency, and
-            regulatory history — not just text similarity.
+            Enter your subject device details to find the safest, most defensible predicate. The
+            strategy engine scores predicates on similarity, defense readiness, and objection risk.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-1 block">Product Code *</label>
               <Input
                 value={productCode}
                 onChange={e => setProductCode(e.target.value)}
                 placeholder="e.g. DQA, NBW, QKQ"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Device Name *</label>
+              <Input
+                value={deviceName}
+                onChange={e => setDeviceName(e.target.value)}
+                placeholder="e.g. Spinal Fusion Cage"
               />
             </div>
             <div>
@@ -1321,11 +1740,11 @@ function StrategyTab({
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">Technology</label>
+              <label className="text-sm font-medium mb-1 block">Technology Description *</label>
               <Input
                 value={technology}
                 onChange={e => setTechnology(e.target.value)}
-                placeholder="e.g. Electrochemical sensor"
+                placeholder="e.g. Titanium interbody cage for spinal fusion"
               />
             </div>
             <div>
@@ -1333,7 +1752,7 @@ function StrategyTab({
               <Input
                 value={materials}
                 onChange={e => setMaterials(e.target.value)}
-                placeholder="e.g. Titanium alloy"
+                placeholder="e.g. Titanium alloy, PEEK"
               />
             </div>
             <div>
@@ -1345,27 +1764,81 @@ function StrategyTab({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-sm font-medium mb-1 block">Tissue Contact</label>
-              <Input
+              <select
                 value={tissueContact}
                 onChange={e => setTissueContact(e.target.value)}
-                placeholder="e.g. Intact skin, blood contact"
-              />
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">Select…</option>
+                <option value="none">None</option>
+                <option value="intact_skin">Intact Skin</option>
+                <option value="breached">Breached / Mucosal</option>
+                <option value="blood">Blood Path</option>
+                <option value="implant">Implant</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Duration (ISO 10993)</label>
+              <select
+                value={duration}
+                onChange={e => setDuration(e.target.value)}
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">Select…</option>
+                <option value="transient">≤24h (Transient)</option>
+                <option value="short">24h–30d (Short)</option>
+                <option value="long">&gt;30d (Long / Permanent)</option>
+              </select>
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Sterilization</label>
-              <Input
+              <select
                 value={sterilization}
                 onChange={e => setSterilization(e.target.value)}
-                placeholder="e.g. EO sterilization, radiation"
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">Select…</option>
+                <option value="EO">EO (Ethylene Oxide)</option>
+                <option value="gamma">Gamma Irradiation</option>
+                <option value="steam">Steam (Autoclave)</option>
+                <option value="ebeam">E-Beam</option>
+                <option value="none">None / Non-sterile</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Patient Population</label>
+              <Input
+                value={patientPopulation}
+                onChange={e => setPatientPopulation(e.target.value)}
+                placeholder="e.g. Adult, Pediatric, Geriatric"
               />
+            </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 h-10">
+                <input
+                  type="checkbox"
+                  checked={softwarePresent}
+                  onChange={e => setSoftwarePresent(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-sm font-medium">Software Present</span>
+              </label>
             </div>
           </div>
           <Button
             onClick={handleSuggest}
-            disabled={!productCode.trim() || !intendedUse.trim() || suggestMut.isPending}
+            disabled={
+              !productCode.trim() ||
+              !deviceName.trim() ||
+              !intendedUse.trim() ||
+              !technology.trim() ||
+              suggestMut.isPending
+            }
             className="bg-purple-600 hover:bg-purple-700"
           >
             {suggestMut.isPending ? (
@@ -1388,14 +1861,20 @@ function StrategyTab({
           <div className="grid grid-cols-4 gap-4">
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold">{suggestMut.data.total_candidates_evaluated}</p>
-                <p className="text-sm text-muted-foreground">Evaluated</p>
+                <p className="text-3xl font-bold">{suggestMut.data.total_candidates_scanned}</p>
+                <p className="text-sm text-muted-foreground">Scanned</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-3xl font-bold text-green-600">
-                  {suggestMut.data.suggestions.filter(s => s.strategy_recommendation === 'BALANCED' || s.strategy_recommendation === 'CONSERVATIVE').length}
+                  {
+                    suggestMut.data.suggestions.filter(
+                      s =>
+                        s.strategy_recommendation === 'BALANCED' ||
+                        s.strategy_recommendation === 'CONSERVATIVE'
+                    ).length
+                  }
                 </p>
                 <p className="text-sm text-muted-foreground">Safe Options</p>
               </CardContent>
@@ -1403,9 +1882,12 @@ function StrategyTab({
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-3xl font-bold text-red-600">
-                  {suggestMut.data.suggestions.filter(s => s.strategy_recommendation === 'AVOID' || s.strategy_recommendation === 'RISKY').length}
+                  {
+                    suggestMut.data.suggestions.filter(s => s.strategy_recommendation === 'AVOID')
+                      .length
+                  }
                 </p>
-                <p className="text-sm text-muted-foreground">Risky/Avoid</p>
+                <p className="text-sm text-muted-foreground">Avoid</p>
               </CardContent>
             </Card>
             <Card>
@@ -1422,9 +1904,7 @@ function StrategyTab({
           <Card>
             <CardHeader>
               <CardTitle>Ranked Predicate Suggestions</CardTitle>
-              <CardDescription>
-                Sorted by composite score (similarity − toxicity penalty). Higher is better.
-              </CardDescription>
+              <CardDescription>Sorted by similarity score. Higher is better.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -1435,9 +1915,8 @@ function StrategyTab({
                     <TableHead>Device Name</TableHead>
                     <TableHead>Strategy</TableHead>
                     <TableHead>Similarity</TableHead>
-                    <TableHead>Toxicity</TableHead>
-                    <TableHead>Lineage</TableHead>
-                    <TableHead>Composite</TableHead>
+                    <TableHead>DRS</TableHead>
+                    <TableHead>Score</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1447,17 +1926,17 @@ function StrategyTab({
                       className={
                         s.strategy_recommendation === 'AVOID'
                           ? 'bg-red-50/50'
-                          : s.strategy_recommendation === 'RISKY'
-                            ? 'bg-orange-50/30'
-                            : idx === 0
-                              ? 'bg-green-50/30'
-                              : ''
+                          : idx === 0
+                            ? 'bg-green-50/30'
+                            : ''
                       }
                     >
                       <TableCell className="font-mono text-sm text-muted-foreground">
                         {idx + 1}
                       </TableCell>
-                      <TableCell className="font-mono text-sm font-semibold">{s.k_number}</TableCell>
+                      <TableCell className="font-mono text-sm font-semibold">
+                        {s.k_number}
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{s.device_name}</p>
@@ -1467,30 +1946,28 @@ function StrategyTab({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <StrategyBadge recommendation={s.strategy_recommendation as StrategyRecommendation} />
+                        <StrategyBadge
+                          recommendation={s.strategy_recommendation as StrategyRecommendation}
+                        />
                       </TableCell>
                       <TableCell>
                         <SimilarityBar score={s.similarity_score} />
                       </TableCell>
                       <TableCell>
-                        <ToxicityBadge score={s.toxicity_score} />
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={
-                            s.lineage_safety === 'CLEAN'
-                              ? 'bg-green-50 text-green-700'
-                              : s.lineage_safety === 'COMPROMISED'
-                                ? 'bg-red-50 text-red-700'
-                                : 'bg-gray-50 text-gray-600'
-                          }
+                        <span
+                          className={`font-mono text-sm ${
+                            s.defense_readiness_score >= 70
+                              ? 'text-green-700'
+                              : s.defense_readiness_score >= 40
+                                ? 'text-amber-600'
+                                : 'text-red-600'
+                          }`}
                         >
-                          {s.lineage_safety}
-                        </Badge>
+                          {s.defense_readiness_score?.toFixed(0) ?? '—'}
+                        </span>
                       </TableCell>
                       <TableCell className="font-mono text-sm">
-                        {s.composite_score.toFixed(3)}
+                        {s.similarity_score.toFixed(3)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1498,6 +1975,72 @@ function StrategyTab({
               </Table>
             </CardContent>
           </Card>
+
+          {/* Defense Packet Seed — enterprise-grade evidence fix list */}
+          {suggestMut.data.defense_packet_seed?.tasks?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" /> Defense Packet Seed
+                  <Badge variant="outline" className="text-[10px] ml-2">
+                    Readiness: {suggestMut.data.defense_packet_seed.readiness_score}/100
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  Machine-readable evidence fix list — bridges predicate ranking to regulatory
+                  workflow.
+                  {suggestMut.data.defense_packet_seed.top_risks?.length > 0 && (
+                    <span className="ml-2">
+                      Top risks:{' '}
+                      {suggestMut.data.defense_packet_seed.top_risks.map((r: string, i: number) => (
+                        <Badge key={i} variant="destructive" className="text-[9px] ml-1">
+                          {r}
+                        </Badge>
+                      ))}
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {suggestMut.data.defense_packet_seed.tasks.map((task: any) => (
+                    <div key={task.task_id} className="p-3 rounded-md border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge
+                          variant={
+                            task.severity === 'HIGH'
+                              ? 'destructive'
+                              : task.severity === 'MEDIUM'
+                                ? 'default'
+                                : 'secondary'
+                          }
+                          className="text-[10px] shrink-0"
+                        >
+                          {task.severity}
+                        </Badge>
+                        <span className="font-mono text-xs text-blue-600 shrink-0">
+                          [{task.category}]
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {task.trigger}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-1">{task.rationale}</p>
+                      {task.recommended_artifacts?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {task.recommended_artifacts.map((art: string, i: number) => (
+                            <Badge key={i} variant="outline" className="text-[9px]">
+                              {art}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Reasoning details */}
           <Card>
@@ -1513,7 +2056,9 @@ function StrategyTab({
                   <div key={s.k_number} className="p-3 rounded-md border bg-muted/30">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-sm font-semibold">{s.k_number}</span>
-                      <StrategyBadge recommendation={s.strategy_recommendation as StrategyRecommendation} />
+                      <StrategyBadge
+                        recommendation={s.strategy_recommendation as StrategyRecommendation}
+                      />
                     </div>
                     <p className="text-sm text-muted-foreground italic">{s.reasoning}</p>
                   </div>

@@ -28,10 +28,10 @@ export default function TopNav() {
 
       <div className="flex items-center gap-6">
         <Link
-          to="/ind/wizard-v2"
+          to="/client-portal/ectd-coauthor"
           className="text-sm text-slate-700 dark:text-slate-300 hover:text-regulatory-600 dark:hover:text-regulatory-400 transition-colors focus-visible:outline-none focus-visible:ring focus-visible:ring-regulatory-400 rounded-sm"
         >
-          IND Wizard
+          eCTD Co-Author
         </Link>
         <Link
           to="/csr-intelligence"

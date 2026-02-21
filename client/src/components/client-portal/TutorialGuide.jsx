@@ -1,26 +1,24 @@
 /**
  * Tutorial Guide Component
- * 
+ *
  * Comprehensive guide covering all modules in the Client Portal with
  * hyperlinks that navigate users to specific sections and features.
  */
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'wouter';
-import { 
-  Book, 
-  ChevronRight, 
-  ExternalLink, 
-  FileText, 
-  Settings, 
-  Users, 
+import { useLocation } from 'wouter';
+import {
+  Book,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  Users,
   Beaker,
   Brain,
   Shield,
   Zap,
-  AlertCircle,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,14 +30,14 @@ const TutorialGuide = () => {
   const [, setLocation] = useLocation();
   const [expandedSections, setExpandedSections] = useState({});
 
-  const toggleSection = (sectionId) => {
+  const toggleSection = sectionId => {
     setExpandedSections(prev => ({
       ...prev,
-      [sectionId]: !prev[sectionId]
+      [sectionId]: !prev[sectionId],
     }));
   };
 
-  const navigateToSection = (path) => {
+  const navigateToSection = path => {
     setLocation(path);
   };
 
@@ -53,19 +51,19 @@ const TutorialGuide = () => {
         'Submit FDA-compliant INDs efficiently',
         'Manage regulatory documentation',
         'Track submission timelines',
-        'Ensure compliance across regions'
+        'Ensure compliance across regions',
       ],
       modules: [
         {
-          name: 'IND Wizard™',
-          path: '/client-portal/ind-wizard',
-          description: 'Complete FDA IND submission automation',
+          name: 'eCTD Co-Author™',
+          path: '/client-portal/ectd-coauthor',
+          description: 'Complete FDA IND & eCTD submission automation',
           features: [
             'FDA Form 1571 auto-generation',
             'Module 2-5 template system',
             'Real-time compliance validation',
-            'ESG Gateway submission'
-          ]
+            'ESG Gateway submission',
+          ],
         },
         {
           name: 'eCTD Co-Author',
@@ -75,10 +73,10 @@ const TutorialGuide = () => {
             'Structured document creation',
             'Real-time regulatory guidance',
             'Version control and tracking',
-            'Cross-reference validation'
-          ]
-        }
-      ]
+            'Cross-reference validation',
+          ],
+        },
+      ],
     },
     'cmc-scientist': {
       title: 'CMC Scientist',
@@ -88,7 +86,7 @@ const TutorialGuide = () => {
         'Generate CMC documentation efficiently',
         'Ensure analytical method compliance',
         'Manage manufacturing processes',
-        'Track quality control metrics'
+        'Track quality control metrics',
       ],
       modules: [
         {
@@ -99,10 +97,10 @@ const TutorialGuide = () => {
             'Module 3 auto-generation',
             'Analytical method validation',
             'Manufacturing process mapping',
-            'Stability study tracking'
-          ]
-        }
-      ]
+            'Stability study tracking',
+          ],
+        },
+      ],
     },
     'clinical-researcher': {
       title: 'Clinical Researcher',
@@ -112,7 +110,7 @@ const TutorialGuide = () => {
         'Design optimal clinical protocols',
         'Analyze clinical study reports',
         'Predict trial success factors',
-        'Benchmark against industry data'
+        'Benchmark against industry data',
       ],
       modules: [
         {
@@ -123,10 +121,10 @@ const TutorialGuide = () => {
             'CSR semantic analysis',
             'Success/failure prediction',
             'Endpoint optimization',
-            'Benchmark comparisons'
-          ]
-        }
-      ]
+            'Benchmark comparisons',
+          ],
+        },
+      ],
     },
     'medical-writer': {
       title: 'Medical Writer',
@@ -136,7 +134,7 @@ const TutorialGuide = () => {
         'Create compliant medical documents',
         'Collaborate on regulatory submissions',
         'Maintain document version control',
-        'Ensure consistent formatting'
+        'Ensure consistent formatting',
       ],
       modules: [
         {
@@ -147,11 +145,11 @@ const TutorialGuide = () => {
             'Template-based authoring',
             'Real-time collaboration',
             'AI writing assistance',
-            'Regulatory compliance checks'
-          ]
-        }
-      ]
-    }
+            'Regulatory compliance checks',
+          ],
+        },
+      ],
+    },
   };
 
   const aiTechnologies = [
@@ -164,8 +162,8 @@ const TutorialGuide = () => {
         'Automated document drafting',
         'Regulatory text analysis',
         'Compliance checking',
-        'Cross-reference validation'
-      ]
+        'Cross-reference validation',
+      ],
     },
     {
       name: 'Machine Learning Predictive Analytics',
@@ -176,8 +174,8 @@ const TutorialGuide = () => {
         'Trial success prediction',
         'Risk assessment',
         'Timeline forecasting',
-        'Quality trending'
-      ]
+        'Quality trending',
+      ],
     },
     {
       name: 'Natural Language Processing (NLP)',
@@ -188,9 +186,9 @@ const TutorialGuide = () => {
         'Document classification',
         'Information extraction',
         'Semantic search',
-        'Content summarization'
-      ]
-    }
+        'Content summarization',
+      ],
+    },
   ];
 
   return (
@@ -202,7 +200,8 @@ const TutorialGuide = () => {
           <h1 className="text-3xl font-bold">Concept2Cure Platform Tutorial</h1>
         </div>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Comprehensive guide to mastering the Concept2Cure platform for efficient regulatory submissions
+          Comprehensive guide to mastering the Concept2Cure platform for efficient regulatory
+          submissions
         </p>
       </div>
 
@@ -233,19 +232,38 @@ const TutorialGuide = () => {
                   <h4 className="font-semibold">Core Modules</h4>
                   <div className="space-y-2">
                     {[
-                      { name: 'IND Wizard™', path: '/client-portal/ind-wizard', desc: 'FDA submission automation' },
-                      { name: 'CMC Wizard', path: '/client-portal/cmc-module', desc: 'Chemistry, Manufacturing & Controls' },
-                      { name: 'eCTD Co-Author', path: '/client-portal/ectd-coauthor', desc: 'Collaborative document authoring' },
-                      { name: 'CSR Intelligence', path: '/client-portal/csr-intelligence', desc: 'Clinical study report analysis' }
-                    ].map((module) => (
-                      <div key={module.name} className="flex items-center justify-between p-2 border rounded">
+                      {
+                        name: 'eCTD Co-Author™',
+                        path: '/client-portal/ectd-coauthor',
+                        desc: 'IND & eCTD submission automation',
+                      },
+                      {
+                        name: 'CMC Wizard',
+                        path: '/client-portal/cmc-module',
+                        desc: 'Chemistry, Manufacturing & Controls',
+                      },
+                      {
+                        name: 'eCTD Co-Author',
+                        path: '/client-portal/ectd-coauthor',
+                        desc: 'Collaborative document authoring',
+                      },
+                      {
+                        name: 'CSR Intelligence',
+                        path: '/client-portal/csr-intelligence',
+                        desc: 'Clinical study report analysis',
+                      },
+                    ].map(module => (
+                      <div
+                        key={module.name}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div>
                           <div className="font-medium">{module.name}</div>
                           <div className="text-sm text-muted-foreground">{module.desc}</div>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => navigateToSection(module.path)}
                           className="flex items-center space-x-1"
                         >
@@ -260,19 +278,38 @@ const TutorialGuide = () => {
                   <h4 className="font-semibold">Support Features</h4>
                   <div className="space-y-2">
                     {[
-                      { name: 'Document Vault', path: '/client-portal/vault', desc: '21 CFR Part 11 compliant storage' },
-                      { name: 'Analytics Dashboard', path: '/client-portal/analytics', desc: 'Performance metrics and insights' },
-                      { name: 'Collaboration Hub', path: '/client-portal/collaboration', desc: 'Team communication and workflows' },
-                      { name: 'Compliance Monitor', path: '/client-portal/compliance', desc: 'Real-time regulatory tracking' }
-                    ].map((feature) => (
-                      <div key={feature.name} className="flex items-center justify-between p-2 border rounded">
+                      {
+                        name: 'Document Vault',
+                        path: '/client-portal/vault',
+                        desc: '21 CFR Part 11 compliant storage',
+                      },
+                      {
+                        name: 'Analytics Dashboard',
+                        path: '/client-portal/analytics',
+                        desc: 'Performance metrics and insights',
+                      },
+                      {
+                        name: 'Collaboration Hub',
+                        path: '/client-portal/collaboration',
+                        desc: 'Team communication and workflows',
+                      },
+                      {
+                        name: 'Compliance Monitor',
+                        path: '/client-portal/compliance',
+                        desc: 'Real-time regulatory tracking',
+                      },
+                    ].map(feature => (
+                      <div
+                        key={feature.name}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div>
                           <div className="font-medium">{feature.name}</div>
                           <div className="text-sm text-muted-foreground">{feature.desc}</div>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => navigateToSection(feature.path)}
                           className="flex items-center space-x-1"
                         >
@@ -318,26 +355,28 @@ const TutorialGuide = () => {
                     <h4 className="font-semibold">Recommended Modules</h4>
                     {role.modules.map((module, idx) => (
                       <Collapsible key={idx}>
-                        <CollapsibleTrigger 
+                        <CollapsibleTrigger
                           className="flex items-center justify-between w-full p-3 border rounded-lg hover:bg-gray-50"
                           onClick={() => toggleSection(`${roleId}-${idx}`)}
                         >
                           <div className="text-left">
                             <div className="font-medium">{module.name}</div>
-                            <div className="text-sm text-muted-foreground">{module.description}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {module.description}
+                            </div>
                           </div>
-                          <ChevronRight 
+                          <ChevronRight
                             className={`h-4 w-4 transition-transform ${
                               expandedSections[`${roleId}-${idx}`] ? 'rotate-90' : ''
-                            }`} 
+                            }`}
                           />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-2 p-3 bg-gray-50 rounded-lg">
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <h5 className="font-medium">Key Features</h5>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 onClick={() => navigateToSection(module.path)}
                                 className="flex items-center space-x-1"
                               >
@@ -370,17 +409,17 @@ const TutorialGuide = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>IND Wizard™</span>
-                  <Button 
-                    variant="outline" 
+                  <span>eCTD Co-Author™</span>
+                  <Button
+                    variant="outline"
                     size="sm"
-                    onClick={() => navigateToSection('/client-portal/ind-wizard')}
+                    onClick={() => navigateToSection('/client-portal/ectd-coauthor')}
                   >
                     Launch <ExternalLink className="h-3 w-3 ml-1" />
                   </Button>
                 </CardTitle>
                 <CardDescription>
-                  FDA-compliant IND submission automation platform
+                  FDA-compliant IND & eCTD submission automation platform
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -388,19 +427,42 @@ const TutorialGuide = () => {
                   <h4 className="font-semibold">Workflow Steps</h4>
                   <div className="space-y-2">
                     {[
-                      { step: 'Module 1', desc: 'Administrative Information', path: '/client-portal/ind-wizard?step=1' },
-                      { step: 'Module 2', desc: 'Quality Overall Summary', path: '/client-portal/ind-wizard?step=2' },
-                      { step: 'Module 3', desc: 'Quality Documentation', path: '/client-portal/ind-wizard?step=3' },
-                      { step: 'Module 4', desc: 'Nonclinical Study Reports', path: '/client-portal/ind-wizard?step=4' },
-                      { step: 'Module 5', desc: 'Clinical Study Reports', path: '/client-portal/ind-wizard?step=5' }
-                    ].map((item) => (
-                      <div key={item.step} className="flex items-center justify-between p-2 border rounded">
+                      {
+                        step: 'Module 1',
+                        desc: 'Administrative Information',
+                        path: '/client-portal/ectd-coauthor?step=1',
+                      },
+                      {
+                        step: 'Module 2',
+                        desc: 'Quality Overall Summary',
+                        path: '/client-portal/ectd-coauthor?step=2',
+                      },
+                      {
+                        step: 'Module 3',
+                        desc: 'Quality Documentation',
+                        path: '/client-portal/ectd-coauthor?step=3',
+                      },
+                      {
+                        step: 'Module 4',
+                        desc: 'Nonclinical Study Reports',
+                        path: '/client-portal/ectd-coauthor?step=4',
+                      },
+                      {
+                        step: 'Module 5',
+                        desc: 'Clinical Study Reports',
+                        path: '/client-portal/ectd-coauthor?step=5',
+                      },
+                    ].map(item => (
+                      <div
+                        key={item.step}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div>
                           <span className="font-medium">{item.step}</span>
                           <span className="text-sm text-muted-foreground ml-2">{item.desc}</span>
                         </div>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => navigateToSection(item.path)}
                         >
@@ -417,8 +479,8 @@ const TutorialGuide = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>CMC Wizard</span>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => navigateToSection('/client-portal/cmc-module')}
                   >
@@ -434,18 +496,37 @@ const TutorialGuide = () => {
                   <h4 className="font-semibold">Key Features</h4>
                   <div className="space-y-2">
                     {[
-                      { feature: 'Module 3 Generator', desc: 'Automated CMC documentation', path: '/client-portal/cmc-module?tab=generator' },
-                      { feature: 'Analytical Methods', desc: 'Method validation and tracking', path: '/client-portal/cmc-module?tab=analytical' },
-                      { feature: 'Manufacturing', desc: 'Process documentation and control', path: '/client-portal/cmc-module?tab=manufacturing' },
-                      { feature: 'Stability Studies', desc: 'Study design and data management', path: '/client-portal/cmc-module?tab=stability' }
-                    ].map((item) => (
-                      <div key={item.feature} className="flex items-center justify-between p-2 border rounded">
+                      {
+                        feature: 'Module 3 Generator',
+                        desc: 'Automated CMC documentation',
+                        path: '/client-portal/cmc-module?tab=generator',
+                      },
+                      {
+                        feature: 'Analytical Methods',
+                        desc: 'Method validation and tracking',
+                        path: '/client-portal/cmc-module?tab=analytical',
+                      },
+                      {
+                        feature: 'Manufacturing',
+                        desc: 'Process documentation and control',
+                        path: '/client-portal/cmc-module?tab=manufacturing',
+                      },
+                      {
+                        feature: 'Stability Studies',
+                        desc: 'Study design and data management',
+                        path: '/client-portal/cmc-module?tab=stability',
+                      },
+                    ].map(item => (
+                      <div
+                        key={item.feature}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div>
                           <span className="font-medium">{item.feature}</span>
                           <span className="text-sm text-muted-foreground ml-2">{item.desc}</span>
                         </div>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => navigateToSection(item.path)}
                         >
@@ -462,8 +543,8 @@ const TutorialGuide = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>eCTD Co-Author</span>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => navigateToSection('/client-portal/ectd-coauthor')}
                   >
@@ -479,18 +560,37 @@ const TutorialGuide = () => {
                   <h4 className="font-semibold">Authoring Tools</h4>
                   <div className="space-y-2">
                     {[
-                      { tool: 'Document Editor', desc: 'Rich text editing with AI assistance', path: '/client-portal/ectd-coauthor?view=editor' },
-                      { tool: 'Template Library', desc: 'Pre-approved regulatory templates', path: '/client-portal/ectd-coauthor?view=templates' },
-                      { tool: 'Collaboration Hub', desc: 'Real-time team collaboration', path: '/client-portal/ectd-coauthor?view=collaboration' },
-                      { tool: 'Version Control', desc: 'Document versioning and approval', path: '/client-portal/ectd-coauthor?view=versions' }
-                    ].map((item) => (
-                      <div key={item.tool} className="flex items-center justify-between p-2 border rounded">
+                      {
+                        tool: 'Document Editor',
+                        desc: 'Rich text editing with AI assistance',
+                        path: '/client-portal/ectd-coauthor?view=editor',
+                      },
+                      {
+                        tool: 'Template Library',
+                        desc: 'Pre-approved regulatory templates',
+                        path: '/client-portal/ectd-coauthor?view=templates',
+                      },
+                      {
+                        tool: 'Collaboration Hub',
+                        desc: 'Real-time team collaboration',
+                        path: '/client-portal/ectd-coauthor?view=collaboration',
+                      },
+                      {
+                        tool: 'Version Control',
+                        desc: 'Document versioning and approval',
+                        path: '/client-portal/ectd-coauthor?view=versions',
+                      },
+                    ].map(item => (
+                      <div
+                        key={item.tool}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div>
                           <span className="font-medium">{item.tool}</span>
                           <span className="text-sm text-muted-foreground ml-2">{item.desc}</span>
                         </div>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => navigateToSection(item.path)}
                         >
@@ -507,8 +607,8 @@ const TutorialGuide = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>CSR Intelligence</span>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => navigateToSection('/client-portal/csr-intelligence')}
                   >
@@ -524,18 +624,37 @@ const TutorialGuide = () => {
                   <h4 className="font-semibold">Analysis Tools</h4>
                   <div className="space-y-2">
                     {[
-                      { tool: 'CSR Library', desc: 'Searchable database of clinical reports', path: '/client-portal/csr-intelligence?view=library' },
-                      { tool: 'Success Predictor', desc: 'AI-powered trial outcome prediction', path: '/client-portal/csr-intelligence?view=predictor' },
-                      { tool: 'Benchmark Analysis', desc: 'Compare against industry standards', path: '/client-portal/csr-intelligence?view=benchmark' },
-                      { tool: 'Endpoint Optimizer', desc: 'Optimize clinical endpoints', path: '/client-portal/csr-intelligence?view=endpoints' }
-                    ].map((item) => (
-                      <div key={item.tool} className="flex items-center justify-between p-2 border rounded">
+                      {
+                        tool: 'CSR Library',
+                        desc: 'Searchable database of clinical reports',
+                        path: '/client-portal/csr-intelligence?view=library',
+                      },
+                      {
+                        tool: 'Success Predictor',
+                        desc: 'AI-powered trial outcome prediction',
+                        path: '/client-portal/csr-intelligence?view=predictor',
+                      },
+                      {
+                        tool: 'Benchmark Analysis',
+                        desc: 'Compare against industry standards',
+                        path: '/client-portal/csr-intelligence?view=benchmark',
+                      },
+                      {
+                        tool: 'Endpoint Optimizer',
+                        desc: 'Optimize clinical endpoints',
+                        path: '/client-portal/csr-intelligence?view=endpoints',
+                      },
+                    ].map(item => (
+                      <div
+                        key={item.tool}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div>
                           <span className="font-medium">{item.tool}</span>
                           <span className="text-sm text-muted-foreground ml-2">{item.desc}</span>
                         </div>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => navigateToSection(item.path)}
                         >
@@ -626,9 +745,7 @@ const TutorialGuide = () => {
           <Card>
             <CardHeader>
               <CardTitle>Quick Start Guide</CardTitle>
-              <CardDescription>
-                Get started with TrialSage in 5 easy steps
-              </CardDescription>
+              <CardDescription>Get started with TrialSage in 5 easy steps</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -638,37 +755,37 @@ const TutorialGuide = () => {
                     title: 'Access Your Dashboard',
                     description: 'Navigate to your personalized client portal dashboard',
                     action: 'Go to Dashboard',
-                    path: '/client-portal'
+                    path: '/client-portal',
                   },
                   {
                     step: 2,
                     title: 'Choose Your Module',
                     description: 'Select the module that matches your current project needs',
                     action: 'Browse Modules',
-                    path: '/client-portal#modules'
+                    path: '/client-portal#modules',
                   },
                   {
                     step: 3,
                     title: 'Upload Your Documents',
                     description: 'Import existing documents or start with our templates',
                     action: 'Document Vault',
-                    path: '/client-portal/vault'
+                    path: '/client-portal/vault',
                   },
                   {
                     step: 4,
                     title: 'Generate Content',
                     description: 'Use AI-powered tools to create regulatory documents',
                     action: 'Start Creating',
-                    path: '/client-portal/ind-wizard'
+                    path: '/client-portal/ectd-coauthor',
                   },
                   {
                     step: 5,
                     title: 'Review & Submit',
                     description: 'Validate compliance and submit to regulatory authorities',
                     action: 'Submission Center',
-                    path: '/client-portal/submissions'
-                  }
-                ].map((item) => (
+                    path: '/client-portal/submissions',
+                  },
+                ].map(item => (
                   <div key={item.step} className="flex items-start space-x-4 p-4 border rounded-lg">
                     <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
                       {item.step}
@@ -677,8 +794,8 @@ const TutorialGuide = () => {
                       <h4 className="font-semibold">{item.title}</h4>
                       <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                     </div>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => navigateToSection(item.path)}
                       className="flex items-center space-x-1"

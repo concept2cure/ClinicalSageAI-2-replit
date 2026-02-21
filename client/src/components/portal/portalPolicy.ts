@@ -1,6 +1,6 @@
 /**
  * Portal Policy Configuration
- * 
+ *
  * Defines the business rules and policies that govern portal behavior.
  * Includes module registry, role permissions, and the core computePortalExperience function.
  */
@@ -218,19 +218,7 @@ export const MODULE_REGISTRY: Record<ModuleId, PortalModule> = {
     productTypes: 'all',
     agencies: 'all',
   },
-  ind_wizard: {
-    id: 'ind_wizard',
-    name: 'IND Wizard',
-    description: 'Guided IND application builder',
-    icon: 'wand-2',
-    route: '/portal/ind-wizard',
-    category: 'regulatory',
-    requiredPermission: 'submissions',
-    minPermissionLevel: 'write',
-    productTypes: ['drug', 'biologic', 'cell_therapy', 'gene_therapy'],
-    agencies: ['FDA'],
-    badge: { text: 'Popular', variant: 'default' },
-  },
+  // ind_wizard: DEPRECATED — rolled into eCTD Co-Author (coauthor module)
   cer_generator: {
     id: 'cer_generator',
     name: 'CER Generator',
@@ -393,37 +381,37 @@ function isModuleApplicable(
       return false;
     }
   }
-  
+
   // Check agency compatibility
   if (module.agencies !== 'all' && agency) {
     if (!module.agencies.includes(agency)) {
       return false;
     }
   }
-  
+
   return true;
 }
 
 function getEnabledModules(context: PortalContext): ModuleId[] {
   const { user, organization, productType, targetAgency } = context;
-  
+
   return Object.values(MODULE_REGISTRY)
     .filter(module => {
       // Check organization has module enabled
       if (!organization.enabledModules.includes(module.id)) {
         return false;
       }
-      
+
       // Check user has permission
       if (!hasPermission(user.permissions, module.requiredPermission, module.minPermissionLevel)) {
         return false;
       }
-      
+
       // Check module applicability
       if (!isModuleApplicable(module, productType, targetAgency)) {
         return false;
       }
-      
+
       return true;
     })
     .map(m => m.id);
@@ -435,73 +423,143 @@ function getEnabledModules(context: PortalContext): ModuleId[] {
 
 function buildNavigation(enabledModules: ModuleId[]): NavSection[] {
   const sections: NavSection[] = [];
-  
+
   // Core section
   const coreItems: NavItem[] = [];
   if (enabledModules.includes('dashboard')) {
-    coreItems.push({ id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', route: '/portal' });
+    coreItems.push({
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: 'layout-dashboard',
+      route: '/portal',
+    });
   }
   if (enabledModules.includes('vault')) {
-    coreItems.push({ id: 'vault', label: 'Document Vault', icon: 'folder-lock', route: '/portal/vault' });
+    coreItems.push({
+      id: 'vault',
+      label: 'Document Vault',
+      icon: 'folder-lock',
+      route: '/portal/vault',
+    });
   }
   if (enabledModules.includes('submissions')) {
-    coreItems.push({ id: 'submissions', label: 'Submissions', icon: 'send', route: '/portal/submissions' });
+    coreItems.push({
+      id: 'submissions',
+      label: 'Submissions',
+      icon: 'send',
+      route: '/portal/submissions',
+    });
   }
   if (coreItems.length > 0) {
     sections.push({ id: 'core', title: 'Overview', items: coreItems });
   }
-  
+
   // Regulatory Tools section
   const regulatoryItems: NavItem[] = [];
-  if (enabledModules.includes('ind_wizard')) {
-    regulatoryItems.push({ id: 'ind_wizard', label: 'IND Wizard', icon: 'wand-2', route: '/portal/ind-wizard' });
-  }
+  // ind_wizard DEPRECATED — IND workflow now in eCTD Co-Author
   if (enabledModules.includes('cer_generator')) {
-    regulatoryItems.push({ id: 'cer_generator', label: 'CER Generator', icon: 'file-text', route: '/portal/cer-generator' });
+    regulatoryItems.push({
+      id: 'cer_generator',
+      label: 'CER Generator',
+      icon: 'file-text',
+      route: '/portal/cer-generator',
+    });
   }
   if (enabledModules.includes('510k_builder')) {
-    regulatoryItems.push({ id: '510k_builder', label: '510(k) Builder', icon: 'shield-check', route: '/portal/510k' });
+    regulatoryItems.push({
+      id: '510k_builder',
+      label: '510(k) Builder',
+      icon: 'shield-check',
+      route: '/portal/510k',
+    });
   }
   if (enabledModules.includes('coauthor')) {
-    regulatoryItems.push({ id: 'coauthor', label: 'eCTD Co-Author', icon: 'users', route: '/portal/coauthor' });
+    regulatoryItems.push({
+      id: 'coauthor',
+      label: 'eCTD Co-Author',
+      icon: 'users',
+      route: '/portal/coauthor',
+    });
   }
   if (enabledModules.includes('validation_hub')) {
-    regulatoryItems.push({ id: 'validation_hub', label: 'Validation Hub', icon: 'check-circle', route: '/portal/validation' });
+    regulatoryItems.push({
+      id: 'validation_hub',
+      label: 'Validation Hub',
+      icon: 'check-circle',
+      route: '/portal/validation',
+    });
   }
   if (regulatoryItems.length > 0) {
-    sections.push({ id: 'regulatory', title: 'Regulatory Tools', items: regulatoryItems, collapsible: true });
+    sections.push({
+      id: 'regulatory',
+      title: 'Regulatory Tools',
+      items: regulatoryItems,
+      collapsible: true,
+    });
   }
-  
+
   // Intelligence section
   const intelligenceItems: NavItem[] = [];
   if (enabledModules.includes('csr_intelligence')) {
-    intelligenceItems.push({ id: 'csr_intelligence', label: 'CSR Intelligence', icon: 'brain', route: '/portal/csr-intelligence', badge: 'New' });
+    intelligenceItems.push({
+      id: 'csr_intelligence',
+      label: 'CSR Intelligence',
+      icon: 'brain',
+      route: '/portal/csr-intelligence',
+      badge: 'New',
+    });
   }
   if (enabledModules.includes('protocol_optimizer')) {
-    intelligenceItems.push({ id: 'protocol_optimizer', label: 'Protocol Optimizer', icon: 'settings-2', route: '/portal/protocol-optimizer', badge: 'Beta' });
+    intelligenceItems.push({
+      id: 'protocol_optimizer',
+      label: 'Protocol Optimizer',
+      icon: 'settings-2',
+      route: '/portal/protocol-optimizer',
+      badge: 'Beta',
+    });
   }
   if (enabledModules.includes('analytics')) {
-    intelligenceItems.push({ id: 'analytics', label: 'Analytics', icon: 'bar-chart-3', route: '/portal/analytics' });
+    intelligenceItems.push({
+      id: 'analytics',
+      label: 'Analytics',
+      icon: 'bar-chart-3',
+      route: '/portal/analytics',
+    });
   }
   if (enabledModules.includes('ask_lumen')) {
-    intelligenceItems.push({ id: 'ask_lumen', label: 'Ask Lumen', icon: 'message-circle', route: '/portal/ask-lumen' });
+    intelligenceItems.push({
+      id: 'ask_lumen',
+      label: 'Ask Lumen',
+      icon: 'message-circle',
+      route: '/portal/ask-lumen',
+    });
   }
   if (intelligenceItems.length > 0) {
-    sections.push({ id: 'intelligence', title: 'Intelligence', items: intelligenceItems, collapsible: true });
+    sections.push({
+      id: 'intelligence',
+      title: 'Intelligence',
+      items: intelligenceItems,
+      collapsible: true,
+    });
   }
-  
+
   // Administration section
   const adminItems: NavItem[] = [];
   if (enabledModules.includes('team')) {
     adminItems.push({ id: 'team', label: 'Team', icon: 'users-2', route: '/portal/team' });
   }
   if (enabledModules.includes('settings')) {
-    adminItems.push({ id: 'settings', label: 'Settings', icon: 'settings', route: '/portal/settings' });
+    adminItems.push({
+      id: 'settings',
+      label: 'Settings',
+      icon: 'settings',
+      route: '/portal/settings',
+    });
   }
   if (adminItems.length > 0) {
     sections.push({ id: 'admin', title: 'Administration', items: adminItems });
   }
-  
+
   return sections;
 }
 
@@ -509,13 +567,10 @@ function buildNavigation(enabledModules: ModuleId[]): NavSection[] {
 // DASHBOARD WIDGET BUILDER
 // =============================================================================
 
-function buildDashboardWidgets(
-  enabledModules: ModuleId[],
-  role: UserRole
-): DashboardWidget[] {
+function buildDashboardWidgets(enabledModules: ModuleId[], role: UserRole): DashboardWidget[] {
   const widgets: DashboardWidget[] = [];
   let row = 0;
-  
+
   // Stats cards row (always shown)
   widgets.push({
     id: 'stats_submissions',
@@ -550,7 +605,7 @@ function buildDashboardWidgets(
     config: { metric: 'attention' },
   });
   row++;
-  
+
   // Main content row
   if (enabledModules.includes('submissions')) {
     widgets.push({
@@ -561,7 +616,7 @@ function buildDashboardWidgets(
       position: { row, col: 0 },
     });
   }
-  
+
   // Quick actions
   widgets.push({
     id: 'quick_actions',
@@ -571,7 +626,7 @@ function buildDashboardWidgets(
     position: { row, col: 2 },
   });
   row++;
-  
+
   // Activity and deadlines row
   widgets.push({
     id: 'activity_feed',
@@ -580,7 +635,7 @@ function buildDashboardWidgets(
     size: 'medium',
     position: { row, col: 0 },
   });
-  
+
   widgets.push({
     id: 'deadline_tracker',
     type: 'deadline_tracker',
@@ -588,9 +643,13 @@ function buildDashboardWidgets(
     size: 'medium',
     position: { row, col: 1 },
   });
-  
+
   // AI insights for eligible users
-  if (enabledModules.includes('ask_lumen') && role !== 'sponsor_viewer' && role !== 'external_reviewer') {
+  if (
+    enabledModules.includes('ask_lumen') &&
+    role !== 'sponsor_viewer' &&
+    role !== 'external_reviewer'
+  ) {
     widgets.push({
       id: 'ai_insights',
       type: 'ai_insights',
@@ -599,7 +658,7 @@ function buildDashboardWidgets(
       position: { row, col: 2 },
     });
   }
-  
+
   return widgets;
 }
 
@@ -607,13 +666,10 @@ function buildDashboardWidgets(
 // QUICK ACTIONS BUILDER
 // =============================================================================
 
-function buildQuickActions(
-  enabledModules: ModuleId[],
-  productType?: ProductType
-): QuickAction[] {
+function buildQuickActions(enabledModules: ModuleId[], productType?: ProductType): QuickAction[] {
   const actions: QuickAction[] = [];
   let priority = 0;
-  
+
   // Document upload (always available if vault is enabled)
   if (enabledModules.includes('vault')) {
     actions.push({
@@ -625,21 +681,21 @@ function buildQuickActions(
       priority: priority++,
     });
   }
-  
+
   // Product-specific actions
   if (productType === 'drug' || productType === 'biologic') {
-    if (enabledModules.includes('ind_wizard')) {
+    if (enabledModules.includes('coauthor')) {
       actions.push({
         id: 'new_ind',
         label: 'Start IND Application',
-        description: 'Begin a new IND submission',
+        description: 'Begin a new IND submission via eCTD Co-Author',
         icon: 'wand-2',
-        route: '/portal/ind-wizard/new',
+        route: '/portal/coauthor/new',
         priority: priority++,
       });
     }
   }
-  
+
   if (productType === 'medical_device' || productType === 'ivd') {
     if (enabledModules.includes('510k_builder')) {
       actions.push({
@@ -662,7 +718,7 @@ function buildQuickActions(
       });
     }
   }
-  
+
   // Validation (always useful)
   if (enabledModules.includes('validation_hub')) {
     actions.push({
@@ -674,7 +730,7 @@ function buildQuickActions(
       priority: priority++,
     });
   }
-  
+
   // AI Assistant
   if (enabledModules.includes('ask_lumen')) {
     actions.push({
@@ -686,7 +742,7 @@ function buildQuickActions(
       priority: priority++,
     });
   }
-  
+
   return actions.sort((a, b) => a.priority - b.priority).slice(0, 6);
 }
 
@@ -698,7 +754,7 @@ function getFeatureFlags(context: PortalContext): FeatureFlags {
   const { organization, user } = context;
   const isEnterprise = organization.tier === 'enterprise';
   const isProfessional = organization.tier === 'professional' || isEnterprise;
-  
+
   return {
     aiAssistant: isProfessional && hasPermission(user.permissions, 'ai_assistant', 'read'),
     realTimeCollaboration: isEnterprise,
@@ -715,29 +771,29 @@ function getFeatureFlags(context: PortalContext): FeatureFlags {
 
 export function computePortalExperience(context: PortalContext): PortalExperience {
   const { user, organization, productType, targetAgency } = context;
-  
+
   // Determine enabled modules based on permissions and context
   const enabledModules = getEnabledModules(context);
-  
+
   // Build navigation structure
   const navigation = buildNavigation(enabledModules);
-  
+
   // Build dashboard widgets
   const dashboardWidgets = buildDashboardWidgets(enabledModules, user.role);
-  
+
   // Build quick actions
   const quickActions = buildQuickActions(enabledModules, productType);
-  
+
   // Get feature flags
   const features = getFeatureFlags(context);
-  
+
   // Determine theme
   const theme = organization.customBranding || {
     primaryColor: '#2563eb',
     accentColor: '#3b82f6',
     companyName: 'Concept2Cure',
   };
-  
+
   return {
     navigation,
     dashboardWidgets,

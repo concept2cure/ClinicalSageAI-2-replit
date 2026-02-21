@@ -2,7 +2,7 @@ import axios from 'axios';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { logger } from './utils/logger';
+import logger from './utils/logger';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -69,6 +69,7 @@ export interface ProjectMetadata {
   certifier_phone?: string;
   certifier_fax?: string;
   serial_number?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -81,6 +82,11 @@ export class INDAutomationService {
 
   constructor() {
     logger.info('Initializing IND Automation Service');
+  }
+
+  private isHealthyPayload(payload: any): boolean {
+    const status = payload?.status;
+    return status === 'healthy' || status === 'ok' || status === 'operational';
   }
 
   /**
@@ -101,24 +107,21 @@ export class INDAutomationService {
       }
 
       // Make sure Python is installed and the required packages are available
-      const startScriptPath = path.join(__dirname, '..', 'start_ind_automation_api.py');
-      if (
-        !fs.existsSync(startScriptPath) ||
-        !fs.existsSync(path.join(this.servicePath, 'main.py'))
-      ) {
+      const startScriptPathCandidates = [
+        path.join(__dirname, '..', 'start_ind_automation_api.py'),
+        path.join(__dirname, '..', 'backend', 'start_ind_automation_api.py'),
+      ];
+      const startScriptPath = startScriptPathCandidates.find(candidate => fs.existsSync(candidate));
+      if (!startScriptPath || !fs.existsSync(path.join(this.servicePath, 'main.py'))) {
         logger.error('IND Automation service files not found');
         return false;
       }
 
       // Start the Python service using the starter script
-      this.pythonServiceProcess = spawn(
-        'python3',
-        [path.join(__dirname, '..', 'start_ind_automation_api.py')],
-        {
-          cwd: path.join(__dirname, '..'),
-          stdio: 'pipe',
-        }
-      );
+      this.pythonServiceProcess = spawn('python3', [startScriptPath], {
+        cwd: path.join(__dirname, '..'),
+        stdio: 'pipe',
+      });
 
       // Handle process events
       this.pythonServiceProcess.stdout.on('data', (data: Buffer) => {
@@ -140,7 +143,7 @@ export class INDAutomationService {
         try {
           await new Promise(resolve => setTimeout(resolve, 1000));
           const response = await axios.get(`${this.serviceUrl}/health`);
-          if (response.status === 200 && response.data.status === 'healthy') {
+          if (response.status === 200 && this.isHealthyPayload(response.data)) {
             logger.info('IND Automation service started successfully');
             return true;
           }
@@ -177,9 +180,74 @@ export class INDAutomationService {
   async isServiceRunning(): Promise<boolean> {
     try {
       const response = await axios.get(`${this.serviceUrl}/health`);
-      return response.status === 200 && response.data.status === 'healthy';
+      return response.status === 200 && this.isHealthyPayload(response.data);
     } catch (error) {
       return false;
+    }
+  }
+
+  async generateModuleDocument(
+    moduleNumber: 1 | 2 | 3 | 4 | 5,
+    data: ProjectMetadata
+  ): Promise<Buffer> {
+    try {
+      const serviceRunning = await this.isServiceRunning();
+      if (!serviceRunning) {
+        await this.startService();
+      }
+
+      const response = await axios.post(`${this.serviceUrl}/api/ind/module/${moduleNumber}`, data, {
+        responseType: 'arraybuffer',
+      });
+
+      return Buffer.from(response.data);
+    } catch (error) {
+      logger.error(`Error generating Module ${moduleNumber} document: ${error.message}`);
+      throw new Error(`Failed to generate Module ${moduleNumber} document: ${error.message}`);
+    }
+  }
+
+  async getPyramidCatalog(): Promise<Record<string, unknown>> {
+    try {
+      const serviceRunning = await this.isServiceRunning();
+      if (!serviceRunning) {
+        await this.startService();
+      }
+
+      const response = await axios.get(`${this.serviceUrl}/api/ind/pyramid/catalog`);
+      return response.data;
+    } catch (error) {
+      logger.error(`Error fetching IND pyramid catalog: ${error.message}`);
+      throw new Error(`Failed to fetch IND pyramid catalog: ${error.message}`);
+    }
+  }
+
+  async generatePyramidTemplate(
+    moduleNumber: 1 | 2 | 3 | 4 | 5,
+    templateId: string,
+    data: ProjectMetadata
+  ): Promise<Buffer> {
+    try {
+      const serviceRunning = await this.isServiceRunning();
+      if (!serviceRunning) {
+        await this.startService();
+      }
+
+      const encodedTemplateId = encodeURIComponent(templateId);
+      const response = await axios.post(
+        `${this.serviceUrl}/api/ind/pyramid/${moduleNumber}/${encodedTemplateId}`,
+        data,
+        { responseType: 'arraybuffer' }
+      );
+
+      return Buffer.from(response.data);
+    } catch (error) {
+      logger.error(
+        `Error generating Module ${moduleNumber} template ${templateId}: ${error.message}`
+      );
+      throw new Error(
+        `Failed to generate Module ${moduleNumber} template ${templateId}: ${error.message}`
+      );
     }
   }
 

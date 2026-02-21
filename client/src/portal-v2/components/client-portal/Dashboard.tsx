@@ -14,10 +14,19 @@ const moduleToRoute: Record<string, string> = {
   regulatory_intel: '/client-portal/regulatory-intel',
   cmc_platform: '/client-portal/cmc-wizard',
   clinical_trial: '/client-portal/study-architect',
-  quality_management: '/client-portal/regulatory-intel',
-  document_control: '/client-portal/vault',
+  quality_management: '/client-portal/quality',
+  document_control: '/client-portal/documents',
   analytics: '/client-portal/analytics',
-  settings: '/module-settings',
+  cer_generator: '/client-portal/cer-generator',
+  ectd_coauthor: '/client-portal/ectd-coauthor',
+  '510k_builder': '/client-portal/510k-builder',
+  lumen_cortex: '/client-portal/lumen-cortex',
+  ai_assistant: '/client-portal/ai-assistant',
+  safety_reporting: '/client-portal/safety',
+  training: '/client-portal/training',
+  project_hub: '/client-portal/project-hub',
+  timeline_planner: '/client-portal/timeline-planner',
+  settings: '/client-portal/settings',
 };
 
 const moduleIcons: Record<string, React.ReactNode> = {

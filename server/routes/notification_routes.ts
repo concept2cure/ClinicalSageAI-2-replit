@@ -1,8 +1,12 @@
 import { Express, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { db } from '../db';
 import { logExportAction, getExportLogs } from '../export_logger';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Setup NodeMailer or similar email service here in a real implementation
 // For now, we're creating a mock function
@@ -354,7 +358,7 @@ Hello TrialSage User,
 
 You have no activity to report in your weekly digest.
 
-As you use TrialSage to analyze protocols and generate reports, 
+As you use TrialSage to analyze protocols and generate reports,
 your activity will appear here in your weekly digest.
 
 Best Regards,

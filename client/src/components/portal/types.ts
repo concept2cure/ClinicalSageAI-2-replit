@@ -1,6 +1,6 @@
 /**
  * Portal Type Definitions
- * 
+ *
  * Core interfaces and type definitions for the Concept2Cure V.2 Client Portal.
  * These types define the structure for roles, agencies, study types, and modules.
  */
@@ -9,7 +9,7 @@
 // USER ROLES & PERMISSIONS
 // =============================================================================
 
-export type UserRole = 
+export type UserRole =
   | 'admin'
   | 'regulatory_lead'
   | 'clinical_ops'
@@ -60,18 +60,18 @@ export interface NotificationPreferences {
 // REGULATORY AGENCIES & REGIONS
 // =============================================================================
 
-export type RegulatoryAgency = 
-  | 'FDA'           // US Food and Drug Administration
-  | 'EMA'           // European Medicines Agency
-  | 'PMDA'          // Japan Pharmaceuticals and Medical Devices Agency
+export type RegulatoryAgency =
+  | 'FDA' // US Food and Drug Administration
+  | 'EMA' // European Medicines Agency
+  | 'PMDA' // Japan Pharmaceuticals and Medical Devices Agency
   | 'Health_Canada' // Health Canada
-  | 'TGA'           // Australia Therapeutic Goods Administration
-  | 'MHRA'          // UK Medicines and Healthcare products Regulatory Agency
-  | 'NMPA'          // China National Medical Products Administration
-  | 'ANVISA'        // Brazil National Health Surveillance Agency
-  | 'COFEPRIS';     // Mexico Federal Commission for Protection against Sanitary Risks
+  | 'TGA' // Australia Therapeutic Goods Administration
+  | 'MHRA' // UK Medicines and Healthcare products Regulatory Agency
+  | 'NMPA' // China National Medical Products Administration
+  | 'ANVISA' // Brazil National Health Surveillance Agency
+  | 'COFEPRIS'; // Mexico Federal Commission for Protection against Sanitary Risks
 
-export type Region = 
+export type Region =
   | 'US'
   | 'EU'
   | 'Japan'
@@ -96,17 +96,17 @@ export interface AgencyConfig {
 // PRODUCT & STUDY TYPES
 // =============================================================================
 
-export type ProductType = 
+export type ProductType =
   | 'drug'
   | 'biologic'
   | 'medical_device'
   | 'combination_product'
-  | 'ivd'              // In Vitro Diagnostic
+  | 'ivd' // In Vitro Diagnostic
   | 'cell_therapy'
   | 'gene_therapy'
   | 'vaccine';
 
-export type StudyType = 
+export type StudyType =
   | 'phase_1'
   | 'phase_2'
   | 'phase_3'
@@ -118,18 +118,18 @@ export type StudyType =
   | 'expanded_access'
   | 'pivotal';
 
-export type SubmissionType = 
-  | 'IND'              // Investigational New Drug
-  | 'NDA'              // New Drug Application
-  | 'BLA'              // Biologics License Application
-  | '510k'             // 510(k) Premarket Notification
-  | 'PMA'              // Premarket Approval
-  | 'De_Novo'          // De Novo Classification
-  | 'CER'              // Clinical Evaluation Report (EU MDR)
-  | 'MAA'              // Marketing Authorization Application (EU)
-  | 'ANDA'             // Abbreviated New Drug Application
-  | 'CTD'              // Common Technical Document
-  | 'PSUR'             // Periodic Safety Update Report
+export type SubmissionType =
+  | 'IND' // Investigational New Drug
+  | 'NDA' // New Drug Application
+  | 'BLA' // Biologics License Application
+  | '510k' // 510(k) Premarket Notification
+  | 'PMA' // Premarket Approval
+  | 'De_Novo' // De Novo Classification
+  | 'CER' // Clinical Evaluation Report (EU MDR)
+  | 'MAA' // Marketing Authorization Application (EU)
+  | 'ANDA' // Abbreviated New Drug Application
+  | 'CTD' // Common Technical Document
+  | 'PSUR' // Periodic Safety Update Report
   | 'Annual_Report';
 
 export interface StudyContext {
@@ -148,10 +148,9 @@ export interface StudyContext {
 // PORTAL MODULES
 // =============================================================================
 
-export type ModuleId = 
+export type ModuleId =
   | 'dashboard'
   | 'vault'
-  | 'ind_wizard'
   | 'cer_generator'
   | '510k_builder'
   | 'csr_intelligence'
@@ -180,7 +179,7 @@ export interface PortalModule {
   isBeta?: boolean;
 }
 
-export type ModuleCategory = 
+export type ModuleCategory =
   | 'core'
   | 'regulatory'
   | 'clinical'
@@ -223,7 +222,7 @@ export interface DashboardWidget {
   config?: Record<string, unknown>;
 }
 
-export type WidgetType = 
+export type WidgetType =
   | 'stats_card'
   | 'activity_feed'
   | 'deadline_tracker'

@@ -124,6 +124,8 @@ const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
 const CERPage = lazy(() => import('./pages/CerPage'));
 // Import the original CERV2Page directly, not the wrapper
 const CERV2Page = lazy(() => import('./pages/CERV2Page'));
+// Phase 7.3 – CERV2 Editor AI Integration
+const CERV2EditorAI = lazy(() => import('./pages/CERV2EditorAI'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
 
@@ -197,8 +199,10 @@ const StudyRegulatoryIntelligenceSuite = lazy(
   () => import('./components/unified/StudyRegulatoryIntelligenceSuite')
 );
 
-// IND Wizard pages - DELETED per user request
-// const IndWizardLayout = lazy(() => import('./components/ind-wizard/IndWizardLayout')); // DELETED
+// IND Wizard DEPRECATED — rolled into eCTD Co-Author
+// const IndWizardLayout = lazy(() => import('./layout/IndWizardLayout')); // DEPRECATED
+const QualityDashboard = lazy(() => import('./pages/QualityDashboard'));
+const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
 // import INDWizardModule from './components/ind-wizard/INDWizardModule'; // DELETED
 // const INDWizardDashboard = lazy(() => import('./pages/INDWizardDashboard')); // DELETED
 // const INDFullSolution = lazy(() => import('./pages/INDFullSolution')); // DELETED
@@ -248,6 +252,9 @@ const QualityHelp = lazy(() => import('./routes/help/QualityHelp'));
 // New Project Wizard for 510(k) submissions
 const NewProjectWizard = lazy(() => import('./pages/NewProjectWizard'));
 
+// Platform Readiness Dashboard — interactive Phase 0–1 audit visualization
+const PlatformReadinessDashboard = lazy(() => import('./pages/PlatformReadinessDashboard'));
+
 // Protected Route wrapper - redirects to Concept2Cure login if not authenticated
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -273,6 +280,15 @@ const ProtectedRoute = ({ children }) => {
 
 // Main App Content (protected)
 function AppContent() {
+  const [location] = useLocation();
+
+  const isConcept2CurePublicRoute =
+    location === '/concept2cure' || location.startsWith('/concept2cure/');
+
+  if (isConcept2CurePublicRoute) {
+    return <MainApp />;
+  }
+
   return (
     <ProtectedRoute>
       <MainApp />
@@ -561,7 +577,81 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* IND Dashboard route DELETED per user request */}
+            {/* --- Client Portal Module Routes (sidebar navigation) --- */}
+            {/* IND Wizard DEPRECATED — redirect to eCTD Co-Author */}
+            <Route path="/client-portal/ind-wizard">
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
+            </Route>
+            <Route path="/client-portal/ectd-coauthor">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <FulleCTDCoAuthor />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/510k-builder">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/quality">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <QualityDashboard />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/documents">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <DocumentsPage />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/settings">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <Settings />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/safety">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ClientPortalV2 />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/training">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ClientPortalV2 />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/ai-assistant">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <LumenCortex />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/project-hub">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ClientPortalV2 />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/client-portal/timeline-planner">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <TimelinePage />
+                </Suspense>
+              )}
+            </Route>
             {/* Unified eCTD System - combines IND Wizard and Co-Author */}
             <Route path="/unified-ectd">
               {() => (
@@ -1362,28 +1452,25 @@ function MainApp() {
                             </div>
                           )}
 
+                          {/* IND Wizard DEPRECATED — redirect to eCTD Co-Author */}
                           {activeModule === 'ind' && (
                             <Card className="shadow-lg border-t-4 border-blue-500">
-                              <CardContent className="p-0">
-                                <IndWizardLayout
-                                  onDataUpdate={data => {
-                                    updateSharedData({
-                                      drugName: data.drugName,
-                                      indication: data.indication,
-                                      sponsor: data.sponsor,
-                                      phase: data.phase,
-                                    });
-
-                                    // Update module status
-                                    setModuleStatus(prev => ({
-                                      ...prev,
-                                      ind: {
-                                        ...prev.ind,
-                                        complete: data.stepsComplete || prev.ind.complete,
-                                      },
-                                    }));
-                                  }}
-                                />
+                              <CardContent className="p-6">
+                                <div className="text-center">
+                                  <h2 className="text-2xl font-bold mb-4">
+                                    IND Workflow — eCTD Co-Author
+                                  </h2>
+                                  <p className="text-gray-600 mb-6">
+                                    IND submission preparation is now handled through the eCTD
+                                    Co-Author module.
+                                  </p>
+                                  <Button
+                                    size="lg"
+                                    onClick={() => setLocation('/client-portal/ectd-coauthor')}
+                                  >
+                                    Open eCTD Co-Author
+                                  </Button>
+                                </div>
                               </CardContent>
                             </Card>
                           )}
@@ -1817,56 +1904,14 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* IND Wizard Module Routes - Using IndWizardLayout for all 7 steps */}
-            <Route path="/module-1">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-2">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-3">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-4">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-5">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-6">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
-            <Route path="/module-7">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
-            </Route>
+            {/* IND Wizard Module Routes — DEPRECATED, redirect to eCTD Co-Author */}
+            <Route path="/module-1">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-2">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-3">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-4">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-5">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-6">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
+            <Route path="/module-7">{() => <Redirect to="/client-portal/ectd-coauthor" />}</Route>
             {/* Analytical Control & Method Management Routes */}
             <Route path="/analytical">
               {() => (
@@ -1962,6 +2007,13 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
+            <Route path="/admin/platform-readiness">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <PlatformReadinessDashboard />
+                </Suspense>
+              )}
+            </Route>
             {/* Client Management & Settings Routes */}
             <Route path="/client-management">
               {() => (
@@ -1992,54 +2044,34 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
+            {/* Client Portal Module Routes — DEPRECATED IND Wizard, redirect to eCTD Co-Author */}
             <Route path="/client-portal/module-1">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-2">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-3">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-4">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-5">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-6">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
             </Route>
             <Route path="/client-portal/module-7">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <IndWizardLayout />
-                </Suspense>
-              )}
+              {() => <Redirect to="/client-portal/ectd-coauthor" />}
+            </Route>
+            {/* Legacy IND Full Solution routes — consolidated into CoAuthor */}
+            <Route path="/ind-full-solution">
+              {() => <Redirect to="/coauthor?source=ind-legacy" />}
+            </Route>
+            <Route path="/ind-full-solution/:rest*">
+              {() => <Redirect to="/coauthor?source=ind-legacy" />}
             </Route>
             <Route path="/ectd-module">
               {() => (
@@ -2078,6 +2110,9 @@ function MainApp() {
             {/* CER Generator catch-all routes */}
             <Route path="/cer-generator/*">{() => <CERV2Page />}</Route>
             <Route path="/client-portal/cer-generator/*">{() => <CERV2Page />}</Route>
+            {/* Phase 7.3 – CERV2 Editor AI Integration */}
+            <Route path="/cerv2/editor-ai">{() => <CERV2EditorAI />}</Route>
+            <Route path="/cerv2-editor-ai">{() => <CERV2EditorAI />}</Route>
             <Route path="/cerv2/*">{() => <CERV2Page />}</Route>
             <Route path="/cerV2/*">{() => <CERV2Page />}</Route>
             {/* Enhanced Document Editor Route for IND Wizard Integration */}

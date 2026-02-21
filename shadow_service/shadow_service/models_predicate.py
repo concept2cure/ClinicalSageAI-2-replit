@@ -262,3 +262,276 @@ class PredicateRadarPoint(BaseModel):
     recommended: bool = False
     route_type: Optional[RouteType] = None
     has_recall: bool = False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 6.6.B — Predicate Suggestion Engine (v1)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class StrategyRecommendation(str, Enum):
+    CONSERVATIVE = "CONSERVATIVE"
+    BALANCED = "BALANCED"
+    AGGRESSIVE = "AGGRESSIVE"
+    AVOID = "AVOID"
+
+
+class PredicateFlagCode(str, Enum):
+    """Enum codes for typed risk flags."""
+    OLD_PREDICATE = "OLD_PREDICATE"
+    LOW_TEXT_MATCH = "LOW_TEXT_MATCH"
+    MISSING_SUMMARY_TEXT = "MISSING_SUMMARY_TEXT"
+    VERY_NEW = "VERY_NEW"
+    MATERIAL_MISMATCH = "MATERIAL_MISMATCH"
+    CONTACT_MISMATCH = "CONTACT_MISMATCH"
+    WEAK_SUMMARY_TEXT = "WEAK_SUMMARY_TEXT"
+    ENERGY_MISMATCH = "ENERGY_MISMATCH"
+    SOFTWARE_MISMATCH = "SOFTWARE_MISMATCH"
+    STERILIZATION_MISMATCH = "STERILIZATION_MISMATCH"
+
+
+# Keep legacy alias for backward compat
+PredicateFlag = PredicateFlagCode
+
+
+class RiskFlagSeverity(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class RiskFlag(BaseModel):
+    """Typed risk flag per spec: code + severity + message."""
+    code: str
+    severity: RiskFlagSeverity
+    message: str
+
+
+class ObjectionTrigger(str, Enum):
+    """Typed triggers for anticipated reviewer objections."""
+    INTENDED_USE_DRIFT = "INTENDED_USE_DRIFT"
+    MATERIAL_CHANGE = "MATERIAL_CHANGE"
+    ENERGY_SOURCE_CHANGE = "ENERGY_SOURCE_CHANGE"
+    STERILIZATION_CHANGE = "STERILIZATION_CHANGE"
+    SOFTWARE_CYBER_GAP = "SOFTWARE_CYBER_GAP"
+    TISSUE_CONTACT_DRIFT = "TISSUE_CONTACT_DRIFT"
+    DURATION_MISMATCH = "DURATION_MISMATCH"
+    OLD_PREDICATE_GAP = "OLD_PREDICATE_GAP"
+    MISSING_SUMMARY = "MISSING_SUMMARY"
+
+
+class ObjectionSeverity(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class EvidenceType(str, Enum):
+    """Suggested evidence types for objection resolution."""
+    BENCH = "bench"
+    BIOCOMP = "biocomp"
+    CLINICAL = "clinical"
+    SW_LIFECYCLE = "sw_lifecycle"
+    CYBERSECURITY = "cybersecurity"
+    STERILIZATION_VALIDATION = "sterilization_validation"
+    RISK_ANALYSIS = "risk_analysis"
+    PERFORMANCE_DATA = "performance_data"
+
+
+class Objection(BaseModel):
+    """A structured reviewer objection per spec (trigger/severity/question/recommended_fix/evidence_types)."""
+    trigger: str
+    severity: ObjectionSeverity
+    question: str
+    recommended_fix: str
+    evidence_types: list[str] = Field(default_factory=list)
+
+
+# Keep legacy alias
+AnticipatedObjection = Objection
+
+
+class MatchSnippet(BaseModel):
+    """A short excerpt from predicate text that matched the subject."""
+    text: str = Field(description="Short excerpt (≤200 chars)")
+    source: str = Field("txt_content", description="Field the snippet came from")
+
+
+class PredicateSuggestRequest(BaseModel):
+    """Input for POST /predicate/suggest — the subject device to find predicates for.
+
+    Required: program_id, product_code, device_name, intended_use, technology_description.
+    Strongly recommended: materials, energy_source, tissue_contact, duration, software_present, sterilization, patient_population.
+    """
+    program_id: str
+    # ── Required (B0) ──
+    product_code: str
+    device_name: str
+    intended_use: str
+    technology_description: str
+    # ── Strongly recommended (B0) ──
+    materials: Optional[list[str]] = None
+    energy_source: Optional[str] = None
+    tissue_contact: Optional[str] = None  # none / intact_skin / breached / blood / implant
+    duration: Optional[str] = None        # transient / short / long (ISO 10993 buckets)
+    software_present: Optional[bool] = None
+    sterilization: Optional[str] = None   # e.g. EO, gamma, steam, none
+    patient_population: Optional[str] = None  # e.g. pediatric, adult, geriatric
+    # ── Legacy compat ──
+    device_description: Optional[str] = None  # fallback if technology_description empty
+    software_flag: Optional[bool] = None      # alias for software_present
+
+
+class ScoreBreakdown(BaseModel):
+    """Transparent scoring weights — trust builder for regulatory teams."""
+    fts_score: float = Field(0.0, description="Postgres full-text rank (0–1)")
+    name_match: float = Field(0.0, description="Device name token overlap (0–1)")
+    recency_boost: float = Field(0.0, description="Recency bonus (0–1)")
+    completeness_bonus: float = Field(0.0, description="Has summary text + URL (0–1)")
+    weights: dict[str, float] = Field(
+        default_factory=lambda: {
+            "fts": 0.55,
+            "name": 0.20,
+            "recency": 0.10,
+            "completeness": 0.05,
+            "drs": 0.10,
+        }
+    )
+
+
+class EvidenceTaskSeed(BaseModel):
+    """Simple per-suggestion evidence need (legacy compat).
+
+    For the rich response-level Defense Packet Seed, see DefensePacketSeed.
+    """
+    evidence_type: str = Field(description="e.g. bench, biocomp, sw_lifecycle")
+    description: str = Field(description="What needs to be prepared")
+    source_objection: str = Field(description="Which objection triggered this")
+    priority: str = Field("MEDIUM", description="HIGH / MEDIUM / LOW")
+
+
+class EvidenceCategory(str, Enum):
+    """10 canonical evidence categories for regulatory workflow."""
+    BENCH_TESTING = "BenchTesting"
+    BIOCOMPATIBILITY = "Biocompatibility"
+    RISK_MANAGEMENT = "RiskManagement"
+    SOFTWARE_LIFECYCLE = "SoftwareLifecycle"
+    CYBERSECURITY = "Cybersecurity"
+    STERILIZATION_VALIDATION = "SterilizationValidation"
+    CLINICAL_EVIDENCE = "ClinicalEvidence"
+    LABELING_IFU = "LabelingIFU"
+    STANDARDS_CONFORMANCE = "StandardsConformance"
+    POST_MARKET_SURVEILLANCE = "PostMarketSurveillance"
+
+
+class EvidenceTask(BaseModel):
+    """A single evidence task in the Defense Packet Seed.
+
+    Machine-readable 'fix list' item — deterministic, no LLM.
+    task_id is a stable hash so downstream systems can persist/track.
+    """
+    task_id: str = Field(description="Stable hash-based id (sha256[:12] of category+trigger)")
+    category: str = Field(description="One of EvidenceCategory values")
+    severity: str = Field("MEDIUM", description="LOW / MEDIUM / HIGH")
+    rationale: str = Field(description="Human-readable explanation")
+    trigger: str = Field(description="e.g. MATERIAL_MISMATCH")
+    recommended_artifacts: list[str] = Field(
+        default_factory=list,
+        description="Specific docs/tests needed, e.g. ['ISO 10993-1 plan', 'Cytotoxicity report']",
+    )
+    mapping: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Structured mapping for future linkage (Truth Machine, SE Matrix cells, eCTD)",
+    )
+
+
+class DefensePacketSeed(BaseModel):
+    """Response-level aggregated defense packet — the enterprise-grade 'fix list'.
+
+    Bridges predicate ranking → Shadow FDA Reviewer → Evidence-linked SE Matrix
+    without rewriting anything later. Can become:
+      - Truth Machine evidence placeholders
+      - EvidenceCell IDs in the SE Matrix
+      - Document task list in workflow UI
+      - Audit-traceable review plan
+    """
+    subject_hash: str = Field(description="SHA-256 of normalized input")
+    generated_at: str = Field(description="ISO 8601 timestamp")
+    program_id: str
+    product_code: str
+    tasks: list[EvidenceTask] = Field(default_factory=list, description="Deduped + sorted evidence tasks")
+    readiness_score: int = Field(0, ge=0, le=100, description="Composite DRS across suggestions")
+    top_risks: list[str] = Field(default_factory=list, description="Risk flag codes for UI badges")
+
+
+class PredicateSuggestion(BaseModel):
+    """A single predicate suggestion with full Shadow Reviewer Scorecard."""
+    # ── Identity + metadata ──
+    k_number: str
+    device_name: str
+    applicant: Optional[str] = None
+    product_code: str
+    decision_date: Optional[date] = None
+    summary_url: Optional[str] = None
+    # ── Scores (B2) ──
+    similarity_score: float = Field(ge=0.0, le=1.0)
+    defense_readiness_score: float = Field(
+        0.0, ge=0.0, le=100.0,
+        description="DRS: evidence completeness metric (0–100)",
+    )
+    toxicity_score: Optional[float] = Field(
+        None, ge=0.0, le=1.0,
+        description="Weighted toxicity from safety signals (6.6.F)",
+    )
+    family_toxicity_score: Optional[float] = Field(
+        None, ge=0.0, le=1.0,
+        description="Family tree toxicity from lineage recalls (6.6.F)",
+    )
+    badge: Optional[str] = Field(
+        None,
+        description="Toxicity badge: TOXIC | RISKY_FAMILY | CLEAN (6.6.F)",
+    )
+    # ── Strategy ──
+    strategy_recommendation: StrategyRecommendation
+    # ── Explainability ──
+    reasoning: str
+    score_breakdown: ScoreBreakdown
+    risk_flags: list[RiskFlag] = Field(default_factory=list)
+    match_snippets: list[MatchSnippet] = Field(
+        default_factory=list,
+        description="Top 3 short excerpts from predicate text",
+    )
+    anticipated_objections: list[Objection] = Field(
+        default_factory=list,
+        description="Predicted reviewer objections with fixes",
+    )
+    # ── Per-suggestion evidence seeds (legacy compat) ──
+    defense_packet_seed: list[EvidenceTaskSeed] = Field(
+        default_factory=list,
+        description="Simple per-suggestion evidence needs (see response-level DefensePacketSeed for rich version)",
+    )
+    # ── Legacy compat ──
+    matched_terms: list[str] = Field(default_factory=list)
+    recency_years: Optional[float] = None
+    flags: list[str] = Field(default_factory=list)
+    reviewer_heat: int = Field(0, ge=0, le=100, description="Triage signal 0-100")
+    next_evidence: list[str] = Field(
+        default_factory=list,
+        description="Rule-based hints for evidence to gather",
+    )
+
+
+class PredicateSuggestResponse(BaseModel):
+    """Response from POST /predicate/suggest — top 5 predicates with full scorecards."""
+    suggestions: list[PredicateSuggestion]
+    generated_at: datetime
+    subject_hash: str = Field(description="SHA-256 of normalized input for dedup/caching")
+    product_code: str
+    total_candidates_scanned: int = 0
+    latency_ms: int = Field(0, description="Server-side latency in milliseconds")
+    weights_version: str = Field("v2.0", description="Scoring algorithm version")
+    cached: bool = Field(False, description="True if served from cache")
+    # ── Response-level Defense Packet Seed ──
+    defense_packet_seed: Optional[DefensePacketSeed] = Field(
+        None,
+        description="Aggregated evidence fix-list across all suggestions — enterprise-grade bridge to Truth Machine / DOCX / eCTD",
+    )

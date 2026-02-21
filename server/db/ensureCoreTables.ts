@@ -108,7 +108,7 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
   };
 
   const rawUrl =
-    connectionString || process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL;
+    connectionString || process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET;
   const dbUrl = cleanDatabaseUrl(rawUrl);
   const startTime = Date.now();
   const result: EnsureTablesResult = {

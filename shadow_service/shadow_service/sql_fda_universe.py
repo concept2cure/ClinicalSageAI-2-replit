@@ -326,6 +326,51 @@ LIMIT $2;
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Ingestion Run Log (fda_ingest_runs)
+# ─────────────────────────────────────────────────────────────────────────────
+
+INSERT_INGEST_RUN = """
+INSERT INTO predicate.fda_ingest_runs
+    (job_name, status, started_at, product_codes_filter, max_clearances_limit,
+     triggered_by, run_fingerprint)
+VALUES ($1, 'running', now(), $2, $3, $4, $5)
+RETURNING id;
+"""
+
+UPDATE_INGEST_RUN_COMPLETED = """
+UPDATE predicate.fda_ingest_runs
+SET status              = $2,
+    completed_at        = now(),
+    duration_seconds    = $3,
+    clearances_processed = $4,
+    clearances_upserted  = $5,
+    signals_processed    = $6,
+    signals_upserted     = $7,
+    errors_count         = $8,
+    errors_detail        = $9::jsonb
+WHERE id = $1;
+"""
+
+SELECT_LAST_INGEST_RUN = """
+SELECT * FROM predicate.fda_ingest_runs
+ORDER BY started_at DESC
+LIMIT 1;
+"""
+
+SELECT_LAST_SUCCESSFUL_INGEST = """
+SELECT * FROM predicate.fda_ingest_runs
+WHERE status = 'completed'
+ORDER BY completed_at DESC
+LIMIT 1;
+"""
+
+SELECT_INGEST_RUNS_RECENT = """
+SELECT * FROM predicate.fda_ingest_runs
+ORDER BY started_at DESC
+LIMIT $1;
+"""
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Health / Stats (6.6.A acceptance criteria)
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -350,4 +395,62 @@ SELECT
             (SELECT COUNT(*) FROM predicate.fda_510k_clearances), 1
         )
     END AS pct_with_signals;
+"""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Predicate Suggestion — Full-Text Search + Scoring (Phase 6.6.B)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# FTS search: product_code filter + full-text rank on txt_content + device_name.
+# Returns raw rows with fts_rank for Python-side composite scoring.
+# $1 = product_code, $2 = plainto_tsquery subject text, $3 = limit
+SUGGEST_PREDICATES_FTS = """
+SELECT
+    c.k_number,
+    c.device_name,
+    c.applicant,
+    c.product_code,
+    c.decision_date,
+    c.decision_code,
+    c.summary_url,
+    c.txt_content,
+    c.clearance_type,
+    ts_rank_cd(
+        to_tsvector('english', coalesce(c.txt_content, '') || ' ' || coalesce(c.device_name, '')),
+        plainto_tsquery('english', $2)
+    ) AS fts_rank
+FROM predicate.fda_510k_clearances c
+WHERE c.product_code = $1
+  AND c.decision_code = 'SE'
+  AND c.decision_date >= NOW() - INTERVAL '10 years'
+ORDER BY fts_rank DESC, c.decision_date DESC
+LIMIT $3;
+"""
+
+# Fallback when subject text is empty / FTS returns nothing — pure recency sort.
+SUGGEST_PREDICATES_FALLBACK = """
+SELECT
+    c.k_number,
+    c.device_name,
+    c.applicant,
+    c.product_code,
+    c.decision_date,
+    c.decision_code,
+    c.summary_url,
+    c.txt_content,
+    c.clearance_type,
+    0.0 AS fts_rank
+FROM predicate.fda_510k_clearances c
+WHERE c.product_code = $1
+  AND c.decision_code = 'SE'
+ORDER BY c.decision_date DESC
+LIMIT $2;
+"""
+
+# Count total SE clearances for a product code (for response metadata).
+COUNT_SE_CLEARANCES = """
+SELECT COUNT(*) AS total
+FROM predicate.fda_510k_clearances
+WHERE product_code = $1
+  AND decision_code = 'SE';
 """

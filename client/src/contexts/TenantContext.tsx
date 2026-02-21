@@ -122,14 +122,35 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
 
   // Removed console.log to prevent potential API key exposure
 
+  const getAuthHeaders = () => {
+    const token =
+      localStorage.getItem('trialsage_access_token') ||
+      sessionStorage.getItem('trialsage_access_token');
+
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   // Load organizations and client workspaces from database
   useEffect(() => {
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const loadTenantData = async () => {
       setIsLoading(true);
 
       try {
+        const authHeaders = getAuthHeaders();
+        if (!authHeaders.Authorization) {
+          setIsLoading(false);
+          retryTimeout = setTimeout(() => {
+            void loadTenantData();
+          }, 1500);
+          return;
+        }
+
         // Fetch organizations from database API
-        const response = await fetch('/api/tenants');
+        const response = await fetch('/api/tenants', {
+          headers: authHeaders,
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch organizations');
         }
@@ -142,7 +163,9 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
 
         for (const org of orgData) {
           try {
-            const clientResponse = await fetch(`/api/clients?organizationId=${org.id}`);
+            const clientResponse = await fetch(`/api/clients?organizationId=${org.id}`, {
+              headers: authHeaders,
+            });
             if (clientResponse.ok) {
               const clientResult = await clientResponse.json();
               if (clientResult.success && clientResult.clients) {
@@ -233,6 +256,12 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
     };
 
     loadTenantData();
+
+    return () => {
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
   }, []);
 
   // Save selections to localStorage
@@ -311,7 +340,9 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
       for (const org of organizations) {
         try {
           // Fetching client workspaces for organization
-          const clientResponse = await fetch(`/api/clients?organizationId=${org.id}`);
+          const clientResponse = await fetch(`/api/clients?organizationId=${org.id}`, {
+            headers: getAuthHeaders(),
+          });
           if (clientResponse.ok) {
             const clientResult = await clientResponse.json();
             if (clientResult.success && clientResult.clients) {

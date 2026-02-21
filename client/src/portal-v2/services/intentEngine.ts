@@ -79,7 +79,7 @@ export interface IntentResult {
  */
 export const INTENT_REGISTRY: IntentMapping[] = [
   // ─────────────────────────────────────────────────────────────────────────────
-  // IND Wizard Intents
+  // IND / eCTD Co-Author Intents (IND Wizard deprecated → rolled into eCTD Co-Author)
   // ─────────────────────────────────────────────────────────────────────────────
   {
     patterns: [
@@ -92,16 +92,16 @@ export const INTENT_REGISTRY: IntentMapping[] = [
       'ind wizard',
       'investigational new drug',
     ],
-    moduleId: 'ind_wizard',
+    moduleId: 'ectd_coauthor',
     action: 'navigate',
-    params: { route: '/ind-wizard' },
-    description: 'Navigate to IND Application Wizard',
+    params: { route: '/ectd-coauthor' },
+    description: 'Navigate to eCTD Co-Author (IND workflow)',
   },
   {
     patterns: ['ind status', 'check ind', 'ind progress', 'where is my ind'],
-    moduleId: 'ind_wizard',
+    moduleId: 'ectd_coauthor',
     action: 'query',
-    description: 'Query IND submission status',
+    description: 'Query IND submission status via eCTD Co-Author',
   },
 
   // ─────────────────────────────────────────────────────────────────────────────

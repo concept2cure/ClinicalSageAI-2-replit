@@ -13,11 +13,19 @@ export const apiRequest = async (
   customHeaders?: Record<string, string>
 ): Promise<Response> => {
   // Get organization ID from localStorage
-  const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-  
+  const organizationId =
+    localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+
+  // Get auth token from localStorage (stored by authService on login)
+  const authToken =
+    localStorage.getItem('token') ||
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('auth_token');
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'x-organization-id': organizationId,
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...customHeaders,
   };
 
@@ -51,9 +59,12 @@ export const getQueryFn = (options: GetQueryFnOptions = {}) => {
   return async ({ queryKey }: { queryKey: string[] }) => {
     const [url] = queryKey;
     // Get organization ID from localStorage
-    const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+    const organizationId =
+      localStorage.getItem('organizationId') ||
+      localStorage.getItem('currentOrganizationId') ||
+      '1';
     const response = await apiRequest('GET', url, undefined, {
-      'x-organization-id': organizationId
+      'x-organization-id': organizationId,
     });
 
     if (response.status === 401) {

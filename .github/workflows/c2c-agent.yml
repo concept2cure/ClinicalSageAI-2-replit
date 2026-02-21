@@ -1,0 +1,277 @@
+name: C2C Agent — Validate & Audit
+
+on:
+  push:
+    branches: [main, concept2cure-v2]
+  pull_request:
+    branches: [main, concept2cure-v2]
+  schedule:
+    - cron: '0 2 * * 1' # Weekly Monday 2AM UTC
+  workflow_dispatch:
+    inputs:
+      agent_task:
+        description: 'Agent task to run'
+        required: false
+        default: 'full_audit'
+        type: choice
+        options:
+          - full_audit
+          - regulatory_validation
+          - security_audit
+          - compliance_check
+          - ai_prompt_eval
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 1. SETUP — Neon branch management
+  # ═══════════════════════════════════════════════════════════════════════════
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      neon_branch: ${{ steps.neon.outputs.branch_id }}
+      db_url: ${{ steps.neon.outputs.db_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Neon preview branch (PRs only)
+        id: neon
+        if: github.event_name == 'pull_request'
+        uses: neondatabase/create-branch-action@v4
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch_name: preview-${{ github.head_ref }}
+          parent: ${{ secrets.NEON_PROD_BRANCH }}
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 2. TYPE CHECK + LINT
+  # ═══════════════════════════════════════════════════════════════════════════
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: TypeScript type check
+        run: node --max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --skipLibCheck
+
+      - name: ESLint
+        run: npx eslint . --max-warnings 50 || true
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 3. REGULATORY VALIDATION
+  # ═══════════════════════════════════════════════════════════════════════════
+  regulatory_validation:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.inputs.agent_task == 'regulatory_validation' ||
+      github.event.inputs.agent_task == 'full_audit' ||
+      github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install agent deps
+        run: pip install pyyaml
+
+      - name: Run regulatory validator
+        run: python .github/agents/regulatory-validator/agent.py ./ectd ./ectd-stubs
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regulatory-validation-report
+          path: reports/regulatory-validation.json
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const report = JSON.parse(fs.readFileSync('reports/regulatory-validation.json', 'utf8'));
+              const body = [
+                '## Regulatory Validation Report',
+                '',
+                `| Metric | Value |`,
+                `|--------|-------|`,
+                `| Total findings | ${report.summary.total_findings} |`,
+                `| Critical | ${report.summary.critical} |`,
+                `| High | ${report.summary.high} |`,
+                `| Submission ready | ${report.summary.submission_ready ? 'Yes' : 'No'} |`,
+              ].join('\n');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body
+              });
+            } catch { /* report may not exist */ }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 4. SECURITY AUDIT (CodeQL + custom checks)
+  # ═══════════════════════════════════════════════════════════════════════════
+  security_audit:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.inputs.agent_task == 'security_audit' ||
+      github.event.inputs.agent_task == 'full_audit' ||
+      github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for hardcoded secrets..."
+          PATTERNS='password|secret|api.key|token|private.key|credentials'
+          HITS=$(grep -rn --include="*.ts" --include="*.js" --include="*.py" -iE "$PATTERNS" \
+            --exclude-dir=node_modules --exclude-dir=.git \
+            --exclude="*.test.*" --exclude="*.spec.*" --exclude="*.d.ts" \
+            server/ client/ || true)
+
+          # Filter out legitimate patterns (env refs, type declarations)
+          REAL_HITS=$(echo "$HITS" | grep -v 'process.env' | grep -v 'interface ' | grep -v '// ' | grep -v 'secret:' | grep -v 'password:' || true)
+
+          if [ -n "$REAL_HITS" ]; then
+            echo "::warning::Potential hardcoded secrets detected"
+            echo "$REAL_HITS"
+          else
+            echo "No hardcoded secrets found"
+          fi
+
+      - name: Verify Zero Data Retention config
+        run: |
+          echo "Checking ZDR enforcement..."
+          # Ensure no OpenAI calls store data
+          if grep -rn 'store.*true\|log_prompts.*true' server/ --include="*.ts" 2>/dev/null; then
+            echo "::error::Data retention violation detected"
+            exit 1
+          fi
+          echo "ZDR check passed"
+
+      - name: Verify SSL/TLS enforcement
+        run: |
+          echo "Checking database SSL enforcement..."
+          if grep -rn "ssl.*reject\|sslmode.*disable" server/ --include="*.ts" 2>/dev/null; then
+            echo "::error::SSL enforcement violation"
+            exit 1
+          fi
+          echo "SSL check passed"
+
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high || true
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 5. 21 CFR PART 11 COMPLIANCE CHECK
+  # ═══════════════════════════════════════════════════════════════════════════
+  compliance_check:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.inputs.agent_task == 'compliance_check' ||
+      github.event.inputs.agent_task == 'full_audit' ||
+      github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify audit trail coverage
+        run: |
+          echo "Checking audit trail implementation..."
+          ROUTES_WITHOUT_AUDIT=$(grep -rn 'router\.\(post\|put\|patch\|delete\)' server/routes/ --include="*.ts" -l | while read f; do
+            if ! grep -q 'audit' "$f"; then
+              echo "$f"
+            fi
+          done || true)
+
+          if [ -n "$ROUTES_WITHOUT_AUDIT" ]; then
+            echo "::warning::Routes missing audit trail logging:"
+            echo "$ROUTES_WITHOUT_AUDIT"
+          else
+            echo "All mutation routes have audit logging"
+          fi
+
+      - name: Verify electronic signature infrastructure
+        run: |
+          echo "Checking e-signature implementation..."
+          if grep -rqn 'signDocument\|verifySignature\|e_signature' server/ --include="*.ts"; then
+            echo "E-signature infrastructure found"
+          else
+            echo "::warning::Electronic signature implementation not detected"
+          fi
+
+      - name: Verify access control enforcement
+        run: |
+          echo "Checking RBAC enforcement..."
+          UNPROTECTED=$(grep -rn 'router\.\(get\|post\|put\|delete\)' server/routes/ --include="*.ts" -l | while read f; do
+            if ! grep -q 'requireAuth\|authenticate\|verifyToken\|requireModule\|requireTier' "$f"; then
+              echo "$f"
+            fi
+          done || true)
+
+          if [ -n "$UNPROTECTED" ]; then
+            echo "::warning::Route files without auth middleware:"
+            echo "$UNPROTECTED"
+          fi
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 6. AI PROMPT EVALUATION
+  # ═══════════════════════════════════════════════════════════════════════════
+  ai_prompt_eval:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.inputs.agent_task == 'ai_prompt_eval' ||
+      github.event.inputs.agent_task == 'full_audit'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Validate prompt templates compile
+        run: |
+          echo "Type-checking AI prompt services..."
+          npx tsc --noEmit --skipLibCheck \
+            server/services/module-intelligence.ts \
+            server/services/lumen-instruction-engine.ts \
+            server/services/lumen-context-builder.ts \
+            2>&1 || true
+
+      - name: Check prompt quality heuristics
+        run: |
+          echo "Checking prompt quality..."
+          # Ensure all prompts have system instructions
+          for f in server/services/module-intelligence.ts server/services/lumen-instruction-engine.ts; do
+            if [ -f "$f" ]; then
+              PROMPT_COUNT=$(grep -c 'system.*prompt\|systemPrompt\|role.*system' "$f" || true)
+              echo "$f: $PROMPT_COUNT system prompt references"
+              if [ "$PROMPT_COUNT" -lt 1 ]; then
+                echo "::warning::$f may be missing system prompt definitions"
+              fi
+            fi
+          done
+
+      - name: Verify hallucination guardrails
+        run: |
+          echo "Verifying hallucination detection..."
+          if grep -rqn 'hallucination\|source.grounding\|claim.verification\|citation.enforcement' server/services/ --include="*.ts"; then
+            echo "Hallucination guardrails detected"
+          else
+            echo "::warning::No hallucination detection found in services"
+          fi

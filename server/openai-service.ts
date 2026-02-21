@@ -1,8 +1,9 @@
 import OpenAI from 'openai';
 import pdfParse from 'pdf-parse';
 import fs from 'fs';
+import { getGateway } from './services/ai-gateway/index.js';
 
-// Initialize OpenAI client
+// Initialize OpenAI client (still needed for embeddings which gateway doesn't handle)
 // NOTE: the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -48,23 +49,15 @@ export async function generateStructuredResponse(
   systemPrompt?: string
 ): Promise<any> {
   try {
-    const messages = [
-      ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
-      { role: 'user' as const, content: prompt },
-    ];
-
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o',
-      messages,
-      response_format: { type: 'json_object' },
+    const gw = getGateway();
+    return await gw.structuredOutput(prompt, undefined, {
+      taskType: 'structured_output',
+      messages: [
+        ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
+        { role: 'user' as const, content: prompt },
+      ],
+      callerModule: 'openai-service/generateStructuredResponse',
     });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('Empty response from OpenAI');
-    }
-
-    return JSON.parse(content);
   } catch (error) {
     console.error('Error generating structured response:', error);
     throw new Error(
@@ -88,17 +81,19 @@ export async function analyzeText(
   maxTokens: number = 3000
 ): Promise<string> {
   try {
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o', // Latest and most capable model
+    const gw = getGateway();
+    const response = await gw.route({
+      taskType: 'document_analysis',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt },
       ],
       temperature,
-      max_tokens: maxTokens,
+      maxTokens,
+      callerModule: 'openai-service/analyzeText',
     });
 
-    return response.choices[0].message.content || '';
+    return response.content || '';
   } catch (error: any) {
     console.error('Error in OpenAI service:', error);
     throw new Error(`OpenAI analysis failed: ${error.message}`);
@@ -137,7 +132,7 @@ export async function generateSearchContextSummary(
     // Format the prompt
     const prompt = `
       I'm searching for clinical studies with this query: "${searchQuery}"
-      
+
       I found this study in the database:
       Title: ${csrInfo.title}
       Phase: ${csrInfo.phase}
@@ -145,7 +140,7 @@ export async function generateSearchContextSummary(
       Sample Size: ${csrInfo.sample_size}
       Outcome: ${csrInfo.outcome}
       Sponsor: ${csrInfo.sponsor}
-      
+
       In 150 characters or less, explain why this study is relevant to my search and highlight the most important aspects that match my query.
     `;
 
@@ -231,11 +226,11 @@ export async function generateTailoredProtocolRecommendations(
   // Create a system prompt that instructs the model to be specific to this protocol
   const systemPrompt = `
     You are the world's foremost expert on clinical study design and protocol optimization with extensive experience in ${protocolMeta.indication} trials.
-    
+
     Your task is to analyze a clinical trial protocol and provide HIGHLY SPECIFIC, DATA-DRIVEN recommendations
     that are directly relevant to this exact protocol. Focus exclusively on the submitted protocol
     for a ${protocolMeta.indication} study in ${protocolMeta.phase.replace('phase', 'Phase ')}.
-    
+
     Important instructions:
     1. Make every recommendation SPECIFICALLY about this ${protocolMeta.indication} protocol
     2. Reference CONCRETE specific elements from the protocol in your suggestions
@@ -296,22 +291,22 @@ export async function generateTailoredProtocolRecommendations(
 
   // Construct the user prompt
   const userPrompt = `
-    Please analyze this clinical trial protocol for a ${protocolMeta.indication} study (${protocolMeta.phase.replace('phase', 'Phase ')}) 
+    Please analyze this clinical trial protocol for a ${protocolMeta.indication} study (${protocolMeta.phase.replace('phase', 'Phase ')})
     and provide HIGHLY SPECIFIC recommendations tailored to this exact protocol.
-    
+
     PROTOCOL TEXT:
     ${protocolText.substring(0, 4000)} // Limit to first 4000 chars to avoid token limits
-    
+
     PROTOCOL METADATA:
     - Title: ${protocolMeta.title || `${protocolMeta.indication} Clinical Trial`}
     - Indication/Disease: ${protocolMeta.indication}
     - Phase: ${protocolMeta.phase.replace('phase', 'Phase ')}
     - Study Type: ${protocolMeta.studyType === 'rct' ? 'Randomized Controlled Trial' : protocolMeta.studyType}
-    
+
     ${csrContext}
-    
+
     ${academicContext}
-    
+
     IMPORTANT: Provide 4-6 major recommendation categories. Each recommendation must be:
     1. HIGHLY SPECIFIC to this ${protocolMeta.indication} protocol
     2. Reference EXACT elements from this protocol
@@ -368,10 +363,10 @@ export async function analyzeCsrContent(text: string): Promise<any> {
 
   try {
     const response = await analyzeText(
-      `Extract structured information from the following CSR text. Include the study design, 
-      primary objective, inclusion/exclusion criteria, treatment arms, endpoints, sample size, 
+      `Extract structured information from the following CSR text. Include the study design,
+      primary objective, inclusion/exclusion criteria, treatment arms, endpoints, sample size,
       results, safety information, and any other key elements.
-      
+
       CSR TEXT:
       ${text.substring(0, 8000)}`, // Limit text size to avoid token limits
       systemPrompt,
@@ -439,16 +434,16 @@ export async function analyzeCsrContent(text: string): Promise<any> {
  */
 export async function generateCsrSummary(text: string): Promise<string> {
   const systemPrompt = `
-    You are a clinical study report (CSR) summarization expert. Create a concise yet comprehensive 
-    summary of the provided CSR text focusing on the key aspects of the study design, 
+    You are a clinical study report (CSR) summarization expert. Create a concise yet comprehensive
+    summary of the provided CSR text focusing on the key aspects of the study design,
     objectives, methods, results, and conclusions.
   `;
 
   try {
     const response = await analyzeText(
-      `Generate a concise summary (about 250-500 words) of the following clinical study report. 
+      `Generate a concise summary (about 250-500 words) of the following clinical study report.
       Focus on the study design, objectives, key findings, and conclusions.
-      
+
       CSR TEXT:
       ${text.substring(0, 8000)}`, // Limit text size to avoid token limits
       systemPrompt,
@@ -477,9 +472,9 @@ export async function analyzeCerContent(text: string): Promise<any> {
 
   try {
     const response = await analyzeText(
-      `Extract structured information from the following Clinical Evaluation Report (CER) text. Include the device name, 
+      `Extract structured information from the following Clinical Evaluation Report (CER) text. Include the device name,
       manufacturer, indication, safety issues, complaint rates, adverse events, performance evaluation, and any other key elements.
-      
+
       CER TEXT:
       ${text.substring(0, 8000)}`, // Limit text size to avoid token limits
       systemPrompt,
@@ -543,16 +538,16 @@ export async function analyzeCerContent(text: string): Promise<any> {
  */
 export async function generateCerSummary(text: string): Promise<string> {
   const systemPrompt = `
-    You are a clinical evaluation report (CER) summarization expert. Create a concise yet comprehensive 
-    summary of the provided CER text focusing on the key aspects of the device performance, 
+    You are a clinical evaluation report (CER) summarization expert. Create a concise yet comprehensive
+    summary of the provided CER text focusing on the key aspects of the device performance,
     safety issues, complaint rates, and overall evaluation.
   `;
 
   try {
     const response = await analyzeText(
-      `Generate a concise summary (about 250-500 words) of the following clinical evaluation report. 
+      `Generate a concise summary (about 250-500 words) of the following clinical evaluation report.
       Focus on the device performance, safety issues, complaint rates, and key findings.
-      
+
       CER TEXT:
       ${text.substring(0, 8000)}`, // Limit text size to avoid token limits
       systemPrompt,
@@ -574,8 +569,8 @@ export async function generateCerSummary(text: string): Promise<string> {
  */
 export async function processCerNlpQuery(query: string): Promise<any> {
   const systemPrompt = `
-    You are an expert in clinical evaluation reports and FDA adverse event data. 
-    Interpret the user's natural language query about adverse events and transform it into a structured 
+    You are an expert in clinical evaluation reports and FDA adverse event data.
+    Interpret the user's natural language query about adverse events and transform it into a structured
     filtering request. Focus on understanding queries related to patient demographics, event types,
     severity levels, and timeframes.
   `;

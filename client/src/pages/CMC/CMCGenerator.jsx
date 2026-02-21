@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   ArrowLeft,
   Beaker,
@@ -33,9 +33,6 @@ import {
   Bell,
   Star,
 } from 'lucide-react';
-import SmartWorkflowsInterface from '@/components/cmc/SmartWorkflowsInterface';
-import CMCBlueprintGenerator from '@/components/cmc/CMCBlueprintGenerator';
-import CMCDocumentManager from '@/components/cmc/CMCDocumentManager';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,6 +40,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useLocation } from 'wouter';
+
+const SmartWorkflowsInterface = lazy(() => import('@/components/cmc/SmartWorkflowsInterface'));
+const CMCBlueprintGenerator = lazy(() => import('@/components/cmc/CMCBlueprintGenerator'));
+const CMCDocumentManager = lazy(() => import('@/components/cmc/CMCDocumentManager'));
 
 const CMCGenerator = () => {
   const [, setLocation] = useLocation();
@@ -788,22 +789,46 @@ const CMCGenerator = () => {
           </TabsContent>
 
           <TabsContent value="blueprint" className="space-y-6">
-            <CMCBlueprintGenerator />
+            {activeTab === 'blueprint' && (
+              <Suspense
+                fallback={
+                  <div className="p-6 text-sm text-slate-500">Loading blueprint generator...</div>
+                }
+              >
+                <CMCBlueprintGenerator />
+              </Suspense>
+            )}
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-6">
-            <CMCDocumentManager />
+            {activeTab === 'documents' && (
+              <Suspense
+                fallback={
+                  <div className="p-6 text-sm text-slate-500">Loading document manager...</div>
+                }
+              >
+                <CMCDocumentManager />
+              </Suspense>
+            )}
           </TabsContent>
 
           <TabsContent value="workflows" className="space-y-6">
-            <SmartWorkflowsInterface
-              drugName={drugName}
-              structuredInputs={structuredInputs}
-              onWorkflowComplete={result => {
-                setGeneratedBlueprint(result);
-                setActiveTab('authoring');
-              }}
-            />
+            {activeTab === 'workflows' && (
+              <Suspense
+                fallback={
+                  <div className="p-6 text-sm text-slate-500">Loading smart workflows...</div>
+                }
+              >
+                <SmartWorkflowsInterface
+                  drugName={drugName}
+                  structuredInputs={structuredInputs}
+                  onWorkflowComplete={result => {
+                    setGeneratedBlueprint(result);
+                    setActiveTab('authoring');
+                  }}
+                />
+              </Suspense>
+            )}
           </TabsContent>
         </Tabs>
       </div>

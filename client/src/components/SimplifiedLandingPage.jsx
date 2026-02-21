@@ -13,7 +13,7 @@ export default function SimplifiedLandingPage() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Animated background canvas */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[url('/assets/particle-bg.svg')] bg-cover bg-center opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-tr from-blue-800 via-transparent to-green-600 mix-blend-overlay" />
         </div>
         <Container className="relative z-10 text-center px-6">

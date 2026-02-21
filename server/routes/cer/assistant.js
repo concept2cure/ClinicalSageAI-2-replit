@@ -8,12 +8,16 @@
 
 const express = require('express');
 const router = express.Router();
-const { OpenAI } = require('openai');
 
-// Initialize OpenAI with API key from environment
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// AI Gateway integration — centralised LLM routing, audit & policy
+let _gateway = null;
+async function getGatewayInstance() {
+  if (!_gateway) {
+    const mod = await import('../../services/ai-gateway/index.js');
+    _gateway = mod.getGateway();
+  }
+  return _gateway;
+}
 
 /**
  * POST /api/cer/assistant
@@ -45,25 +49,25 @@ router.post('/', async (req, res) => {
       title,
     });
 
-    // Call OpenAI API with the prepared prompt
-    const response = await openai.chat.completions.create({
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      model: 'gpt-4o',
+    // Route through AI Gateway — centralised audit, policy & rate limiting
+    const gateway = await getGatewayInstance();
+    const gatewayResponse = await gateway.route({
+      taskType: 'cer_assistant',
       messages: [
         {
           role: 'system',
-          content: `You are an expert AI assistant specializing in Clinical Evaluation Reports (CERs) and medical device regulatory compliance. 
+          content: `You are an expert AI assistant specializing in Clinical Evaluation Reports (CERs) and medical device regulatory compliance.
           Your purpose is to help users understand regulatory requirements, interpret FAERS data, and improve their CER documentation.
-          
+
           Always provide accurate, regulatory-focused answers that include:
           1. Direct answers to user questions
           2. Specific regulatory references when relevant (EU MDR, ISO 14155, FDA 21 CFR 812, etc.)
           3. Evidence-based insights, not opinions
-          
-          Important: Your responses should be structured in a clear, professional format. 
+
+          Important: Your responses should be structured in a clear, professional format.
           When appropriate, cite specific regulatory clauses, standards, or guidelines.
           Format your response as plain text.
-          
+
           The conversation is taking place within the CER Builder platform.`,
         },
         {
@@ -72,12 +76,14 @@ router.post('/', async (req, res) => {
         },
       ],
       temperature: 0.7,
-      max_tokens: 1000,
-      response_format: { type: 'json_object' },
+      maxTokens: 1000,
+      jsonMode: true,
+      callerModule: 'cer-assistant',
+      metadata: { cerTitle: title },
     });
 
     // Parse and process the AI response
-    const aiResponse = JSON.parse(response.choices[0].message.content);
+    const aiResponse = JSON.parse(gatewayResponse.content);
 
     // Return structured response to the client
     return res.json({
@@ -143,9 +149,9 @@ function generateContextualPrompt({ question, sections, faers, selectedSection, 
   }
 
   // Add final instructions for the AI
-  prompt += `Please provide a concise, regulatory-focused answer to the user's question. 
-  Include specific references to relevant regulations when appropriate. 
-  Format your response as JSON with 'answer' containing the main response and 'references' 
+  prompt += `Please provide a concise, regulatory-focused answer to the user's question.
+  Include specific references to relevant regulations when appropriate.
+  Format your response as JSON with 'answer' containing the main response and 'references'
   as an array of relevant regulatory citations or references.`;
 
   return prompt;

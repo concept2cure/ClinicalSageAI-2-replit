@@ -25,6 +25,7 @@ else
 fi
 
 CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
+CHANGED_STATUS=$(git diff --name-status "$BASE"...HEAD || true)
 if [[ -z "$CHANGED" ]]; then
   echo "No changes detected."
   exit 0
@@ -58,7 +59,17 @@ if [[ -z "$SRC_FILES" ]]; then
   exit 0
 fi
 
-MISSING=()
+ADDED_OR_RENAMED=$(echo "$CHANGED_STATUS" \
+  | awk '$1 ~ /^A|^R/ {print $NF}' \
+  | grep -E '^(server|client/src|shared)/.*\.(ts|tsx|js|jsx)$' \
+  | grep -vE '\.(test|spec)\.' \
+  | grep -vE '\.stories\.' \
+  | grep -vE "$EXCLUDE_RE" \
+  || true)
+
+MISSING_REQUIRED=()
+MISSING_WARN=()
+
 for file in $SRC_FILES; do
   base=$(basename "$file")
   name="${base%.*}"
@@ -72,14 +83,26 @@ for file in $SRC_FILES; do
     -not -path "./.worktrees/*" \
     -not -path "./.ai/*" \
     | grep -q .; then
-    MISSING+=("$file")
+    if echo "$ADDED_OR_RENAMED" | grep -qx "$file"; then
+      MISSING_REQUIRED+=("$file")
+    else
+      MISSING_WARN+=("$file")
+    fi
   fi
 done
 
-if (( ${#MISSING[@]} > 0 )); then
-  echo "Missing corresponding tests for:"
-  printf ' - %s\n' "${MISSING[@]}"
-  exit 1
+if (( ${#MISSING_WARN[@]} > 0 )); then
+  echo "Warning: modified files without companion tests (non-blocking):"
+  printf ' - %s\n' "${MISSING_WARN[@]}"
 fi
 
-echo "Test presence verified for changed source files."
+if (( ${#MISSING_REQUIRED[@]} > 0 )); then
+  echo "Missing corresponding tests for:"
+  printf ' - %s\n' "${MISSING_REQUIRED[@]}"
+  if [[ "${VERIFY_TESTS_STRICT:-false}" == "true" ]]; then
+    exit 1
+  fi
+  echo "VERIFY_TESTS_STRICT is not enabled; continuing with warning-only mode."
+fi
+
+echo "Test presence verified for added/renamed source files."

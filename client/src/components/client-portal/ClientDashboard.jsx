@@ -273,7 +273,7 @@ const ClientDashboard = () => {
             type: 'form',
             updatedAt: '2025-04-26T10:15:00Z',
             updatedBy: 'Sarah Johnson',
-            module: 'ind-wizard',
+            module: 'ectd-coauthor',
           },
           {
             id: 2,
@@ -305,7 +305,7 @@ const ClientDashboard = () => {
             type: 'data',
             updatedAt: '2025-04-22T11:05:00Z',
             updatedBy: 'Michael Brown',
-            module: 'ind-wizard',
+            module: 'ectd-coauthor',
           },
         ];
 

@@ -46,3 +46,29 @@ export const getAuthStatus = () => {
     user: userInfo,
   };
 };
+
+export const signInWithGoogle = async () => {
+  const result = await signIn();
+  if (!result.success) {
+    throw new Error(result.error || 'Google sign-in failed');
+  }
+  return result.user;
+};
+
+export const signOutFromGoogle = async () => {
+  const result = await signOut();
+  if (!result.success) {
+    throw new Error(result.error || 'Google sign-out failed');
+  }
+  return true;
+};
+
+export default {
+  signIn,
+  signOut,
+  signInWithGoogle,
+  signOutFromGoogle,
+  isGoogleAuthenticated,
+  getCurrentUser,
+  getAuthStatus,
+};

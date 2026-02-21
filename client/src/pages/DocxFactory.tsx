@@ -25,6 +25,9 @@ import {
   useRenderEvents,
   useSeedTemplates,
   useDemoPacks,
+  useCatalogFamilies,
+  useCatalogDocTypes,
+  useCatalogTemplates,
   downloadArtifact,
   computeSHA256,
   type DocxTemplate,
@@ -84,6 +87,8 @@ import {
   Hash,
   PackagePlus,
   Beaker,
+  Sparkles,
+  Bot,
 } from 'lucide-react';
 
 // =============================================================================
@@ -114,6 +119,10 @@ function formatTimestamp(dateStr: string): string {
 // Legacy helper — delegates to StatusPill for templates
 function statusBadge(status: string) {
   return <StatusPill status={status} />;
+}
+
+function prettyLabel(value: string): string {
+  return value.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 }
 
 // =============================================================================
@@ -351,8 +360,14 @@ function HashVerificationPanel({ state }: { state: HashVerifyState }) {
 function CreateTemplateDialog({ programId }: { programId: string }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
+  const [docFamily, setDocFamily] = useState('ind');
   const [docType, setDocType] = useState('generic');
   const createTemplate = useCreateTemplate(programId);
+  const { data: catalogFamilies } = useCatalogFamilies();
+  const { data: familyDocTypes } = useCatalogDocTypes(docFamily);
+
+  const selectableFamilies = catalogFamilies?.length ? catalogFamilies : ['ind'];
+  const selectableDocTypes = familyDocTypes?.length ? familyDocTypes : [];
 
   const handleSubmit = useCallback(() => {
     if (!name.trim()) return;
@@ -362,11 +377,17 @@ function CreateTemplateDialog({ programId }: { programId: string }) {
         onSuccess: () => {
           setOpen(false);
           setName('');
+          setDocFamily('ind');
           setDocType('generic');
         },
       }
     );
   }, [name, docType, createTemplate]);
+
+  const handleDocFamilyChange = useCallback((value: string) => {
+    setDocFamily(value);
+    setDocType('generic');
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -391,6 +412,21 @@ function CreateTemplateDialog({ programId }: { programId: string }) {
             />
           </div>
           <div className="space-y-2">
+            <label className="text-sm font-medium">Document Family</label>
+            <Select value={docFamily} onValueChange={handleDocFamilyChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {selectableFamilies.map(family => (
+                  <SelectItem key={family} value={family}>
+                    {prettyLabel(family)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <label className="text-sm font-medium">Document Type</label>
             <Select value={docType} onValueChange={setDocType}>
               <SelectTrigger>
@@ -398,30 +434,11 @@ function CreateTemplateDialog({ programId }: { programId: string }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="generic">Generic</SelectItem>
-                {/* IND Templates */}
-                <SelectItem value="ectd_cover_letter">eCTD Cover Letter (Module 1)</SelectItem>
-                <SelectItem value="ind_1571_narrative">FDA 1571 Narrative Summary</SelectItem>
-                <SelectItem value="ib_change_summary">IB Change Summary</SelectItem>
-                <SelectItem value="cmc_drug_substance">CMC Drug Substance (3.2.S)</SelectItem>
-                <SelectItem value="cmc_drug_product">CMC Drug Product (3.2.P)</SelectItem>
-                <SelectItem value="clinical_benefit_risk">Clinical Benefit/Risk (2.5)</SelectItem>
-                <SelectItem value="nonclinical_overview">Nonclinical Overview (2.4)</SelectItem>
-                <SelectItem value="quality_overall_summary">
-                  Quality Overall Summary (2.3)
-                </SelectItem>
-                <SelectItem value="csr_synopsis">CSR Synopsis (5.3)</SelectItem>
-                <SelectItem value="protocol_synopsis">Protocol Synopsis</SelectItem>
-                {/* 510(k) Templates */}
-                <SelectItem value="510k_cover_letter">510(k) Cover Letter</SelectItem>
-                <SelectItem value="510k_se_comparison">510(k) SE Comparison</SelectItem>
-                <SelectItem value="510k_device_description">510(k) Device Description</SelectItem>
-                <SelectItem value="510k_summary">510(k) Summary (§807.92)</SelectItem>
-                <SelectItem value="510k_biocompatibility">510(k) Biocompatibility</SelectItem>
-                {/* CER eCTD 4.0 Templates */}
-                <SelectItem value="cer_evaluation_plan">CER Evaluation Plan</SelectItem>
-                <SelectItem value="cer_literature_analysis">CER Literature Analysis</SelectItem>
-                <SelectItem value="cer_benefit_risk_pmcf">CER Benefit-Risk &amp; PMCF</SelectItem>
-                <SelectItem value="cer_state_of_art">CER State of the Art</SelectItem>
+                {selectableDocTypes.map(type => (
+                  <SelectItem key={type} value={type}>
+                    {prettyLabel(type)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -528,9 +545,18 @@ function CreateRenderDialog({
   const [open, setOpen] = useState(false);
   const [templateVersionId, setTemplateVersionId] = useState('');
   const [inputsRaw, setInputsRaw] = useState('{}');
+  const [demoDocFamily, setDemoDocFamily] = useState('ind');
   const [demoDocType, setDemoDocType] = useState('');
   const createRender = useCreateRender(programId);
-  const { data: demoPacks, isLoading: demoLoading } = useDemoPacks(demoDocType);
+  const { data: catalogFamilies } = useCatalogFamilies();
+  const { data: familyDocTypes } = useCatalogDocTypes(demoDocFamily);
+  const { data: demoPacks, isLoading: demoLoading } = useDemoPacks({
+    docType: demoDocType || undefined,
+    docFamily: demoDocType ? undefined : demoDocFamily,
+  });
+
+  const selectableFamilies = catalogFamilies?.length ? catalogFamilies : ['ind'];
+  const selectableDocTypes = familyDocTypes?.length ? familyDocTypes : [];
 
   const handleSelectDemoPack = useCallback((pack: DemoPack) => {
     setInputsRaw(JSON.stringify(pack.inputs, null, 2));
@@ -612,35 +638,34 @@ function CreateRenderDialog({
               <Beaker className="h-3.5 w-3.5" />
               Use Demo Inputs
             </label>
+            <Select
+              value={demoDocFamily}
+              onValueChange={value => {
+                setDemoDocFamily(value);
+                setDemoDocType('');
+              }}
+            >
+              <SelectTrigger data-testid="demo-doc-family-select">
+                <SelectValue placeholder="Select document family…" />
+              </SelectTrigger>
+              <SelectContent>
+                {selectableFamilies.map(family => (
+                  <SelectItem key={family} value={family}>
+                    {prettyLabel(family)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={demoDocType} onValueChange={setDemoDocType}>
               <SelectTrigger data-testid="demo-doc-type-select">
                 <SelectValue placeholder="Select doc type for demo inputs…" />
               </SelectTrigger>
               <SelectContent>
-                {/* IND Templates */}
-                <SelectItem value="ectd_cover_letter">eCTD Cover Letter</SelectItem>
-                <SelectItem value="ind_1571_narrative">FDA 1571 Narrative</SelectItem>
-                <SelectItem value="ib_change_summary">IB Change Summary</SelectItem>
-                <SelectItem value="cmc_drug_substance">CMC Drug Substance (3.2.S)</SelectItem>
-                <SelectItem value="cmc_drug_product">CMC Drug Product (3.2.P)</SelectItem>
-                <SelectItem value="clinical_benefit_risk">Clinical Benefit/Risk (2.5)</SelectItem>
-                <SelectItem value="nonclinical_overview">Nonclinical Overview (2.4)</SelectItem>
-                <SelectItem value="quality_overall_summary">
-                  Quality Overall Summary (2.3)
-                </SelectItem>
-                <SelectItem value="csr_synopsis">CSR Synopsis (5.3)</SelectItem>
-                <SelectItem value="protocol_synopsis">Protocol Synopsis</SelectItem>
-                {/* 510(k) Templates */}
-                <SelectItem value="510k_cover_letter">510(k) Cover Letter</SelectItem>
-                <SelectItem value="510k_se_comparison">510(k) SE Comparison</SelectItem>
-                <SelectItem value="510k_device_description">510(k) Device Description</SelectItem>
-                <SelectItem value="510k_summary">510(k) Summary (§807.92)</SelectItem>
-                <SelectItem value="510k_biocompatibility">510(k) Biocompatibility</SelectItem>
-                {/* CER eCTD 4.0 Templates */}
-                <SelectItem value="cer_evaluation_plan">CER Evaluation Plan</SelectItem>
-                <SelectItem value="cer_literature_analysis">CER Literature Analysis</SelectItem>
-                <SelectItem value="cer_benefit_risk_pmcf">CER Benefit-Risk &amp; PMCF</SelectItem>
-                <SelectItem value="cer_state_of_art">CER State of the Art</SelectItem>
+                {selectableDocTypes.map(type => (
+                  <SelectItem key={type} value={type}>
+                    {prettyLabel(type)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {demoLoading && (
@@ -700,11 +725,26 @@ function CreateRenderDialog({
 function TemplatesTab({ programId }: { programId: string }) {
   const { data, isLoading, error, refetch } = useTemplates(programId);
   const seedTemplates = useSeedTemplates(programId);
+  const { data: catalogFamilies } = useCatalogFamilies();
+  const [selectedSeedFamily, setSelectedSeedFamily] = useState('all');
+  const [selectedSeedDocType, setSelectedSeedDocType] = useState('all');
+  const scopedFamily = selectedSeedFamily !== 'all' ? selectedSeedFamily : undefined;
+  const { data: familyDocTypes } = useCatalogDocTypes(scopedFamily);
+  const { data: scopedCatalog } = useCatalogTemplates({
+    docFamily: scopedFamily,
+    docType: selectedSeedDocType !== 'all' ? selectedSeedDocType : undefined,
+  });
   const templates = data?.items || [];
 
   const handleSeed = useCallback(() => {
-    seedTemplates.mutate(undefined);
-  }, [seedTemplates]);
+    seedTemplates.mutate({
+      doc_family: selectedSeedFamily !== 'all' ? selectedSeedFamily : undefined,
+      doc_type: selectedSeedDocType !== 'all' ? selectedSeedDocType : undefined,
+    });
+  }, [seedTemplates, selectedSeedFamily, selectedSeedDocType]);
+
+  const availableFamilies = catalogFamilies?.length ? catalogFamilies : ['ind'];
+  const availableDocTypes = familyDocTypes?.length ? familyDocTypes : [];
 
   if (isLoading) {
     return (
@@ -746,6 +786,91 @@ function TemplatesTab({ programId }: { programId: string }) {
         </Card>
       )}
 
+      <Card className="border-slate-200">
+        <CardContent className="py-4 px-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Bot className="h-4 w-4" />
+                  Guided Regulatory Setup
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Choose a document family, install starter templates, then launch renders with demo
+                  payloads.
+                </p>
+              </div>
+              <Badge variant="outline" className="text-[10px]">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Catalog-driven
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Document Family</label>
+                <Select
+                  value={selectedSeedFamily}
+                  onValueChange={value => {
+                    setSelectedSeedFamily(value);
+                    setSelectedSeedDocType('all');
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All families</SelectItem>
+                    {availableFamilies.map(family => (
+                      <SelectItem key={family} value={family}>
+                        {prettyLabel(family)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Document Type</label>
+                <Select value={selectedSeedDocType} onValueChange={setSelectedSeedDocType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    {availableDocTypes.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {prettyLabel(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleSeed}
+                  disabled={seedTemplates.isPending}
+                  id="seed-templates-btn"
+                  data-testid="seed-templates-guided-btn"
+                >
+                  {seedTemplates.isPending ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <PackagePlus className="h-3 w-3 mr-1" />
+                  )}
+                  {seedTemplates.isPending ? 'Installing…' : 'Install Starter Templates'}
+                </Button>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Matching starter templates: {scopedCatalog?.total ?? 0}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Seed error banner — friendly messages for known HTTP codes */}
       {seedTemplates.isError && (
         <Card className="border-destructive">
@@ -767,20 +892,6 @@ function TemplatesTab({ programId }: { programId: string }) {
           {templates.length} template{templates.length !== 1 ? 's' : ''}
         </p>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSeed}
-            disabled={seedTemplates.isPending}
-            data-testid="seed-templates-btn"
-          >
-            {seedTemplates.isPending ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-            ) : (
-              <PackagePlus className="h-3 w-3 mr-1" />
-            )}
-            {seedTemplates.isPending ? 'Installing…' : 'Install Starter Templates'}
-          </Button>
           <Button variant="ghost" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-3 w-3" />
           </Button>

@@ -6,7 +6,7 @@
  * @description
  * Claude.ai / ChatGPT style conversational interface.
  * Clean, focused, breathing room for thinking.
- * 
+ *
  * Now connected to Lumen Cortex backend for real AI responses.
  *
  * Design Philosophy:
@@ -69,8 +69,16 @@ interface ZenChatProps {
   projectName?: string;
   submissionType?: string;
   threadId?: string;
+  /** Auto-send this message on mount (e.g., from IND Workspace "Draft with AI") */
+  initialMessage?: string | null;
   onNewArtifact?: (artifact: CortexArtifact) => void;
   onThreadChange?: (threadId: string) => void;
+  /** Personalized greeting from user intelligence */
+  greeting?: { text: string; subtitle?: string } | null;
+  /** Last work session summary for continuity */
+  lastWork?: { contextTitle: string; contextType: string } | null;
+  /** AI-recommended next task */
+  nextTask?: { taskTitle: string; taskDescription?: string } | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -118,20 +126,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
     const urlRegex = /(https?:\/\/[^\s)]+)/g;
     const urls = message.content.match(urlRegex) || [];
-    urls.forEach((href) => {
-      if (!links.some((l) => l.href === href)) {
+    urls.forEach(href => {
+      if (!links.some(l => l.href === href)) {
         const label = href.replace(/^https?:\/\//, '').split('/')[0];
         links.push({ href, label });
       }
     });
 
-    const internalRegex = /(^|[\s(])\/(concept2cure|csr|vault|analytics|dashboard|coauthor|admin)[^\s)]*/g;
+    const internalRegex =
+      /(^|[\s(])\/(concept2cure|csr|vault|analytics|dashboard|coauthor|admin)[^\s)]*/g;
     const internalMatches = message.content.match(internalRegex) || [];
     internalMatches
-      .map((raw) => raw.trim())
-      .forEach((raw) => {
+      .map(raw => raw.trim())
+      .forEach(raw => {
         const href = raw.startsWith('/') ? raw : raw.slice(1);
-        if (!links.some((l) => l.href === href)) {
+        if (!links.some(l => l.href === href)) {
           links.push({ href, label: `Open ${href}` });
         }
       });
@@ -161,9 +170,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm',
-              isUser
-                ? 'bg-zinc-900'
-                : 'bg-gradient-to-br from-violet-500 to-violet-600'
+              isUser ? 'bg-zinc-900' : 'bg-gradient-to-br from-violet-500 to-violet-600'
             )}
           >
             {isUser ? (
@@ -198,7 +205,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {message.attachments.map((attachment) => (
+                {message.attachments.map(attachment => (
                   <div
                     key={attachment.id}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-100 rounded-lg text-sm text-zinc-600"
@@ -213,7 +220,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* Actions - appear on hover */}
             {!message.isStreaming && actionLinks.length > 0 && !isUser && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {actionLinks.map((link) => (
+                {actionLinks.map(link => (
                   <button
                     key={link.href}
                     onClick={() => onNavigate?.(link.href)}
@@ -287,45 +294,79 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// WELCOME SCREEN - Empty state, like Claude.ai
+// WELCOME SCREEN - Personalized, like Claude.ai
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
+  greeting?: { text: string; subtitle?: string } | null;
+  lastWork?: { contextTitle: string; contextType: string } | null;
+  nextTask?: { taskTitle: string; taskDescription?: string } | null;
 }
 
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuggestionClick }) => {
+const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
+  onSuggestionClick,
+  greeting,
+  lastWork,
+  nextTask,
+}) => {
   const suggestions = [
+    // If we have AI-recommended next task, show it first
+    ...(nextTask
+      ? [
+          {
+            title: nextTask.taskTitle,
+            description: nextTask.taskDescription || 'AI-recommended next step',
+            highlight: true,
+          },
+        ]
+      : []),
+    // If we have last work context, offer to continue
+    ...(lastWork
+      ? [
+          {
+            title: `Continue: ${lastWork.contextTitle}`,
+            description: `Pick up where you left off with ${lastWork.contextType.replace(/_/g, ' ')}`,
+            highlight: false,
+          },
+        ]
+      : []),
     {
       title: 'Start a 510(k) submission',
       description: 'Guide me through the predicate device selection',
+      highlight: false,
     },
     {
       title: 'Draft an IND protocol',
       description: 'Help me design a Phase 1 clinical trial',
+      highlight: false,
     },
     {
       title: 'Analyze regulatory pathway',
       description: 'Compare 510(k) vs PMA for my device',
+      highlight: false,
     },
     {
       title: 'Generate submission documents',
       description: 'Create an indications for use statement',
+      highlight: false,
     },
-  ];
+  ].slice(0, 5); // Show max 5 suggestions
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full px-4 py-12">
-      {/* Logo & greeting */}
+      {/* Logo & personalized greeting */}
       <div className="mb-6 text-center">
         <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-md shadow-violet-500/20">
           <Sparkles className="w-7 h-7 text-white" />
         </div>
         <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
-          How can I help today?
+          {greeting?.text || 'How can I help today?'}
         </h1>
         <p className="text-sm text-zinc-500 max-w-md">
-          I'm Lumen, your regulatory intelligence assistant.
+          {greeting?.subtitle
+            ? `${greeting.subtitle} · Lumen Cortex is ready`
+            : "I'm Lumen, your regulatory intelligence assistant."}
         </p>
       </div>
 
@@ -336,14 +377,28 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuggestionClick }) => {
             key={index}
             onClick={() => onSuggestionClick(suggestion.title)}
             className={cn(
-              'group p-4 text-left rounded-xl border border-zinc-200 bg-white',
-              'hover:border-zinc-300 hover:bg-zinc-50 transition-all duration-150'
+              'group p-4 text-left rounded-xl border bg-white transition-all duration-150',
+              suggestion.highlight
+                ? 'border-violet-300 bg-violet-50/50 hover:border-violet-400 hover:bg-violet-50'
+                : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
             )}
           >
-            <div className="text-sm font-medium text-zinc-900 group-hover:text-zinc-950">
+            <div
+              className={cn(
+                'text-sm font-medium group-hover:text-zinc-950',
+                suggestion.highlight ? 'text-violet-900' : 'text-zinc-900'
+              )}
+            >
               {suggestion.title}
             </div>
-            <div className="text-xs text-zinc-500 mt-1">{suggestion.description}</div>
+            <div
+              className={cn(
+                'text-xs mt-1',
+                suggestion.highlight ? 'text-violet-600' : 'text-zinc-500'
+              )}
+            >
+              {suggestion.description}
+            </div>
           </button>
         ))}
       </div>
@@ -420,7 +475,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <textarea
             ref={textareaRef}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
@@ -495,8 +550,12 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   projectName: _projectName,
   submissionType,
   threadId: initialThreadId,
+  initialMessage,
   onNewArtifact,
   onThreadChange,
+  greeting,
+  lastWork,
+  nextTask,
 }) => {
   const [, setLocation] = useLocation();
   // Cortex integration
@@ -524,7 +583,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   // Convert Cortex messages to local format
-  const messages: Message[] = cortexMessages.map((m) => ({
+  const messages: Message[] = cortexMessages.map(m => ({
     id: m.id,
     role: m.role as 'user' | 'assistant',
     content: m.content,
@@ -534,9 +593,10 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   }));
 
   // Add streaming indicator if active
-  const displayMessages = isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
-    ? messages.map((m, i) => i === messages.length - 1 ? { ...m, isStreaming: true } : m)
-    : messages;
+  const displayMessages =
+    isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
+      ? messages.map((m, i) => (i === messages.length - 1 ? { ...m, isStreaming: true } : m))
+      : messages;
 
   // Refs
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -609,6 +669,15 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     setInput(text);
   };
 
+  // Auto-send initial message (e.g., from IND Workspace → Draft with AI)
+  const initialMessageSentRef = useRef(false);
+  useEffect(() => {
+    if (initialMessage && !initialMessageSentRef.current && !isLoading && !isStreaming) {
+      initialMessageSentRef.current = true;
+      streamMessage(initialMessage);
+    }
+  }, [initialMessage, isLoading, isStreaming, streamMessage]);
+
   // Show welcome screen if no messages
   const showWelcome = displayMessages.length === 0;
 
@@ -637,16 +706,21 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         className="flex-1 overflow-y-auto zen-scroll"
       >
         {showWelcome ? (
-          <WelcomeScreen onSuggestionClick={handleSuggestionClick} />
+          <WelcomeScreen
+            onSuggestionClick={handleSuggestionClick}
+            greeting={greeting}
+            lastWork={lastWork}
+            nextTask={nextTask}
+          />
         ) : (
           <div className="py-4">
-            {displayMessages.map((message) => (
+            {displayMessages.map(message => (
               <MessageBubble
                 key={message.id}
                 message={message}
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? () => {} : undefined}
-                onFeedback={(positive) =>
+                onFeedback={positive =>
                   console.log('Feedback:', positive ? 'positive' : 'negative')
                 }
                 onNavigate={handleNavigate}
@@ -658,10 +732,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       </div>
 
       {/* Scroll to bottom button */}
-      <ScrollToBottomButton
-        visible={showScrollButton}
-        onClick={() => scrollToBottom()}
-      />
+      <ScrollToBottomButton visible={showScrollButton} onClick={() => scrollToBottom()} />
 
       {/* Input area */}
       <ChatInput

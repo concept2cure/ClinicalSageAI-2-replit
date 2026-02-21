@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import queryClient, { apiRequest } from '@/lib/queryClient';
@@ -6,9 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../contexts/TenantContext';
 import { OrganizationSwitcher } from '../components/tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../components/tenant/ClientWorkspaceSwitcher';
-
-// Lazy load the TaskManagementHub component
-const TaskManagementHub = lazy(() => import('@/components/TaskManagementHub'));
 import {
   FileText,
   Users,
@@ -86,7 +83,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -111,7 +114,28 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Area, AreaChart } from 'recharts';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Area,
+  AreaChart,
+} from 'recharts';
 import { format, addDays, differenceInDays, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -140,14 +164,14 @@ const CHART_COLORS = [
 
 // Module definitions with icons and colors
 const MODULES = {
-  'eCTD': { icon: FileText, color: COLORS.primary, label: 'eCTD Co-Author' },
-  'CMC': { icon: FlaskConical, color: COLORS.purple, label: 'CMC Dashboard' },
-  'Clinical': { icon: Activity, color: COLORS.success, label: 'Clinical Studies' },
-  'Quality': { icon: Shield, color: COLORS.warning, label: 'Quality Control' },
-  'Vault': { icon: Archive, color: COLORS.indigo, label: 'Document Vault' },
-  'Protocol': { icon: BookOpen, color: COLORS.teal, label: 'Protocol Design' },
-  'Risk': { icon: AlertTriangle, color: COLORS.danger, label: 'Risk Assessment' },
-  'Analytics': { icon: BarChart3, color: COLORS.pink, label: 'Analytics Hub' },
+  eCTD: { icon: FileText, color: COLORS.primary, label: 'eCTD Co-Author' },
+  CMC: { icon: FlaskConical, color: COLORS.purple, label: 'CMC Dashboard' },
+  Clinical: { icon: Activity, color: COLORS.success, label: 'Clinical Studies' },
+  Quality: { icon: Shield, color: COLORS.warning, label: 'Quality Control' },
+  Vault: { icon: Archive, color: COLORS.indigo, label: 'Document Vault' },
+  Protocol: { icon: BookOpen, color: COLORS.teal, label: 'Protocol Design' },
+  Risk: { icon: AlertTriangle, color: COLORS.danger, label: 'Risk Assessment' },
+  Analytics: { icon: BarChart3, color: COLORS.pink, label: 'Analytics Hub' },
 };
 
 // Main Component
@@ -164,6 +188,113 @@ export default function UnifiedSubmissionCenter() {
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterModule, setFilterModule] = useState('all');
 
+  // Agent Swarm state
+  const [activeSwarm, setActiveSwarm] = useState(null);
+  const [swarmLoading, setSwarmLoading] = useState(false);
+  const [hitlTasks, setHitlTasks] = useState([]);
+  const swarmPollRef = useRef(null);
+  const swarmTimeoutRef = useRef(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (swarmPollRef.current) clearInterval(swarmPollRef.current);
+      if (swarmTimeoutRef.current) clearTimeout(swarmTimeoutRef.current);
+    };
+  }, []);
+
+  // Launch an AI Agent Swarm for a project
+  const launchAgentSwarm = async project => {
+    if (!project) {
+      toast({
+        title: 'No Project Selected',
+        description: 'Select a project before launching a swarm.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSwarmLoading(true);
+    try {
+      const res = await apiRequest('/api/agent-swarm/swarms', 'POST', {
+        submissionId: project.id || 'sub-' + Date.now(),
+        agents: ['regulatory-reviewer', 'medical-writer', 'statistics-analyst', 'quality-checker'],
+        config: { strategy: 'parallel', maxConcurrency: 4, hitlRequired: true },
+      });
+      const swarm = typeof res === 'object' ? res : (await res.json?.()) || res;
+      setActiveSwarm(swarm);
+      // Start the swarm execution
+      await apiRequest(`/api/agent-swarm/swarms/${swarm.id}/start`, 'POST');
+      toast({
+        title: 'AI Swarm Launched',
+        description: `${swarm.agents?.length || 4} agents working on "${project.name || project.title}"`,
+      });
+      pollSwarmStatus(swarm.id);
+    } catch (err) {
+      console.error('Swarm launch error:', err);
+      toast({
+        title: 'Swarm Launch Failed',
+        description: 'Could not start the AI agent swarm. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSwarmLoading(false);
+    }
+  };
+
+  // Poll swarm status for HITL tasks and completion
+  const pollSwarmStatus = swarmId => {
+    if (swarmPollRef.current) clearInterval(swarmPollRef.current);
+    if (swarmTimeoutRef.current) clearTimeout(swarmTimeoutRef.current);
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/agent-swarm/swarms/${swarmId}`, { credentials: 'include' });
+        if (!res.ok) {
+          clearInterval(interval);
+          swarmPollRef.current = null;
+          return;
+        }
+        const data = await res.json();
+        setActiveSwarm(data);
+        // Collect HITL-pending tasks
+        const pending = (data.tasks || []).filter(t => t.status === 'needs-human-review');
+        setHitlTasks(pending);
+        if (data.status === 'completed' || data.status === 'failed') {
+          clearInterval(interval);
+          swarmPollRef.current = null;
+          toast({
+            title: data.status === 'completed' ? 'Swarm Complete' : 'Swarm Failed',
+            description: `Agent swarm finished with status: ${data.status}`,
+          });
+        }
+      } catch {
+        clearInterval(interval);
+        swarmPollRef.current = null;
+      }
+    }, 3000);
+    swarmPollRef.current = interval;
+    // Auto-stop polling after 5 minutes
+    swarmTimeoutRef.current = setTimeout(() => {
+      clearInterval(interval);
+      swarmPollRef.current = null;
+    }, 300000);
+  };
+
+  // Approve a HITL task
+  const approveHitlTask = async taskId => {
+    if (!activeSwarm) return;
+    try {
+      await apiRequest(`/api/agent-swarm/swarms/${activeSwarm.id}/hitl/${taskId}/approve`, 'POST', {
+        approved: true,
+        feedback: 'Approved by submission manager',
+      });
+      setHitlTasks(prev => prev.filter(t => t.id !== taskId));
+      toast({ title: 'Task Approved', description: 'Agent will continue processing.' });
+    } catch (err) {
+      toast({ title: 'Approval Failed', description: String(err), variant: 'destructive' });
+    }
+  };
+
   // Fetch projects
   const { data: projectsData, isLoading: projectsLoading } = useQuery({
     queryKey: ['/api/submission-center/projects'],
@@ -178,17 +309,17 @@ export default function UnifiedSubmissionCenter() {
   const { data: intelligenceData } = useQuery({
     queryKey: ['/api/submission-center/regulatory-intelligence'],
   });
-  
+
   // Fetch pipeline data
   const { data: pipelineData } = useQuery({
     queryKey: ['/api/submission-center/pipeline'],
   });
 
   // Navigate to module helper
-  const navigateToModule = (moduleKey) => {
-    switch(moduleKey) {
+  const navigateToModule = moduleKey => {
+    switch (moduleKey) {
       case 'eCTD':
-        setLocation('/coauthor');  // Fixed: correct route for eCTD Co-Author
+        setLocation('/coauthor'); // Fixed: correct route for eCTD Co-Author
         break;
       case 'CMC':
         setLocation('/cmc-blueprint');
@@ -212,7 +343,7 @@ export default function UnifiedSubmissionCenter() {
 
   // Create project mutation
   const createProjectMutation = useMutation({
-    mutationFn: (data) => apiRequest('/api/submission-center/projects', 'POST', data),
+    mutationFn: data => apiRequest('/api/submission-center/projects', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['/api/submission-center/projects']);
       setShowCreateProjectDialog(false);
@@ -225,7 +356,7 @@ export default function UnifiedSubmissionCenter() {
 
   // Create task mutation
   const createTaskMutation = useMutation({
-    mutationFn: (data) => apiRequest('/api/submission-center/tasks', 'POST', data),
+    mutationFn: data => apiRequest('/api/submission-center/tasks', 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['/api/submission-center/tasks']);
       setShowCreateTaskDialog(false);
@@ -262,34 +393,42 @@ export default function UnifiedSubmissionCenter() {
       inProgressTasks: tasks.filter(t => t.status === 'in-progress').length,
       completedTasks: tasks.filter(t => t.status === 'completed').length,
       blockedTasks: tasks.filter(t => t.status === 'blocked').length,
-      overdueTasks: tasks.filter(t => 
-        t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'completed'
+      overdueTasks: tasks.filter(
+        t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'completed'
       ).length,
-      upcomingDeadlines: projects.filter(p => 
-        p.submissionDeadline && 
-        differenceInDays(new Date(p.submissionDeadline), new Date()) <= 30 &&
-        differenceInDays(new Date(p.submissionDeadline), new Date()) >= 0
+      upcomingDeadlines: projects.filter(
+        p =>
+          p.submissionDeadline &&
+          differenceInDays(new Date(p.submissionDeadline), new Date()) <= 30 &&
+          differenceInDays(new Date(p.submissionDeadline), new Date()) >= 0
       ).length,
-      averageCompletion: projects.length > 0 
-        ? Math.round(projects.reduce((sum, p) => sum + (p.completionPercentage || 0), 0) / projects.length)
-        : 0,
+      averageCompletion:
+        projects.length > 0
+          ? Math.round(
+              projects.reduce((sum, p) => sum + (p.completionPercentage || 0), 0) / projects.length
+            )
+          : 0,
       criticalTasks: tasks.filter(t => t.priority === 'critical').length,
       highRiskProjects: projects.filter(p => (p.riskScore || 0) > 70).length,
-      complianceScore: projects.length > 0
-        ? Math.round(projects.reduce((sum, p) => sum + (p.complianceScore || 100), 0) / projects.length)
-        : 100,
+      complianceScore:
+        projects.length > 0
+          ? Math.round(
+              projects.reduce((sum, p) => sum + (p.complianceScore || 100), 0) / projects.length
+            )
+          : 100,
     };
   }, [projectsData, tasksData]);
 
   // Filter projects and tasks based on search and filters
   const filteredProjects = useMemo(() => {
     let projects = projectsData?.data || [];
-    
+
     if (searchQuery) {
-      projects = projects.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.type?.toLowerCase().includes(searchQuery.toLowerCase())
+      projects = projects.filter(
+        p =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.type?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -302,11 +441,12 @@ export default function UnifiedSubmissionCenter() {
 
   const filteredTasks = useMemo(() => {
     let tasks = tasksData?.data || [];
-    
+
     if (searchQuery) {
-      tasks = tasks.filter(t => 
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      tasks = tasks.filter(
+        t =>
+          t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.description?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -385,7 +525,7 @@ export default function UnifiedSubmissionCenter() {
                 <Input
                   placeholder="Search projects, tasks..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   className="pl-9 w-64"
                 />
               </div>
@@ -532,14 +672,16 @@ export default function UnifiedSubmissionCenter() {
                             <p>No projects found</p>
                           </div>
                         ) : (
-                          filteredProjects.slice(0, 5).map((project) => (
-                            <ProjectCard
-                              key={project.id}
-                              project={project}
-                              onSelect={() => setSelectedProject(project)}
-                              selected={selectedProject?.id === project.id}
-                            />
-                          ))
+                          filteredProjects
+                            .slice(0, 5)
+                            .map(project => (
+                              <ProjectCard
+                                key={project.id}
+                                project={project}
+                                onSelect={() => setSelectedProject(project)}
+                                selected={selectedProject?.id === project.id}
+                              />
+                            ))
                         )}
                       </div>
                     </ScrollArea>
@@ -554,14 +696,107 @@ export default function UnifiedSubmissionCenter() {
                         <CardTitle className="text-lg">Submission Pipeline</CardTitle>
                         <CardDescription>Workflow stages across all projects</CardDescription>
                       </div>
-                      <Badge variant="outline" className="border-purple-200 text-purple-700">
-                        <Workflow className="h-3 w-3 mr-1" />
-                        Live
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                          disabled={swarmLoading || !selectedProject}
+                          onClick={() => launchAgentSwarm(selectedProject)}
+                        >
+                          {swarmLoading ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Cpu className="h-3 w-3" />
+                          )}
+                          Launch AI Swarm
+                        </Button>
+                        <Badge variant="outline" className="border-purple-200 text-purple-700">
+                          <Workflow className="h-3 w-3 mr-1" />
+                          Live
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4">
+                  <CardContent className="p-4 space-y-4">
                     <PipelineView projects={filteredProjects.slice(0, 3)} />
+
+                    {/* Active Agent Swarm Status */}
+                    {activeSwarm && (
+                      <div className="mt-4 border rounded-lg p-3 bg-indigo-50/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Cpu className="h-4 w-4 text-indigo-600" />
+                            <span className="text-sm font-medium text-indigo-800">Agent Swarm</span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-xs',
+                                activeSwarm.status === 'completed'
+                                  ? 'border-green-300 text-green-700'
+                                  : activeSwarm.status === 'running'
+                                    ? 'border-blue-300 text-blue-700'
+                                    : activeSwarm.status === 'failed'
+                                      ? 'border-red-300 text-red-700'
+                                      : 'border-gray-300 text-gray-700'
+                              )}
+                            >
+                              {activeSwarm.status || 'pending'}
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {activeSwarm.agents?.length || 0} agents
+                          </span>
+                        </div>
+
+                        {/* Progress */}
+                        {activeSwarm.tasks && (
+                          <Progress
+                            value={Math.round(
+                              (activeSwarm.tasks.filter(t => t.status === 'completed').length /
+                                Math.max(activeSwarm.tasks.length, 1)) *
+                                100
+                            )}
+                            className="h-2"
+                          />
+                        )}
+
+                        {/* HITL Approval Cards */}
+                        {hitlTasks.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-amber-700 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Human Review Required ({hitlTasks.length})
+                            </p>
+                            {hitlTasks.slice(0, 3).map(task => (
+                              <div
+                                key={task.id}
+                                className="flex items-center justify-between bg-white rounded-md border border-amber-200 p-2"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium truncate">
+                                    {task.description || task.type}
+                                  </p>
+                                  <p className="text-[10px] text-gray-500">
+                                    {task.agentId || 'Agent'}
+                                  </p>
+                                </div>
+                                <div className="flex gap-1 ml-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 px-2 text-xs text-green-700 border-green-200"
+                                    onClick={() => approveHitlTask(task.id)}
+                                  >
+                                    <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -635,12 +870,24 @@ export default function UnifiedSubmissionCenter() {
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
-                      
+
                       {/* Task Quick Stats */}
                       <div className="space-y-2">
-                        <TaskStatRow label="Critical Tasks" count={metrics.criticalTasks} color={COLORS.danger} />
-                        <TaskStatRow label="Overdue Tasks" count={metrics.overdueTasks} color={COLORS.warning} />
-                        <TaskStatRow label="Blocked Tasks" count={metrics.blockedTasks} color={COLORS.danger} />
+                        <TaskStatRow
+                          label="Critical Tasks"
+                          count={metrics.criticalTasks}
+                          color={COLORS.danger}
+                        />
+                        <TaskStatRow
+                          label="Overdue Tasks"
+                          count={metrics.overdueTasks}
+                          color={COLORS.warning}
+                        />
+                        <TaskStatRow
+                          label="Blocked Tasks"
+                          count={metrics.blockedTasks}
+                          color={COLORS.danger}
+                        />
                         <TaskStatRow label="Completed Today" count={3} color={COLORS.success} />
                       </div>
                     </div>
@@ -735,7 +982,7 @@ export default function UnifiedSubmissionCenter() {
                     {/* Online Users */}
                     <div className="flex items-center gap-2">
                       <div className="flex -space-x-2">
-                        {[1, 2, 3, 4, 5].map((i) => (
+                        {[1, 2, 3, 4, 5].map(i => (
                           <Avatar key={i} className="h-8 w-8 border-2 border-white">
                             <AvatarFallback className="text-xs">U{i}</AvatarFallback>
                           </Avatar>
@@ -786,9 +1033,7 @@ export default function UnifiedSubmissionCenter() {
           <TimelineView projects={filteredProjects} tasks={filteredTasks} />
         )}
 
-        {viewMode === 'pipeline' && (
-          <PipelineDetailView projects={filteredProjects} />
-        )}
+        {viewMode === 'pipeline' && <PipelineDetailView projects={filteredProjects} />}
       </div>
 
       {/* Create Project Dialog */}
@@ -812,7 +1057,18 @@ export default function UnifiedSubmissionCenter() {
 }
 
 // Component: Metric Card
-function MetricCard({ title, value, total, suffix, subtitle, icon: Icon, color, trend, alert, progress }) {
+function MetricCard({
+  title,
+  value,
+  total,
+  suffix,
+  subtitle,
+  icon: Icon,
+  color,
+  trend,
+  alert,
+  progress,
+}) {
   return (
     <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -829,23 +1085,20 @@ function MetricCard({ title, value, total, suffix, subtitle, icon: Icon, color, 
         <div className="space-y-1">
           <p className="text-sm text-gray-600">{title}</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{value}{suffix}</span>
-            {total && (
-              <span className="text-sm text-gray-500">/ {total}</span>
-            )}
+            <span className="text-2xl font-bold">
+              {value}
+              {suffix}
+            </span>
+            {total && <span className="text-sm text-gray-500">/ {total}</span>}
           </div>
-          {subtitle && (
-            <p className="text-xs text-gray-500">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
           {trend && (
             <div className="flex items-center gap-1 mt-2">
               <TrendingUp className="h-4 w-4 text-green-600" />
               <span className="text-sm text-green-600">+{trend}%</span>
             </div>
           )}
-          {progress && (
-            <Progress value={value} className="h-2 mt-2" />
-          )}
+          {progress && <Progress value={value} className="h-2 mt-2" />}
         </div>
       </CardContent>
     </Card>
@@ -871,8 +1124,8 @@ function ProjectCard({ project, onSelect, selected }) {
   return (
     <div
       className={cn(
-        "p-4 rounded-lg border transition-all cursor-pointer hover:shadow-sm",
-        selected ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white"
+        'p-4 rounded-lg border transition-all cursor-pointer hover:shadow-sm',
+        selected ? 'border-blue-500 bg-blue-50/50' : 'border-gray-200 bg-white'
       )}
       onClick={onSelect}
     >
@@ -884,14 +1137,16 @@ function ProjectCard({ project, onSelect, selected }) {
               {project.status}
             </Badge>
           </div>
-          <p className="text-xs text-gray-600 mt-1">{project.type} • {project.agency}</p>
+          <p className="text-xs text-gray-600 mt-1">
+            {project.type} • {project.agency}
+          </p>
         </div>
-        <AlertCircle className={cn("h-4 w-4", priorityColors[project.priority])} />
+        <AlertCircle className={cn('h-4 w-4', priorityColors[project.priority])} />
       </div>
-      
+
       <div className="space-y-2">
         <Progress value={project.completionPercentage || 0} className="h-2" />
-        
+
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
@@ -916,7 +1171,7 @@ function ProjectCard({ project, onSelect, selected }) {
 
         {project.modules && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {project.modules.slice(0, 3).map((module) => (
+            {project.modules.slice(0, 3).map(module => (
               <Badge key={module} variant="outline" className="text-xs">
                 {module}
               </Badge>
@@ -941,7 +1196,10 @@ function ModuleCard({ name, icon: Icon, color, taskCount, activeCount, onClick }
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="p-2 rounded-lg transition-transform group-hover:scale-110" style={{ backgroundColor: `${color}20` }}>
+        <div
+          className="p-2 rounded-lg transition-transform group-hover:scale-110"
+          style={{ backgroundColor: `${color}20` }}
+        >
           <Icon className="h-5 w-5" style={{ color }} />
         </div>
         <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
@@ -963,19 +1221,23 @@ function ModuleCard({ name, icon: Icon, color, taskCount, activeCount, onClick }
 // Component: Pipeline View
 function PipelineView({ projects }) {
   const stages = ['Planning', 'Authoring', 'Review', 'Submission', 'Agency Review', 'Approved'];
-  
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
         {stages.map((stage, index) => (
           <div key={stage} className="flex-1 text-center">
             <div className="flex items-center justify-center mb-1">
-              <div className={cn(
-                "h-8 w-8 rounded-full flex items-center justify-center font-semibold",
-                index === 0 ? "bg-blue-100 text-blue-700" :
-                index === stages.length - 1 ? "bg-green-100 text-green-700" :
-                "bg-gray-100 text-gray-700"
-              )}>
+              <div
+                className={cn(
+                  'h-8 w-8 rounded-full flex items-center justify-center font-semibold',
+                  index === 0
+                    ? 'bg-blue-100 text-blue-700'
+                    : index === stages.length - 1
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-700'
+                )}
+              >
                 {index + 1}
               </div>
             </div>
@@ -984,25 +1246,25 @@ function PipelineView({ projects }) {
         ))}
       </div>
 
-      {projects.map((project) => (
+      {projects.map(project => (
         <div key={project.id} className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all"
-                style={{ width: `${(project.completionPercentage || 0)}%` }}
+                style={{ width: `${project.completionPercentage || 0}%` }}
               />
             </div>
           </div>
           <div className="relative flex items-center justify-between">
             {stages.map((_, index) => (
-              <div 
+              <div
                 key={index}
                 className={cn(
-                  "h-4 w-4 rounded-full border-2 bg-white",
+                  'h-4 w-4 rounded-full border-2 bg-white',
                   index <= Math.floor((project.completionPercentage || 0) / (100 / stages.length))
-                    ? "border-blue-500"
-                    : "border-gray-300"
+                    ? 'border-blue-500'
+                    : 'border-gray-300'
                 )}
               />
             ))}
@@ -1023,7 +1285,9 @@ function TaskStatRow({ label, count, color }) {
     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
       <span className="text-sm text-gray-600">{label}</span>
       <div className="flex items-center gap-2">
-        <span className="font-semibold" style={{ color }}>{count}</span>
+        <span className="font-semibold" style={{ color }}>
+          {count}
+        </span>
       </div>
     </div>
   );
@@ -1039,7 +1303,7 @@ function IntelligenceItem({ item }) {
   };
 
   // Safely parse and format the date
-  const formatDate = (dateValue) => {
+  const formatDate = dateValue => {
     if (!dateValue) return 'Unknown date';
     try {
       const date = new Date(dateValue);
@@ -1087,9 +1351,7 @@ function ComplianceMetric({ label, score, status }) {
       <span className="text-sm text-gray-600">{label}</span>
       <div className="flex items-center gap-2">
         <Progress value={score} className="w-24 h-2" />
-        <span className={cn("text-sm font-medium", statusColors[status])}>
-          {score}%
-        </span>
+        <span className={cn('text-sm font-medium', statusColors[status])}>{score}%</span>
       </div>
     </div>
   );
@@ -1125,7 +1387,7 @@ function KanbanBoard({ tasks, onTaskUpdate }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {columns.map((column) => (
+      {columns.map(column => (
         <div key={column.id} className="space-y-3">
           <div className="flex items-center justify-between p-3 rounded-lg bg-gray-100">
             <h3 className="font-semibold text-sm">{column.title}</h3>
@@ -1136,12 +1398,8 @@ function KanbanBoard({ tasks, onTaskUpdate }) {
           <div className="space-y-2">
             {tasks
               .filter(t => t.status === column.id)
-              .map((task) => (
-                <KanbanTaskCard
-                  key={task.id}
-                  task={task}
-                  onUpdate={onTaskUpdate}
-                />
+              .map(task => (
+                <KanbanTaskCard key={task.id} task={task} onUpdate={onTaskUpdate} />
               ))}
           </div>
         </div>
@@ -1160,7 +1418,12 @@ function KanbanTaskCard({ task, onUpdate }) {
   };
 
   return (
-    <Card className={cn("p-3 cursor-move hover:shadow-md transition-shadow border-l-4", priorityColors[task.priority])}>
+    <Card
+      className={cn(
+        'p-3 cursor-move hover:shadow-md transition-shadow border-l-4',
+        priorityColors[task.priority]
+      )}
+    >
       <div className="space-y-2">
         <h4 className="font-medium text-sm line-clamp-2">{task.title}</h4>
         <div className="flex items-center gap-2 text-xs text-gray-600">
@@ -1239,7 +1502,7 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
     modules: [],
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     onCreate(formData);
   };
@@ -1253,7 +1516,7 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
             Start a new regulatory submission project with automated workflow setup
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -1261,15 +1524,18 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Drug XYZ NDA Submission"
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="type">Submission Type</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+              <Select
+                value={formData.type}
+                onValueChange={value => setFormData({ ...formData, type: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1283,10 +1549,13 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="agency">Regulatory Agency</Label>
-              <Select value={formData.agency} onValueChange={(value) => setFormData({ ...formData, agency: value })}>
+              <Select
+                value={formData.agency}
+                onValueChange={value => setFormData({ ...formData, agency: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1299,10 +1568,13 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="priority">Priority Level</Label>
-              <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+              <Select
+                value={formData.priority}
+                onValueChange={value => setFormData({ ...formData, priority: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1314,29 +1586,29 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="deadline">Submission Deadline</Label>
               <Input
                 id="deadline"
                 type="date"
                 value={formData.submissionDeadline}
-                onChange={(e) => setFormData({ ...formData, submissionDeadline: e.target.value })}
+                onChange={e => setFormData({ ...formData, submissionDeadline: e.target.value })}
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               placeholder="Brief description of the submission project..."
               rows={3}
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Enable Modules</Label>
             <div className="grid grid-cols-3 gap-3">
@@ -1346,11 +1618,14 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
                     type="checkbox"
                     id={key}
                     checked={formData.modules.includes(key)}
-                    onChange={(e) => {
+                    onChange={e => {
                       if (e.target.checked) {
                         setFormData({ ...formData, modules: [...formData.modules, key] });
                       } else {
-                        setFormData({ ...formData, modules: formData.modules.filter(m => m !== key) });
+                        setFormData({
+                          ...formData,
+                          modules: formData.modules.filter(m => m !== key),
+                        });
                       }
                     }}
                     className="rounded border-gray-300"
@@ -1362,7 +1637,7 @@ function CreateProjectDialog({ open, onOpenChange, onCreate, isLoading }) {
               ))}
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
@@ -1403,7 +1678,7 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
     estimatedHours: '',
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     onCreate({
       ...formData,
@@ -1417,21 +1692,22 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>
-            Add a new task to the submission workflow
-          </DialogDescription>
+          <DialogDescription>Add a new task to the submission workflow</DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="project">Project</Label>
-              <Select value={formData.projectId} onValueChange={(value) => setFormData({ ...formData, projectId: value })}>
+              <Select
+                value={formData.projectId}
+                onValueChange={value => setFormData({ ...formData, projectId: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((project) => (
+                  {projects.map(project => (
                     <SelectItem key={project.id} value={project.id.toString()}>
                       {project.name}
                     </SelectItem>
@@ -1439,10 +1715,13 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="module">Module</Label>
-              <Select value={formData.moduleId} onValueChange={(value) => setFormData({ ...formData, moduleId: value })}>
+              <Select
+                value={formData.moduleId}
+                onValueChange={value => setFormData({ ...formData, moduleId: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select module" />
                 </SelectTrigger>
@@ -1457,22 +1736,25 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
               </Select>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="title">Task Title</Label>
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
               placeholder="e.g., Review CMC Section 3.2.S.4"
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+              <Select
+                value={formData.category}
+                onValueChange={value => setFormData({ ...formData, category: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1486,10 +1768,13 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+              <Select
+                value={formData.type}
+                onValueChange={value => setFormData({ ...formData, type: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1502,10 +1787,13 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+              <Select
+                value={formData.priority}
+                onValueChange={value => setFormData({ ...formData, priority: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1518,30 +1806,30 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
               </Select>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="assignee">Assignee</Label>
               <Input
                 id="assignee"
                 value={formData.assignee}
-                onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
+                onChange={e => setFormData({ ...formData, assignee: e.target.value })}
                 placeholder="Name"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="assigneeEmail">Assignee Email</Label>
               <Input
                 id="assigneeEmail"
                 type="email"
                 value={formData.assigneeEmail}
-                onChange={(e) => setFormData({ ...formData, assigneeEmail: e.target.value })}
+                onChange={e => setFormData({ ...formData, assigneeEmail: e.target.value })}
                 placeholder="email@example.com"
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dueDate">Due Date</Label>
@@ -1549,10 +1837,10 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
                 id="dueDate"
                 type="date"
                 value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="estimatedHours">Estimated Hours</Label>
               <Input
@@ -1560,23 +1848,23 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
                 type="number"
                 step="0.5"
                 value={formData.estimatedHours}
-                onChange={(e) => setFormData({ ...formData, estimatedHours: e.target.value })}
+                onChange={e => setFormData({ ...formData, estimatedHours: e.target.value })}
                 placeholder="8"
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               placeholder="Task description and requirements..."
               rows={3}
             />
           </div>
-          
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
@@ -1604,15 +1892,15 @@ function CreateTaskDialog({ open, onOpenChange, onCreate, isLoading, projects })
 // Navigation helper
 function navigateToModule(module) {
   const moduleRoutes = {
-    'eCTD': '/coauthor',
-    'CMC': '/cmc-blueprint',
-    'Clinical': '/csr-intelligence',
-    'Quality': '/quality-control',
-    'Vault': '/vault',
-    'Protocol': '/study-architect',
-    'Risk': '/regulatory-risk-dashboard',
-    'Analytics': '/analytics',
+    eCTD: '/coauthor',
+    CMC: '/cmc-blueprint',
+    Clinical: '/csr-intelligence',
+    Quality: '/quality-control',
+    Vault: '/vault',
+    Protocol: '/study-architect',
+    Risk: '/regulatory-risk-dashboard',
+    Analytics: '/analytics',
   };
-  
+
   window.location.href = moduleRoutes[module] || '/';
 }

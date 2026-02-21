@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "510k_se_matrix_v2",
+  "title": "510(k) Substantial Equivalence Matrix V2 — Evidence-Linked",
+  "description": "Schema for the V2 SE matrix payload with risk_code + evidence_task_ids linkage. Used by SEMatrixDocxFactory.render_v2() to produce DOCX output.",
+  "version": "6.6.0",
+  "type": "object",
+  "required": [
+    "template_id",
+    "version",
+    "device_name",
+    "predicate_k_number",
+    "predicate_device_name",
+    "comparison_rows",
+    "evidence_tasks",
+    "defense_readiness_score",
+    "generated_at",
+    "risk_code_map_version"
+  ],
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "const": "510k_se_matrix_v2"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "device_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "predicate_k_number": {
+      "type": "string",
+      "pattern": "^K\\d{6}$"
+    },
+    "predicate_device_name": {
+      "type": "string"
+    },
+    "comparison_rows": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "$ref": "#/$defs/SEMatrixRowV2"
+      }
+    },
+    "evidence_tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EvidenceTaskV2"
+      }
+    },
+    "defense_readiness_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "risk_code_map_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "evidence_linkage": {
+      "type": "boolean",
+      "const": true
+    },
+    "regulatory_standard": {
+      "type": "string",
+      "const": "FDA_510k_SE"
+    }
+  },
+  "$defs": {
+    "RiskCode": {
+      "type": "string",
+      "enum": [
+        "IU_MISMATCH",
+        "INDICATIONS_EXPANDED",
+        "TECH_DIFFERENCE",
+        "ENERGY_SOURCE_CHANGE",
+        "DESIGN_ARCH_CHANGE",
+        "MATERIAL_CHANGE",
+        "TISSUE_CONTACT_CHANGE",
+        "CONTACT_DURATION_CHANGE",
+        "STERILIZATION_METHOD_CHANGE",
+        "PACKAGING_SYSTEM_CHANGE",
+        "SHELF_LIFE_CHANGE",
+        "SOFTWARE_PRESENT_NEW",
+        "SOFTWARE_SAFETY_CLASS_DIFF",
+        "CYBERSECURITY_SURFACE_INCREASED",
+        "INTEROPERABILITY_CLAIM",
+        "ML_ADAPTIVITY",
+        "PERFORMANCE_CLAIM_CHANGE",
+        "CLINICAL_EVIDENCE_GAP",
+        "HUMAN_FACTORS_CHANGE",
+        "STANDARDS_GAP",
+        "LABELING_IFU_GAP",
+        "PMS_SIGNAL_RISK",
+        "PREDICATE_TOXICITY_HIGH",
+        "PREDICATE_LINEAGE_COMPROMISED"
+      ]
+    },
+    "DiffFlag": {
+      "type": "string",
+      "enum": ["EQUIVALENT", "DISCUSSION_REQUIRED", "SIGNIFICANT"]
+    },
+    "SEMatrixRowV2": {
+      "type": "object",
+      "required": [
+        "sort_order",
+        "characteristic",
+        "category",
+        "subject_value",
+        "predicate_value",
+        "diff_flag",
+        "discussion_text",
+        "evidence_task_ids"
+      ],
+      "properties": {
+        "sort_order": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9
+        },
+        "characteristic": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "intended_use",
+            "technology",
+            "materials",
+            "energy_source",
+            "sterilization",
+            "biocompatibility",
+            "software",
+            "performance",
+            "general"
+          ]
+        },
+        "subject_value": {
+          "type": "string"
+        },
+        "predicate_value": {
+          "type": "string"
+        },
+        "diff_flag": {
+          "$ref": "#/$defs/DiffFlag"
+        },
+        "discussion_text": {
+          "type": "string"
+        },
+        "risk_code": {
+          "oneOf": [{ "$ref": "#/$defs/RiskCode" }, { "type": "null" }]
+        },
+        "triggered_risk_codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RiskCode" },
+          "description": "All risk codes triggered by this row (may include secondary codes)"
+        },
+        "evidence_task_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{12}$"
+          }
+        },
+        "requires_citation": {
+          "type": "boolean"
+        },
+        "suggested_tests": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "diff_severity": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high", "critical"]
+        },
+        "subject_evidence_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "predicate_evidence_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "subject_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "predicate_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "EvidenceTaskV2": {
+      "type": "object",
+      "required": [
+        "task_id",
+        "category",
+        "risk_code",
+        "label",
+        "severity",
+        "recommended_artifacts",
+        "mapping"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{12}$"
+        },
+        "category": {
+          "type": "string"
+        },
+        "risk_code": {
+          "$ref": "#/$defs/RiskCode"
+        },
+        "label": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"]
+        },
+        "recommended_artifacts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "mapping": {
+          "type": "object",
+          "required": ["truth_machine_placeholder", "se_matrix_linkable", "ectd_section"],
+          "properties": {
+            "truth_machine_placeholder": { "type": "boolean" },
+            "se_matrix_linkable": { "type": "boolean" },
+            "ectd_section": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

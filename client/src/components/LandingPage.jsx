@@ -18,7 +18,7 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="absolute inset-0 bg-[url('/assets/particle-bg.svg')] bg-cover bg-center opacity-30"
+            className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 opacity-40"
           />
           <motion.div
             initial={{ scale: 1 }}

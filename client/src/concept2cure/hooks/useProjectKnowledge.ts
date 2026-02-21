@@ -1,9 +1,9 @@
 /**
  * Concept2Cure - Project Knowledge Hook
- * 
+ *
  * Manages document uploads, context size calculation, and custom instructions.
  * Claude.ai parity: Project Knowledge panel functionality.
- * 
+ *
  * @module concept2cure/hooks/useProjectKnowledge
  * @version 1.0.0
  */
@@ -68,6 +68,13 @@ const ALLOWED_FILE_TYPES = [
 // HELPER FUNCTIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    sessionStorage.getItem('trialsage_access_token') ||
+    localStorage.getItem('trialsage_access_token');
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 /**
  * Estimate token count from text length.
  * More accurate estimation would use tiktoken or similar.
@@ -114,10 +121,8 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // Calculate context metrics
-  const contextTokens = knowledge?.documents.reduce(
-    (sum, doc) => sum + (doc.tokenCount || 0),
-    0
-  ) || 0;
+  const contextTokens =
+    knowledge?.documents.reduce((sum, doc) => sum + (doc.tokenCount || 0), 0) || 0;
   const maxContextTokens = MAX_CONTEXT_TOKENS;
   const contextUsagePercent = Math.round((contextTokens / maxContextTokens) * 100);
 
@@ -134,12 +139,16 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
 
       try {
         // Try API first
-        const response = await fetch(`/api/concept2cure/projects/${projectId}/knowledge`);
-        
+        const response = await fetch(`/api/concept2cure/projects/${projectId}/knowledge`, {
+          headers: getAuthHeaders(),
+        });
+
         if (response.ok) {
           const payload = await response.json().catch(() => ({}));
           if (payload?.success === false) {
-            throw new Error(payload?.error?.message || payload?.error || 'Failed to load project knowledge');
+            throw new Error(
+              payload?.error?.message || payload?.error || 'Failed to load project knowledge'
+            );
           }
           const data = payload?.data ?? payload;
           setKnowledge(data);
@@ -184,183 +193,200 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
   // Save knowledge to localStorage as backup
   useEffect(() => {
     if (projectId && knowledge) {
-      localStorage.setItem(
-        `concept2cure_knowledge_${projectId}`,
-        JSON.stringify(knowledge)
-      );
+      localStorage.setItem(`concept2cure_knowledge_${projectId}`, JSON.stringify(knowledge));
     }
   }, [projectId, knowledge]);
 
   /**
    * Upload a document to the project knowledge.
    */
-  const uploadDocument = useCallback(async (file: File): Promise<UploadedDocument | null> => {
-    if (!projectId) {
-      setError('No project selected');
-      return null;
-    }
-
-    // Validate file type
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setError(`Unsupported file type: ${file.type}. Allowed: PDF, DOCX, TXT, MD, XLSX, CSV`);
-      return null;
-    }
-
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      setError(`File too large. Maximum size: ${MAX_FILE_SIZE_MB}MB`);
-      return null;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-    setError(null);
-
-    try {
-      // Create FormData for upload
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('projectId', projectId);
-
-      // Simulate progress (real implementation would use XMLHttpRequest)
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
-
-      let processedDocument: UploadedDocument;
-
-      try {
-        // Try API upload
-        const response = await fetch('/api/concept2cure/documents/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        clearInterval(progressInterval);
-
-        if (response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          const result: DocumentProcessingResult = payload?.data ?? payload;
-          processedDocument = result.document;
-        } else {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload?.error?.message || payload?.error || 'API upload failed');
-        }
-      } catch {
-        // Fallback: Create document locally with basic processing
-        clearInterval(progressInterval);
-
-        // Read file as text if possible
-        let extractedText = '';
-        let pageCount: number | undefined;
-
-        if (file.type === 'text/plain' || file.type === 'text/markdown' || file.type === 'text/csv') {
-          extractedText = await file.text();
-        } else if (file.type === 'application/pdf') {
-          // For PDFs, we'd need a parser. Estimate based on size.
-          extractedText = `[PDF content - ${formatFileSize(file.size)}]`;
-          pageCount = Math.ceil(file.size / 3000); // Rough estimate
-        } else {
-          extractedText = `[Document content - ${formatFileSize(file.size)}]`;
-        }
-
-        const tokenCount = estimateTokens(extractedText);
-
-        // Check if adding this would exceed context limit
-        if (contextTokens + tokenCount > maxContextTokens) {
-          setError(`Adding this document would exceed the ${maxContextTokens.toLocaleString()} token limit`);
-          setIsUploading(false);
-          return null;
-        }
-
-        processedDocument = {
-          id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          name: file.name,
-          type: getExtensionFromMime(file.type),
-          size: file.size,
-          uploadedAt: new Date().toISOString(),
-          tokenCount,
-          pageCount,
-          status: 'processed',
-        };
+  const uploadDocument = useCallback(
+    async (file: File): Promise<UploadedDocument | null> => {
+      if (!projectId) {
+        setError('No project selected');
+        return null;
       }
 
-      setUploadProgress(100);
+      // Validate file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        setError(`Unsupported file type: ${file.type}. Allowed: PDF, DOCX, TXT, MD, XLSX, CSV`);
+        return null;
+      }
 
-      // Add to knowledge
-      setKnowledge((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          documents: [...prev.documents, processedDocument],
-        };
-      });
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setError(`File too large. Maximum size: ${MAX_FILE_SIZE_MB}MB`);
+        return null;
+      }
 
-      return processedDocument;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
-      return null;
-    } finally {
-      setIsUploading(false);
+      setIsUploading(true);
       setUploadProgress(0);
-    }
-  }, [projectId, contextTokens, maxContextTokens]);
+      setError(null);
+
+      try {
+        // Create FormData for upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        // Simulate progress (real implementation would use XMLHttpRequest)
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => Math.min(prev + 10, 90));
+        }, 200);
+
+        let processedDocument: UploadedDocument;
+
+        try {
+          // Try API upload
+          const response = await fetch('/api/concept2cure/documents/upload', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+          });
+
+          clearInterval(progressInterval);
+
+          if (response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            const result: DocumentProcessingResult = payload?.data ?? payload;
+            processedDocument = result.document;
+          } else {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload?.error?.message || payload?.error || 'API upload failed');
+          }
+        } catch {
+          // Fallback: Create document locally with basic processing
+          clearInterval(progressInterval);
+
+          // Read file as text if possible
+          let extractedText = '';
+          let pageCount: number | undefined;
+
+          if (
+            file.type === 'text/plain' ||
+            file.type === 'text/markdown' ||
+            file.type === 'text/csv'
+          ) {
+            extractedText = await file.text();
+          } else if (file.type === 'application/pdf') {
+            // For PDFs, we'd need a parser. Estimate based on size.
+            extractedText = `[PDF content - ${formatFileSize(file.size)}]`;
+            pageCount = Math.ceil(file.size / 3000); // Rough estimate
+          } else {
+            extractedText = `[Document content - ${formatFileSize(file.size)}]`;
+          }
+
+          const tokenCount = estimateTokens(extractedText);
+
+          // Check if adding this would exceed context limit
+          if (contextTokens + tokenCount > maxContextTokens) {
+            setError(
+              `Adding this document would exceed the ${maxContextTokens.toLocaleString()} token limit`
+            );
+            setIsUploading(false);
+            return null;
+          }
+
+          processedDocument = {
+            id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            name: file.name,
+            type: getExtensionFromMime(file.type),
+            size: file.size,
+            uploadedAt: new Date().toISOString(),
+            tokenCount,
+            pageCount,
+            status: 'processed',
+          };
+        }
+
+        setUploadProgress(100);
+
+        // Add to knowledge
+        setKnowledge(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            documents: [...prev.documents, processedDocument],
+          };
+        });
+
+        return processedDocument;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Upload failed');
+        return null;
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
+    },
+    [projectId, contextTokens, maxContextTokens]
+  );
 
   /**
    * Remove a document from the project knowledge.
    */
-  const removeDocument = useCallback(async (documentId: string): Promise<void> => {
-    if (!projectId) return;
+  const removeDocument = useCallback(
+    async (documentId: string): Promise<void> => {
+      if (!projectId) return;
 
-    try {
-      // Try API first
-      await fetch(`/api/concept2cure/documents/${documentId}`, {
-        method: 'DELETE',
-      }).catch(() => {
-        // Ignore API errors, proceed with local removal
-      });
+      try {
+        // Try API first
+        await fetch(`/api/concept2cure/documents/${documentId}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        }).catch(() => {
+          // Ignore API errors, proceed with local removal
+        });
 
-      // Remove locally
-      setKnowledge((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          documents: prev.documents.filter((doc) => doc.id !== documentId),
-        };
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove document');
-    }
-  }, [projectId]);
+        // Remove locally
+        setKnowledge(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            documents: prev.documents.filter(doc => doc.id !== documentId),
+          };
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to remove document');
+      }
+    },
+    [projectId]
+  );
 
   /**
    * Update custom instructions for the project.
    */
-  const updateCustomInstructions = useCallback(async (instructions: string): Promise<void> => {
-    if (!projectId) return;
+  const updateCustomInstructions = useCallback(
+    async (instructions: string): Promise<void> => {
+      if (!projectId) return;
 
-    try {
-      // Try API first
-      await fetch(`/api/concept2cure/projects/${projectId}/knowledge`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customInstructions: instructions }),
-      }).catch(() => {
-        // Ignore API errors, proceed with local update
-      });
+      try {
+        // Try API first
+        await fetch(`/api/concept2cure/projects/${projectId}/knowledge`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ customInstructions: instructions }),
+        }).catch(() => {
+          // Ignore API errors, proceed with local update
+        });
 
-      // Update locally
-      setKnowledge((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          customInstructions: instructions,
-        };
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update instructions');
-    }
-  }, [projectId]);
+        // Update locally
+        setKnowledge(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            customInstructions: instructions,
+          };
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update instructions');
+      }
+    },
+    [projectId]
+  );
 
   return {
     knowledge,

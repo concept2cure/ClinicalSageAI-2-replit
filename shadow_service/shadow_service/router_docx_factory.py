@@ -29,6 +29,7 @@ from .models_docx_factory import (
     RenderResponse,
     TemplateListResponse,
     TemplateResponse,
+    TemplateVersionListResponse,
     TemplateVersionResponse,
 )
 
@@ -131,6 +132,26 @@ async def create_template_version(template_id: UUID, req: CreateTemplateVersionR
             sha256=req.sha256,
         )
         return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        _handle_lite_mode(e)
+        raise
+
+
+@router.get(
+    "/templates/{template_id}/versions",
+    response_model=TemplateVersionListResponse,
+)
+async def list_template_versions(template_id: UUID, program_id: UUID = Query(...)):
+    """List all versions for a template (scoped to program)."""
+    try:
+        template = await runner.get_template(program_id, template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+
+        items = await runner.list_template_versions(program_id, template_id)
+        return {"items": items, "total": len(items)}
     except HTTPException:
         raise
     except Exception as e:
@@ -272,14 +293,22 @@ async def download_artifact(artifact_id: UUID, program_id: UUID = Query(...)):
 # ── Seed Templates ───────────────────────────────────────────────────────────
 
 @router.post("/seed")
-async def seed_templates(program_id: UUID = Query(...)):
+async def seed_templates(
+    program_id: UUID = Query(...),
+    doc_family: str | None = Query(default=None),
+    doc_type: str | None = Query(default=None),
+):
     """Seed starter templates into a program (idempotent).
 
     Creates 6 regulatory-real templates + versions + demo input packs.
     Safe to call multiple times — duplicates are skipped.
     """
     try:
-        result = await seeder.seed_for_program(program_id)
+        result = await seeder.seed_for_program(
+            program_id,
+            doc_family=doc_family,
+            doc_type=doc_type,
+        )
         return result
     except Exception as e:
         _handle_lite_mode(e)
@@ -287,7 +316,10 @@ async def seed_templates(program_id: UUID = Query(...)):
 
 
 @router.get("/demo-packs")
-async def list_demo_packs(doc_type: str | None = Query(default=None)):
+async def list_demo_packs(
+    doc_type: str | None = Query(default=None),
+    doc_family: str | None = Query(default=None),
+):
     """List available demo input packs (no DB required).
 
     If doc_type is provided, returns packs for that template type only.
@@ -295,4 +327,38 @@ async def list_demo_packs(doc_type: str | None = Query(default=None)):
     """
     if doc_type:
         return seeder.get_demo_packs_for_template(doc_type)
-    return seeder.get_all_demo_packs()
+    return seeder.get_all_demo_packs(doc_family=doc_family)
+
+
+@router.get("/catalog/families")
+async def list_doc_families():
+    """List supported document families for DOCX Factory starter templates."""
+    return {"items": seeder.get_supported_doc_families()}
+
+
+@router.get("/catalog/doc-types")
+async def list_doc_types(doc_family: str | None = Query(default=None)):
+    """List supported template doc_type values, optionally scoped by family."""
+    return {"items": seeder.get_supported_doc_types(doc_family=doc_family)}
+
+
+@router.get("/catalog/templates")
+async def list_seed_catalog(
+    doc_family: str | None = Query(default=None),
+    doc_type: str | None = Query(default=None),
+):
+    """List starter seed template metadata (no DB required)."""
+    entries = seeder.get_seed_catalog(doc_family=doc_family, doc_type=doc_type)
+    return {
+        "items": [
+            {
+                "name": entry["name"],
+                "doc_type": entry["doc_type"],
+                "doc_family": entry.get("doc_family", "ind"),
+                "tags": entry["tags"],
+                "demo_inputs": entry["demo_inputs"],
+            }
+            for entry in entries
+        ],
+        "total": len(entries),
+    }

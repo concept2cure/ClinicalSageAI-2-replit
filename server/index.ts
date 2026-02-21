@@ -15,7 +15,7 @@ import { httpLogger, errorHandler } from './src/mw/observability.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
@@ -51,6 +51,7 @@ let aiProviderRouter: AIProviderRouter | null = null;
 const openaiService = { getRouter: () => aiProviderRouter };
 import auditService from './services/auditService.js';
 import rbacService from './services/roleBasedAccess.js';
+import { authMiddleware } from './auth.js';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -69,16 +70,19 @@ const debugLog = (message: string, data?: any) => {
 import cmcProjectRoutes from './api/cmc/projectRoutes.ts';
 import cmcBlueprintRoutes from './api/cmc/blueprintRoutes.ts';
 import cmcDashboardRoutes from './routes/cmc-dashboard.ts';
+import cmcAggregatorRoutes from './api/cmc/index.js';
+import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
 
 // Import AI assistance routes
-import aiAssistanceRoutes from './routes/ai-assistance.ts';
-import aiPhase3Routes from './api/ai/phase3-routes.js';
+import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance.ts';
+// Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
 
 // Import authoring routes - made optional to prevent startup crashes
 // import authoringRouter from './routes/authoring.router.js';
 
 // Import sections routes - deprecated, using predictive-sections.ts instead
 // import sectionsRouter from './routes/sections.js';
+import predictiveSectionsRoutes from './routes/predictive-sections.ts';
 
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
@@ -94,6 +98,8 @@ import { testAssemblyRoutes } from './routes/test-assembly';
 
 // Import Phase 5: PM Settings & Configuration routes
 import pmSettingsRouter from './src/routes/pm-settings.router';
+import reportsManifestRoutes from './routes/reports/manifest-routes.ts';
+import reportsGenerationRoutes from './routes/reports/generate-report.ts';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -243,9 +249,7 @@ pool
 
     // Enterprise: Verify all core tables exist on startup
     try {
-      const result = await ensureCoreTables(
-        process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL
-      );
+      const result = await ensureCoreTables(process.env.DATABASE_URL);
       if (result.success) {
         console.log(`✅ All ${result.existingTables.length} core database tables verified`);
       } else if (result.missingCritical.length > 0) {
@@ -299,6 +303,19 @@ app.get('/api/health', async (req: Request, res: Response) => {
   res.json(healthData);
 });
 
+// Diagnostic page — serves without React/Vite to test Simple Browser rendering
+app.get('/api/diag', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`<!DOCTYPE html>
+<html><head><title>Diag</title></head>
+<body style="font-family:system-ui;padding:40px;background:#f0fdf4">
+<h1 style="color:#16a34a">✅ Server is alive</h1>
+<p>If you see this, the Simple Browser can render HTML from this server.</p>
+<p>Timestamp: ${new Date().toISOString()}</p>
+<p><a href="/">← Go to main app</a></p>
+</body></html>`);
+});
+
 // Mount authentication routes (SECURE)
 try {
   const authModule = await import('./routes/auth.ts');
@@ -332,36 +349,19 @@ try {
   console.error('❌ Failed to mount users routes:', error);
 }
 
-// Mount legacy login/logout endpoints directly
-app.post('/api/login', async (req, res) => {
-  const isDev = process.env.NODE_ENV !== 'production';
-  const { username, password, email } = req.body;
-  const loginEmail = email || username;
-
-  if (isDev) {
-    return res.json({
-      id: 1,
-      username: loginEmail?.split('@')[0] || 'developer',
-      email: loginEmail || 'developer@trialsage.ai',
-      role: 'admin',
-    });
-  }
-
-  res.json({ id: 1, username: 'user', email: loginEmail, role: 'user' });
+// Legacy login/logout/register endpoints — redirect to proper auth router
+// CRIT-03b FIX: Removed zero-check legacy endpoints that accepted any credentials
+app.post('/api/login', (req, res) => {
+  // Redirect to the real auth endpoint
+  res.redirect(307, '/api/auth/login');
 });
 
 app.post('/api/logout', (req, res) => {
-  res.json({ success: true, message: 'Logged out successfully' });
+  res.redirect(307, '/api/auth/logout');
 });
 
 app.post('/api/register', (req, res) => {
-  const { username, email } = req.body;
-  res.json({
-    id: 1,
-    username: username || email?.split('@')[0] || 'newuser',
-    email: email || `${username}@trialsage.ai`,
-    role: 'user',
-  });
+  res.redirect(307, '/api/auth/signup');
 });
 
 // Mount Enterprise Authentication routes (21 CFR Part 11 Compliant)
@@ -397,6 +397,18 @@ try {
   console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
 }
 
+// ── Global Auth Middleware ──────────────────────────────────────────────
+// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects)
+app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  const openPrefixes = ['/api/auth', '/api/login', '/api/logout', '/api/register', '/api/health'];
+  const fullPath = req.baseUrl + req.path;
+  if (openPrefixes.some(p => fullPath.startsWith(p))) return next();
+  return authMiddleware(req, res, next);
+});
+console.log(
+  '✅ Global authMiddleware applied — all /api/* routes protected (except auth & health)'
+);
+
 // Basic API routes - complex routes will be added back gradually
 app.get('/api/csr', (req: Request, res: Response) => {
   res.json({ message: 'CSR API available', timestamp: new Date() });
@@ -427,10 +439,6 @@ app.get('/api/projects', async (req, res) => {
 
     // Default to org 2 (Concept2Cure) if no org specified
     organization_id = organization_id || '2';
-
-    // Import database connection dynamically
-    const dbModule = await import('./db.js');
-    const { pool } = dbModule;
 
     if (!pool) {
       // Return empty array if database not available
@@ -483,6 +491,35 @@ app.use('/api/enterprise', enterpriseRoutes);
 // Mount enhanced RBAC routes
 import rbacRoutes from './api/enterprise/rbac-routes.js';
 app.use('/api/enterprise/rbac', rbacRoutes);
+
+// Mount CMC Module routes (Chemistry, Manufacturing & Controls)
+try {
+  app.use('/api/cmc', cmcAggregatorRoutes);
+  app.use('/api/cmc/projects', cmcProjectRoutes);
+  app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
+  app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
+  app.use('/api/cmc/dashboard', cmcDashboardPrisma);
+  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + dashboard)');
+} catch (error) {
+  console.error('❌ Failed to mount CMC Module routes:', error);
+}
+
+// Mount AI Assistance routes
+try {
+  app.use('/api/ai-assistance', aiAssistanceRoutes);
+  console.log('✅ AI Assistance API routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount AI Assistance routes:', error);
+}
+
+// Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
+try {
+  const lumenCortexRoutes = await import('./routes/lumen-cortex.ts');
+  app.use('/api/lumen-cortex', lumenCortexRoutes.default);
+  console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
+} catch (error) {
+  console.error('❌ Failed to mount Lumen Cortex routes:', error);
+}
 
 // Mount Phase 5: Intelligent Document System routes
 try {
@@ -573,6 +610,36 @@ try {
   console.log('✅ FDA 510(k) API routes mounted successfully (legacy)');
 } catch (error) {
   console.error('❌ Failed to mount FDA 510(k) routes:', error);
+}
+
+// Mount FDA 510(k) eSTAR export routes
+try {
+  const estarModule = await import('./routes/510k-estar-routes.ts');
+  const estarRoutes = estarModule.default;
+  app.use('/api/510k/estar', estarRoutes);
+  console.log('✅ FDA 510(k) eSTAR export routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount FDA 510(k) eSTAR routes:', error);
+}
+
+// Mount unified CERV2 Export routes (PDF, DOCX, ZIP for all doc types)
+try {
+  const cerv2ExportModule = await import('./routes/cerv2-export-routes.ts');
+  const cerv2ExportRoutes = cerv2ExportModule.default;
+  app.use('/api/cerv2/export', cerv2ExportRoutes);
+  console.log('✅ CERV2 unified export routes mounted (PDF/DOCX/ZIP for 510k, PMA, CER)');
+} catch (error) {
+  console.error('❌ Failed to mount CERV2 export routes:', error);
+}
+
+// Mount CERV2 AI auto-populate stub routes (suggest, equivalence, benefit-risk, templates)
+try {
+  const cerv2AiModule = await import('./routes/cerv2-ai-routes.ts');
+  const cerv2AiRoutes = cerv2AiModule.default;
+  app.use('/api/cerv2/ai', cerv2AiRoutes);
+  console.log('✅ CERV2 AI auto-populate routes mounted (suggest, equivalence, benefit-risk)');
+} catch (error) {
+  console.error('❌ Failed to mount CERV2 AI routes:', error);
 }
 
 // Mount Document Orchestration routes for 510(k) auto-population
@@ -683,6 +750,16 @@ try {
   console.error('❌ Failed to mount License routes:', error);
 }
 
+// Mount Module Subscriptions & User Intelligence routes
+try {
+  const moduleSubModule = await import('./routes/module-subscriptions.js');
+  const moduleSubRoutes = moduleSubModule.default;
+  app.use('/api/module-subscriptions', moduleSubRoutes);
+  console.log('✅ Module Subscriptions & User Intelligence API routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount Module Subscriptions routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');
@@ -748,6 +825,56 @@ try {
   console.log('✅ eCTD Documents routes loaded (version control & lineage tracking)');
 } catch (error) {
   console.error('❌ Failed to mount eCTD Documents routes:', error);
+}
+
+// Mount eCTD 4.0 Validation & Backbone routes
+try {
+  const ectdValidateModule = await import('./routes/ectd-validate.ts');
+  const ectdValidateRoutes = ectdValidateModule.default;
+  app.use('/api/ectd-validate', ectdValidateRoutes);
+  console.log('✅ eCTD 4.0 Validation & Backbone routes loaded');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Validation routes:', error);
+}
+
+// Mount eCTD Compile routes (INDWorkspace compile button backend)
+try {
+  const ectdCompileModule = await import('./routes/ectd-compile.ts');
+  const ectdCompileRoutes = ectdCompileModule.default;
+  app.use('/api/ectd-compile', ectdCompileRoutes);
+  console.log('✅ eCTD Compile routes mounted (compile, validate, readiness, history)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Compile routes:', error);
+}
+
+// Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
+try {
+  const indPdfModule = await import('./routes/ind-pdf.ts');
+  const indPdfRoutes = indPdfModule.default;
+  app.use('/api/ind-pdf', indPdfRoutes);
+  console.log('✅ IND PDF generation routes mounted (Puppeteer-powered)');
+} catch (error) {
+  console.error('❌ Failed to mount IND PDF routes:', error);
+}
+
+// Mount IND Sections API (live CTD section map with document status)
+try {
+  const indSectionsModule = await import('./routes/ind-sections.ts');
+  const indSectionsRoutes = indSectionsModule.default;
+  app.use('/api/ind-sections', indSectionsRoutes);
+  console.log('✅ IND Sections API routes loaded');
+} catch (error) {
+  console.error('❌ Failed to mount IND Sections routes:', error);
+}
+
+// Mount Project Sections API (section tracking, assignments, comments, audit trail)
+try {
+  const projectSectionsModule = await import('./routes/project-sections.ts');
+  const projectSectionsRoutes = projectSectionsModule.default;
+  app.use('/api/project-sections', projectSectionsRoutes);
+  console.log('✅ Project Sections API routes loaded');
+} catch (error) {
+  console.error('❌ Failed to mount Project Sections routes:', error);
 }
 
 // Mount Document Data Center routes (integrated vault + 3-axis tagging for 510(k) file management)
@@ -851,6 +978,52 @@ try {
   console.log('✅ Predicate Intelligence BFF proxy routes mounted (Phase 6.6)');
 } catch (error) {
   console.error('❌ Failed to mount Predicate Intelligence BFF proxy routes:', error);
+}
+
+// Shadow service health proxy
+app.get('/api/shadow/health', async (_req: Request, res: Response) => {
+  try {
+    const shadowBase = process.env.SHADOW_SERVICE_URL || 'http://localhost:8001';
+    const response = await fetch(`${shadowBase}/health`);
+    const payload = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: 'Shadow service health check failed',
+        details: payload,
+      });
+    }
+
+    return res.json(payload);
+  } catch (error: any) {
+    return res.status(502).json({
+      error: 'Shadow service unavailable',
+      message: error?.message || 'Unknown error',
+    });
+  }
+});
+
+// Mount SE Matrix render orchestration (Phase 6.6.C2 — Manifest + Payload + Render + Audit)
+// POST /api/programs/:programId/se-matrix/render → Shadow payload → Part 11 audit
+try {
+  const seMatrixModule = await import('./routes/se-matrix.js');
+  const seMatrixRoutes = seMatrixModule.default;
+  app.use('/api/programs', seMatrixRoutes);
+  console.log('✅ SE Matrix render orchestration routes mounted (Phase 6.6.C2)');
+} catch (error) {
+  console.error('❌ Failed to mount SE Matrix render routes:', error);
+}
+
+// Mount Defense Packet routes (Phase 6.6.D — Versioned, Signed Compliance Artifacts)
+// POST /api/programs/:programId/predicate-intel/defense-packet → Create packet
+// GET  /api/programs/:programId/predicate-intel/defense-packets → List packets
+try {
+  const defensePacketModule = await import('./routes/defense-packet.js');
+  const defensePacketRoutes = defensePacketModule.default;
+  app.use('/api/programs', defensePacketRoutes);
+  console.log('✅ Defense Packet routes mounted (Phase 6.6.D)');
+} catch (error) {
+  console.error('❌ Failed to mount Defense Packet routes:', error);
 }
 
 // Mount Demo Seed routes (for creating demo projects)
@@ -1355,6 +1528,661 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
       error: 'Failed to retrieve CSR statistics',
     });
   }
+});
+
+// Reports canonical routers (P1 extraction in progress)
+app.use('/api/reports', reportsGenerationRoutes);
+app.use('/api/reports', reportsManifestRoutes);
+
+// Reports compatibility facade — real DB query with fallback
+app.get('/api/reports', async (req: Request, res: Response) => {
+  try {
+    const reportType = req.query.type as string | undefined;
+
+    if (reportType === 'section-generation-log') {
+      // Query audit_events for report generation events
+      const result = await pool.query(
+        `SELECT event_type, user_name, metadata, timestamp FROM audit_events
+         WHERE event_type LIKE 'report.%' ORDER BY timestamp DESC LIMIT 20`
+      );
+      return res.json({
+        summary: { totalCalls: result.rows.length, avgLatency: 0, errorRate: 0 },
+        rows: result.rows.map((r: any) => ({
+          timestamp: r.timestamp,
+          user: r.user_name,
+          section: r.metadata?.section || 'N/A',
+          modelVersion: 'lumen-cortex-v2',
+          status: 'success',
+          latency: 0,
+        })),
+      });
+    }
+
+    // Query real reports from database
+    const result = await pool.query(
+      `SELECT id, title, report_type, status, metadata, created_at, updated_at
+       FROM reports ORDER BY created_at DESC LIMIT 50`
+    );
+
+    return res.json(
+      result.rows.map((r: any) => ({
+        id: r.id,
+        title: r.title || `Report ${r.id}`,
+        type: r.report_type,
+        status: r.status || 'draft',
+        sponsor: r.metadata?.sponsor || '',
+        indication: r.metadata?.indication || '',
+        phase: r.metadata?.phase || '',
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }))
+    );
+  } catch (error) {
+    console.error('Failed to fetch reports:', error);
+    return res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+app.post('/api/reports', async (req: Request, res: Response) => {
+  try {
+    const { title, reportType, content, metadata } = req.body;
+    const result = await pool.query(
+      `INSERT INTO reports (organization_id, title, report_type, status, content, metadata, created_at, updated_at)
+       VALUES (1, $1, $2, 'draft', $3, $4, NOW(), NOW()) RETURNING id`,
+      [
+        title || 'Untitled Report',
+        reportType || 'general',
+        JSON.stringify(content || {}),
+        JSON.stringify(metadata || {}),
+      ]
+    );
+    return res.status(201).json({
+      success: true,
+      message: 'Report created successfully',
+      reportId: result.rows[0].id,
+    });
+  } catch (error) {
+    console.error('Failed to create report:', error);
+    return res.status(500).json({ error: 'Failed to create report' });
+  }
+});
+
+app.get('/api/reports/count', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*)::int AS count FROM reports');
+    return res.json({ count: result.rows[0]?.count || 0 });
+  } catch (error) {
+    return res.json({ count: 0 });
+  }
+});
+
+app.get('/api/reports/lumen-bio', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'lumen-bio' ORDER BY created_at DESC`
+    );
+    return res.json({ reports: result.rows, status: 'available' });
+  } catch (error) {
+    return res.json({ reports: [], status: 'available' });
+  }
+});
+
+app.get('/api/reports/lumen-bio/recent', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'lumen-bio' ORDER BY created_at DESC LIMIT 5`
+    );
+    return res.json({ reports: result.rows, status: 'available' });
+  } catch (error) {
+    return res.json({ reports: [], status: 'available' });
+  }
+});
+
+app.get('/api/reports/export.pdf', async (_req: Request, res: Response) => {
+  const pdfContent = `%PDF-1.1
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 66 >>
+stream
+BT
+/F1 18 Tf
+72 720 Td
+(ClinicalSage Report Export) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000060 00000 n
+0000000117 00000 n
+0000000243 00000 n
+0000000361 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+431
+%%EOF`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename="clinicalsage-report.pdf"');
+  return res.send(Buffer.from(pdfContent, 'utf-8'));
+});
+
+// Audit — DB-backed implementation using audit_events table
+async function queryAuditEvents(queryParams: any, limitVal = 10, offsetVal = 0) {
+  const conditions: string[] = [];
+  const params: any[] = [];
+  let idx = 1;
+
+  if (queryParams.org_id || queryParams.tenantId) {
+    conditions.push(`organization_id = $${idx++}`);
+    params.push(parseInt(String(queryParams.org_id || queryParams.tenantId)));
+  }
+  if (queryParams.event_type) {
+    conditions.push(`event_type = $${idx++}`);
+    params.push(String(queryParams.event_type));
+  }
+  if (queryParams.user_id || queryParams.userId) {
+    conditions.push(`user_id = $${idx++}`);
+    params.push(parseInt(String(queryParams.user_id || queryParams.userId)));
+  }
+  if (queryParams.start_date || queryParams.startDate) {
+    conditions.push(`timestamp >= $${idx++}`);
+    params.push(new Date(String(queryParams.start_date || queryParams.startDate)));
+  }
+  if (queryParams.end_date || queryParams.endDate) {
+    conditions.push(`timestamp <= $${idx++}`);
+    params.push(new Date(String(queryParams.end_date || queryParams.endDate)));
+  }
+  if (queryParams.search) {
+    conditions.push(
+      `(user_name ILIKE $${idx} OR event_type ILIKE $${idx} OR entity_type ILIKE $${idx})`
+    );
+    params.push(`%${String(queryParams.search)}%`);
+    idx++;
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::int AS total FROM audit_events ${where}`,
+    params
+  );
+  const total = countResult.rows[0]?.total || 0;
+
+  params.push(limitVal);
+  params.push(offsetVal);
+  const result = await pool.query(
+    `SELECT id, organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role,
+            ip_address, timestamp, reason, comments, regulatory_significant, gxp_relevant, metadata, created_at
+     FROM audit_events ${where} ORDER BY timestamp DESC LIMIT $${idx++} OFFSET $${idx++}`,
+    params
+  );
+
+  return { rows: result.rows, total };
+}
+
+function formatAuditRow(row: any) {
+  const action = (row.event_type || '').split('.').pop()?.toUpperCase() || 'VIEW';
+  return {
+    id: `AUDIT-${row.id}`,
+    userId: String(row.user_id || ''),
+    user_id: String(row.user_id || ''),
+    userName: row.user_name || 'System',
+    action,
+    actionType: action.charAt(0) + action.slice(1).toLowerCase(),
+    event_type: row.event_type || '',
+    severity: row.regulatory_significant ? 'warning' : 'info',
+    component: row.entity_type || 'System',
+    details: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
+    description: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
+    ipAddress: row.ip_address || '',
+    region: 'US',
+    org_id: String(row.organization_id || ''),
+    project_id: String(row.entity_id || ''),
+    timestamp: row.timestamp || row.created_at,
+  };
+}
+
+app.get('/api/audit/logs', async (req: Request, res: Response) => {
+  try {
+    const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
+    const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10));
+    const { rows, total } = await queryAuditEvents(req.query, limit, offset);
+
+    return res.json({
+      logs: rows.map(formatAuditRow),
+      total,
+      limit,
+      offset,
+    });
+  } catch (error) {
+    console.error('Failed to fetch audit logs:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+// Legacy alias compatibility for historical clients
+app.get('/api/audit-logs', async (req: Request, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+    const pageSize = Math.max(1, parseInt(String(req.query.pageSize || '10'), 10));
+    const offset = (page - 1) * pageSize;
+    const { rows, total } = await queryAuditEvents(req.query, pageSize, offset);
+
+    return res.json({
+      logs: rows.map(formatAuditRow),
+      totalCount: total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    });
+  } catch (error) {
+    console.error('Failed to fetch legacy audit logs:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+app.get('/api/audit/events', async (req: Request, res: Response) => {
+  try {
+    const { rows, total } = await queryAuditEvents(req.query, 50, 0);
+    return res.json({
+      success: true,
+      events: rows.map((row: any) => ({
+        eventId: row.id,
+        eventType: row.event_type,
+        severity: row.regulatory_significant ? 'warning' : 'info',
+        timestamp: row.timestamp,
+        actor: {
+          userId: row.user_id,
+          userName: row.user_name,
+        },
+        target: {
+          component: row.entity_type,
+          projectId: row.entity_id,
+        },
+        details: row.reason || row.comments || '',
+      })),
+      total,
+    });
+  } catch (error) {
+    console.error('Failed to fetch audit events:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit events' });
+  }
+});
+
+app.post('/api/audit/events', async (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    const result = await pool.query(
+      `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
+      [
+        body.organizationId || 1,
+        body.eventType || body.event_type || 'general',
+        body.entityType || body.entity_type || 'system',
+        body.entityId || body.entity_id || 0,
+        body.userId || body.user_id || 0,
+        body.userName || body.user_name || 'System',
+        body.userRole || body.user_role || 'user',
+        body.ipAddress || body.ip_address || req.ip || '',
+        body.reason || body.details || null,
+        JSON.stringify(body.metadata || body.payload || {}),
+        body.regulatorySignificant || false,
+        body.gxpRelevant || false,
+      ]
+    );
+    return res.status(201).json({
+      success: true,
+      eventId: result.rows[0].id,
+      receivedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Failed to record audit event:', error);
+    return res.status(500).json({ error: 'Failed to record audit event' });
+  }
+});
+
+app.post('/api/audit/signatures', async (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    // Store signature as an audit event with signature metadata
+    const result = await pool.query(
+      `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, ip_address, timestamp,
+       signature_status, signed_by, signed_date, signature_meaning, reason, metadata, regulatory_significant, gxp_relevant, created_at)
+       VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'signed', $5, NOW(), $7, $8, $9, true, true, NOW()) RETURNING id`,
+      [
+        body.organizationId || 1,
+        body.entityType || 'document',
+        body.entityId || 0,
+        body.userId || 0,
+        body.signedBy || body.userId || 'system',
+        req.ip || '',
+        body.meaning || 'Electronically signed',
+        body.reason || null,
+        JSON.stringify({ signatureType: '21CFR11', ...body.metadata }),
+      ]
+    );
+
+    return res.status(201).json({
+      success: true,
+      signatureId: `SIG_${result.rows[0].id}`,
+      record: {
+        signatureId: `SIG_${result.rows[0].id}`,
+        entityType: body.entityType || 'document',
+        entityId: body.entityId || 0,
+        signedBy: body.signedBy || body.userId || 'system',
+        reason: body.reason,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error('Failed to record audit signature:', error);
+    return res.status(500).json({ error: 'Failed to record audit signature' });
+  }
+});
+
+app.get('/api/audit/signatures/:signatureId/verify', async (req: Request, res: Response) => {
+  try {
+    const sigId = req.params.signatureId.replace('SIG_', '');
+    const result = await pool.query(
+      `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
+       FROM audit_events WHERE id = $1 AND event_type = 'signature.create'`,
+      [parseInt(sigId) || 0]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        verified: false,
+        message: 'Signature not found',
+      });
+    }
+
+    const row = result.rows[0];
+    return res.json({
+      success: true,
+      verified: row.signature_status === 'signed',
+      signature: {
+        signatureId: `SIG_${row.id}`,
+        entityType: row.entity_type,
+        entityId: String(row.entity_id),
+        signedBy: row.signed_by,
+        reason: row.reason,
+        timestamp: row.signed_date,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to verify audit signature:', error);
+    return res.status(500).json({ error: 'Failed to verify audit signature' });
+  }
+});
+
+app.get('/api/audit', async (req: Request, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+    const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
+    const offset = (page - 1) * limit;
+    const { rows, total } = await queryAuditEvents(req.query, limit, offset);
+
+    return res.json({
+      logs: rows.map(formatAuditRow),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.max(1, Math.ceil(total / limit)),
+      },
+    });
+  } catch (error) {
+    console.error('Failed to fetch audit entries:', error);
+    return res.status(500).json({ error: 'Failed to fetch audit entries' });
+  }
+});
+
+app.get('/api/audit/export', async (req: Request, res: Response) => {
+  try {
+    const { rows } = await queryAuditEvents(req.query, 10000, 0);
+    const logs = rows.map(formatAuditRow);
+    const headers = ['timestamp', 'userName', 'action', 'component', 'details', 'ipAddress'];
+
+    const csvRows = logs.map((log: any) =>
+      [log.timestamp, log.userName, log.action, log.component, log.details, log.ipAddress]
+        .map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(',')
+    );
+
+    const csv = [headers.join(','), ...csvRows].join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="audit_logs.csv"');
+    return res.send(csv);
+  } catch (error) {
+    console.error('Failed to export audit logs:', error);
+    return res.status(500).json({ error: 'Failed to export audit logs' });
+  }
+});
+
+app.post('/api/audit/bulk-delete', async (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    // Only allow deletion of non-regulatory-significant events
+    const result = await pool.query(
+      `DELETE FROM audit_events WHERE regulatory_significant = false AND gxp_relevant = false RETURNING id`
+    );
+    return res.json({
+      success: true,
+      deletedCount: result.rowCount || 0,
+      reason: body.reason || null,
+    });
+  } catch (error) {
+    console.error('Failed to bulk-delete audit logs:', error);
+    return res.status(500).json({ error: 'Failed to bulk-delete audit logs' });
+  }
+});
+
+// Search compatibility facade (P0 route recovery)
+app.post('/api/search/vector', async (req: Request, res: Response) => {
+  try {
+    const query = String(req.body?.query || '').trim();
+    const k = Math.max(1, parseInt(String(req.body?.k || 5), 10));
+
+    const mockResults = [
+      {
+        content:
+          'The study demonstrated statistically significant overall survival improvement versus standard of care.',
+        relevance: 0.95,
+        document_id: 1,
+        document_title: 'Clinical Study Report XYZ-123',
+        source_page: 42,
+        source_section: 'Efficacy Results',
+      },
+      {
+        content:
+          'Grade 3 or higher adverse events were observed at acceptable rates with no unexpected safety signals.',
+        relevance: 0.88,
+        document_id: 1,
+        document_title: 'Clinical Study Report XYZ-123',
+        source_page: 67,
+        source_section: 'Safety Results',
+      },
+      {
+        content:
+          'Comparative analysis shows endpoint consistency with prior phase II oncology studies.',
+        relevance: 0.82,
+        document_id: 2,
+        document_title: 'Comparative Efficacy Analysis',
+        source_page: 15,
+        source_section: 'Discussion',
+      },
+    ];
+
+    const filtered = query
+      ? mockResults.filter(
+          row =>
+            row.content.toLowerCase().includes(query.toLowerCase()) ||
+            row.document_title.toLowerCase().includes(query.toLowerCase()) ||
+            row.source_section.toLowerCase().includes(query.toLowerCase())
+        )
+      : mockResults;
+
+    return res.json((filtered.length ? filtered : mockResults).slice(0, k));
+  } catch (error) {
+    console.error('Vector search failed:', error);
+    return res.status(500).json({ error: 'Vector search failed' });
+  }
+});
+
+// Endpoint recommendation compatibility facade (P0 route recovery)
+app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
+  try {
+    const indication = String(req.body?.indication || 'General');
+    const phase = String(req.body?.phase || 'Phase 2');
+
+    const recommendations = [
+      {
+        endpoint: 'Progression-Free Survival (PFS)',
+        summary: `${phase} ${indication} programs commonly use PFS as a primary efficacy endpoint.`,
+        matchCount: 124,
+        successRate: 0.62,
+        reference: 'CSR corpus cluster A',
+      },
+      {
+        endpoint: 'Overall Response Rate (ORR)',
+        summary:
+          'ORR is frequently selected for accelerated decision support in oncology-like indications.',
+        matchCount: 98,
+        successRate: 0.57,
+        reference: 'CSR corpus cluster C',
+      },
+      {
+        endpoint: 'Duration of Response (DoR)',
+        summary: 'DoR is often paired with ORR to strengthen clinical benefit characterization.',
+        matchCount: 86,
+        successRate: 0.54,
+        reference: 'CSR corpus cluster D',
+      },
+    ];
+
+    return res.json(recommendations);
+  } catch (error) {
+    console.error('Endpoint recommendation failed:', error);
+    return res.status(500).json({ error: 'Endpoint recommendation failed' });
+  }
+});
+
+// Retention policy compatibility facade (P0 route recovery)
+let retentionPolicies = [
+  {
+    id: 1,
+    policyName: 'Clinical Trial Master Files',
+    documentType: 'CTM',
+    retentionPeriod: 7,
+    periodUnit: 'years',
+    archiveBeforeDelete: true,
+    notifyBeforeDeletion: true,
+    notificationPeriod: 30,
+    notificationUnit: 'days',
+    active: true,
+  },
+  {
+    id: 2,
+    policyName: 'Pharmacovigilance Safety Reports',
+    documentType: 'Safety Report',
+    retentionPeriod: 10,
+    periodUnit: 'years',
+    archiveBeforeDelete: true,
+    notifyBeforeDeletion: true,
+    notificationPeriod: 45,
+    notificationUnit: 'days',
+    active: true,
+  },
+];
+
+const retentionDocumentTypes = [
+  { id: 'ctm', value: 'CTM', label: 'Clinical Trial Master File' },
+  { id: 'csr', value: 'CSR', label: 'Clinical Study Report' },
+  { id: 'safety', value: 'Safety Report', label: 'Safety Report' },
+  { id: 'protocol', value: 'Protocol', label: 'Clinical Protocol' },
+];
+
+app.get('/api/retention/policies', async (_req: Request, res: Response) => {
+  return res.json({ success: true, data: retentionPolicies });
+});
+
+app.get('/api/retention/document-types', async (_req: Request, res: Response) => {
+  return res.json({ success: true, data: retentionDocumentTypes });
+});
+
+app.post('/api/retention/policies', async (req: Request, res: Response) => {
+  try {
+    const newPolicy = {
+      id: Date.now(),
+      ...req.body,
+    };
+    retentionPolicies = [newPolicy, ...retentionPolicies];
+    return res.status(201).json({ success: true, data: newPolicy });
+  } catch (error) {
+    console.error('Failed to create retention policy:', error);
+    return res.status(500).json({ error: 'Failed to create retention policy' });
+  }
+});
+
+app.put('/api/retention/policies/:id', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const existing = retentionPolicies.find(policy => policy.id === id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Retention policy not found' });
+    }
+
+    retentionPolicies = retentionPolicies.map(policy =>
+      policy.id === id ? { ...policy, ...req.body, id } : policy
+    );
+
+    const updated = retentionPolicies.find(policy => policy.id === id);
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Failed to update retention policy:', error);
+    return res.status(500).json({ error: 'Failed to update retention policy' });
+  }
+});
+
+app.delete('/api/retention/policies/:id', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const before = retentionPolicies.length;
+    retentionPolicies = retentionPolicies.filter(policy => policy.id !== id);
+
+    if (retentionPolicies.length === before) {
+      return res.status(404).json({ error: 'Retention policy not found' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete retention policy:', error);
+    return res.status(500).json({ error: 'Failed to delete retention policy' });
+  }
+});
+
+app.post('/api/retention/run-job', async (_req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    jobId: `RETENTION_JOB_${Date.now()}`,
+    status: 'started',
+  });
 });
 
 // Add missing Lumen AI endpoint
@@ -3088,17 +3916,24 @@ app.get('/api/atoms', async (req: Request, res: Response) => {
   }
 });
 
-// Vault statistics endpoint
+// Vault statistics endpoint — real DB query
 app.get('/api/vault/statistics', async (req: Request, res: Response) => {
   try {
-    // Return basic vault statistics
+    const statsResult = await pool.query(`
+      SELECT
+        COUNT(*)::int AS total_documents,
+        0::bigint AS total_size,
+        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int AS recent_uploads
+      FROM documents
+    `);
+    const stats = statsResult.rows[0] || {};
     res.json({
-      totalDocuments: 0,
-      totalSize: 0,
-      recentUploads: 0,
+      totalDocuments: stats.total_documents || 0,
+      totalSize: parseInt(stats.total_size) || 0,
+      recentUploads: stats.recent_uploads || 0,
       complianceScore: 95,
-      storageUsed: 0,
-      storageLimit: 1000000000, // 1GB limit
+      storageUsed: parseInt(stats.total_size) || 0,
+      storageLimit: 1000000000,
     });
   } catch (error) {
     console.error('Error fetching vault statistics:', error);
@@ -3106,18 +3941,30 @@ app.get('/api/vault/statistics', async (req: Request, res: Response) => {
   }
 });
 
-// Vault list endpoint
+// Vault list endpoint — queries real documents table
 app.get('/api/vault/list', async (req: Request, res: Response) => {
   try {
-    // Return basic vault document list
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+    const pageSize = Math.max(1, Math.min(100, parseInt(String(req.query.pageSize || '50'), 10)));
+    const offset = (page - 1) * pageSize;
+
+    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM documents');
+    const total = countResult.rows[0]?.total || 0;
+
+    const docsResult = await pool.query(
+      `SELECT id, title, document_type, category, status, document_code, description, created_at, updated_at
+       FROM documents ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      [pageSize, offset]
+    );
+
     res.json({
       success: true,
-      documents: [],
+      documents: docsResult.rows,
       metadata: {
-        totalCount: 0,
-        currentPage: 1,
-        totalPages: 1,
-        pageSize: 50,
+        totalCount: total,
+        currentPage: page,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        pageSize,
       },
     });
   } catch (error) {
@@ -4235,6 +5082,14 @@ async function startServer() {
   //   console.error('Failed to mount sections routes:', error);
   // }
 
+  // Mount predictive sections routes
+  try {
+    app.use('/api/predictive-sections', predictiveSectionsRoutes);
+    console.log('✅ Predictive sections routes mounted successfully');
+  } catch (error) {
+    console.error('Failed to mount predictive sections routes:', error);
+  }
+
   // Mount Validation routes
   try {
     const validationRoutes = await import('./routes/validation.ts');
@@ -4270,9 +5125,339 @@ async function startServer() {
     console.error('Failed to mount project routes:', error);
   }
 
-  // ============================================================================
+  // Mount project hierarchy routes (Pillar 1: 4-level hierarchy tree)
+  try {
+    const hierarchyRoutes = await import('./routes/project-hierarchy');
+    app.use('/api/project-hierarchy', hierarchyRoutes.default || hierarchyRoutes);
+    console.log('✅ Project Hierarchy routes mounted at /api/project-hierarchy');
+  } catch (error) {
+    console.error('Failed to mount project-hierarchy routes:', error);
+  }
+
+  // Mount project rules routes (Pillar 2: Client-configurable rules engine)
+  try {
+    const rulesRoutes = await import('./routes/project-rules');
+    app.use('/api/project-rules', rulesRoutes.default || rulesRoutes);
+    console.log('✅ Project Rules Engine routes mounted at /api/project-rules');
+  } catch (error) {
+    console.error('Failed to mount project-rules routes:', error);
+  }
+
+  // Mount AI Sentinel routes (Pillar 3: Proactive monitoring)
+  try {
+    const sentinelRoutes = await import('./routes/sentinel-routes');
+    app.use('/api/sentinel', sentinelRoutes.default || sentinelRoutes);
+    console.log('✅ AI Sentinel routes mounted at /api/sentinel');
+  } catch (error) {
+    console.error('Failed to mount sentinel routes:', error);
+  }
+
+  // Start Sentinel background scheduler (Pillar 3)
+  try {
+    const { getSentinelScheduler } = await import('./services/sentinel/scheduler');
+    const scheduler = getSentinelScheduler(pool);
+    scheduler
+      .start()
+      .then(() => {
+        console.log('✅ AI Sentinel background scheduler started');
+      })
+      .catch(err => {
+        console.error('Failed to start sentinel scheduler:', err);
+      });
+  } catch (error) {
+    console.error('Failed to initialize sentinel scheduler:', error);
+  }
+
+  // Mount project-module integration routes (Pillar 4: Full module integration)
+  try {
+    const moduleRoutes = await import('./routes/project-modules');
+    app.use('/api/projects', moduleRoutes.default || moduleRoutes); // nested: /api/projects/:id/modules
+    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes); // top-level: /api/project-modules/find, /org-stats
+    console.log(
+      '✅ Project Module Integration routes mounted at /api/projects/:id/modules & /api/project-modules'
+    );
+  } catch (error) {
+    console.error('Failed to mount project-modules routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Wave 5: Mount previously-unmounted core route files
+  // ──────────────────────────────────────────────────────────────────────────
+
+  try {
+    const qualityMgmtApi = await import('./routes/quality-management-api.ts');
+    app.use('/api/quality', qualityMgmtApi.default);
+    console.log('✅ Quality Management API routes mounted at /api/quality');
+  } catch (error) {
+    console.error('Failed to mount quality-management-api routes:', error);
+  }
+
+  try {
+    const analyticsRoutes = await import('./routes/analytics-routes.ts');
+    app.use('/api/analytics', analyticsRoutes.default);
+    console.log('✅ Analytics routes mounted at /api/analytics');
+  } catch (error) {
+    console.error('Failed to mount analytics routes:', error);
+  }
+
+  try {
+    const vaultAutoRoutes = await import('./routes/vault-auto.ts');
+    app.use('/api/vault', vaultAutoRoutes.default);
+    console.log('✅ Vault routes mounted at /api/vault');
+  } catch (error) {
+    console.error('Failed to mount vault routes:', error);
+  }
+
+  try {
+    const documentsUnified = await import('./routes/documents-unified.ts');
+    app.use('/api/documents', documentsUnified.default);
+    console.log('✅ Documents-unified routes mounted at /api/documents');
+  } catch (error) {
+    console.error('Failed to mount documents-unified routes:', error);
+  }
+
+  try {
+    const { protocolRoutes } = await import('./routes/protocol_routes.ts');
+    app.use('/api/protocol', protocolRoutes);
+    console.log('✅ Protocol routes mounted at /api/protocol');
+  } catch (error) {
+    console.error('Failed to mount protocol routes:', error);
+  }
+
+  try {
+    const qcRoutes = await import('./routes/qc.routes.ts');
+    app.use('/api/qc', qcRoutes.default);
+    console.log('✅ QC routes mounted at /api/qc');
+  } catch (error) {
+    console.error('Failed to mount qc routes:', error);
+  }
+
+  try {
+    const moduleIntegrationRoutes = await import('./routes/moduleIntegrationRoutes.ts');
+    app.use('/api/module-integration', moduleIntegrationRoutes.default);
+    console.log('✅ Module Integration routes mounted at /api/module-integration');
+  } catch (error) {
+    console.error('Failed to mount module-integration routes:', error);
+  }
+
+  try {
+    const regulatoryRoutesModule = await import('./routes/regulatoryRoutes.ts');
+    app.use('/api/regulatory', regulatoryRoutesModule.default);
+    console.log('✅ Regulatory routes mounted at /api/regulatory');
+  } catch (error) {
+    console.error('Failed to mount regulatory routes:', error);
+  }
+
+  try {
+    const innovationRoutes = await import('./routes/innovation-routes.ts');
+    app.use('/api/innovation', innovationRoutes.default);
+    console.log('✅ Innovation routes mounted at /api/innovation');
+  } catch (error) {
+    console.error('Failed to mount innovation routes:', error);
+  }
+
+  try {
+    const notificationRoutes = await import('./routes/notification_routes.ts');
+    // notification_routes exports a function(app) that registers routes directly
+    if (
+      typeof notificationRoutes.default === 'function' &&
+      notificationRoutes.default.length >= 1
+    ) {
+      notificationRoutes.default(app);
+    } else {
+      app.use('/api/notifications', notificationRoutes.default);
+    }
+    console.log('✅ Notification routes mounted at /api/notifications');
+  } catch (error) {
+    console.error('Failed to mount notification routes:', error);
+  }
+
+  try {
+    const indUnifiedRoutes = await import('./routes/ind-unified.ts');
+    app.use('/api/ind-wizard', indUnifiedRoutes.default);
+    console.log('✅ IND Unified routes mounted at /api/ind-wizard');
+  } catch (error) {
+    console.error('Failed to mount ind-unified routes:', error);
+  }
+
+  try {
+    const indTemplatesRoutes = await import('./routes/ind-templates.ts');
+    app.use('/api/ind-templates', indTemplatesRoutes.default);
+    console.log('✅ IND Templates routes mounted at /api/ind-templates');
+  } catch (error) {
+    console.error('Failed to mount ind-templates routes:', error);
+  }
+
+  try {
+    const indSubmissionsRoutes = await import('./routes/ind-submissions.routes.ts');
+    app.use('/api/ind-submissions', indSubmissionsRoutes.default);
+    console.log('✅ IND Submissions routes mounted at /api/ind-submissions');
+  } catch (error) {
+    console.error('Failed to mount ind-submissions routes:', error);
+  }
+
+  try {
+    const indDatabaseRoutes = await import('./routes/ind-database.routes.ts');
+    app.use('/api/ind-database', indDatabaseRoutes.default);
+    console.log('✅ IND Database routes mounted at /api/ind-database');
+  } catch (error) {
+    console.error('Failed to mount ind-database routes:', error);
+  }
+
+  try {
+    const plannerRoutes = await import('./routes/planner-routes.ts');
+    app.use('/api/planner', plannerRoutes.default);
+    console.log('✅ Planner routes mounted at /api/planner');
+  } catch (error) {
+    console.error('Failed to mount planner routes:', error);
+  }
+
+  try {
+    const tenantSectionGating = await import('./routes/tenant-section-gating.ts');
+    app.use('/api/tenant-section-gating', tenantSectionGating.default);
+    console.log('✅ Tenant Section Gating routes mounted at /api/tenant-section-gating');
+  } catch (error) {
+    console.error('Failed to mount tenant-section-gating routes:', error);
+  }
+
+  try {
+    const tenantConfig = await import('./routes/tenant-config.ts');
+    app.use('/api/tenant-config', tenantConfig.default);
+    console.log('✅ Tenant Config routes mounted at /api/tenant-config');
+  } catch (error) {
+    console.error('Failed to mount tenant-config routes:', error);
+  }
+
+  try {
+    const tenantStats = await import('./routes/tenant-stats.ts');
+    app.use('/api/tenant-stats', tenantStats.default);
+    console.log('✅ Tenant Stats routes mounted at /api/tenant-stats');
+  } catch (error) {
+    console.error('Failed to mount tenant-stats routes:', error);
+  }
+
+  try {
+    const tenantTraceability = await import('./routes/tenant-traceability.ts');
+    app.use('/api/tenant-traceability', tenantTraceability.default);
+    console.log('✅ Tenant Traceability routes mounted at /api/tenant-traceability');
+  } catch (error) {
+    console.error('Failed to mount tenant-traceability routes:', error);
+  }
+
+  try {
+    const tenantQualityValidation = await import('./routes/tenant-quality-validation.ts');
+    app.use('/api/tenant-quality-validation', tenantQualityValidation.default);
+    console.log('✅ Tenant Quality Validation routes mounted at /api/tenant-quality-validation');
+  } catch (error) {
+    console.error('Failed to mount tenant-quality-validation routes:', error);
+  }
+
+  try {
+    const tenantCtqFactors = await import('./routes/tenant-ctq-factors.ts');
+    app.use('/api/tenant-ctq-factors', tenantCtqFactors.default);
+    console.log('✅ Tenant CTQ Factors routes mounted at /api/tenant-ctq-factors');
+  } catch (error) {
+    console.error('Failed to mount tenant-ctq-factors routes:', error);
+  }
+
+  try {
+    const indAutomationRoutes = await import('./routes/ind_automation_routes.ts');
+    app.use('/api/ind-automation', indAutomationRoutes.default);
+    console.log('✅ IND Automation routes mounted at /api/ind-automation');
+  } catch (error) {
+    console.error('Failed to mount ind-automation routes:', error);
+  }
+
+  // Mount Audit-Gap Remediation Services (figures, export, traceability, keywords, extraction, confidence, verification)
+  try {
+    const auditServicesModule = await import('./routes/audit-services.js');
+    app.use('/api/audit-services', auditServicesModule.default);
+    console.log(
+      '✅ Audit Services API routes mounted (figures, export, traceability, keywords, extraction, confidence, verification)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount Audit Services routes:', error);
+  }
+
+  // Mount Integration Test routes (development/QA only — full-flow smoke test)
+  try {
+    const integrationTestModule = await import('./routes/integration-test.ts');
+    app.use('/api/integration-test', integrationTestModule.default);
+    console.log('✅ Integration Test routes mounted (health, full-flow)');
+  } catch (error) {
+    console.error('❌ Failed to mount Integration Test routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ADVANCED PLATFORM CAPABILITIES (GraphRAG, Digital Twin, RWE, etc.)
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const realtimeCollabRoutes = await import('./routes/realtime-collab.ts');
+    app.use('/api/realtime-collab', realtimeCollabRoutes.default);
+    console.log('✅ Real-time Collaboration routes mounted at /api/realtime-collab');
+  } catch (error) {
+    console.error('❌ Failed to mount real-time collaboration routes:', error);
+  }
+
+  try {
+    const graphragRoutes = await import('./routes/graphrag.ts');
+    app.use('/api/graphrag', graphragRoutes.default);
+    console.log('✅ GraphRAG routes mounted at /api/graphrag');
+  } catch (error) {
+    console.error('❌ Failed to mount GraphRAG routes:', error);
+  }
+
+  try {
+    const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft.ts');
+    app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
+    console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+  } catch (error) {
+    console.error('❌ Failed to mount Lumen Cortex FT routes:', error);
+  }
+
+  try {
+    const part11Routes = await import('./routes/part11-compliance.ts');
+    app.use('/api/part11', part11Routes.default);
+    console.log('✅ 21 CFR Part 11 Compliance routes mounted at /api/part11');
+  } catch (error) {
+    console.error('❌ Failed to mount Part 11 compliance routes:', error);
+  }
+
+  try {
+    const docUnderstandingRoutes = await import('./routes/document-understanding.ts');
+    app.use('/api/document-understanding', docUnderstandingRoutes.default);
+    console.log('✅ Document Understanding routes mounted at /api/document-understanding');
+  } catch (error) {
+    console.error('❌ Failed to mount document understanding routes:', error);
+  }
+
+  try {
+    const agentSwarmRoutes = await import('./routes/agent-swarm.ts');
+    app.use('/api/agent-swarm', agentSwarmRoutes.default);
+    console.log('✅ Agent Swarm routes mounted at /api/agent-swarm');
+  } catch (error) {
+    console.error('❌ Failed to mount agent swarm routes:', error);
+  }
+
+  try {
+    const rweRoutes = await import('./routes/real-world-evidence.ts');
+    app.use('/api/real-world-evidence', rweRoutes.default);
+    console.log('✅ Real-World Evidence routes mounted at /api/real-world-evidence');
+  } catch (error) {
+    console.error('❌ Failed to mount real-world evidence routes:', error);
+  }
+
+  try {
+    const digitalTwinRoutes = await import('./routes/regulatory-digital-twin.ts');
+    app.use('/api/regulatory-digital-twin', digitalTwinRoutes.default);
+    console.log('✅ Regulatory Digital Twin routes mounted at /api/regulatory-digital-twin');
+  } catch (error) {
+    console.error('❌ Failed to mount regulatory digital twin routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // CATCH-ALL FOR UNMATCHED API ROUTES - MUST RETURN JSON, NOT HTML
-  // ============================================================================
+  // ──────────────────────────────────────────────────────────────────────────
   app.all('/api/*', (req, res) => {
     console.log(`[API 404] Unhandled API route: ${req.method} ${req.path}`);
     res.status(404).json({
@@ -4298,48 +5483,53 @@ async function startServer() {
 
   // Setup Vite middleware for frontend serving (development mode with HMR)
   // This must be done AFTER all API routes are mounted
-  try {
-    await setupVite(app, httpServer);
-    console.log('✅ Vite middleware setup complete - frontend will be served');
-  } catch (viteError) {
-    console.error('⚠️ Vite setup failed, falling back to static serving:', viteError);
-    // Fallback: serve static files from dist if Vite fails
-    const distPath = path.resolve(__dirname, '../client/dist');
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-      app.get('*', (_req, res) => {
-        res.sendFile(path.resolve(distPath, 'index.html'));
-      });
-      console.log('✅ Static files being served from dist folder');
-    } else {
-      // Last resort: serve a simple landing page
-      app.get('/', (_req, res) => {
-        res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>TrialSage - ClinicalSageAI</title>
-            <style>
-              body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-              .container { text-align: center; color: white; padding: 40px; }
-              h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-              p { font-size: 1.2rem; opacity: 0.9; }
-              a { color: white; text-decoration: underline; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>🧬 TrialSage Platform</h1>
-              <p>API Server is running successfully.</p>
-              <p>Check <a href="/api/health">/api/health</a> for system status.</p>
-              <p>Frontend build may be required. Run: <code>npm run build</code></p>
-            </div>
-          </body>
-          </html>
-        `);
-      });
-      console.log('⚠️ No frontend available - serving basic landing page');
+  const skipVite = ['1', 'true', 'yes'].includes(String(process.env.SKIP_VITE || '').toLowerCase());
+  if (!skipVite) {
+    try {
+      await setupVite(app, httpServer);
+      console.log('✅ Vite middleware setup complete - frontend will be served');
+    } catch (viteError) {
+      console.error('⚠️ Vite setup failed, falling back to static serving:', viteError);
+      // Fallback: serve static files from dist if Vite fails
+      const distPath = path.resolve(__dirname, '../client/dist');
+      if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
+        app.get('*', (_req, res) => {
+          res.sendFile(path.resolve(distPath, 'index.html'));
+        });
+        console.log('✅ Static files being served from dist folder');
+      } else {
+        // Last resort: serve a simple landing page
+        app.get('/', (_req, res) => {
+          res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>TrialSage - ClinicalSageAI</title>
+              <style>
+                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+                .container { text-align: center; color: white; padding: 40px; }
+                h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+                p { font-size: 1.2rem; opacity: 0.9; }
+                a { color: white; text-decoration: underline; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>🧬 TrialSage Platform</h1>
+                <p>API Server is running successfully.</p>
+                <p>Check <a href="/api/health">/api/health</a> for system status.</p>
+                <p>Frontend build may be required. Run: <code>npm run build</code></p>
+              </div>
+            </body>
+            </html>
+          `);
+        });
+        console.log('⚠️ No frontend available - serving basic landing page');
+      }
     }
+  } else {
+    console.log('⚠️ SKIP_VITE enabled - skipping Vite middleware setup');
   }
 
   // Start the HTTP server

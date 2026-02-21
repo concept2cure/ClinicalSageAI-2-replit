@@ -129,7 +129,6 @@ import {
   Gauge,
   FileBarChart,
   Save,
-  Template,
   FolderOpen,
   ChevronLeft,
   Database,
@@ -154,12 +153,25 @@ import {
   TimerOff,
   Inbox,
   SendHorizontal,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import io from 'socket.io-client';
-import { format, addDays, differenceInDays, isAfter, isBefore, parseISO, startOfDay, endOfDay, addWeeks, addMonths, formatDistanceToNow, formatDistance } from 'date-fns';
+import {
+  format,
+  addDays,
+  differenceInDays,
+  isAfter,
+  isBefore,
+  parseISO,
+  startOfDay,
+  endOfDay,
+  addWeeks,
+  addMonths,
+  formatDistanceToNow,
+  formatDistance,
+} from 'date-fns';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import GanttChartView from './GanttChartView';
@@ -176,43 +188,139 @@ const socket = io('/', {
 
 // Enhanced Task Templates with more options
 const TASK_TEMPLATES = {
-  'IND_SUBMISSION': {
+  IND_SUBMISSION: {
     name: 'IND Submission Package',
     description: 'Standard tasks for preparing an IND submission',
     icon: Package,
     color: 'from-blue-500 to-purple-600',
     tasks: [
-      { title: 'Prepare Form FDA 1571', priority: 'high', estimatedHours: 4, tags: ['IND', 'FDA', 'Form'], requiredFields: ['sponsor', 'protocol'], complianceLevel: 'critical' },
-      { title: 'Compile Clinical Protocol', priority: 'high', estimatedHours: 12, tags: ['IND', 'Clinical', 'Protocol'], requiredFields: ['objectives', 'design'], complianceLevel: 'critical' },
-      { title: 'Complete Chemistry Manufacturing Controls', priority: 'high', estimatedHours: 24, tags: ['IND', 'CMC'], requiredFields: ['substance', 'product'], complianceLevel: 'critical' },
-      { title: 'Prepare Investigator Brochure', priority: 'medium', estimatedHours: 16, tags: ['IND', 'Documentation'], complianceLevel: 'standard' },
-      { title: 'Compile Preclinical Data', priority: 'medium', estimatedHours: 20, tags: ['IND', 'Preclinical'], complianceLevel: 'standard' },
+      {
+        title: 'Prepare Form FDA 1571',
+        priority: 'high',
+        estimatedHours: 4,
+        tags: ['IND', 'FDA', 'Form'],
+        requiredFields: ['sponsor', 'protocol'],
+        complianceLevel: 'critical',
+      },
+      {
+        title: 'Compile Clinical Protocol',
+        priority: 'high',
+        estimatedHours: 12,
+        tags: ['IND', 'Clinical', 'Protocol'],
+        requiredFields: ['objectives', 'design'],
+        complianceLevel: 'critical',
+      },
+      {
+        title: 'Complete Chemistry Manufacturing Controls',
+        priority: 'high',
+        estimatedHours: 24,
+        tags: ['IND', 'CMC'],
+        requiredFields: ['substance', 'product'],
+        complianceLevel: 'critical',
+      },
+      {
+        title: 'Prepare Investigator Brochure',
+        priority: 'medium',
+        estimatedHours: 16,
+        tags: ['IND', 'Documentation'],
+        complianceLevel: 'standard',
+      },
+      {
+        title: 'Compile Preclinical Data',
+        priority: 'medium',
+        estimatedHours: 20,
+        tags: ['IND', 'Preclinical'],
+        complianceLevel: 'standard',
+      },
     ],
   },
-  'CMC_REVIEW': {
+  CMC_REVIEW: {
     name: 'CMC Review Checklist',
     description: 'Standard review tasks for CMC documentation',
     icon: FileCheck,
     color: 'from-purple-500 to-pink-600',
     tasks: [
-      { title: 'Review Drug Substance Specifications', priority: 'high', estimatedHours: 6, tags: ['CMC', 'Review'], requiredFields: ['specs'], complianceLevel: 'critical' },
-      { title: 'Validate Analytical Methods', priority: 'high', estimatedHours: 8, tags: ['CMC', 'Analytical'], requiredFields: ['validation'], complianceLevel: 'critical' },
-      { title: 'Check Stability Data Completeness', priority: 'medium', estimatedHours: 4, tags: ['CMC', 'Stability'], complianceLevel: 'standard' },
-      { title: 'Verify Manufacturing Process', priority: 'high', estimatedHours: 10, tags: ['CMC', 'Manufacturing'], requiredFields: ['process'], complianceLevel: 'critical' },
-      { title: 'Review Batch Records', priority: 'medium', estimatedHours: 6, tags: ['CMC', 'Batch'], complianceLevel: 'standard' },
+      {
+        title: 'Review Drug Substance Specifications',
+        priority: 'high',
+        estimatedHours: 6,
+        tags: ['CMC', 'Review'],
+        requiredFields: ['specs'],
+        complianceLevel: 'critical',
+      },
+      {
+        title: 'Validate Analytical Methods',
+        priority: 'high',
+        estimatedHours: 8,
+        tags: ['CMC', 'Analytical'],
+        requiredFields: ['validation'],
+        complianceLevel: 'critical',
+      },
+      {
+        title: 'Check Stability Data Completeness',
+        priority: 'medium',
+        estimatedHours: 4,
+        tags: ['CMC', 'Stability'],
+        complianceLevel: 'standard',
+      },
+      {
+        title: 'Verify Manufacturing Process',
+        priority: 'high',
+        estimatedHours: 10,
+        tags: ['CMC', 'Manufacturing'],
+        requiredFields: ['process'],
+        complianceLevel: 'critical',
+      },
+      {
+        title: 'Review Batch Records',
+        priority: 'medium',
+        estimatedHours: 6,
+        tags: ['CMC', 'Batch'],
+        complianceLevel: 'standard',
+      },
     ],
   },
-  'STABILITY_STUDY': {
+  STABILITY_STUDY: {
     name: 'Stability Study Setup',
     description: 'Tasks for initiating a new stability study',
     icon: Timer,
     color: 'from-green-500 to-teal-600',
     tasks: [
-      { title: 'Draft Stability Protocol', priority: 'high', estimatedHours: 8, tags: ['Stability', 'Protocol'], complianceLevel: 'critical' },
-      { title: 'Prepare Sample Pull Schedule', priority: 'high', estimatedHours: 2, tags: ['Stability', 'Schedule'], complianceLevel: 'standard' },
-      { title: 'Set Up Stability Chambers', priority: 'medium', estimatedHours: 4, tags: ['Stability', 'Equipment'], complianceLevel: 'standard' },
-      { title: 'Create Sample Tracking System', priority: 'medium', estimatedHours: 3, tags: ['Stability', 'Tracking'], complianceLevel: 'standard' },
-      { title: 'Define Testing Parameters', priority: 'high', estimatedHours: 5, tags: ['Stability', 'Testing'], complianceLevel: 'critical' },
+      {
+        title: 'Draft Stability Protocol',
+        priority: 'high',
+        estimatedHours: 8,
+        tags: ['Stability', 'Protocol'],
+        complianceLevel: 'critical',
+      },
+      {
+        title: 'Prepare Sample Pull Schedule',
+        priority: 'high',
+        estimatedHours: 2,
+        tags: ['Stability', 'Schedule'],
+        complianceLevel: 'standard',
+      },
+      {
+        title: 'Set Up Stability Chambers',
+        priority: 'medium',
+        estimatedHours: 4,
+        tags: ['Stability', 'Equipment'],
+        complianceLevel: 'standard',
+      },
+      {
+        title: 'Create Sample Tracking System',
+        priority: 'medium',
+        estimatedHours: 3,
+        tags: ['Stability', 'Tracking'],
+        complianceLevel: 'standard',
+      },
+      {
+        title: 'Define Testing Parameters',
+        priority: 'high',
+        estimatedHours: 5,
+        tags: ['Stability', 'Testing'],
+        complianceLevel: 'critical',
+      },
     ],
   },
 };
@@ -245,10 +353,15 @@ const COMPLIANCE_LEVELS = {
 };
 
 // Modern Task Management System Component
-const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'org1', clientWorkspaceId = 'ws1', userRole = 'admin' }) => {
+const ModernTaskManagementSystem = ({
+  projectId = 'default',
+  organizationId = 'org1',
+  clientWorkspaceId = 'ws1',
+  userRole = 'admin',
+}) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // State Management
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -261,18 +374,18 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
     dateRange: null,
     complianceLevel: 'all',
   });
-  
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showTimeTracking, setShowTimeTracking] = useState(false);
   const [showComplianceModal, setShowComplianceModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  
+
   const [activeTimer, setActiveTimer] = useState(null);
   const [timerElapsed, setTimerElapsed] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [taskHistory, setTaskHistory] = useState([]);
-  
+
   // Notification preferences
   const [notificationPrefs, setNotificationPrefs] = useState({
     email: {
@@ -311,15 +424,15 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
   // Time tracking state
   const [timeEntries, setTimeEntries] = useState([]);
   const [showTimesheetModal, setShowTimesheetModal] = useState(false);
-  
+
   // Compliance state
   const [complianceChecks, setComplianceChecks] = useState([]);
   const [complianceScore, setComplianceScore] = useState(85);
-  
+
   // Version history state
   const [taskVersions, setTaskVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
-  
+
   // Timer effect
   useEffect(() => {
     let interval;
@@ -333,14 +446,14 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
 
   // Real-time updates effect
   useEffect(() => {
-    socket.on('taskUpdate', (data) => {
+    socket.on('taskUpdate', data => {
       handleRealTimeUpdate(data);
     });
-    
-    socket.on('notification', (notification) => {
+
+    socket.on('notification', notification => {
       handleNewNotification(notification);
     });
-    
+
     return () => {
       socket.off('taskUpdate');
       socket.off('notification');
@@ -348,21 +461,21 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
   }, []);
 
   // Handle real-time updates
-  const handleRealTimeUpdate = (data) => {
+  const handleRealTimeUpdate = data => {
     if (data.type === 'taskUpdated') {
-      setTasks(prev => prev.map(task => 
-        task.id === data.taskId ? { ...task, ...data.updates } : task
-      ));
-      
+      setTasks(prev =>
+        prev.map(task => (task.id === data.taskId ? { ...task, ...data.updates } : task))
+      );
+
       // Add to history
       addToHistory(data.taskId, 'update', data.updates);
     }
   };
 
   // Handle new notification
-  const handleNewNotification = (notification) => {
+  const handleNewNotification = notification => {
     setNotifications(prev => [notification, ...prev]);
-    
+
     // Show toast for important notifications
     if (notification.priority === 'high') {
       toast({
@@ -371,7 +484,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
         variant: notification.type === 'error' ? 'destructive' : 'default',
       });
     }
-    
+
     // Play sound if enabled
     if (notificationPrefs.inApp.sound) {
       playNotificationSound();
@@ -394,13 +507,16 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
       user: 'Current User', // Replace with actual user
       timestamp: new Date().toISOString(),
     };
-    
+
     setTaskHistory(prev => [historyEntry, ...prev]);
-    setTaskVersions(prev => [...prev, { ...tasks.find(t => t.id === taskId), versionId: historyEntry.id }]);
+    setTaskVersions(prev => [
+      ...prev,
+      { ...tasks.find(t => t.id === taskId), versionId: historyEntry.id },
+    ]);
   };
 
   // Clone task function
-  const cloneTask = (task) => {
+  const cloneTask = task => {
     const clonedTask = {
       ...task,
       id: Date.now().toString(),
@@ -410,14 +526,14 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
       updatedAt: new Date().toISOString(),
       timeSpent: 0,
     };
-    
+
     setTasks(prev => [...prev, clonedTask]);
-    
+
     toast({
       title: 'Task Cloned',
       description: `Successfully cloned "${task.title}"`,
     });
-    
+
     addToHistory(clonedTask.id, 'clone', { originalTaskId: task.id });
   };
 
@@ -426,7 +542,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
     const instances = [];
     let currentDate = new Date();
     const endDate = settings.endDate ? new Date(settings.endDate) : addMonths(currentDate, 12);
-    
+
     while (currentDate <= endDate) {
       const instance = {
         ...baseTask,
@@ -435,9 +551,9 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
         recurringTaskId: baseTask.id,
         recurrencePattern: settings.pattern,
       };
-      
+
       instances.push(instance);
-      
+
       // Calculate next occurrence
       switch (settings.pattern) {
         case 'daily':
@@ -453,10 +569,10 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
           break;
       }
     }
-    
+
     setRecurringTasks(prev => [...prev, { baseTask, settings, instances }]);
     setTasks(prev => [...prev, ...instances]);
-    
+
     toast({
       title: 'Recurring Task Created',
       description: `Created ${instances.length} recurring instances`,
@@ -464,7 +580,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
   };
 
   // Start/stop timer
-  const toggleTimer = (taskId) => {
+  const toggleTimer = taskId => {
     if (activeTimer === taskId) {
       // Stop timer
       const entry = {
@@ -475,19 +591,19 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
         duration: timerElapsed,
         description: 'Timer session',
       };
-      
+
       setTimeEntries(prev => [...prev, entry]);
-      
+
       // Update task time spent
-      setTasks(prev => prev.map(task =>
-        task.id === taskId
-          ? { ...task, timeSpent: (task.timeSpent || 0) + timerElapsed }
-          : task
-      ));
-      
+      setTasks(prev =>
+        prev.map(task =>
+          task.id === taskId ? { ...task, timeSpent: (task.timeSpent || 0) + timerElapsed } : task
+        )
+      );
+
       setActiveTimer(null);
       setTimerElapsed(0);
-      
+
       toast({
         title: 'Timer Stopped',
         description: `Logged ${formatDuration(timerElapsed)} to task`,
@@ -496,7 +612,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
       // Start timer
       setActiveTimer(taskId);
       setTimerElapsed(0);
-      
+
       toast({
         title: 'Timer Started',
         description: 'Time tracking is active',
@@ -505,11 +621,11 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
   };
 
   // Format duration helper
-  const formatDuration = (seconds) => {
+  const formatDuration = seconds => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -517,9 +633,9 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
   };
 
   // Check compliance
-  const checkCompliance = (task) => {
+  const checkCompliance = task => {
     const checks = [];
-    
+
     // Check required fields
     if (task.requiredFields) {
       task.requiredFields.forEach(field => {
@@ -531,7 +647,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
         });
       });
     }
-    
+
     // Check deadline
     if (task.dueDate && new Date(task.dueDate) < new Date()) {
       checks.push({
@@ -541,7 +657,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
         severity: 'warning',
       });
     }
-    
+
     // Check compliance level requirements
     if (task.complianceLevel === 'critical' && !task.approvedBy) {
       checks.push({
@@ -551,14 +667,14 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
         severity: 'error',
       });
     }
-    
+
     setComplianceChecks(checks);
-    
+
     // Calculate compliance score
     const passedChecks = checks.filter(c => c.passed).length;
     const score = checks.length > 0 ? (passedChecks / checks.length) * 100 : 100;
     setComplianceScore(score);
-    
+
     return checks;
   };
 
@@ -589,15 +705,15 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
   };
 
   // Restore task version
-  const restoreVersion = (versionId) => {
+  const restoreVersion = versionId => {
     const version = taskVersions.find(v => v.versionId === versionId);
     if (version) {
-      setTasks(prev => prev.map(task =>
-        task.id === version.id ? { ...version, versionId: undefined } : task
-      ));
-      
+      setTasks(prev =>
+        prev.map(task => (task.id === version.id ? { ...version, versionId: undefined } : task))
+      );
+
       addToHistory(version.id, 'restore', { versionId });
-      
+
       toast({
         title: 'Version Restored',
         description: 'Task has been restored to selected version',
@@ -623,12 +739,14 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
 
   // Handle task update
   const handleTaskUpdate = (taskId, updates) => {
-    setTasks(prev => prev.map(task =>
-      task.id === taskId ? { ...task, ...updates, updatedAt: new Date().toISOString() } : task
-    ));
-    
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId ? { ...task, ...updates, updatedAt: new Date().toISOString() } : task
+      )
+    );
+
     addToHistory(taskId, 'update', updates);
-    
+
     // Check compliance after update
     const updatedTask = tasks.find(t => t.id === taskId);
     if (updatedTask) {
@@ -656,7 +774,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                 Streamline your workflow with advanced task tracking
               </p>
             </div>
-            
+
             {/* Notification Center */}
             <div className="flex items-center gap-4">
               {/* Compliance Score */}
@@ -664,7 +782,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                 <ShieldCheck className="w-5 h-5 text-green-500" />
                 <span className="text-sm font-semibold">{complianceScore}%</span>
               </div>
-              
+
               {/* Active Timer Display */}
               {activeTimer && (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white animate-pulse">
@@ -672,7 +790,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                   <span className="font-mono font-semibold">{formatDuration(timerElapsed)}</span>
                 </div>
               )}
-              
+
               {/* Notification Bell */}
               <button
                 className="relative p-2 rounded-xl bg-white shadow-sm hover:shadow-md transition-all notification-badge"
@@ -681,7 +799,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
               >
                 <Bell className="w-5 h-5 text-gray-700" />
               </button>
-              
+
               {/* Create New Task Button */}
               <Button
                 onClick={() => setShowCreateModal(true)}
@@ -692,7 +810,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
               </Button>
             </div>
           </div>
-          
+
           {/* View Mode Switcher */}
           <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-xl w-fit">
             {[
@@ -700,7 +818,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
               { value: 'list', icon: ListTodo, label: 'List' },
               { value: 'calendar', icon: Calendar, label: 'Calendar' },
               { value: 'gantt', icon: GanttChart, label: 'Gantt' },
-            ].map((mode) => (
+            ].map(mode => (
               <button
                 key={mode.value}
                 onClick={() => setViewMode(mode.value)}
@@ -719,9 +837,15 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
         </div>
 
         {/* Filters Bar */}
-        <div className="glass-panel rounded-2xl p-4 animate-slideUp" style={{ animationDelay: '0.1s' }}>
+        <div
+          className="glass-panel rounded-2xl p-4 animate-slideUp"
+          style={{ animationDelay: '0.1s' }}
+        >
           <div className="flex items-center gap-4 flex-wrap">
-            <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+            <Select
+              value={filters.status}
+              onValueChange={value => setFilters(prev => ({ ...prev, status: value }))}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -732,8 +856,11 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
+
+            <Select
+              value={filters.priority}
+              onValueChange={value => setFilters(prev => ({ ...prev, priority: value }))}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
@@ -745,8 +872,11 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                 <SelectItem value="low">Low</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Select value={filters.complianceLevel} onValueChange={(value) => setFilters(prev => ({ ...prev, complianceLevel: value }))}>
+
+            <Select
+              value={filters.complianceLevel}
+              onValueChange={value => setFilters(prev => ({ ...prev, complianceLevel: value }))}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Compliance" />
               </SelectTrigger>
@@ -758,7 +888,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                 <SelectItem value="none">None</SelectItem>
               </SelectContent>
             </Select>
-            
+
             {/* Quick Actions */}
             <div className="ml-auto flex items-center gap-2">
               <Button
@@ -770,7 +900,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                 <FileBarChart className="w-4 h-4" />
                 Timesheet
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -780,7 +910,7 @@ const ModernTaskManagementSystem = ({ projectId = 'default', organizationId = 'o
                 <ShieldCheck className="w-4 h-4" />
                 Compliance
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -822,7 +952,7 @@ const KanbanView = ({ tasks, onTaskUpdate }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {columns.map((column) => (
+      {columns.map(column => (
         <div key={column} className="space-y-4">
           <div className="glass-panel rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
@@ -831,7 +961,7 @@ const KanbanView = ({ tasks, onTaskUpdate }) => {
                 {tasks.filter(t => t.status === column).length}
               </span>
             </div>
-            
+
             <ScrollArea className="h-[500px]">
               <div className="space-y-3">
                 {tasks
@@ -866,11 +996,11 @@ const TaskCard = ({ task, onUpdate }) => {
           {task.priority}
         </Badge>
       </div>
-      
+
       {task.description && (
         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
       )}
-      
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {task.assignee && (
@@ -884,17 +1014,11 @@ const TaskCard = ({ task, onUpdate }) => {
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-1">
-          {task.timeTracking && (
-            <Timer className="w-4 h-4 text-gray-400" />
-          )}
-          {task.hasAttachments && (
-            <Paperclip className="w-4 h-4 text-gray-400" />
-          )}
-          {task.comments > 0 && (
-            <MessageSquare className="w-4 h-4 text-gray-400" />
-          )}
+          {task.timeTracking && <Timer className="w-4 h-4 text-gray-400" />}
+          {task.hasAttachments && <Paperclip className="w-4 h-4 text-gray-400" />}
+          {task.comments > 0 && <MessageSquare className="w-4 h-4 text-gray-400" />}
         </div>
       </div>
     </div>

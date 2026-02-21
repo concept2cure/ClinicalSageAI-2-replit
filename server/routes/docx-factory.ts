@@ -14,9 +14,10 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { Readable } from 'stream';
 import { eq, and } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth.js';
-import { db } from '../db.js';
+import { db } from '../db';
 import { regulatoryPrograms } from '../../shared/schema/programs.js';
 
 const router = Router();
@@ -217,6 +218,30 @@ router.post(
   }
 );
 
+/**
+ * GET /api/docx-factory/templates/:templateId/versions?program_id=...
+ *
+ * List all versions for a template.
+ */
+router.get(
+  '/templates/:templateId/versions',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const programId = String(req.query.program_id || '');
+    try {
+      const result = await proxyToShadow(
+        `/docx/templates/${encodeURIComponent(req.params.templateId)}/versions`,
+        { query: { program_id: programId } }
+      );
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (err: any) {
+      console.error('[docx-factory] list versions proxy error:', err.message);
+      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    }
+  }
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Routes — Renders
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -395,6 +420,13 @@ router.get(
         res.setHeader('X-Artifact-SHA256', sha256Header);
       }
 
+      if (response.body) {
+        const stream = Readable.fromWeb(response.body as any);
+        res.status(200);
+        stream.pipe(res);
+        return;
+      }
+
       const buffer = Buffer.from(await response.arrayBuffer());
       res.status(200).send(buffer);
     } catch (err: any) {
@@ -412,7 +444,7 @@ router.get(
  * POST /api/docx-factory/seed?program_id=...
  *
  * Seed starter templates into a program (idempotent).
- * Creates 6 regulatory-real templates + versions + demo input packs.
+ * Optional filters: doc_family, doc_type.
  */
 router.post(
   '/seed',
@@ -421,9 +453,16 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const programId = String(req.query.program_id || req.body?.program_id || '');
+      const query: Record<string, string> = { program_id: programId };
+      if (req.query.doc_family) {
+        query.doc_family = String(req.query.doc_family);
+      }
+      if (req.query.doc_type) {
+        query.doc_type = String(req.query.doc_type);
+      }
       const result = await proxyToShadow('/docx/seed', {
         method: 'POST',
-        query: { program_id: programId },
+        query,
       });
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
@@ -437,7 +476,7 @@ router.post(
  * GET /api/docx-factory/demo-packs?doc_type=...
  *
  * List available demo input packs. No DB required — reads from static JSON files.
- * Optionally filter by doc_type.
+ * Optionally filter by doc_type and/or doc_family.
  */
 router.get('/demo-packs', requireConfigured, async (req: Request, res: Response) => {
   try {
@@ -445,10 +484,69 @@ router.get('/demo-packs', requireConfigured, async (req: Request, res: Response)
     if (req.query.doc_type) {
       query.doc_type = String(req.query.doc_type);
     }
+    if (req.query.doc_family) {
+      query.doc_family = String(req.query.doc_family);
+    }
     const result = await proxyToShadow('/docx/demo-packs', { query });
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     console.error('[docx-factory] demo-packs proxy error:', err.message);
+    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+  }
+});
+
+/**
+ * GET /api/docx-factory/catalog/families
+ *
+ * List supported document families from the DOCX seed catalog.
+ */
+router.get('/catalog/families', requireConfigured, async (_req: Request, res: Response) => {
+  try {
+    const result = await proxyToShadow('/docx/catalog/families');
+    res.status(result.status).type(result.contentType).send(result.body);
+  } catch (err: any) {
+    console.error('[docx-factory] catalog families proxy error:', err.message);
+    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+  }
+});
+
+/**
+ * GET /api/docx-factory/catalog/doc-types?doc_family=...
+ *
+ * List supported template doc_type values, optionally scoped by family.
+ */
+router.get('/catalog/doc-types', requireConfigured, async (req: Request, res: Response) => {
+  try {
+    const query: Record<string, string> = {};
+    if (req.query.doc_family) {
+      query.doc_family = String(req.query.doc_family);
+    }
+    const result = await proxyToShadow('/docx/catalog/doc-types', { query });
+    res.status(result.status).type(result.contentType).send(result.body);
+  } catch (err: any) {
+    console.error('[docx-factory] catalog doc-types proxy error:', err.message);
+    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+  }
+});
+
+/**
+ * GET /api/docx-factory/catalog/templates?doc_family=...&doc_type=...
+ *
+ * List seed template metadata, optionally scoped by family and/or doc type.
+ */
+router.get('/catalog/templates', requireConfigured, async (req: Request, res: Response) => {
+  try {
+    const query: Record<string, string> = {};
+    if (req.query.doc_family) {
+      query.doc_family = String(req.query.doc_family);
+    }
+    if (req.query.doc_type) {
+      query.doc_type = String(req.query.doc_type);
+    }
+    const result = await proxyToShadow('/docx/catalog/templates', { query });
+    res.status(result.status).type(result.contentType).send(result.body);
+  } catch (err: any) {
+    console.error('[docx-factory] catalog templates proxy error:', err.message);
     res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
   }
 });

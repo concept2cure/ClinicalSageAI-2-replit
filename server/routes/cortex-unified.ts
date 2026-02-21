@@ -16,6 +16,14 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
+import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
+import { getGateway } from '../services/ai-gateway/index.js';
+import type { GatewayResponse } from '../services/ai-gateway/types.js';
+import {
+  getOrCreateThread,
+  getThreadMessages,
+  saveChatMessage,
+} from '../services/chat-thread-helpers.js';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -138,6 +146,293 @@ router.get('/docs', (_req: Request, res: Response) => {
     },
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTEXT-AWARE CHAT ENDPOINT
+// POST /api/cortex/chat — Primary endpoint for ZenChat / Lumen Cortex
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// AI Gateway instance (lazy-initialized)
+let chatGateway: ReturnType<typeof getGateway> | null = null;
+function ensureChatGateway() {
+  if (!chatGateway) {
+    try {
+      chatGateway = getGateway();
+    } catch {
+      /* demo mode */
+    }
+  }
+  return chatGateway;
+}
+
+/**
+ * POST /api/cortex/chat
+ * Context-aware chat endpoint for Lumen Cortex.
+ * Accepts project_id and automatically injects project context into the system prompt.
+ */
+router.post('/chat', async (req: Request, res: Response) => {
+  try {
+    const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code } =
+      req.body || {};
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+    }
+
+    const organizationId =
+      parseInt((req as any).tenantContext?.organizationId, 10) ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+
+    // Resolve project ID — strip "proj_" prefix if present (concept2cure format)
+    let numericProjectId: number | undefined;
+    if (project_id) {
+      const cleaned = String(project_id).replace(/^proj_/, '');
+      numericProjectId = parseInt(cleaned, 10) || undefined;
+    }
+
+    // Build context-aware system prompt (with optional section-specific guidance)
+    const { systemPrompt, context } = await buildContextAwarePrompt({
+      projectId: numericProjectId,
+      organizationId,
+      userId,
+      submissionType: submission_type,
+      customSystemPrompt: system_prompt,
+      sectionCode: section_code || undefined,
+    });
+
+    // Get or create thread (prefix 'cortex' to distinguish from legacy chat)
+    const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
+    const previousMessages = await getThreadMessages(threadId);
+
+    let assistantMessage: string;
+    let model = 'lumen-cortex-demo';
+    let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+
+    // Route through AI Gateway
+    const gw = ensureChatGateway();
+    if (gw && gw.getEnabledProviders().length > 0) {
+      try {
+        const gwMessages = [
+          { role: 'system' as const, content: systemPrompt },
+          ...previousMessages.map((m: any) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          })),
+          { role: 'user' as const, content: message },
+        ];
+
+        logger.info(
+          `[Chat] Sending context-aware message (project=${numericProjectId || 'none'}, sub=${context.project?.submissionType || 'none'}, section=${section_code || 'none'})`
+        );
+
+        const gwResponse: GatewayResponse = await gw.route({
+          taskType: 'chat',
+          messages: gwMessages,
+          temperature: 0.7,
+          maxTokens: 4000,
+          callerModule: 'lumen-cortex-chat',
+          organizationId: String(organizationId),
+          userId: userId ? String(userId) : undefined,
+          projectId: numericProjectId ? String(numericProjectId) : undefined,
+        });
+
+        assistantMessage =
+          gwResponse.content ||
+          'I apologize, but I was unable to generate a response. Please try again.';
+        model = `${gwResponse.provider}/${gwResponse.model}`;
+        usage = {
+          prompt_tokens: gwResponse.usage.inputTokens,
+          completion_tokens: gwResponse.usage.outputTokens,
+          total_tokens: gwResponse.usage.totalTokens,
+        };
+      } catch (gwError: any) {
+        logger.warn(`[Chat] AI Gateway call failed, using demo mode: ${gwError.message}`);
+        assistantMessage = generateContextAwareDemoResponse(message, context);
+        model = 'lumen-cortex-demo';
+      }
+    } else {
+      assistantMessage = generateContextAwareDemoResponse(message, context);
+    }
+
+    // Persist messages
+    await saveChatMessage(threadId, 'user', message, model);
+    await saveChatMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
+
+    res.json({
+      answer: assistantMessage,
+      response: assistantMessage,
+      thread_id: threadId,
+      usage,
+      model,
+      context: {
+        projectName: context.project?.name || null,
+        submissionType: context.project?.submissionType || submission_type || null,
+        progress: context.project?.progress || null,
+        documentsTotal: context.documents?.totalDocuments || 0,
+        documentsCompleted: context.documents?.completedDocuments || 0,
+        sectionCode: section_code || null,
+      },
+    });
+  } catch (error: any) {
+    logger.error(`[Chat] Error: ${error.message}`);
+    res.status(500).json({
+      error: 'Failed to process message',
+      code: 'CHAT_ERROR',
+      message: error.message,
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SAVE DRAFT — Persist AI-generated content as a tagged artifact
+// POST /api/cortex/save-draft
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/save-draft', async (req: Request, res: Response) => {
+  try {
+    const { project_id, section_code, title, content, status } = req.body || {};
+
+    if (!project_id || !section_code || !content) {
+      return res.status(400).json({
+        error: 'project_id, section_code, and content are required',
+      });
+    }
+
+    const organizationId =
+      parseInt((req as any).tenantContext?.organizationId, 10) ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+
+    const numericProjectId = parseInt(String(project_id).replace(/^proj_/, ''), 10);
+    if (!numericProjectId) {
+      return res.status(400).json({ error: 'Invalid project_id' });
+    }
+
+    // Lazy-import to avoid circular deps
+    const { tagArtifact } = await import('../services/artifact-tagger.js');
+
+    const result = await tagArtifact({
+      projectId: numericProjectId,
+      organizationId,
+      userId: userId || undefined,
+      sectionCode: section_code,
+      title: title || `Draft: ${section_code}`,
+      content,
+      status: status || 'draft',
+      source: 'lumen_cortex',
+      metadata: { savedVia: 'cortex-save-draft' },
+    });
+
+    logger.info(
+      `[SaveDraft] Artifact ${result.isNew ? 'created' : 'updated'}: ${result.artifactId} for section ${section_code}`
+    );
+
+    res.json({
+      success: true,
+      artifactId: result.artifactId,
+      sectionCode: result.sectionCode,
+      isNew: result.isNew,
+      sectionStatusUpdated: result.sectionStatusUpdated,
+    });
+  } catch (error: any) {
+    logger.error(`[SaveDraft] Error: ${error.message}`);
+    res.status(500).json({ error: 'Failed to save draft' });
+  }
+});
+
+/**
+ * Demo response generator that uses project context for relevance.
+ */
+function generateContextAwareDemoResponse(
+  message: string,
+  context: import('../services/lumen-context-builder.js').LumenContext
+): string {
+  const lower = message.toLowerCase();
+  const projectName = context.project?.name || 'your project';
+  const subType = context.project?.submissionType || 'regulatory submission';
+  const progress = context.project?.progress || 0;
+
+  if (lower.includes('status') || lower.includes('progress') || lower.includes('where')) {
+    return `## ${projectName} — Status Overview
+
+**Submission Type**: ${subType}
+**Overall Progress**: ${progress}%
+${context.documents ? `**Documents**: ${context.documents.completedDocuments}/${context.documents.totalDocuments} completed` : ''}
+
+### Recommended Next Steps
+
+1. ${progress < 30 ? 'Complete Module 1 administrative forms (FDA 1571, 1572)' : progress < 60 ? 'Finalize Module 2 summaries and Module 3 CMC data' : 'Complete QA review and prepare eCTD package for submission'}
+2. Review any open document gaps in the CTD section navigator
+3. Run a compliance check before advancing to the next phase
+
+Would you like me to focus on a specific module or document section?`;
+  }
+
+  if (
+    lower.includes('ind') ||
+    lower.includes('module') ||
+    lower.includes('ctd') ||
+    lower.includes('ectd')
+  ) {
+    return `## IND CTD Structure for ${projectName}
+
+The IND application follows the ICH Common Technical Document (CTD) format with 5 modules:
+
+| Module | Content | Status |
+|--------|---------|--------|
+| **M1** | Regional Administrative (FDA Forms, Cover Letter) | ${progress > 20 ? '✅ In Progress' : '⬜ Not Started'} |
+| **M2** | CTD Summaries (QOS, Nonclinical/Clinical Overviews) | ${progress > 40 ? '✅ In Progress' : '⬜ Not Started'} |
+| **M3** | Quality/CMC (Drug Substance S.1-S.7, Drug Product P.1-P.8) | ${progress > 50 ? '✅ In Progress' : '⬜ Not Started'} |
+| **M4** | Nonclinical Study Reports (Pharm, PK, Tox) | ${progress > 60 ? '✅ In Progress' : '⬜ Not Started'} |
+| **M5** | Clinical (Phase 1 Protocol, Study Reports) | ${progress > 70 ? '✅ In Progress' : '⬜ Not Started'} |
+
+### Key References
+- **21 CFR 312.23(a)** — Content and format of an IND
+- **ICH M4** — The Common Technical Document
+- **ICH M8** — eCTD v4.0 Implementation Guide
+
+What specific module or section would you like help with?`;
+  }
+
+  if (lower.includes('help') || lower.includes('what can') || lower.includes('how')) {
+    return `## How I Can Help with ${projectName}
+
+I'm Lumen Cortex, your AI regulatory intelligence engine. For your **${subType}** submission, I can:
+
+1. **Draft Documents** — Generate eCTD-compliant sections for any CTD module
+2. **Review Content** — Check documents against regulatory requirements and flag gaps
+3. **Guide Strategy** — Recommend submission strategies and timeline optimization
+4. **Track Compliance** — Monitor 21 CFR Part 11, ICH, and agency-specific requirements
+5. **Analyze Risks** — Identify potential deficiencies before FDA review
+
+### Quick Actions
+- "Draft Module 2.3 Quality Overall Summary"
+- "What sections are missing for my IND?"
+- "Review my drug substance characterization"
+- "Create a submission timeline"
+
+What would you like to work on?`;
+  }
+
+  return `Thank you for your question about **${projectName}** (${subType}).
+
+I'd be happy to help. Based on your current progress (${progress}%), here are some thoughts:
+
+${
+  context.documents && context.documents.totalDocuments > 0
+    ? `You have **${context.documents.completedDocuments}** of **${context.documents.totalDocuments}** documents completed. `
+    : "It looks like you're in the early stages of document preparation. "
+}
+
+To give you the most relevant guidance, could you specify:
+1. Which CTD module or section you're working on?
+2. Whether you need help drafting, reviewing, or strategizing?
+
+I can also provide a full gap analysis of your submission package if that would be helpful.`;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUB-ROUTER MOUNTS

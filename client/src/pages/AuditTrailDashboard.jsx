@@ -33,6 +33,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarIcon,
+  ShieldCheck,
+  Link2,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,6 +57,39 @@ export default function AuditTrailDashboard() {
   const [bulkDeleteReason, setBulkDeleteReason] = useState('');
   const [activeView, setActiveView] = useState('all');
   const { toast } = useToast();
+
+  // Part 11 chain integrity state
+  const [chainIntegrity, setChainIntegrity] = useState(null);
+  const [checkingIntegrity, setCheckingIntegrity] = useState(false);
+
+  // Verify Part 11 audit trail chain integrity (cryptographic hash chain)
+  const verifyChainIntegrity = async () => {
+    setCheckingIntegrity(true);
+    try {
+      const res = await fetch('/api/part11/audit-trail/chain-integrity');
+      if (res.ok) {
+        const data = await res.json();
+        setChainIntegrity(data);
+        toast({
+          title: data.integrityValid ? 'Chain Verified' : 'Integrity Issue',
+          description: data.integrityValid
+            ? `All ${data.totalEntries} audit entries verified — no tampering detected.`
+            : `Chain integrity check found issues. Review required.`,
+          variant: data.integrityValid ? 'default' : 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Verification Failed',
+          description: `Chain integrity endpoint returned ${res.status}. Contact support.`,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.warn('Part 11 chain integrity check unavailable:', error.message);
+    } finally {
+      setCheckingIntegrity(false);
+    }
+  };
 
   useEffect(() => {
     fetchAuditLogs();
@@ -291,6 +326,41 @@ export default function AuditTrailDashboard() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={verifyChainIntegrity}
+                    disabled={checkingIntegrity}
+                    className={
+                      chainIntegrity?.integrityValid === true
+                        ? 'border-emerald-300 text-emerald-700'
+                        : ''
+                    }
+                  >
+                    {checkingIntegrity ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Link2 className="h-4 w-4" />
+                    )}
+                    {chainIntegrity?.integrityValid === true && (
+                      <ShieldCheck className="h-3.5 w-3.5 ml-1 text-emerald-600" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Verify Part 11 chain integrity</p>
+                  {chainIntegrity && (
+                    <p className="text-xs opacity-75">
+                      {chainIntegrity.totalEntries} entries verified
+                    </p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <Button variant="outline" size="sm" onClick={exportCSV}>
               <Download className="h-4 w-4 mr-1" /> Export

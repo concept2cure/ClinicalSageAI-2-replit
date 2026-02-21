@@ -1,6 +1,6 @@
 import express from 'express';
 import { indAutomationService, Module3Data, ProjectMetadata } from '../ind-automation-service';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import axios from 'axios';
 import http from 'http';
 import https from 'https';
@@ -26,6 +26,33 @@ const httpClient = axios.create({
   httpsAgent: new https.Agent({ timeout: 60000 }),
   timeout: 60000, // 60 seconds timeout
 });
+
+const sendModuleDocument = async (
+  moduleNumber: 1 | 2 | 3 | 4 | 5,
+  req: express.Request,
+  res: express.Response,
+  defaultName: string
+) => {
+  try {
+    const data = req.body as ProjectMetadata;
+    const documentBytes = await indAutomationService.generateModuleDocument(moduleNumber, data);
+    const safeDrugName = (data.drug_name || defaultName).replace(/\s+/g, '_');
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="Module${moduleNumber}_${safeDrugName}.docx"`,
+      'Content-Length': documentBytes.length,
+    });
+
+    res.send(documentBytes);
+  } catch (error) {
+    logger.error(`Error generating Module ${moduleNumber} document: ${error.message}`);
+    res.status(500).json({
+      status: 'error',
+      message: `Failed to generate Module ${moduleNumber} document: ${error.message}`,
+    });
+  }
+};
 
 /**
  * GET /api/ind-automation/status
@@ -146,8 +173,8 @@ router.post('/generate/module3', async (req, res) => {
 
     logger.info(`Generating Module 3 document for drug ${data.drug_name}`);
 
-    // Generate the document
-    const documentBytes = await indAutomationService.generateModule3FromData(data);
+    // Generate the document through unified module rendering
+    const documentBytes = await indAutomationService.generateModuleDocument(3, data);
 
     // Set headers and send response
     const filename = data.drug_name.replace(/\s+/g, '_');
@@ -164,6 +191,80 @@ router.post('/generate/module3', async (req, res) => {
       .status(500)
       .json({ status: 'error', message: `Failed to generate document: ${error.message}` });
   }
+});
+
+router.get('/templates/pyramid', async (req, res) => {
+  try {
+    const catalog = await indAutomationService.getPyramidCatalog();
+    res.json(catalog);
+  } catch (error) {
+    logger.error(`Error fetching IND pyramid catalog: ${error.message}`);
+    res.status(500).json({
+      status: 'error',
+      message: `Failed to fetch IND pyramid catalog: ${error.message}`,
+    });
+  }
+});
+
+router.post('/generate/module/:moduleNumber/template/:templateId', async (req, res) => {
+  try {
+    const moduleNumber = Number(req.params.moduleNumber);
+    const templateId = req.params.templateId;
+    const data = req.body as ProjectMetadata;
+
+    if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 5) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'moduleNumber must be an integer between 1 and 5',
+      });
+    }
+
+    if (!templateId) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'templateId is required',
+      });
+    }
+
+    const documentBytes = await indAutomationService.generatePyramidTemplate(
+      moduleNumber as 1 | 2 | 3 | 4 | 5,
+      templateId,
+      data
+    );
+
+    const safeDrugName = (data.drug_name || 'IND').replace(/\s+/g, '_');
+    const safeTemplateId = templateId.replace(/[^a-zA-Z0-9.-]/g, '_');
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="Module${moduleNumber}_${safeTemplateId}_${safeDrugName}.docx"`,
+      'Content-Length': documentBytes.length,
+    });
+
+    res.send(documentBytes);
+  } catch (error) {
+    logger.error(`Error generating IND pyramid sub-template: ${error.message}`);
+    res.status(500).json({
+      status: 'error',
+      message: `Failed to generate IND pyramid sub-template: ${error.message}`,
+    });
+  }
+});
+
+router.post('/generate/module1', async (req, res) => {
+  await sendModuleDocument(1, req, res, 'IND_Admin');
+});
+
+router.post('/generate/module2', async (req, res) => {
+  await sendModuleDocument(2, req, res, 'IND_Summaries');
+});
+
+router.post('/generate/module4', async (req, res) => {
+  await sendModuleDocument(4, req, res, 'IND_Nonclinical');
+});
+
+router.post('/generate/module5', async (req, res) => {
+  await sendModuleDocument(5, req, res, 'IND_Clinical');
 });
 
 /**

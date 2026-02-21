@@ -1,9 +1,9 @@
 /**
  * FDA MedWatch 3500A XML Export Generator
- * 
+ *
  * Generates FDA-compliant XML for adverse event reporting per FDA MedWatch 3500A form.
  * This implementation follows the FDA HL7v3 Individual Case Safety Report (ICSR) format.
- * 
+ *
  * @version 1.0.0
  * @compliance FDA 21 CFR Part 803, FDA MedWatch 3500A
  * @reference https://www.fda.gov/safety/medical-product-safety-information/medwatch-fda-safety-information-and-adverse-event-reporting-program
@@ -17,7 +17,7 @@ import {
   ValidationError,
   ValidationWarning,
   ExportResult,
-  CODE_SYSTEMS
+  CODE_SYSTEMS,
 } from '../types';
 
 // Type assertion helper for flexible data access from canonical model
@@ -43,21 +43,21 @@ const FDA_SERIOUSNESS_CODES: Record<string, string> = {
   hospitalization: 'HO',
   disability: 'DS',
   congenital_anomaly: 'CA',
-  other_medically_important: 'OT'
+  other_medically_important: 'OT',
 };
 
 // Patient sex mapping
 const FDA_SEX_CODES: Record<string, string> = {
   male: '1',
   female: '2',
-  unknown: '0'
+  unknown: '0',
 };
 
 // Report type mapping
 const FDA_REPORT_TYPE_CODES: Record<string, string> = {
   initial: '1',
   followup: '2',
-  final: '3'
+  final: '3',
 };
 
 // Causality assessment mapping
@@ -67,7 +67,7 @@ const FDA_CAUSALITY_CODES: Record<string, string> = {
   possible: '3',
   unlikely: '4',
   conditional: '5',
-  unassessable: '6'
+  unassessable: '6',
 };
 
 // =============================================================================
@@ -80,13 +80,14 @@ const FDA_CAUSALITY_CODES: Record<string, string> = {
 function formatFDADate(date: Date | string | undefined, includeTime: boolean = false): string {
   if (!date) return '';
   const d = new Date(date);
-  
+
   if (includeTime) {
-    return d.toISOString()
+    return d
+      .toISOString()
       .replace(/[-:T]/g, '')
       .replace(/\.\d{3}Z/, '');
   }
-  
+
   return d.toISOString().split('T')[0].replace(/-/g, '');
 }
 
@@ -118,11 +119,14 @@ function cdataWrap(value: string | undefined): string {
  * Generate UUID for message ID
  */
 function generateMessageId(): string {
-  return 'urn:uuid:' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+  return (
+    'urn:uuid:' +
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    })
+  );
 }
 
 /**
@@ -150,10 +154,13 @@ function mapCausalityCode(causality: string | undefined): string {
 /**
  * Validate adverse event for FDA submission
  */
-export function validateForFDA(event: CanonicalAdverseEvent): { errors: ValidationError[]; warnings: ValidationWarning[] } {
+export function validateForFDA(event: CanonicalAdverseEvent): {
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+} {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
+
   // Access patient as any for flexible property access
   const patient = event.patient as any;
 
@@ -163,7 +170,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
       code: 'FDA-001',
       field: 'caseNumber',
       message: 'Case number is required for FDA submission',
-      severity: 'error'
+      severity: 'error',
     });
   }
 
@@ -172,7 +179,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
       code: 'FDA-002',
       field: 'receiveDate',
       message: 'Receive date is required for FDA submission',
-      severity: 'error'
+      severity: 'error',
     });
   }
 
@@ -181,7 +188,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
       code: 'FDA-003',
       field: 'patient',
       message: 'Patient information is required for FDA submission',
-      severity: 'error'
+      severity: 'error',
     });
   } else {
     // Patient validation
@@ -190,7 +197,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
         code: 'FDA-W001',
         field: 'patient.age',
         message: 'Patient age or birth date is recommended for FDA submission',
-        severity: 'warning'
+        severity: 'warning',
       });
     }
   }
@@ -200,7 +207,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
       code: 'FDA-004',
       field: 'reactions',
       message: 'At least one reaction is required for FDA submission',
-      severity: 'error'
+      severity: 'error',
     });
   } else {
     // Validate each reaction
@@ -210,7 +217,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
           code: 'FDA-005',
           field: `reactions[${index}].meddra_pt_code`,
           message: `Reaction ${index + 1}: MedDRA preferred term code is required`,
-          severity: 'error'
+          severity: 'error',
         });
       }
     });
@@ -222,7 +229,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
       code: 'FDA-006',
       field: 'suspectProducts',
       message: 'At least one suspect product is required for FDA submission',
-      severity: 'error'
+      severity: 'error',
     });
   } else {
     // Validate each product
@@ -232,7 +239,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
           code: 'FDA-007',
           field: `suspectProducts[${index}].product_name`,
           message: `Product ${index + 1}: Product name is required`,
-          severity: 'error'
+          severity: 'error',
         });
       }
     });
@@ -243,26 +250,26 @@ export function validateForFDA(event: CanonicalAdverseEvent): { errors: Validati
       code: 'FDA-008',
       field: 'reporter',
       message: 'Reporter information is required for FDA submission',
-      severity: 'error'
+      severity: 'error',
     });
   }
 
   // Seriousness validation
   if (event.isSerious) {
-    const hasSeriousnessCriteria = 
+    const hasSeriousnessCriteria =
       event.seriousnessDeath ||
       event.seriousnessLifeThreatening ||
       event.seriousnessHospitalization ||
       event.seriousnessDisability ||
       event.seriousnessCongenitalAnomaly ||
       event.seriousnessOtherMedicallyImportant;
-    
+
     if (!hasSeriousnessCriteria) {
       warnings.push({
         code: 'FDA-W002',
         field: 'seriousness',
         message: 'Serious case should have at least one seriousness criterion specified',
-        severity: 'warning'
+        severity: 'warning',
       });
     }
   }
@@ -288,7 +295,7 @@ export function generateFDA3500AXML(
     return {
       success: false,
       errors: validation.errors,
-      warnings: validation.warnings
+      warnings: validation.warnings,
     };
   }
 
@@ -298,10 +305,10 @@ export function generateFDA3500AXML(
 
   // Build XML document
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<MCCI_IN200100UV01 xmlns="${FDA_NAMESPACE}" 
+<MCCI_IN200100UV01 xmlns="${FDA_NAMESPACE}"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   ITSVersion="XML_1.0">
-  
+
   <!-- Message Header -->
   <id root="${messageId}"/>
   <creationTime value="${creationTime}"/>
@@ -309,14 +316,14 @@ export function generateFDA3500AXML(
   <processingCode code="P"/>
   <processingModeCode code="T"/>
   <acceptAckCode code="AL"/>
-  
+
   <!-- Receiver: FDA -->
   <receiver typeCode="RCV">
     <device classCode="DEV" determinerCode="INSTANCE">
       <id root="${FDA_SENDER_OID}"/>
     </device>
   </receiver>
-  
+
   <!-- Sender -->
   <sender typeCode="SND">
     <device classCode="DEV" determinerCode="INSTANCE">
@@ -324,25 +331,25 @@ export function generateFDA3500AXML(
       <name>${escapeXml(event.sender?.sender_organization || 'Unknown Organization')}</name>
     </device>
   </sender>
-  
+
   <!-- Control Act -->
   <controlActProcess classCode="CACT" moodCode="EVN">
     <code code="${FDA_MESSAGE_TYPE}" codeSystem="2.16.840.1.113883.1.18"/>
-    
+
     <!-- Subject: ICSR -->
     <subject typeCode="SUBJ">
       <investigationEvent classCode="INVSTG" moodCode="EVN">
-        
+
         <!-- Case Identification -->
         <id root="${event.tenantId}" extension="${escapeXml(event.caseNumber)}"/>
         ${event.worldwideCaseId ? `<id root="2.16.840.1.113883.3.989.2.1.3.1" extension="${escapeXml(event.worldwideCaseId)}"/>` : ''}
-        
+
         <!-- Safety Report Type -->
         <code code="PAT_ADV_EVNT" codeSystem="2.16.840.1.113883.5.4"/>
-        
+
         <!-- Report Type (Initial/Followup) -->
         <activityTime value="${formatFDADate(event.receiveDate)}"/>
-        
+
 ${generateReportTypeSection(event)}
 ${generateSeriousnessSection(event)}
 ${generatePatientSection(event, meddraVersion)}
@@ -350,10 +357,10 @@ ${generateReactionsSection(event, meddraVersion)}
 ${generateProductsSection(event)}
 ${generateReporterSection(event)}
 ${generateNarrativeSection(event)}
-        
+
       </investigationEvent>
     </subject>
-    
+
   </controlActProcess>
 </MCCI_IN200100UV01>`;
 
@@ -371,9 +378,9 @@ ${generateNarrativeSection(event)}
       messageId,
       creationTime,
       terminologyVersions: {
-        meddra: meddraVersion
-      }
-    }
+        meddra: meddraVersion,
+      },
+    },
   };
 }
 
@@ -388,8 +395,8 @@ function generateReportTypeSection(event: CanonicalAdverseEvent): string {
         <!-- Report Type -->
         <component typeCode="COMP">
           <adverseEventAssessment classCode="INVSTG" moodCode="EVN">
-            <code code="${reportTypeCode}" 
-              codeSystem="2.16.840.1.113883.6.163" 
+            <code code="${reportTypeCode}"
+              codeSystem="2.16.840.1.113883.6.163"
               displayName="${event.reportType === 'followup' ? 'Follow-up' : event.reportType === 'final' ? 'Final' : 'Initial'}"/>
             <effectiveTime>
               <low value="${formatFDADate(event.receiveDate)}"/>
@@ -432,7 +439,9 @@ function generateSeriousnessSection(event: CanonicalAdverseEvent): string {
     seriousnessComponents.push(generateSeriousnessComponent('CA', 'Congenital anomaly'));
   }
   if (event.seriousnessOtherMedicallyImportant) {
-    seriousnessComponents.push(generateSeriousnessComponent('OT', 'Other medically important', event.seriousnessOtherDetails));
+    seriousnessComponents.push(
+      generateSeriousnessComponent('OT', 'Other medically important', event.seriousnessOtherDetails)
+    );
   }
 
   return `
@@ -495,15 +504,19 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
   let medicalHistorySection = '';
   const medHistory = event.medicalHistory as AnyData | undefined;
   if (medHistory?.conditions && medHistory.conditions.length > 0) {
-    const conditions = medHistory.conditions.map((condition: AnyData, idx: number) => `
+    const conditions = medHistory.conditions
+      .map(
+        (condition: AnyData, idx: number) => `
               <observationEvent classCode="OBS" moodCode="EVN">
-                <code code="${condition.meddra_code || 'unknown'}" 
-                  codeSystem="2.16.840.1.113883.6.163" 
+                <code code="${condition.meddra_code || 'unknown'}"
+                  codeSystem="2.16.840.1.113883.6.163"
                   codeSystemVersion="${meddraVersion}"
                   displayName="${escapeXml(condition.condition_term || condition.meddra_code)}"/>
                 ${condition.start_date ? `<effectiveTime><low value="${formatFDADate(condition.start_date)}"/></effectiveTime>` : ''}
                 ${condition.ongoing ? '<statusCode code="active"/>' : '<statusCode code="completed"/>'}
-              </observationEvent>`).join('\n');
+              </observationEvent>`
+      )
+      .join('\n');
 
     medicalHistorySection = `
             <!-- Medical History -->
@@ -533,11 +546,12 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
  */
 function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: string): string {
   const reactions = (event.reactions || []) as AnyData[];
-  
-  const reactionComponents = reactions.map((reaction: AnyData, index: number) => {
-    const outcomeCode = CODE_SYSTEMS.ICH_OUTCOME[reaction.outcome || 'unknown'] || '0';
-    
-    return `
+
+  const reactionComponents = reactions
+    .map((reaction: AnyData, index: number) => {
+      const outcomeCode = CODE_SYSTEMS.ICH_OUTCOME[reaction.outcome || 'unknown'] || '0';
+
+      return `
           <!-- Reaction ${index + 1} -->
           <component typeCode="COMP">
             <adverseEffectAssessment classCode="OBS" moodCode="EVN">
@@ -546,41 +560,50 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
                 ${reaction.onset_date ? `<low value="${formatFDADate(reaction.onset_date)}"/>` : ''}
                 ${reaction.resolution_date ? `<high value="${formatFDADate(reaction.resolution_date)}"/>` : ''}
               </effectiveTime>
-              
+
               <!-- MedDRA Term -->
-              <value xsi:type="CD" 
-                code="${reaction.meddra_pt_code || 'unknown'}" 
+              <value xsi:type="CD"
+                code="${reaction.meddra_pt_code || 'unknown'}"
                 codeSystem="2.16.840.1.113883.6.163"
                 codeSystemVersion="${meddraVersion}"
                 displayName="${escapeXml(reaction.meddra_pt || reaction.reaction_term || '')}">
-                ${reaction.meddra_llt_code ? `
-                <translation code="${reaction.meddra_llt_code}" 
+                ${
+                  reaction.meddra_llt_code
+                    ? `
+                <translation code="${reaction.meddra_llt_code}"
                   codeSystem="2.16.840.1.113883.6.163"
                   codeSystemVersion="${meddraVersion}"
-                  displayName="${escapeXml(reaction.meddra_llt || '')}"/>` : ''}
+                  displayName="${escapeXml(reaction.meddra_llt || '')}"/>`
+                    : ''
+                }
               </value>
-              
+
               <!-- Duration -->
-              ${reaction.duration_value ? `
+              ${
+                reaction.duration_value
+                  ? `
               <entryRelationship typeCode="MFST">
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="DURATION" codeSystem="2.16.840.1.113883.5.4"/>
                   <value xsi:type="PQ" value="${reaction.duration_value}" unit="${reaction.duration_unit || 'd'}"/>
                 </observation>
-              </entryRelationship>` : ''}
-              
+              </entryRelationship>`
+                  : ''
+              }
+
               <!-- Outcome -->
               <entryRelationship typeCode="OUTC">
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="OUTCOME" codeSystem="2.16.840.1.113883.5.4"/>
-                  <value xsi:type="CD" code="${outcomeCode}" 
+                  <value xsi:type="CD" code="${outcomeCode}"
                     codeSystem="2.16.840.1.113883.6.163"
                     displayName="${reaction.outcome || 'unknown'}"/>
                 </observation>
               </entryRelationship>
             </adverseEffectAssessment>
           </component>`;
-  }).join('\n');
+    })
+    .join('\n');
 
   return `
         <!-- Reactions -->
@@ -594,16 +617,20 @@ function generateProductsSection(event: CanonicalAdverseEvent): string {
   const suspectProducts = (event.suspectProducts || []) as AnyData[];
   const concomitantProducts = (event.concomitantProducts || []) as AnyData[];
 
-  const suspectComponents = suspectProducts.map((product: AnyData, index: number) => 
-    generateProductComponent(product, index, 'suspect')).join('\n');
-  
-  const concomitantComponents = concomitantProducts.map((product: AnyData, index: number) => 
-    generateProductComponent(product, index, 'concomitant')).join('\n');
+  const suspectComponents = suspectProducts
+    .map((product: AnyData, index: number) => generateProductComponent(product, index, 'suspect'))
+    .join('\n');
+
+  const concomitantComponents = concomitantProducts
+    .map((product: AnyData, index: number) =>
+      generateProductComponent(product, index, 'concomitant')
+    )
+    .join('\n');
 
   return `
         <!-- Suspect Products -->
         ${suspectComponents}
-        
+
         <!-- Concomitant Products -->
         ${concomitantComponents}`;
 }
@@ -611,80 +638,113 @@ function generateProductsSection(event: CanonicalAdverseEvent): string {
 /**
  * Generate individual product component
  */
-function generateProductComponent(product: any, index: number, role: 'suspect' | 'concomitant'): string {
+function generateProductComponent(
+  product: any,
+  index: number,
+  role: 'suspect' | 'concomitant'
+): string {
   const roleCode = role === 'suspect' ? '1' : '2';
-  const routeCode = CODE_SYSTEMS.FDA_ROUTE[product.route?.toLowerCase()] || product.route || 'unknown';
+  const routeCode =
+    CODE_SYSTEMS.FDA_ROUTE[product.route?.toLowerCase()] || product.route || 'unknown';
 
   return `
           <!-- ${role === 'suspect' ? 'Suspect' : 'Concomitant'} Product ${index + 1} -->
           <component typeCode="COMP">
             <substanceAdministration classCode="SBADM" moodCode="EVN">
               <id extension="${escapeXml(product.product_id || `PROD-${index + 1}`)}"/>
-              
+
               <!-- Role (Suspect/Concomitant) -->
               <code code="${roleCode}" codeSystem="2.16.840.1.113883.6.163" displayName="${role}"/>
-              
+
               <!-- Route -->
               <routeCode code="${routeCode}" codeSystem="2.16.840.1.113883.5.112" displayName="${escapeXml(product.route || '')}"/>
-              
+
               <!-- Dosage -->
-              ${product.dose_value ? `
-              <doseQuantity value="${product.dose_value}" unit="${product.dose_unit || 'mg'}"/>` : ''}
-              
+              ${
+                product.dose_value
+                  ? `
+              <doseQuantity value="${product.dose_value}" unit="${product.dose_unit || 'mg'}"/>`
+                  : ''
+              }
+
               <!-- Frequency -->
-              ${product.frequency ? `
+              ${
+                product.frequency
+                  ? `
               <effectiveTime xsi:type="PIVL_TS">
                 <period value="${product.frequency_value || 1}" unit="${product.frequency_unit || 'd'}"/>
-              </effectiveTime>` : ''}
-              
+              </effectiveTime>`
+                  : ''
+              }
+
               <!-- Dates -->
-              ${product.start_date || product.stop_date ? `
+              ${
+                product.start_date || product.stop_date
+                  ? `
               <effectiveTime xsi:type="IVL_TS">
                 ${product.start_date ? `<low value="${formatFDADate(product.start_date)}"/>` : ''}
                 ${product.stop_date ? `<high value="${formatFDADate(product.stop_date)}"/>` : ''}
-              </effectiveTime>` : ''}
-              
+              </effectiveTime>`
+                  : ''
+              }
+
               <!-- Product Details -->
               <consumable>
                 <manufacturedProduct classCode="MANU">
                   <manufacturedMaterialKind>
-                    <code code="${escapeXml(product.ndc_code || product.product_id || 'unknown')}" 
+                    <code code="${escapeXml(product.ndc_code || product.product_id || 'unknown')}"
                       codeSystem="2.16.840.1.113883.6.69"/>
                     <name>${escapeXml(product.product_name || '')}</name>
-                    ${product.manufacturer ? `
+                    ${
+                      product.manufacturer
+                        ? `
                     <manufacturerOrganization>
                       <name>${escapeXml(product.manufacturer)}</name>
-                    </manufacturerOrganization>` : ''}
+                    </manufacturerOrganization>`
+                        : ''
+                    }
                   </manufacturedMaterialKind>
                 </manufacturedProduct>
               </consumable>
-              
+
               <!-- Indication -->
-              ${product.indication ? `
+              ${
+                product.indication
+                  ? `
               <entryRelationship typeCode="RSON">
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="INDICATION" codeSystem="2.16.840.1.113883.5.4"/>
                   <value xsi:type="ST">${cdataWrap(product.indication)}</value>
                 </observation>
-              </entryRelationship>` : ''}
-              
+              </entryRelationship>`
+                  : ''
+              }
+
               <!-- Action Taken -->
-              ${product.action_taken ? `
+              ${
+                product.action_taken
+                  ? `
               <entryRelationship typeCode="COMP">
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="C53254" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="Action Taken"/>
                   <value xsi:type="ST">${escapeXml(product.action_taken)}</value>
                 </observation>
-              </entryRelationship>` : ''}
-              
+              </entryRelationship>`
+                  : ''
+              }
+
               <!-- Rechallenge -->
-              ${product.rechallenge !== undefined ? `
+              ${
+                product.rechallenge !== undefined
+                  ? `
               <entryRelationship typeCode="COMP">
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="RECHALLENGE" codeSystem="2.16.840.1.113883.5.4"/>
                   <value xsi:type="ST">${product.rechallenge ? 'positive' : 'negative'}</value>
                 </observation>
-              </entryRelationship>` : ''}
+              </entryRelationship>`
+                  : ''
+              }
             </substanceAdministration>
           </component>`;
 }
@@ -703,34 +763,54 @@ function generateReporterSection(event: CanonicalAdverseEvent): string {
           <assignedEntity classCode="ASSIGNED">
             <id extension="${escapeXml(reporter.reporter_id || 'unknown')}"/>
             <code code="${qualificationCode}" codeSystem="2.16.840.1.113883.6.163" displayName="${escapeXml(reporter.qualification_text || 'Healthcare Professional')}"/>
-            
+
             <assignedPerson classCode="PSN" determinerCode="INSTANCE">
-              ${reporter.given_name || reporter.family_name ? `
+              ${
+                reporter.given_name || reporter.family_name
+                  ? `
               <name>
                 ${reporter.title ? `<prefix>${escapeXml(reporter.title)}</prefix>` : ''}
                 ${reporter.given_name ? `<given>${escapeXml(reporter.given_name)}</given>` : ''}
                 ${reporter.middle_name ? `<given>${escapeXml(reporter.middle_name)}</given>` : ''}
                 ${reporter.family_name ? `<family>${escapeXml(reporter.family_name)}</family>` : ''}
-              </name>` : ''}
+              </name>`
+                  : ''
+              }
             </assignedPerson>
-            
-            ${reporter.organization ? `
+
+            ${
+              reporter.organization
+                ? `
             <representedOrganization classCode="ORG" determinerCode="INSTANCE">
               <name>${escapeXml(reporter.organization)}</name>
               ${reporter.department ? `<desc>${escapeXml(reporter.department)}</desc>` : ''}
-              ${reporter.street_address || reporter.city || reporter.country ? `
+              ${
+                reporter.street_address || reporter.city || reporter.country
+                  ? `
               <addr>
                 ${reporter.street_address ? `<streetAddressLine>${escapeXml(reporter.street_address)}</streetAddressLine>` : ''}
                 ${reporter.city ? `<city>${escapeXml(reporter.city)}</city>` : ''}
                 ${reporter.state_province ? `<state>${escapeXml(reporter.state_province)}</state>` : ''}
                 ${reporter.postal_code ? `<postalCode>${escapeXml(reporter.postal_code)}</postalCode>` : ''}
                 ${reporter.country ? `<country>${escapeXml(reporter.country)}</country>` : ''}
-              </addr>` : ''}
-              ${reporter.telephone ? `
-              <telecom value="tel:${escapeXml(reporter.telephone)}"/>` : ''}
-              ${reporter.email ? `
-              <telecom value="mailto:${escapeXml(reporter.email)}"/>` : ''}
-            </representedOrganization>` : ''}
+              </addr>`
+                  : ''
+              }
+              ${
+                reporter.telephone
+                  ? `
+              <telecom value="tel:${escapeXml(reporter.telephone)}"/>`
+                  : ''
+              }
+              ${
+                reporter.email
+                  ? `
+              <telecom value="mailto:${escapeXml(reporter.email)}"/>`
+                  : ''
+              }
+            </representedOrganization>`
+                : ''
+            }
           </assignedEntity>
         </author>`;
 }
@@ -752,27 +832,39 @@ function generateNarrativeSection(event: CanonicalAdverseEvent): string {
         <component typeCode="COMP">
           <section classCode="DOCSECT" moodCode="EVN">
             <code code="NARRATIVE" codeSystem="2.16.840.1.113883.5.4"/>
-            ${narrative ? `
+            ${
+              narrative
+                ? `
             <text>
               <paragraph>
                 <caption>Case Narrative</caption>
                 ${cdataWrap(narrative)}
               </paragraph>
-            </text>` : ''}
-            ${reporterComments ? `
+            </text>`
+                : ''
+            }
+            ${
+              reporterComments
+                ? `
             <text>
               <paragraph>
                 <caption>Reporter Comments</caption>
                 ${cdataWrap(reporterComments)}
               </paragraph>
-            </text>` : ''}
-            ${senderComments ? `
+            </text>`
+                : ''
+            }
+            ${
+              senderComments
+                ? `
             <text>
               <paragraph>
                 <caption>Sender Comments</caption>
                 ${cdataWrap(senderComments)}
               </paragraph>
-            </text>` : ''}
+            </text>`
+                : ''
+            }
           </section>
         </component>`;
 }

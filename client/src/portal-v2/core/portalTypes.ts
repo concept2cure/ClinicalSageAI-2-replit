@@ -358,7 +358,6 @@ export type ModuleCategory =
 export type ModuleId =
   | 'dashboard'
   | 'vault'
-  | 'ind_wizard'
   | 'cer_generator'
   | '510k_builder'
   | 'ectd_coauthor'
@@ -373,6 +372,8 @@ export type ModuleId =
   | 'ai_assistant'
   | 'project_hub'
   | 'timeline_planner'
+  | 'platform_readiness'
+  | 'lumen_cortex'
   | 'settings';
 
 /** Module metadata for navigation and display */

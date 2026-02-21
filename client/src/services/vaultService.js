@@ -233,6 +233,37 @@ export const getDocumentAuditTrail = async documentId => {
   return response.json();
 };
 
+/**
+ * Save a document payload to vault
+ * @param {Object} documentData - document metadata/content payload
+ * @returns {Promise<Object>} save result
+ */
+export const saveDocument = async documentData => {
+  try {
+    const response = await fetch(`${BASE_URL}/documents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...buildAuthHeader(),
+      },
+      body: JSON.stringify(documentData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save document');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error saving document to vault:', error);
+    return {
+      success: false,
+      error: error.message,
+      data: documentData,
+    };
+  }
+};
+
 export default {
   getFolderStructure,
   getFilesInFolder,
@@ -246,4 +277,5 @@ export default {
   getDocumentMetadata,
   getDocumentVersions,
   getDocumentAuditTrail,
+  saveDocument,
 };

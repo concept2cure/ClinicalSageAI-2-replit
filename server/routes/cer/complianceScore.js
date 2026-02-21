@@ -8,12 +8,15 @@
  * with EU MDR, FDA 21 CFR 812, and ISO 14155 requirements.
  */
 
-const { OpenAI } = require('openai');
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// AI Gateway integration — centralised LLM routing, audit & policy
+let _gateway = null;
+async function getGatewayInstance() {
+  if (!_gateway) {
+    const mod = await import('../../services/ai-gateway/index.js');
+    _gateway = mod.getGateway();
+  }
+  return _gateway;
+}
 
 /**
  * Get a compliance score for CER sections against regulatory standards using GPT-4o
@@ -39,17 +42,17 @@ async function complianceScoreHandler(req, res) {
     // Construct the prompt for GPT-4o analysis
     const analysisPrompt = {
       role: 'system',
-      content: `You are an expert medical device regulatory compliance assessor specialized in Clinical Evaluation Reports (CERs). 
+      content: `You are an expert medical device regulatory compliance assessor specialized in Clinical Evaluation Reports (CERs).
       Your task is to evaluate the provided CER sections for compliance with the following regulatory standards: ${standards.join(', ')}.
-      
+
       For each section, assess:
       1. Content quality and completeness
       2. Alignment with regulatory requirements
       3. Identification of any critical gaps
       4. Specific improvement suggestions
-      
+
       Analyze the document titled "${title || 'Clinical Evaluation Report'}" and provide a structured compliance report.
-      
+
       Respond with a JSON object having the following structure:
       {
         "overallScore": (decimal between 0-1),
@@ -87,17 +90,20 @@ async function complianceScoreHandler(req, res) {
       content: `Please analyze the following CER sections for compliance with ${standards.join(', ')} standards:\n\n${sectionsForAnalysis.map(section => `## ${section.title}\n${section.content}\n\n`).join('')}`,
     };
 
-    console.log('Sending compliance analysis request to OpenAI...');
-    // Call OpenAI API for analysis
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    console.log('Sending compliance analysis request via AI Gateway...');
+    // Route through AI Gateway — centralised audit, policy & rate limiting
+    const gateway = await getGatewayInstance();
+    const gatewayResponse = await gateway.route({
+      taskType: 'cer_compliance',
       messages: [analysisPrompt, userMessage],
-      temperature: 0.2, // Lower temperature for more consistent analysis
-      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      jsonMode: true,
+      callerModule: 'cer-compliance-score',
+      metadata: { title: title || 'CER', standardsCount: standards.length },
     });
 
     // Parse the response content as JSON
-    const analysisResult = JSON.parse(response.choices[0].message.content);
+    const analysisResult = JSON.parse(gatewayResponse.content);
 
     // Return the compliance analysis results
     res.json(analysisResult);

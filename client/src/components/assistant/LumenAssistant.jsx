@@ -93,7 +93,7 @@ export default function LumenAssistant() {
     const inputLower = input.toLowerCase();
 
     if (inputLower.includes('ind') && inputLower.includes('form')) {
-      return 'For IND applications, you need to complete several key FDA forms including Form FDA 1571 (IND Application), Form FDA 1572 (Statement of Investigator), Form FDA 3674 (Certification of Compliance), and Form FDA 3454 (Financial Disclosure). You can access all these forms in the FDA Forms section of the IND Wizard module.';
+      return 'For IND applications, you need to complete several key FDA forms including Form FDA 1571 (IND Application), Form FDA 1572 (Statement of Investigator), Form FDA 3674 (Certification of Compliance), and Form FDA 3454 (Financial Disclosure). You can access all these forms in the FDA Forms section of the eCTD Co-Author module.';
     }
 
     if (inputLower.includes('protocol') || inputLower.includes('study design')) {

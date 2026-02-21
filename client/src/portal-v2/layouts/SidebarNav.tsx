@@ -77,6 +77,7 @@ const moduleIcons: Record<string, React.ComponentType<{ className?: string }>> =
   dossier_builder: Building2,
   submission_tracker: Briefcase,
   audit_trail: Scale,
+  platform_readiness: Activity,
   settings: Settings,
 };
 
@@ -95,25 +96,26 @@ const categoryIcons: Record<ModuleCategory, React.ComponentType<{ className?: st
   operations: Workflow,
 };
 
-// Route mapping for modules
+// Route mapping for modules — keys must match ModuleId values in portalTypes.ts
 const moduleRouteMap: Record<string, string> = {
   dashboard: '/client-portal',
   vault: '/client-portal/vault',
+  cer_generator: '/client-portal/cer-generator',
+  '510k_builder': '/client-portal/510k-builder',
+  ectd_coauthor: '/client-portal/ectd-coauthor',
   regulatory_intel: '/client-portal/regulatory-intel',
   cmc_platform: '/client-portal/cmc-wizard',
   clinical_trial: '/client-portal/study-architect',
+  safety_reporting: '/client-portal/safety',
   quality_management: '/client-portal/quality',
   document_control: '/client-portal/documents',
+  training: '/client-portal/training',
   analytics: '/client-portal/analytics',
-  ind_automation: '/client-portal/ind-wizard',
-  cer_generator: '/client-portal/cer-generator',
-  protocol_designer: '/client-portal/protocol-designer',
-  safety_database: '/client-portal/safety',
-  biostatistics: '/client-portal/biostatistics',
-  medical_writing: '/client-portal/medical-writing',
-  dossier_builder: '/client-portal/dossier',
-  submission_tracker: '/client-portal/submissions',
-  audit_trail: '/client-portal/audit',
+  ai_assistant: '/client-portal/ai-assistant',
+  lumen_cortex: '/client-portal/lumen-cortex',
+  project_hub: '/client-portal/project-hub',
+  timeline_planner: '/client-portal/timeline-planner',
+  platform_readiness: '/admin/platform-readiness',
   settings: '/client-portal/settings',
 };
 

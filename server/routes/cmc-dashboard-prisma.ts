@@ -6,7 +6,13 @@ import { deriveInsights } from '../services/cmc/aiInsights.js';
 const r = Router();
 const PROD = 'DP-001';
 
-r.get('/dashboard/summary', async (_req, res) => {
+const isMissingTableError = (error: unknown): boolean => {
+  const code = (error as any)?.code;
+  const message = String((error as any)?.message || '');
+  return code === 'P2021' || message.includes('does not exist in the current database');
+};
+
+r.get('/summary', async (_req, res) => {
   try {
     const [errors, warnings, overdue, highRisks, tasks7] = await Promise.all([
       prisma.cmcValidationIssue.count({
@@ -59,6 +65,17 @@ r.get('/dashboard/summary', async (_req, res) => {
       methodsValidatedPct,
     });
   } catch (error) {
+    if (isMissingTableError(error)) {
+      return res.json({
+        submissionReadiness: 0,
+        openValidationIssues: 0,
+        tasksDue7d: 0,
+        changeControlsOpen: 0,
+        qualityScore: 0,
+        methodsValidatedPct: 0,
+        message: 'CMC dashboard data unavailable: backing tables not initialized',
+      });
+    }
     console.error('Dashboard summary error:', error);
     res.status(500).json({ error: 'Failed to fetch dashboard summary' });
   }
@@ -72,6 +89,9 @@ r.get('/stage-gates', async (_req, res) => {
     });
     res.json(rows);
   } catch (error) {
+    if (isMissingTableError(error)) {
+      return res.json([]);
+    }
     console.error('Stage gates error:', error);
     res.status(500).json({ error: 'Failed to fetch stage gates' });
   }
@@ -86,6 +106,9 @@ r.get('/tasks', async (req, res) => {
     });
     res.json(rows);
   } catch (error) {
+    if (isMissingTableError(error)) {
+      return res.json([]);
+    }
     console.error('Tasks error:', error);
     res.status(500).json({ error: 'Failed to fetch tasks' });
   }
@@ -99,6 +122,9 @@ r.get('/validation/issues', async (_req, res) => {
     });
     res.json(rows);
   } catch (error) {
+    if (isMissingTableError(error)) {
+      return res.json([]);
+    }
     console.error('Validation issues error:', error);
     res.status(500).json({ error: 'Failed to fetch validation issues' });
   }
@@ -112,6 +138,9 @@ r.get('/risks', async (_req, res) => {
     });
     res.json(rows);
   } catch (error) {
+    if (isMissingTableError(error)) {
+      return res.json([]);
+    }
     console.error('Risks error:', error);
     res.status(500).json({ error: 'Failed to fetch risks' });
   }
@@ -132,6 +161,15 @@ r.get('/ai/insights', async (_req, res) => {
     const dosageForm = 'Film-coated tablet';
     res.json(deriveInsights(issues as any, stages as any, dosageForm));
   } catch (error) {
+    if (isMissingTableError(error)) {
+      return res.json({
+        overview: {
+          riskLevel: 'unknown',
+          recommendation: 'Initialize CMC tables to enable AI insights.',
+        },
+        insights: [],
+      });
+    }
     console.error('AI insights error:', error);
     res.status(500).json({ error: 'Failed to fetch AI insights' });
   }

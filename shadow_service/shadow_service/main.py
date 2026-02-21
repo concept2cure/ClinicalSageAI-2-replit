@@ -93,6 +93,7 @@ from .router_orchestration import router as orchestration_router
 from .router_evidence import router as evidence_router
 from .router_docx_factory import router as docx_factory_router
 from .router_predicate import router as predicate_router
+from .router_render import router as render_router
 
 # Configure logging
 logging.basicConfig(
@@ -107,6 +108,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
     # Startup
     logger.info("Starting Shadow Interrogation Service...")
+
+    # Gate 2 — Risk-code contract validation (zero drift enforcement)
+    try:
+        from .scoring.risk_code_contract_validator import validate_risk_code_contract
+        contract = validate_risk_code_contract()
+        logger.info(
+            "Risk-code contract: %s (v%s, %d codes)",
+            contract["status"],
+            contract["lock_version"],
+            contract["risk_code_count"],
+        )
+    except Exception as exc:
+        logger.critical("Risk-code contract validation failed: %s", exc)
+        raise SystemExit(1) from exc
+
     pool = await db.get_pool()  # Initialize connection pool (may return None in lite mode)
     if pool is None:
         logger.warning("Service started in LITE MODE - no database connection")
@@ -156,6 +172,7 @@ app.include_router(orchestration_router)  # Phase 4 Orchestration Kernel
 app.include_router(evidence_router)       # Phase 5 Evidence Fabric
 app.include_router(docx_factory_router)   # Phase 6 DOCX Factory
 app.include_router(predicate_router)     # Phase 6.6 Predicate Intelligence
+app.include_router(render_router)        # Phase 7.0 Document Renderers
 
 
 # =============================================================================

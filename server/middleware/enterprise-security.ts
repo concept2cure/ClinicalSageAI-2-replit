@@ -74,35 +74,49 @@ const config = {
 // SECURITY HEADERS (Helmet Configuration)
 // ============================================================================
 
-export const securityHeaders = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-      connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:'],
-      frameSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: config.isProduction ? [] : null,
-    },
-  },
-  crossOriginEmbedderPolicy: false, // Disable for PDF rendering
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-  hsts: {
-    maxAge: 31536000, // 1 year
-    includeSubDomains: true,
-    preload: true,
-  },
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-  xssFilter: true,
-  noSniff: true,
-  ieNoOpen: true,
-  dnsPrefetchControl: { allow: false },
-  frameguard: { action: 'sameorigin' },
-  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
-});
+// In development (Codespaces / Replit), relax headers so the app can render
+// inside VS Code Simple Browser (iframe) and Vite HMR WebSocket can connect.
+export const securityHeaders = config.isDevelopment
+  ? helmet({
+      contentSecurityPolicy: false, // Disable CSP entirely in dev
+      crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false, // Allow iframe embedding (Simple Browser)
+      crossOriginResourcePolicy: false,
+      hsts: false, // No HSTS in dev
+      frameguard: false, // Allow iframes (VS Code Simple Browser)
+      dnsPrefetchControl: false,
+      permittedCrossDomainPolicies: false,
+      xssFilter: false,
+    })
+  : helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+          connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:', 'ws:'],
+          frameSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          upgradeInsecureRequests: [],
+        },
+      },
+      crossOriginEmbedderPolicy: false, // Disable for PDF rendering
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true,
+      },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      xssFilter: true,
+      noSniff: true,
+      ieNoOpen: true,
+      dnsPrefetchControl: { allow: false },
+      frameguard: { action: 'sameorigin' },
+      permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+    });
 
 // ============================================================================
 // CORS CONFIGURATION
@@ -293,8 +307,10 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
     }
     (req as any).organizationId = user.organizationId;
   } else if (headerOrgId && typeof headerOrgId === 'string') {
-    // Validate UUID format
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(headerOrgId)) {
+    // Validate UUID format or numeric ID or simple alphanumeric
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const simpleRegex = /^[a-z0-9_-]{1,64}$/i;
+    if (!uuidRegex.test(headerOrgId) && !simpleRegex.test(headerOrgId)) {
       return res.status(400).json({
         error: 'Invalid organization ID format',
         code: 'INVALID_ORG_ID',

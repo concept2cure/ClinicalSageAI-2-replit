@@ -1,0 +1,1251 @@
+{
+  "manifest_hash": "e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+  "packet_id": "e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+  "packet_version": "6.6.D1",
+  "product_code": "SNP",
+  "program_id": "prog-snapshot",
+  "readiness_score": 42.0,
+  "risk_code_map_version": "2.0.0",
+  "risk_vocab_hash": "dc158fe46e8ff010dcf8280ff6c551a7e2770a06b09273e4da5eba63cba592e3",
+  "stale_reasons": [],
+  "status": "BLOCKED",
+  "subject_hash": "2f48f2724c58",
+  "tasks": [
+    {
+      "acceptance_criteria": [
+        "Provide electrical safety/EMC testing per applicable standards (IEC 60601).",
+        "Demonstrate equivalent thermal/energy output under worst-case conditions.",
+        "Map all energy-related hazards to controls and verification evidence."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The energy source differs from the predicate. Identify all new hazards and provide bench testing evidence demonstrating safety.",
+          "recommended_artifacts": [
+            "Bench Test Report",
+            "Electrical Safety / EMC Report",
+            "FMEA / Hazard Analysis"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion",
+            "Section 7 \u2014 Performance Testing",
+            "Section 9 \u2014 Electrical Safety"
+          ]
+        },
+        {
+          "question": "Has thermal/energy output equivalence been demonstrated under worst-case conditions?",
+          "recommended_artifacts": [
+            "Bench Test Report"
+          ],
+          "recommended_sections": [
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_3"
+      ],
+      "category": "BenchTesting",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Bench Test Report",
+        "Electrical Safety / EMC Report",
+        "FMEA / Hazard Analysis"
+      ],
+      "se_matrix_rows": [
+        "char_3"
+      ],
+      "severity": "High",
+      "task_id": "5d152b6e5496",
+      "title": "Verify safety and performance impact of energy source change",
+      "triggered_risk_codes": [
+        "ENERGY_SOURCE_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::5d152b6e5496",
+      "why_it_matters": "Energy source differences change the hazard profile. FDA commonly requires electrical safety, EMC, and bench verification."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide ISO 10993-1 biological evaluation rationale and endpoint coverage.",
+        "If testing required, attach final test reports and acceptance criteria.",
+        "Provide chemical characterization data for new materials."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Identify the material change and provide ISO 10993 biological evaluation justifying biocompatibility.",
+          "recommended_artifacts": [
+            "Chemical Characterization Report",
+            "ISO 10993-1 Biological Evaluation Plan"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion",
+            "Section 8 \u2014 Biocompatibility"
+          ]
+        },
+        {
+          "question": "Has chemical characterization been performed per ISO 10993-18 for the new material?",
+          "recommended_artifacts": [
+            "Chemical Characterization Report"
+          ],
+          "recommended_sections": [
+            "Section 8 \u2014 Biocompatibility"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_5"
+      ],
+      "category": "Biocompatibility",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Chemical Characterization Report",
+        "Cytotoxicity/Sensitization/Irritation Summary",
+        "ISO 10993-1 Biological Evaluation Plan"
+      ],
+      "se_matrix_rows": [
+        "char_5"
+      ],
+      "severity": "High",
+      "task_id": "c1039a76ab50",
+      "title": "Assess biocompatibility impact of material change",
+      "triggered_risk_codes": [
+        "MATERIAL_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::c1039a76ab50",
+      "why_it_matters": "Material changes can alter biological response. FDA expects ISO 10993 justification and testing as needed."
+    },
+    {
+      "acceptance_criteria": [
+        "Update ISO 10993-1 biological evaluation for new contact type.",
+        "Identify additional biocompatibility endpoints required by new contact type.",
+        "Provide residual risk / benefit-risk justification for contact change."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The tissue contact type has changed. What additional biocompatibility endpoints are now applicable per ISO 10993-1?",
+          "recommended_artifacts": [
+            "ISO 10993-1 Biological Evaluation Plan"
+          ],
+          "recommended_sections": [
+            "Section 8 \u2014 Biocompatibility"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_6"
+      ],
+      "category": "Biocompatibility",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "ISO 10993-1 Biological Evaluation Plan",
+        "Residual Risk / Benefit-Risk Justification"
+      ],
+      "se_matrix_rows": [
+        "char_6"
+      ],
+      "severity": "High",
+      "task_id": "d23471855d8b",
+      "title": "Evaluate impact of tissue contact type change",
+      "triggered_risk_codes": [
+        "TISSUE_CONTACT_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::d23471855d8b",
+      "why_it_matters": "Change in tissue contact type (e.g., intact skin \u2192 blood contact) requires updated biocompatibility evaluation per ISO 10993-1."
+    },
+    {
+      "acceptance_criteria": [
+        "Conduct systematic literature review for applicable clinical evidence.",
+        "If literature insufficient, develop clinical study protocol.",
+        "Provide clinical rationale memo justifying evidence sufficiency."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Bench testing may be insufficient. What clinical evidence or literature supports the claims?",
+          "recommended_artifacts": [
+            "Clinical Rationale Memo",
+            "Literature Review"
+          ],
+          "recommended_sections": [
+            "Section 10 \u2014 Clinical Data"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_17"
+      ],
+      "category": "ClinicalEvidence",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Clinical Protocol / Study Plan",
+        "Clinical Rationale Memo",
+        "Literature Review"
+      ],
+      "se_matrix_rows": [
+        "char_17"
+      ],
+      "severity": "High",
+      "task_id": "0d63de2a9f01",
+      "title": "Provide clinical evidence to address identified gaps",
+      "triggered_risk_codes": [
+        "CLINICAL_EVIDENCE_GAP"
+      ],
+      "truth_machine_placeholder_id": "TMP::0d63de2a9f01",
+      "why_it_matters": "Bench data alone may not support claim differences. Clinical evidence or systematic literature review likely needed to close the gap."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide side-by-side intended use comparison with predicate.",
+        "Justify any differences with clinical evidence or bench bridging.",
+        "Confirm labeling/IFU reflects aligned indications."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "How does the subject device's intended use differ from the predicate, and what evidence supports the claim of substantial equivalence despite these differences?",
+          "recommended_artifacts": [
+            "Clinical Rationale Memo",
+            "IFU Draft"
+          ],
+          "recommended_sections": [
+            "Section 12 \u2014 Summary",
+            "Section 5 \u2014 Substantial Equivalence Discussion"
+          ]
+        },
+        {
+          "question": "Have the indications for use been narrowed or broadened vs. the predicate? Provide specific language comparison.",
+          "recommended_artifacts": [
+            "Claims Matrix",
+            "IFU Draft"
+          ],
+          "recommended_sections": [
+            "Section 4 \u2014 Indications for Use",
+            "Section 5 \u2014 Substantial Equivalence Discussion"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_0"
+      ],
+      "category": "ClinicalEvidence",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Clinical Rationale Memo",
+        "IFU Draft",
+        "Warnings / Precautions Update"
+      ],
+      "se_matrix_rows": [
+        "char_0"
+      ],
+      "severity": "High",
+      "task_id": "49334fb3e8e1",
+      "title": "Align intended use and indications with predicate",
+      "triggered_risk_codes": [
+        "IU_MISMATCH"
+      ],
+      "truth_machine_placeholder_id": "TMP::49334fb3e8e1",
+      "why_it_matters": "Intended use mismatch is the leading cause of NSE determinations. FDA expects identical or narrower intended use for SE claims."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide clinical evidence (literature or study) supporting expanded population.",
+        "Document risk/benefit analysis for new indications.",
+        "Attach clinical protocol / study plan if prospective data needed."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "What clinical evidence supports the expanded indications beyond the predicate's cleared scope?",
+          "recommended_artifacts": [
+            "Clinical Rationale Memo",
+            "Literature Review"
+          ],
+          "recommended_sections": [
+            "Section 10 \u2014 Clinical Data",
+            "Section 4 \u2014 Indications for Use"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_1"
+      ],
+      "category": "ClinicalEvidence",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Clinical Bridging Analysis",
+        "Clinical Protocol / Study Plan",
+        "Clinical Rationale Memo",
+        "Literature Review"
+      ],
+      "se_matrix_rows": [
+        "char_1"
+      ],
+      "severity": "High",
+      "task_id": "ecd87acf9202",
+      "title": "Justify expanded indications for use",
+      "triggered_risk_codes": [
+        "INDICATIONS_EXPANDED"
+      ],
+      "truth_machine_placeholder_id": "TMP::ecd87acf9202",
+      "why_it_matters": "Broader indications require clinical evidence supporting the expanded patient population, use environment, or anatomical site."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide SBOM with all software components and versions.",
+        "Attach threat model and security risk assessment.",
+        "Document vulnerability management and patch/update process.",
+        "Provide penetration testing summary if applicable."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The device has increased connectivity. Provide threat model, SBOM, and vulnerability assessment.",
+          "recommended_artifacts": [
+            "SBOM",
+            "Threat Model",
+            "Vulnerability Assessment Summary"
+          ],
+          "recommended_sections": [
+            "Cybersecurity Documentation"
+          ]
+        },
+        {
+          "question": "Describe the patch/update process and how security vulnerabilities will be addressed post-market.",
+          "recommended_artifacts": [
+            "Patch / Update Process"
+          ],
+          "recommended_sections": [
+            "Cybersecurity Documentation"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_13"
+      ],
+      "category": "Cybersecurity",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Patch / Update Process",
+        "SBOM",
+        "Vulnerability Assessment Summary"
+      ],
+      "se_matrix_rows": [
+        "char_13"
+      ],
+      "severity": "High",
+      "task_id": "d48499b85d47",
+      "title": "Provide cybersecurity evidence for increased attack surface",
+      "triggered_risk_codes": [
+        "CYBERSECURITY_SURFACE_INCREASED"
+      ],
+      "truth_machine_placeholder_id": "TMP::d48499b85d47",
+      "why_it_matters": "Increased network/cloud/mobile connectivity increases cybersecurity attack surface. SBOM, threat model, and vulnerability assessment required."
+    },
+    {
+      "acceptance_criteria": [
+        "Document known safety signals for chosen predicate (recalls, MDRs).",
+        "Provide risk/benefit justification for continuing with this predicate.",
+        "Consider identifying alternate predicate without safety concerns.",
+        "Attach recall/safety signal summary with disposition."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The chosen predicate has elevated safety signals. Justify continued use or identify alternate predicate.",
+          "recommended_artifacts": [
+            "CAPA Summary",
+            "Recall / Safety Signal Summary"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion"
+          ]
+        },
+        {
+          "question": "Provide analysis of predicate recalls/MDRs and explain why the subject device mitigates those concerns.",
+          "recommended_artifacts": [
+            "Recall / Safety Signal Summary"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_22"
+      ],
+      "category": "PostMarketSurveillance",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "CAPA Summary",
+        "Recall / Safety Signal Summary"
+      ],
+      "se_matrix_rows": [
+        "char_22"
+      ],
+      "severity": "High",
+      "task_id": "2d0fbfd94481",
+      "title": "Justify continued use of predicate with elevated safety signals",
+      "triggered_risk_codes": [
+        "PREDICATE_TOXICITY_HIGH"
+      ],
+      "truth_machine_placeholder_id": "TMP::2d0fbfd94481",
+      "why_it_matters": "Predicate has elevated safety signals (recalls, MDRs). Provide risk justification or consider alternate predicate."
+    },
+    {
+      "acceptance_criteria": [
+        "Document predicate lineage and associated safety events.",
+        "Provide risk management file addressing lineage concerns.",
+        "If lineage toxicity is significant, provide alternate predicate analysis.",
+        "Attach CAPA summary for any open corrective actions in lineage."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The predicate family has safety concerns (cascading recalls). Document lineage analysis and risk controls.",
+          "recommended_artifacts": [
+            "ISO 14971 Risk Management Plan",
+            "Recall / Safety Signal Summary"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion"
+          ]
+        },
+        {
+          "question": "Has an alternate predicate with a clean safety lineage been evaluated?",
+          "recommended_artifacts": [
+            "Recall / Safety Signal Summary"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_23"
+      ],
+      "category": "PostMarketSurveillance",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "CAPA Summary",
+        "ISO 14971 Risk Management Plan",
+        "Recall / Safety Signal Summary"
+      ],
+      "se_matrix_rows": [
+        "char_23"
+      ],
+      "severity": "High",
+      "task_id": "e33f4a4befce",
+      "title": "Address compromised predicate family safety lineage",
+      "triggered_risk_codes": [
+        "PREDICATE_LINEAGE_COMPROMISED"
+      ],
+      "truth_machine_placeholder_id": "TMP::e33f4a4befce",
+      "why_it_matters": "Predicate family tree shows safety concerns (cascading recalls, warning letters). Document risk controls and consider alternate lineage."
+    },
+    {
+      "acceptance_criteria": [
+        "Classify software level of concern (Class A/B/C per IEC 62304).",
+        "Provide software development lifecycle plan and artifacts.",
+        "Attach V&V summary, traceability matrix, and SOUP/OTS list.",
+        "Provide SBOM and threat model for cybersecurity review."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The subject introduces software not present in the predicate. Provide IEC 62304 software lifecycle documentation and level of concern classification.",
+          "recommended_artifacts": [
+            "IEC 62304 Software Development Plan",
+            "SOUP List"
+          ],
+          "recommended_sections": [
+            "Section 6 \u2014 Device Description",
+            "Section 7 \u2014 Performance Testing"
+          ]
+        },
+        {
+          "question": "Provide SBOM and cybersecurity documentation for the new software component.",
+          "recommended_artifacts": [
+            "SBOM",
+            "Threat Model"
+          ],
+          "recommended_sections": [
+            "Cybersecurity Documentation"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_11"
+      ],
+      "category": "SoftwareLifecycle",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "IEC 62304 Software Development Plan",
+        "SBOM",
+        "SOUP List",
+        "Threat Model"
+      ],
+      "se_matrix_rows": [
+        "char_11"
+      ],
+      "severity": "High",
+      "task_id": "f1f7f3c11fee",
+      "title": "Provide software lifecycle evidence for new/updated software",
+      "triggered_risk_codes": [
+        "SOFTWARE_PRESENT_NEW"
+      ],
+      "truth_machine_placeholder_id": "TMP::f1f7f3c11fee",
+      "why_it_matters": "Subject introduces software not present in predicate. Full IEC 62304 lifecycle documentation and cybersecurity review required."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide Predetermined Change Control Plan (PCCP) for adaptive algorithms.",
+        "Document training/validation dataset characteristics and bias analysis.",
+        "Attach performance monitoring plan with drift detection methodology.",
+        "Provide algorithm verification evidence under expected operating conditions."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The device uses adaptive ML/AI. Provide the Predetermined Change Control Plan (PCCP) and performance monitoring methodology.",
+          "recommended_artifacts": [
+            "IEC 62304 Software Development Plan",
+            "Verification & Validation Evidence"
+          ],
+          "recommended_sections": [
+            "Cybersecurity Documentation",
+            "Section 7 \u2014 Performance Testing"
+          ]
+        },
+        {
+          "question": "Describe the training/validation dataset, bias analysis, and expected operating conditions.",
+          "recommended_artifacts": [
+            "Verification & Validation Evidence"
+          ],
+          "recommended_sections": [
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_15"
+      ],
+      "category": "SoftwareLifecycle",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "IEC 62304 Software Development Plan",
+        "ISO 14971 Risk Management Plan",
+        "Verification & Validation Evidence"
+      ],
+      "se_matrix_rows": [
+        "char_15"
+      ],
+      "severity": "High",
+      "task_id": "f9c585967957",
+      "title": "Provide ML/AI controls and predetermined change control plan",
+      "triggered_risk_codes": [
+        "ML_ADAPTIVITY"
+      ],
+      "truth_machine_placeholder_id": "TMP::f9c585967957",
+      "why_it_matters": "ML/AI model adaptivity requires a predetermined change control plan (PCCP) and performance monitoring evidence per FDA AI/ML guidance."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide interface specification and interoperability test protocol.",
+        "Attach test results demonstrating accurate data exchange under fault conditions.",
+        "If applicable, provide vulnerability assessment for connected interfaces."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "What interoperability claims are made, and what testing validates safe and accurate data exchange?",
+          "recommended_artifacts": [
+            "Bench Test Report",
+            "Performance Verification Summary"
+          ],
+          "recommended_sections": [
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_14"
+      ],
+      "category": "BenchTesting",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Bench Test Report",
+        "Performance Verification Summary",
+        "Vulnerability Assessment Summary"
+      ],
+      "se_matrix_rows": [
+        "char_14"
+      ],
+      "severity": "Medium",
+      "task_id": "38dc201f14da",
+      "title": "Provide interoperability testing and data integrity evidence",
+      "triggered_risk_codes": [
+        "INTEROPERABILITY_CLAIM"
+      ],
+      "truth_machine_placeholder_id": "TMP::38dc201f14da",
+      "why_it_matters": "New interoperability claims require interface testing and data integrity evidence demonstrating safe data exchange."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide bench test protocol with acceptance criteria for each performance claim.",
+        "Attach bench test report demonstrating claim verification.",
+        "If claims cannot be verified by bench alone, provide clinical bridging analysis."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Provide bench test data with acceptance criteria supporting changed performance claims.",
+          "recommended_artifacts": [
+            "Bench Test Protocol",
+            "Bench Test Report"
+          ],
+          "recommended_sections": [
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_16"
+      ],
+      "category": "BenchTesting",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Bench Test Protocol",
+        "Bench Test Report",
+        "Clinical Bridging Analysis",
+        "Performance Verification Summary"
+      ],
+      "se_matrix_rows": [
+        "char_16"
+      ],
+      "severity": "Medium",
+      "task_id": "47fdcf2ed0dc",
+      "title": "Verify performance claims with bench/clinical evidence",
+      "triggered_risk_codes": [
+        "PERFORMANCE_CLAIM_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::47fdcf2ed0dc",
+      "why_it_matters": "Performance claim changes require bench testing with defined acceptance criteria and may require clinical bridging analysis."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide design comparison document (subject vs. predicate architecture).",
+        "Attach bench test results demonstrating equivalent performance.",
+        "Document risk analysis addressing new design-related hazards."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "How does the design architecture differ, and what verification evidence supports equivalent performance?",
+          "recommended_artifacts": [
+            "Bench Test Protocol",
+            "Bench Test Report"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion",
+            "Section 6 \u2014 Device Description"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_4"
+      ],
+      "category": "BenchTesting",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Bench Test Protocol",
+        "Bench Test Report",
+        "FMEA / Hazard Analysis"
+      ],
+      "se_matrix_rows": [
+        "char_4"
+      ],
+      "severity": "Medium",
+      "task_id": "ba1e3d3caf4f",
+      "title": "Verify design architecture equivalence with predicate",
+      "triggered_risk_codes": [
+        "DESIGN_ARCH_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::ba1e3d3caf4f",
+      "why_it_matters": "Design architecture changes require verification/validation demonstrating equivalent performance and safety characteristics."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide bench test protocol and results comparing subject vs. predicate performance.",
+        "Map technology differences to risk analysis and hazard controls.",
+        "Demonstrate equivalent performance under worst-case conditions."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Describe the core technology differences and provide bench/analytical data supporting equivalent performance and safety.",
+          "recommended_artifacts": [
+            "Bench Test Protocol",
+            "Bench Test Report"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion",
+            "Section 7 \u2014 Performance Testing"
+          ]
+        },
+        {
+          "question": "Does the technology change introduce new biocompatibility, electrical safety, or software risk concerns not present in the predicate?",
+          "recommended_artifacts": [
+            "Biocompatibility Report",
+            "Risk Management File"
+          ],
+          "recommended_sections": [
+            "Section 5 \u2014 Substantial Equivalence Discussion",
+            "Section 9 \u2014 Electrical Safety"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_2"
+      ],
+      "category": "BenchTesting",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Bench Test Protocol",
+        "Bench Test Report",
+        "ISO 14971 Risk Management Plan"
+      ],
+      "se_matrix_rows": [
+        "char_2"
+      ],
+      "severity": "Medium",
+      "task_id": "dffb33e394b4",
+      "title": "Demonstrate substantial equivalence despite technology differences",
+      "triggered_risk_codes": [
+        "TECH_DIFFERENCE"
+      ],
+      "truth_machine_placeholder_id": "TMP::dffb33e394b4",
+      "why_it_matters": "Core technology differences require bench or analytical testing to show the new technology does not raise new safety/effectiveness questions."
+    },
+    {
+      "acceptance_criteria": [
+        "Update ISO 10993-1 evaluation to address new duration category.",
+        "If moving to longer duration, provide additional endpoint testing evidence.",
+        "Document rationale for any endpoint exemptions."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Contact duration category has changed. Provide updated biocompatibility evaluation per ISO 10993-1 Table A.1.",
+          "recommended_artifacts": [
+            "ISO 10993-1 Biological Evaluation Plan"
+          ],
+          "recommended_sections": [
+            "Section 8 \u2014 Biocompatibility"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_7"
+      ],
+      "category": "Biocompatibility",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Cytotoxicity/Sensitization/Irritation Summary",
+        "ISO 10993-1 Biological Evaluation Plan"
+      ],
+      "se_matrix_rows": [
+        "char_7"
+      ],
+      "severity": "Medium",
+      "task_id": "788c3a4ac4e4",
+      "title": "Evaluate impact of contact duration category change",
+      "triggered_risk_codes": [
+        "CONTACT_DURATION_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::788c3a4ac4e4",
+      "why_it_matters": "Change in contact duration category (limited/prolonged/permanent) may require additional biocompatibility endpoints per ISO 10993-1."
+    },
+    {
+      "acceptance_criteria": [
+        "Conduct formative and/or summative human factors studies.",
+        "Document use-related risk analysis and mitigations.",
+        "Update IFU to reflect any workflow or interface changes."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "The user interface or workflow has changed. Provide human factors validation evidence.",
+          "recommended_artifacts": [
+            "Human Factors Validation Summary",
+            "IFU Draft"
+          ],
+          "recommended_sections": [
+            "Section 12 \u2014 Summary",
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_18"
+      ],
+      "category": "LabelingIFU",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Human Factors Validation Summary",
+        "IFU Draft",
+        "Warnings / Precautions Update"
+      ],
+      "se_matrix_rows": [
+        "char_18"
+      ],
+      "severity": "Medium",
+      "task_id": "ed212850b3cb",
+      "title": "Validate human factors for changed user interface",
+      "triggered_risk_codes": [
+        "HUMAN_FACTORS_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::ed212850b3cb",
+      "why_it_matters": "Changes to user interface or workflow require human factors validation and updated IFU per FDA human factors guidance."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide complaint trending analysis for predicate and subject (if on market).",
+        "Attach CAPA summary for any open corrective actions.",
+        "If applicable, provide PSUR / PMCF trigger memo."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Post-market signals have been identified. Provide complaint trending and CAPA documentation.",
+          "recommended_artifacts": [
+            "CAPA Summary",
+            "Complaint Trending"
+          ],
+          "recommended_sections": [
+            "Section 12 \u2014 Summary"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_21"
+      ],
+      "category": "PostMarketSurveillance",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "CAPA Summary",
+        "Complaint Trending",
+        "PSUR / PMCF Trigger Memo"
+      ],
+      "se_matrix_rows": [
+        "char_21"
+      ],
+      "severity": "Medium",
+      "task_id": "78a37c9f43b5",
+      "title": "Document post-market surveillance signals and mitigations",
+      "triggered_risk_codes": [
+        "PMS_SIGNAL_RISK"
+      ],
+      "truth_machine_placeholder_id": "TMP::78a37c9f43b5",
+      "why_it_matters": "Post-market signals suggest heightened scrutiny. Provide complaint trending and CAPA documentation to demonstrate risk control."
+    },
+    {
+      "acceptance_criteria": [
+        "Document software safety classification rationale (IEC 62304 Class A/B/C).",
+        "If higher class, provide enhanced V&V evidence commensurate with risk.",
+        "Provide traceability between requirements, design, and verification."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Software safety classification differs. Justify the classification and provide V&V evidence commensurate with the risk level.",
+          "recommended_artifacts": [
+            "IEC 62304 Software Development Plan",
+            "Verification & Validation Evidence"
+          ],
+          "recommended_sections": [
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_12"
+      ],
+      "category": "SoftwareLifecycle",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "IEC 62304 Software Development Plan",
+        "Verification & Validation Evidence"
+      ],
+      "se_matrix_rows": [
+        "char_12"
+      ],
+      "severity": "Medium",
+      "task_id": "b18aa9889ce5",
+      "title": "Justify software safety classification difference",
+      "triggered_risk_codes": [
+        "SOFTWARE_SAFETY_CLASS_DIFF"
+      ],
+      "truth_machine_placeholder_id": "TMP::b18aa9889ce5",
+      "why_it_matters": "Software safety classification differs from predicate. Provide classification justification and appropriate V&V evidence per IEC 62304."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide applicable recognized standards list and gap analysis.",
+        "For each gap, provide rationale for alternative approach or test evidence.",
+        "Attach conformance test summaries where applicable."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "No recognized consensus standard covers the identified differences. Provide rationale for the alternative approach.",
+          "recommended_artifacts": [
+            "Standards Gap Rationale",
+            "Standards Matrix"
+          ],
+          "recommended_sections": [
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_19"
+      ],
+      "category": "StandardsConformance",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Conformance Test Summary",
+        "Standards Gap Rationale",
+        "Standards Matrix"
+      ],
+      "se_matrix_rows": [
+        "char_19"
+      ],
+      "severity": "Medium",
+      "task_id": "c016728c56c6",
+      "title": "Provide standards conformance rationale for identified gaps",
+      "triggered_risk_codes": [
+        "STANDARDS_GAP"
+      ],
+      "truth_machine_placeholder_id": "TMP::c016728c56c6",
+      "why_it_matters": "No recognized consensus standard covers the identified differences. Provide rationale or alternative test evidence."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide sterilization validation summary (SAL 10^-6 or as applicable).",
+        "If EO sterilization, provide residuals report within ISO 10993-7 limits.",
+        "Demonstrate package integrity maintained under new sterilization process."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Provide sterilization validation data for the new method, including SAL and any residuals testing.",
+          "recommended_artifacts": [
+            "EO Residuals Report",
+            "Sterilization Validation (SAL)"
+          ],
+          "recommended_sections": [
+            "Section 11 \u2014 Sterilization"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_8"
+      ],
+      "category": "SterilizationValidation",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "EO Residuals Report",
+        "Sterilization Validation (SAL)"
+      ],
+      "se_matrix_rows": [
+        "char_8"
+      ],
+      "severity": "Medium",
+      "task_id": "ac52ccedb07e",
+      "title": "Revalidate sterilization for new method",
+      "triggered_risk_codes": [
+        "STERILIZATION_METHOD_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::ac52ccedb07e",
+      "why_it_matters": "Sterilization method change requires revalidation and review of residual limits, bioburden, and sterility assurance level."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide accelerated aging study protocol and results.",
+        "If available, provide real-time aging data corroborating accelerated results.",
+        "Document acceptance criteria and test methods for aging endpoints."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Provide accelerated and/or real-time aging data supporting the claimed shelf life.",
+          "recommended_artifacts": [
+            "Bench Test Protocol",
+            "Bench Test Report"
+          ],
+          "recommended_sections": [
+            "Section 7 \u2014 Performance Testing"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_10"
+      ],
+      "category": "BenchTesting",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Bench Test Protocol",
+        "Bench Test Report",
+        "Performance Verification Summary"
+      ],
+      "se_matrix_rows": [
+        "char_10"
+      ],
+      "severity": "Low",
+      "task_id": "06204336f581",
+      "title": "Provide shelf-life and aging study evidence",
+      "triggered_risk_codes": [
+        "SHELF_LIFE_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::06204336f581",
+      "why_it_matters": "New shelf-life claims require accelerated and/or real-time aging study data demonstrating device performance/safety over claimed period."
+    },
+    {
+      "acceptance_criteria": [
+        "Update IFU text to reflect any differences from predicate.",
+        "Add/update warnings and contraindications as applicable.",
+        "Verify claims in labeling are supported by verification/validation evidence."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Labeling/IFU appears misaligned with device differences. Confirm labeling has been updated.",
+          "recommended_artifacts": [
+            "IFU Draft",
+            "Warnings / Precautions Update"
+          ],
+          "recommended_sections": [
+            "Section 4 \u2014 Indications for Use",
+            "Section 6 \u2014 Device Description"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_20"
+      ],
+      "category": "LabelingIFU",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "IFU Draft",
+        "Warnings / Precautions Update"
+      ],
+      "se_matrix_rows": [
+        "char_20"
+      ],
+      "severity": "Low",
+      "task_id": "b4258a791d66",
+      "title": "Update labeling and IFU to reflect device differences",
+      "triggered_risk_codes": [
+        "LABELING_IFU_GAP"
+      ],
+      "truth_machine_placeholder_id": "TMP::b4258a791d66",
+      "why_it_matters": "Labeling or IFU requires updates to reflect device differences, warnings, contraindications, or changed operating procedures."
+    },
+    {
+      "acceptance_criteria": [
+        "Provide packaging integrity / seal strength test results.",
+        "Demonstrate sterile barrier maintained through distribution simulation.",
+        "If applicable, provide accelerated aging data supporting new packaging."
+      ],
+      "anticipated_questions": [
+        {
+          "question": "Has packaging integrity been validated with the new packaging system, including distribution simulation?",
+          "recommended_artifacts": [
+            "Packaging Integrity / Seal Strength"
+          ],
+          "recommended_sections": [
+            "Section 11 \u2014 Sterilization",
+            "Section 6 \u2014 Device Description"
+          ]
+        }
+      ],
+      "artifact_targets": [
+        "MANIFEST::e7e14722a2e0a4a558358c3c01575a8fa64d04f9749ff8e99ff4ae7fa5c70c54",
+        "SE_MATRIX_ROW::char_9"
+      ],
+      "category": "SterilizationValidation",
+      "completion": {
+        "completed_at": null,
+        "completed_by": null,
+        "evidence_refs": [],
+        "state": "OPEN",
+        "waiver_reason": null
+      },
+      "recommended_artifacts": [
+        "Bench Test Report",
+        "Packaging Integrity / Seal Strength"
+      ],
+      "se_matrix_rows": [
+        "char_9"
+      ],
+      "severity": "Low",
+      "task_id": "f59c80a22581",
+      "title": "Verify packaging integrity and sterile barrier system",
+      "triggered_risk_codes": [
+        "PACKAGING_SYSTEM_CHANGE"
+      ],
+      "truth_machine_placeholder_id": "TMP::f59c80a22581",
+      "why_it_matters": "Packaging system change requires integrity testing and may affect sterile barrier claims and shelf-life."
+    }
+  ],
+  "top_risks": [
+    "CYBERSECURITY_SURFACE_INCREASED",
+    "ENERGY_SOURCE_CHANGE",
+    "INDICATIONS_EXPANDED",
+    "IU_MISMATCH",
+    "MATERIAL_CHANGE",
+    "ML_ADAPTIVITY",
+    "SOFTWARE_PRESENT_NEW",
+    "TISSUE_CONTACT_CHANGE"
+  ]
+}

@@ -4520,41 +4520,56 @@ export type InsertDocumentAuditLog = z.infer<typeof insertDocumentAuditLogSchema
  * Core project entity that spans across all modules.
  * This is the central project record that can be linked to module-specific data.
  */
-export const projects = pgTable('projects', {
-  id: serial('id').primaryKey(),
-  organizationId: integer('organization_id')
-    .notNull()
-    .references(() => organizations.id),
-  clientWorkspaceId: integer('client_workspace_id')
-    .notNull()
-    .references(() => clientWorkspaces.id),
-  name: text('name').notNull(),
-  code: text('code'), // Project code or identifier
-  description: text('description'),
-  status: text('status').default('planning').notNull(), // planning, active, on-hold, completed, archived
-  priority: text('priority').default('medium').notNull(), // low, medium, high, critical
-  type: text('type').notNull(), // research, clinical, regulatory, commercial, etc.
-  startDate: timestamp('start_date'),
-  targetEndDate: timestamp('target_end_date'),
-  actualEndDate: timestamp('actual_end_date'),
-  progress: integer('progress').default(0), // 0-100 percentage
-  budget: integer('budget'),
-  budgetCurrency: text('budget_currency').default('USD'),
-  budgetStatus: text('budget_status').default('within-budget'), // within-budget, at-risk, over-budget
-  createdById: integer('created_by_id').references(() => users.id),
-  ownerId: integer('owner_id').references(() => users.id),
-  sponsors: text('sponsors').array(), // List of sponsor IDs or names
-  tags: text('tags').array(),
-  criticalToQualityFactors: json('critical_to_quality_factors'), // CtQ factors array
-  riskLevel: text('risk_level').default('medium'), // low, medium, high
-  riskAssessment: json('risk_assessment'),
-  qualityTargets: json('quality_targets'),
-  moduleReferences: json('module_references'), // References to specific module instances
-  settings: json('settings'),
-  metadata: json('metadata'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const projects = pgTable(
+  'projects',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    clientWorkspaceId: integer('client_workspace_id')
+      .notNull()
+      .references(() => clientWorkspaces.id),
+
+    // ── Hierarchy (Program → Project → Study → Sub-project) ───────────────
+    parentProjectId: integer('parent_project_id'), // FK to projects.id — self-referential (added via foreignKey below)
+    depth: integer('depth').default(0).notNull(), // 0=Program, 1=Project, 2=Study, 3=Sub-project
+    path: text('path'), // Materialized path e.g. "1/5/12" for fast ancestor/descendant queries
+
+    name: text('name').notNull(),
+    code: text('code'), // Project code or identifier
+    description: text('description'),
+    status: text('status').default('planning').notNull(), // planning, active, on-hold, completed, archived
+    priority: text('priority').default('medium').notNull(), // low, medium, high, critical
+    type: text('type').notNull(), // research, clinical, regulatory, commercial, etc.
+    startDate: timestamp('start_date'),
+    targetEndDate: timestamp('target_end_date'),
+    actualEndDate: timestamp('actual_end_date'),
+    progress: integer('progress').default(0), // 0-100 percentage
+    budget: integer('budget'),
+    budgetCurrency: text('budget_currency').default('USD'),
+    budgetStatus: text('budget_status').default('within-budget'), // within-budget, at-risk, over-budget
+    createdById: integer('created_by_id').references(() => users.id),
+    ownerId: integer('owner_id').references(() => users.id),
+    sponsors: text('sponsors').array(), // List of sponsor IDs or names
+    tags: text('tags').array(),
+    criticalToQualityFactors: json('critical_to_quality_factors'), // CtQ factors array
+    riskLevel: text('risk_level').default('medium'), // low, medium, high
+    riskAssessment: json('risk_assessment'),
+    qualityTargets: json('quality_targets'),
+    moduleReferences: json('module_references'), // References to specific module instances
+    settings: json('settings'),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    parentProjectIdx: index('projects_parent_project_idx').on(table.parentProjectId),
+    pathIdx: index('projects_path_idx').on(table.path),
+    depthIdx: index('projects_depth_idx').on(table.depth),
+    parentFk: foreignKey({ columns: [table.parentProjectId], foreignColumns: [table.id] }),
+  })
+);
 
 // Project Insert Schema
 export const insertProjectSchema = createInsertSchemaOmit(projects, {
@@ -5281,6 +5296,177 @@ export const insertTaskAutomationSchema = createInsertSchemaOmit(taskAutomation,
 export type TaskAutomation = InferSelectModel<typeof taskAutomation>;
 export type InsertTaskAutomation = z.infer<typeof insertTaskAutomationSchema>;
 
+// ============================================================================
+// PROJECT RULES ENGINE
+// Client-configurable event-driven rules for project automation
+// ============================================================================
+
+/**
+ * Project Rules Table
+ *
+ * Client-configurable rules that fire on project lifecycle events.
+ * Rules evaluate conditions against the event context and execute
+ * actions like task creation, notifications, escalations, AI analysis.
+ * Scoped per organization with optional template or project overrides.
+ */
+export const projectRules = pgTable(
+  'project_rules',
+  {
+    id: serial('id').primaryKey(),
+    ruleId: text('rule_id').notNull().unique(), // UUID for external references
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    description: text('description'),
+
+    // Scope — where this rule applies
+    scope: text('scope').default('global').notNull(), // global, template, project
+    scopeProjectId: integer('scope_project_id').references(() => projects.id), // when scope=project
+    scopeTemplateId: integer('scope_template_id').references(() => projectTemplates.id), // when scope=template
+
+    // Trigger — what fires this rule
+    triggerEvent: text('trigger_event').notNull(),
+    // Valid events: project.created, project.status_changed, project.risk_changed,
+    //   task.completed, task.overdue, task.assigned,
+    //   document.uploaded, document.approved,
+    //   stage.completed, stage.blocked,
+    //   milestone.approaching, milestone.missed,
+    //   risk.threshold_breached, budget.threshold_breached,
+    //   approval.requested, approval.decided,
+    //   child_project.created, child_project.status_changed,
+    //   module.linked, sentinel.finding
+
+    // Conditions — when this rule should fire (AND/OR grouping)
+    conditions: json('conditions'), // Array<{ field, operator, value, logic?: 'AND'|'OR' }>
+
+    // Actions — what to do when conditions match (executed in order)
+    actions: json('actions'), // Array<{ type, config }> — create_task, send_notification, block_transition, escalate, update_field, trigger_ai_analysis, advance_stage, create_child_project
+
+    // Execution control
+    priority: integer('priority').default(50), // 0-100, higher = runs first
+    isActive: boolean('is_active').default(true),
+    cooldownMinutes: integer('cooldown_minutes').default(0), // Prevent rapid re-firing
+    maxExecutions: integer('max_executions'), // null = unlimited
+
+    // Tracking
+    executionCount: integer('execution_count').default(0),
+    successCount: integer('success_count').default(0),
+    failureCount: integer('failure_count').default(0),
+    lastExecutedAt: timestamp('last_executed_at'),
+    lastResult: json('last_result'), // { success, message, actionResults[] }
+
+    // Metadata
+    isBuiltIn: boolean('is_built_in').default(false), // true = shipped default, can't delete
+    tags: text('tags').array(),
+    metadata: json('metadata'),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    ruleIdIdx: uniqueIndex('project_rules_rule_id_idx').on(table.ruleId),
+    orgIdx: index('project_rules_org_idx').on(table.organizationId),
+    triggerIdx: index('project_rules_trigger_idx').on(table.triggerEvent),
+    scopeIdx: index('project_rules_scope_idx').on(table.scope),
+    activeIdx: index('project_rules_active_idx').on(table.isActive),
+  })
+);
+
+// Project Rules Insert Schema
+export const insertProjectRuleSchema = createInsertSchemaOmit(projectRules, {
+  id: true,
+  executionCount: true,
+  successCount: true,
+  failureCount: true,
+  lastExecutedAt: true,
+  lastResult: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Project Rules Types
+export type ProjectRule = InferSelectModel<typeof projectRules>;
+export type InsertProjectRule = z.infer<typeof insertProjectRuleSchema>;
+
+/**
+ * Rule Execution Log — Audit trail of every rule execution
+ */
+export const ruleExecutionLog = pgTable(
+  'rule_execution_log',
+  {
+    id: serial('id').primaryKey(),
+    executionId: text('execution_id').notNull().unique(), // UUID
+    ruleId: text('rule_id').notNull(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id),
+    triggerEvent: text('trigger_event').notNull(),
+    triggerContext: json('trigger_context'), // Snapshot of the event payload
+    conditionsMatched: boolean('conditions_matched').default(false),
+    actionsExecuted: json('actions_executed'), // Array<{ type, success, result, durationMs }>
+    success: boolean('success').default(false),
+    errorMessage: text('error_message'),
+    durationMs: integer('duration_ms'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    ruleIdIdx: index('rule_exec_rule_id_idx').on(table.ruleId),
+    orgIdx: index('rule_exec_org_idx').on(table.organizationId),
+    projectIdx: index('rule_exec_project_idx').on(table.projectId),
+    createdIdx: index('rule_exec_created_idx').on(table.createdAt),
+  })
+);
+
+export type RuleExecutionLog = InferSelectModel<typeof ruleExecutionLog>;
+
+/**
+ * Sentinel Findings Table — Proactive AI analysis results
+ */
+export const sentinelFindings = pgTable(
+  'sentinel_findings',
+  {
+    id: serial('id').primaryKey(),
+    findingId: text('finding_id').notNull().unique(), // UUID
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id),
+    analyzerType: text('analyzer_type').notNull(), // deadline_risk, cross_project, regulatory_change, quality_drift, budget_burn
+    severity: text('severity').default('medium').notNull(), // low, medium, high, critical
+    title: text('title').notNull(),
+    summary: text('summary').notNull(),
+    details: json('details'), // Analyzer-specific structured data
+    recommendations: json('recommendations'), // Array<{ action, rationale, priority }>
+    affectedItems: json('affected_items'), // Array<{ type: 'project'|'task'|'document', id, name }>
+    status: text('status').default('open').notNull(), // open, acknowledged, resolved, dismissed
+    resolvedAt: timestamp('resolved_at'),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    aiRequestId: text('ai_request_id'), // Links to AI Gateway audit log for traceability
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    findingIdIdx: uniqueIndex('sentinel_finding_id_idx').on(table.findingId),
+    orgIdx: index('sentinel_org_idx').on(table.organizationId),
+    projectIdx: index('sentinel_project_idx').on(table.projectId),
+    analyzerIdx: index('sentinel_analyzer_idx').on(table.analyzerType),
+    severityIdx: index('sentinel_severity_idx').on(table.severity),
+    statusIdx: index('sentinel_status_idx').on(table.status),
+  })
+);
+
+export const insertSentinelFindingSchema = createInsertSchemaOmit(sentinelFindings, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SentinelFinding = InferSelectModel<typeof sentinelFindings>;
+export type InsertSentinelFinding = z.infer<typeof insertSentinelFindingSchema>;
+
 /**
  * Task Dependencies Table
  *
@@ -5396,6 +5582,14 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     fields: [projects.clientWorkspaceId],
     references: [clientWorkspaces.id],
   }),
+  // ── Hierarchy self-referential relations ──
+  parent: one(projects, {
+    fields: [projects.parentProjectId],
+    references: [projects.id],
+    relationName: 'projectHierarchy',
+  }),
+  children: many(projects, { relationName: 'projectHierarchy' }),
+  // ── Existing relations ──
   modules: many(projectModules),
   workflowStages: many(projectWorkflowStages),
   tasks: many(projectTasks),

@@ -180,6 +180,11 @@ describe('DOCX Factory BFF Proxy', () => {
         .send({ storage_key: 'test.docx', sha256: 'a'.repeat(64) });
       expect(res.status).toBe(422);
     });
+
+    it('GET /templates/:id/versions without program_id → 422', async () => {
+      const res = await request(app).get(`/api/docx-factory/templates/${TEMPLATE_ID}/versions`);
+      expect(res.status).toBe(422);
+    });
   });
 
   // ── 3. Security — no admin token leak ─────────────────────────────────────
@@ -261,6 +266,13 @@ describe('DOCX Factory BFF Proxy', () => {
         .post(`/api/docx-factory/templates/${TEMPLATE_ID}/versions`)
         .query({ program_id: PROGRAM_ID })
         .send({ storage_key: 'x.docx', sha256: 'a'.repeat(64) });
+      expect(res.status).not.toBe(404);
+    });
+
+    it('has GET /templates/:id/versions endpoint', async () => {
+      const res = await request(app)
+        .get(`/api/docx-factory/templates/${TEMPLATE_ID}/versions`)
+        .query({ program_id: PROGRAM_ID });
       expect(res.status).not.toBe(404);
     });
 

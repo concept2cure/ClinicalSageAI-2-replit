@@ -68,6 +68,7 @@
     "NODE_ENV": "development"
   },
   "python.analysis.extraPaths": ["shadow_service"],
+  "python.defaultInterpreterPath": "/workspaces/ClinicalSageAI-2-replit/.venv/bin/python",
   "files.associations": {
     "*.sql": "plaintext"
   },
@@ -75,5 +76,6 @@
   "mssql.intelliSense.enableSuggestions": false,
   "mssql.intelliSense.enableQuickInfo": false,
   "mssql.intelliSense.enableErrorChecking": false,
-  "mssql.ignorePlatformWarning": true
+  "mssql.ignorePlatformWarning": true,
+  "azureTerraform.checkTerraformCmd": false
 }

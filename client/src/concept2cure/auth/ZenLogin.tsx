@@ -31,6 +31,9 @@ import {
 
 import { computeRedirect } from './redirectUtils';
 
+// Brand logo
+import concept2cureLogo from '@/assets/concept2cure-logo.jpg';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -46,29 +49,13 @@ interface AuthError {
 // ICONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const LogoIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* DNA Helix stylized - representing clinical/pharma */}
-    <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="2" className="text-blue-600" />
-    <path
-      d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      className="text-blue-600"
-    />
-    <path
-      d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      className="text-violet-500"
-    />
-    <circle cx="14" cy="14" r="2" fill="currentColor" className="text-blue-600" />
-    <circle cx="26" cy="14" r="2" fill="currentColor" className="text-violet-500" />
-    <circle cx="14" cy="26" r="2" fill="currentColor" className="text-violet-500" />
-    <circle cx="26" cy="26" r="2" fill="currentColor" className="text-blue-600" />
-  </svg>
+// Logo rendered from actual brand asset
+const BrandLogo = () => (
+  <img
+    src={concept2cureLogo}
+    alt="Concept2Cure"
+    className="h-14 w-auto object-contain"
+  />
 );
 
 const MicrosoftIcon = () => (
@@ -315,11 +302,6 @@ export const ZenLogin: React.FC = () => {
       return;
     }
 
-    if (password.length < 8) {
-      setError({ field: 'password', message: 'Password must be at least 8 characters' });
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
@@ -537,10 +519,12 @@ export const ZenLogin: React.FC = () => {
         onClick={handleEmailContinue}
         disabled={isLoading}
         className={`
-          w-full py-3 px-4
+          w-full py-3.5 px-4
           flex items-center justify-center gap-2
-          text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          text-base font-semibold text-white
+          bg-gradient-to-r from-blue-600 to-indigo-600
+          hover:from-blue-700 hover:to-indigo-700
+          shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
           rounded-xl
           transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
@@ -556,7 +540,7 @@ export const ZenLogin: React.FC = () => {
           <div className="w-full border-t border-zinc-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-[#FAFAF9] text-zinc-500">or continue with</span>
+          <span className="px-4 bg-white text-zinc-400 text-xs uppercase tracking-wider">or continue with</span>
         </div>
       </div>
 
@@ -695,10 +679,12 @@ export const ZenLogin: React.FC = () => {
         onClick={handleLogin}
         disabled={isLoading}
         className={`
-          w-full py-3 px-4
+          w-full py-3.5 px-4
           flex items-center justify-center gap-2
-          text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          text-base font-semibold text-white
+          bg-gradient-to-r from-blue-600 to-indigo-600
+          hover:from-blue-700 hover:to-indigo-700
+          shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
           rounded-xl
           transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
@@ -915,32 +901,86 @@ export const ZenLogin: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
-      {/* Main content - centered */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <motion.div
-          variants={cardVariants}
-          initial="initial"
-          animate="animate"
-          className="w-full max-w-md"
-        >
-          {/* Logo and title */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center mb-4">
-              <LogoIcon />
+    <div className="min-h-screen flex">
+      {/* Left panel — branding / hero */}
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
+        {/* Decorative grid */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M60 0H0v60\' fill=\'none\' stroke=\'%23fff\' stroke-width=\'.5\'/%3E%3C/svg%3E")'}} />
+        {/* Gradient orbs */}
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-indigo-500/20 blur-[100px]" />
+
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          {/* Top — logo */}
+          <div>
+            <div className="flex items-center gap-3">
+              <img src={concept2cureLogo} alt="Concept2Cure" className="h-12 w-auto rounded-lg shadow-lg" />
+              <span className="text-xl font-semibold text-white tracking-tight">Concept2Cure</span>
             </div>
-            <h1 className="text-2xl font-semibold text-zinc-900">
-              {step === 'success' ? '' : 'Sign in to Concept2Cure'}
-            </h1>
-            {step === 'email' && (
-              <p className="mt-2 text-sm text-zinc-600">
-                Regulatory intelligence platform for life sciences
-              </p>
-            )}
           </div>
 
-          {/* Auth card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+          {/* Center — tagline */}
+          <div className="space-y-6">
+            <h2 className="text-4xl font-bold text-white leading-tight">
+              Accelerate your path<br />from concept to cure.
+            </h2>
+            <p className="text-lg text-blue-200/80 max-w-md leading-relaxed">
+              AI-powered regulatory intelligence for IND, NDA, BLA,
+              510(k) and beyond — purpose-built for life-sciences teams.
+            </p>
+            {/* Trust badges */}
+            <div className="flex items-center gap-4 pt-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-medium text-blue-200">
+                <ShieldIcon /> FDA 21 CFR Part 11
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-medium text-blue-200">
+                <ShieldIcon /> HIPAA Compliant
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-medium text-blue-200">
+                <ShieldIcon /> SOC 2 Type II
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom — testimonial / stat */}
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+            <p className="text-sm text-blue-100/90 italic leading-relaxed">
+              "Concept2Cure reduced our IND preparation time from 18 months to
+              under 6 — with full regulatory traceability at every step."
+            </p>
+            <p className="mt-3 text-xs text-blue-300/70">— VP Regulatory Affairs, Top-20 Biopharma</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel — auth form */}
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Mobile logo (shown on small screens only) */}
+        <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-100">
+          <img src={concept2cureLogo} alt="Concept2Cure" className="h-10 w-auto rounded-lg" />
+          <span className="text-lg font-semibold text-zinc-900">Concept2Cure</span>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12">
+          <motion.div
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+            className="w-full max-w-sm"
+          >
+            {/* Title */}
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-zinc-900">
+                {step === 'success' ? '' : 'Welcome back'}
+              </h1>
+              {step === 'email' && (
+                <p className="mt-2 text-sm text-zinc-500">
+                  Sign in to your Concept2Cure account
+                </p>
+              )}
+            </div>
+
+            {/* Auth form */}
             <AnimatePresence mode="wait">
               {step === 'email' && renderEmailStep()}
               {step === 'password' && renderPasswordStep()}
@@ -949,35 +989,33 @@ export const ZenLogin: React.FC = () => {
               {step === 'reset-sent' && renderResetSentStep()}
               {step === 'success' && renderSuccessStep()}
             </AnimatePresence>
-          </div>
 
-          {/* Sign up link */}
-          {(step === 'email' || step === 'password') && (
-            <p className="mt-6 text-center text-sm text-zinc-600">
-              Don't have an account?{' '}
-              <button
-                onClick={() => setLocation('/signup')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Request access
-              </button>
-            </p>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Footer with compliance notice */}
-      <footer className="py-6 px-4">
-        <div className="max-w-md mx-auto">
-          <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 mb-2">
-            <ShieldIcon />
-            <span>FDA 21 CFR Part 11 Compliant</span>
-          </div>
-          <p className="text-center text-xs text-zinc-400">
-            © {new Date().getFullYear()} TrialSage. All rights reserved.
-          </p>
+            {/* Sign up link */}
+            {(step === 'email' || step === 'password') && (
+              <p className="mt-8 text-center text-sm text-zinc-500">
+                Don't have an account?{' '}
+                <button
+                  onClick={() => setLocation('/concept2cure/signup')}
+                  className="text-blue-600 hover:text-blue-700 font-semibold"
+                >
+                  Request access
+                </button>
+              </p>
+            )}
+          </motion.div>
         </div>
-      </footer>
+
+        {/* Footer */}
+        <footer className="py-5 px-6 border-t border-zinc-100">
+          <div className="max-w-sm mx-auto flex items-center justify-between text-xs text-zinc-400">
+            <span>© {new Date().getFullYear()} Concept2Cure Inc.</span>
+            <div className="flex items-center gap-1">
+              <ShieldIcon />
+              <span>Enterprise-grade security</span>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };

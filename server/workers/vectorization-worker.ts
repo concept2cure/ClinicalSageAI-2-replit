@@ -48,6 +48,13 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+function requirePool() {
+  if (!pool) {
+    throw new Error('Database pool not available');
+  }
+  return pool;
+}
+
 /**
  * Simple token estimator (approximately 4 chars per token)
  */
@@ -137,7 +144,7 @@ async function extractText(content: Buffer, fileType: string): Promise<string> {
  * Process a single document
  */
 async function processDocument(job: ProcessingJob): Promise<void> {
-  const client = await pool.connect();
+  const client = await requirePool().connect();
 
   try {
     console.log(`Processing document: ${job.title} (${job.document_id})`);
@@ -290,7 +297,7 @@ async function processDocument(job: ProcessingJob): Promise<void> {
  * Get pending jobs from queue
  */
 async function getPendingJobs(limit: number = 10): Promise<ProcessingJob[]> {
-  const result = await pool.query(
+  const result = await requirePool().query(
     `
     SELECT
       pq.id,
@@ -368,8 +375,9 @@ export async function processSingleDocument(
   documentId: string
 ): Promise<{ success: boolean; chunks?: number; error?: string }> {
   try {
+    const dbPool = requirePool();
     // Create a processing job
-    await pool.query(
+    await dbPool.query(
       `
       INSERT INTO vault.processing_queue (document_id, processing_type, priority)
       VALUES ($1, 'vectorize', 'high')
@@ -379,7 +387,7 @@ export async function processSingleDocument(
     );
 
     // Get the job
-    const jobResult = await pool.query(
+    const jobResult = await dbPool.query(
       `
       SELECT
         pq.id,
@@ -405,7 +413,7 @@ export async function processSingleDocument(
     await processDocument(jobResult.rows[0]);
 
     // Get chunk count
-    const countResult = await pool.query(
+    const countResult = await dbPool.query(
       `
       SELECT chunk_count FROM vault.documents WHERE id = $1
     `,
@@ -430,7 +438,7 @@ export async function getWorkerStatus(): Promise<{
   completed: number;
   failed: number;
 }> {
-  const result = await pool.query(`
+  const result = await requirePool().query(`
     SELECT
       COUNT(*) FILTER (WHERE status = 'pending') as pending,
       COUNT(*) FILTER (WHERE status = 'processing') as processing,

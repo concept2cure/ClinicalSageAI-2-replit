@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 
 # ============================================
-# PRE-COMMIT HOOK - Tech Debt Prevention
-# Added: 2026-01-24
+# PRE-COMMIT HOOK - Tech Debt Prevention + eCTD Contract Enforcement
+# Added: 2026-01-24 | Updated: Phase 6.6.H
 # ============================================
 
 echo "🔍 Running pre-commit checks..."
@@ -57,6 +57,42 @@ if [ -n "$LARGE_FILES" ]; then
   echo "Consider splitting into smaller modules."
   echo "See docs/ARCHITECTURE.md for guidance."
   echo ""
+fi
+
+# ── Phase 6.6.H: eCTD Contract Enforcement ──────────────────────────────
+# Run ci:ectd-stubs when schemas, ectd-stubs data, or contract files change.
+# This is a HARD GATE — if the bundle data drifts from the schema, commit is blocked.
+
+ECTD_CHANGED=$(git diff --cached --name-only | grep -E '(^schemas/|^ectd-stubs/|proof_pack_zip\.py|contract_hashes\.py|validate-ectd-stubs-bundle\.ts)' || true)
+
+if [ -n "$ECTD_CHANGED" ]; then
+  echo ""
+  echo "🔒 eCTD contract files changed — running AJV bundle validation..."
+  if ! npm run --silent ci:ectd-stubs 2>&1; then
+    echo ""
+    echo "🚫 ERROR: eCTD bundle validation FAILED."
+    echo "   The bundle data does not validate against the schema."
+    echo "   Fix schemas/ or ectd-stubs/ before committing."
+    echo ""
+    exit 1
+  fi
+  echo "✅ eCTD bundle validation passed."
+fi
+
+# Run ci:risk-codes when risk code contract files change.
+RISK_CHANGED=$(git diff --cached --name-only | grep -E '(risk_codes|risk_vocab|predicate_intel/)' || true)
+
+if [ -n "$RISK_CHANGED" ]; then
+  echo ""
+  echo "🔒 Risk code contract files changed — running risk code validation..."
+  if ! npm run --silent ci:risk-codes 2>&1; then
+    echo ""
+    echo "🚫 ERROR: Risk code validation FAILED."
+    echo "   Fix risk code contract files before committing."
+    echo ""
+    exit 1
+  fi
+  echo "✅ Risk code validation passed."
 fi
 
 echo "✅ Pre-commit checks complete"

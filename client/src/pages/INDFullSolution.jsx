@@ -25,27 +25,98 @@ import {
   Briefcase,
   Users,
   Loader2,
+  Bot,
+  Sparkles,
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { apiRequest } from '../lib/queryClient';
 import ExampleReportPackages from '../components/ExampleReportPackages';
 
 export default function INDFullSolution() {
+  const COAUTHOR_IMPORT_KEY = 'coauthor_pending_canvas_import';
   const [activeTab, setActiveTab] = useState('ind-templates');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingFromDocs, setIsCreatingFromDocs] = useState(false);
+  const [templateWorkflowResults, setTemplateWorkflowResults] = useState({});
+  const [moduleReviewActions, setModuleReviewActions] = useState({});
+  const [guidedFamily, setGuidedFamily] = useState('ind');
+  const [guidedTemplateId, setGuidedTemplateId] = useState('1');
+  const [focusedTemplateId, setFocusedTemplateId] = useState(null);
+  const [kpiWindowDays, setKpiWindowDays] = useState(7);
   const [indStats, setIndStats] = useState({
     totalSubmissions: 842,
     successRate: 98.4,
     averagePreparationTime: 14.2,
     avgCostSavings: 187500,
+    kpiEvents: {
+      totalTracked: 0,
+      uploadStarted: 0,
+      draftGenerated: 0,
+      sectionAccepted: 0,
+      sectionRewritten: 0,
+      exportTriggered: 0,
+      last24Hours: {
+        uploadStarted: 0,
+        draftGenerated: 0,
+        sectionAccepted: 0,
+        sectionRewritten: 0,
+        exportTriggered: 0,
+      },
+    },
+    kpiTrends: {
+      windowDays: 7,
+      rows: [],
+    },
+    kpiDerived: {
+      window: {
+        acceptanceRatio: 0,
+        draftToExportConversion: 0,
+      },
+      lifetime: {
+        acceptanceRatio: 0,
+        draftToExportConversion: 0,
+      },
+    },
+    kpiAttribution: {
+      total: {
+        standardFlow: 0,
+        riskAlert: 0,
+      },
+      last24Hours: {
+        standardFlow: 0,
+        riskAlert: 0,
+      },
+    },
+    kpiDeltas: {
+      windowDays: 7,
+      acceptanceRatioDelta: 0,
+      draftToExportConversionDelta: 0,
+      interventionShareDelta: 0,
+    },
   });
   const { toast } = useToast();
+
+  const acceptanceRatio = indStats.kpiDerived?.window?.acceptanceRatio ?? 0;
+  const draftToExportConversion = indStats.kpiDerived?.window?.draftToExportConversion ?? 0;
+  const acceptanceAtRisk = acceptanceRatio < 60;
+  const conversionAtRisk = draftToExportConversion < 30;
+  const standardFlowEvents24h = indStats.kpiAttribution?.last24Hours?.standardFlow ?? 0;
+  const riskAlertEvents24h = indStats.kpiAttribution?.last24Hours?.riskAlert ?? 0;
+  const interventionDenominator24h = standardFlowEvents24h + riskAlertEvents24h;
+  const interventionShare24h =
+    interventionDenominator24h > 0
+      ? Math.round((riskAlertEvents24h / interventionDenominator24h) * 1000) / 10
+      : 0;
+  const interventionShareAtRisk = interventionShare24h > 40;
+  const acceptanceRatioDelta = indStats.kpiDeltas?.acceptanceRatioDelta ?? 0;
+  const draftToExportConversionDelta = indStats.kpiDeltas?.draftToExportConversionDelta ?? 0;
+  const interventionShareDelta = indStats.kpiDeltas?.interventionShareDelta ?? 0;
 
   // Handle template download
   const handleDownloadTemplate = async templateId => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/ind/template/${templateId}/download`);
+      const response = await fetch(`/api/ind-templates/template/${templateId}/download`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -78,7 +149,7 @@ export default function INDFullSolution() {
   const handleDownloadModule = async moduleId => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/ind/module/${moduleId}/download`);
+      const response = await fetch(`/api/ind-templates/module/${moduleId}/download`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -111,7 +182,7 @@ export default function INDFullSolution() {
   const handleCreateTemplate = async templateId => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/ind/template/${templateId}/create`, {
+      const response = await fetch(`/api/ind-templates/template/${templateId}/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -139,11 +210,388 @@ export default function INDFullSolution() {
     }
   };
 
+  const handleCreateFromDocuments = template => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt';
+
+    input.onchange = async event => {
+      const files = Array.from(event.target?.files || []);
+      if (!files.length) {
+        return;
+      }
+
+      try {
+        setIsCreatingFromDocs(true);
+        const formData = new FormData();
+        formData.append('projectName', template.title);
+        files.forEach(file => formData.append('files', file));
+
+        const response = await fetch(
+          `/api/ind-templates/template/${template.id}/create-with-documents`,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to create IND project from documents');
+        }
+
+        const result = await response.json();
+
+        setTemplateWorkflowResults(prev => ({
+          ...prev,
+          [template.id]: result,
+        }));
+
+        toast({
+          title: 'IND Project Created',
+          description: `Generated ${Object.keys(result.moduleDrafts || {}).length} module drafts and prepared Canvas + DOCX workflow outputs.`,
+        });
+
+        localStorage.setItem(
+          COAUTHOR_IMPORT_KEY,
+          JSON.stringify({
+            projectId: result.projectId,
+            projectName: result.projectName,
+            templateId: result.templateId,
+            specialization: result.specialization,
+            editorJson: result.canvasEditorJson,
+            moduleDrafts: result.moduleDrafts,
+            moduleAssessments: result.moduleAssessments,
+            reviewActions: result.reviewActions || {},
+            createdAt: result.created,
+          })
+        );
+
+        toast({
+          title: 'Opening Canvas Editor',
+          description: 'Loading your generated IND draft into the editor session...',
+        });
+
+        setTimeout(() => {
+          window.location.href = '/coauthor?source=ind-templates';
+        }, 250);
+      } catch (error) {
+        toast({
+          title: 'Creation Error',
+          description: 'Failed to create IND project from uploaded documents.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsCreatingFromDocs(false);
+      }
+    };
+
+    input.click();
+  };
+
+  const handleDownloadWorkflowDocx = async url => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to download generated DOCX');
+      }
+
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = 'generated_ind_project.docx';
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(objectUrl);
+      document.body.removeChild(link);
+    } catch (error) {
+      toast({
+        title: 'Download Error',
+        description: 'Unable to download generated DOCX artifact.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownloadCanvasJson = async url => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to download Canvas JSON');
+      }
+
+      const payload = await response.json();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = 'ind_canvas_editor.json';
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(objectUrl);
+      document.body.removeChild(link);
+    } catch (error) {
+      toast({
+        title: 'Download Error',
+        description: 'Unable to download Canvas JSON artifact.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getWorkflowReviewActions = workflowResult => {
+    if (!workflowResult?.projectId) {
+      return workflowResult?.reviewActions || {};
+    }
+
+    const statefulActions = Object.entries(moduleReviewActions).reduce((acc, [key, value]) => {
+      if (key.startsWith(`${workflowResult.projectId}:`)) {
+        const moduleName = key.slice(`${workflowResult.projectId}:`.length);
+        acc[moduleName] = value;
+      }
+      return acc;
+    }, {});
+
+    return {
+      ...(workflowResult.reviewActions || {}),
+      ...statefulActions,
+    };
+  };
+
+  const getModuleReviewAction = (projectId, moduleName, fallbackActions = {}) => {
+    if (!projectId) {
+      return fallbackActions[moduleName] || 'pending';
+    }
+
+    const key = `${projectId}:${moduleName}`;
+    return moduleReviewActions[key] || fallbackActions[moduleName] || 'pending';
+  };
+
+  const setModuleReviewAction = async (projectId, templateId, moduleName, action) => {
+    if (!projectId) {
+      return;
+    }
+
+    const key = `${projectId}:${moduleName}`;
+    setModuleReviewActions(prev => ({
+      ...prev,
+      [key]: action,
+    }));
+
+    setTemplateWorkflowResults(prev => {
+      const workflowResult = prev?.[templateId];
+      if (!workflowResult) return prev;
+
+      return {
+        ...prev,
+        [templateId]: {
+          ...workflowResult,
+          reviewActions: {
+            ...(workflowResult.reviewActions || {}),
+            [moduleName]: action,
+          },
+        },
+      };
+    });
+
+    try {
+      await fetch(`/api/ind-templates/projects/${projectId}/review-actions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ moduleName, action }),
+      });
+    } catch (error) {
+      console.error('Failed to persist module review action:', error);
+    }
+  };
+
+  const confidenceBadgeClass = confidence => {
+    if (confidence === 'high') {
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    }
+    if (confidence === 'medium') {
+      return 'bg-amber-100 text-amber-700 border-amber-200';
+    }
+    return 'bg-rose-100 text-rose-700 border-rose-200';
+  };
+
+  const getLatestWorkflowResult = () => {
+    const results = Object.values(templateWorkflowResults || {}).filter(
+      workflow => workflow?.projectId && workflow?.canvasEditorJson
+    );
+
+    if (!results.length) return null;
+
+    return [...results].sort((a, b) => {
+      const aTs = new Date(a.created || a.createdAt || 0).getTime();
+      const bTs = new Date(b.created || b.createdAt || 0).getTime();
+      return bTs - aTs;
+    })[0];
+  };
+
+  const emitIndKpiEvent = async (eventName, projectId, payload = {}) => {
+    try {
+      await fetch('/api/ind-templates/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventName,
+          projectId,
+          payload,
+        }),
+      });
+    } catch (error) {
+      console.warn('Failed to emit IND KPI event:', eventName, error);
+    }
+  };
+
+  const handleOpenCanvasEditor = (payload, reviewActionOverrides = {}) => {
+    if (!payload?.canvasEditorJson) {
+      window.location.href = '/coauthor';
+      return;
+    }
+
+    localStorage.setItem(
+      COAUTHOR_IMPORT_KEY,
+      JSON.stringify({
+        projectId: payload.projectId,
+        projectName: payload.projectName,
+        templateId: payload.templateId,
+        specialization: payload.specialization,
+        editorJson: payload.canvasEditorJson,
+        moduleDrafts: payload.moduleDrafts,
+        moduleAssessments: payload.moduleAssessments,
+        reviewActions: {
+          ...(getWorkflowReviewActions(payload) || {}),
+          ...(reviewActionOverrides || {}),
+        },
+        createdAt: payload.created,
+      })
+    );
+
+    window.location.href = '/coauthor?source=ind-templates';
+  };
+
+  const handleFocusLowConfidenceSections = async () => {
+    const latestWorkflow = getLatestWorkflowResult();
+    if (!latestWorkflow) {
+      toast({
+        title: 'No Active Draft',
+        description: 'Generate an IND draft first to focus low-confidence sections.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const lowConfidenceModules = Object.entries(latestWorkflow.moduleAssessments || {})
+      .filter(([, assessment]) => assessment?.confidence !== 'high')
+      .map(([moduleName]) => moduleName);
+
+    if (!lowConfidenceModules.length) {
+      toast({
+        title: 'No Low-Confidence Sections',
+        description: 'Current project has no low-confidence sections.',
+      });
+      return;
+    }
+
+    setActiveTab('ind-templates');
+    setFocusedTemplateId(Number(latestWorkflow.templateId));
+
+    await Promise.allSettled(
+      lowConfidenceModules.map(moduleName =>
+        setModuleReviewAction(
+          latestWorkflow.projectId,
+          latestWorkflow.templateId,
+          moduleName,
+          'needs_revision'
+        )
+      )
+    );
+
+    void Promise.allSettled(
+      lowConfidenceModules.map(moduleName =>
+        emitIndKpiEvent('section_rewritten', latestWorkflow.projectId, {
+          moduleName,
+          source: 'kpi_risk_alert',
+          intent: 'focus_low_confidence_sections',
+        })
+      )
+    );
+
+    setTimeout(() => {
+      const node = document.getElementById(`ind-template-card-${latestWorkflow.templateId}`);
+      node?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+
+    toast({
+      title: 'Focused Review Ready',
+      description: `${lowConfidenceModules.length} section(s) marked for revision in the active project.`,
+    });
+  };
+
+  const handleOpenLatestRiskDraftInCoAuthor = async () => {
+    const latestWorkflow = getLatestWorkflowResult();
+    if (!latestWorkflow) {
+      toast({
+        title: 'No Active Draft',
+        description: 'Generate an IND draft first before opening CoAuthor.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const lowConfidenceModules = Object.entries(latestWorkflow.moduleAssessments || {})
+      .filter(([, assessment]) => assessment?.confidence !== 'high')
+      .map(([moduleName]) => moduleName);
+
+    const reviewActionOverrides = lowConfidenceModules.reduce((acc, moduleName) => {
+      acc[moduleName] = 'needs_revision';
+      return acc;
+    }, {});
+
+    await Promise.allSettled(
+      lowConfidenceModules.map(moduleName =>
+        setModuleReviewAction(
+          latestWorkflow.projectId,
+          latestWorkflow.templateId,
+          moduleName,
+          'needs_revision'
+        )
+      )
+    );
+
+    void emitIndKpiEvent('export_triggered', latestWorkflow.projectId, {
+      source: 'kpi_risk_alert',
+      intent: 'open_in_coauthor',
+      lowConfidenceModuleCount: lowConfidenceModules.length,
+    });
+
+    handleOpenCanvasEditor(latestWorkflow, reviewActionOverrides);
+  };
+
+  const startGuidedFlow = () => {
+    if (guidedFamily === 'ind') {
+      const selectedTemplate =
+        indTemplates.find(template => String(template.id) === guidedTemplateId) || indTemplates[0];
+      setActiveTab('ind-templates');
+      handleCreateFromDocuments(selectedTemplate);
+      return;
+    }
+
+    window.location.href = `/docx-factory?doc_family=${encodeURIComponent(guidedFamily)}`;
+  };
+
   useEffect(() => {
     const fetchINDStats = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/ind/stats');
+        const response = await fetch(`/api/ind-templates/stats?windowDays=${kpiWindowDays}`);
         if (response.ok) {
           const data = await response.json();
           setIndStats(data);
@@ -157,7 +605,7 @@ export default function INDFullSolution() {
     };
 
     fetchINDStats();
-  }, []);
+  }, [kpiWindowDays]);
 
   // Sample IND templates
   const indTemplates = [
@@ -338,7 +786,14 @@ export default function INDFullSolution() {
 
   // Function to render a template card
   const TemplateCard = ({ template }) => (
-    <div className="bg-white/80 border border-slate-200/70 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div
+      id={`ind-template-card-${template.id}`}
+      className={`bg-white/80 border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
+        focusedTemplateId === template.id
+          ? 'border-amber-300 ring-2 ring-amber-100'
+          : 'border-slate-200/70'
+      }`}
+    >
       <div className="border-b border-slate-200/60 p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center">
@@ -365,15 +820,180 @@ export default function INDFullSolution() {
               <ChevronRight size={16} className="ml-1" />
             </button>
           </Link>
-          <button
-            onClick={() => handleDownloadTemplate(template.id)}
-            disabled={isLoading}
-            className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
-          >
-            {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
-            Download Package
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleCreateFromDocuments(template)}
+              disabled={isCreatingFromDocs}
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+            >
+              {isCreatingFromDocs ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
+              Create from Uploaded Docs
+            </button>
+            <button
+              onClick={() => handleDownloadTemplate(template.id)}
+              disabled={isLoading}
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+            >
+              {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
+              Download Package
+            </button>
+          </div>
         </div>
+        {templateWorkflowResults[template.id]?.workflow ? (
+          <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-medium text-slate-700 mb-2">
+              Generated IND workflow artifacts ready:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() =>
+                  handleDownloadWorkflowDocx(
+                    templateWorkflowResults[template.id].workflow.docxDownloadUrl
+                  )
+                }
+                className="inline-flex items-center px-2.5 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded text-xs"
+              >
+                Download Generated DOCX
+              </button>
+              <button
+                onClick={() =>
+                  handleDownloadCanvasJson(
+                    templateWorkflowResults[template.id].workflow.canvasJsonUrl
+                  )
+                }
+                className="inline-flex items-center px-2.5 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded text-xs"
+              >
+                Download Canvas JSON
+              </button>
+              <Link to="/docx-factory">
+                <button className="inline-flex items-center px-2.5 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded text-xs">
+                  Open DOCX Factory
+                </button>
+              </Link>
+              <Link to="/coauthor">
+                <button
+                  onClick={event => {
+                    event.preventDefault();
+                    handleOpenCanvasEditor(templateWorkflowResults[template.id]);
+                  }}
+                  className="inline-flex items-center px-2.5 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded text-xs"
+                >
+                  Open Canvas Editor
+                </button>
+              </Link>
+            </div>
+
+            {templateWorkflowResults[template.id]?.moduleAssessments ? (
+              <div className="mt-4 border-t border-slate-200 pt-3">
+                <p className="text-xs font-medium text-slate-700 mb-2">AI Quality Review</p>
+                <div className="space-y-2">
+                  {Object.entries(templateWorkflowResults[template.id].moduleAssessments).map(
+                    ([moduleName, assessment]) => {
+                      const workflowResult = templateWorkflowResults[template.id];
+                      const reviewAction = getModuleReviewAction(
+                        workflowResult?.projectId,
+                        moduleName,
+                        getWorkflowReviewActions(workflowResult)
+                      );
+                      return (
+                        <div
+                          key={moduleName}
+                          className="rounded border border-slate-200 bg-white/80 px-3 py-2"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs font-medium text-slate-800">{moduleName}</p>
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${confidenceBadgeClass(
+                                assessment.confidence
+                              )}`}
+                            >
+                              {assessment.confidence} confidence
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            Relevance score: {assessment.relevanceScore}
+                          </p>
+                          {assessment.evidence?.length ? (
+                            <div className="mt-2 space-y-1">
+                              {assessment.evidence.slice(0, 2).map(evidence => (
+                                <div
+                                  key={`${moduleName}-${evidence.filename}`}
+                                  className="text-[11px] text-slate-600 bg-slate-50 rounded border border-slate-100 px-2 py-1"
+                                >
+                                  <span className="font-medium">{evidence.filename}</span> · score{' '}
+                                  {evidence.score}
+                                  <div className="text-slate-500 mt-0.5">{evidence.excerpt}</div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-slate-500 mt-2">
+                              No direct evidence found in uploaded files.
+                            </p>
+                          )}
+
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            <button
+                              onClick={() =>
+                                setModuleReviewAction(
+                                  workflowResult?.projectId,
+                                  template.id,
+                                  moduleName,
+                                  'accepted'
+                                )
+                              }
+                              className={`px-2 py-1 rounded text-[11px] border ${
+                                reviewAction === 'accepted'
+                                  ? 'bg-emerald-100 border-emerald-200 text-emerald-700'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() =>
+                                setModuleReviewAction(
+                                  workflowResult?.projectId,
+                                  template.id,
+                                  moduleName,
+                                  'needs_revision'
+                                )
+                              }
+                              className={`px-2 py-1 rounded text-[11px] border ${
+                                reviewAction === 'needs_revision'
+                                  ? 'bg-amber-100 border-amber-200 text-amber-700'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              Needs Revision
+                            </button>
+                            <button
+                              onClick={() =>
+                                setModuleReviewAction(
+                                  workflowResult?.projectId,
+                                  template.id,
+                                  moduleName,
+                                  'rewrite'
+                                )
+                              }
+                              className={`px-2 py-1 rounded text-[11px] border ${
+                                reviewAction === 'rewrite'
+                                  ? 'bg-rose-100 border-rose-200 text-rose-700'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              Rewrite
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -556,7 +1176,9 @@ export default function INDFullSolution() {
                 <div className="h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   <span className="font-semibold">2</span>
                 </div>
-                <h3 className="text-lg font-medium text-slate-900">Safety 7-Day / 15-Day Reports</h3>
+                <h3 className="text-lg font-medium text-slate-900">
+                  Safety 7-Day / 15-Day Reports
+                </h3>
               </div>
               <p className="text-slate-600">
                 Wizard auto-creates 3500A narrative + cover letter. Sequence flagged "Amendment –
@@ -569,7 +1191,9 @@ export default function INDFullSolution() {
                 <div className="h-8 w-8 rounded-full bg-slate-900/5 text-slate-700 flex items-center justify-center mr-3">
                   <span className="font-semibold">3</span>
                 </div>
-                <h3 className="text-lg font-medium text-slate-900">Annual Report (21 CFR 312.33)</h3>
+                <h3 className="text-lg font-medium text-slate-900">
+                  Annual Report (21 CFR 312.33)
+                </h3>
               </div>
               <p className="text-slate-600">
                 Auto-roll prior year's protocol list + safety summary into template; QC; file to
@@ -992,6 +1616,65 @@ export default function INDFullSolution() {
           </div>
         </div>
 
+        <div className="mb-10 bg-white/80 rounded-xl border border-slate-200/70 shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Bot size={16} className="text-slate-700" />
+                AI Guided Submission Builder
+              </p>
+              <p className="text-sm text-slate-600 mt-1">
+                Choose your regulatory family and start a guided draft flow with uploaded evidence.
+              </p>
+            </div>
+            <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 bg-slate-50">
+              <Sparkles size={12} className="mr-1" />
+              Simple Mode
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+            <div>
+              <label className="text-xs text-slate-500">Regulatory Family</label>
+              <select
+                value={guidedFamily}
+                onChange={event => setGuidedFamily(event.target.value)}
+                className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700"
+              >
+                <option value="ind">IND</option>
+                <option value="nda">NDA</option>
+                <option value="bla">BLA</option>
+                <option value="sop">SOP</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">IND Package</label>
+              <select
+                value={guidedTemplateId}
+                onChange={event => setGuidedTemplateId(event.target.value)}
+                disabled={guidedFamily !== 'ind'}
+                className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                {indTemplates.map(template => (
+                  <option key={template.id} value={String(template.id)}>
+                    {template.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={startGuidedFlow}
+                disabled={isCreatingFromDocs}
+                className="w-full inline-flex items-center justify-center px-3 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+              >
+                {isCreatingFromDocs ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
+                {guidedFamily === 'ind' ? 'Start Guided Upload' : 'Open Family Workspace'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Tab Navigation */}
         <div className="border-b border-slate-200/60 mb-8">
           <nav className="-mb-px flex">
@@ -1199,6 +1882,224 @@ export default function INDFullSolution() {
                 ${indStats.avgCostSavings.toLocaleString()}
               </div>
               <div className="text-sm text-slate-500">Avg. Cost Savings</div>
+            </div>
+          </div>
+
+          <div className="mb-8 bg-white/80 rounded-lg border border-slate-200/70 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-900">AI Workflow KPI Events</h3>
+              <span className="text-xs text-slate-500">
+                Total tracked: {indStats.kpiEvents?.totalTracked ?? 0}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] text-slate-500">Upload Started (24h)</div>
+                <div className="text-lg font-semibold text-slate-900">
+                  {indStats.kpiEvents?.last24Hours?.uploadStarted ?? 0}
+                </div>
+              </div>
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] text-slate-500">Draft Generated (24h)</div>
+                <div className="text-lg font-semibold text-slate-900">
+                  {indStats.kpiEvents?.last24Hours?.draftGenerated ?? 0}
+                </div>
+              </div>
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] text-slate-500">Sections Accepted (24h)</div>
+                <div className="text-lg font-semibold text-slate-900">
+                  {indStats.kpiEvents?.last24Hours?.sectionAccepted ?? 0}
+                </div>
+              </div>
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] text-slate-500">Sections Rewritten (24h)</div>
+                <div className="text-lg font-semibold text-slate-900">
+                  {indStats.kpiEvents?.last24Hours?.sectionRewritten ?? 0}
+                </div>
+              </div>
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] text-slate-500">Export Triggered (24h)</div>
+                <div className="text-lg font-semibold text-slate-900">
+                  {indStats.kpiEvents?.last24Hours?.exportTriggered ?? 0}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px]">
+              <span className="text-slate-500">Attribution (24h):</span>
+              <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-slate-700">
+                Standard flow: {indStats.kpiAttribution?.last24Hours?.standardFlow ?? 0}
+              </span>
+              <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700">
+                Risk-alert interventions: {indStats.kpiAttribution?.last24Hours?.riskAlert ?? 0}
+              </span>
+              <span
+                className={`inline-flex items-center rounded border px-2 py-0.5 ${
+                  interventionShareAtRisk
+                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    : 'border-slate-200 bg-slate-50 text-slate-700'
+                }`}
+              >
+                Intervention share: {interventionShare24h}%
+              </span>
+              <span className="text-slate-500">
+                Δ{indStats.kpiDeltas?.windowDays ?? kpiWindowDays}d:{' '}
+                <span
+                  className={
+                    interventionShareDelta > 0
+                      ? 'text-rose-700'
+                      : interventionShareDelta < 0
+                        ? 'text-emerald-700'
+                        : 'text-slate-600'
+                  }
+                >
+                  {interventionShareDelta > 0 ? '+' : ''}
+                  {interventionShareDelta}%
+                </span>
+              </span>
+            </div>
+
+            <div className="mt-4 border-t border-slate-200 pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-slate-700">
+                  Last {indStats.kpiTrends?.windowDays ?? 7} Days Trend
+                </p>
+                <div className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 p-1">
+                  {[7, 14, 30].map(days => (
+                    <button
+                      key={days}
+                      onClick={() => setKpiWindowDays(days)}
+                      className={`px-2 py-0.5 rounded text-[11px] ${
+                        kpiWindowDays === days
+                          ? 'bg-slate-900 text-white'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {days}d
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-[11px]">
+                  <thead>
+                    <tr className="text-slate-500">
+                      <th className="text-left py-1 pr-3">Date</th>
+                      <th className="text-left py-1 pr-3">Uploads</th>
+                      <th className="text-left py-1 pr-3">Drafts</th>
+                      <th className="text-left py-1 pr-3">Accepted</th>
+                      <th className="text-left py-1 pr-3">Rewritten</th>
+                      <th className="text-left py-1">Exports</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(indStats.kpiTrends?.rows || []).map(row => (
+                      <tr key={row.date} className="border-t border-slate-100 text-slate-700">
+                        <td className="py-1.5 pr-3">{row.date}</td>
+                        <td className="py-1.5 pr-3">{row.uploadStarted}</td>
+                        <td className="py-1.5 pr-3">{row.draftGenerated}</td>
+                        <td className="py-1.5 pr-3">{row.sectionAccepted}</td>
+                        <td className="py-1.5 pr-3">{row.sectionRewritten}</td>
+                        <td className="py-1.5">{row.exportTriggered}</td>
+                      </tr>
+                    ))}
+                    {!indStats.kpiTrends?.rows?.length ? (
+                      <tr>
+                        <td colSpan={6} className="py-3 text-slate-500">
+                          No trend data yet.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div
+                  className={`rounded border px-3 py-2 ${
+                    acceptanceAtRisk ? 'border-rose-200 bg-rose-50' : 'border-slate-200 bg-slate-50'
+                  }`}
+                >
+                  <p className="text-[11px] text-slate-500">Acceptance Ratio</p>
+                  <p
+                    className={`text-lg font-semibold ${
+                      acceptanceAtRisk ? 'text-rose-700' : 'text-slate-900'
+                    }`}
+                  >
+                    {acceptanceRatio}%
+                  </p>
+                  <p className="text-[10px] text-slate-500">
+                    Lifetime: {indStats.kpiDerived?.lifetime?.acceptanceRatio ?? 0}%
+                  </p>
+                  <p
+                    className={`text-[10px] ${
+                      acceptanceRatioDelta > 0
+                        ? 'text-emerald-700'
+                        : acceptanceRatioDelta < 0
+                          ? 'text-rose-700'
+                          : 'text-slate-500'
+                    }`}
+                  >
+                    vs prev window: {acceptanceRatioDelta > 0 ? '+' : ''}
+                    {acceptanceRatioDelta}%
+                  </p>
+                </div>
+                <div
+                  className={`rounded border px-3 py-2 ${
+                    conversionAtRisk ? 'border-rose-200 bg-rose-50' : 'border-slate-200 bg-slate-50'
+                  }`}
+                >
+                  <p className="text-[11px] text-slate-500">Draft → Export Conversion</p>
+                  <p
+                    className={`text-lg font-semibold ${
+                      conversionAtRisk ? 'text-rose-700' : 'text-slate-900'
+                    }`}
+                  >
+                    {draftToExportConversion}%
+                  </p>
+                  <p className="text-[10px] text-slate-500">
+                    Lifetime: {indStats.kpiDerived?.lifetime?.draftToExportConversion ?? 0}%
+                  </p>
+                  <p
+                    className={`text-[10px] ${
+                      draftToExportConversionDelta > 0
+                        ? 'text-emerald-700'
+                        : draftToExportConversionDelta < 0
+                          ? 'text-rose-700'
+                          : 'text-slate-500'
+                    }`}
+                  >
+                    vs prev window: {draftToExportConversionDelta > 0 ? '+' : ''}
+                    {draftToExportConversionDelta}%
+                  </p>
+                </div>
+              </div>
+
+              {acceptanceAtRisk || conversionAtRisk ? (
+                <div className="mt-3 rounded border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+                  <p className="font-medium">KPI risk alert</p>
+                  <p className="mt-0.5">
+                    {acceptanceAtRisk ? 'Acceptance ratio is below 60%. ' : ''}
+                    {conversionAtRisk ? 'Draft-to-export conversion is below 30%. ' : ''}
+                    Review low-confidence sections and export blockers.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      onClick={handleFocusLowConfidenceSections}
+                      className="inline-flex items-center rounded border border-rose-200 bg-white px-2 py-1 text-[11px] text-rose-700 hover:bg-rose-50"
+                    >
+                      Focus Low-Confidence Sections
+                    </button>
+                    <button
+                      onClick={handleOpenLatestRiskDraftInCoAuthor}
+                      className="inline-flex items-center rounded border border-rose-200 bg-white px-2 py-1 text-[11px] text-rose-700 hover:bg-rose-50"
+                    >
+                      Open in CoAuthor
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 

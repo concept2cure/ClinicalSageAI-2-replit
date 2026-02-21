@@ -23,9 +23,9 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { eq, and } from 'drizzle-orm';
-import { db } from '../../db';
-import { regulatoryPrograms } from '@shared/schema';
-import { authenticateToken } from '../middleware/auth';
+import { db } from '../db.js';
+import { regulatoryPrograms } from '../../shared/schema/programs.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -160,7 +160,13 @@ async function proxyToShadow(
 
 function sendProxyResponse(
   res: Response,
-  result: { status: number; body: string; contentType: string; rawBuffer?: Buffer; rawHeaders?: Record<string, string> }
+  result: {
+    status: number;
+    body: string;
+    contentType: string;
+    rawBuffer?: Buffer;
+    rawHeaders?: Record<string, string>;
+  }
 ) {
   // Binary responses: forward buffer directly
   if (result.rawBuffer) {
@@ -174,6 +180,49 @@ function sendProxyResponse(
   }
   res.status(result.status).set('Content-Type', result.contentType).send(result.body);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Suggest — Phase 6.6.B Predicate Suggestion Engine
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/predicate-intelligence/suggest?program_id=...
+ *
+ * Returns top 5 predicate suggestions with explainability.
+ * Body: { program_id, product_code, device_name, intended_use, technology_description, ...optional fields }
+ *
+ * Error normalization per spec:
+ *   403 → "You don't have access to this program."
+ *   503 → "Predicate universe not configured or stale."
+ *   422 → validation errors passthrough
+ *   others → passthrough
+ */
+router.post('/suggest', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/suggest', {
+      method: 'POST',
+      body: req.body,
+    });
+
+    // Normalize shadow errors per spec
+    if (result.status === 503) {
+      try {
+        const parsed = JSON.parse(result.body);
+        return res.status(503).json({
+          error: 'Predicate universe not configured or stale',
+          detail: parsed.detail || 'FDA universe not ready',
+        });
+      } catch {
+        return res.status(503).json({ error: 'Predicate universe not configured or stale' });
+      }
+    }
+
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    console.error('[predicate-intel] suggest proxy error:', err.message);
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Candidates
@@ -344,27 +393,6 @@ router.post('/generate-510k-preview', requireConfigured, requireProgramAccess, a
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Phase 6.6.B — Predicate Suggestion (Strategy Engine)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.post(
-  '/device/predicate-suggest',
-  requireConfigured,
-  requireProgramAccess,
-  async (req, res) => {
-    try {
-      const result = await proxyToShadow('/predicate/device/predicate-suggest', {
-        method: 'POST',
-        body: req.body,
-      });
-      sendProxyResponse(res, result);
-    } catch (err: any) {
-      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
-    }
-  }
-);
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // Phase 6.6.C — Generate SE Matrix (auto-populated)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -476,5 +504,120 @@ router.post(
     }
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Program-scoped convenience route per spec 6.6.B.2
+// POST /api/predicate-intelligence/programs/:programId/suggestions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/programs/:programId/suggestions', requireConfigured, async (req, res, next) => {
+  // Inject programId into body and query for downstream middleware/proxy
+  const programId = req.params.programId;
+  req.body = { ...req.body, program_id: programId };
+  req.query = { ...req.query, program_id: programId };
+  // Run through program access check then forward to suggest
+  requireProgramAccess(req, res, async () => {
+    try {
+      const result = await proxyToShadow('/predicate/suggest', {
+        method: 'POST',
+        body: req.body,
+      });
+
+      if (result.status === 503) {
+        try {
+          const parsed = JSON.parse(result.body);
+          return res.status(503).json({
+            error: 'Predicate universe not configured or stale',
+            detail: parsed.detail || 'FDA universe not ready',
+          });
+        } catch {
+          return res.status(503).json({ error: 'Predicate universe not configured or stale' });
+        }
+      }
+
+      sendProxyResponse(res, result);
+    } catch (err: any) {
+      console.error('[predicate-intel] program-scoped suggest error:', err.message);
+      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C-V2 — Evidence-Linked SE Matrix (risk_code + evidence_task_ids)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/predicate-intelligence/generate-se-matrix-v2
+ *
+ * Generate V2 SE matrix with risk_code → evidence_task_ids linkage.
+ * Returns: SEMatrixPayloadV2 with comparison_rows, evidence_tasks, score.
+ */
+router.post('/generate-se-matrix-v2', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/generate-se-matrix-v2', {
+      method: 'POST',
+      body: req.body,
+    });
+
+    if (result.status === 503) {
+      try {
+        const parsed = JSON.parse(result.body);
+        return res.status(503).json({
+          error: 'Predicate Intelligence not ready',
+          detail: parsed.detail || 'Shadow service degraded',
+        });
+      } catch {
+        return res.status(503).json({ error: 'Predicate Intelligence not ready' });
+      }
+    }
+
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    console.error('[predicate-intel] SE matrix V2 generation error:', err.message);
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
+
+/**
+ * POST /api/predicate-intelligence/render-se-docx-v2
+ *
+ * Render V2 Evidence-Linked SE Matrix as downloadable DOCX with evidence
+ * footnotes, risk_code badges, and yellow-highlighted missing evidence cells.
+ */
+router.post('/render-se-docx-v2', requireConfigured, requireProgramAccess, async (req, res) => {
+  try {
+    const result = await proxyToShadow('/predicate/render-se-docx-v2', {
+      method: 'POST',
+      body: req.body,
+      binary: true,
+    });
+
+    if (result.status === 503) {
+      try {
+        const parsed = JSON.parse(result.body);
+        return res.status(503).json({
+          error: 'Predicate Intelligence not ready',
+          detail: parsed.detail || 'Shadow service degraded',
+        });
+      } catch {
+        return res.status(503).json({ error: 'Predicate Intelligence not ready' });
+      }
+    }
+
+    if (result.rawBuffer && result.contentType?.includes('openxmlformats')) {
+      const disposition =
+        result.rawHeaders?.['content-disposition'] || 'attachment; filename="SE_Matrix_V2.docx"';
+      res.setHeader('Content-Type', result.contentType);
+      res.setHeader('Content-Disposition', disposition);
+      return res.status(result.status).send(result.rawBuffer);
+    }
+
+    sendProxyResponse(res, result);
+  } catch (err: any) {
+    console.error('[predicate-intel] SE DOCX V2 render error:', err.message);
+    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+  }
+});
 
 export default router;

@@ -1,0 +1,1964 @@
+{
+  "meta": {
+    "title": "CERV2 Phase 0-1 Readiness Execution Board",
+    "generated": "2026-02-12",
+    "version": "v1.0.0",
+    "branch": "concept2cure-v2",
+    "commit": "8d56db7"
+  },
+  "summary": {
+    "overall_readiness_pct": 55,
+    "critical_blockers": 8,
+    "high_gaps": 9,
+    "medium_gaps": 6,
+    "low_gaps": 4,
+    "total_endpoints": 180,
+    "total_templates_defined": 44,
+    "total_docx_on_disk": 19,
+    "ectd_coauthor_endpoints_missing": 18,
+    "ectd_coauthor_client_files": 100,
+    "ectd_coauthor_client_lines": 67000,
+    "cmc_wizard_client_components": 102,
+    "cmc_wizard_client_lines": 90454,
+    "cmc_wizard_server_api_files": 24,
+    "cmc_wizard_server_api_lines": 10935,
+    "cmc_wizard_endpoints_unreachable": 80,
+    "cmc_wizard_db_tables_defined": 12,
+    "cmc_wizard_db_tables_migrated": 0
+  },
+  "doc_types": [
+    {
+      "id": "cerv2_510k",
+      "label": "FDA 510(k)",
+      "agency": "FDA",
+      "pathway": "Device",
+      "style_pack": "510k_v1",
+      "readiness_pct": 90,
+      "sections": [
+        {
+          "id": "cover_letter",
+          "label": "Cover Letter",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": false,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "user-fee-cover",
+          "docx_seed_template": "510k_cover_letter",
+          "status": "PARTIAL"
+        },
+        {
+          "id": "admin",
+          "label": "Administrative Info",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": true,
+          "outline_to_editor_map": "cdrh-cover-sheet",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "ifu",
+          "label": "Indications for Use",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": true,
+          "outline_to_editor_map": "indications-for-use",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "summary",
+          "label": "510(k) Summary",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": false,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "510k-summary",
+          "docx_seed_template": "510k_summary",
+          "status": "PARTIAL"
+        },
+        {
+          "id": "desc",
+          "label": "Device Description",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["device_description"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "outline_to_editor_map": "device-description",
+          "docx_seed_template": "510k_device_description",
+          "status": "READY"
+        },
+        {
+          "id": "pred",
+          "label": "Predicate Comparison",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["predicate_comparison"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": true,
+          "outline_to_editor_map": "substantial-equivalence",
+          "docx_seed_template": "510k_se_comparison",
+          "status": "PARTIAL"
+        },
+        {
+          "id": "se",
+          "label": "SE Discussion",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["se_discussion"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "outline_to_editor_map": "substantial-equivalence",
+          "docx_seed_template": "510k_se_comparison",
+          "status": "READY"
+        },
+        {
+          "id": "testing",
+          "label": "Performance Testing",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["performance_testing"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "executive-studies",
+          "docx_seed_template": "510k_biocompatibility",
+          "status": "READY"
+        },
+        {
+          "id": "labeling",
+          "label": "Labeling",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "outline_to_editor_map": "proposed-labeling",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "concl",
+          "label": "Conclusion",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["conclusion"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": false,
+          "required": false,
+          "outline_to_editor_map": "executive-summary",
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        }
+      ]
+    },
+    {
+      "id": "cerv2_pma",
+      "label": "FDA PMA",
+      "agency": "FDA",
+      "pathway": "Device",
+      "style_pack": "pma_v1",
+      "readiness_pct": 80,
+      "sections": [
+        {
+          "id": "summary",
+          "label": "PMA Summary",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["summary_overview"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "nonclin",
+          "label": "Nonclinical Testing",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["bench_testing"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "clin",
+          "label": "Clinical Data",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["study_design", "clinical_results"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "mfgqa",
+          "label": "Manufacturing / QA",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "labeling",
+          "label": "Labeling",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "risk",
+          "label": "Benefit-Risk",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["risk_analysis"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "pms",
+          "label": "Post-Market Surveillance",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["pms_plan"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        }
+      ]
+    },
+    {
+      "id": "cerv2_cer",
+      "label": "EU MDR CER",
+      "agency": "EU",
+      "pathway": "Diagnostics",
+      "style_pack": "cer_mdr_v1",
+      "readiness_pct": 90,
+      "sections": [
+        {
+          "id": "sota",
+          "label": "State of the Art",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["current_knowledge"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": "cer_state_of_art",
+          "status": "READY"
+        },
+        {
+          "id": "device",
+          "label": "Device Description",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["device_description"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "dataset",
+          "label": "Clinical Data / Literature",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["search_strategy"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": "cer_literature_analysis",
+          "status": "READY"
+        },
+        {
+          "id": "appraisal",
+          "label": "Appraisal",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["appraisal_methodology"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "benefitrisk",
+          "label": "Benefit-Risk",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["clinical_benefits", "residual_risks"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": true,
+          "docx_seed_template": "cer_benefit_risk_pmcf",
+          "status": "READY"
+        },
+        {
+          "id": "gspr",
+          "label": "GSPR Mapping",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["gspr_overview"],
+          "ai_deep_mock": true,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "pms",
+          "label": "PMS / PMCF",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["pms_plan"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        },
+        {
+          "id": "concl",
+          "label": "Conclusion",
+          "in_doc_outlines": true,
+          "in_shared_doc_types": true,
+          "ai_suggest_template": true,
+          "ai_aliases": ["overall_conclusion"],
+          "ai_deep_mock": false,
+          "llm_integrated": false,
+          "export_per_section_pdf": true,
+          "required": false,
+          "docx_seed_template": null,
+          "status": "PARTIAL"
+        }
+      ]
+    }
+  ],
+  "docx_factory_seed_catalog": [
+    {
+      "name": "eCTD Cover Letter",
+      "doc_type": "ectd_cover_letter",
+      "file": "ectd_cover_letter.docx",
+      "module": "M1",
+      "tags": ["ectd", "module-1"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Form FDA 1571 Narrative",
+      "doc_type": "ind_1571_narrative",
+      "file": "fda_1571_narrative.docx",
+      "module": "M1",
+      "tags": ["ind", "fda-1571"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "IB Change Summary",
+      "doc_type": "ib_change_summary",
+      "file": "ib_change_summary.docx",
+      "module": "IB",
+      "tags": ["ib", "change-summary"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CMC Drug Substance (3.2.S)",
+      "doc_type": "cmc_drug_substance",
+      "file": "cmc_drug_substance.docx",
+      "module": "M3",
+      "tags": ["cmc", "module-3"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CMC Drug Product (3.2.P)",
+      "doc_type": "cmc_drug_product",
+      "file": "cmc_drug_product.docx",
+      "module": "M3",
+      "tags": ["cmc", "module-3"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Clinical Benefit/Risk (2.5)",
+      "doc_type": "clinical_benefit_risk",
+      "file": "clinical_benefit_risk.docx",
+      "module": "M2",
+      "tags": ["clinical", "module-2"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Nonclinical Overview (2.4)",
+      "doc_type": "nonclinical_overview",
+      "file": "nonclinical_overview.docx",
+      "module": "M2",
+      "tags": ["nonclinical", "module-2"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Quality Overall Summary (2.3)",
+      "doc_type": "quality_overall_summary",
+      "file": "quality_overall_summary.docx",
+      "module": "M2",
+      "tags": ["quality", "module-2"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CSR Synopsis (5.3)",
+      "doc_type": "csr_synopsis",
+      "file": "csr_synopsis.docx",
+      "module": "M5",
+      "tags": ["clinical", "module-5"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "Protocol Synopsis",
+      "doc_type": "protocol_synopsis",
+      "file": "protocol_synopsis.docx",
+      "module": "Clinical",
+      "tags": ["clinical", "protocol"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Cover Letter",
+      "doc_type": "510k_cover_letter",
+      "file": "510k_cover_letter.docx",
+      "module": "510k",
+      "tags": ["510k", "device"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) SE Comparison",
+      "doc_type": "510k_se_comparison",
+      "file": "510k_se_comparison.docx",
+      "module": "510k",
+      "tags": ["510k", "se-comparison"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Device Description",
+      "doc_type": "510k_device_description",
+      "file": "510k_device_description.docx",
+      "module": "510k",
+      "tags": ["510k", "device"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Summary (§807.92)",
+      "doc_type": "510k_summary",
+      "file": "510k_summary.docx",
+      "module": "510k",
+      "tags": ["510k", "summary"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "510(k) Biocompatibility",
+      "doc_type": "510k_biocompatibility",
+      "file": "510k_biocompatibility.docx",
+      "module": "510k",
+      "tags": ["510k", "iso-10993"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER Evaluation Plan",
+      "doc_type": "cer_evaluation_plan",
+      "file": "cer_evaluation_plan.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER Literature Analysis",
+      "doc_type": "cer_literature_analysis",
+      "file": "cer_literature_analysis.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER Benefit-Risk & PMCF",
+      "doc_type": "cer_benefit_risk_pmcf",
+      "file": "cer_benefit_risk_pmcf.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    },
+    {
+      "name": "CER State of the Art",
+      "doc_type": "cer_state_of_art",
+      "file": "cer_state_of_art.docx",
+      "module": "CER",
+      "tags": ["cer", "ectd-4", "eu-mdr"],
+      "on_disk": true,
+      "seeded_by_default": false
+    }
+  ],
+  "ind_templates": [
+    {
+      "name": "Form FDA 1571",
+      "generator": "render_form1571()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Form FDA 1572",
+      "generator": "render_form1572()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Form FDA 3674",
+      "generator": "render_form3674()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "IND Cover Letter",
+      "generator": "generate_cover_letter()",
+      "format": "docx+j2",
+      "module": "M1",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Module 2 Clinical",
+      "generator": null,
+      "format": "j2",
+      "module": "M2",
+      "on_disk": true,
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 2 Nonclinical",
+      "generator": null,
+      "format": "j2",
+      "module": "M2",
+      "on_disk": true,
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 2 Quality",
+      "generator": null,
+      "format": "j2",
+      "module": "M2",
+      "on_disk": true,
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Module 3 CMC",
+      "generator": "TemplateGenerator.generate_module3()",
+      "format": "xml+j2",
+      "module": "M3",
+      "on_disk": true,
+      "status": "READY"
+    },
+    {
+      "name": "Module 4 Nonclinical Studies",
+      "generator": null,
+      "format": null,
+      "module": "M4",
+      "on_disk": false,
+      "status": "MISSING"
+    },
+    {
+      "name": "Module 5 Clinical Study Reports",
+      "generator": null,
+      "format": null,
+      "module": "M5",
+      "on_disk": false,
+      "status": "MISSING"
+    }
+  ],
+  "ind_module_coverage": {
+    "module_1_administrative": {
+      "total_sub_templates_needed": 12,
+      "existing": 4,
+      "missing": [
+        "environmental_assessment",
+        "patent_info",
+        "financial_disclosure",
+        "drug_master_file",
+        "labeling",
+        "case_report_forms",
+        "debarment_certification",
+        "field_copy_certification"
+      ],
+      "readiness_pct": 33
+    },
+    "module_2_summaries": {
+      "total_sub_templates_needed": 7,
+      "existing": 3,
+      "missing": [
+        "introduction",
+        "pharmacology_written_summary",
+        "pharmacology_tabulated_summary",
+        "clinical_pharmacology"
+      ],
+      "readiness_pct": 43
+    },
+    "module_3_quality": {
+      "total_sub_templates_needed": 10,
+      "existing": 3,
+      "missing": [
+        "drug_substance_characterization",
+        "control_of_drug_substance",
+        "reference_standards",
+        "container_closure",
+        "stability",
+        "excipients",
+        "dissolution"
+      ],
+      "readiness_pct": 30
+    },
+    "module_4_nonclinical": {
+      "total_sub_templates_needed": 8,
+      "existing": 0,
+      "missing": [
+        "pharmacology_primary",
+        "pharmacology_secondary",
+        "pharmacology_safety",
+        "pharmacokinetics",
+        "toxicology_single_dose",
+        "toxicology_repeat_dose",
+        "genotoxicity",
+        "carcinogenicity"
+      ],
+      "readiness_pct": 0
+    },
+    "module_5_clinical": {
+      "total_sub_templates_needed": 10,
+      "existing": 1,
+      "missing": [
+        "clinical_study_report_full",
+        "clinical_tabulations",
+        "individual_patient_data",
+        "protocol_amendments",
+        "sample_crfs",
+        "human_pk_studies",
+        "clinical_efficacy",
+        "clinical_safety",
+        "post_marketing"
+      ],
+      "readiness_pct": 10
+    }
+  },
+  "ectd_coauthor": {
+    "overall_readiness_pct": 25,
+    "client": {
+      "pages": {
+        "primary": {
+          "file": "client/src/pages/CoAuthor.jsx",
+          "lines": 13461,
+          "status": "IMPLEMENTED"
+        },
+        "full_wrapper": {
+          "file": "client/src/pages/FulleCTDCoAuthor.jsx",
+          "lines": 1181,
+          "status": "PARTIAL"
+        },
+        "search": {
+          "file": "client/src/pages/SearchResultsPage.jsx",
+          "lines": 836,
+          "status": "IMPLEMENTED"
+        },
+        "restore": {
+          "file": "client/src/pages/RestoreCoAuthor.jsx",
+          "lines": 759,
+          "status": "PARTIAL"
+        },
+        "real": { "file": "client/src/pages/RealCoAuthor.jsx", "lines": 752, "status": "PARTIAL" },
+        "simple_creator": {
+          "file": "client/src/pages/SimpleDocumentCreator.jsx",
+          "lines": 143,
+          "status": "MINIMAL"
+        },
+        "wrapper": { "file": "client/src/pages/CoauthorPage.jsx", "lines": 25, "status": "STUB" }
+      },
+      "components": {
+        "total_files": 38,
+        "total_lines": 16501,
+        "implemented": 36,
+        "stubs": 2,
+        "top_components": [
+          {
+            "name": "ComponentManagementSystem",
+            "lines": 3444,
+            "purpose": "CCMS/UDI component management"
+          },
+          { "name": "DocumentPreview", "lines": 1169, "purpose": "Document preview/render" },
+          { "name": "VersionHistory", "lines": 1088, "purpose": "Version control UI" },
+          {
+            "name": "ComplianceCommandCenter",
+            "lines": 961,
+            "purpose": "Compliance/validation dashboard"
+          },
+          {
+            "name": "AdvancedSearchPanel",
+            "lines": 857,
+            "purpose": "Full-text search with refiners"
+          },
+          { "name": "DocumentSelector", "lines": 794, "purpose": "Document selection/browsing" },
+          { "name": "WorkflowTimeline", "lines": 734, "purpose": "Workflow progress tracker" },
+          { "name": "ActivityFeed", "lines": 666, "purpose": "Activity/audit trail" },
+          { "name": "AskDataRoomPanel", "lines": 662, "purpose": "AI data room query panel" },
+          { "name": "NotificationCenter", "lines": 645, "purpose": "Notifications/alerts" },
+          { "name": "SmartBlocks", "lines": 581, "purpose": "Content block authoring" },
+          { "name": "DraftEditor", "lines": 556, "purpose": "Rich text editor" },
+          { "name": "ImportFromINDDialog", "lines": 483, "purpose": "IND-to-eCTD import dialog" },
+          {
+            "name": "CollaborationSidebar",
+            "lines": 452,
+            "purpose": "Real-time collaboration panel"
+          }
+        ],
+        "stub_components": [
+          { "name": "SubmissionProgress", "lines": 33, "status": "STUB" },
+          { "name": "CanvasWorkbenchModule", "lines": 20, "status": "STUB" }
+        ]
+      },
+      "services": [
+        {
+          "name": "coauthorService",
+          "file": "coauthorService.js",
+          "lines": 196,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "name": "collaborationService",
+          "file": "coauthorCollaborationService.js",
+          "lines": 555,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "name": "workspaceService",
+          "file": "coauthorWorkspaceService.js",
+          "lines": 42,
+          "status": "STUB"
+        }
+      ],
+      "routes": [
+        "/coauthor",
+        "/working-coauthor",
+        "/coauthor-clean",
+        "/ectd-co-author",
+        "/coauthor/timeline",
+        "/coauthor/ask-lumen",
+        "/coauthor/canvas",
+        "/coauthor/validation",
+        "/coauthor/templates",
+        "/create-document",
+        "/portal/ectd-coauthor"
+      ]
+    },
+    "server": {
+      "mounted_routes": [
+        {
+          "file": "server/routes/coauthor.ts",
+          "mount": "/api/coauthor",
+          "lines": 23,
+          "status": "STUB",
+          "endpoints_implemented": 2,
+          "endpoints_missing": 18
+        },
+        {
+          "file": "server/routes/ectd-documents.ts",
+          "mount": "/api/ectd-documents",
+          "lines": 23,
+          "status": "STUB",
+          "endpoints_implemented": 2,
+          "endpoints_missing": 0
+        }
+      ],
+      "disconnected_real_routes": [
+        {
+          "file": "server/routes/authoring.router.ts",
+          "mount": "/api/regulatory",
+          "lines": 5126,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/documentAuthoring.routes.ts",
+          "mount": "/api/document-authoring",
+          "lines": 2047,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/phase6.routes.ts",
+          "mount": "/api/phase6",
+          "lines": 591,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/leaves.js",
+          "mount": "/api/leaves",
+          "lines": 401,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/contextual-guidance.js",
+          "mount": "/api/guidance",
+          "lines": 113,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "server/routes/predictive-sections.ts",
+          "mount": "/api/predictive",
+          "lines": 299,
+          "status": "IMPLEMENTED"
+        }
+      ],
+      "services": [
+        {
+          "name": "ectdService",
+          "file": "server/services/ectdService.ts",
+          "lines": 489,
+          "status": "IMPLEMENTED",
+          "purpose": "Dream eCTD Machine"
+        },
+        {
+          "name": "ECTDScaffoldingService",
+          "file": "server/services/ectd/ECTDScaffoldingService.ts",
+          "lines": 465,
+          "status": "IMPLEMENTED",
+          "purpose": "Module structure, multi-agency"
+        },
+        {
+          "name": "eventBus",
+          "file": "server/services/eventBus.js",
+          "lines": 413,
+          "status": "IMPLEMENTED",
+          "purpose": "IND <> CoAuthor events"
+        },
+        {
+          "name": "componentExtraction",
+          "file": "server/services/componentExtraction.js",
+          "lines": 559,
+          "status": "IMPLEMENTED",
+          "purpose": "Component extraction"
+        },
+        {
+          "name": "unifiedDocumentIngestion",
+          "file": "server/services/unifiedDocumentIngestion.js",
+          "lines": 1495,
+          "status": "IMPLEMENTED",
+          "purpose": "Full eCTD pipeline"
+        },
+        {
+          "name": "ReleaseHashGenerator",
+          "file": "server/services/export/ReleaseHashGenerator.ts",
+          "lines": 520,
+          "status": "IMPLEMENTED",
+          "purpose": "SHA256 hashing"
+        }
+      ],
+      "db_tables": [
+        {
+          "name": "ectd_modules",
+          "purpose": "Hierarchical eCTD structure (M1-M5)",
+          "status": "DEFINED"
+        },
+        { "name": "ectd_granules", "purpose": "Atomic document units", "status": "DEFINED" },
+        { "name": "ectd_templates", "purpose": "Reusable document templates", "status": "DEFINED" },
+        {
+          "name": "ectd_compilations",
+          "purpose": "Module compilation + XML backbone",
+          "status": "DEFINED"
+        },
+        {
+          "name": "ectd_change_control",
+          "purpose": "Change control per granule",
+          "status": "DEFINED"
+        },
+        {
+          "name": "ectd_cross_references",
+          "purpose": "Cross-module references",
+          "status": "DEFINED"
+        }
+      ]
+    },
+    "shadow_service": [
+      {
+        "file": "router_ectd.py",
+        "lines": 773,
+        "status": "IMPLEMENTED",
+        "purpose": "Full CRUD for eCTD"
+      },
+      {
+        "file": "models_ectd.py",
+        "lines": 303,
+        "status": "IMPLEMENTED",
+        "purpose": "Pydantic models"
+      },
+      { "file": "sql_ectd.py", "lines": 278, "status": "IMPLEMENTED", "purpose": "SQL queries" },
+      {
+        "file": "ectd_assembly.py",
+        "lines": 226,
+        "status": "IMPLEMENTED",
+        "purpose": "eCTD ZIP assembly"
+      },
+      {
+        "file": "leaf_registry.py",
+        "lines": 182,
+        "status": "IMPLEMENTED",
+        "purpose": "Leaf map + sequence plan"
+      },
+      {
+        "file": "proof_pack_zip.py",
+        "lines": 397,
+        "status": "IMPLEMENTED",
+        "purpose": "Proof Pack ZIP"
+      },
+      {
+        "file": "router_ectd_stub.py",
+        "lines": 204,
+        "status": "STUB",
+        "purpose": "Fallback skeleton"
+      }
+    ],
+    "missing_endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/coauthor/documents",
+        "purpose": "Create/list documents",
+        "wire_to": "ectdService"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/documents/:id/versions",
+        "purpose": "Version history",
+        "wire_to": "ectd_granules"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/documents/:id/restore/:versionId",
+        "purpose": "Restore version",
+        "wire_to": "ectd_change_control"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/ectd-modules/tree-with-counts",
+        "purpose": "eCTD module tree",
+        "wire_to": "ECTDScaffoldingService"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/documents/section/:sectionId",
+        "purpose": "Docs per section",
+        "wire_to": "ectdService"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/components/ingest",
+        "purpose": "Component ingestion",
+        "wire_to": "componentExtraction"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/ectd-modules/:sectionId",
+        "purpose": "Module lookup",
+        "wire_to": "ECTDScaffoldingService"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/modules/:id/documents",
+        "purpose": "Create doc in module",
+        "wire_to": "ectdService"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/validate",
+        "purpose": "Document validation",
+        "wire_to": "authoring.router"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/validate/history/:documentId",
+        "purpose": "Validation history",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/validate/export/:validationId",
+        "purpose": "Export validation",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/validate/latest/:documentId",
+        "purpose": "Latest validation",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/documents/:id/status-history",
+        "purpose": "Status audit trail",
+        "wire_to": "db"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/coauthor/documents/:id/status",
+        "purpose": "Update status",
+        "wire_to": "db"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/import-word",
+        "purpose": "Word import",
+        "wire_to": "unifiedDocumentIngestion"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/export",
+        "purpose": "Export to formats",
+        "wire_to": "documentAuthoring"
+      },
+      {
+        "method": "POST",
+        "path": "/api/coauthor/search",
+        "purpose": "Full-text search",
+        "wire_to": "db"
+      },
+      {
+        "method": "GET",
+        "path": "/api/coauthor/components/statistics",
+        "purpose": "Component stats",
+        "wire_to": "componentExtraction"
+      }
+    ],
+    "readiness_by_feature": {
+      "document_crud": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "overall_pct": 25
+      },
+      "ectd_module_tree": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "overall_pct": 25
+      },
+      "validation": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "overall_pct": 25
+      },
+      "version_history": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "PARTIAL",
+        "db": "DEFINED",
+        "overall_pct": 20
+      },
+      "collaboration": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "NONE",
+        "db": "NONE",
+        "overall_pct": 15
+      },
+      "component_ingestion": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 25
+      },
+      "word_import": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 25
+      },
+      "export": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 25
+      },
+      "search": {
+        "client": "IMPLEMENTED",
+        "server_route": "MISSING",
+        "server_service": "NONE",
+        "db": "NONE",
+        "overall_pct": 10
+      },
+      "ectd_package_assembly": {
+        "client": "NONE",
+        "server_route": "IMPLEMENTED",
+        "server_service": "IMPLEMENTED",
+        "db": "DEFINED",
+        "shadow": "IMPLEMENTED",
+        "overall_pct": 80
+      },
+      "ectd_hashing": {
+        "client": "NONE",
+        "server_route": "IMPLEMENTED",
+        "server_service": "IMPLEMENTED",
+        "db": "NONE",
+        "overall_pct": 90
+      },
+      "ectd4_compiler": {
+        "client": "NONE",
+        "server_route": "NONE",
+        "server_service": "NONE",
+        "ind_automation": "IMPLEMENTED",
+        "overall_pct": 90
+      }
+    }
+  },
+  "cmc_wizard": {
+    "discovery_summary": {
+      "total_files": 155,
+      "total_lines": 108800,
+      "readiness_pct": 15,
+      "root_cause": "Routes imported but never mounted with app.use(). 30 minutes of mounting unlocks 90K+ lines of client code."
+    },
+    "client": {
+      "pages": [
+        {
+          "file": "client/src/modules/CmcWizard.jsx",
+          "lines": 98,
+          "status": "UI_SHELL_ONLY",
+          "note": "5-step wizard, NO data forms, NO API calls"
+        },
+        { "file": "client/src/pages/CMCPage.jsx", "lines": 12, "status": "WRAPPER" },
+        { "file": "client/src/pages/CMCModule.jsx", "lines": 594, "status": "IMPLEMENTED" },
+        { "file": "client/src/pages/CMCBlueprintPage.jsx", "lines": 158, "status": "IMPLEMENTED" },
+        {
+          "file": "client/src/pages/CMCBlueprintGenerator.jsx",
+          "lines": 177,
+          "status": "IMPLEMENTED"
+        },
+        { "file": "client/src/pages/CMC/CMCGenerator.jsx", "lines": 814, "status": "IMPLEMENTED" },
+        { "file": "client/src/modules/CMCModule.jsx", "lines": 735, "status": "IMPLEMENTED" },
+        {
+          "file": "client/src/concept2cure/components/cmc/CMCWizard.tsx",
+          "lines": 625,
+          "status": "IMPLEMENTED",
+          "note": "ICH Guardrail checker, client-only domain logic"
+        }
+      ],
+      "components_dir": "client/src/components/cmc/",
+      "component_count": 102,
+      "component_total_lines": 90454,
+      "top_components": [
+        { "file": "ComprehensiveCMCPlatformClean.jsx", "lines": 25424 },
+        { "file": "DocumentAuthoringFixed.jsx", "lines": 4517 },
+        { "file": "ManufacturingProcessPanel.jsx", "lines": 3542 },
+        { "file": "TaskManagementSystem.jsx", "lines": 3079 },
+        { "file": "ComprehensiveCMCPlatform.jsx", "lines": 2854 },
+        { "file": "RegulatoryWorkflowManager.jsx", "lines": 2737 },
+        { "file": "BlueprintEditor.jsx", "lines": 2192 },
+        { "file": "SubmissionPreparator.jsx", "lines": 2176 },
+        { "file": "MethodDetails.jsx", "lines": 1921 },
+        { "file": "SupplyChainPanel.jsx", "lines": 1879 }
+      ],
+      "services": [
+        {
+          "file": "client/src/concept2cure/services/cmcService.ts",
+          "lines": 750,
+          "status": "IMPLEMENTED"
+        },
+        {
+          "file": "client/src/api/cmc.js",
+          "lines": 141,
+          "status": "IMPLEMENTED",
+          "note": "7 endpoints, all return 404"
+        },
+        { "file": "client/src/types/cmc.d.ts", "lines": 157, "status": "TYPE_DEFS" }
+      ],
+      "routes": ["/cmc-wizard", "/client-portal/cmc-wizard", "/cmc-blueprint", "/cmc-monitoring"]
+    },
+    "server": {
+      "api_module": {
+        "dir": "server/api/cmc/",
+        "file_count": 24,
+        "total_lines": 10935,
+        "mounted": false,
+        "index_file": "server/api/cmc/index.js",
+        "sub_routers": [
+          "blueprint-generator",
+          "change-impact-simulator",
+          "manufacturing-tuner",
+          "preclinical-translator",
+          "global-compliance",
+          "audit-risk-monitor",
+          "cmc-copilot"
+        ]
+      },
+      "mounted_routes": [
+        {
+          "file": "server/routes/cmc-dashboard.ts",
+          "lines": 36,
+          "mount_path": "/api/cmc",
+          "status": "STUB",
+          "endpoints": ["GET /status", "GET /metrics", "GET /projects"]
+        }
+      ],
+      "unmounted_routes": [
+        {
+          "file": "server/routes/cmc-dashboard-prisma.ts",
+          "lines": 140,
+          "status": "IMPLEMENTED",
+          "note": "Full Prisma dashboard — never imported"
+        },
+        { "file": "server/api/cmc/cmcRoutes.ts", "lines": 643, "status": "IMPLEMENTED" },
+        {
+          "file": "server/api/cmc/routes.ts",
+          "lines": 384,
+          "status": "IMPLEMENTED",
+          "note": "Drizzle CRUD for core Module 3 data"
+        },
+        {
+          "file": "server/api/cmc/projectRoutes.ts",
+          "lines": 657,
+          "status": "IMPLEMENTED",
+          "note": "Imported at L69 but no app.use()"
+        },
+        {
+          "file": "server/api/cmc/blueprintRoutes.ts",
+          "lines": 688,
+          "status": "IMPLEMENTED",
+          "note": "Imported at L70 but no app.use()"
+        },
+        { "file": "server/api/cmc/workflowRoutes.ts", "lines": 964, "status": "IMPLEMENTED" },
+        { "file": "server/api/cmc/documentRoutes.ts", "lines": 530, "status": "IMPLEMENTED" },
+        { "file": "server/api/cmc/collaborationRoutes.ts", "lines": 428, "status": "IMPLEMENTED" },
+        { "file": "server/api/cmc/playbookRoutes.ts", "lines": 454, "status": "IMPLEMENTED" }
+      ],
+      "services": [
+        { "file": "server/services/cmcBlueprintService.js", "lines": 638, "status": "IMPLEMENTED" },
+        { "file": "server/services/cmcEvents.js", "lines": 222, "status": "IMPLEMENTED" },
+        { "file": "server/services/cmc/aiInsights.ts", "lines": 38, "status": "IMPLEMENTED" },
+        { "file": "server/services/cmc/readiness.ts", "lines": 20, "status": "IMPLEMENTED" },
+        { "file": "services/ai/detectors/CMCAnalyzer.ts", "lines": 563, "status": "IMPLEMENTED" }
+      ],
+      "db_schema": {
+        "drizzle_file": "shared/cmc-schema.ts",
+        "drizzle_lines": 333,
+        "drizzle_tables": 12,
+        "sql_files": [
+          { "file": "sql/cmc_blueprints.sql", "lines": 381 },
+          { "file": "server/database/cmc-playbook-schema.sql", "lines": 133 }
+        ],
+        "tables": [
+          "cmc_projects",
+          "drug_substances",
+          "drug_products",
+          "analytical_methods",
+          "stability_studies",
+          "manufacturing_processes",
+          "quality_specifications",
+          "regulatory_documents",
+          "compliance_tracking",
+          "workflow_templates",
+          "project_workflows",
+          "workflow_tasks",
+          "risk_assessments"
+        ],
+        "migration_status": "NEVER_MIGRATED"
+      }
+    },
+    "shadow_service": [
+      {
+        "file": "shadow_service/shadow_service/demo_inputs/cmc_drug_substance__cmc_lite.json",
+        "lines": 86
+      },
+      {
+        "file": "shadow_service/shadow_service/demo_inputs/cmc_drug_product__cmc_lite.json",
+        "lines": 66
+      },
+      {
+        "file": "shadow_service/shadow_service/demo_templates/cmc_drug_substance.docx",
+        "type": "DOCX"
+      },
+      {
+        "file": "shadow_service/shadow_service/demo_templates/cmc_drug_product.docx",
+        "type": "DOCX"
+      }
+    ],
+    "ind_automation": {
+      "file": "ind_automation/cmc_guidance.py",
+      "lines": 126,
+      "status": "IMPLEMENTED",
+      "note": "CMC regulatory guidance + OpenAI integration"
+    },
+    "module3_ctd_coverage": {
+      "3.2.S.1_general_information": { "db": true, "server": true, "client": true },
+      "3.2.S.2_manufacture": { "db": true, "server": true, "client": true },
+      "3.2.S.3_characterization": { "db": "partial", "server": "partial", "client": true },
+      "3.2.S.4_control": { "db": true, "server": true, "client": true },
+      "3.2.S.5_reference_standards": { "db": "jsonb_field", "server": false, "client": "minimal" },
+      "3.2.S.6_container_closure": { "db": false, "server": false, "client": false },
+      "3.2.S.7_stability": { "db": true, "server": true, "client": true },
+      "3.2.P.1_description_composition": { "db": true, "server": true, "client": true },
+      "3.2.P.2_pharmaceutical_development": {
+        "db": "partial",
+        "server": "partial",
+        "client": true
+      },
+      "3.2.P.3_manufacture": { "db": true, "server": true, "client": true },
+      "3.2.P.4_control_excipients": { "db": false, "server": false, "client": "ui_only" },
+      "3.2.P.5_control_drug_product": { "db": true, "server": true, "client": true },
+      "3.2.P.6_reference_standards": { "db": false, "server": false, "client": false },
+      "3.2.P.7_container_closure": { "db": false, "server": false, "client": "partial" },
+      "3.2.P.8_stability": { "db": true, "server": true, "client": true },
+      "3.2.A_appendices": { "db": false, "server": false, "client": "partial" },
+      "3.2.R_regional_information": { "db": false, "server": false, "client": false }
+    },
+    "unreachable_endpoints_sample": [
+      "POST /api/cmc/generate-blueprint",
+      "GET /api/cmc/analytical-methods",
+      "GET /api/cmc/stability-studies",
+      "GET /api/cmc/drug-substances",
+      "GET /api/cmc/drug-products",
+      "POST /api/cmc/projects",
+      "GET /api/cmc/workflows",
+      "GET /api/cmc/tasks",
+      "POST /api/cmc/blueprint-generator/generate",
+      "POST /api/cmc/change-impact-simulator/simulate",
+      "POST /api/cmc/manufacturing-tuner/optimize",
+      "POST /api/cmc/cmc-copilot/query",
+      "GET /api/cmc/dashboard/summary",
+      "GET /api/cmc/stage-gates",
+      "GET /api/cmc/validation/issues",
+      "POST /api/cmc/compliance/check-rules"
+    ]
+  },
+  "gaps": {
+    "critical": [
+      {
+        "id": "C1",
+        "title": "AI endpoints return static templates — no LLM integration",
+        "module": "AI",
+        "impact": "All suggestions are placeholder text",
+        "effort": "3-5 days",
+        "priority": "P2-1"
+      },
+      {
+        "id": "C2",
+        "title": "IND Module 4 (Nonclinical) — zero templates",
+        "module": "IND",
+        "impact": "Cannot generate Module 4 content",
+        "effort": "3 days",
+        "priority": "P1-4"
+      },
+      {
+        "id": "C3",
+        "title": "IND Module 5 (Clinical) — minimal coverage",
+        "module": "IND",
+        "impact": "Only CSR Synopsis exists",
+        "effort": "3 days",
+        "priority": "P1-5"
+      },
+      {
+        "id": "C4",
+        "title": "PMA has no DOCX seed templates",
+        "module": "DOCX Factory",
+        "impact": "PMA only via CERV2 editor export",
+        "effort": "3 days",
+        "priority": "P1-1"
+      },
+      {
+        "id": "C5",
+        "title": "/api/coauthor routes are 23-line stubs — 18 of 20 endpoints missing",
+        "module": "eCTD Co-Author",
+        "impact": "CoAuthor.jsx (13,461L) calls endpoints that return 404; entire Co-Author workflow non-functional",
+        "effort": "5-7 days",
+        "priority": "P0C-1"
+      },
+      {
+        "id": "C6",
+        "title": "/api/ectd-documents routes are 23-line stubs — returns empty arrays",
+        "module": "eCTD Co-Author",
+        "impact": "Document CRUD for eCTD submissions non-functional",
+        "effort": "2-3 days",
+        "priority": "P0C-2"
+      },
+      {
+        "id": "C7",
+        "title": "CMC Wizard routes imported but NEVER MOUNTED — 102 components (90,454L) dead",
+        "module": "CMC Wizard",
+        "impact": "~80 /api/cmc/* endpoints called by client ALL return 404. Entire CMC platform non-functional.",
+        "effort": "30 min (mount) + 2-4 hrs (migrate DB)",
+        "priority": "P0D-1"
+      },
+      {
+        "id": "C8",
+        "title": "CMC API module (24 files, 10,935L) never imported — server/api/cmc/index.js unreachable",
+        "module": "CMC Wizard",
+        "impact": "7 AI sub-routers (blueprint-generator, change-impact-simulator, etc.) all return 404",
+        "effort": "30 min",
+        "priority": "P0D-2"
+      }
+    ],
+    "high": [
+      {
+        "id": "H1",
+        "title": "510(k) per-section PDFs missing 4 sections",
+        "module": "Export",
+        "effort": "1 day",
+        "priority": "P1-2"
+      },
+      {
+        "id": "H2",
+        "title": "cover_letter/summary not in shared/docTypes.ts",
+        "module": "Config",
+        "effort": "30 min",
+        "priority": "P0-1"
+      },
+      {
+        "id": "H3",
+        "title": "cerv2-versions.ts is dead stub code",
+        "module": "API",
+        "effort": "30 min",
+        "priority": "P0-2"
+      },
+      {
+        "id": "H4",
+        "title": "fetchEquivalence/fetchBenefitRisk never called",
+        "module": "Client",
+        "effort": "2 hrs",
+        "priority": "P0-4/P0-5"
+      },
+      {
+        "id": "H5",
+        "title": "IND templates route commented out",
+        "module": "IND",
+        "effort": "15 min",
+        "priority": "P0-6"
+      },
+      {
+        "id": "H6",
+        "title": "Real eCTD logic at /api/regulatory disconnected from CoAuthor UI",
+        "module": "eCTD Co-Author",
+        "effort": "2-3 days",
+        "priority": "P0C-3"
+      },
+      {
+        "id": "H7",
+        "title": "6 eCTD DB tables defined but never migrated or seeded",
+        "module": "eCTD Co-Author",
+        "effort": "1 day",
+        "priority": "P0C-4"
+      },
+      {
+        "id": "H8",
+        "title": "cmc-dashboard.ts (36L) is ONLY mounted CMC route — returns zeroed metrics",
+        "module": "CMC Wizard",
+        "effort": "30 min",
+        "priority": "P0D-3"
+      },
+      {
+        "id": "H9",
+        "title": "12 CMC Drizzle tables + 2 SQL schemas never migrated — no data persistence",
+        "module": "CMC Wizard",
+        "effort": "2-4 hrs",
+        "priority": "P0D-4"
+      }
+    ],
+    "medium": [
+      {
+        "id": "M1",
+        "title": "DOCX Factory seeds only 6 of 19 catalog",
+        "module": "DOCX Factory",
+        "effort": "2 hrs",
+        "priority": "P0-7"
+      },
+      {
+        "id": "M2",
+        "title": "Mock export routes lack auth",
+        "module": "Export",
+        "effort": "15 min",
+        "priority": "P0-3"
+      },
+      {
+        "id": "M3",
+        "title": "No predicate search server endpoint",
+        "module": "API",
+        "effort": "2 days",
+        "priority": "P2-5"
+      },
+      {
+        "id": "M4",
+        "title": "IND Module 1 missing 8+ sub-templates",
+        "module": "IND",
+        "effort": "2 days",
+        "priority": "P1-3"
+      },
+      {
+        "id": "M5",
+        "title": "IND Module 2 summaries Jinja2 only",
+        "module": "IND",
+        "effort": "2 days",
+        "priority": "P1-3"
+      },
+      {
+        "id": "M6",
+        "title": "No IND doc type in CERV2 editor",
+        "module": "CERV2",
+        "effort": "3 days",
+        "priority": "P3-4"
+      }
+    ],
+    "low": [
+      {
+        "id": "L1",
+        "title": "Enhanced mock content for 8/25 sections only",
+        "module": "AI",
+        "effort": "1 day",
+        "priority": "P1-6"
+      },
+      {
+        "id": "L2",
+        "title": "No CHANGELOG.md",
+        "module": "Docs",
+        "effort": "1 hr",
+        "priority": "P3-1"
+      },
+      {
+        "id": "L3",
+        "title": "Pre-existing build warnings",
+        "module": "Build",
+        "effort": "2 hrs",
+        "priority": "P3-2"
+      },
+      {
+        "id": "L4",
+        "title": "eCTD XML templates are minimal",
+        "module": "eCTD",
+        "effort": "1 day",
+        "priority": "P3-3"
+      }
+    ]
+  },
+  "remediation_phases": {
+    "phase_0a_immediate": {
+      "label": "Before QA",
+      "effort": "1 day",
+      "tasks": [
+        {
+          "id": "P0-1",
+          "task": "Add cover_letter/summary to shared/docTypes.ts 510(k) sections",
+          "effort": "30 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-2",
+          "task": "Remove or implement cerv2-versions.ts",
+          "effort": "30 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-3",
+          "task": "Add auth to mock export routes",
+          "effort": "15 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-4",
+          "task": "Wire fetchEquivalence() to PredicateSearch",
+          "effort": "1 hr",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-5",
+          "task": "Wire fetchBenefitRisk() to ReviewWorkflow",
+          "effort": "1 hr",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-6",
+          "task": "Uncomment IND templates route",
+          "effort": "15 min",
+          "status": "not-started"
+        },
+        {
+          "id": "P0-7",
+          "task": "Update DOCX Factory seed to register all 19",
+          "effort": "2 hrs",
+          "status": "not-started"
+        }
+      ]
+    },
+    "phase_0b_templates": {
+      "label": "Template Completion",
+      "effort": "1-2 weeks",
+      "tasks": [
+        {
+          "id": "P1-1",
+          "task": "Create 7 PMA DOCX seed templates",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-2",
+          "task": "Add 4 missing 510(k) per-section PDF renderers",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-3",
+          "task": "Expand IND Module 1+2 templates",
+          "effort": "4 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-4",
+          "task": "Create IND Module 4 template set",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-5",
+          "task": "Create IND Module 5 template set",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P1-6",
+          "task": "Expand enhanced mock content to all 25 sections",
+          "effort": "1 day",
+          "status": "not-started"
+        }
+      ]
+    },
+    "phase_0c_coauthor": {
+      "label": "eCTD Co-Author Route Implementation",
+      "effort": "5-7 days",
+      "description": "Implement 18 missing /api/coauthor endpoints. Most can delegate to existing services (ectdService, ECTDScaffoldingService, componentExtraction, unifiedDocumentIngestion, documentAuthoring routes).",
+      "tasks": [
+        {
+          "id": "P0C-1",
+          "task": "Implement /api/coauthor/sessions CRUD (GET list, GET :id, PUT :id, DELETE :id)",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "authoring.router.ts session logic"
+        },
+        {
+          "id": "P0C-2",
+          "task": "Implement /api/ectd-documents full CRUD (GET list, GET :id, POST, PUT :id, DELETE :id)",
+          "effort": "1 day",
+          "status": "not-started",
+          "wire_to": "documentAuthoring.routes.ts + ectdService.ts"
+        },
+        {
+          "id": "P0C-3",
+          "task": "Implement /api/coauthor/sessions/:id/modules — eCTD module tree (M1-M5)",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ECTDScaffoldingService.ts"
+        },
+        {
+          "id": "P0C-4",
+          "task": "Implement /api/coauthor/sessions/:id/documents — document listing per session",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectdService.ts"
+        },
+        {
+          "id": "P0C-5",
+          "task": "Implement /api/coauthor/sessions/:id/compile — eCTD compilation + XML backbone",
+          "effort": "1 day",
+          "status": "not-started",
+          "wire_to": "ectdService.ts compileSubmission()"
+        },
+        {
+          "id": "P0C-6",
+          "task": "Implement /api/coauthor/sessions/:id/validate — submission validation",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectdService.ts validateSubmission()"
+        },
+        {
+          "id": "P0C-7",
+          "task": "Implement /api/coauthor/sessions/:id/export — export to eCTD package",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectdService.ts + ReleaseHashGenerator"
+        },
+        {
+          "id": "P0C-8",
+          "task": "Implement /api/coauthor/templates — eCTD template CRUD",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectd_templates DB table"
+        },
+        {
+          "id": "P0C-9",
+          "task": "Implement /api/coauthor/atoms — content atom library",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "componentExtraction.js"
+        },
+        {
+          "id": "P0C-10",
+          "task": "Implement /api/coauthor/collaboration — real-time collaboration endpoints",
+          "effort": "1 day",
+          "status": "not-started",
+          "wire_to": "eventBus.js + WebSocket"
+        },
+        {
+          "id": "P0C-11",
+          "task": "Implement /api/coauthor/sessions/:id/history — version history per session",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "ectd_change_control DB table"
+        },
+        {
+          "id": "P0C-12",
+          "task": "Run eCTD DB migrations (6 tables) and seed reference data",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "wire_to": "db/schema.ts eCTD table definitions"
+        }
+      ]
+    },
+    "phase_0d_cmc_wizard": {
+      "label": "CMC Wizard Route Mounting + DB Migration",
+      "effort": "1-2 days",
+      "description": "Mount the existing 24-file CMC API module and migrate 12 Drizzle ORM tables. This is the highest-ROI fix: 30 minutes of mounting unlocks 90,454 lines of client code and ~120 server endpoints.",
+      "tasks": [
+        {
+          "id": "P0D-1",
+          "task": "Add app.use('/api/cmc', cmcApiRoutes) in server/index.ts — import server/api/cmc/index.js",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables 7 AI sub-routers + /status + /test-event"
+        },
+        {
+          "id": "P0D-2",
+          "task": "Add app.use('/api/cmc', cmcRoutes) in server/index.ts — mount cmcRoutes.ts aggregator",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables /generate-blueprint, /analyze, + workflow/collaboration/document sub-mounts"
+        },
+        {
+          "id": "P0D-3",
+          "task": "Add app.use('/api/cmc/projects', cmcProjectRoutes) — mount project CRUD",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables project + substance + product + stability CRUD"
+        },
+        {
+          "id": "P0D-4",
+          "task": "Add app.use('/api/cmc/blueprints', cmcBlueprintRoutes) — mount blueprint CRUD",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Enables blueprint generation, lock/unlock, export"
+        },
+        {
+          "id": "P0D-5",
+          "task": "Mount cmc-dashboard-prisma.ts — replace stub dashboard with Prisma-backed implementation",
+          "effort": "30 min",
+          "status": "not-started",
+          "impact": "Enables /dashboard/summary, /stage-gates, /tasks, /risks, /ai/insights"
+        },
+        {
+          "id": "P0D-6",
+          "task": "Mount routes.ts — Drizzle CRUD for analytical-methods, stability-studies, drug-substances, drug-products",
+          "effort": "15 min",
+          "status": "not-started",
+          "impact": "Core data CRUD for Module 3 sections"
+        },
+        {
+          "id": "P0D-7",
+          "task": "Run Drizzle migration for 12 CMC tables defined in shared/cmc-schema.ts",
+          "effort": "2 hrs",
+          "status": "not-started",
+          "impact": "Data persistence for all CMC operations"
+        },
+        {
+          "id": "P0D-8",
+          "task": "Run SQL migrations: cmc_blueprints.sql + cmc-playbook-schema.sql",
+          "effort": "1 hr",
+          "status": "not-started",
+          "impact": "Blueprint templates + workflow instances + checklists"
+        },
+        {
+          "id": "P0D-9",
+          "task": "Verify all ~80 client API calls resolve to server handlers — integration test",
+          "effort": "4 hrs",
+          "status": "not-started",
+          "impact": "End-to-end validation of CMC platform"
+        }
+      ]
+    },
+    "phase_1a_ai": {
+      "label": "AI Integration",
+      "effort": "2-4 weeks",
+      "tasks": [
+        {
+          "id": "P2-1",
+          "task": "Integrate LLM behind /api/cerv2/ai/suggest",
+          "effort": "3 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-2",
+          "task": "Integrate LLM for /api/cerv2/ai/analyze-section",
+          "effort": "2 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-3",
+          "task": "Integrate LLM for /api/cerv2/ai/equivalence",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-4",
+          "task": "Integrate LLM for /api/cerv2/ai/benefit-risk",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-5",
+          "task": "Create server-side predicate search endpoint",
+          "effort": "2 days",
+          "status": "not-started"
+        },
+        {
+          "id": "P2-6",
+          "task": "Add IND doc type to CERV2 AI routes",
+          "effort": "3 days",
+          "status": "not-started"
+        }
+      ]
+    },
+    "phase_1b_polish": {
+      "label": "End-to-End Polish",
+      "effort": "1 week",
+      "tasks": [
+        {
+          "id": "P3-1",
+          "task": "Generate CHANGELOG.md",
+          "effort": "1 hr",
+          "status": "not-started"
+        },
+        {
+          "id": "P3-2",
+          "task": "Clean up pre-existing build warnings",
+          "effort": "2 hrs",
+          "status": "not-started"
+        },
+        {
+          "id": "P3-3",
+          "task": "Expand eCTD XML templates",
+          "effort": "1 day",
+          "status": "not-started"
+        },
+        {
+          "id": "P3-4",
+          "task": "Add IND Canvas editing support",
+          "effort": "3 days",
+          "status": "not-started"
+        }
+      ]
+    }
+  }
+}

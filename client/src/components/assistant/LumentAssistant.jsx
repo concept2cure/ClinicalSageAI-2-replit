@@ -53,7 +53,11 @@ const LumentAssistant = ({ context = {}, active = false }) => {
       if (context.module === 'cer2v' || inputValue.toLowerCase().includes('cer')) {
         response =
           'I can help with your Clinical Evaluation Report (CER). For CER generation, I recommend including sections on state of the art, clinical data evaluation, and risk-benefit analysis. Would you like me to help draft a specific section?';
-      } else if (context.module === 'ind-wizard' || inputValue.toLowerCase().includes('ind')) {
+      } else if (
+        context.module === 'ind-wizard' ||
+        context.module === 'ectd-coauthor' ||
+        inputValue.toLowerCase().includes('ind')
+      ) {
         response =
           "For your IND application, make sure you've addressed all the required components in Modules 1-5. Looking at your current progress, Module 3 (CMC) seems to need additional attention. Would you like me to outline what's missing?";
       } else if (context.module === 'cmc-module' || inputValue.toLowerCase().includes('cmc')) {

@@ -32,7 +32,112 @@ export type QuestionSeverity = 'high' | 'medium' | 'low' | 'critical';
 // Phase 6.6.A/B — Strategy & FDA Universe Types
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type StrategyRecommendation = 'CONSERVATIVE' | 'AGGRESSIVE' | 'BALANCED' | 'RISKY' | 'AVOID';
+export type StrategyRecommendation = 'CONSERVATIVE' | 'AGGRESSIVE' | 'BALANCED' | 'AVOID';
+
+export type ObjectionTrigger =
+  | 'INTENDED_USE_DRIFT'
+  | 'MATERIAL_CHANGE'
+  | 'ENERGY_SOURCE_CHANGE'
+  | 'STERILIZATION_CHANGE'
+  | 'SOFTWARE_CYBER_GAP'
+  | 'TISSUE_CONTACT_DRIFT'
+  | 'DURATION_MISMATCH'
+  | 'OLD_PREDICATE_GAP'
+  | 'MISSING_SUMMARY';
+
+export type SuggestedEvidenceType =
+  | 'bench'
+  | 'biocomp'
+  | 'clinical'
+  | 'sw_lifecycle'
+  | 'cybersecurity'
+  | 'sterilization_validation'
+  | 'risk_analysis'
+  | 'performance_data';
+
+export type PredicateFlag =
+  | 'OLD_PREDICATE'
+  | 'LOW_TEXT_MATCH'
+  | 'MISSING_SUMMARY_TEXT'
+  | 'VERY_NEW'
+  | 'MATERIAL_MISMATCH'
+  | 'CONTACT_MISMATCH'
+  | 'WEAK_SUMMARY_TEXT'
+  | 'ENERGY_MISMATCH'
+  | 'SOFTWARE_MISMATCH'
+  | 'STERILIZATION_MISMATCH';
+
+export type RiskFlagSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface RiskFlag {
+  code: string;
+  severity: RiskFlagSeverity;
+  message: string;
+}
+
+export type ObjectionSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface Objection {
+  trigger: string;
+  severity: ObjectionSeverity;
+  question: string;
+  recommended_fix: string;
+  evidence_types: SuggestedEvidenceType[];
+}
+
+/** Legacy alias */
+export type AnticipatedObjection = Objection;
+
+export interface EvidenceTaskSeed {
+  evidence_type: string;
+  description: string;
+  source_objection: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+/** Legacy alias */
+export type DefensePacketSeedLegacy = EvidenceTaskSeed;
+
+export type EvidenceCategory =
+  | 'BenchTesting'
+  | 'Biocompatibility'
+  | 'RiskManagement'
+  | 'SoftwareLifecycle'
+  | 'Cybersecurity'
+  | 'SterilizationValidation'
+  | 'ClinicalEvidence'
+  | 'LabelingIFU'
+  | 'StandardsConformance'
+  | 'PostMarketSurveillance';
+
+/**
+ * Lightweight evidence task shape used by DefensePacketSeed.
+ * For the full ops-complete type with tracking, use EvidenceTask (alias of EvidenceTaskFull).
+ */
+export interface EvidenceTaskLite {
+  task_id: string;
+  category: EvidenceCategory;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  rationale: string;
+  trigger: string;
+  recommended_artifacts: string[];
+  mapping: Record<string, unknown>;
+}
+
+export interface DefensePacketSeed {
+  subject_hash: string;
+  generated_at: string;
+  program_id: string;
+  product_code: string;
+  tasks: EvidenceTaskLite[];
+  readiness_score: number;
+  top_risks: string[];
+}
+
+export interface MatchSnippet {
+  text: string;
+  source: string;
+}
 
 export type LineageSafety = 'CLEAN' | 'COMPROMISED' | 'UNKNOWN';
 
@@ -66,34 +171,70 @@ export interface PredicateSuggestion {
   k_number: string;
   device_name: string;
   applicant?: string | null;
-  clearance_date?: string | null;
-  product_code?: string | null;
+  product_code: string;
+  decision_date?: string | null;
+  summary_url?: string | null;
+  // Scores (B2)
   similarity_score: number;
-  toxicity_score: number;
-  lineage_safety: LineageSafety;
+  defense_readiness_score: number;
+  toxicity_score?: number | null;
+  family_toxicity_score?: number | null;
+  badge?: ToxicityBadge | null;
+  // Strategy
   strategy_recommendation: StrategyRecommendation;
+  // Explainability
   reasoning: string;
-  composite_score: number;
-  semantic_distance?: number | null;
+  score_breakdown: {
+    fts_score: number;
+    name_match: number;
+    recency_boost: number;
+    completeness_bonus: number;
+    weights: Record<string, number>;
+  };
+  risk_flags: RiskFlag[];
+  match_snippets: MatchSnippet[];
+  anticipated_objections: Objection[];
+  // Per-suggestion evidence seeds (legacy compat)
+  defense_packet_seed: EvidenceTaskSeed[];
+  // Legacy compat
+  matched_terms: string[];
+  recency_years?: number | null;
+  flags: string[];
+  reviewer_heat: number;
+  next_evidence: string[];
 }
 
 export interface PredicateSuggestRequest {
   program_id: string;
+  // Required (B0)
   product_code: string;
+  device_name: string;
   intended_use: string;
-  technology?: string;
-  materials?: string;
+  technology_description: string;
+  // Strongly recommended
+  materials?: string[];
   energy_source?: string;
-  tissue_contact?: string;
-  sterilization?: string;
-  max_results?: number;
+  tissue_contact?: string; // none / intact_skin / breached / blood / implant
+  duration?: string; // transient / short / long (ISO 10993)
+  software_present?: boolean;
+  sterilization?: string; // EO, gamma, steam, none
+  patient_population?: string; // pediatric, adult, geriatric
+  // Legacy compat
+  device_description?: string;
+  software_flag?: boolean;
 }
 
 export interface PredicateSuggestResponse {
   suggestions: PredicateSuggestion[];
-  subject_device_hash: string;
-  total_candidates_evaluated: number;
+  subject_hash: string;
+  product_code: string;
+  total_candidates_scanned: number;
+  latency_ms: number;
   generated_at: string;
+  weights_version: string;
+  cached: boolean;
+  // Response-level Defense Packet Seed
+  defense_packet_seed: DefensePacketSeed | null;
 }
 
 export interface FDA510kClearance {
@@ -176,12 +317,23 @@ export interface SEMatrixPayload {
   generation_timestamp: string;
 }
 
+export interface EvidenceManifestEntry {
+  row_id: string;
+  category: string;
+  characteristic: string;
+  equivalence_status: EquivalenceStatus;
+  diff_flag: string;
+  evidence_placeholders: string[];
+  highlight: boolean;
+}
+
 export interface GenerateSEMatrixResponse {
   se_matrix_payload: SEMatrixPayload;
   defense_readiness_score: number;
   row_count: number;
   discussion_required_count: number;
   generation_timestamp: string;
+  evidence_manifest: EvidenceManifestEntry[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -421,6 +573,7 @@ export interface ToxicPredicateDetail {
   signals: ToxicSignalDetail[];
   toxicity_score: number;
   family_toxicity_score: number;
+  badge: ToxicityBadge;
   mdr_rate_bucket: 'NONE' | 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   family_recall_count: number;
   is_toxic: boolean;
@@ -534,3 +687,628 @@ export interface SEMatrixRenderPlan {
   discussion_count: number;
   not_equivalent_count: number;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C-V2 — Evidence-Linked SE Matrix Types (risk_code + evidence_task_ids)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Canonical risk_code enum — mirrors shadow_service RiskCode.
+ * 24 deterministic risk codes covering all SE comparison categories.
+ */
+export type RiskCode =
+  // A. Intended Use / Indications
+  | 'IU_MISMATCH'
+  | 'INDICATIONS_EXPANDED'
+  // B. Technology / Design / Energy Source
+  | 'TECH_DIFFERENCE'
+  | 'ENERGY_SOURCE_CHANGE'
+  | 'DESIGN_ARCH_CHANGE'
+  // C. Materials / Bio / Contact
+  | 'MATERIAL_CHANGE'
+  | 'TISSUE_CONTACT_CHANGE'
+  | 'CONTACT_DURATION_CHANGE'
+  // D. Sterilization / Shelf-life / Packaging
+  | 'STERILIZATION_METHOD_CHANGE'
+  | 'PACKAGING_SYSTEM_CHANGE'
+  | 'SHELF_LIFE_CHANGE'
+  // E. Software / Cyber / Interop
+  | 'SOFTWARE_PRESENT_NEW'
+  | 'SOFTWARE_SAFETY_CLASS_DIFF'
+  | 'CYBERSECURITY_SURFACE_INCREASED'
+  | 'INTEROPERABILITY_CLAIM'
+  | 'ML_ADAPTIVITY'
+  // F. Clinical / Performance
+  | 'PERFORMANCE_CLAIM_CHANGE'
+  | 'CLINICAL_EVIDENCE_GAP'
+  | 'HUMAN_FACTORS_CHANGE'
+  // G. Standards / Labeling / PMS
+  | 'STANDARDS_GAP'
+  | 'LABELING_IFU_GAP'
+  | 'PMS_SIGNAL_RISK'
+  // H. Predicate Safety Lineage
+  | 'PREDICATE_TOXICITY_HIGH'
+  | 'PREDICATE_LINEAGE_COMPROMISED';
+
+/** Diff flag for V2 SE matrix rows. */
+export type DiffFlagV2 = 'EQUIVALENT' | 'DISCUSSION_REQUIRED' | 'SIGNIFICANT';
+
+/** V2 SE matrix comparison row with risk_code linkage. */
+export interface SEMatrixRowV2 {
+  sort_order: number;
+  characteristic: string;
+  category: string;
+  subject_value: string;
+  predicate_value: string;
+  diff_flag: DiffFlagV2;
+  discussion_text: string;
+  risk_code: RiskCode | null;
+  triggered_risk_codes: string[];
+  evidence_task_ids: string[];
+  requires_citation: boolean;
+  suggested_tests: string[];
+  diff_severity: string;
+  subject_evidence_ids: string[];
+  predicate_evidence_ids: string[];
+  subject_confidence: number;
+  predicate_confidence: number;
+}
+
+/** V2 Evidence task with deterministic mapping. */
+export interface EvidenceTaskV2 {
+  task_id: string;
+  category: string;
+  risk_code: string;
+  label: string;
+  severity: string;
+  recommended_artifacts: string[];
+  mapping: {
+    truth_machine_placeholder: boolean;
+    se_matrix_linkable: boolean;
+    ectd_section: string;
+  };
+}
+
+/** Full V2 SE matrix payload returned by /generate-se-matrix-v2. */
+export interface SEMatrixPayloadV2 {
+  template_id: string;
+  version: string;
+  device_name: string;
+  predicate_k_number: string;
+  predicate_device_name: string;
+  comparison_rows: SEMatrixRowV2[];
+  evidence_tasks: EvidenceTaskV2[];
+  defense_readiness_score: number;
+  generated_at: string;
+  risk_code_map_version: string;
+  evidence_linkage: boolean;
+  regulatory_standard: string;
+}
+
+/** Response shape from POST /generate-se-matrix-v2. */
+export interface GenerateSEMatrixV2Response {
+  se_matrix_payload: SEMatrixPayloadV2;
+  defense_readiness_score: number;
+  row_count: number;
+  discussion_required_count: number;
+  significant_count: number;
+  evidence_task_count: number;
+  risk_code_map_version: string;
+  generation_timestamp: string;
+  /** Manifest hash for determinism replay (E2). May be absent in older responses. */
+  manifest_hash?: string;
+}
+
+/** Request body for POST /generate-se-matrix-v2. */
+export interface GenerateSEMatrixV2Request {
+  program_id: string;
+  selected_predicate_k_number: string;
+  subject_device: Record<string, string>;
+  design_control_ids?: Record<string, string>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.C2 — Manifest + Payload + Render Types
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Part 11-grade manifest emitted with every SE matrix generation.
+ * All hash fields are SHA-256 hex digests (truncated to 12 chars for subject/vocab).
+ */
+export interface RegulatoryIntelManifest {
+  subject_hash: string;
+  program_id: string;
+  product_code: string;
+  predicate_k_number: string;
+  generator_version: string;
+  risk_code_map_version: string;
+  risk_vocab_hash: string;
+  manifest_hash: string;
+  generated_at: string;
+  risk_codes_used: string[];
+  evidence_task_ids: string[];
+  defense_readiness_score: number;
+  top_risks: string[];
+}
+
+/** Request body for POST /api/programs/:programId/se-matrix/render. */
+export interface SEMatrixRenderRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  selectedPredicate: {
+    kNumber: string;
+    [key: string]: unknown;
+  };
+  designControlIds?: Record<string, string>;
+}
+
+/**
+ * Response from POST /api/programs/:programId/se-matrix/render.
+ * Contains the full manifest, evidence tasks, and a render job ID.
+ */
+export interface SEMatrixRenderResponse {
+  renderJobId: string;
+  manifest: RegulatoryIntelManifest;
+  evidenceTasks: EvidenceTaskV2[];
+  payload: SEMatrixPayloadV2;
+}
+
+/**
+ * Request body for Shadow Service POST /device/se-matrix-payload.
+ * Internal — used by BFF only.
+ */
+export interface SEMatrixPayloadRequest {
+  program_id: string;
+  product_code: string;
+  selected_predicate_k_number: string;
+  subject_device: Record<string, string>;
+  selected_predicate: Record<string, unknown>;
+  design_control_ids?: Record<string, string>;
+  include_explainability?: boolean;
+}
+
+/**
+ * Response from Shadow Service POST /device/se-matrix-payload.
+ * Internal — used by BFF only.
+ */
+export interface SEMatrixPayloadResponse {
+  manifest: RegulatoryIntelManifest;
+  payload: SEMatrixPayloadV2;
+  evidence_tasks: EvidenceTaskV2[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.D — Defense Packet (Versioned, Signed Compliance Artifact)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Lifecycle status of a defense packet.
+ * CREATED → RENDERING → RENDERED (happy path)
+ * CREATED/RENDERING → FAILED (terminal)
+ * RENDERED → STALE (staleness detected)
+ */
+export type DefensePacketRenderStatus = 'CREATED' | 'RENDERING' | 'RENDERED' | 'FAILED' | 'STALE';
+
+/**
+ * Diff summary comparing two successive defense packets for the same
+ * program + subject combination.
+ */
+export interface DefensePacketDiffSummary {
+  previous_manifest_hash: string;
+  current_manifest_hash: string;
+  readiness_score_delta: number;
+  risk_codes_added: string[];
+  risk_codes_removed: string[];
+  evidence_tasks_added: number;
+  evidence_tasks_removed: number;
+  top_risks_changed: boolean;
+}
+
+/**
+ * Result of a staleness check on a defense packet.
+ */
+export interface DefensePacketStalenessResult {
+  is_stale: boolean;
+  reasons: string[];
+  current_risk_vocab_hash: string;
+  current_risk_code_map_version: string;
+  packet_risk_vocab_hash: string;
+  packet_risk_code_map_version: string;
+}
+
+/**
+ * Request body for POST /api/programs/:programId/predicate-intel/defense-packet.
+ */
+export interface CreateDefensePacketRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  predicateRecord: Record<string, unknown>;
+  designControlIds?: Record<string, string>;
+  render?: boolean;
+}
+
+/**
+ * Response from POST /api/programs/:programId/predicate-intel/defense-packet.
+ */
+export interface CreateDefensePacketResponse {
+  defense_packet_id: string;
+  manifest_hash: string;
+  defense_readiness_score: number;
+  top_risks: string[];
+  risk_codes_used: string[];
+  tasks: unknown[];
+  render_job_id: string | null;
+  status: DefensePacketRenderStatus;
+  subject_hash: string;
+  previous_packet_id: string | null;
+  diff_summary: DefensePacketDiffSummary | null;
+}
+
+/**
+ * Full defense packet record as returned by GET endpoints.
+ */
+export interface DefensePacketRecord {
+  id: string;
+  program_id: string;
+  subject_hash: string;
+  predicate_k_number: string;
+  risk_code_map_version: string;
+  risk_vocab_hash: string;
+  generator_version: string;
+  defense_readiness_score: number;
+  top_risks: string[];
+  tasks: unknown[];
+  se_payload: Record<string, unknown>;
+  subject_device: Record<string, string>;
+  risk_codes_used: string[];
+  product_code: string;
+  manifest_hash: string;
+  status: DefensePacketRenderStatus;
+  staleness_reason: string | null;
+  render_job_id: string | null;
+  error_code: string | null;
+  error_detail: string | null;
+  created_by_user_id: string;
+  previous_packet_id: string | null;
+  created_at: string;
+  updated_at: string;
+  rendered_at: string | null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.D1 — Defense Packet Evidence Ops (Rich Domain Types)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type EvidenceSeverity = 'High' | 'Medium' | 'Low';
+export type EvidenceTaskState = 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'WAIVED';
+export type PacketOpsStatus = 'CREATED' | 'IN_PROGRESS' | 'READY' | 'BLOCKED' | 'STALE' | 'FAILED';
+export type DefensePacketStatus = PacketOpsStatus;
+export type DefensePacketDBStatus = DefensePacketRenderStatus;
+
+export type EvidenceRefType =
+  | 'TRUTH_PLACEHOLDER'
+  | 'PROGRAM_DOC'
+  | 'DOCX_RENDER'
+  | 'PDF_RENDER'
+  | 'ECTD_LEAF'
+  | 'URL';
+
+export interface EvidenceRef {
+  ref_type: EvidenceRefType;
+  ref_id: string;
+  label?: string | null;
+}
+
+export interface EvidenceTaskCompletion {
+  state: EvidenceTaskState;
+  waiver_reason?: string | null;
+  completed_by?: string | null;
+  completed_at?: string | null;
+  evidence_refs: EvidenceRef[];
+}
+
+export interface ReviewerQuestionSeed {
+  question: string;
+  recommended_sections: string[];
+  recommended_artifacts: string[];
+}
+
+/**
+ * Operationally complete evidence task — Phase 6.6.D1.
+ * Deterministic, with full ops fields for tracking, assignment, and verification.
+ */
+export interface EvidenceTaskFull {
+  task_id: string;
+  severity: EvidenceSeverity;
+  category: EvidenceCategory;
+  triggered_risk_codes: string[];
+  se_matrix_rows: string[];
+  title: string;
+  why_it_matters: string;
+  acceptance_criteria: string[];
+  recommended_artifacts: string[];
+  artifact_targets: string[];
+  truth_machine_placeholder_id?: string | null;
+  anticipated_questions: ReviewerQuestionSeed[];
+  completion: EvidenceTaskCompletion;
+}
+
+/**
+ * Full Defense Packet — Phase 6.6.D1 response-level artifact.
+ *
+ * Key invariant: packet_id == manifest_hash.
+ * Deterministic ordering for tasks, risk codes, artifact targets.
+ */
+export interface DefensePacketFull {
+  packet_version: string;
+  packet_id: string;
+  manifest_hash: string;
+  subject_hash: string;
+  program_id: string;
+  product_code: string;
+  generated_at: string;
+  risk_code_map_version: string;
+  risk_vocab_hash: string;
+  readiness_score: number;
+  status: PacketOpsStatus;
+  stale_reasons: string[];
+  top_risks: string[];
+  tasks: EvidenceTaskFull[];
+}
+
+/**
+ * Submission gating result — Phase 6.6.D1.
+ * Determines if eCTD packaging is allowed or blocked.
+ */
+export interface SubmissionGateResult {
+  allowed: boolean;
+  blocking_task_ids: string[];
+  blocking_risk_codes: string[];
+  missing_evidence_refs: string[];
+  recommended_next_actions: string[];
+  override_available: boolean;
+  reason: string;
+}
+
+/**
+ * Response from POST /defense-packet/build (6.6.D1).
+ */
+export interface BuildDefensePacketResponse {
+  defense_packet: DefensePacketFull;
+  submission_gate: SubmissionGateResult;
+}
+
+/**
+ * Request for POST /defense-packet/build (6.6.D1).
+ */
+export interface BuildDefensePacketRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  selectedPredicate: Record<string, unknown>;
+  designControlIds?: Record<string, string>;
+}
+
+/**
+ * Request for POST /defense-packet/:packetId/waive-task (6.6.D1).
+ */
+export interface WaiveTaskRequest {
+  taskId: string;
+  waiverReason: string;
+}
+
+/**
+ * Response from POST /defense-packet/:packetId/waive-task (6.6.D1).
+ */
+export interface WaiveTaskResponse {
+  task_id: string;
+  waiver_recorded: boolean;
+  waiver_reason: string;
+  waived_by: string;
+  waived_at: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E1 — Proof Pack (Zero-Drift Evidence)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type IngestFreshnessStatus = 'GREEN' | 'YELLOW' | 'RED';
+
+export interface IngestFreshness {
+  last_success_at: string | null;
+  source: string;
+  status: IngestFreshnessStatus;
+}
+
+export interface ProofPackAudit {
+  signature_method: 'HSM' | 'PKI' | 'DEV';
+  key_id: string;
+  doc_hash: string;
+}
+
+/**
+ * Defense Proof Pack — read-only attestation of contract integrity.
+ * GET /predicate-intel/proof-pack?program_id=...&subject_hash=...
+ */
+export interface ProofPack {
+  subject_hash: string;
+  risk_vocab_version: string;
+  risk_vocab_hash: string;
+  manifest_hash: string;
+  generated_at: string;
+  ingest_freshness: IngestFreshness;
+  audit: ProofPackAudit;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.E2 — Replay Determinism (with E.3 diff summary)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface ReplayDeterminismRequest {
+  productCode: string;
+  subjectDevice: Record<string, string>;
+  selectedPredicate: Record<string, unknown>;
+  /** The original manifest hash to compare against */
+  originalManifestHash: string;
+}
+
+export type DriftSeverity = 'NONE' | 'LOW' | 'MED' | 'HIGH';
+
+/** Structured diff for a single field that drifted */
+export interface DriftDiffEntry {
+  path: string;
+  before_hash: string;
+  after_hash: string;
+  severity: DriftSeverity;
+}
+
+export interface ReplayDeterminismResult {
+  deterministic: boolean;
+  original_manifest_hash: string;
+  replay_manifest_hash: string;
+  original_risk_vocab_hash: string;
+  replay_risk_vocab_hash: string;
+  original_risk_codes: string[];
+  replay_risk_codes: string[];
+  drift_details: string[];
+  /** E.3 — structured diff summary with severity levels */
+  diff_summary: DriftDiffEntry[];
+  /** E.3 — controlled list of drift reason codes */
+  drift_reason_codes: string[];
+  /** G — deterministic drift severity from locked mapping */
+  drift_severity: DriftSeverity;
+  /** E.3 — UI uses this directly to block/allow download */
+  block_download: boolean;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.G — Proof Pack Trust Chain (Submission-Grade)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Contract snapshot — frozen set of hashes for tamper detection */
+export interface ContractSnapshot {
+  risk_vocab_hash: string;
+  risk_codes_lock_hash: string;
+  schema_hash: string;
+  generator_version: string;
+}
+
+/** Result of persisting a proof pack (G — with contract snapshot) */
+export interface ProofPackPersistResult {
+  proof_pack_id: string;
+  manifest_hash: string;
+  status: 'CREATED' | 'REUSED' | 'ASSEMBLED' | 'FAILED';
+  zip_manifest_hash: string;
+  contract: ContractSnapshot;
+  block_download: boolean;
+  created_at: string;
+}
+
+/** Artifact entry inside a proof pack ZIP */
+export interface ProofPackArtifactEntry {
+  filename: string;
+  sha256: string;
+  size_bytes: number;
+  mime_type: string;
+}
+
+/** Structured checksum failure from verify endpoint */
+export interface ChecksumFailure {
+  path: string;
+  expected_sha256: string;
+  actual_sha256: string;
+}
+
+/** Verification result for a stored proof pack (G — structured failures) */
+export interface ProofPackVerifyResult {
+  proof_pack_id: string;
+  manifest_hash: string;
+  status: 'CREATED' | 'ASSEMBLED' | 'FAILED';
+  verified: boolean;
+  computed_checksums_match: boolean;
+  failures: ChecksumFailure[];
+  contract: {
+    stored: ContractSnapshot;
+    current: ContractSnapshot;
+  };
+  block_download: boolean;
+  drift_severity: DriftSeverity | null;
+  downloaded_count: number;
+  created_at: string;
+}
+
+/** Error response for blocked downloads (409) */
+export interface ProofPackDownloadBlockedError {
+  error_code: 'PROOF_PACK_DOWNLOAD_BLOCKED';
+  drift_severity: DriftSeverity;
+  drift_reason_codes: string[];
+  block_download: true;
+  message: string;
+}
+
+/** Error response for contract mismatch (409) */
+export interface ProofPackContractMismatchError {
+  error_code: 'PROOF_PACK_CONTRACT_MISMATCH';
+  mismatches: Array<{ field: string; expected: string; actual: string }>;
+  expected_contract: ContractSnapshot;
+  actual_contract: ContractSnapshot;
+  block_download: true;
+  message: string;
+}
+
+/** Error response for legacy endpoint usage (410) */
+export interface ProofPackEndpointRemovedError {
+  error_code: 'ENDPOINT_REMOVED_USE_PROOF_PACK_ID';
+  message: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Phase 6.6.F — Safety Signals & Lineage Graph
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type ToxicityBadge = 'TOXIC' | 'RISKY_FAMILY' | 'CLEAN';
+
+export interface PredicateToxicityProfile {
+  k_number: string;
+  toxicity_score: number;
+  badge: ToxicityBadge;
+  signal_count: number;
+  signals: SafetySignal[]; // reuses existing SafetySignal above
+  family_toxicity_score: number;
+  lineage_depth_checked: number;
+  strategy_override: 'AVOID' | null;
+}
+
+export interface SafetySignalIngestResult {
+  k_number: string;
+  signals_upserted: number;
+  signals_skipped: number;
+  toxicity_score: number;
+  badge: ToxicityBadge;
+}
+
+export interface LineageEdge {
+  child_k_number: string;
+  parent_k_number: string;
+  relationship_type: string;
+  distance: number;
+  confidence: number;
+  parent_device_name?: string;
+  parent_product_code?: string;
+}
+
+export interface LineageGraph {
+  root_k_number: string;
+  edges: LineageEdge[];
+  family_toxicity: number;
+  max_depth: number;
+  total_nodes: number;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Spec-Aligned Aliases (Phase 6.6.D1 Naming Convention)
+// ═══════════════════════════════════════════════════════════════════════════════
+// The spec uses shorter names; *Full variants kept for backward compatibility.
+
+export type EvidenceTask = EvidenceTaskFull;
+export type DefensePacket = DefensePacketFull;
+export type DefensePacketOpsStatus = PacketOpsStatus;

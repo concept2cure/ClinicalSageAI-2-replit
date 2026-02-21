@@ -125,7 +125,7 @@ const RiskMitigationPlanDialog = ({
   const fetchEnhancedRiskAnalytics = async () => {
     try {
       // Connect to REAL Lumen AI Regulatory Analysis Hub
-      const response = await fetch('/api/lumen/regulatory-analysis', {
+      const response = await fetch('/api/lumen-cortex/regulatory-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -261,7 +261,7 @@ const RiskMitigationPlanDialog = ({
   const fetchRegulatoryGuidance = async () => {
     try {
       // Connect to REAL Lumen AI Regulatory Intelligence Hub
-      const response = await fetch('/api/lumen/ich-e6r3-guidance', {
+      const response = await fetch('/api/lumen-cortex/ich-e6r3-guidance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

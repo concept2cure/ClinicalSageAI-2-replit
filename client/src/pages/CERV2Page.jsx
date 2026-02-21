@@ -5,13 +5,13 @@ import { useToast } from '@/components/ui/toaster';
 import { queryClient } from '@/lib/queryClient';
 import SharePointFileManager from '@/components/sharepoint/SharePointFileManager';
 import axios from 'axios';
-// CER imports disabled - focusing on 510(k) workflow only
-// import CerBuilderPanel from '@/components/cer/CerBuilderPanel';
-// import CerPreviewPanel from '@/components/cer/CerPreviewPanel';
-// import LiteratureSearchPanel from '@/components/cer/LiteratureSearchPanel';
-// import LiteratureMethodologyPanel from '@/components/cer/LiteratureMethodologyPanel';
+// CER imports re-enabled per REGULATORY_UX_AUDIT_2026-02-13 recommendation
+import CerBuilderPanel from '@/components/cer/CerBuilderPanel';
+import CerPreviewPanel from '@/components/cer/CerPreviewPanel';
+import LiteratureSearchPanel from '@/components/cer/LiteratureSearchPanel';
+import LiteratureMethodologyPanel from '@/components/cer/LiteratureMethodologyPanel';
 import ComplianceScorePanel from '@/components/cer/ComplianceScorePanel';
-// import CerAssistantPanel from '@/components/cer/CerAssistantPanel';
+import CerAssistantPanel from '@/components/cer/CerAssistantPanel';
 import DocumentVaultPanel from '@/components/cer/DocumentVaultPanel';
 import CerDataRetrievalPanel from '@/components/cer/CerDataRetrievalPanel';
 // Using 510k specific components instead of CER ones
@@ -59,6 +59,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cerApiService } from '@/services/CerAPIService';
 import MedicalDeviceDocumentEditor from '@/components/MedicalDeviceDocumentEditor';
+import { DOC_TYPES } from '@shared/docTypes';
 import { literatureAPIService } from '@/services/LiteratureAPIService';
 import LiteratureFeatureService from '@/services/LiteratureFeatureService';
 import { ensureProfileIntegrity, createNewDeviceProfile } from '@/utils/deviceProfileUtils';
@@ -181,11 +182,11 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const assistantContext = safeAssistantHook();
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
   const { toast } = useToast();
-  
+
   // Organization and workspace IDs for project management
   const organizationId = '6'; // Default organization ID
   const clientWorkspaceId = '26'; // Default workspace ID
-  
+
   // Set organization ID in localStorage for API interceptor
   useEffect(() => {
     localStorage.setItem('currentOrganizationId', organizationId);
@@ -193,7 +194,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
   // Multi-Project Management State
   const [allProjects, setAllProjects] = useState([]);
-  
+
   const [currentProjectId, setCurrentProjectId] = useState(() => {
     try {
       const saved = localStorage.getItem('currentMedicalDeviceProjectId');
@@ -205,31 +206,31 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
   const [showProjectSelector, setShowProjectSelector] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
-  
+
   // Fetch projects from database on mount and when workspace changes
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         console.log('Fetching projects from database...');
-        
+
         // Using organizationId and clientWorkspaceId defined at component level
         console.log('Using org ID:', organizationId, 'workspace ID:', clientWorkspaceId);
-        
+
         // Build query params
         const params = new URLSearchParams();
         params.append('organization_id', organizationId);
         params.append('client_workspace_id', clientWorkspaceId);
-        
+
         const url = `/api/projects?${params.toString()}`;
         console.log('Fetching from:', url);
-        
+
         const response = await fetch(url);
         console.log('Response status:', response.status);
-        
+
         if (response.ok) {
           const projects = await response.json();
           console.log('Received projects from API:', projects);
-          
+
           // Transform database projects to match frontend format
           const transformedProjects = projects.map(p => ({
             id: p.id?.toString() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -242,12 +243,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             createdAt: p.created_at || new Date().toISOString(),
             updatedAt: p.updated_at || new Date().toISOString(),
             attachedDocuments: p.metadata?.attachedDocuments || [],
-            state: p.metadata?.state || {}
+            state: p.metadata?.state || {},
           }));
-          
+
           console.log('Transformed projects:', transformedProjects);
           setAllProjects(transformedProjects);
-          
+
           // Also cache in localStorage for offline access
           localStorage.setItem('medicalDeviceProjects', JSON.stringify(transformedProjects));
         } else {
@@ -258,10 +259,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             try {
               const projects = JSON.parse(saved);
               console.log('Loaded cached projects from localStorage:', projects);
-              setAllProjects(projects.map(p => ({
-                ...p,
-                attachedDocuments: p.attachedDocuments || []
-              })));
+              setAllProjects(
+                projects.map(p => ({
+                  ...p,
+                  attachedDocuments: p.attachedDocuments || [],
+                }))
+              );
             } catch (parseError) {
               console.warn('Error parsing localStorage projects:', parseError);
             }
@@ -275,17 +278,19 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           if (saved) {
             const projects = JSON.parse(saved);
             console.log('Loaded projects from localStorage:', projects);
-            setAllProjects(projects.map(p => ({
-              ...p,
-              attachedDocuments: p.attachedDocuments || []
-            })));
+            setAllProjects(
+              projects.map(p => ({
+                ...p,
+                attachedDocuments: p.attachedDocuments || [],
+              }))
+            );
           }
         } catch (localError) {
           console.warn('Error loading projects from localStorage:', localError);
         }
       }
     };
-    
+
     // Add a small delay to ensure the component is mounted
     setTimeout(fetchProjects, 100);
   }, []); // Run once on mount
@@ -297,15 +302,19 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [newClientMode, setNewClientMode] = useState(false);
   const [deviceIntakeData, setDeviceIntakeData] = useState(null);
   const [deviceType, setDeviceType] = useState('Class II Medical Device');
-  
+
   // Document viewer state for inline document display
   const [documentViewerData, setDocumentViewerData] = useState({
     isOpen: false,
     url: '',
     documentName: '',
-    type: 'other'
+    type: 'other',
   });
   const [documentType, setDocumentType] = useState('510k'); // Force 510k mode for now
+  const [selectedDocType, setSelectedDocType] = useState(() => {
+    const initial = String(initialDocumentType || '');
+    return initial.startsWith('cerv2_') ? initial : 'cerv2_510k';
+  });
   const [deviceName, setDeviceName] = useState('');
   const [manufacturer, setManufacturer] = useState('');
   const [intendedUse, setIntendedUse] = useState('');
@@ -313,6 +322,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [showESTARDemo, setShowESTARDemo] = useState(false);
   const [cerDocumentId, setCerDocumentId] = useState(() => {
     const prefix = 'CER-';
+    return prefix + Math.floor(100000 + Math.random() * 900000);
+  });
+  const [pmaDocumentId, setPmaDocumentId] = useState(() => {
+    const prefix = 'PMA-';
     return prefix + Math.floor(100000 + Math.random() * 900000);
   });
   const [k510DocumentId, setK510DocumentId] = useState(() => {
@@ -327,6 +340,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [isFetchingLiterature, setIsFetchingLiterature] = useState(false);
   // Start users at Device Intake Form - the clear starting point for 510(k)
   const [activeTab, setActiveTab] = useState(initialActiveTab || 'device-intake');
+
+  const docTypeLabel = DOC_TYPES[selectedDocType]?.label || 'CERV2 Document';
 
   // Helper function to load saved state from localStorage
   const loadSavedState = (key, defaultValue) => {
@@ -349,7 +364,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   };
 
   // Multi-Project Management Functions
-  const saveAllProjects = (projects) => {
+  const saveAllProjects = projects => {
     try {
       localStorage.setItem('medicalDeviceProjects', JSON.stringify(projects));
     } catch (error) {
@@ -357,7 +372,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     }
   };
 
-  const createNewProject = (projectData) => {
+  const createNewProject = projectData => {
     const newProject = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       deviceName: projectData.deviceName || 'Untitled Device',
@@ -376,65 +391,66 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         literatureResults,
         complianceScore,
         workflowStep,
-        documentType
-      }
+        documentType,
+        cerv2DocType: selectedDocType,
+      },
     };
-    
+
     const updated = [...allProjects, newProject];
     setAllProjects(updated);
     saveAllProjects(updated);
     setCurrentProjectId(newProject.id);
     localStorage.setItem('currentMedicalDeviceProjectId', newProject.id);
-    
+
     toast({
       title: 'New Project Created',
       description: `Created project for ${newProject.deviceName}`,
     });
-    
+
     return newProject;
   };
 
-  const switchToProject = async (projectId) => {
+  const switchToProject = async projectId => {
     const project = allProjects.find(p => p.id === projectId);
     if (!project) return;
-    
+
     // Save current project state before switching
     if (currentProjectId) {
       saveCurrentProjectState();
     }
-    
+
     // Load the selected project's state
     setCurrentProjectId(projectId);
     localStorage.setItem('currentMedicalDeviceProjectId', projectId);
-    
+
     // Fetch FDA 510(k) stage data from database
     try {
       const response = await fetch(`/api/fda-510k/projects/${projectId}/stage`);
       if (response.ok) {
         const stageData = await response.json();
         console.log('Loaded FDA 510(k) stage data:', stageData);
-        
+
         // Set the workflow step based on the database stage
         if (stageData.current_stage) {
           setWorkflowStep(stageData.current_stage);
-          
+
           // Also set the appropriate tab based on stage
           const stageTabMap = {
-            1: 'device-intake',  // Stage 1: Initial Device Assessment
-            2: 'predicate',      // Stage 2: Predicate Analysis
-            3: 'equivalence',    // Stage 3: Performance Testing
-            4: 'compliance',     // Stage 4: Clinical Validation
-            5: 'estar',          // Stage 5: eSTAR & RTA Prep
-            6: 'submission',     // Stage 6: Final QC Review
-            7: 'submission'      // Stage 7: FDA Submission
+            1: 'device-intake', // Stage 1: Initial Device Assessment
+            2: 'predicate', // Stage 2: Predicate Analysis
+            3: 'equivalence', // Stage 3: Performance Testing
+            4: 'compliance', // Stage 4: Clinical Validation
+            5: 'estar', // Stage 5: eSTAR & RTA Prep
+            6: 'submission', // Stage 6: Final QC Review
+            7: 'submission', // Stage 7: FDA Submission
           };
-          
+
           const targetTab = stageTabMap[stageData.current_stage] || 'device-intake';
           setActiveTab(targetTab);
-          
+
           // Update workflow progress
           setWorkflowProgress(stageData.overall_progress || 0);
-          
+
           // If we have eSTAR/RTA status, set those too
           if (stageData.estar_status) {
             setEstarStatus(stageData.estar_status);
@@ -451,7 +467,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         setWorkflowStep(project.state.workflowStep || 1);
       }
     }
-    
+
     // Restore project state
     if (project.state) {
       setDeviceProfile(project.state.deviceProfile || {});
@@ -459,19 +475,20 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       setLiteratureResults(project.state.literatureResults || []);
       setComplianceScore(project.state.complianceScore || null);
       setDocumentType(project.state.documentType || '510k');
+      setSelectedDocType(project.state.cerv2DocType || 'cerv2_510k');
     }
-    
+
     toast({
       title: 'Switched Project',
       description: `Now working on ${project.deviceName}`,
     });
-    
+
     setShowProjectSelector(false);
   };
 
   const saveCurrentProjectState = () => {
     if (!currentProjectId) return;
-    
+
     const updatedProjects = allProjects.map(p => {
       if (p.id === currentProjectId) {
         return {
@@ -486,26 +503,27 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             literatureResults,
             complianceScore,
             workflowStep,
-            documentType
-          }
+            documentType,
+            cerv2DocType: selectedDocType,
+          },
         };
       }
       return p;
     });
-    
+
     setAllProjects(updatedProjects);
     saveAllProjects(updatedProjects);
   };
 
-  const deleteProject = (projectId) => {
+  const deleteProject = projectId => {
     // Use functional update to avoid stale state issues
     setAllProjects(prevProjects => {
       const project = prevProjects.find(p => p.id === projectId);
       if (!project) return prevProjects;
-      
+
       const updated = prevProjects.filter(p => p.id !== projectId);
       saveAllProjects(updated);
-      
+
       // If deleting current project, switch to another or clear
       if (currentProjectId === projectId) {
         if (updated.length > 0) {
@@ -518,12 +536,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           localStorage.removeItem('currentMedicalDeviceProjectId');
         }
       }
-      
+
       toast({
         title: 'Project Deleted',
         description: `Deleted project: ${project.deviceName}`,
       });
-      
+
       return updated;
     });
   };
@@ -569,7 +587,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [showFixesDialog, setShowFixesDialog] = useState(false);
   const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
   const [templateData, setTemplateData] = useState(null);
-  
+
   // Document Vault & Section Editing State
   const [selectedSection, setSelectedSection] = useState(null); // Section selected from vault to edit
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
@@ -611,7 +629,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         lastUpdated: new Date().toISOString(),
       },
     });
-    
+
     // Ensure profile integrity before returning
     return ensureProfileIntegrity(baseProfile);
   });
@@ -676,7 +694,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   // Load project state when currentProjectId changes
   useEffect(() => {
     if (!currentProjectId) return;
-    
+
     const project = allProjects.find(p => p.id === currentProjectId);
     if (project && project.state) {
       // Rehydrate all project state
@@ -686,19 +704,27 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       setComplianceScore(project.state.complianceScore || {});
       setWorkflowStep(project.state.workflowStep || 1);
       setDocumentType(project.state.documentType || project.deviceType || '510k');
+      setSelectedDocType(project.state.cerv2DocType || 'cerv2_510k');
     }
   }, [currentProjectId, allProjects]);
 
   // Auto-save current project state periodically
   useEffect(() => {
     if (!currentProjectId) return;
-    
+
     const saveInterval = setInterval(() => {
       saveCurrentProjectState();
     }, 30000); // Save every 30 seconds
-    
+
     return () => clearInterval(saveInterval);
-  }, [currentProjectId, deviceProfile, predicateDevices, literatureResults, complianceScore, workflowStep]);
+  }, [
+    currentProjectId,
+    deviceProfile,
+    predicateDevices,
+    literatureResults,
+    complianceScore,
+    workflowStep,
+  ]);
 
   // Update device profile when device information changes and persist it
   useEffect(() => {
@@ -714,10 +740,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
         // Ensure the updated profile maintains proper structure
         const validatedProfile = ensureProfileIntegrity(updatedProfile);
-        
+
         // Persist device profile to localStorage
         saveState('deviceProfile', validatedProfile);
-        
+
         return validatedProfile;
       });
     }
@@ -767,15 +793,15 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Always open in the inline document viewer for consistent experience
     setDocumentViewerData({
       isOpen: true,
       url: url,
       documentName: documentName,
-      type: url.endsWith('.pdf') ? 'pdf' : 'other'
+      type: url.endsWith('.pdf') ? 'pdf' : 'other',
     });
-    
+
     if (showToast) {
       showToast({
         title: 'Opening Document',
@@ -1387,21 +1413,21 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     }
   };
 
-
   // Helper function to check if a tab is completed with proper validation
   // Placed at component level so it's accessible from both renderContent and renderNavigation
-  const isTabCompleted = (tabId) => {
-    switch(tabId) {
+  const isTabCompleted = tabId => {
+    switch (tabId) {
       case 'device-intake':
         // Must have all required fields, not just some
-        const isComplete = deviceProfile && 
-               deviceProfile.deviceName && 
-               deviceProfile.manufacturer && 
-               deviceProfile.intendedUse && 
-               deviceProfile.productCode && 
-               deviceProfile.regulationNumber &&
-               deviceProfile.deviceClass;
-        
+        const isComplete =
+          deviceProfile &&
+          deviceProfile.deviceName &&
+          deviceProfile.manufacturer &&
+          deviceProfile.intendedUse &&
+          deviceProfile.productCode &&
+          deviceProfile.regulationNumber &&
+          deviceProfile.deviceClass;
+
         if (tabId === 'device-intake') {
           console.log('🔍 Checking Device Intake completion:', {
             hasDeviceProfile: !!deviceProfile,
@@ -1411,16 +1437,19 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             productCode: deviceProfile?.productCode,
             regulationNumber: deviceProfile?.regulationNumber,
             deviceClass: deviceProfile?.deviceClass,
-            isComplete
+            isComplete,
           });
         }
-        
+
         return isComplete;
       case 'pathway-analyzer':
         return recommendedPathway && recommendedPathway.pathway;
       case 'predicates':
         // Must have found and selected at least one predicate
-        return (predicatesFound || (predicateDevices && predicateDevices.length > 0)) && selectedPredicate;
+        return (
+          (predicatesFound || (predicateDevices && predicateDevices.length > 0)) &&
+          selectedPredicate
+        );
       case 'device-data-center':
         return false; // Can check if minimum files uploaded
       case 'document-editor':
@@ -1437,29 +1466,43 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   };
 
   // Helper function to check if files are present for a section
-  const checkFilesPresent = (category) => {
+  const checkFilesPresent = category => {
     // Check EnhancedDocumentVault uploads or deviceProfile file references
-    switch(category) {
-      case 'bench': return !!deviceProfile?.benchFiles?.length;
-      case 'biocompatibility': return !!deviceProfile?.biocompFiles?.length;
-      case 'software': return !!deviceProfile?.softwareFiles?.length;
-      case 'cybersecurity': return !!deviceProfile?.cyberFiles?.length;
-      case 'clinical': return !!deviceProfile?.clinicalFiles?.length;
-      case 'sterility': return !!deviceProfile?.sterilityFiles?.length;
-      case 'emc': return !!deviceProfile?.emcFiles?.length;
-      case 'usability': return !!deviceProfile?.usabilityFiles?.length;
-      case 'labeling': return !!deviceProfile?.labelingFiles?.length;
-      default: return false;
+    switch (category) {
+      case 'bench':
+        return !!deviceProfile?.benchFiles?.length;
+      case 'biocompatibility':
+        return !!deviceProfile?.biocompFiles?.length;
+      case 'software':
+        return !!deviceProfile?.softwareFiles?.length;
+      case 'cybersecurity':
+        return !!deviceProfile?.cyberFiles?.length;
+      case 'clinical':
+        return !!deviceProfile?.clinicalFiles?.length;
+      case 'sterility':
+        return !!deviceProfile?.sterilityFiles?.length;
+      case 'emc':
+        return !!deviceProfile?.emcFiles?.length;
+      case 'usability':
+        return !!deviceProfile?.usabilityFiles?.length;
+      case 'labeling':
+        return !!deviceProfile?.labelingFiles?.length;
+      default:
+        return false;
     }
   };
 
   // Helper function to check if a section is complete
-  const checkSectionComplete = (sectionId) => {
+  const checkSectionComplete = sectionId => {
     // Check if all required fields and documents for a section are complete
-    switch(sectionId) {
+    switch (sectionId) {
       case 'device-intake':
-        return deviceProfile?.deviceName && deviceProfile?.manufacturer && 
-               deviceProfile?.intendedUse && deviceProfile?.productCode;
+        return (
+          deviceProfile?.deviceName &&
+          deviceProfile?.manufacturer &&
+          deviceProfile?.intendedUse &&
+          deviceProfile?.productCode
+        );
       case 'pathway-analyzer':
         return !!deviceProfile?.recommendedPathway;
       case 'predicates':
@@ -1477,103 +1520,188 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       case 'admin-forms':
         return !!deviceProfile?.forms3514 && !!deviceProfile?.forms3601;
       case '510k-summary':
-        return !!deviceProfile?.summaryType && 
-               (!!deviceProfile?.summary807_92 || !!deviceProfile?.statement807_93);
+        return (
+          !!deviceProfile?.summaryType &&
+          (!!deviceProfile?.summary807_92 || !!deviceProfile?.statement807_93)
+        );
       default:
         return false;
     }
   };
 
   // FDA 510(k) 7-Stage Workflow Gate Conditions - Enhanced with all 6 gate types
-  const checkStageGateConditions = (stage) => {
+  const checkStageGateConditions = stage => {
     switch (stage) {
       case 'setup':
         return {
           // Boolean checks
-          programSelected: { type: 'boolean', value: !!deviceProfile?.submissionType, label: 'Program Selected' },
+          programSelected: {
+            type: 'boolean',
+            value: !!deviceProfile?.submissionType,
+            label: 'Program Selected',
+          },
           // String non-empty checks
-          productCodeSet: { type: 'string_nonempty', value: deviceProfile?.productCode, label: 'Product Code' },
-          intendedUseDrafted: { type: 'string_nonempty', value: deviceProfile?.intendedUse, label: 'Intended Use' },
+          productCodeSet: {
+            type: 'string_nonempty',
+            value: deviceProfile?.productCode,
+            label: 'Product Code',
+          },
+          intendedUseDrafted: {
+            type: 'string_nonempty',
+            value: deviceProfile?.intendedUse,
+            label: 'Intended Use',
+          },
           // Section complete check
-          deviceIntakeComplete: { type: 'section_complete', value: checkSectionComplete('device-intake'), label: 'Device Intake' },
+          deviceIntakeComplete: {
+            type: 'section_complete',
+            value: checkSectionComplete('device-intake'),
+            label: 'Device Intake',
+          },
           // Overall gate status
-          passed: !!deviceProfile?.submissionType && !!deviceProfile?.productCode && 
-                  deviceProfile?.productCode !== 'UNASSIGNED' && checkSectionComplete('device-intake')
+          passed:
+            !!deviceProfile?.submissionType &&
+            !!deviceProfile?.productCode &&
+            deviceProfile?.productCode !== 'UNASSIGNED' &&
+            checkSectionComplete('device-intake'),
         };
-      
+
       case 'strategy':
         const setupGate = checkStageGateConditions('setup');
         return {
           // Boolean check
-          predicateSelected: { type: 'boolean', value: !!deviceProfile?.primaryPredicate, label: 'Predicate Selected' },
+          predicateSelected: {
+            type: 'boolean',
+            value: !!deviceProfile?.primaryPredicate,
+            label: 'Predicate Selected',
+          },
           // Section complete check
-          seStrategyDefined: { type: 'section_complete', value: checkSectionComplete('se-strategy'), label: 'SE Strategy' },
+          seStrategyDefined: {
+            type: 'section_complete',
+            value: checkSectionComplete('se-strategy'),
+            label: 'SE Strategy',
+          },
           // Overall gate status
-          passed: setupGate.passed && !!deviceProfile?.primaryPredicate && checkSectionComplete('se-strategy')
+          passed:
+            setupGate.passed &&
+            !!deviceProfile?.primaryPredicate &&
+            checkSectionComplete('se-strategy'),
         };
-      
+
       case 'evidence_plan':
         const strategyGate = checkStageGateConditions('strategy');
         return {
           // Section complete checks
-          standardsMatrixReady: { type: 'section_complete', value: checkSectionComplete('standards-matrix'), label: 'Standards Matrix' },
-          testPlanReady: { type: 'section_complete', value: checkSectionComplete('test-plan'), label: 'Test Plan' },
+          standardsMatrixReady: {
+            type: 'section_complete',
+            value: checkSectionComplete('standards-matrix'),
+            label: 'Standards Matrix',
+          },
+          testPlanReady: {
+            type: 'section_complete',
+            value: checkSectionComplete('test-plan'),
+            label: 'Test Plan',
+          },
           // Overall gate status
-          passed: strategyGate.passed && checkSectionComplete('standards-matrix') && checkSectionComplete('test-plan')
+          passed:
+            strategyGate.passed &&
+            checkSectionComplete('standards-matrix') &&
+            checkSectionComplete('test-plan'),
         };
-      
+
       case 'evidence':
         const evidencePlanGate = checkStageGateConditions('evidence_plan');
         const benchFilesPresent = checkFilesPresent('bench');
         const biocompFilesPresent = checkFilesPresent('biocompatibility');
         return {
           // File present checks
-          benchTestingFiles: { type: 'file_present', value: benchFilesPresent, label: 'Bench Test Reports' },
-          biocompatibilityFiles: { type: 'file_present', value: biocompFilesPresent, label: 'Biocompatibility Reports' },
+          benchTestingFiles: {
+            type: 'file_present',
+            value: benchFilesPresent,
+            label: 'Bench Test Reports',
+          },
+          biocompatibilityFiles: {
+            type: 'file_present',
+            value: biocompFilesPresent,
+            label: 'Biocompatibility Reports',
+          },
           // Coverage threshold check
-          evidenceCoverage: { type: 'coverage', value: deviceProfile?.evidenceCoverage || 0, threshold: 0.8, label: 'Evidence Coverage' },
+          evidenceCoverage: {
+            type: 'coverage',
+            value: deviceProfile?.evidenceCoverage || 0,
+            threshold: 0.8,
+            label: 'Evidence Coverage',
+          },
           // Overall gate status
-          passed: evidencePlanGate.passed && (deviceProfile?.evidenceCoverage >= 0.8)
+          passed: evidencePlanGate.passed && deviceProfile?.evidenceCoverage >= 0.8,
         };
-      
+
       case 'authoring':
         const evidenceGate = checkStageGateConditions('evidence');
         return {
           // Section complete checks
-          adminFormsReady: { type: 'section_complete', value: (!!deviceProfile?.forms3514 && !!deviceProfile?.forms3601), label: 'Admin Forms' },
-          narrativesReady: { type: 'section_complete', value: !!deviceProfile?.seDiscussion, label: 'SE Discussion' },
-          summaryComplete: { type: 'section_complete', value: checkSectionComplete('510k-summary'), label: '510(k) Summary/Statement' },
+          adminFormsReady: {
+            type: 'section_complete',
+            value: !!deviceProfile?.forms3514 && !!deviceProfile?.forms3601,
+            label: 'Admin Forms',
+          },
+          narrativesReady: {
+            type: 'section_complete',
+            value: !!deviceProfile?.seDiscussion,
+            label: 'SE Discussion',
+          },
+          summaryComplete: {
+            type: 'section_complete',
+            value: checkSectionComplete('510k-summary'),
+            label: '510(k) Summary/Statement',
+          },
           // Overall gate status
-          passed: evidenceGate.passed && !!deviceProfile?.forms3514 && !!deviceProfile?.forms3601 && checkSectionComplete('510k-summary')
+          passed:
+            evidenceGate.passed &&
+            !!deviceProfile?.forms3514 &&
+            !!deviceProfile?.forms3601 &&
+            checkSectionComplete('510k-summary'),
         };
-      
+
       case 'estar_rta':
         const authoringGate = checkStageGateConditions('authoring');
         return {
           // File present check
-          estarPackageFile: { type: 'file_present', value: !!deviceProfile?.estarPackageFile, label: 'eSTAR Package' },
+          estarPackageFile: {
+            type: 'file_present',
+            value: !!deviceProfile?.estarPackageFile,
+            label: 'eSTAR Package',
+          },
           // Threshold check
-          rtaScore: { type: 'threshold', value: deviceProfile?.rtaScore || 0, threshold: 0.9, label: 'RTA Score' },
+          rtaScore: {
+            type: 'threshold',
+            value: deviceProfile?.rtaScore || 0,
+            threshold: 0.9,
+            label: 'RTA Score',
+          },
           // Overall gate status
-          passed: authoringGate.passed && (deviceProfile?.rtaScore >= 0.9)
+          passed: authoringGate.passed && deviceProfile?.rtaScore >= 0.9,
         };
-      
+
       case 'submit_ai':
         const estarGate = checkStageGateConditions('estar_rta');
         return {
           // String non-empty check
-          submissionId: { type: 'string_nonempty', value: deviceProfile?.submissionId, label: 'Submission ID' },
+          submissionId: {
+            type: 'string_nonempty',
+            value: deviceProfile?.submissionId,
+            label: 'Submission ID',
+          },
           // Overall gate status
-          passed: estarGate.passed && !!deviceProfile?.submissionId
+          passed: estarGate.passed && !!deviceProfile?.submissionId,
         };
-      
+
       default:
         return { passed: true };
     }
   };
 
   // Stage-based visibility for conditional sections based on device toggles
-  const isSectionVisible = (sectionId) => {
+  const isSectionVisible = sectionId => {
     // Software-specific sections
     const softwareSections = ['software', 'software_summary'];
     if (softwareSections.includes(sectionId)) {
@@ -1610,7 +1738,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           existingProject={deviceProfile}
           organizationId={organizationId}
           projectId={k510DocumentId || deviceProfile?.id}
-          onSave={(workflowData) => {
+          onSave={workflowData => {
             // Update device profile with enhanced workflow data
             const enhancedProfile = {
               ...deviceProfile,
@@ -1643,33 +1771,33 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               primaryPredicate: workflowData.primaryPredicateKNumber,
               predicateManufacturer: workflowData.predicateManufacturer,
               // Store full workflow data
-              workflowMetadata: workflowData
+              workflowMetadata: workflowData,
             };
-            
+
             setDeviceProfile(enhancedProfile);
             // Save to localStorage
             localStorage.setItem('510k_deviceProfile', JSON.stringify(enhancedProfile));
             localStorage.setItem('510k_enhanced_workflow', JSON.stringify(workflowData));
-            
+
             toast({
               title: 'Progress Saved',
               description: 'Your 510(k) workflow data has been saved successfully.',
             });
           }}
-          onComplete={(completedData) => {
+          onComplete={completedData => {
             toast({
               title: '510(k) Workflow Complete',
               description: 'All stages completed. Ready for FDA submission.',
               duration: 5000,
             });
-            
+
             // Navigate to submission tab
             setActiveTab('submission');
           }}
         />
       );
     }
-    
+
     // Pathway Analyzer Component - helps users choose between 510(k), PMA, or De Novo
     else if (activeTab === 'pathway-analyzer') {
       return (
@@ -1680,15 +1808,18 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">Step 2: Determine Your Regulatory Pathway</h4>
+                  <h4 className="font-semibold text-purple-900 mb-1">
+                    Step 2: Determine Your Regulatory Pathway
+                  </h4>
                   <p className="text-sm text-purple-800">
-                    Based on your device profile from Step 1, this AI-powered analyzer will recommend the appropriate 
-                    FDA regulatory pathway (510(k), PMA, or De Novo). The recommendation considers device class, 
-                    intended use, and risk profile.
+                    Based on your device profile from Step 1, this AI-powered analyzer will
+                    recommend the appropriate FDA regulatory pathway (510(k), PMA, or De Novo). The
+                    recommendation considers device class, intended use, and risk profile.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">
-                    <strong>Prerequisites:</strong> Device Intake Form must be completed (Step 1). The analyzer uses 
-                    your device classification, intended use, and risk factors to determine the best pathway.
+                    <strong>Prerequisites:</strong> Device Intake Form must be completed (Step 1).
+                    The analyzer uses your device classification, intended use, and risk factors to
+                    determine the best pathway.
                   </div>
                 </div>
               </div>
@@ -1705,28 +1836,35 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     Overall Progress
                   </h3>
                   <span className="text-xs text-gray-500">
-                    {[
-                      isTabCompleted('device-intake'),
-                      isTabCompleted('pathway-analyzer'),
-                      isTabCompleted('predicates'),
-                      isTabCompleted('equivalence'),
-                      isTabCompleted('compliance')
-                    ].filter(Boolean).length} / 5 Core Steps Complete
-                  </span>
-                </div>
-                
-                {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                  <div 
-                    className="bg-gradient-to-r from-blue-600 to-green-600 h-2 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${([
+                    {
+                      [
                         isTabCompleted('device-intake'),
                         isTabCompleted('pathway-analyzer'),
                         isTabCompleted('predicates'),
                         isTabCompleted('equivalence'),
-                        isTabCompleted('compliance')
-                      ].filter(Boolean).length / 5) * 100}%` 
+                        isTabCompleted('compliance'),
+                      ].filter(Boolean).length
+                    }{' '}
+                    / 5 Core Steps Complete
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                  <div
+                    className="bg-gradient-to-r from-blue-600 to-green-600 h-2 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${
+                        ([
+                          isTabCompleted('device-intake'),
+                          isTabCompleted('pathway-analyzer'),
+                          isTabCompleted('predicates'),
+                          isTabCompleted('equivalence'),
+                          isTabCompleted('compliance'),
+                        ].filter(Boolean).length /
+                          5) *
+                        100
+                      }%`,
                     }}
                   />
                 </div>
@@ -1735,30 +1873,35 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <div className="bg-green-50 rounded p-2 text-center">
                     <div className="font-bold text-green-700">
-                      {[
-                        isTabCompleted('device-intake'),
-                        isTabCompleted('pathway-analyzer'),
-                        isTabCompleted('predicates'),
-                        isTabCompleted('equivalence'),
-                        isTabCompleted('compliance')
-                      ].filter(Boolean).length}
+                      {
+                        [
+                          isTabCompleted('device-intake'),
+                          isTabCompleted('pathway-analyzer'),
+                          isTabCompleted('predicates'),
+                          isTabCompleted('equivalence'),
+                          isTabCompleted('compliance'),
+                        ].filter(Boolean).length
+                      }
                     </div>
                     <div className="text-green-600">Completed</div>
                   </div>
                   <div className="bg-blue-50 rounded p-2 text-center">
                     <div className="font-bold text-blue-700">
-                      {5 - [
-                        isTabCompleted('device-intake'),
-                        isTabCompleted('pathway-analyzer'),
-                        isTabCompleted('predicates'),
-                        isTabCompleted('equivalence'),
-                        isTabCompleted('compliance')
-                      ].filter(Boolean).length}
+                      {5 -
+                        [
+                          isTabCompleted('device-intake'),
+                          isTabCompleted('pathway-analyzer'),
+                          isTabCompleted('predicates'),
+                          isTabCompleted('equivalence'),
+                          isTabCompleted('compliance'),
+                        ].filter(Boolean).length}
                     </div>
                     <div className="text-blue-600">Remaining</div>
                   </div>
                   <div className="bg-purple-50 rounded p-2 text-center">
-                    <div className="font-bold text-purple-700">{deviceProfile.deviceName ? '1' : '0'}</div>
+                    <div className="font-bold text-purple-700">
+                      {deviceProfile.deviceName ? '1' : '0'}
+                    </div>
                     <div className="text-purple-600">Device(s)</div>
                   </div>
                 </div>
@@ -1785,19 +1928,24 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                         className="bg-green-600 hover:bg-green-700 text-white"
                         onClick={() => {
                           // Intelligently determine next incomplete step using validation
-                          const isDeviceIntakeComplete = deviceProfile.deviceName && 
-                                                         deviceProfile.manufacturer && 
-                                                         deviceProfile.intendedUse && 
-                                                         deviceProfile.productCode && 
-                                                         deviceProfile.regulationNumber &&
-                                                         deviceProfile.deviceClass;
-                          
-                          const isPathwayComplete = recommendedPathway && recommendedPathway.pathway;
-                          const isPredicatesComplete = (predicatesFound || (predicateDevices && predicateDevices.length > 0)) && selectedPredicate;
-                          
+                          const isDeviceIntakeComplete =
+                            deviceProfile.deviceName &&
+                            deviceProfile.manufacturer &&
+                            deviceProfile.intendedUse &&
+                            deviceProfile.productCode &&
+                            deviceProfile.regulationNumber &&
+                            deviceProfile.deviceClass;
+
+                          const isPathwayComplete =
+                            recommendedPathway && recommendedPathway.pathway;
+                          const isPredicatesComplete =
+                            (predicatesFound ||
+                              (predicateDevices && predicateDevices.length > 0)) &&
+                            selectedPredicate;
+
                           let nextStep = 'device-intake';
                           let nextStepName = 'Device Intake Form';
-                          
+
                           if (!isDeviceIntakeComplete) {
                             nextStep = 'device-intake';
                             nextStepName = 'Device Intake Form';
@@ -1817,7 +1965,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             nextStep = 'document-editor';
                             nextStepName = 'Document Editor';
                           }
-                          
+
                           setActiveTab(nextStep);
                           toast({
                             title: 'Resuming Your Work',
@@ -1832,55 +1980,88 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     )}
                   </div>
                   <p className="text-sm text-gray-700 mb-4">
-                    Follow this step-by-step workflow to build your complete FDA 510(k) submission package:
+                    Follow this step-by-step workflow to build your complete FDA 510(k) submission
+                    package:
                   </p>
-                  
+
                   {/* Step Progress Indicator */}
                   <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-sm text-gray-900">Your 510(k) Submission Workflow</h4>
+                      <h4 className="font-semibold text-sm text-gray-900">
+                        Your 510(k) Submission Workflow
+                      </h4>
                       <span className="text-xs text-gray-500">Follow steps 1-12 in order</span>
                     </div>
-                    
+
                     {/* Visual Progress Flow */}
                     <div className="flex items-center justify-between space-x-2 mb-4 overflow-x-auto">
                       <div className="flex items-center space-x-1">
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">1</div>
+                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          1
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">2</div>
+                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          2
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">3</div>
+                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          3
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-cyan-100 text-cyan-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">4</div>
+                        <div className="bg-cyan-100 text-cyan-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          4
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">5</div>
+                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          5
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-yellow-100 text-yellow-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">6</div>
+                        <div className="bg-yellow-100 text-yellow-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          6
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">7</div>
+                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          7
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-orange-100 text-orange-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">8</div>
+                        <div className="bg-orange-100 text-orange-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          8
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-red-100 text-red-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">9</div>
+                        <div className="bg-red-100 text-red-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          9
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">10</div>
+                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          10
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">11</div>
+                        <div className="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          11
+                        </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">12</div>
+                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                          12
+                        </div>
                       </div>
                     </div>
-                    
+
                     {/* Quick Start Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</div>
-                          <h5 className="font-semibold text-xs text-blue-900">Step 1: Device Intake</h5>
+                          <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                            1
+                          </div>
+                          <h5 className="font-semibold text-xs text-blue-900">
+                            Step 1: Device Intake
+                          </h5>
                         </div>
-                        <p className="text-xs text-blue-700 mb-2">Complete comprehensive intake form</p>
-                        <Button 
-                          size="sm" 
+                        <p className="text-xs text-blue-700 mb-2">
+                          Complete comprehensive intake form
+                        </p>
+                        <Button
+                          size="sm"
                           variant="default"
                           className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
                           onClick={() => setActiveTab('device-intake')}
@@ -1890,16 +2071,22 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           Start Here
                         </Button>
                       </div>
-                      
+
                       <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-3 rounded-lg border border-cyan-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-cyan-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</div>
-                          <h5 className="font-semibold text-xs text-cyan-900">Step 2: Data Collection</h5>
+                          <div className="bg-cyan-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                            2
+                          </div>
+                          <h5 className="font-semibold text-xs text-cyan-900">
+                            Step 2: Data Collection
+                          </h5>
                         </div>
-                        <p className="text-xs text-cyan-700 mb-2">Upload test reports & documents</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <p className="text-xs text-cyan-700 mb-2">
+                          Upload test reports & documents
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="w-full text-xs bg-white hover:bg-cyan-50"
                           onClick={() => setActiveTab('device-data-center')}
                           data-testid="banner-step2-datacenter"
@@ -1908,16 +2095,22 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           Data Center
                         </Button>
                       </div>
-                      
+
                       <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg border border-green-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">3</div>
-                          <h5 className="font-semibold text-xs text-green-900">Step 3: Document Creation</h5>
+                          <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                            3
+                          </div>
+                          <h5 className="font-semibold text-xs text-green-900">
+                            Step 3: Document Creation
+                          </h5>
                         </div>
-                        <p className="text-xs text-green-700 mb-2">Write 510(k) with AI assistance</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <p className="text-xs text-green-700 mb-2">
+                          Write 510(k) with AI assistance
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="w-full text-xs bg-white hover:bg-green-50"
                           onClick={() => setActiveTab('document-editor')}
                           data-testid="banner-step3-editor"
@@ -1926,16 +2119,20 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           Document Editor
                         </Button>
                       </div>
-                      
+
                       <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 rounded-lg border border-teal-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">4</div>
-                          <h5 className="font-semibold text-xs text-teal-900">Step 4: Submission</h5>
+                          <div className="bg-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                            4
+                          </div>
+                          <h5 className="font-semibold text-xs text-teal-900">
+                            Step 4: Submission
+                          </h5>
                         </div>
                         <p className="text-xs text-teal-700 mb-2">Compliance check & finalize</p>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="w-full text-xs bg-white hover:bg-teal-50"
                           onClick={() => setActiveTab('compliance')}
                           data-testid="banner-step4-compliance"
@@ -1951,8 +2148,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       <BookOpen className="h-3 w-3" />
                       New to 510(k)?
                     </span>
-                    <Button 
-                      variant="link" 
+                    <Button
+                      variant="link"
                       className="h-auto p-0 text-xs text-blue-600"
                       onClick={() => setActiveTab('fda-guidance')}
                       data-testid="banner-goto-guidance"
@@ -1960,8 +2157,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       Read FDA Guidance
                     </Button>
                     <span className="text-gray-400">•</span>
-                    <Button 
-                      variant="link" 
+                    <Button
+                      variant="link"
                       className="h-auto p-0 text-xs text-blue-600"
                       onClick={() => setActiveTab('assistant')}
                       data-testid="banner-goto-assistant"
@@ -1990,8 +2187,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <Label htmlFor="device-risk" className="text-sm font-medium">
                     Device Risk Level
                   </Label>
-                  <Select 
-                    onValueChange={(value) => {
+                  <Select
+                    onValueChange={value => {
                       setPathwayAnalysis(prev => ({ ...prev, riskLevel: value }));
                     }}
                     data-testid="select-risk-level"
@@ -2010,8 +2207,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <Label htmlFor="predicate-exists" className="text-sm font-medium">
                     Similar Device on Market?
                   </Label>
-                  <Select 
-                    onValueChange={(value) => {
+                  <Select
+                    onValueChange={value => {
                       setPathwayAnalysis(prev => ({ ...prev, predicateExists: value }));
                     }}
                     data-testid="select-predicate-exists"
@@ -2030,8 +2227,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <Label htmlFor="device-type" className="text-sm font-medium">
                     Device Type
                   </Label>
-                  <Select 
-                    onValueChange={(value) => {
+                  <Select
+                    onValueChange={value => {
                       setPathwayAnalysis(prev => ({ ...prev, deviceType: value }));
                     }}
                     data-testid="select-device-type"
@@ -2041,7 +2238,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="implantable">Implantable</SelectItem>
-                      <SelectItem value="life-sustaining">Life-Sustaining/Life-Supporting</SelectItem>
+                      <SelectItem value="life-sustaining">
+                        Life-Sustaining/Life-Supporting
+                      </SelectItem>
                       <SelectItem value="diagnostic">In Vitro Diagnostic</SelectItem>
                       <SelectItem value="therapeutic">Therapeutic</SelectItem>
                       <SelectItem value="monitoring">Monitoring/Measurement</SelectItem>
@@ -2053,8 +2252,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <Label htmlFor="intended-use-risk" className="text-sm font-medium">
                     Intended Use Risk
                   </Label>
-                  <Select 
-                    onValueChange={(value) => {
+                  <Select
+                    onValueChange={value => {
                       setPathwayAnalysis(prev => ({ ...prev, intendedUseRisk: value }));
                     }}
                     data-testid="select-intended-use-risk"
@@ -2077,24 +2276,33 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 onClick={async () => {
                   setIsAnalyzingPathway(true);
                   setPmaError(null);
-                  
+
                   try {
                     // Simulate pathway analysis logic
                     await new Promise(resolve => setTimeout(resolve, 1500));
-                    
+
                     // Determine recommended pathway based on inputs
                     const analysis = pathwayAnalysis || {};
                     let recommended = '510(k)';
                     let confidence = 85;
                     let reasons = [];
-                    
-                    if (analysis.riskLevel === 'high' || analysis.deviceType === 'implantable' || 
-                        analysis.deviceType === 'life-sustaining' || analysis.intendedUseRisk === 'critical') {
+
+                    if (
+                      analysis.riskLevel === 'high' ||
+                      analysis.deviceType === 'implantable' ||
+                      analysis.deviceType === 'life-sustaining' ||
+                      analysis.intendedUseRisk === 'critical'
+                    ) {
                       recommended = 'PMA';
                       reasons.push('High-risk device classification');
-                      reasons.push('Requires clinical data to demonstrate safety and effectiveness');
+                      reasons.push(
+                        'Requires clinical data to demonstrate safety and effectiveness'
+                      );
                       confidence = 92;
-                    } else if (analysis.predicateExists === 'no' && analysis.riskLevel === 'moderate') {
+                    } else if (
+                      analysis.predicateExists === 'no' &&
+                      analysis.riskLevel === 'moderate'
+                    ) {
                       recommended = 'De Novo';
                       reasons.push('Novel device without predicate');
                       reasons.push('Moderate risk classification');
@@ -2104,25 +2312,25 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       reasons.push('Can demonstrate substantial equivalence');
                       confidence = 90;
                     }
-                    
+
                     setRecommendedPathway({
                       pathway: recommended,
                       confidence: confidence,
                       reasons: reasons,
-                      analysisDate: new Date().toISOString()
+                      analysisDate: new Date().toISOString(),
                     });
-                    
+
                     toast({
-                      title: "Analysis Complete",
+                      title: 'Analysis Complete',
                       description: `Recommended pathway: ${recommended} (${confidence}% confidence)`,
                     });
                   } catch (error) {
                     console.error('Pathway analysis error:', error);
                     setPmaError('Failed to analyze pathway. Please try again.');
                     toast({
-                      title: "Analysis Failed",
-                      description: "Error analyzing regulatory pathway",
-                      variant: "destructive"
+                      title: 'Analysis Failed',
+                      description: 'Error analyzing regulatory pathway',
+                      variant: 'destructive',
                     });
                   } finally {
                     setIsAnalyzingPathway(false);
@@ -2164,7 +2372,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       <h4 className="font-medium mb-2">Key Factors:</h4>
                       <ul className="list-disc pl-5 space-y-1">
                         {recommendedPathway.reasons.map((reason, idx) => (
-                          <li key={idx} className="text-sm text-gray-700">{reason}</li>
+                          <li key={idx} className="text-sm text-gray-700">
+                            {reason}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -2177,7 +2387,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             setActiveTab('device-profile');
                           }
                           toast({
-                            title: "Starting Submission Process",
+                            title: 'Starting Submission Process',
                             description: `Navigating to ${recommendedPathway.pathway} workflow`,
                           });
                         }}
@@ -2212,9 +2422,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         <div className="p-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-800">
-                PMA Device Search
-              </CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-800">PMA Device Search</CardTitle>
               <CardDescription>
                 Search FDA Pre-Market Approval database for Class III medical devices
               </CardDescription>
@@ -2231,8 +2439,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       id="pma-search"
                       placeholder="Enter device name, manufacturer, or PMA number..."
                       value={pmaSearchQuery}
-                      onChange={(e) => setPmaSearchQuery(e.target.value)}
-                      onKeyPress={(e) => {
+                      onChange={e => setPmaSearchQuery(e.target.value)}
+                      onKeyPress={e => {
                         if (e.key === 'Enter') {
                           document.getElementById('pma-search-button')?.click();
                         }
@@ -2245,37 +2453,37 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                         setIsLoadingPma(true);
                         setPmaError(null);
                         setPmaDevices([]);
-                        
+
                         try {
                           const searchCriteria = {
                             deviceName: pmaSearchQuery,
                             genericName: pmaSearchQuery,
-                            manufacturer: pmaSearchQuery
+                            manufacturer: pmaSearchQuery,
                           };
-                          
+
                           const results = await fdaPMAService.searchPMADevices(searchCriteria);
-                          
+
                           if (results && results.length > 0) {
                             setPmaDevices(results);
                             toast({
-                              title: "Search Complete",
+                              title: 'Search Complete',
                               description: `Found ${results.length} PMA devices`,
                             });
                           } else {
                             setPmaDevices([]);
                             toast({
-                              title: "No Results",
-                              description: "No PMA devices found matching your search",
-                              variant: "default"
+                              title: 'No Results',
+                              description: 'No PMA devices found matching your search',
+                              variant: 'default',
                             });
                           }
                         } catch (error) {
                           console.error('PMA search error:', error);
                           setPmaError('Failed to search PMA devices. Please try again.');
                           toast({
-                            title: "Search Failed",
-                            description: error.message || "Error searching PMA database",
-                            variant: "destructive"
+                            title: 'Search Failed',
+                            description: error.message || 'Error searching PMA database',
+                            variant: 'destructive',
                           });
                         } finally {
                           setIsLoadingPma(false);
@@ -2312,20 +2520,22 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Search Results ({pmaDevices.length})</h3>
-                    <Badge variant="outline">
-                      FDA PMA Database
-                    </Badge>
+                    <Badge variant="outline">FDA PMA Database</Badge>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {pmaDevices.map((device, idx) => (
-                      <Card 
-                        key={idx} 
+                      <Card
+                        key={idx}
                         className="hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => {
-                          const isSelected = selectedPmaDevices.find(d => d.pma_number === device.pma_number);
+                          const isSelected = selectedPmaDevices.find(
+                            d => d.pma_number === device.pma_number
+                          );
                           if (isSelected) {
-                            setSelectedPmaDevices(selectedPmaDevices.filter(d => d.pma_number !== device.pma_number));
+                            setSelectedPmaDevices(
+                              selectedPmaDevices.filter(d => d.pma_number !== device.pma_number)
+                            );
                           } else {
                             setSelectedPmaDevices([...selectedPmaDevices, device]);
                           }
@@ -2338,7 +2548,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                               <div className="flex items-center gap-2">
                                 <input
                                   type="checkbox"
-                                  checked={selectedPmaDevices.some(d => d.pma_number === device.pma_number)}
+                                  checked={selectedPmaDevices.some(
+                                    d => d.pma_number === device.pma_number
+                                  )}
                                   onChange={() => {}}
                                   className="h-4 w-4 text-blue-600"
                                   data-testid={`checkbox-pma-${idx}`}
@@ -2381,23 +2593,25 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={async (e) => {
+                              onClick={async e => {
                                 e.stopPropagation();
                                 try {
-                                  const supplements = await fdaPMAService.getPMASupplements(device.pma_number);
+                                  const supplements = await fdaPMAService.getPMASupplements(
+                                    device.pma_number
+                                  );
                                   setPmaSupplements(prev => ({
                                     ...prev,
-                                    [device.pma_number]: supplements
+                                    [device.pma_number]: supplements,
                                   }));
                                   toast({
-                                    title: "Supplements Retrieved",
+                                    title: 'Supplements Retrieved',
                                     description: `Found ${supplements.total_supplements} supplements for ${device.pma_number}`,
                                   });
                                 } catch (error) {
                                   toast({
-                                    title: "Error",
-                                    description: "Failed to retrieve supplements",
-                                    variant: "destructive"
+                                    title: 'Error',
+                                    description: 'Failed to retrieve supplements',
+                                    variant: 'destructive',
                                   });
                                 }
                               }}
@@ -2418,7 +2632,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                         onClick={() => {
                           setActiveTab('pma-comparison');
                           toast({
-                            title: "Compare Devices",
+                            title: 'Compare Devices',
                             description: `Comparing ${selectedPmaDevices.length} selected devices`,
                           });
                         }}
@@ -2490,8 +2704,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             Attribute
                           </th>
                           {selectedPmaDevices.map((device, idx) => (
-                            <th 
-                              key={idx} 
+                            <th
+                              key={idx}
                               className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                               data-testid={`header-device-${idx}`}
                             >
@@ -2506,7 +2720,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             PMA Number
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <td
+                              key={idx}
+                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                            >
                               <Badge variant="outline">{device.pma_number}</Badge>
                             </td>
                           ))}
@@ -2546,7 +2763,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             Approval Date
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <td
+                              key={idx}
+                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                            >
                               {new Date(device.decision_date).toLocaleDateString()}
                             </td>
                           ))}
@@ -2556,7 +2776,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             Product Code
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <td
+                              key={idx}
+                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                            >
                               <code className="bg-gray-100 px-2 py-1 rounded">
                                 {device.product_code}
                               </code>
@@ -2578,11 +2801,18 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             Expedited Review
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <td
+                              key={idx}
+                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                            >
                               {device.expedited_review ? (
-                                <Badge variant="outline" className="bg-green-50">Yes</Badge>
+                                <Badge variant="outline" className="bg-green-50">
+                                  Yes
+                                </Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-gray-50">No</Badge>
+                                <Badge variant="outline" className="bg-gray-50">
+                                  No
+                                </Badge>
                               )}
                             </td>
                           ))}
@@ -2603,14 +2833,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           );
                           setPmaComparisonResults(analysis);
                           toast({
-                            title: "Analysis Complete",
-                            description: "Device comparison analysis generated",
+                            title: 'Analysis Complete',
+                            description: 'Device comparison analysis generated',
                           });
                         } catch (error) {
                           toast({
-                            title: "Analysis Failed",
-                            description: "Error analyzing devices",
-                            variant: "destructive"
+                            title: 'Analysis Failed',
+                            description: 'Error analyzing devices',
+                            variant: 'destructive',
                           });
                         } finally {
                           setIsLoadingPma(false);
@@ -2657,14 +2887,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <div key={idx} className="p-3 border rounded-lg">
                             <div className="flex justify-between items-start">
                               <div>
-                                <h4 className="font-medium">
-                                  {comp.pma_device.trade_name}
-                                </h4>
+                                <h4 className="font-medium">{comp.pma_device.trade_name}</h4>
                                 <p className="text-sm text-gray-600">
                                   PMA: {comp.pma_device.pma_number}
                                 </p>
                               </div>
-                              <Badge variant={comp.similarity_score > 0.6 ? "default" : "secondary"}>
+                              <Badge
+                                variant={comp.similarity_score > 0.6 ? 'default' : 'secondary'}
+                              >
                                 {Math.round(comp.similarity_score * 100)}% Match
                               </Badge>
                             </div>
@@ -2676,9 +2906,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                                 ))}
                               </ul>
                             </div>
-                            <p className="mt-2 text-sm text-blue-600">
-                              {comp.recommendation}
-                            </p>
+                            <p className="mt-2 text-sm text-blue-600">{comp.recommendation}</p>
                           </div>
                         ))}
                       </CardContent>
@@ -2715,10 +2943,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       id="pma-device-name"
                       placeholder="Enter device name"
                       value={pmaSubmissionData.deviceName || ''}
-                      onChange={(e) => setPmaSubmissionData(prev => ({
-                        ...prev,
-                        deviceName: e.target.value
-                      }))}
+                      onChange={e =>
+                        setPmaSubmissionData(prev => ({
+                          ...prev,
+                          deviceName: e.target.value,
+                        }))
+                      }
                       data-testid="input-pma-device-name"
                     />
                   </div>
@@ -2728,10 +2958,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       id="pma-manufacturer"
                       placeholder="Enter manufacturer name"
                       value={pmaSubmissionData.manufacturer || ''}
-                      onChange={(e) => setPmaSubmissionData(prev => ({
-                        ...prev,
-                        manufacturer: e.target.value
-                      }))}
+                      onChange={e =>
+                        setPmaSubmissionData(prev => ({
+                          ...prev,
+                          manufacturer: e.target.value,
+                        }))
+                      }
                       data-testid="input-pma-manufacturer"
                     />
                   </div>
@@ -2749,20 +2981,31 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                         { id: 'device-desc', label: 'Device Description', icon: Cpu },
                         { id: 'indications', label: 'Indications for Use', icon: ClipboardList },
                         { id: 'marketing', label: 'Marketing History', icon: BarChart },
-                        { id: 'summary', label: 'Summary of Safety & Effectiveness', icon: ShieldCheck },
+                        {
+                          id: 'summary',
+                          label: 'Summary of Safety & Effectiveness',
+                          icon: ShieldCheck,
+                        },
                         { id: 'conformity', label: 'Declaration of Conformity', icon: CheckSquare },
                         { id: 'clinical', label: 'Clinical Investigations', icon: Activity },
-                        { id: 'nonclinical', label: 'Non-Clinical Laboratory Studies', icon: HardDrive },
+                        {
+                          id: 'nonclinical',
+                          label: 'Non-Clinical Laboratory Studies',
+                          icon: HardDrive,
+                        },
                         { id: 'bibliography', label: 'Bibliography', icon: BookOpen },
-                      ].map((section) => (
-                        <div key={section.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      ].map(section => (
+                        <div
+                          key={section.id}
+                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                        >
                           <div className="flex items-center gap-3">
                             <section.icon className="h-5 w-5 text-blue-600" />
                             <span className="font-medium">{section.label}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant={pmaSubmissionData[section.id] ? "default" : "outline"}>
-                              {pmaSubmissionData[section.id] ? "Complete" : "Pending"}
+                            <Badge variant={pmaSubmissionData[section.id] ? 'default' : 'outline'}>
+                              {pmaSubmissionData[section.id] ? 'Complete' : 'Pending'}
                             </Badge>
                             <Button
                               size="sm"
@@ -2770,11 +3013,11 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                               onClick={() => {
                                 setPmaSubmissionData(prev => ({
                                   ...prev,
-                                  [section.id]: !prev[section.id]
+                                  [section.id]: !prev[section.id],
                                 }));
                                 toast({
-                                  title: "Section Updated",
-                                  description: `${section.label} marked as ${!pmaSubmissionData[section.id] ? "complete" : "pending"}`,
+                                  title: 'Section Updated',
+                                  description: `${section.label} marked as ${!pmaSubmissionData[section.id] ? 'complete' : 'pending'}`,
                                 });
                               }}
                               data-testid={`button-toggle-${section.id}`}
@@ -2795,17 +3038,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       const completedSections = Object.keys(pmaSubmissionData).filter(
                         key => pmaSubmissionData[key] === true
                       ).length;
-                      
+
                       if (completedSections < 5) {
                         toast({
-                          title: "Incomplete Submission",
-                          description: "Please complete all required sections before validation",
-                          variant: "destructive"
+                          title: 'Incomplete Submission',
+                          description: 'Please complete all required sections before validation',
+                          variant: 'destructive',
                         });
                       } else {
                         toast({
-                          title: "Validation Successful",
-                          description: "Your PMA submission is ready for review",
+                          title: 'Validation Successful',
+                          description: 'Your PMA submission is ready for review',
                         });
                       }
                     }}
@@ -2819,8 +3062,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     variant="outline"
                     onClick={() => {
                       toast({
-                        title: "Draft Saved",
-                        description: "Your PMA submission draft has been saved",
+                        title: 'Draft Saved',
+                        description: 'Your PMA submission draft has been saved',
                       });
                     }}
                     data-testid="button-save-draft"
@@ -2833,8 +3076,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     className="bg-green-600 hover:bg-green-700"
                     onClick={() => {
                       toast({
-                        title: "Generating PMA Package",
-                        description: "Your FDA-compliant PMA submission package is being prepared",
+                        title: 'Generating PMA Package',
+                        description: 'Your FDA-compliant PMA submission package is being prepared',
                       });
                     }}
                     data-testid="button-generate-pma"
@@ -2849,7 +3092,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <Info className="h-4 w-4" />
                   <AlertTitle>PMA Submission Guidance</AlertTitle>
                   <AlertDescription className="mt-2 space-y-2">
-                    <p>The PMA application must demonstrate reasonable assurance of safety and effectiveness for the device's intended use.</p>
+                    <p>
+                      The PMA application must demonstrate reasonable assurance of safety and
+                      effectiveness for the device's intended use.
+                    </p>
                     <ul className="list-disc pl-5 text-sm">
                       <li>Clinical data is typically required to support PMA approval</li>
                       <li>Manufacturing information must comply with Quality System Regulation</li>
@@ -2866,19 +3112,41 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     }
 
     // DOCUMENT EDITOR MUST BE CHECKED FIRST - BEFORE 510k GENERAL CHECK
-    else if (activeTab === 'document-editor' && documentType === '510k') {
-      console.log('🔥 RENDERING DOCUMENT EDITOR FOR 510(k)');
+    else if (activeTab === 'document-editor') {
+      const activeDocumentId =
+        selectedDocType === 'cerv2_510k'
+          ? k510DocumentId || `510K-${Date.now()}`
+          : selectedDocType === 'cerv2_pma'
+            ? pmaDocumentId || `PMA-${Date.now()}`
+            : cerDocumentId || `CER-${Date.now()}`;
+
       return (
         <div className="p-6 space-y-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold text-slate-700">Document Type</span>
+            <select
+              className="border border-slate-300 rounded-md px-3 py-2 text-sm"
+              value={selectedDocType}
+              onChange={event => setSelectedDocType(event.target.value)}
+            >
+              <option value="cerv2_510k">FDA 510(k)</option>
+              <option value="cerv2_pma">FDA PMA</option>
+              <option value="cerv2_cer">EU MDR CER</option>
+            </select>
+          </div>
+
           {/* Auto-Population Status Banner */}
           <Card className="bg-blue-50 border-blue-200 context-banner-enter">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
                 <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-blue-900 mb-1">Document Editor - Pre-Populated from Your Intake Data</h4>
+                  <h4 className="font-semibold text-blue-900 mb-1">
+                    Document Editor - Pre-Populated from Your Intake Data
+                  </h4>
                   <p className="text-sm text-blue-800 mb-2">
-                    All FDA 510(k) document templates have been automatically populated with your device information from Step 1.
+                    {docTypeLabel} templates are populated with your device information where
+                    available.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div className="bg-white rounded p-2 border border-blue-200">
@@ -2887,7 +3155,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     </div>
                     <div className="bg-white rounded p-2 border border-blue-200">
                       <div className="font-semibold text-blue-900 mb-1">Manufacturer ✓</div>
-                      <div className="text-blue-700">{deviceProfile?.manufacturer || 'Not set'}</div>
+                      <div className="text-blue-700">
+                        {deviceProfile?.manufacturer || 'Not set'}
+                      </div>
                     </div>
                     <div className="bg-white rounded p-2 border border-blue-200">
                       <div className="font-semibold text-blue-900 mb-1">Product Code ✓</div>
@@ -2895,7 +3165,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     </div>
                   </div>
                   <p className="text-xs text-blue-600 font-semibold mt-2">
-                    💡 Simply edit the pre-filled sections or use the AI Writing Helper to enhance content!
+                    💡 Simply edit the pre-filled sections or use the AI Writing Helper to enhance
+                    content!
                   </p>
                 </div>
               </div>
@@ -2903,63 +3174,71 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           </Card>
 
           <MedicalDeviceDocumentEditor
-            documentType="cerv2_510k"
+            documentType={selectedDocType}
             selectedSection={selectedSection} // Pass section selected from vault
-          deviceProfile={deviceProfile || {
-            deviceName: deviceName,
-            manufacturer: manufacturer,
-            intendedUse: intendedUse,
-            productCode: productCode,
-            regulationNumber: regulationNumber,
-            predicateDevice: selectedPredicate?.k_number,
-            predicateManufacturer: selectedPredicate?.applicant,
-            mdClass: deviceClass,
-            udi: deviceUdi,
-            description: deviceProfile?.description || '',
-            technicalSpecifications: deviceProfile?.technicalSpecifications || ''
-          }}
-          predicateDevices={predicateDevices}
-          onSectionSaved={async (section) => {
-            // Invalidate React Query cache to refresh vault immediately
-            await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
-            
-            toast({
-              title: 'Section Saved',
-              description: `${section.section_number} ${section.section_title} saved - Vault refreshed`,
-            });
-          }}
-          literatureResults={literatureResults}
-          documentId={k510DocumentId || `510K-${Date.now()}`}
-          existingContent={loadSavedState(`document_content_510k`, '')}
-          onSave={(data) => {
-            toast({
-              title: 'FDA 510(k) Document Saved',
-              description: 'Your submission has been saved successfully',
-            });
-            
-            if (!k510DocumentId && data.documentId) {
-              setK510DocumentId(data.documentId);
+            deviceProfile={
+              deviceProfile || {
+                deviceName: deviceName,
+                manufacturer: manufacturer,
+                intendedUse: intendedUse,
+                productCode: productCode,
+                regulationNumber: regulationNumber,
+                predicateDevice: selectedPredicate?.k_number,
+                predicateManufacturer: selectedPredicate?.applicant,
+                mdClass: deviceClass,
+                udi: deviceUdi,
+                description: deviceProfile?.description || '',
+                technicalSpecifications: deviceProfile?.technicalSpecifications || '',
+              }
             }
-          }}
-          onExport={(format) => {
-            toast({
-              title: `Export ${format.toUpperCase()} Successful`,
-              description: 'Your 510(k) document has been exported',
-            });
-          }}
-          readOnly={false}
+            predicateDevices={predicateDevices}
+            onSectionSaved={async section => {
+              // Invalidate React Query cache to refresh vault immediately
+              await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
+
+              toast({
+                title: 'Section Saved',
+                description: `${section.section_number} ${section.section_title} saved - Vault refreshed`,
+              });
+            }}
+            literatureResults={literatureResults}
+            documentId={activeDocumentId}
+            existingContent={loadSavedState(`document_content_${selectedDocType}`, '')}
+            onSave={data => {
+              toast({
+                title: `${docTypeLabel} Document Saved`,
+                description: `Your ${docTypeLabel} submission has been saved successfully`,
+              });
+
+              if (selectedDocType === 'cerv2_510k' && !k510DocumentId && data.documentId) {
+                setK510DocumentId(data.documentId);
+              }
+              if (selectedDocType === 'cerv2_pma' && !pmaDocumentId && data.documentId) {
+                setPmaDocumentId(data.documentId);
+              }
+              if (selectedDocType === 'cerv2_cer' && !cerDocumentId && data.documentId) {
+                setCerDocumentId(data.documentId);
+              }
+            }}
+            onExport={format => {
+              toast({
+                title: `Export ${format.toUpperCase()} Successful`,
+                description: `Your ${docTypeLabel} document has been exported`,
+              });
+            }}
+            readOnly={false}
           />
         </div>
       );
     }
-    
+
     // Document Vault - handle for BOTH CER and 510k
     else if (activeTab === 'document-vault') {
       return (
         <EnhancedDocumentVault
-          documentType={documentType}
+          documentType={selectedDocType}
           projectId={currentProjectId}
-          onSectionSelect={(section) => {
+          onSectionSelect={section => {
             setSelectedSection(section);
             setActiveTab('document-editor');
             toast({
@@ -2967,7 +3246,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               description: `Editing: ${section.section_number} ${section.section_title}`,
             });
           }}
-          onFileClick={(file) => {
+          onFileClick={file => {
             toast({
               title: 'Document Selected',
               description: `Opening ${file.name}`,
@@ -2982,12 +3261,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         />
       );
     }
-    
+
     // Device Data Center - handle for 510k
     else if (activeTab === 'device-data-center') {
       return (
         <div className="p-6">
-          <DeviceDataCenterEnhanced 
+          <DeviceDataCenterEnhanced
             projectId={deviceProfile?.id?.toString()}
             workflowStage={workflowStep}
             mode="full"
@@ -2995,19 +3274,19 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         </div>
       );
     }
-    
+
     // ============================================================================
     // STAGE 0: SETUP - Device Intake & Predicate Search
     // ============================================================================
-    
+
     // Predicate Finder - FDA workflow tab
     else if (activeTab === 'predicates') {
       console.log('[CERV2Page] Rendering predicates tab:', {
         activeTab,
         deviceProfile,
-        PredicateFinderPanelExists: !!PredicateFinderPanel
+        PredicateFinderPanelExists: !!PredicateFinderPanel,
       });
-      
+
       return (
         <div className="p-6 space-y-6" data-testid="predicate-finder-content">
           <Card className="bg-purple-50 border-purple-200 context-banner-enter">
@@ -3015,21 +3294,25 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">Predicate & Regulation Finder</h4>
+                  <h4 className="font-semibold text-purple-900 mb-1">
+                    Predicate & Regulation Finder
+                  </h4>
                   <p className="text-sm text-purple-800">
-                    Search FDA's database for cleared devices similar to yours. Predicate devices are previously 
-                    cleared products with similar intended use and technological characteristics. Finding strong 
-                    predicates is essential for demonstrating substantial equivalence.
+                    Search FDA's database for cleared devices similar to yours. Predicate devices
+                    are previously cleared products with similar intended use and technological
+                    characteristics. Finding strong predicates is essential for demonstrating
+                    substantial equivalence.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">
-                    <strong>Prerequisites:</strong> Device profile from Device Intake (device name, product code, intended use). 
-                    Search uses your product code, regulation number, and device description to find relevant predicates.
+                    <strong>Prerequisites:</strong> Device profile from Device Intake (device name,
+                    product code, intended use). Search uses your product code, regulation number,
+                    and device description to find relevant predicates.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <PredicateFinderPanel
             deviceProfile={deviceProfile}
             setDeviceProfile={newProfile => {
@@ -3047,7 +3330,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     // ============================================================================
     // STAGE 1: STRATEGY - Substantial Equivalence Development
     // ============================================================================
-    
     else if (activeTab === 'se-strategy') {
       return (
         <div className="p-6 space-y-6" data-testid="se-strategy-content">
@@ -3056,10 +3338,13 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <GitCompare className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-orange-900 mb-1">Substantial Equivalence Strategy</h4>
+                  <h4 className="font-semibold text-orange-900 mb-1">
+                    Substantial Equivalence Strategy
+                  </h4>
                   <p className="text-sm text-orange-800">
-                    Document your strategy for demonstrating substantial equivalence to the predicate device(s).
-                    Define technological characteristics, intended use comparison, and testing approach.
+                    Document your strategy for demonstrating substantial equivalence to the
+                    predicate device(s). Define technological characteristics, intended use
+                    comparison, and testing approach.
                   </p>
                   <div className="mt-2 text-xs text-orange-700">
                     <strong>Prerequisites:</strong> Predicate device(s) selected from Stage 0.
@@ -3077,7 +3362,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               }
             }}
             documentId={deviceProfile?.id || k510DocumentId}
-            onComplete={(data) => {
+            onComplete={data => {
               setDeviceProfile({ ...deviceProfile, seStrategy: data });
               toast({
                 title: 'SE Strategy Saved',
@@ -3094,7 +3379,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     // ============================================================================
     // STAGE 2: EVIDENCE PLAN - Standards Matrix & Test Planning
     // ============================================================================
-    
     else if (activeTab === 'standards-matrix') {
       return (
         <div className="p-6 space-y-6" data-testid="standards-matrix-content">
@@ -3103,14 +3387,18 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <ClipboardCheck className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-indigo-900 mb-1">Standards Matrix & Declarations of Conformity</h4>
+                  <h4 className="font-semibold text-indigo-900 mb-1">
+                    Standards Matrix & Declarations of Conformity
+                  </h4>
                   <p className="text-sm text-indigo-800">
-                    Select applicable consensus standards (IEC, ISO, ASTM, etc.) and create Declarations of Conformity.
-                    This defines the regulatory framework for your testing strategy.
+                    Select applicable consensus standards (IEC, ISO, ASTM, etc.) and create
+                    Declarations of Conformity. This defines the regulatory framework for your
+                    testing strategy.
                   </p>
                   <div className="mt-2 text-xs text-indigo-700">
-                    <strong>What to include:</strong> ISO 10993 (biocompatibility), IEC 60601 (electrical safety), 
-                    IEC 62304 (software), ISO 14971 (risk management), and product-specific standards.
+                    <strong>What to include:</strong> ISO 10993 (biocompatibility), IEC 60601
+                    (electrical safety), IEC 62304 (software), ISO 14971 (risk management), and
+                    product-specific standards.
                   </div>
                 </div>
               </div>
@@ -3120,21 +3408,23 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           <Card>
             <CardHeader>
               <CardTitle>Standards Selection Matrix</CardTitle>
-              <CardDescription>Select applicable regulatory standards for your device</CardDescription>
+              <CardDescription>
+                Select applicable regulatory standards for your device
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8 text-gray-500">
                 <ClipboardCheck className="h-12 w-12 mx-auto mb-3 text-indigo-300" />
                 <p className="mb-2">Standards Matrix Editor</p>
-                <p className="text-sm">Coming soon - Select and document consensus standards compliance</p>
+                <p className="text-sm">
+                  Coming soon - Select and document consensus standards compliance
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
       );
-    }
-    
-    else if (activeTab === 'test-plan') {
+    } else if (activeTab === 'test-plan') {
       return (
         <div className="p-6 space-y-6" data-testid="test-plan-content">
           <Card className="bg-purple-50 border-purple-200">
@@ -3144,11 +3434,13 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-purple-900 mb-1">Integrated Test Plan</h4>
                   <p className="text-sm text-purple-800">
-                    Create a comprehensive test protocol detailing all verification and validation testing.
-                    Links standards from Standards Matrix to specific test methods and acceptance criteria.
+                    Create a comprehensive test protocol detailing all verification and validation
+                    testing. Links standards from Standards Matrix to specific test methods and
+                    acceptance criteria.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">
-                    <strong>Prerequisites:</strong> Standards Matrix must be completed to define testing scope.
+                    <strong>Prerequisites:</strong> Standards Matrix must be completed to define
+                    testing scope.
                   </div>
                 </div>
               </div>
@@ -3158,13 +3450,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           <Card>
             <CardHeader>
               <CardTitle>Test Protocol Development</CardTitle>
-              <CardDescription>Define test methods, acceptance criteria, and protocols</CardDescription>
+              <CardDescription>
+                Define test methods, acceptance criteria, and protocols
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8 text-gray-500">
                 <Activity className="h-12 w-12 mx-auto mb-3 text-purple-300" />
                 <p className="mb-2">Test Plan Editor</p>
-                <p className="text-sm">Coming soon - Create detailed test protocols and acceptance criteria</p>
+                <p className="text-sm">
+                  Coming soon - Create detailed test protocols and acceptance criteria
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -3175,29 +3471,40 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     // ============================================================================
     // STAGE 3: EVIDENCE - Testing Artifacts & Reports
     // ============================================================================
-    
     else if (activeTab === 'evidence-matrix') {
       // Calculate coverage percentages based on uploaded documents
-      const calculateCoverage = (category) => {
+      const calculateCoverage = category => {
         // This would normally check actual uploaded files in the vault
         // For now, use deviceProfile data as proxy
-        switch(category) {
+        switch (category) {
           case 'bench':
             return deviceProfile?.benchTestReports ? 100 : 0;
           case 'biocompatibility':
             return deviceProfile?.biocompTestReports ? 100 : 0;
           case 'software':
-            return (deviceProfile?.software || deviceProfile?.toggles?.hasSoftware) ? 
-              (deviceProfile?.softwareDocs ? 100 : 0) : null;
+            return deviceProfile?.software || deviceProfile?.toggles?.hasSoftware
+              ? deviceProfile?.softwareDocs
+                ? 100
+                : 0
+              : null;
           case 'cybersecurity':
-            return (deviceProfile?.cybersecurity || deviceProfile?.toggles?.isCyberDevice) ?
-              (deviceProfile?.cyberDocs ? 100 : 0) : null;
+            return deviceProfile?.cybersecurity || deviceProfile?.toggles?.isCyberDevice
+              ? deviceProfile?.cyberDocs
+                ? 100
+                : 0
+              : null;
           case 'clinical':
-            return (deviceProfile?.clinicalData || deviceProfile?.toggles?.hasClinicalData) ?
-              (deviceProfile?.clinicalReports ? 100 : 0) : null;
+            return deviceProfile?.clinicalData || deviceProfile?.toggles?.hasClinicalData
+              ? deviceProfile?.clinicalReports
+                ? 100
+                : 0
+              : null;
           case 'sterility':
-            return (deviceProfile?.sterilization || deviceProfile?.toggles?.isSterile) ?
-              (deviceProfile?.sterilityReports ? 100 : 0) : null;
+            return deviceProfile?.sterilization || deviceProfile?.toggles?.isSterile
+              ? deviceProfile?.sterilityReports
+                ? 100
+                : 0
+              : null;
           case 'emc':
             return deviceProfile?.emcReports ? 100 : 0;
           case 'usability':
@@ -3208,34 +3515,64 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             return 0;
         }
       };
-      
+
       // Evidence categories with conditional items
       const evidenceCategories = [
         { id: 'bench', name: 'Bench Testing', icon: TestTube, color: 'green', required: true },
-        { id: 'biocompatibility', name: 'Biocompatibility', icon: Heart, color: 'red', required: true },
+        {
+          id: 'biocompatibility',
+          name: 'Biocompatibility',
+          icon: Heart,
+          color: 'red',
+          required: true,
+        },
         { id: 'emc', name: 'EMC & Electrical Safety', icon: Zap, color: 'yellow', required: true },
         { id: 'usability', name: 'Usability/HF', icon: Users, color: 'purple', required: true },
         { id: 'labeling', name: 'Labeling', icon: FileText, color: 'blue', required: true },
-        { id: 'software', name: 'Software V&V', icon: Code, color: 'cyan', 
-          required: deviceProfile?.software || deviceProfile?.toggles?.hasSoftware },
-        { id: 'cybersecurity', name: 'Cybersecurity', icon: Lock, color: 'gray',
-          required: deviceProfile?.cybersecurity || deviceProfile?.toggles?.isCyberDevice },
-        { id: 'sterility', name: 'Sterility', icon: Shield, color: 'indigo',
-          required: deviceProfile?.sterilization || deviceProfile?.toggles?.isSterile },
-        { id: 'clinical', name: 'Clinical Data', icon: FileText, color: 'teal',
-          required: deviceProfile?.clinicalData || deviceProfile?.toggles?.hasClinicalData }
+        {
+          id: 'software',
+          name: 'Software V&V',
+          icon: Code,
+          color: 'cyan',
+          required: deviceProfile?.software || deviceProfile?.toggles?.hasSoftware,
+        },
+        {
+          id: 'cybersecurity',
+          name: 'Cybersecurity',
+          icon: Lock,
+          color: 'gray',
+          required: deviceProfile?.cybersecurity || deviceProfile?.toggles?.isCyberDevice,
+        },
+        {
+          id: 'sterility',
+          name: 'Sterility',
+          icon: Shield,
+          color: 'indigo',
+          required: deviceProfile?.sterilization || deviceProfile?.toggles?.isSterile,
+        },
+        {
+          id: 'clinical',
+          name: 'Clinical Data',
+          icon: FileText,
+          color: 'teal',
+          required: deviceProfile?.clinicalData || deviceProfile?.toggles?.hasClinicalData,
+        },
       ].filter(cat => cat.required !== false);
-      
+
       // Calculate overall coverage
-      const coverages = evidenceCategories.map(cat => calculateCoverage(cat.id)).filter(c => c !== null);
-      const overallCoverage = coverages.length > 0 ? 
-        Math.round(coverages.reduce((a, b) => a + b, 0) / coverages.length) : 0;
-      
+      const coverages = evidenceCategories
+        .map(cat => calculateCoverage(cat.id))
+        .filter(c => c !== null);
+      const overallCoverage =
+        coverages.length > 0
+          ? Math.round(coverages.reduce((a, b) => a + b, 0) / coverages.length)
+          : 0;
+
       // Update device profile with coverage
       if (deviceProfile?.evidenceCoverage !== overallCoverage / 100) {
         setDeviceProfile({ ...deviceProfile, evidenceCoverage: overallCoverage / 100 });
       }
-      
+
       return (
         <div className="p-6 space-y-6" data-testid="evidence-matrix-content">
           {/* Coverage Overview Card */}
@@ -3244,12 +3581,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <BarChart className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-blue-900 mb-1">Evidence Matrix Coverage Dashboard</h4>
+                  <h4 className="font-semibold text-blue-900 mb-1">
+                    Evidence Matrix Coverage Dashboard
+                  </h4>
                   <p className="text-sm text-blue-800">
-                    Track your testing and documentation progress across all required evidence categories.
-                    Gate requirement: ≥80% overall coverage to proceed to Stage 4.
+                    Track your testing and documentation progress across all required evidence
+                    categories. Gate requirement: ≥80% overall coverage to proceed to Stage 4.
                   </p>
-                  
+
                   {/* Overall Progress Bar */}
                   <div className="mt-4">
                     <div className="flex justify-between mb-1">
@@ -3257,78 +3596,99 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       <span className="text-sm font-bold text-blue-900">{overallCoverage}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div 
+                      <div
                         className={`h-3 rounded-full transition-all duration-500 ${
-                          overallCoverage >= 80 ? 'bg-green-600' : 
-                          overallCoverage >= 60 ? 'bg-yellow-500' : 
-                          overallCoverage >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                          overallCoverage >= 80
+                            ? 'bg-green-600'
+                            : overallCoverage >= 60
+                              ? 'bg-yellow-500'
+                              : overallCoverage >= 40
+                                ? 'bg-orange-500'
+                                : 'bg-red-500'
                         }`}
                         style={{ width: `${overallCoverage}%` }}
                         data-testid="overall-coverage-bar"
                       />
                     </div>
                     <div className="mt-1 text-xs text-blue-700">
-                      {overallCoverage >= 80 ? 
-                        '✅ Gate requirement met - Ready for Stage 4' : 
-                        `⚠️ Need ${80 - overallCoverage}% more coverage to proceed`}
+                      {overallCoverage >= 80
+                        ? '✅ Gate requirement met - Ready for Stage 4'
+                        : `⚠️ Need ${80 - overallCoverage}% more coverage to proceed`}
                     </div>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Individual Category Coverage */}
           <Card>
             <CardHeader>
               <CardTitle>Evidence Category Breakdown</CardTitle>
-              <CardDescription>Upload test reports and documentation for each required category</CardDescription>
+              <CardDescription>
+                Upload test reports and documentation for each required category
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {evidenceCategories.map((category) => {
+                {evidenceCategories.map(category => {
                   const IconComponent = category.icon;
                   const coverage = calculateCoverage(category.id);
                   const colorClass = `text-${category.color}-600`;
                   const bgColorClass = `bg-${category.color}-50`;
-                  
+
                   return (
-                    <div key={category.id} className="border rounded-lg p-4" data-testid={`coverage-${category.id}`}>
+                    <div
+                      key={category.id}
+                      className="border rounded-lg p-4"
+                      data-testid={`coverage-${category.id}`}
+                    >
                       <div className="flex items-start gap-3">
                         <IconComponent className={`h-5 w-5 ${colorClass} mt-0.5`} />
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-2">
                             <h5 className="font-medium text-gray-900">{category.name}</h5>
-                            <span className={`text-sm font-bold ${coverage === 100 ? 'text-green-600' : 'text-gray-600'}`}>
+                            <span
+                              className={`text-sm font-bold ${coverage === 100 ? 'text-green-600' : 'text-gray-600'}`}
+                            >
                               {coverage}%
                             </span>
                           </div>
-                          
+
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
+                            <div
                               className={`h-2 rounded-full transition-all duration-500 ${
-                                coverage === 100 ? 'bg-green-600' : 
-                                coverage > 0 ? 'bg-yellow-500' : 'bg-gray-300'
+                                coverage === 100
+                                  ? 'bg-green-600'
+                                  : coverage > 0
+                                    ? 'bg-yellow-500'
+                                    : 'bg-gray-300'
                               }`}
                               style={{ width: `${coverage}%` }}
                             />
                           </div>
-                          
+
                           <div className="mt-2 text-xs text-gray-600">
-                            {coverage === 100 ? 
-                              '✅ Complete' : 
-                              coverage > 0 ? 
-                              '⏳ In Progress' : 
-                              '📋 Not Started'}
+                            {coverage === 100
+                              ? '✅ Complete'
+                              : coverage > 0
+                                ? '⏳ In Progress'
+                                : '📋 Not Started'}
                           </div>
-                          
+
                           <Button
                             size="sm"
                             variant="outline"
                             className="mt-2 text-xs"
-                            onClick={() => setActiveTab(category.id === 'emc' ? 'emc-es' : 
-                                                     category.id === 'clinical' ? 'clinical-data' :
-                                                     category.id)}
+                            onClick={() =>
+                              setActiveTab(
+                                category.id === 'emc'
+                                  ? 'emc-es'
+                                  : category.id === 'clinical'
+                                    ? 'clinical-data'
+                                    : category.id
+                              )
+                            }
                             data-testid={`goto-${category.id}`}
                           >
                             {coverage === 100 ? 'Review' : 'Upload'} Documents →
@@ -3339,7 +3699,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   );
                 })}
               </div>
-              
+
               {/* Summary Statistics */}
               <div className="mt-6 pt-6 border-t">
                 <div className="grid grid-cols-3 gap-4 text-center">
@@ -3351,10 +3711,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-yellow-600">
-                      {evidenceCategories.filter(cat => {
-                        const cov = calculateCoverage(cat.id);
-                        return cov > 0 && cov < 100;
-                      }).length}
+                      {
+                        evidenceCategories.filter(cat => {
+                          const cov = calculateCoverage(cat.id);
+                          return cov > 0 && cov < 100;
+                        }).length
+                      }
                     </div>
                     <div className="text-xs text-gray-600">In Progress</div>
                   </div>
@@ -3370,9 +3732,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           </Card>
         </div>
       );
-    }
-    
-    else if (activeTab === 'bench-testing') {
+    } else if (activeTab === 'bench-testing') {
       return (
         <div className="p-6 space-y-6" data-testid="bench-testing-content">
           <Card className="bg-green-50 border-green-200">
@@ -3382,22 +3742,26 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-green-900 mb-1">Bench / Performance Testing</h4>
                   <p className="text-sm text-green-800">
-                    Upload and manage bench test reports, performance testing data, and technical summaries.
+                    Upload and manage bench test reports, performance testing data, and technical
+                    summaries.
                   </p>
                   <div className="mt-2 text-xs text-green-700">
-                    <strong>What to upload:</strong> Performance test reports, validation protocols, raw data, statistical analysis.
+                    <strong>What to upload:</strong> Performance test reports, validation protocols,
+                    raw data, statistical analysis.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="bench-testing" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="bench-testing"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'biocompatibility') {
+    } else if (activeTab === 'biocompatibility') {
       return (
         <div className="p-6 space-y-6" data-testid="biocompatibility-content">
           <Card className="bg-red-50 border-red-200">
@@ -3407,22 +3771,26 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-red-900 mb-1">Biocompatibility Testing</h4>
                   <p className="text-sm text-red-800">
-                    Manage ISO 10993 biocompatibility test reports and biological evaluation summaries.
+                    Manage ISO 10993 biocompatibility test reports and biological evaluation
+                    summaries.
                   </p>
                   <div className="mt-2 text-xs text-red-700">
-                    <strong>Required tests:</strong> Cytotoxicity, sensitization, irritation, systemic toxicity (based on ISO 10993-1 matrix).
+                    <strong>Required tests:</strong> Cytotoxicity, sensitization, irritation,
+                    systemic toxicity (based on ISO 10993-1 matrix).
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="biocompatibility" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="biocompatibility"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'sterility') {
+    } else if (activeTab === 'sterility') {
       return (
         <div className="p-6 space-y-6" data-testid="sterility-content">
           <Card className="bg-blue-50 border-blue-200">
@@ -3435,19 +3803,22 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     Document sterilization validation, shelf-life testing, and packaging validation.
                   </p>
                   <div className="mt-2 text-xs text-blue-700">
-                    <strong>Required documentation:</strong> Sterilization validation per ISO 11135/11137, package integrity per ASTM F1980.
+                    <strong>Required documentation:</strong> Sterilization validation per ISO
+                    11135/11137, package integrity per ASTM F1980.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="sterility" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="sterility"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'emc-es') {
+    } else if (activeTab === 'emc-es') {
       return (
         <div className="p-6 space-y-6" data-testid="emc-es-content">
           <Card className="bg-yellow-50 border-yellow-200">
@@ -3457,22 +3828,26 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-yellow-900 mb-1">Electrical Safety & EMC</h4>
                   <p className="text-sm text-yellow-800">
-                    Upload electrical safety (IEC 60601-1) and electromagnetic compatibility (IEC 60601-1-2) test reports.
+                    Upload electrical safety (IEC 60601-1) and electromagnetic compatibility (IEC
+                    60601-1-2) test reports.
                   </p>
                   <div className="mt-2 text-xs text-yellow-700">
-                    <strong>Required standards:</strong> IEC 60601-1 (electrical safety), IEC 60601-1-2 (EMC).
+                    <strong>Required standards:</strong> IEC 60601-1 (electrical safety), IEC
+                    60601-1-2 (EMC).
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="electrical-emc" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="electrical-emc"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'software') {
+    } else if (activeTab === 'software') {
       return (
         <div className="p-6 space-y-6" data-testid="software-content">
           <Card className="bg-cyan-50 border-cyan-200">
@@ -3480,24 +3855,30 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <Code className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-cyan-900 mb-1">Software Documentation (IEC 62304)</h4>
+                  <h4 className="font-semibold text-cyan-900 mb-1">
+                    Software Documentation (IEC 62304)
+                  </h4>
                   <p className="text-sm text-cyan-800">
-                    Document software development lifecycle, verification/validation, and cybersecurity per IEC 62304.
+                    Document software development lifecycle, verification/validation, and
+                    cybersecurity per IEC 62304.
                   </p>
                   <div className="mt-2 text-xs text-cyan-700">
-                    <strong>Required documentation:</strong> Software development plan, architecture, V&V protocols, hazard analysis.
+                    <strong>Required documentation:</strong> Software development plan,
+                    architecture, V&V protocols, hazard analysis.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="software" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="software"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'cybersecurity') {
+    } else if (activeTab === 'cybersecurity') {
       return (
         <div className="p-6 space-y-6" data-testid="cybersecurity-content">
           <Card className="bg-gray-50 border-gray-200">
@@ -3507,22 +3888,26 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Cybersecurity Documentation</h4>
                   <p className="text-sm text-gray-800">
-                    Document cybersecurity risk management, threat modeling, and secure design per FDA guidance.
+                    Document cybersecurity risk management, threat modeling, and secure design per
+                    FDA guidance.
                   </p>
                   <div className="mt-2 text-xs text-gray-700">
-                    <strong>Required documentation:</strong> Cybersecurity management plan, threat analysis, SBOM, secure development.
+                    <strong>Required documentation:</strong> Cybersecurity management plan, threat
+                    analysis, SBOM, secure development.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="cybersecurity" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="cybersecurity"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'usability') {
+    } else if (activeTab === 'usability') {
       return (
         <div className="p-6 space-y-6" data-testid="usability-content">
           <Card className="bg-purple-50 border-purple-200">
@@ -3532,22 +3917,26 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-purple-900 mb-1">Usability / Human Factors</h4>
                   <p className="text-sm text-purple-800">
-                    Document human factors engineering and usability validation per IEC 62366 and FDA HFE guidance.
+                    Document human factors engineering and usability validation per IEC 62366 and
+                    FDA HFE guidance.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">
-                    <strong>Required documentation:</strong> Use-related risk analysis, formative testing, summative validation.
+                    <strong>Required documentation:</strong> Use-related risk analysis, formative
+                    testing, summative validation.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="usability" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="usability"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'clinical-data') {
+    } else if (activeTab === 'clinical-data') {
       return (
         <div className="p-6 space-y-6" data-testid="clinical-data-content">
           <Card className="bg-teal-50 border-teal-200">
@@ -3557,17 +3946,23 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-teal-900 mb-1">Clinical Data</h4>
                   <p className="text-sm text-teal-800">
-                    Upload clinical study reports, literature reviews, or clinical data summaries if required.
+                    Upload clinical study reports, literature reviews, or clinical data summaries if
+                    required.
                   </p>
                   <div className="mt-2 text-xs text-teal-700">
-                    <strong>When required:</strong> Novel technology, significant design changes, or FDA requests clinical evidence.
+                    <strong>When required:</strong> Novel technology, significant design changes, or
+                    FDA requests clinical evidence.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="clinical" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="clinical"
+          />
         </div>
       );
     }
@@ -3575,7 +3970,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     // ============================================================================
     // STAGE 4: AUTHOR - eSTAR Section Narratives & Forms
     // ============================================================================
-    
     else if (activeTab === 'biocomp-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="biocomp-summary-content">
@@ -3586,30 +3980,33 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-pink-900 mb-1">Biocompatibility Summary</h4>
                   <p className="text-sm text-pink-800">
-                    Summarize ISO 10993-1 rationale, test matrix, and biocompatibility test results. Auto-populated from Stage 3 biocompatibility evidence.
+                    Summarize ISO 10993-1 rationale, test matrix, and biocompatibility test results.
+                    Auto-populated from Stage 3 biocompatibility evidence.
                   </p>
                   <div className="mt-2 text-xs text-pink-700">
-                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}_biocomp_summary
+                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
+                    _biocomp_summary
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="biocompatibility-summary"
             documentId={`${deviceProfile?.id || k510DocumentId}_biocomp_summary`}
-            onSave={(data) => {
+            onSave={data => {
               setDeviceProfile({ ...deviceProfile, biocompSummary: data });
-              toast({ title: 'Biocompatibility Summary Saved', description: 'Document linked to submission workflow.' });
+              toast({
+                title: 'Biocompatibility Summary Saved',
+                description: 'Document linked to submission workflow.',
+              });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'cybersecurity-summary') {
+    } else if (activeTab === 'cybersecurity-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="cybersecurity-summary-content">
           <Card className="bg-red-50 border-red-200">
@@ -3619,30 +4016,33 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-red-900 mb-1">Cybersecurity Summary</h4>
                   <p className="text-sm text-red-800">
-                    Document threat model, SBOM, update mechanisms, and vulnerability management. Auto-populated from Stage 3 cybersecurity evidence.
+                    Document threat model, SBOM, update mechanisms, and vulnerability management.
+                    Auto-populated from Stage 3 cybersecurity evidence.
                   </p>
                   <div className="mt-2 text-xs text-red-700">
-                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}_cybersecurity_summary
+                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
+                    _cybersecurity_summary
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="cybersecurity-summary"
             documentId={`${deviceProfile?.id || k510DocumentId}_cybersecurity_summary`}
-            onSave={(data) => {
+            onSave={data => {
               setDeviceProfile({ ...deviceProfile, cybersecuritySummary: data });
-              toast({ title: 'Cybersecurity Summary Saved', description: 'Document linked to submission workflow.' });
+              toast({
+                title: 'Cybersecurity Summary Saved',
+                description: 'Document linked to submission workflow.',
+              });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'emc-es-summary') {
+    } else if (activeTab === 'emc-es-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="emc-es-summary-content">
           <Card className="bg-yellow-50 border-yellow-200">
@@ -3650,32 +4050,37 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <Zap className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-yellow-900 mb-1">Electrical Safety & EMC Summary</h4>
+                  <h4 className="font-semibold text-yellow-900 mb-1">
+                    Electrical Safety & EMC Summary
+                  </h4>
                   <p className="text-sm text-yellow-800">
-                    Summarize IEC 60601-1 and 60601-1-2 test results and standards conformities. Auto-populated from Stage 3 EMC/ES evidence.
+                    Summarize IEC 60601-1 and 60601-1-2 test results and standards conformities.
+                    Auto-populated from Stage 3 EMC/ES evidence.
                   </p>
                   <div className="mt-2 text-xs text-yellow-700">
-                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}_emc_es_summary
+                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
+                    _emc_es_summary
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="emc-es-summary"
             documentId={`${deviceProfile?.id || k510DocumentId}_emc_es_summary`}
-            onSave={(data) => {
+            onSave={data => {
               setDeviceProfile({ ...deviceProfile, emcEsSummary: data });
-              toast({ title: 'Electrical Safety & EMC Summary Saved', description: 'Document linked to submission workflow.' });
+              toast({
+                title: 'Electrical Safety & EMC Summary Saved',
+                description: 'Document linked to submission workflow.',
+              });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'software-summary') {
+    } else if (activeTab === 'software-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="software-summary-content">
           <Card className="bg-blue-50 border-blue-200">
@@ -3685,30 +4090,33 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-blue-900 mb-1">Software Summary</h4>
                   <p className="text-sm text-blue-800">
-                    Document software level of concern, architecture, and V&V traceability per IEC 62304. Auto-populated from Stage 3 software evidence.
+                    Document software level of concern, architecture, and V&V traceability per IEC
+                    62304. Auto-populated from Stage 3 software evidence.
                   </p>
                   <div className="mt-2 text-xs text-blue-700">
-                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}_software_summary
+                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
+                    _software_summary
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="software-summary"
             documentId={`${deviceProfile?.id || k510DocumentId}_software_summary`}
-            onSave={(data) => {
+            onSave={data => {
               setDeviceProfile({ ...deviceProfile, softwareSummary: data });
-              toast({ title: 'Software Summary Saved', description: 'Document linked to submission workflow.' });
+              toast({
+                title: 'Software Summary Saved',
+                description: 'Document linked to submission workflow.',
+              });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'standards-declarations') {
+    } else if (activeTab === 'standards-declarations') {
       return (
         <div className="p-6 space-y-6" data-testid="standards-declarations-content">
           <Card className="bg-green-50 border-green-200">
@@ -3716,32 +4124,37 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <Award className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">Standards & Declarations of Conformity</h4>
+                  <h4 className="font-semibold text-green-900 mb-1">
+                    Standards & Declarations of Conformity
+                  </h4>
                   <p className="text-sm text-green-800">
-                    List all FDA-recognized consensus standards with edition, clauses, and extent of conformity. Auto-populated from Stage 2 standards matrix.
+                    List all FDA-recognized consensus standards with edition, clauses, and extent of
+                    conformity. Auto-populated from Stage 2 standards matrix.
                   </p>
                   <div className="mt-2 text-xs text-green-700">
-                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}_standards_doc
+                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
+                    _standards_doc
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="standards-declarations"
             documentId={`${deviceProfile?.id || k510DocumentId}_standards_doc`}
-            onSave={(data) => {
+            onSave={data => {
               setDeviceProfile({ ...deviceProfile, standardsDeclarations: data });
-              toast({ title: 'Standards & DoCs Saved', description: 'Document linked to submission workflow.' });
+              toast({
+                title: 'Standards & DoCs Saved',
+                description: 'Document linked to submission workflow.',
+              });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'sterility-summary') {
+    } else if (activeTab === 'sterility-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="sterility-summary-content">
           <Card className="bg-cyan-50 border-cyan-200">
@@ -3749,32 +4162,37 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <Droplet className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-cyan-900 mb-1">Sterilization & Shelf Life Summary</h4>
+                  <h4 className="font-semibold text-cyan-900 mb-1">
+                    Sterilization & Shelf Life Summary
+                  </h4>
                   <p className="text-sm text-cyan-800">
-                    Document sterilization method, SAL, pyrogen limits, and packaging integrity/aging. Auto-populated from Stage 3 sterility evidence.
+                    Document sterilization method, SAL, pyrogen limits, and packaging
+                    integrity/aging. Auto-populated from Stage 3 sterility evidence.
                   </p>
                   <div className="mt-2 text-xs text-cyan-700">
-                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}_sterility_summary
+                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
+                    _sterility_summary
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="sterility-summary"
             documentId={`${deviceProfile?.id || k510DocumentId}_sterility_summary`}
-            onSave={(data) => {
+            onSave={data => {
               setDeviceProfile({ ...deviceProfile, sterilitySummary: data });
-              toast({ title: 'Sterilization & Shelf Life Summary Saved', description: 'Document linked to submission workflow.' });
+              toast({
+                title: 'Sterilization & Shelf Life Summary Saved',
+                description: 'Document linked to submission workflow.',
+              });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'usability-summary') {
+    } else if (activeTab === 'usability-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="usability-summary-content">
           <Card className="bg-purple-50 border-purple-200">
@@ -3784,30 +4202,33 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-purple-900 mb-1">Usability Summary</h4>
                   <p className="text-sm text-purple-800">
-                    Provide risk-based justification or summative human factors study summary per IEC 62366. Auto-populated from Stage 3 usability evidence.
+                    Provide risk-based justification or summative human factors study summary per
+                    IEC 62366. Auto-populated from Stage 3 usability evidence.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">
-                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}_usability_summary
+                    <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
+                    _usability_summary
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="usability-summary"
             documentId={`${deviceProfile?.id || k510DocumentId}_usability_summary`}
-            onSave={(data) => {
+            onSave={data => {
               setDeviceProfile({ ...deviceProfile, usabilitySummary: data });
-              toast({ title: 'Usability Summary Saved', description: 'Document linked to submission workflow.' });
+              toast({
+                title: 'Usability Summary Saved',
+                description: 'Document linked to submission workflow.',
+              });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'admin-forms') {
+    } else if (activeTab === 'admin-forms') {
       return (
         <div className="p-6 space-y-6" data-testid="admin-forms-content">
           <Card className="bg-blue-50 border-blue-200">
@@ -3817,29 +4238,33 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-blue-900 mb-1">Administrative & Forms</h4>
                   <p className="text-sm text-blue-800">
-                    Complete FDA Forms 3514 (User Fee Cover Sheet) and 3601 (Indications Statement). Include cover letter and transmittal letter.
+                    Complete FDA Forms 3514 (User Fee Cover Sheet) and 3601 (Indications Statement).
+                    Include cover letter and transmittal letter.
                   </p>
                   <div className="mt-2 text-xs text-blue-700">
-                    <strong>Required forms:</strong> FDA 3514, FDA 3601, Cover Letter, Transmittal Letter.
+                    <strong>Required forms:</strong> FDA 3514, FDA 3601, Cover Letter, Transmittal
+                    Letter.
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="administrative"
-            onSave={(data) => {
-              setDeviceProfile({ ...deviceProfile, forms3514: data.form3514, forms3601: data.form3601 });
+            onSave={data => {
+              setDeviceProfile({
+                ...deviceProfile,
+                forms3514: data.form3514,
+                forms3601: data.form3601,
+              });
               toast({ title: 'Administrative Forms Saved' });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'indications-for-use') {
+    } else if (activeTab === 'indications-for-use') {
       return (
         <div className="p-6 space-y-6" data-testid="indications-content">
           <Card className="bg-green-50 border-green-200">
@@ -3847,27 +4272,28 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <FileCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">Indications for Use (FDA Form 3881)</h4>
+                  <h4 className="font-semibold text-green-900 mb-1">
+                    Indications for Use (FDA Form 3881)
+                  </h4>
                   <p className="text-sm text-green-800">
-                    Draft the Indications for Use statement defining intended use, patient population, and clinical application.
+                    Draft the Indications for Use statement defining intended use, patient
+                    population, and clinical application.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="indications"
-            onSave={(data) => {
+            onSave={data => {
               toast({ title: 'Indications Saved' });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'device-description') {
+    } else if (activeTab === 'device-description') {
       return (
         <div className="p-6 space-y-6" data-testid="device-description-content">
           <Card className="bg-gray-50 border-gray-200">
@@ -3877,25 +4303,24 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Device Description</h4>
                   <p className="text-sm text-gray-800">
-                    Comprehensive technical description of device components, materials, specifications, and principles of operation.
+                    Comprehensive technical description of device components, materials,
+                    specifications, and principles of operation.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="device_description"
-            onSave={(data) => {
+            onSave={data => {
               toast({ title: 'Device Description Saved' });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'se-discussion') {
+    } else if (activeTab === 'se-discussion') {
       return (
         <div className="p-6 space-y-6" data-testid="se-discussion-content">
           <Card className="bg-orange-50 border-orange-200">
@@ -3903,51 +4328,54 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <GitCompare className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-orange-900 mb-1">Substantial Equivalence Discussion</h4>
+                  <h4 className="font-semibold text-orange-900 mb-1">
+                    Substantial Equivalence Discussion
+                  </h4>
                   <p className="text-sm text-orange-800">
-                    Detailed narrative comparing your device to the predicate(s), demonstrating substantial equivalence.
+                    Detailed narrative comparing your device to the predicate(s), demonstrating
+                    substantial equivalence.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             predicateDevices={predicateDevices}
             section="substantial_equivalence"
-            onSave={(data) => {
+            onSave={data => {
               toast({ title: 'SE Discussion Saved' });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'document-editor') {
+    } else if (activeTab === 'document-editor') {
       // Render the comprehensive MedicalDeviceDocumentEditor with all 22 FDA sections
       return (
         <MedicalDeviceDocumentEditor
           documentType="cerv2_510k"
           selectedSection={selectedSection}
-          deviceProfile={deviceProfile || {
-            deviceName: deviceName,
-            manufacturer: manufacturer,
-            intendedUse: intendedUse,
-            productCode: productCode,
-            regulationNumber: regulationNumber,
-            predicateDevice: selectedPredicate?.k_number,
-            predicateManufacturer: selectedPredicate?.applicant,
-            mdClass: deviceClass,
-            udi: deviceUdi,
-            description: deviceProfile?.description || '',
-            technicalSpecifications: deviceProfile?.technicalSpecifications || ''
-          }}
+          deviceProfile={
+            deviceProfile || {
+              deviceName: deviceName,
+              manufacturer: manufacturer,
+              intendedUse: intendedUse,
+              productCode: productCode,
+              regulationNumber: regulationNumber,
+              predicateDevice: selectedPredicate?.k_number,
+              predicateManufacturer: selectedPredicate?.applicant,
+              mdClass: deviceClass,
+              udi: deviceUdi,
+              description: deviceProfile?.description || '',
+              technicalSpecifications: deviceProfile?.technicalSpecifications || '',
+            }
+          }
           predicateDevices={predicateDevices}
-          onSectionSaved={async (section) => {
+          onSectionSaved={async section => {
             // Invalidate React Query cache to refresh vault immediately
             await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
-            
+
             toast({
               title: 'Section Saved',
               description: `${section.section_number} ${section.section_title} saved - Vault refreshed`,
@@ -3956,17 +4384,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           literatureResults={literatureResults}
           documentId={k510DocumentId || `510K-${Date.now()}`}
           existingContent={loadSavedState(`document_content_510k`, '')}
-          onSave={(data) => {
+          onSave={data => {
             toast({
               title: 'FDA 510(k) Document Saved',
               description: 'Your submission has been saved successfully',
             });
-            
+
             if (!k510DocumentId && data.documentId) {
               setK510DocumentId(data.documentId);
             }
           }}
-          onExport={(format) => {
+          onExport={format => {
             toast({
               title: `Export ${format.toUpperCase()} Successful`,
               description: 'Your 510(k) document has been exported',
@@ -3975,9 +4403,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           readOnly={false}
         />
       );
-    }
-    
-    else if (activeTab === 'labeling') {
+    } else if (activeTab === 'labeling') {
       return (
         <div className="p-6 space-y-6" data-testid="labeling-content">
           <Card className="bg-purple-50 border-purple-200">
@@ -3987,19 +4413,22 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-purple-900 mb-1">Labeling</h4>
                   <p className="text-sm text-purple-800">
-                    Upload draft labeling including instructions for use, device labels, and packaging labels.
+                    Upload draft labeling including instructions for use, device labels, and
+                    packaging labels.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <EnhancedDocumentVault documentType="510k" projectId={k510DocumentId} category="labeling" />
+          <EnhancedDocumentVault
+            documentType="510k"
+            projectId={k510DocumentId}
+            category="labeling"
+          />
         </div>
       );
-    }
-    
-    else if (activeTab === 'performance-summaries') {
+    } else if (activeTab === 'performance-summaries') {
       return (
         <div className="p-6 space-y-6" data-testid="performance-summaries-content">
           <Card className="bg-cyan-50 border-cyan-200">
@@ -4007,30 +4436,31 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <BarChart className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-cyan-900 mb-1">Performance Testing Summaries</h4>
+                  <h4 className="font-semibold text-cyan-900 mb-1">
+                    Performance Testing Summaries
+                  </h4>
                   <p className="text-sm text-cyan-800">
-                    Summarize all verification and validation testing performed, referencing test reports from Stage 3.
+                    Summarize all verification and validation testing performed, referencing test
+                    reports from Stage 3.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section="performance_testing"
-            onSave={(data) => {
+            onSave={data => {
               toast({ title: 'Performance Summaries Saved' });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === '510k-summary') {
+    } else if (activeTab === '510k-summary') {
       // XOR validation state - track user's selection between Summary or Statement
       const [summaryType, setSummaryType] = useState(deviceProfile?.summaryType || 'summary');
-      
+
       return (
         <div className="p-6 space-y-6" data-testid="510k-summary-content">
           <Card className="bg-indigo-50 border-indigo-200">
@@ -4038,12 +4468,16 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <FileText className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-indigo-900 mb-1">510(k) Summary or Statement</h4>
+                  <h4 className="font-semibold text-indigo-900 mb-1">
+                    510(k) Summary or Statement
+                  </h4>
                   <p className="text-sm text-indigo-800">
-                    Create a 510(k) Summary (public) or 510(k) Statement (confidential). Summary is recommended.
+                    Create a 510(k) Summary (public) or 510(k) Statement (confidential). Summary is
+                    recommended.
                   </p>
                   <div className="mt-2 text-xs text-indigo-700">
-                    <strong>FDA Requirement:</strong> You must select either a Summary (21 CFR 807.92) OR a Statement (21 CFR 807.93), not both.
+                    <strong>FDA Requirement:</strong> You must select either a Summary (21 CFR
+                    807.92) OR a Statement (21 CFR 807.93), not both.
                   </div>
                 </div>
               </div>
@@ -4054,7 +4488,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           <Card>
             <CardHeader>
               <CardTitle>Select Document Type</CardTitle>
-              <CardDescription>Choose one required document type for your 510(k) submission</CardDescription>
+              <CardDescription>
+                Choose one required document type for your 510(k) submission
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -4065,9 +4501,13 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     name="summary-type"
                     value="summary"
                     checked={summaryType === 'summary'}
-                    onChange={(e) => {
+                    onChange={e => {
                       setSummaryType(e.target.value);
-                      setDeviceProfile({ ...deviceProfile, summaryType: 'summary', statementType: null });
+                      setDeviceProfile({
+                        ...deviceProfile,
+                        summaryType: 'summary',
+                        statementType: null,
+                      });
                     }}
                     className="mt-1"
                     data-testid="radio-summary"
@@ -4076,8 +4516,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     <div>
                       <div className="font-medium">510(k) Summary (21 CFR 807.92)</div>
                       <div className="text-sm text-gray-600">
-                        Public document summarizing safety and effectiveness. Recommended for transparency.
-                        Released to public after clearance.
+                        Public document summarizing safety and effectiveness. Recommended for
+                        transparency. Released to public after clearance.
                       </div>
                     </div>
                   </label>
@@ -4090,9 +4530,13 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     name="summary-type"
                     value="statement"
                     checked={summaryType === 'statement'}
-                    onChange={(e) => {
+                    onChange={e => {
                       setSummaryType(e.target.value);
-                      setDeviceProfile({ ...deviceProfile, summaryType: null, statementType: 'statement' });
+                      setDeviceProfile({
+                        ...deviceProfile,
+                        summaryType: null,
+                        statementType: 'statement',
+                      });
                     }}
                     className="mt-1"
                     data-testid="radio-statement"
@@ -4101,114 +4545,45 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                     <div>
                       <div className="font-medium">510(k) Statement (21 CFR 807.93)</div>
                       <div className="text-sm text-gray-600">
-                        Certifies that a summary will be provided upon request. Keeps information confidential.
-                        Protects proprietary information.
+                        Certifies that a summary will be provided upon request. Keeps information
+                        confidential. Protects proprietary information.
                       </div>
                     </div>
                   </label>
                 </div>
               </div>
-              
+
               {/* Visual indicator of current selection */}
               <div className="mt-4 p-3 bg-blue-50 rounded-md">
                 <div className="text-sm font-medium text-blue-900">
-                  Current Selection: {summaryType === 'summary' ? '510(k) Summary' : '510(k) Statement'}
+                  Current Selection:{' '}
+                  {summaryType === 'summary' ? '510(k) Summary' : '510(k) Statement'}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <ESTARBuilderPanel 
+          <ESTARBuilderPanel
             deviceProfile={deviceProfile}
             section={summaryType} // Pass either 'summary' or 'statement'
             documentType={summaryType === 'summary' ? '807.92' : '807.93'}
-            onSave={(data) => {
+            onSave={data => {
               const updatedProfile = {
                 ...deviceProfile,
                 summaryType: summaryType,
-                [summaryType === 'summary' ? 'summary807_92' : 'statement807_93']: data
+                [summaryType === 'summary' ? 'summary807_92' : 'statement807_93']: data,
               };
               setDeviceProfile(updatedProfile);
-              toast({ 
-                title: summaryType === 'summary' ? '510(k) Summary Saved' : '510(k) Statement Saved',
-                description: `Document type ${summaryType === 'summary' ? '21 CFR 807.92' : '21 CFR 807.93'} has been saved.`
+              toast({
+                title:
+                  summaryType === 'summary' ? '510(k) Summary Saved' : '510(k) Statement Saved',
+                description: `Document type ${summaryType === 'summary' ? '21 CFR 807.92' : '21 CFR 807.93'} has been saved.`,
               });
             }}
           />
         </div>
       );
-    }
-    
-    else if (activeTab === 'truthful-accurate') {
-      return (
-        <div className="p-6 space-y-6" data-testid="truthful-accurate-content">
-          <Card className="bg-red-50 border-red-200">
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-red-900 mb-1">Truthful & Accurate Statement</h4>
-                  <p className="text-sm text-red-800">
-                    Regulatory certification that all information in the 510(k) is truthful and accurate.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <ESTARBuilderPanel 
-            deviceProfile={deviceProfile}
-            section="truthful_accurate"
-            onSave={(data) => {
-              toast({ title: 'Truthful & Accurate Statement Saved' });
-            }}
-          />
-        </div>
-      );
-    }
-
-    // ============================================================================
-    // STAGE 5: eSTAR & RTA - Assembly and Validation
-    // ============================================================================
-    
-    else if (activeTab === 'estar-assembly') {
-      return (
-        <div className="p-6 space-y-6" data-testid="estar-assembly-content">
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
-                <Package className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-blue-900 mb-1">eSTAR Package Assembly</h4>
-                  <p className="text-sm text-blue-800">
-                    Compile all sections and documents into an FDA eSTAR-compliant package structure.
-                  </p>
-                  <div className="mt-2 text-xs text-blue-700">
-                    <strong>Prerequisites:</strong> All Stage 4 authoring sections must be complete.
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>eSTAR Package Compiler</CardTitle>
-              <CardDescription>Assemble submission into FDA eSTAR format</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-3 text-blue-300" />
-                <p className="mb-2">eSTAR Assembly Engine</p>
-                <p className="text-sm">Coming soon - Automated eSTAR package generation</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-    
-    else if (activeTab === 'rta-check') {
+    } else if (activeTab === 'rta-check') {
       return (
         <div className="p-6 space-y-6" data-testid="rta-check-content">
           <Card className="bg-green-50 border-green-200">
@@ -4216,22 +4591,25 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <ClipboardCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">RTA (Refuse to Accept) Pre-Check</h4>
+                  <h4 className="font-semibold text-green-900 mb-1">
+                    RTA (Refuse to Accept) Pre-Check
+                  </h4>
                   <p className="text-sm text-green-800">
-                    Validate your submission against FDA's RTA checklist to avoid submission rejection.
+                    Validate your submission against FDA's RTA checklist to avoid submission
+                    rejection.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <RTAChecklistPanel 
+          <RTAChecklistPanel
             deviceProfile={deviceProfile}
-            onComplete={(score) => {
+            onComplete={score => {
               setDeviceProfile({ ...deviceProfile, rtaScore: score });
-              toast({ 
+              toast({
                 title: 'RTA Check Complete',
-                description: `Your submission scored ${Math.round(score * 100)}% - ${score >= 0.9 ? 'Ready to submit!' : 'Address issues before submitting'}`
+                description: `Your submission scored ${Math.round(score * 100)}% - ${score >= 0.9 ? 'Ready to submit!' : 'Address issues before submitting'}`,
               });
             }}
           />
@@ -4242,7 +4620,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     // ============================================================================
     // STAGE 6: SUBMIT & AI - Portal Submission and Tracking
     // ============================================================================
-    
     else if (activeTab === 'fda-forms') {
       return (
         <div className="p-6 space-y-6" data-testid="fda-forms-content">
@@ -4253,12 +4630,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-purple-900 mb-1">SMART Forms System</h4>
                   <p className="text-sm text-purple-800">
-                    Comprehensive FDA SMART Forms system with 30+ forms for 510(k), PMA, and special submissions.
-                    All forms feature intelligent auto-population from CERV2 workflow data, AI-powered field suggestions,
-                    and real-time synchronization across all stages.
+                    Comprehensive FDA SMART Forms system with 30+ forms for 510(k), PMA, and special
+                    submissions. All forms feature intelligent auto-population from CERV2 workflow
+                    data, AI-powered field suggestions, and real-time synchronization across all
+                    stages.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">
-                    <strong>Features:</strong> Auto-generation • Smart validation • Batch processing • Form dependencies • Cross-reference mapping
+                    <strong>Features:</strong> Auto-generation • Smart validation • Batch processing
+                    • Form dependencies • Cross-reference mapping
                   </div>
                 </div>
               </div>
@@ -4273,16 +4652,16 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div className="text-center py-8 text-gray-500">
                   <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p className="mb-2">No Project Selected</p>
-                  <p className="text-sm">Complete the Device Intake Form to start generating FDA forms</p>
+                  <p className="text-sm">
+                    Complete the Device Intake Form to start generating FDA forms
+                  </p>
                 </div>
               </CardContent>
             </Card>
           )}
         </div>
       );
-    }
-    
-    else if (activeTab === 'submission') {
+    } else if (activeTab === 'submission') {
       return (
         <div className="p-6 space-y-6" data-testid="submission-content">
           <Card className="bg-teal-50 border-teal-200">
@@ -4317,9 +4696,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           </Card>
         </div>
       );
-    }
-    
-    else if (activeTab === 'ai-tracking') {
+    } else if (activeTab === 'ai-tracking') {
       return (
         <div className="p-6 space-y-6" data-testid="ai-tracking-content">
           <Card className="bg-amber-50 border-amber-200">
@@ -4327,7 +4704,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <MessageSquare className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-amber-900 mb-1">Interactive Review / AI Tracking</h4>
+                  <h4 className="font-semibold text-amber-900 mb-1">
+                    Interactive Review / AI Tracking
+                  </h4>
                   <p className="text-sm text-amber-800">
                     Track your submission status and respond to FDA interactive review requests.
                   </p>
@@ -4336,7 +4715,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </CardContent>
           </Card>
 
-          <FDATimelineTracker 
+          <FDATimelineTracker
             deviceProfile={deviceProfile}
             submissionId={deviceProfile?.submissionId}
           />
@@ -4346,7 +4725,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
     // Special handling for equivalence tab outside of workflow steps
     else if (activeTab === 'equivalence') {
-
       try {
         return (
           <div className="p-4 space-y-4">
@@ -4415,7 +4793,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           equivalenceData={equivalenceData}
         />
       );
-    // CER Assistant disabled
+      // CER Assistant disabled
     } else if (activeTab === 'documents') {
       // Support both CER and 510k documents in the vault
       const currentProject = allProjects.find(p => p.id === currentProjectId);
@@ -4427,7 +4805,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           isOpen={true}
           projectId={currentProjectId}
           attachedDocuments={currentProject?.attachedDocuments || []}
-          onAttachDocument={(documentId) => {
+          onAttachDocument={documentId => {
             if (!currentProjectId) {
               toast({
                 title: 'No Project Selected',
@@ -4436,7 +4814,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               });
               return;
             }
-            
+
             const updatedProjects = allProjects.map(p => {
               if (p.id === currentProjectId) {
                 const alreadyAttached = p.attachedDocuments?.includes(documentId);
@@ -4450,21 +4828,21 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               }
               return p;
             });
-            
+
             setAllProjects(updatedProjects);
             localStorage.setItem('cerv2_all_projects', JSON.stringify(updatedProjects));
-            
+
             const isAttaching = !currentProject?.attachedDocuments?.includes(documentId);
             toast({
               title: isAttaching ? 'Document Attached' : 'Document Detached',
-              description: isAttaching 
+              description: isAttaching
                 ? 'Document successfully attached to submission'
                 : 'Document removed from submission',
             });
           }}
         />
       );
-    } 
+    }
     // CER data retrieval disabled
     else if (activeTab === 'equivalence') {
       // Support both CER and 510k document types for the equivalence tab
@@ -4477,18 +4855,18 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           onComplete={handleEquivalenceComplete}
         />
       );
-    // All CER-specific tabs have been disabled to focus on 510(k) workflow
+      // All CER-specific tabs have been disabled to focus on 510(k) workflow
     } else if (activeTab === 'import') {
       // Document Import Panel for Word/PDF files
       return (
         <DocumentImportPanel
-          onImportComplete={(data) => {
+          onImportComplete={data => {
             toast({
               title: 'Import Complete',
               description: `Successfully imported ${data.fileName}`,
             });
           }}
-          onContentExtracted={(content) => {
+          onContentExtracted={content => {
             // Pass content to document editor if needed
             console.log('Content extracted:', content);
           }}
@@ -4501,14 +4879,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           documentId={documentType === '510k' ? k510DocumentId : null}
           projectId={currentProjectId}
           deviceProfile={deviceProfile}
-          onChecklistUpdate={(data) => {
+          onChecklistUpdate={data => {
             console.log('RTA Checklist updated:', data);
           }}
-          onValidationComplete={(isValid) => {
+          onValidationComplete={isValid => {
             toast({
               title: isValid ? 'RTA Requirements Met' : 'RTA Issues Found',
-              description: isValid 
-                ? 'Your submission meets FDA RTA requirements' 
+              description: isValid
+                ? 'Your submission meets FDA RTA requirements'
                 : 'Please address the identified issues',
               variant: isValid ? 'default' : 'destructive',
             });
@@ -4523,20 +4901,19 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           projectId={currentProjectId}
           submissionDate={localStorage.getItem(`fda_submission_date_${currentProjectId}`)}
           reviewType="traditional"
-          onMilestoneReached={(milestone) => {
+          onMilestoneReached={milestone => {
             toast({
               title: `FDA Milestone: Day ${milestone.day}`,
               description: milestone.title,
               variant: milestone.critical ? 'destructive' : 'default',
             });
           }}
-          onTimelineUpdate={(data) => {
+          onTimelineUpdate={data => {
             console.log('FDA Timeline updated:', data);
           }}
         />
       );
-    } 
-    else if (activeTab === 'submission') {
+    } else if (activeTab === 'submission') {
       // Final Submission Panel
       return (
         <div className="p-6 space-y-6">
@@ -4547,33 +4924,34 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 <div>
                   <h4 className="font-semibold text-teal-900 mb-1">Final Submission Package</h4>
                   <p className="text-sm text-teal-800">
-                    Review and finalize your complete 510(k) submission package. Ensure all required documents 
-                    are complete, validated, and ready for FDA submission.
+                    Review and finalize your complete 510(k) submission package. Ensure all required
+                    documents are complete, validated, and ready for FDA submission.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           {deviceProfile && deviceProfile.id ? (
             <ReportGenerator
               deviceProfile={deviceProfile}
               documentId={deviceProfile.id}
               exportTimestamp={new Date().toISOString()}
-              draftStatus={(compliance && compliance.status) ? compliance.status : 'draft'}
+              draftStatus={compliance && compliance.status ? compliance.status : 'draft'}
               setDraftStatus={setDraftStatus}
               sections={Array.isArray(sections) ? sections : []}
               onSubmissionReady={handleSubmissionReady}
             />
           ) : (
             <div className="text-center p-8">
-              <p className="text-gray-600">Please complete device profile before generating submission package.</p>
+              <p className="text-gray-600">
+                Please complete device profile before generating submission package.
+              </p>
             </div>
           )}
         </div>
       );
-    }
-    else if (activeTab === 'fda-guidance') {
+    } else if (activeTab === 'fda-guidance') {
       // FDA Guidance and Resources
       return (
         <div className="p-6 space-y-6">
@@ -4582,16 +4960,23 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <div className="flex items-start gap-3">
                 <BookOpen className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-3">FDA 510(k) Guidance Documents</h4>
+                  <h4 className="font-semibold text-blue-900 mb-3">
+                    FDA 510(k) Guidance Documents
+                  </h4>
                   <div className="space-y-4 text-sm text-blue-800">
                     <div>
                       <h5 className="font-medium mb-2">Key Guidance Documents:</h5>
                       <ul className="list-disc list-inside space-y-1 ml-2">
-                        <li>The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications</li>
+                        <li>
+                          The 510(k) Program: Evaluating Substantial Equivalence in Premarket
+                          Notifications
+                        </li>
                         <li>Refuse to Accept Policy for 510(k)s</li>
                         <li>Format for Traditional and Abbreviated 510(k)s</li>
                         <li>Deciding When to Submit a 510(k) for a Change to an Existing Device</li>
-                        <li>FDA and Industry Actions on Premarket Notification (510(k)) Submissions</li>
+                        <li>
+                          FDA and Industry Actions on Premarket Notification (510(k)) Submissions
+                        </li>
                       </ul>
                     </div>
                     <div>
@@ -4609,6 +4994,110 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </CardContent>
           </Card>
         </div>
+      );
+    }
+    // CER-specific tab rendering (re-enabled per REGULATORY_UX_AUDIT_2026-02-13)
+    else if (activeTab === 'builder') {
+      return (
+        <CerBuilderPanel
+          documentId={cerDocumentId}
+          sections={sections}
+          onSectionUpdate={(sectionId, data) => {
+            setSections(prev => prev.map(s => (s.id === sectionId ? { ...s, ...data } : s)));
+          }}
+        />
+      );
+    } else if (activeTab === 'cer-preview') {
+      return (
+        <CerPreviewPanel
+          documentId={cerDocumentId}
+          sections={sections}
+          deviceProfile={deviceProfile}
+        />
+      );
+    } else if (activeTab === 'literature') {
+      return (
+        <LiteratureSearchPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          onLiteratureSelect={items => {
+            setSelectedLiterature(prev => [...prev, ...items]);
+          }}
+        />
+      );
+    } else if (activeTab === 'literature-review') {
+      return (
+        <LiteratureReviewWorkflow
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          selectedLiterature={selectedLiterature}
+        />
+      );
+    } else if (activeTab === 'literature-methodology') {
+      return (
+        <LiteratureMethodologyPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />
+      );
+    } else if (activeTab === 'cep') {
+      return (
+        <ClinicalEvaluationPlanPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'qmp') {
+      return (
+        <QualityManagementPlanPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />
+      );
+    } else if (activeTab === 'data-retrieval') {
+      return <CerDataRetrievalPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
+    } else if (activeTab === 'internal-clinical-data') {
+      return <InternalClinicalDataPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
+    } else if (activeTab === 'sota') {
+      return <StateOfArtPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
+    } else if (activeTab === 'gspr-mapping') {
+      return (
+        <GSPRMappingPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'traceability') {
+      return (
+        <RegulatoryTraceabilityMatrix
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'assistant') {
+      return (
+        <CerAssistantPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+          activeTab={activeTab}
+        />
+      );
+    } else if (activeTab === 'maude') {
+      return <MAUDIntegrationPanel documentId={cerDocumentId} deviceProfile={deviceProfile} />;
+    } else if (activeTab === 'cer-reports') {
+      return (
+        <CerComprehensiveReportsPanel
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+        />
+      );
+    } else if (activeTab === 'cer-export') {
+      return (
+        <ExportModule
+          documentId={cerDocumentId}
+          deviceProfile={deviceProfile}
+          sections={sections}
+          documentType="cer"
+        />
       );
     }
     // OLD DUPLICATE CODE REMOVED - NOW HANDLED EARLIER IN FUNCTION
@@ -4679,8 +5168,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-blue-200">
-                <Button 
-                  onClick={() => setActiveTab('device-intake')} 
+                <Button
+                  onClick={() => setActiveTab('device-intake')}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Start Stage 0: Setup
@@ -4717,7 +5206,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   )}
                   <span>Device Intake</span>
                   {!deviceProfile?.deviceName && (
-                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full">START</span>
+                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full">
+                      START
+                    </span>
                   )}
                 </div>
               ),
@@ -4818,13 +5309,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               status: 'todo',
             },
             // Conditional sections based on device toggles
-            ...(isSectionVisible('sterility') ? [{
-              id: 'sterility',
-              label: 'Sterilization & Shelf Life',
-              icon: <Shield className="h-4 w-4 mr-1.5 text-blue-600" />,
-              required: false,
-              status: 'todo',
-            }] : []),
+            ...(isSectionVisible('sterility')
+              ? [
+                  {
+                    id: 'sterility',
+                    label: 'Sterilization & Shelf Life',
+                    icon: <Shield className="h-4 w-4 mr-1.5 text-blue-600" />,
+                    required: false,
+                    status: 'todo',
+                  },
+                ]
+              : []),
             {
               id: 'emc-es',
               label: 'Electrical Safety & EMC',
@@ -4832,20 +5327,28 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               required: true,
               status: 'todo',
             },
-            ...(isSectionVisible('software') ? [{
-              id: 'software',
-              label: 'Software Documentation',
-              icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
-              required: false,
-              status: 'todo',
-            }] : []),
-            ...(isSectionVisible('cybersecurity') ? [{
-              id: 'cybersecurity',
-              label: 'Cybersecurity',
-              icon: <Lock className="h-4 w-4 mr-1.5 text-gray-600" />,
-              required: false,
-              status: 'todo',
-            }] : []),
+            ...(isSectionVisible('software')
+              ? [
+                  {
+                    id: 'software',
+                    label: 'Software Documentation',
+                    icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                    required: false,
+                    status: 'todo',
+                  },
+                ]
+              : []),
+            ...(isSectionVisible('cybersecurity')
+              ? [
+                  {
+                    id: 'cybersecurity',
+                    label: 'Cybersecurity',
+                    icon: <Lock className="h-4 w-4 mr-1.5 text-gray-600" />,
+                    required: false,
+                    status: 'todo',
+                  },
+                ]
+              : []),
             {
               id: 'usability',
               label: 'Usability / Human Factors',
@@ -4853,13 +5356,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               required: false,
               status: 'todo',
             },
-            ...(isSectionVisible('clinical_data') ? [{
-              id: 'clinical-data',
-              label: 'Clinical Data',
-              icon: <FileText className="h-4 w-4 mr-1.5 text-teal-600" />,
-              required: false,
-              status: 'todo',
-            }] : []),
+            ...(isSectionVisible('clinical_data')
+              ? [
+                  {
+                    id: 'clinical-data',
+                    label: 'Clinical Data',
+                    icon: <FileText className="h-4 w-4 mr-1.5 text-teal-600" />,
+                    required: false,
+                    status: 'todo',
+                  },
+                ]
+              : []),
           ],
         },
         // Stage 4: Author - Write narratives in eSTAR order
@@ -4917,13 +5424,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               required: true,
               status: 'todo',
             },
-            ...(isSectionVisible('cybersecurity') ? [{
-              id: 'cybersecurity-summary',
-              label: 'Cybersecurity Summary',
-              icon: <Shield className="h-4 w-4 mr-1.5 text-red-600" />,
-              required: false,
-              status: 'todo',
-            }] : []),
+            ...(isSectionVisible('cybersecurity')
+              ? [
+                  {
+                    id: 'cybersecurity-summary',
+                    label: 'Cybersecurity Summary',
+                    icon: <Shield className="h-4 w-4 mr-1.5 text-red-600" />,
+                    required: false,
+                    status: 'todo',
+                  },
+                ]
+              : []),
             {
               id: 'emc-es-summary',
               label: 'Electrical Safety & EMC Summary',
@@ -4931,13 +5442,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               required: true,
               status: 'todo',
             },
-            ...(isSectionVisible('software') ? [{
-              id: 'software-summary',
-              label: 'Software Summary',
-              icon: <Code className="h-4 w-4 mr-1.5 text-blue-600" />,
-              required: false,
-              status: 'todo',
-            }] : []),
+            ...(isSectionVisible('software')
+              ? [
+                  {
+                    id: 'software-summary',
+                    label: 'Software Summary',
+                    icon: <Code className="h-4 w-4 mr-1.5 text-blue-600" />,
+                    required: false,
+                    status: 'todo',
+                  },
+                ]
+              : []),
             {
               id: 'standards-declarations',
               label: 'Standards & Declarations of Conformity',
@@ -4945,13 +5460,17 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               required: true,
               status: 'todo',
             },
-            ...(isSectionVisible('sterility') ? [{
-              id: 'sterility-summary',
-              label: 'Sterilization & Shelf Life Summary',
-              icon: <Droplet className="h-4 w-4 mr-1.5 text-cyan-600" />,
-              required: false,
-              status: 'todo',
-            }] : []),
+            ...(isSectionVisible('sterility')
+              ? [
+                  {
+                    id: 'sterility-summary',
+                    label: 'Sterilization & Shelf Life Summary',
+                    icon: <Droplet className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                    required: false,
+                    status: 'todo',
+                  },
+                ]
+              : []),
             {
               id: 'usability-summary',
               label: 'Usability Summary',
@@ -5006,9 +5525,13 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
                   <span>RTA Pre-Check</span>
                   {deviceProfile?.rtaScore && (
-                    <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
-                      deviceProfile.rtaScore >= 0.9 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
+                    <span
+                      className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+                        deviceProfile.rtaScore >= 0.9
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}
+                    >
                       {Math.round(deviceProfile.rtaScore * 100)}%
                     </span>
                   )}
@@ -5069,15 +5592,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           <div className="flex overflow-x-auto pb-3 px-6 space-x-8">
             {k510TabGroups.map((group, groupIndex) => {
               const gateStatus = group.gateStatus || { passed: false };
-              const isPreviousStagePassed = groupIndex === 0 || k510TabGroups[groupIndex - 1]?.gateStatus?.passed;
+              const isPreviousStagePassed =
+                groupIndex === 0 || k510TabGroups[groupIndex - 1]?.gateStatus?.passed;
               const isStageAccessible = groupIndex === 0 || isPreviousStagePassed;
 
               return (
                 <div key={groupIndex} className="space-y-2 min-w-fit">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-700">
-                      {group.label}
-                    </span>
+                    <span className="text-xs font-semibold text-gray-700">{group.label}</span>
                     {/* Gate Status Indicator */}
                     {gateStatus.passed ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -5089,14 +5611,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   </div>
                   <div className="flex flex-wrap gap-1" role="tablist">
                     {group.tabs.map((tab, tabIndex) => {
-                      const isTabEnabled = isStageAccessible && (tab.status !== 'blocked');
-                      
+                      const isTabEnabled = isStageAccessible && tab.status !== 'blocked';
+
                       // Status chip colors
                       const statusColors = {
-                        'todo': 'bg-gray-100 text-gray-600',
-                        'draft': 'bg-yellow-100 text-yellow-700',
-                        'ready': 'bg-green-100 text-green-700',
-                        'blocked': 'bg-red-100 text-red-700',
+                        todo: 'bg-gray-100 text-gray-600',
+                        draft: 'bg-yellow-100 text-yellow-700',
+                        ready: 'bg-green-100 text-green-700',
+                        blocked: 'bg-red-100 text-red-700',
                       };
 
                       return (
@@ -5131,12 +5653,19 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           >
                             <div className="flex flex-col items-start gap-1">
                               <div className="flex items-center gap-1.5">
-                                {tab.icon || (tab.label && typeof tab.label === 'object' ? null : <FileText className="h-3.5 w-3.5" />)}
-                                <span className="font-medium">{typeof tab.label === 'object' ? tab.label : tab.label}</span>
+                                {tab.icon ||
+                                  (tab.label && typeof tab.label === 'object' ? null : (
+                                    <FileText className="h-3.5 w-3.5" />
+                                  ))}
+                                <span className="font-medium">
+                                  {typeof tab.label === 'object' ? tab.label : tab.label}
+                                </span>
                               </div>
                               {/* Status Badge */}
                               {tab.status && (
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusColors[tab.status]}`}>
+                                <span
+                                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusColors[tab.status]}`}
+                                >
                                   {tab.status.toUpperCase()}
                                 </span>
                               )}
@@ -5518,10 +6047,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-gray-900">
-                FDA 510(k) Submission Pipeline
-              </h1>
-              
+              <h1 className="text-2xl font-bold text-gray-900">FDA 510(k) Submission Pipeline</h1>
+
               {/* Multi-Project Selector */}
               <div className="relative">
                 <Button
@@ -5534,7 +6061,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                   <FolderOpen className="h-4 w-4 text-blue-600" />
                   <span className="font-medium text-blue-900">
                     {currentProjectId
-                      ? allProjects.find(p => p.id === currentProjectId)?.deviceName || 'Select Project'
+                      ? allProjects.find(p => p.id === currentProjectId)?.deviceName ||
+                        'Select Project'
                       : 'No Project Selected'}
                   </span>
                   <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700">
@@ -5584,12 +6112,16 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-gray-900">{project.deviceName}</h4>
+                                    <h4 className="font-semibold text-gray-900">
+                                      {project.deviceName}
+                                    </h4>
                                     {project.id === currentProjectId && (
                                       <CheckCircle className="h-4 w-4 text-blue-600" />
                                     )}
                                   </div>
-                                  <p className="text-xs text-gray-600 mt-0.5">{project.manufacturer}</p>
+                                  <p className="text-xs text-gray-600 mt-0.5">
+                                    {project.manufacturer}
+                                  </p>
                                   <div className="flex items-center gap-2 mt-2">
                                     <Badge variant="outline" className="text-xs">
                                       {project.deviceType === 'cer' ? 'CER' : '510(k)'}
@@ -5612,7 +6144,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation();
                                     if (confirm(`Delete project "${project.deviceName}"?`)) {
                                       deleteProject(project.id);
@@ -5905,7 +6437,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/Format-and-Content-of-the-Clinical-and-Statistical-Sections-of-an-Application.pdf',
@@ -5935,7 +6467,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/E3-Structure-and-Content-of-Clinical-Study-Reports.pdf',
@@ -5965,7 +6497,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/7.19.13.Miller-Clinical-Trials.pdf',
@@ -6042,7 +6574,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/CER REPORT EXAMPLE OUTPUT.pdf',
@@ -6072,7 +6604,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/ICER_Acute-Pain_Evidence-Report_For-Publication_020525.pdf',
@@ -6102,7 +6634,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/AO_2508_2023_1-3.pdf',
@@ -6134,7 +6666,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/9789240097711-eng.pdf',
@@ -6214,7 +6746,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-100 bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/1 - CER 2021 Update - Arthrosurface Shoulder Implant Systems - 10.07.2021 (FINAL).pdf',
@@ -6244,7 +6776,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-100 bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/Clinical-Evaluation-Reports-How-To-Leverage-Published-Data-–-Pro-Te-Fall-2016.pdf',
@@ -6274,7 +6806,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-100 bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/Human-Factors-Studies-and-Related-Clinical-Study-Considerations-in-Combination-Product-Design-and-Development.pdf',
@@ -6353,7 +6885,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/ENVIA_Whitepaper_SOTApdf.pdf',
@@ -6383,7 +6915,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           <button
                             type="button"
                             className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
-                            onClick={(e) =>
+                            onClick={e =>
                               openDocumentSafely(
                                 e,
                                 '/attached_assets/DI_Intelligent-clinical-trials.pdf',
@@ -6461,7 +6993,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                             <button
                               type="button"
                               className="flex w-full items-center py-2 px-3 pl-9 hover:bg-blue-50 cursor-pointer text-left"
-                              onClick={(e) =>
+                              onClick={e =>
                                 openDocumentSafely(
                                   e,
                                   '/attached_assets/9789240097711-eng.pdf',
@@ -6629,7 +7161,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={(e) => {
+            onSubmit={e => {
               e.preventDefault();
               const formData = new FormData(e.target);
               const projectData = {
@@ -6638,11 +7170,11 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 deviceClass: formData.get('deviceClass'),
                 intendedUse: formData.get('intendedUse'),
               };
-              
+
               const newProject = createNewProject(projectData);
               setShowNewProjectDialog(false);
               setActiveTab('device-profile');
-              
+
               toast({
                 title: 'Project Created',
                 description: `Created new project: ${projectData.deviceName}`,
@@ -6703,7 +7235,11 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700" data-testid="button-submit-new-project">
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-submit-new-project"
+              >
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Create Project
               </Button>
@@ -6714,27 +7250,27 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
       {/* Document Viewer Modal */}
       {documentViewerData.isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4"
-          onClick={(e) => {
+          onClick={e => {
             // Close when clicking on backdrop (not on the modal itself)
             if (e.target === e.currentTarget) {
               setDocumentViewerData({
                 isOpen: false,
                 url: '',
                 documentName: '',
-                type: 'other'
+                type: 'other',
               });
             }
           }}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             // Close on Escape key press
             if (e.key === 'Escape') {
               setDocumentViewerData({
                 isOpen: false,
                 url: '',
                 documentName: '',
-                type: 'other'
+                type: 'other',
               });
             }
           }}
@@ -6743,7 +7279,10 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           aria-modal="true"
           aria-label="Document viewer modal"
         >
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
             {/* Viewer Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -6771,7 +7310,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       isOpen: false,
                       url: '',
                       documentName: '',
-                      type: 'other'
+                      type: 'other',
                     });
                   }}
                   className="h-8 w-8 p-0"
@@ -6810,7 +7349,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           isOpen: false,
                           url: '',
                           documentName: '',
-                          type: 'other'
+                          type: 'other',
                         });
                       }}
                     >
@@ -6852,7 +7391,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         >
           <div
             className="fixed right-0 top-0 bottom-0 w-full max-w-4xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-[101]"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             style={{ animation: 'slideInRight 0.3s ease-out' }}
             data-testid="document-vault-panel"
           >
@@ -6882,7 +7421,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
               <EnhancedDocumentVault
                 projectId={currentProjectId}
                 deviceProfile={deviceProfile}
-                onDocumentSelect={(doc) => {
+                onDocumentSelect={doc => {
                   // Handle document selection
                   console.log('Document selected from vault:', doc);
                 }}

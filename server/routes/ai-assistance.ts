@@ -1,8 +1,13 @@
 import { Router } from 'express';
-// NOTE: Using AI Provider Router for multi-provider support
-// The original openaiService was actually Kimi AI (moonshot.cn)
-import aiProviderRouter from '../services/aiProviderRouter.js';
-const openaiService = aiProviderRouter; // Backward compatibility alias
+// NOTE: AIProviderRouter requires a database pool — service initialized lazily via setAIService()
+// The original openaiService was actually Kimi AI (moonshot.cn), now multi-provider
+import type { AIProviderRouter } from '../services/aiProviderRouter.js';
+let openaiService: AIProviderRouter | null = null;
+
+/** Allow server/index.ts to inject the initialized AI service */
+export function setAIService(service: AIProviderRouter) {
+  openaiService = service;
+}
 import { z } from 'zod';
 
 const router = Router();
@@ -111,8 +116,7 @@ router.post('/assist', async (req, res) => {
     let suggestion = '';
     let isRealAI = false;
     
-    // Try to use the OpenAI service
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env.OPENAI_API_KEY && openaiService) {
       try {
         // Add timeout wrapper
         const timeoutPromise = new Promise((_, reject) => 
@@ -221,7 +225,7 @@ router.post('/verify', async (req, res) => {
     let isRealAI = false;
     
     // Try to use OpenAI for verification
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env.OPENAI_API_KEY && openaiService) {
       try {
         const message = `Verify the credibility and accuracy of this content. Check for regulatory compliance and identify any issues:\n\n${content}\n\nSources: ${sources?.join(', ') || 'None provided'}`;
         
@@ -301,8 +305,7 @@ router.get('/health', async (req, res) => {
     }
   };
   
-  // Test OpenAI connection if configured
-  if (process.env.OPENAI_API_KEY) {
+  if (process.env.OPENAI_API_KEY && openaiService) {
     try {
       const testMessage = 'Health check test';
       const timeout = new Promise((_, reject) => 

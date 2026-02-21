@@ -50,7 +50,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import type { ModuleId } from '../core/portalTypes';
 
-// Module route mapping
+// Module route mapping — kept in sync with SidebarNav.tsx
 const moduleRouteMap: Record<string, string> = {
   dashboard: '/client-portal',
   vault: '/client-portal/vault',
@@ -60,15 +60,16 @@ const moduleRouteMap: Record<string, string> = {
   quality_management: '/client-portal/quality',
   document_control: '/client-portal/documents',
   analytics: '/client-portal/analytics',
-  ind_automation: '/client-portal/ind-wizard',
   cer_generator: '/client-portal/cer-generator',
-  protocol_designer: '/client-portal/protocol-designer',
-  safety_database: '/client-portal/safety',
-  biostatistics: '/client-portal/biostatistics',
-  medical_writing: '/client-portal/medical-writing',
-  dossier_builder: '/client-portal/dossier',
-  submission_tracker: '/client-portal/submissions',
-  audit_trail: '/client-portal/audit',
+  ectd_coauthor: '/client-portal/ectd-coauthor',
+  '510k_builder': '/client-portal/510k-builder',
+  lumen_cortex: '/client-portal/lumen-cortex',
+  ai_assistant: '/client-portal/ai-assistant',
+  safety_reporting: '/client-portal/safety',
+  training: '/client-portal/training',
+  project_hub: '/client-portal/project-hub',
+  timeline_planner: '/client-portal/timeline-planner',
+  platform_readiness: '/admin/platform-readiness',
   settings: '/client-portal/settings',
 };
 

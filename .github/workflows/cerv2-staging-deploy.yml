@@ -1,0 +1,362 @@
+name: CERV2 RC → Staging Deploy + Production Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      rc_tag:
+        description: 'Release candidate tag (e.g. rc-9.1.0)'
+        required: false
+        type: string
+      skip_lighthouse:
+        description: 'Skip Lighthouse audit (faster iteration)'
+        required: false
+        type: boolean
+        default: false
+      environment:
+        description: 'Target staging environment'
+        required: true
+        default: 'staging-docker'
+        type: choice
+        options:
+          - staging-docker # Local Docker Compose
+          - staging-vercel # Vercel preview deployment
+
+  # Also triggered by pushes to concept2cure-v2 with Phase 9 tag
+  push:
+    tags:
+      - 'rc-*'
+
+concurrency:
+  group: cerv2-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  STAGING_PORT: 5000
+  STAGING_URL: http://localhost:5000
+
+jobs:
+  # ─── Gate 1: Pre-flight Checks ─────────────────────────────────────────
+  preflight:
+    name: 'Gate 1: Pre-flight Checks'
+    runs-on: ubuntu-latest
+    outputs:
+      rc_version: ${{ steps.version.outputs.rc }}
+      commit_sha: ${{ steps.version.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve RC version
+        id: version
+        env:
+          RC_TAG_INPUT: ${{ inputs.rc_tag }}
+        run: |
+          if [[ -n "$RC_TAG_INPUT" ]]; then
+            echo "rc=$RC_TAG_INPUT" >> "$GITHUB_OUTPUT"
+          else
+            echo "rc=rc-$(date +%Y%m%d)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify branch
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          fi
+          echo "Branch: $BRANCH"
+          echo "Expected: concept2cure-v2 or tag rc-*"
+          if [[ "$BRANCH" != "concept2cure-v2" && ! "$BRANCH" =~ ^rc- ]]; then
+            echo "::warning::Not on concept2cure-v2 — proceeding with caution"
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Phase 9 file integrity check
+        run: |
+          echo "=== Phase 9 File Inventory ==="
+          PHASE9_FILES=(
+            "client/src/pages/CERV2EditorAI.jsx"
+            "client/src/services/CERV2AutoSaveService.js"
+            "client/src/utils/cerv2-section-targets.js"
+            "client/src/utils/CERV2ComplianceEngine.js"
+            "client/src/utils/cerv2-validation-utils.js"
+            "client/src/components/CERV2DeviceContextPanel.jsx"
+            "client/src/components/CERV2AttachmentManager.jsx"
+            "client/src/components/CERV2VersionHistory.jsx"
+            "client/src/components/CERV2PredicateSearch.jsx"
+            "client/src/components/CERV2CitationManager.jsx"
+            "client/src/components/CERV2ReviewWorkflow.jsx"
+            "client/src/components/CERV2ExportControls.jsx"
+          )
+          MISSING=0
+          for f in "${PHASE9_FILES[@]}"; do
+            if [[ -f "$f" ]]; then
+              SIZE=$(wc -l < "$f")
+              echo "  ✔ $f ($SIZE lines)"
+            else
+              echo "  ✖ MISSING: $f"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          if [[ $MISSING -gt 0 ]]; then
+            echo "::error::$MISSING Phase 9 files are missing!"
+            exit 1
+          fi
+          echo ""
+          echo "All ${#PHASE9_FILES[@]} Phase 9 files present."
+
+      - name: Lint (non-blocking)
+        continue-on-error: true
+        run: npm run lint
+
+      - name: TypeScript check (non-blocking)
+        continue-on-error: true
+        run: npm run typecheck
+
+      - name: Security audit (production deps)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
+  # ─── Gate 2: Build ─────────────────────────────────────────────────────
+  build:
+    name: 'Gate 2: Production Build'
+    runs-on: ubuntu-latest
+    needs: preflight
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build client + server
+        run: |
+          # Build with production mode
+          NODE_ENV=production npx vite build 2>&1 | tee build-client.log || true
+          npx esbuild server/index.ts \
+            --platform=node \
+            --packages=external \
+            --bundle \
+            --format=esm \
+            --outdir=dist 2>&1 | tee build-server.log
+
+      - name: Verify build artifacts
+        run: |
+          echo "=== Client Build ==="
+          if [[ -d "dist/public" || -d "dist/client" || -d "client/dist" ]]; then
+            echo "  ✔ Client bundle found"
+            find dist/ client/dist/ -name '*.js' -o -name '*.css' 2>/dev/null | head -20
+          else
+            echo "  ⚠ Client bundle dir not found (checking root dist/)"
+            ls -la dist/ 2>/dev/null || echo "  No dist/ directory"
+          fi
+          echo ""
+          echo "=== Server Build ==="
+          if [[ -f "dist/index.js" ]]; then
+            SIZE=$(wc -c < dist/index.js)
+            echo "  ✔ dist/index.js ($SIZE bytes)"
+          else
+            echo "  ✖ dist/index.js not found!"
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ needs.preflight.outputs.commit_sha }}
+          path: |
+            dist/
+            client/dist/
+            package.json
+            package-lock.json
+          retention-days: 7
+
+  # ─── Gate 3: Unit + Integration Tests ──────────────────────────────────
+  test:
+    name: 'Gate 3: Test Suite'
+    runs-on: ubuntu-latest
+    needs: preflight
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run Vitest
+        run: npx vitest run --config vitest.config.ts --reporter=verbose 2>&1 | tee test-results.log
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ needs.preflight.outputs.commit_sha }}
+          path: test-results.log
+          retention-days: 7
+
+  # ─── Gate 4: Docker Staging Deploy ─────────────────────────────────────
+  staging-deploy:
+    name: 'Gate 4: Staging Deploy'
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    timeout-minutes: 20
+    env:
+      STAGING_DB_PASSWORD: staging-${{ github.run_id }}-${{ github.run_attempt }}
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ env.STAGING_DB_PASSWORD }}
+          POSTGRES_DB: clinicalsage_staging
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ needs.preflight.outputs.commit_sha }}
+
+      - name: Start staging server
+        run: |
+          NODE_ENV=production \
+          PORT=${{ env.STAGING_PORT }} \
+          DATABASE_URL="postgresql://postgres:${{ env.STAGING_DB_PASSWORD }}@localhost:5432/clinicalsage_staging" \
+          node dist/index.js &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> "$GITHUB_ENV"
+
+          # Wait for server to be ready (up to 60s)
+          echo "Waiting for server on port ${{ env.STAGING_PORT }}..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:${{ env.STAGING_PORT }}/api/health > /dev/null 2>&1; then
+              echo "  ✔ Server ready after ${i}s"
+              break
+            fi
+            if [[ $i -eq 60 ]]; then
+              echo "  ✖ Server failed to start within 60s"
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: CERV2 API smoke test
+        run: |
+          node scripts/cerv2_staging_verify.mjs \
+            --base-url http://localhost:${{ env.STAGING_PORT }} \
+            --output staging-report.json \
+            --ci
+
+      - name: Upload staging report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-report-${{ needs.preflight.outputs.commit_sha }}
+          path: staging-report.json
+          retention-days: 14
+
+      - name: Shutdown server
+        if: always()
+        run: |
+          if [[ -n "$SERVER_PID" ]]; then
+            kill "$SERVER_PID" 2>/dev/null || true
+          fi
+
+  # ─── Gate 5: Lighthouse Performance Audit ──────────────────────────────
+  lighthouse:
+    name: 'Gate 5: Lighthouse Audit'
+    if: ${{ !inputs.skip_lighthouse }}
+    runs-on: ubuntu-latest
+    needs: staging-deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci && npm install -g @lhci/cli
+
+      - name: Run Lighthouse CI
+        run: |
+          lhci autorun --config lighthouse-ci.json || true
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-${{ needs.preflight.outputs.commit_sha }}
+          path: .lighthouseci/
+          retention-days: 14
+
+  # ─── Gate 6: Final Approval + Tag ──────────────────────────────────────
+  approve-rc:
+    name: 'Gate 6: RC Approval'
+    runs-on: ubuntu-latest
+    needs: [staging-deploy, lighthouse]
+    if: always() && needs.staging-deploy.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate RC summary
+        run: |
+          RC="${{ needs.preflight.outputs.rc_version || 'untagged' }}"
+          SHA="${{ needs.preflight.outputs.commit_sha || 'unknown' }}"
+          cat <<EOF
+          ╔══════════════════════════════════════════════════════════╗
+          ║           CERV2 Release Candidate Summary               ║
+          ╠══════════════════════════════════════════════════════════╣
+          ║  RC Version:  $RC
+          ║  Commit:      $SHA
+          ║  Branch:      concept2cure-v2
+          ║                                                        ║
+          ║  Gates:                                                ║
+          ║    1. Pre-flight    ✔ Passed                           ║
+          ║    2. Build         ✔ Passed                           ║
+          ║    3. Tests         ✔ Passed                           ║
+          ║    4. Staging       ✔ Passed                           ║
+          ║    5. Lighthouse    ${{ needs.lighthouse.result == 'success' && '✔ Passed' || '⚠ Skipped/Warn' }}
+          ║                                                        ║
+          ║  Status: READY FOR PRODUCTION MERGE                    ║
+          ╚══════════════════════════════════════════════════════════╝
+          EOF
+
+      - name: Tag RC
+        if: ${{ needs.staging-deploy.result == 'success' }}
+        run: |
+          RC="${{ needs.preflight.outputs.rc_version || format('rc-{0}', github.run_number) }}"
+          git tag -f "$RC" || true
+          git push origin "$RC" --force || true
+          echo "Tagged as $RC"

@@ -1,9 +1,9 @@
 """Phase 6.6 — Seed DOCX Factory: Premium Templates + Demo Render Packs.
 
-Idempotent seed script that populates the DOCX Factory with 19 enterprise-grade
+Idempotent seed script that populates the DOCX Factory with enterprise-grade
 regulatory templates and demo input payloads.  Safe to run multiple times.
 
-Template Families (19 total):
+Template Families:
   IND (10):
     1.  eCTD Cover Letter (Module 1.0)
     2.  Form FDA 1571 Narrative Summary
@@ -15,17 +15,33 @@ Template Families (19 total):
     8.  Quality Overall Summary (2.3)
     9.  CSR Synopsis (5.3)
     10. Protocol Synopsis
+    NDA (5):
+        11. eCTD Cover Letter (NDA)
+        12. NDA Clinical Overview (2.5)
+        13. NDA Nonclinical Overview (2.4)
+        14. NDA Quality Overall Summary (2.3)
+        15. NDA CSR Synopsis (5.3)
+    BLA (5):
+        16. eCTD Cover Letter (BLA)
+        17. BLA Clinical Overview (2.5)
+        18. BLA Nonclinical Overview (2.4)
+        19. BLA Quality Overall Summary (2.3)
+        20. BLA CSR Synopsis (5.3)
+    SOP (3):
+        21. SOP — Change Control Summary
+        22. SOP — CAPA Effectiveness Summary
+        23. SOP — Deviation Investigation Summary
   510(k) (5):
-    11. 510(k) Cover Letter
-    12. Substantial Equivalence Comparison
-    13. Device Description
-    14. 510(k) Summary (§807.92)
-    15. Biocompatibility Evaluation
+        24. 510(k) Cover Letter
+        25. Substantial Equivalence Comparison
+        26. Device Description
+        27. 510(k) Summary (§807.92)
+        28. Biocompatibility Evaluation
   CER — eCTD 4.0 (4):
-    16. Clinical Evaluation Plan
-    17. Literature Analysis
-    18. Benefit-Risk & PMCF
-    19. State of the Art
+        29. Clinical Evaluation Plan
+        30. Literature Analysis
+        31. Benefit-Risk & PMCF
+        32. State of the Art
 
 Each template gets:
   - 1 version (DOCX file stored via BlobStore)
@@ -75,6 +91,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "ectd_cover_letter.docx",
         "demo_inputs": ["ectd_cover_letter__ind_starter.json"],
         "tags": ["ectd", "module-1", "cover-letter", "universal"],
+        "doc_family": "ind",
     },
     {
         "name": "Form FDA 1571 Narrative Summary",
@@ -82,6 +99,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "fda_1571_narrative.docx",
         "demo_inputs": ["fda_1571_narrative__ind_starter.json"],
         "tags": ["ind", "fda-1571", "narrative", "phase-1"],
+        "doc_family": "ind",
     },
     {
         "name": "Investigator Brochure Change Summary",
@@ -89,6 +107,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "ib_change_summary.docx",
         "demo_inputs": ["ib_change_summary__ind_starter.json"],
         "tags": ["ib", "change-summary", "safety-update"],
+        "doc_family": "ind",
     },
     {
         "name": "CMC Drug Substance Overview (3.2.S)",
@@ -96,6 +115,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "cmc_drug_substance.docx",
         "demo_inputs": ["cmc_drug_substance__cmc_lite.json"],
         "tags": ["cmc", "module-3", "drug-substance", "quality"],
+        "doc_family": "ind",
     },
     {
         "name": "CMC Drug Product Overview (3.2.P)",
@@ -103,6 +123,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "cmc_drug_product.docx",
         "demo_inputs": ["cmc_drug_product__cmc_lite.json"],
         "tags": ["cmc", "module-3", "drug-product", "quality"],
+        "doc_family": "ind",
     },
     {
         "name": "Clinical Overview — Benefit/Risk Summary (2.5)",
@@ -110,6 +131,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "clinical_benefit_risk.docx",
         "demo_inputs": ["clinical_benefit_risk__ind_starter.json"],
         "tags": ["clinical", "module-2", "benefit-risk", "overview"],
+        "doc_family": "ind",
     },
     {
         "name": "Nonclinical Overview (2.4)",
@@ -117,6 +139,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "nonclinical_overview.docx",
         "demo_inputs": ["nonclinical_overview__ind_starter.json"],
         "tags": ["nonclinical", "module-2", "pharmacology", "toxicology"],
+        "doc_family": "ind",
     },
     {
         "name": "Quality Overall Summary (2.3)",
@@ -124,6 +147,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "quality_overall_summary.docx",
         "demo_inputs": ["quality_overall_summary__ind_starter.json"],
         "tags": ["quality", "module-2", "qos", "cmc-summary"],
+        "doc_family": "ind",
     },
     {
         "name": "CSR Synopsis (5.3)",
@@ -131,6 +155,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "csr_synopsis.docx",
         "demo_inputs": ["csr_synopsis__ind_starter.json"],
         "tags": ["clinical", "module-5", "csr", "ich-e3"],
+        "doc_family": "ind",
     },
     {
         "name": "Protocol Synopsis",
@@ -138,6 +163,120 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "protocol_synopsis.docx",
         "demo_inputs": ["protocol_synopsis__ind_starter.json"],
         "tags": ["clinical", "protocol", "study-design", "phase-2"],
+        "doc_family": "ind",
+    },
+    # =========================================================================
+    # NDA Templates (5)
+    # =========================================================================
+    {
+        "name": "eCTD Cover Letter (NDA)",
+        "doc_type": "nda_cover_letter",
+        "template_file": "ectd_cover_letter.docx",
+        "demo_inputs": ["ectd_cover_letter__ind_starter.json"],
+        "tags": ["nda", "module-1", "cover-letter", "starter"],
+        "doc_family": "nda",
+    },
+    {
+        "name": "NDA Clinical Overview (2.5)",
+        "doc_type": "nda_clinical_overview",
+        "template_file": "clinical_benefit_risk.docx",
+        "demo_inputs": ["clinical_benefit_risk__ind_starter.json"],
+        "tags": ["nda", "module-2", "clinical", "benefit-risk", "starter"],
+        "doc_family": "nda",
+    },
+    {
+        "name": "NDA Nonclinical Overview (2.4)",
+        "doc_type": "nda_nonclinical_overview",
+        "template_file": "nonclinical_overview.docx",
+        "demo_inputs": ["nonclinical_overview__ind_starter.json"],
+        "tags": ["nda", "module-2", "nonclinical", "starter"],
+        "doc_family": "nda",
+    },
+    {
+        "name": "NDA Quality Overall Summary (2.3)",
+        "doc_type": "nda_quality_overall_summary",
+        "template_file": "quality_overall_summary.docx",
+        "demo_inputs": ["quality_overall_summary__ind_starter.json"],
+        "tags": ["nda", "module-2", "quality", "qos", "starter"],
+        "doc_family": "nda",
+    },
+    {
+        "name": "NDA CSR Synopsis (5.3)",
+        "doc_type": "nda_csr_synopsis",
+        "template_file": "csr_synopsis.docx",
+        "demo_inputs": ["csr_synopsis__ind_starter.json"],
+        "tags": ["nda", "module-5", "csr", "starter"],
+        "doc_family": "nda",
+    },
+    # =========================================================================
+    # BLA Templates (5)
+    # =========================================================================
+    {
+        "name": "eCTD Cover Letter (BLA)",
+        "doc_type": "bla_cover_letter",
+        "template_file": "ectd_cover_letter.docx",
+        "demo_inputs": ["ectd_cover_letter__ind_starter.json"],
+        "tags": ["bla", "module-1", "cover-letter", "starter"],
+        "doc_family": "bla",
+    },
+    {
+        "name": "BLA Clinical Overview (2.5)",
+        "doc_type": "bla_clinical_overview",
+        "template_file": "clinical_benefit_risk.docx",
+        "demo_inputs": ["clinical_benefit_risk__ind_starter.json"],
+        "tags": ["bla", "module-2", "clinical", "benefit-risk", "starter"],
+        "doc_family": "bla",
+    },
+    {
+        "name": "BLA Nonclinical Overview (2.4)",
+        "doc_type": "bla_nonclinical_overview",
+        "template_file": "nonclinical_overview.docx",
+        "demo_inputs": ["nonclinical_overview__ind_starter.json"],
+        "tags": ["bla", "module-2", "nonclinical", "starter"],
+        "doc_family": "bla",
+    },
+    {
+        "name": "BLA Quality Overall Summary (2.3)",
+        "doc_type": "bla_quality_overall_summary",
+        "template_file": "quality_overall_summary.docx",
+        "demo_inputs": ["quality_overall_summary__ind_starter.json"],
+        "tags": ["bla", "module-2", "quality", "qos", "starter"],
+        "doc_family": "bla",
+    },
+    {
+        "name": "BLA CSR Synopsis (5.3)",
+        "doc_type": "bla_csr_synopsis",
+        "template_file": "csr_synopsis.docx",
+        "demo_inputs": ["csr_synopsis__ind_starter.json"],
+        "tags": ["bla", "module-5", "csr", "starter"],
+        "doc_family": "bla",
+    },
+    # =========================================================================
+    # SOP Templates (3)
+    # =========================================================================
+    {
+        "name": "SOP — Change Control Summary",
+        "doc_type": "sop_change_control_summary",
+        "template_file": "protocol_synopsis.docx",
+        "demo_inputs": ["protocol_synopsis__ind_starter.json"],
+        "tags": ["sop", "quality-system", "change-control", "starter"],
+        "doc_family": "sop",
+    },
+    {
+        "name": "SOP — CAPA Effectiveness Summary",
+        "doc_type": "sop_capa_effectiveness",
+        "template_file": "quality_overall_summary.docx",
+        "demo_inputs": ["quality_overall_summary__ind_starter.json"],
+        "tags": ["sop", "quality-system", "capa", "starter"],
+        "doc_family": "sop",
+    },
+    {
+        "name": "SOP — Deviation Investigation Summary",
+        "doc_type": "sop_deviation_investigation",
+        "template_file": "nonclinical_overview.docx",
+        "demo_inputs": ["nonclinical_overview__ind_starter.json"],
+        "tags": ["sop", "quality-system", "deviation", "starter"],
+        "doc_family": "sop",
     },
     # =========================================================================
     # 510(k) Templates (5)
@@ -148,6 +287,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "510k_cover_letter.docx",
         "demo_inputs": ["510k_cover_letter__device_pack.json"],
         "tags": ["510k", "device", "cover-letter", "premarket"],
+        "doc_family": "510k",
     },
     {
         "name": "510(k) Substantial Equivalence Comparison",
@@ -155,6 +295,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "510k_se_comparison.docx",
         "demo_inputs": ["510k_se_comparison__device_pack.json"],
         "tags": ["510k", "device", "se-comparison", "predicate"],
+        "doc_family": "510k",
     },
     {
         "name": "510(k) Device Description",
@@ -162,6 +303,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "510k_device_description.docx",
         "demo_inputs": ["510k_device_description__device_pack.json"],
         "tags": ["510k", "device", "description", "technical"],
+        "doc_family": "510k",
     },
     {
         "name": "510(k) Summary (§807.92)",
@@ -169,6 +311,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "510k_summary.docx",
         "demo_inputs": ["510k_summary__device_pack.json"],
         "tags": ["510k", "device", "summary", "807-92"],
+        "doc_family": "510k",
     },
     {
         "name": "510(k) Biocompatibility Evaluation",
@@ -176,6 +319,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "510k_biocompatibility.docx",
         "demo_inputs": ["510k_biocompatibility__device_pack.json"],
         "tags": ["510k", "device", "biocompatibility", "iso-10993"],
+        "doc_family": "510k",
     },
     # =========================================================================
     # CER — eCTD 4.0 Templates (4)
@@ -186,6 +330,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "cer_evaluation_plan.docx",
         "demo_inputs": ["cer_evaluation_plan__cer_pack.json"],
         "tags": ["cer", "ectd-4", "eu-mdr", "evaluation-plan"],
+        "doc_family": "cer",
     },
     {
         "name": "CER — Literature Analysis",
@@ -193,6 +338,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "cer_literature_analysis.docx",
         "demo_inputs": ["cer_literature_analysis__cer_pack.json"],
         "tags": ["cer", "ectd-4", "eu-mdr", "literature-review"],
+        "doc_family": "cer",
     },
     {
         "name": "CER — Benefit-Risk & PMCF",
@@ -200,6 +346,7 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "cer_benefit_risk_pmcf.docx",
         "demo_inputs": ["cer_benefit_risk_pmcf__cer_pack.json"],
         "tags": ["cer", "ectd-4", "eu-mdr", "benefit-risk", "pmcf"],
+        "doc_family": "cer",
     },
     {
         "name": "CER — State of the Art",
@@ -207,8 +354,56 @@ SEED_CATALOG: list[dict[str, Any]] = [
         "template_file": "cer_state_of_art.docx",
         "demo_inputs": ["cer_state_of_art__cer_pack.json"],
         "tags": ["cer", "ectd-4", "eu-mdr", "state-of-art"],
+        "doc_family": "cer",
     },
 ]
+
+
+def _normalize_doc_family(value: str | None) -> str | None:
+    if not value:
+        return None
+    return value.strip().lower()
+
+
+def _entry_family(entry: dict[str, Any]) -> str:
+    return _normalize_doc_family(entry.get("doc_family")) or "ind"
+
+
+def get_supported_doc_families() -> list[str]:
+    """Return all available document families from the seed catalog."""
+    families = sorted({_entry_family(entry) for entry in SEED_CATALOG})
+    return families
+
+
+def get_supported_doc_types(doc_family: str | None = None) -> list[str]:
+    """Return supported doc_type values, optionally scoped by family."""
+    normalized_family = _normalize_doc_family(doc_family)
+    doc_types = {
+        entry["doc_type"]
+        for entry in SEED_CATALOG
+        if not normalized_family or _entry_family(entry) == normalized_family
+    }
+    return sorted(doc_types)
+
+
+def get_seed_catalog(
+    *,
+    doc_family: str | None = None,
+    doc_type: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return catalog entries filtered by family and/or doc type."""
+    normalized_family = _normalize_doc_family(doc_family)
+    normalized_doc_type = (doc_type or "").strip()
+
+    results: list[dict[str, Any]] = []
+    for entry in SEED_CATALOG:
+        if normalized_family and _entry_family(entry) != normalized_family:
+            continue
+        if normalized_doc_type and entry["doc_type"] != normalized_doc_type:
+            continue
+        results.append(entry)
+
+    return results
 
 
 # =============================================================================
@@ -262,6 +457,8 @@ async def seed_for_program(
     program_id: UUID,
     *,
     dry_run: bool = False,
+    doc_family: str | None = None,
+    doc_type: str | None = None,
 ) -> dict[str, Any]:
     """Seed all starter templates + versions into a specific program.
 
@@ -286,12 +483,14 @@ async def seed_for_program(
         "templates": [],
     }
 
+    catalog = get_seed_catalog(doc_family=doc_family, doc_type=doc_type)
+
     conn = await db.acquire_connection()
     try:
         # Set RLS context for this program
         await conn.execute(_SET_PROGRAM_CONTEXT, str(program_id))
 
-        for entry in SEED_CATALOG:
+        for entry in catalog:
             template_name = entry["name"]
             template_file = _TEMPLATES_DIR / entry["template_file"]
 
@@ -379,6 +578,7 @@ async def seed_for_program(
                 "template_id": str(template_id) if template_id else None,
                 "version_id": str(version_id) if version_id else None,
                 "doc_type": entry["doc_type"],
+                "doc_family": _entry_family(entry),
                 "tags": entry["tags"],
                 "demo_packs": demo_packs,
             })
@@ -395,7 +595,7 @@ def get_demo_packs_for_template(doc_type: str) -> list[dict[str, Any]]:
     Useful for the UI to show "Use demo inputs" options.
     """
     packs = []
-    for entry in SEED_CATALOG:
+    for entry in get_seed_catalog(doc_type=doc_type):
         if entry["doc_type"] == doc_type:
             for input_file in entry["demo_inputs"]:
                 input_path = _INPUTS_DIR / input_file
@@ -410,10 +610,14 @@ def get_demo_packs_for_template(doc_type: str) -> list[dict[str, Any]]:
     return packs
 
 
-def get_all_demo_packs() -> list[dict[str, Any]]:
+def get_all_demo_packs(
+    *,
+    doc_family: str | None = None,
+    doc_type: str | None = None,
+) -> list[dict[str, Any]]:
     """Return all demo input packs grouped by template (no DB required)."""
     result = []
-    for entry in SEED_CATALOG:
+    for entry in get_seed_catalog(doc_family=doc_family, doc_type=doc_type):
         packs = []
         for input_file in entry["demo_inputs"]:
             input_path = _INPUTS_DIR / input_file
@@ -428,6 +632,7 @@ def get_all_demo_packs() -> list[dict[str, Any]]:
         result.append({
             "template_name": entry["name"],
             "doc_type": entry["doc_type"],
+            "doc_family": _entry_family(entry),
             "tags": entry["tags"],
             "demo_packs": packs,
         })

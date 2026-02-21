@@ -84,12 +84,13 @@ class LocalBlobStore(BlobStore):
             )
         self._root = Path(root)
         self._root.mkdir(parents=True, exist_ok=True)
+        self._root_resolved = self._root.resolve()
         logger.info("LocalBlobStore initialized at: %s", self._root)
 
     def _resolve(self, key: str) -> Path:
         """Resolve a key to an absolute path (prevent path traversal)."""
-        resolved = (self._root / key).resolve()
-        if not str(resolved).startswith(str(self._root.resolve())):
+        resolved = (self._root_resolved / key).resolve()
+        if not resolved.is_relative_to(self._root_resolved):
             raise ValueError(f"Invalid blob key: path traversal detected in '{key}'")
         return resolved
 

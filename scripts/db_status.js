@@ -3,7 +3,7 @@ import { Client } from 'pg';
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  logger.error('DATABASE_URL is not set.');
+  console.error('DATABASE_URL is not set.');
   process.exit(1);
 }
 
@@ -25,27 +25,35 @@ const run = async () => {
   );
 
   if (tablesResult.rows.length === 0) {
-    logger.error('No migration tables found (drizzle_migrations or schema_migrations).');
+    console.warn('No migration tables found (drizzle_migrations or schema_migrations).');
+    const publicTableCount = await client.query(
+      "SELECT count(*)::int AS count FROM information_schema.tables WHERE table_schema = 'public'"
+    );
+    console.log('Public table count:', publicTableCount.rows[0].count);
     await client.end();
-    process.exit(1);
+    return;
   }
 
-  logger.info('Migration tables found:', tablesResult.rows.map(row => row.table_name).join(', '));
+  console.log('Migration tables found:', tablesResult.rows.map(row => row.table_name).join(', '));
 
   if (tablesResult.rows.some(row => row.table_name === 'drizzle_migrations')) {
-    const migrations = await client.query('SELECT * FROM drizzle_migrations ORDER BY id DESC LIMIT 5');
-    logger.info('Latest drizzle migrations:', migrations.rows);
+    const migrations = await client.query(
+      'SELECT * FROM drizzle_migrations ORDER BY id DESC LIMIT 5'
+    );
+    console.log('Latest drizzle migrations:', migrations.rows);
   }
 
   if (tablesResult.rows.some(row => row.table_name === 'schema_migrations')) {
-    const migrations = await client.query('SELECT * FROM schema_migrations ORDER BY version DESC LIMIT 5');
-    logger.info('Latest schema migrations:', migrations.rows);
+    const migrations = await client.query(
+      'SELECT * FROM schema_migrations ORDER BY version DESC LIMIT 5'
+    );
+    console.log('Latest schema migrations:', migrations.rows);
   }
 
   await client.end();
 };
 
 run().catch(error => {
-  logger.error('Database status check failed:', error);
+  console.error('Database status check failed:', error);
   process.exit(1);
 });

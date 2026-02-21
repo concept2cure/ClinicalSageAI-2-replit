@@ -1,10 +1,10 @@
 /**
  * S3 Storage Service - Regulatory Document Storage Provider
- * 
+ *
  * Provides secure, compliant storage for Evidence Vault documents:
  * - vault-raw/{id}.pdf: Original source documents (immutable)
  * - vault-processed/{id}.json: Structured extractions (Text + Tables + Figures)
- * 
+ *
  * 21 CFR Part 11 compliant: All operations are logged with timestamps and checksums.
  */
 import {
@@ -24,19 +24,21 @@ import { Readable } from 'stream';
 const S3_CONFIG = {
   region: process.env.AWS_REGION || 'us-east-1',
   bucket: process.env.S3_VAULT_BUCKET || 'concept2cure-evidence-vault',
-  credentials: process.env.AWS_ACCESS_KEY_ID ? {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  } : undefined,
+  credentials: process.env.AWS_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      }
+    : undefined,
 };
 
 // Storage paths
 const STORAGE_PATHS = {
-  RAW: 'vault-raw',           // Original documents (PDF, DOCX)
+  RAW: 'vault-raw', // Original documents (PDF, DOCX)
   PROCESSED: 'vault-processed', // Structured JSON extractions
-  TABLES: 'vault-tables',      // Extracted table data
-  FIGURES: 'vault-figures',    // Extracted figure metadata
-  REDACTED: 'vault-redacted',  // PII-redacted versions
+  TABLES: 'vault-tables', // Extracted table data
+  FIGURES: 'vault-figures', // Extracted figure metadata
+  REDACTED: 'vault-redacted', // PII-redacted versions
 } as const;
 
 // Types
@@ -145,10 +147,12 @@ class S3StorageService {
   async initialize(): Promise<boolean> {
     try {
       // Test bucket access
-      await this.client.send(new ListObjectsV2Command({
-        Bucket: this.bucket,
-        MaxKeys: 1,
-      }));
+      await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          MaxKeys: 1,
+        })
+      );
       this.initialized = true;
       console.log(`[S3Storage] Initialized: bucket=${this.bucket}`);
       return true;
@@ -188,16 +192,18 @@ class S3StorageService {
     };
 
     try {
-      const result = await this.client.send(new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: path,
-        Body: buffer,
-        ContentType: mimeType,
-        ContentMD5: Buffer.from(md5, 'hex').toString('base64'),
-        Metadata: this.flattenMetadata(metadata),
-        // Part 11 compliance: server-side encryption
-        ServerSideEncryption: 'AES256',
-      }));
+      const result = await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: path,
+          Body: buffer,
+          ContentType: mimeType,
+          ContentMD5: Buffer.from(md5, 'hex').toString('base64'),
+          Metadata: this.flattenMetadata(metadata),
+          // Part 11 compliance: server-side encryption
+          ServerSideEncryption: 'AES256',
+        })
+      );
 
       return {
         success: true,
@@ -237,21 +243,23 @@ class S3StorageService {
     };
 
     try {
-      const result = await this.client.send(new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: path,
-        Body: buffer,
-        ContentType: 'application/json',
-        Metadata: {
-          documentId,
-          version: processed.version,
-          extractedAt: processed.extractedAt,
-          pageCount: String(processed.metadata.pageCount),
-          tableCount: String(processed.content.tables.length),
-          figureCount: String(processed.content.figures.length),
-        },
-        ServerSideEncryption: 'AES256',
-      }));
+      const result = await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: path,
+          Body: buffer,
+          ContentType: 'application/json',
+          Metadata: {
+            documentId,
+            version: processed.version,
+            extractedAt: processed.extractedAt,
+            pageCount: String(processed.metadata.pageCount),
+            tableCount: String(processed.content.tables.length),
+            figureCount: String(processed.content.figures.length),
+          },
+          ServerSideEncryption: 'AES256',
+        })
+      );
 
       return {
         success: true,
@@ -270,21 +278,25 @@ class S3StorageService {
   /**
    * Download raw document
    */
-  async downloadRawDocument(documentId: string): Promise<{ buffer: Buffer; metadata: Record<string, string> }> {
+  async downloadRawDocument(
+    documentId: string
+  ): Promise<{ buffer: Buffer; metadata: Record<string, string> }> {
     // Try common extensions
     const extensions = ['.pdf', '.docx', '.doc', ''];
-    
+
     for (const ext of extensions) {
       const path = `${STORAGE_PATHS.RAW}/${documentId}${ext}`;
       try {
-        const result = await this.client.send(new GetObjectCommand({
-          Bucket: this.bucket,
-          Key: path,
-        }));
+        const result = await this.client.send(
+          new GetObjectCommand({
+            Bucket: this.bucket,
+            Key: path,
+          })
+        );
 
         const stream = result.Body as Readable;
         const chunks: Buffer[] = [];
-        
+
         for await (const chunk of stream) {
           chunks.push(chunk);
         }
@@ -308,14 +320,16 @@ class S3StorageService {
     const path = `${STORAGE_PATHS.PROCESSED}/${documentId}.json`;
 
     try {
-      const result = await this.client.send(new GetObjectCommand({
-        Bucket: this.bucket,
-        Key: path,
-      }));
+      const result = await this.client.send(
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: path,
+        })
+      );
 
       const stream = result.Body as Readable;
       const chunks: Buffer[] = [];
-      
+
       for await (const chunk of stream) {
         chunks.push(chunk);
       }
@@ -335,7 +349,7 @@ class S3StorageService {
    */
   async getPresignedDownloadUrl(documentId: string, expiresIn: number = 3600): Promise<string> {
     const path = `${STORAGE_PATHS.RAW}/${documentId}.pdf`;
-    
+
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: path,
@@ -353,7 +367,7 @@ class S3StorageService {
     expiresIn: number = 3600
   ): Promise<string> {
     const path = `${STORAGE_PATHS.RAW}/${documentId}${this.getMimeExtension(mimeType)}`;
-    
+
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: path,
@@ -373,10 +387,12 @@ class S3StorageService {
     const path = `${basePath}/${documentId}${extension}`;
 
     try {
-      await this.client.send(new HeadObjectCommand({
-        Bucket: this.bucket,
-        Key: path,
-      }));
+      await this.client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucket,
+          Key: path,
+        })
+      );
       return true;
     } catch (error: any) {
       if (error.name === 'NotFound' || error.name === 'NoSuchKey') {
@@ -398,10 +414,12 @@ class S3StorageService {
 
     for (const path of paths) {
       try {
-        await this.client.send(new DeleteObjectCommand({
-          Bucket: this.bucket,
-          Key: path,
-        }));
+        await this.client.send(
+          new DeleteObjectCommand({
+            Bucket: this.bucket,
+            Key: path,
+          })
+        );
       } catch (error: any) {
         // Ignore not found errors
         if (error.name !== 'NoSuchKey') {
@@ -419,15 +437,17 @@ class S3StorageService {
     maxKeys: number = 100,
     continuationToken?: string
   ): Promise<{ keys: string[]; nextToken?: string }> {
-    const result = await this.client.send(new ListObjectsV2Command({
-      Bucket: this.bucket,
-      Prefix: STORAGE_PATHS[prefix],
-      MaxKeys: maxKeys,
-      ContinuationToken: continuationToken,
-    }));
+    const result = await this.client.send(
+      new ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: STORAGE_PATHS[prefix],
+        MaxKeys: maxKeys,
+        ContinuationToken: continuationToken,
+      })
+    );
 
     return {
-      keys: result.Contents?.map(obj => obj.Key || '').filter(Boolean) || [],
+      keys: result.Contents?.map((obj: { Key?: string }) => obj.Key || '').filter(Boolean) || [],
       nextToken: result.NextContinuationToken,
     };
   }
@@ -439,13 +459,15 @@ class S3StorageService {
     const sourcePath = `${STORAGE_PATHS.RAW}/${documentId}.pdf`;
     const destPath = `${STORAGE_PATHS.REDACTED}/${documentId}.pdf`;
 
-    await this.client.send(new CopyObjectCommand({
-      Bucket: this.bucket,
-      CopySource: `${this.bucket}/${sourcePath}`,
-      Key: destPath,
-      MetadataDirective: 'COPY',
-      ServerSideEncryption: 'AES256',
-    }));
+    await this.client.send(
+      new CopyObjectCommand({
+        Bucket: this.bucket,
+        CopySource: `${this.bucket}/${sourcePath}`,
+        Key: destPath,
+        MetadataDirective: 'COPY',
+        ServerSideEncryption: 'AES256',
+      })
+    );
   }
 
   // Helper methods

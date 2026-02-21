@@ -67,10 +67,10 @@ export default function AppPackagesBanner({ currentPath }) {
     },
     {
       icon: <FileSymlink size={20} />,
-      title: 'IND Wizard',
-      description: 'Design and manage INDs with multi-region compliance',
-      to: '/ind-architect',
-      path: '/ind-architect',
+      title: 'eCTD Co-Author',
+      description: 'Design and manage IND & eCTD submissions with multi-region compliance',
+      to: '/client-portal/ectd-coauthor',
+      path: '/client-portal/ectd-coauthor',
     },
     {
       icon: <Folder size={20} />,
