@@ -18,7 +18,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -53,8 +52,6 @@ export default function AuditTrailDashboard() {
   const [totalLogs, setTotalLogs] = useState(0);
   const pageSize = 9;
   const [selectedLog, setSelectedLog] = useState(null);
-  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
-  const [bulkDeleteReason, setBulkDeleteReason] = useState('');
   const [activeView, setActiveView] = useState('all');
   const { toast } = useToast();
 
@@ -204,50 +201,8 @@ export default function AuditTrailDashboard() {
     }
   };
 
-  const handleBulkDelete = async () => {
-    try {
-      // Build request with current filters to target specific logs
-      const request = {
-        tenantId: filterTenant || undefined,
-        userId: filterUser || undefined,
-        actionType: filterAction || undefined,
-        startDate: filterDateFrom || undefined,
-        endDate: filterDateTo || undefined,
-        reason: bulkDeleteReason,
-      };
-
-      const response = await fetch('/api/audit/bulk-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete audit logs');
-      }
-
-      const result = await response.json();
-
-      // Close dialog and reset form
-      setBulkDeleteConfirm(false);
-      setBulkDeleteReason('');
-
-      // Fetch updated logs
-      fetchAuditLogs();
-
-      toast({
-        title: 'Bulk Delete Successful',
-        description: `Successfully deleted ${result.deletedCount} audit logs.`,
-      });
-    } catch (error) {
-      console.error('Error deleting logs:', error);
-      toast({
-        title: 'Delete Failed',
-        description: 'Failed to delete audit logs. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
+  // Audit trail records are immutable per 21 CFR Part 11 §11.10(e)
+  // Bulk delete functionality has been intentionally removed for regulatory compliance
 
   const detectAnomaly = log => {
     // Define criteria for anomaly detection
@@ -442,66 +397,19 @@ export default function AuditTrailDashboard() {
             {filterTenant && `for tenant "${filterTenant}"`}
           </div>
 
-          <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
-            <DialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="h-4 w-4 mr-1" /> Bulk Delete
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm Bulk Delete</DialogTitle>
-                <DialogDescription>
-                  This will permanently delete all logs matching your current filters. This action
-                  cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="my-4">
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
-                  Reason for deletion (for audit purposes)
-                </label>
-                <Input
-                  value={bulkDeleteReason}
-                  onChange={e => setBulkDeleteReason(e.target.value)}
-                  placeholder="e.g., GDPR compliance, data retention policy"
-                />
-              </div>
-
-              <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-amber-800 text-sm">
-                <p className="font-semibold">Current filters:</p>
-                <ul className="mt-1 ml-4 list-disc">
-                  {filterTenant && <li>Tenant ID: {filterTenant}</li>}
-                  {filterUser && <li>User: {filterUser}</li>}
-                  {filterAction && <li>Action: {filterAction}</li>}
-                  {filterDateFrom && <li>From: {filterDateFrom}</li>}
-                  {filterDateTo && <li>To: {filterDateTo}</li>}
-                  {!filterTenant &&
-                    !filterUser &&
-                    !filterAction &&
-                    !filterDateFrom &&
-                    !filterDateTo && (
-                      <li className="text-red-600 font-semibold">
-                        WARNING: No filters - this will delete ALL logs
-                      </li>
-                    )}
-                </ul>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setBulkDeleteConfirm(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleBulkDelete}
-                  disabled={!bulkDeleteReason}
-                >
-                  Delete Logs
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+                  <Shield className="h-3.5 w-3.5" />
+                  Immutable Audit Trail
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Audit records cannot be deleted per 21 CFR Part 11 §11.10(e)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {loading && page > 1 ? (

@@ -3,6 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
   Loader2,
   Save,
   Trash,
@@ -11,12 +20,18 @@ import {
   ShieldCheck,
   AlertTriangle,
   FileCheck,
+  Lock,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Digital Signature Page - Capture and manage electronic signatures for documents
  */
 const SignaturePage = () => {
+  // Auth context — signer identity must come from authenticated session per §11.100
+  const { session } = useAuth();
+  const authenticatedUser = session?.user;
+
   // Signature pad references and state
   const signaturePadRef = useRef(null);
   const canvasRef = useRef(null);
@@ -24,9 +39,7 @@ const SignaturePage = () => {
   const [signatureImage, setSignatureImage] = useState(null);
   const [savedSignatures, setSavedSignatures] = useState([]);
   const [componentToSign, setComponentToSign] = useState('');
-  const [signatureDate, setSignatureDate] = useState('');
   const [signaturePosition, setSignaturePosition] = useState('');
-  const [signatureName, setSignatureName] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('create');
@@ -35,14 +48,20 @@ const SignaturePage = () => {
   const [signatureMeaning, setSignatureMeaning] = useState('approval');
   const [complianceStatus, setComplianceStatus] = useState(null);
 
+  // Password re-entry dialog state per §11.100(a)
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  // Signer name is bound to authenticated user — not editable
+  const signatureName = authenticatedUser?.display_name || authenticatedUser?.username || '';
+  // Date is server-generated per §11.50(b) — not user-editable
+  const signatureDate = new Date().toISOString().slice(0, 10);
+
   // Initialize signature pad when component mounts
   useEffect(() => {
     loadSavedSignatures();
     loadComplianceStatus();
-
-    // Set today's date as default
-    const today = new Date();
-    setSignatureDate(today.toISOString().slice(0, 10));
   }, []);
 
   // Load Part 11 compliance status (progressive disclosure — shown as badge)
@@ -100,31 +119,43 @@ const SignaturePage = () => {
     }
   };
 
-  // Save signature via Part 11 compliant API (§11.50/§11.70/§11.100)
-  const saveSignature = async () => {
-    if (!componentToSign || !signatureName || !signatureDate) {
+  // Initiate signing — validates fields, then opens password re-entry dialog per §11.100(a)
+  const initiateSign = () => {
+    if (!componentToSign || !signatureName) {
       setMessage('Please complete all required fields.');
       return;
     }
 
-    // Get signature image data
-    let signatureData;
+    // Validate signature image exists
     if (signaturePadRef.current) {
       if (signaturePadRef.current.isEmpty()) {
         setMessage('Please draw a signature.');
         return;
       }
-      signatureData = signaturePadRef.current.toDataURL();
-    } else if (signatureImage) {
-      signatureData = signatureImage;
-    } else {
+    } else if (!signatureImage) {
       setMessage('No signature to save.');
       return;
     }
 
+    // Open password re-entry dialog for identity verification per §11.100(a)
+    setPasswordInput('');
+    setPasswordError('');
+    setShowPasswordDialog(true);
+  };
+
+  // Save signature via Part 11 compliant API after password verification (§11.50/§11.70/§11.100)
+  const saveSignature = async password => {
+    // Get signature image data
+    let signatureData;
+    if (signaturePadRef.current) {
+      signatureData = signaturePadRef.current.toDataURL();
+    } else if (signatureImage) {
+      signatureData = signatureImage;
+    }
+
     setLoading(true);
     try {
-      // Try Part 11 compliant endpoint first (includes meaning, NIST timestamp, SHA-256 hash)
+      // Part 11 compliant endpoint (includes meaning, NIST timestamp, SHA-256 hash)
       const part11Response = await fetch('/api/part11/signatures', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -134,7 +165,7 @@ const SignaturePage = () => {
           signerName: signatureName,
           signerTitle: signaturePosition,
           meaning: signatureMeaning,
-          password: 'verified', // In production: modal prompt for password re-entry per §11.100
+          password: password, // Real password for §11.100(a) identity verification
           signatureImage: signatureData,
         }),
       });
@@ -156,45 +187,33 @@ const SignaturePage = () => {
           },
         ]);
         setMessage('Signature saved successfully (21 CFR Part 11 compliant).');
-        resetSignatureForm();
-        setActiveTab('manage');
-        return;
-      }
-    } catch (error) {
-      console.warn('Part 11 API unavailable, falling back to legacy:', error.message);
-    }
-
-    // Fallback to legacy signature endpoint
-    try {
-      const response = await fetch('/api/signature/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          component: componentToSign,
-          name: signatureName,
-          position: signaturePosition,
-          date: signatureDate,
-          signature: signatureData,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSavedSignatures(prev => [...prev, data.signature]);
-        setMessage('Signature saved successfully.');
+        setShowPasswordDialog(false);
         resetSignatureForm();
         setActiveTab('manage');
       } else {
-        throw new Error('Failed to save signature');
+        const errorData = await part11Response.json().catch(() => ({}));
+        if (part11Response.status === 401 || part11Response.status === 403) {
+          setPasswordError('Identity verification failed. Please re-enter your password.');
+          return; // Keep dialog open for retry
+        }
+        throw new Error(errorData.message || 'Failed to save signature');
       }
     } catch (error) {
       console.error('Error saving signature:', error);
       setMessage('Error saving signature. Please try again.');
+      setShowPasswordDialog(false);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle password dialog submission
+  const handlePasswordSubmit = () => {
+    if (!passwordInput.trim()) {
+      setPasswordError('Password is required for identity verification.');
+      return;
+    }
+    saveSignature(passwordInput);
   };
 
   // Reset signature form
@@ -203,7 +222,6 @@ const SignaturePage = () => {
     setSignatureImage(null);
     setComponentToSign('');
     setSignaturePosition('');
-    setSignatureName('');
 
     // Reset canvas
     if (signaturePadRef.current) {
@@ -224,27 +242,9 @@ const SignaturePage = () => {
     }
   };
 
-  // Delete a saved signature
-  const deleteSignature = async id => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/signature/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setSavedSignatures(prev => prev.filter(sig => sig.id !== id));
-        setMessage('Signature deleted successfully.');
-      } else {
-        throw new Error('Failed to delete signature');
-      }
-    } catch (error) {
-      console.error('Error deleting signature:', error);
-      setMessage('Error deleting signature. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Electronic signatures are legally binding per 21 CFR Part 11 §11.70
+  // Signature deletion has been intentionally removed for regulatory compliance
+  // Voiding a signature requires a counter-signature with documented reason
 
   // Format date for display
   const formatDate = dateString => {
@@ -327,15 +327,16 @@ const SignaturePage = () => {
                   <div>
                     <label className="block mb-1 font-medium">
                       Signer Name<span className="text-red-500">*</span>
+                      <span className="text-xs text-gray-400 ml-1">
+                        (bound to authenticated session per §11.100)
+                      </span>
                     </label>
-                    <input
-                      type="text"
-                      className="w-full p-2 border rounded"
-                      value={signatureName}
-                      onChange={e => setSignatureName(e.target.value)}
-                      placeholder="e.g., Dr. John Smith"
-                      required
-                    />
+                    <div className="w-full p-2 border rounded bg-gray-50 text-gray-700 flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-gray-400" />
+                      {signatureName || (
+                        <span className="text-gray-400 italic">Not authenticated</span>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -352,14 +353,18 @@ const SignaturePage = () => {
                   <div>
                     <label className="block mb-1 font-medium">
                       Date<span className="text-red-500">*</span>
+                      <span className="text-xs text-gray-400 ml-1">
+                        (server-generated per §11.50(b))
+                      </span>
                     </label>
-                    <input
-                      type="date"
-                      className="w-full p-2 border rounded"
-                      value={signatureDate}
-                      onChange={e => setSignatureDate(e.target.value)}
-                      required
-                    />
+                    <div className="w-full p-2 border rounded bg-gray-50 text-gray-700 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      {new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </div>
                   </div>
 
                   <div>
@@ -423,7 +428,7 @@ const SignaturePage = () => {
                         Clear
                       </Button>
                       <Button
-                        onClick={saveSignature}
+                        onClick={initiateSign}
                         disabled={loading}
                         className="flex items-center"
                       >
@@ -507,16 +512,10 @@ const SignaturePage = () => {
                             </div>
                           </div>
                           <div className="mt-3 lg:mt-0">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => deleteSignature(signature.id)}
-                              disabled={loading}
-                              className="flex items-center"
-                            >
-                              <Trash className="h-4 w-4 mr-1" />
-                              Remove
-                            </Button>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <ShieldCheck className="h-3 w-3" />
+                              Legally Bound
+                            </span>
                           </div>
                         </div>
                       </div>

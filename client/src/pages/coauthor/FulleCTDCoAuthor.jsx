@@ -84,12 +84,7 @@ export default function FulleCTDCoAuthor() {
   const [showAllTemplates, setShowAllTemplates] = useState(false);
 
   // Debug the current state values
-  console.log('FulleCTDCoAuthor Debug State:', {
-    showAllDocuments,
-    showAllTemplates,
-    featuredTemplatesLength: 3,
-    allTemplatesLength: 8,
-  });
+  // Debug logging removed for production — use browser DevTools if needed
 
   // eCTD Navigator state
   const [expandedSections, setExpandedSections] = useState({
@@ -102,170 +97,93 @@ export default function FulleCTDCoAuthor() {
     module5: false,
   });
 
-  // Sample file data matching user's PDF
-  const [vaultFiles] = useState([
-    {
-      name: 'Cover Letter.docx',
-      modified: '2025-05-15',
-      status: 'final',
-      size: '1.5 MB',
-      version: '1.0',
-    },
-    {
-      name: 'Application Form.pdf',
-      modified: '2025-05-12',
-      status: 'final',
-      size: '2.3 MB',
-      version: '1.0',
-    },
-  ]);
+  // Vault files — loaded from API
+  const [vaultFiles, setVaultFiles] = useState([]);
 
-  // Recent documents matching user's PDF
-  const [recentDocuments] = useState([
-    { title: 'Test Document3', module: '2.5', status: 'Draft', lastEdited: 'Just now' },
-    {
-      title: 'Module 2.5 Clinical Overview',
-      module: 'Module 2',
-      status: 'In Progress',
-      lastEdited: '2 hours ago',
-    },
-    { title: 'CMC Section 3.2.P', module: 'Module 3', status: 'Draft', lastEdited: '1 day ago' },
-  ]);
+  // Recent documents — loaded from API
+  const [recentDocuments, setRecentDocuments] = useState([]);
 
-  // All documents (expanded list when "View All Documents" is clicked)
-  const [allDocuments] = useState([
-    { title: 'Test Document3', module: '2.5', status: 'Draft', lastEdited: 'Just now' },
-    {
-      title: 'Module 2.5 Clinical Overview',
-      module: 'Module 2',
-      status: 'In Progress',
-      lastEdited: '2 hours ago',
-    },
-    { title: 'CMC Section 3.2.P', module: 'Module 3', status: 'Draft', lastEdited: '1 day ago' },
-    { title: 'Clinical Overview', module: 'Module 2', status: 'Final', lastEdited: '3 days ago' },
-    { title: 'Quality Summary', module: 'Module 3', status: 'Final', lastEdited: '5 days ago' },
-    {
-      title: 'Manufacturing Information',
-      module: 'Module 3',
-      status: 'In Progress',
-      lastEdited: '1 week ago',
-    },
-    { title: 'Pharmacokinetics', module: 'Module 2', status: 'Draft', lastEdited: '2 weeks ago' },
-    { title: 'Safety Summary', module: 'Module 2', status: 'Final', lastEdited: '3 weeks ago' },
-  ]);
+  // All documents — loaded from API
+  const [allDocuments, setAllDocuments] = useState([]);
 
-  // Featured templates (latest 3 for main view)
-  const [featuredTemplates] = useState([
-    {
-      name: 'Module 1 1 Form_1571',
-      module: 'administrative',
-      updated: 'Updated',
-      blocks: ['1.1'],
-      validated: true,
-      regions: ['US FDA'],
-    },
-    {
-      name: 'Module_1_2_Cover_Letter',
-      module: 'administrative',
-      updated: 'Updated',
-      blocks: ['1.2'],
-      validated: true,
-      regions: ['US FDA'],
-    },
-    {
-      name: 'Module_1_3_1_Sponsor_Contact_Information',
-      module: 'administrative',
-      updated: 'Updated',
-      blocks: ['1.3.1'],
-      validated: true,
-      regions: ['US FDA'],
-    },
-  ]);
+  // Templates — loaded from API
+  const [featuredTemplates, setFeaturedTemplates] = useState([]);
+  const [allTemplates, setAllTemplates] = useState([]);
 
-  // All templates (complete list)
-  const [allTemplates] = useState([
-    {
-      name: 'Module 1 1 Form_1571',
-      module: 'administrative',
-      updated: 'Updated',
-      blocks: ['1.1'],
-      validated: true,
-      regions: ['US FDA'],
-    },
-    {
-      name: 'Module_1_2_Cover_Letter',
-      module: 'administrative',
-      updated: 'Updated',
-      blocks: ['1.2'],
-      validated: true,
-      regions: ['US FDA'],
-    },
-    {
-      name: 'Module_1_3_1_Sponsor_Contact_Information',
-      module: 'administrative',
-      updated: 'Updated',
-      blocks: ['1.3.1'],
-      validated: true,
-      regions: ['US FDA'],
-    },
-    {
-      name: 'Module_1_20_Introduction_General_Plan',
-      module: 'administrative',
-      updated: 'Updated',
-      blocks: ['1.20'],
-      validated: true,
-      regions: ['US FDA'],
-    },
-    {
-      name: 'Module_2_2_Introduction',
-      module: 'summary',
-      updated: 'Updated',
-      blocks: ['2.2'],
-      validated: true,
-      regions: ['US FDA', 'EU EMA'],
-    },
-    {
-      name: 'Clinical Overview Template',
-      module: 'Module 2',
-      updated: '2 months ago',
-      blocks: ['2.5', '2.5.6', '2.7.3'],
-      validated: true,
-      regions: ['US FDA', 'EU EMA'],
-    },
-    {
-      name: 'CTD Module 3 Quality Template',
-      module: 'Module 3',
-      updated: '1 month ago',
-      blocks: ['3.2.S.4.1'],
-      validated: true,
-      regions: ['US FDA', 'EU EMA'],
-    },
-    {
-      name: 'NDA Cover Letter Template',
-      module: 'Module 1',
-      updated: '3 weeks ago',
-      blocks: ['1.2'],
-      validated: true,
-      regions: ['US FDA', 'EU EMA'],
-    },
-  ]);
-
-  // Validation dashboard data
-  const [validationData] = useState({
-    completeness: 78,
-    compliance: 92,
-    validation: 65,
-    issues: 4,
-    issueDescription:
-      'Missing source citations in section 2.5.4 and incomplete benefit-risk assessment.',
+  // Validation dashboard data — computed from actual documents
+  const [validationData, setValidationData] = useState({
+    completeness: 0,
+    compliance: 0,
+    validation: 0,
+    issues: 0,
+    issueDescription: 'No documents loaded. Create or import documents to see validation status.',
   });
 
-  // Document health metrics
-  const [documentHealth] = useState({
-    completeness: 72,
-    consistency: 86,
-    issueResolution: 63,
+  // Document health metrics — computed from actual documents
+  const [documentHealth, setDocumentHealth] = useState({
+    completeness: 0,
+    consistency: 0,
+    issueResolution: 0,
   });
+
+  // Load documents and templates from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Fetch documents
+        const docsRes = await fetch('/api/coauthor/documents', {
+          headers: { 'x-organization-id': '1' },
+        });
+        if (docsRes.ok) {
+          const docsData = await docsRes.json();
+          const docs = (docsData.documents || []).map(d => ({
+            title: d.title,
+            module: d.moduleNumber || d.sectionId || '',
+            status: d.status || 'Draft',
+            lastEdited: d.updatedAt ? new Date(d.updatedAt).toLocaleDateString() : 'Unknown',
+          }));
+          setAllDocuments(docs);
+          setRecentDocuments(docs.slice(0, 3));
+        }
+
+        // Fetch templates
+        const tmplRes = await fetch('/api/coauthor/templates');
+        if (tmplRes.ok) {
+          const tmplData = await tmplRes.json();
+          const templates = (tmplData.templates || []).map(t => ({
+            name: t.name,
+            module: t.moduleNumber || '',
+            updated: 'Available',
+            blocks: [t.moduleNumber],
+            validated: true,
+            regions: ['US FDA'],
+          }));
+          setAllTemplates(templates);
+          setFeaturedTemplates(templates.slice(0, 3));
+        }
+
+        // Fetch vault files
+        const vaultRes = await fetch('/api/vault/documents', {
+          headers: { 'x-organization-id': '1' },
+        });
+        if (vaultRes.ok) {
+          const vaultData = await vaultRes.json();
+          const files = (vaultData.documents || vaultData || []).map(f => ({
+            name: f.title || f.name || 'Untitled',
+            modified: f.updatedAt || f.modified || '',
+            status: f.status || 'draft',
+            size: f.size || '',
+            version: f.version || '1.0',
+          }));
+          setVaultFiles(files);
+        }
+      } catch (error) {
+        console.warn('FulleCTDCoAuthor: Failed to load data from API:', error.message);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const toggleSection = sectionId => {
     setExpandedSections(prev => ({
@@ -783,9 +701,9 @@ export default function FulleCTDCoAuthor() {
 
                   {/* Data Center Tab */}
                   <TabsContent value="datacenter" className="space-y-6">
-                    <ECTDDataCenterIntegration 
+                    <ECTDDataCenterIntegration
                       projectId={localStorage.getItem('currentProjectId')}
-                      onDocumentSelect={(doc) => {
+                      onDocumentSelect={doc => {
                         // Handle document selection - open in editor
                         console.log('Opening document:', doc);
                         toast({
@@ -802,23 +720,28 @@ export default function FulleCTDCoAuthor() {
 
                   {/* Content Reuse Tab */}
                   <TabsContent value="contentreuse" className="space-y-6">
-                    <ECTDContentReuseManager 
+                    <ECTDContentReuseManager
                       projectId={localStorage.getItem('currentProjectId')}
-                      onContentInsert={(content) => {
+                      onContentInsert={content => {
                         // Handle content insertion into active document
                         console.log('Inserting reusable content:', content);
                         toast({
                           title: 'Content Ready',
-                          description: 'Content is ready to be inserted. Open a document to insert.',
+                          description:
+                            'Content is ready to be inserted. Open a document to insert.',
                         });
-                        
+
                         // If there's an active document, insert the content
                         if (selectedDocument) {
                           // Navigate to workspace to show the document editor
                           setActiveTab('workspace');
                           // Here you would insert the content into the active editor
                           // For now, just log it
-                          console.log('Would insert into document:', selectedDocument.title, content);
+                          console.log(
+                            'Would insert into document:',
+                            selectedDocument.title,
+                            content
+                          );
                         }
                       }}
                     />
@@ -894,25 +817,31 @@ export default function FulleCTDCoAuthor() {
                                     <div className="text-sm">
                                       <span className="font-medium">ICH Guidelines Referenced</span>
                                     </div>
-                                    
+
                                     {/* Action Buttons */}
                                     <div className="flex items-center space-x-2 pt-3 border-t">
-                                      <Button 
-                                        size="sm" 
+                                      <Button
+                                        size="sm"
                                         variant="default"
                                         className="flex-1"
                                         onClick={() => {
-                                          console.log('Creating document from template:', template.name);
+                                          console.log(
+                                            'Creating document from template:',
+                                            template.name
+                                          );
                                           // Create document from template
                                           fetch('/api/coauthor/documents', {
                                             method: 'POST',
                                             headers: {
                                               'Content-Type': 'application/json',
-                                              'x-organization-id': localStorage.getItem('organizationId') || '6'
+                                              'x-organization-id':
+                                                localStorage.getItem('organizationId') || '6',
                                             },
                                             body: JSON.stringify({
                                               title: `New ${template.name}`,
-                                              content: template.content || `<h1>${template.name}</h1><p>Document created from template.</p>`,
+                                              content:
+                                                template.content ||
+                                                `<h1>${template.name}</h1><p>Document created from template.</p>`,
                                               module_number: template.module?.split(' ')[1] || '1',
                                               module_name: template.module || 'Module 1',
                                               status: 'draft',
@@ -920,49 +849,51 @@ export default function FulleCTDCoAuthor() {
                                               metadata: {
                                                 template_id: template.id,
                                                 template_name: template.name,
-                                                regions: template.regions
+                                                regions: template.regions,
+                                              },
+                                            }),
+                                          })
+                                            .then(res => res.json())
+                                            .then(data => {
+                                              if (data.success) {
+                                                toast({
+                                                  title: 'Document Created',
+                                                  description: `Created new document from ${template.name} template`,
+                                                });
+                                                // Refresh documents list
+                                                window.location.reload();
+                                              } else {
+                                                toast({
+                                                  title: 'Error',
+                                                  description:
+                                                    'Failed to create document from template',
+                                                  variant: 'destructive',
+                                                });
                                               }
                                             })
-                                          })
-                                          .then(res => res.json())
-                                          .then(data => {
-                                            if (data.success) {
+                                            .catch(error => {
+                                              console.error('Error creating document:', error);
                                               toast({
-                                                title: "Document Created",
-                                                description: `Created new document from ${template.name} template`,
+                                                title: 'Error',
+                                                description:
+                                                  'Failed to create document from template',
+                                                variant: 'destructive',
                                               });
-                                              // Refresh documents list
-                                              window.location.reload();
-                                            } else {
-                                              toast({
-                                                title: "Error",
-                                                description: "Failed to create document from template",
-                                                variant: "destructive"
-                                              });
-                                            }
-                                          })
-                                          .catch(error => {
-                                            console.error('Error creating document:', error);
-                                            toast({
-                                              title: "Error",
-                                              description: "Failed to create document from template",
-                                              variant: "destructive"
                                             });
-                                          });
                                         }}
                                         data-testid={`create-template-${index}`}
                                       >
                                         <FileText className="h-3 w-3 mr-1" />
                                         Create from Template
                                       </Button>
-                                      <Button 
-                                        size="sm" 
+                                      <Button
+                                        size="sm"
                                         variant="outline"
                                         onClick={() => {
                                           console.log('Previewing template:', template.name);
                                           // Show template preview in a dialog or navigate to preview
                                           toast({
-                                            title: "Template Preview",
+                                            title: 'Template Preview',
                                             description: `Viewing ${template.name}`,
                                           });
                                         }}
@@ -998,11 +929,11 @@ export default function FulleCTDCoAuthor() {
                   {/* Validation Tab - Now includes SEND/TRC Validation */}
                   <TabsContent value="validation" className="space-y-6">
                     {/* SEND/TRC Validation Panel */}
-                    <SENDValidationPanel 
+                    <SENDValidationPanel
                       documentId={selectedDocument?.id}
                       moduleType={selectedDocument?.module || 'module4'}
                     />
-                    
+
                     {/* Legacy Validation Dashboard */}
                     <Card>
                       <CardHeader>

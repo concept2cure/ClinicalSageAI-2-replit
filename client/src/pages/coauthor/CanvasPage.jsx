@@ -28,8 +28,7 @@ const CanvasPage = () => {
           </Link>
         </div>
         <div className="canvas-meta">
-          <span className="submission-type">IND Initial</span>
-          <span className="submission-id">ID: TSG-IND-2025-0042</span>
+          <span className="submission-type">Submission Canvas</span>
         </div>
       </div>
 

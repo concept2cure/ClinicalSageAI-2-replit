@@ -13,6 +13,7 @@ import {
   Code,
   Image,
   Copy,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   Card,
@@ -23,60 +24,33 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 
-// Mock chat history
-const initialMessages = {
-  2.7: [
-    {
-      id: 1,
-      role: 'user',
-      content: 'What should I include in section 2.7?',
-      timestamp: new Date(Date.now() - 60000 * 60),
-    },
-    {
-      id: 2,
-      role: 'assistant',
-      content:
-        'Section 2.7 (Clinical Summary) should include a detailed yet concise analysis of all clinical data. Make sure to cover:\n\n1. Biopharmaceutic studies\n2. Clinical pharmacology studies\n3. Clinical efficacy studies\n4. Clinical safety findings\n5. Benefit-risk conclusions\n\nI recommend organizing this section with clear tables and graphs for the key efficacy and safety endpoints. Would you like me to help with a specific subsection?',
-      timestamp: new Date(Date.now() - 60000 * 59),
-    },
-  ],
-  3.2: [
-    {
-      id: 1,
-      role: 'user',
-      content: 'How should I structure the manufacturing information?',
-      timestamp: new Date(Date.now() - 60000 * 180),
-    },
-    {
-      id: 2,
-      role: 'assistant',
-      content:
-        'For Section 3.2, structure your manufacturing information as follows:\n\n1. Description of the manufacturing process and process controls\n2. Control of materials\n3. Control of critical steps and intermediates\n4. Process validation and/or evaluation\n5. Manufacturing process development\n\nEnsure you include flow diagrams of the manufacturing process and clearly identify critical process parameters (CPPs) and critical quality attributes (CQAs).',
-      timestamp: new Date(Date.now() - 60000 * 179),
-    },
-  ],
-};
-
-// Default messages for sections without specific history
+// Default welcome message
 const defaultMessages = [
   {
     id: 1,
     role: 'assistant',
     content:
       "Hello! I'm your Lumen AI Regulatory Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
-    timestamp: new Date(Date.now() - 60000 * 5),
+    timestamp: new Date(),
+    source: 'system',
   },
 ];
 
 export default function LumenChatPane({ contextId }) {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(defaultMessages);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [threadId, setThreadId] = useState(null);
+  const [aiModel, setAiModel] = useState(null);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Load section-specific chat history
+  // Reset chat when context changes
   useEffect(() => {
-    setMessages(initialMessages[contextId] || defaultMessages);
+    setMessages(defaultMessages);
+    setThreadId(null);
+    setAiModel(null);
+    setError(null);
   }, [contextId]);
 
   // Auto-scroll to bottom of messages
@@ -84,10 +58,9 @@ export default function LumenChatPane({ contextId }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async () => {
+    if (!input.trim() || isTyping) return;
 
-    // Add user message
     const userMessage = {
       id: messages.length + 1,
       role: 'user',
@@ -96,35 +69,60 @@ export default function LumenChatPane({ contextId }) {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsTyping(true);
+    setError(null);
 
-    // Simulate AI response after a delay
-    setTimeout(() => {
-      const aiResponses = {
-        1.1: 'For this administrative section, make sure to include all required contact information for the sponsor and investigators. Also, ensure Form FDA 356h is properly completed and signed. Would you like me to help with anything specific about this form?',
-        1.2: "In the cover letter, you should clearly state the purpose of the submission, reference any prior communications with the FDA, and provide a high-level overview of what's included. Consider adding a table of contents for the submission package.",
-        2.1: 'The ToC should follow the exact structure defined in ICH M4. Make sure all section numbering is correct and hyperlinks are working properly if submitting electronically.',
-        2.5: 'Your Clinical Overview should focus on the benefit-risk assessment, integrating all relevant data from Module 5. Make sure to address any safety concerns identified in nonclinical studies and how the clinical program addressed them.',
-        2.7: "Based on your current content, I'd recommend strengthening the efficacy summary with more quantitative data. The primary endpoint results should be presented with confidence intervals and p-values. Would you like me to suggest a table format for this data?",
-        3.2: 'Your quality information appears comprehensive, but you might need to add more details on batch analysis. Regulatory authorities typically expect at least 3 batches of data. Also, consider adding a risk assessment for critical process parameters.',
-        4.2: 'For the pharmacology section, make sure to clearly link the mechanism of action to the proposed indication. Include a summary table of all major nonclinical findings and their clinical relevance.',
-        5.3: 'Clinical study reports should follow ICH E3 guidelines. Each CSR should include a protocol and statistical analysis plan as appendices. For pivotal studies, include patient narratives for serious adverse events and discontinuations due to adverse events.',
-      };
+    try {
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userInput,
+          thread_id: threadId,
+          system_prompt: contextId
+            ? `You are a regulatory affairs AI assistant helping with eCTD section ${contextId}. Provide specific, actionable guidance for this regulatory document section. Include ICH guideline references where applicable.`
+            : undefined,
+        }),
+      });
 
-      const defaultResponse =
-        "I've analyzed this section and it appears to follow regulatory guidelines. To enhance it further, consider adding more cross-references to supporting data in other modules. Is there any specific regulatory requirement you're concerned about?";
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.thread_id) setThreadId(data.thread_id);
+      if (data.model) setAiModel(data.model);
 
       const aiMessage = {
         id: messages.length + 2,
         role: 'assistant',
-        content: aiResponses[contextId] || defaultResponse,
+        content: data.answer || 'I was unable to generate a response. Please try again.',
         timestamp: new Date(),
+        model: data.model,
+        source: 'api',
       };
 
       setMessages(prev => [...prev, aiMessage]);
+    } catch (err) {
+      console.error('LumenChatPane: Failed to get AI response:', err);
+      setError('Failed to reach the AI service. Please try again.');
+
+      const errorMessage = {
+        id: messages.length + 2,
+        role: 'assistant',
+        content:
+          'I encountered an error connecting to the AI service. Please check your connection and try again.',
+        timestamp: new Date(),
+        source: 'error',
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = e => {
@@ -144,6 +142,11 @@ export default function LumenChatPane({ contextId }) {
         <CardTitle className="text-base flex items-center">
           <Bot className="h-5 w-5 mr-2 text-primary" />
           Lumen AI Assistant
+          {contextId && (
+            <span className="ml-2 text-xs text-muted-foreground font-normal">
+              Section {contextId}
+            </span>
+          )}
         </CardTitle>
         <CardDescription>
           Ask me about regulatory requirements, content suggestions, or compliance issues
@@ -165,21 +168,25 @@ export default function LumenChatPane({ contextId }) {
                 </Avatar>
               )}
               <div
-                className={`max-w-[80%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'} rounded-xl px-4 py-2.5`}
+                className={`max-w-[80%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : message.source === 'error' ? 'bg-destructive/10 border border-destructive/20' : 'bg-muted'} rounded-xl px-4 py-2.5`}
               >
                 <div className="space-y-2">
                   <div className="prose prose-sm whitespace-pre-line break-words">
+                    {message.source === 'error' && (
+                      <AlertTriangle className="h-4 w-4 inline mr-1 text-destructive" />
+                    )}
                     {message.content}
                   </div>
                   <div
                     className={`text-xs ${message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'} justify-between flex`}
                   >
                     <span>{formatTime(message.timestamp)}</span>
-                    {message.role === 'assistant' && (
+                    {message.role === 'assistant' && message.source !== 'error' && (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-4 w-4 text-muted-foreground hover:text-foreground"
+                        onClick={() => navigator.clipboard?.writeText(message.content)}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -222,6 +229,14 @@ export default function LumenChatPane({ contextId }) {
 
           <div ref={messagesEndRef} />
         </div>
+
+        {error && (
+          <div className="text-xs text-destructive mb-2 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            {error}
+          </div>
+        )}
+
         <div className="flex space-x-2">
           <Button variant="outline" size="icon" className="flex-shrink-0">
             <Paperclip className="h-4 w-4" />
@@ -246,7 +261,7 @@ export default function LumenChatPane({ contextId }) {
         </div>
       </CardContent>
       <CardFooter className="pt-0 px-4 pb-4 border-t flex justify-between items-center text-xs text-muted-foreground">
-        <span>Powered by GPT-4o & Regulatory Knowledge Base</span>
+        <span>{aiModel ? `Powered by ${aiModel}` : 'Powered by Lumen Cortex AI'}</span>
         <div className="flex space-x-2">
           <Button variant="ghost" size="sm" className="h-7 px-2">
             <Image className="h-3 w-3 mr-1" />
