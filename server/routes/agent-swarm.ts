@@ -591,7 +591,7 @@ class SwarmManager {
   }
 
   private async simulateExecution(swarm: SwarmExecution): Promise<void> {
-    // Guard against re-entry — prevent duplicate timer chains
+    // Guard against duplicate simulation timer chains
     if ((swarm as any)._simulating) return;
     (swarm as any)._simulating = true;
 
@@ -631,12 +631,12 @@ class SwarmManager {
           }
         }
         this.updateProgress(swarm);
-        // Clear re-entry guard after final task
-        if (swarm.tasks.every(t => t.status === 'completed' || t.status === 'hitl_review')) {
-          (swarm as any)._simulating = false;
-        }
       }, delay);
     }
+    // Clear simulation guard after all timers fire
+    setTimeout(() => {
+      (swarm as any)._simulating = false;
+    }, delay + 500);
   }
 
   private updateProgress(swarm: SwarmExecution): void {
@@ -689,7 +689,6 @@ class SwarmManager {
 
     // Resume execution
     if (swarm.state === 'hitl_paused') swarm.state = 'executing';
-    (swarm as any)._simulating = false; // Allow new simulation pass
     this.simulateExecution(swarm);
 
     return true;

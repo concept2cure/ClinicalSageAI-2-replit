@@ -483,7 +483,8 @@ const SignaturePage = () => {
                               <div>
                                 <h3 className="font-medium">{signature.name}</h3>
                                 <div className="text-sm text-gray-500">
-                                  {(signature.component || '').toUpperCase()} - {signature.position}
+                                  {(signature.component || 'Unknown').toUpperCase()} -{' '}
+                                  {signature.position || 'N/A'}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1">
                                   <span className="text-xs text-gray-500">

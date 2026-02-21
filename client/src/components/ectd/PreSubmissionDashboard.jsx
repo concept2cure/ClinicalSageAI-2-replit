@@ -42,53 +42,62 @@ export default function PreSubmissionDashboard({ submissionId, moduleType = 'ful
   const [monteCarloTiming, setMonteCarloTiming] = useState(null);
   const [dtLoading, setDtLoading] = useState(false);
 
-  // Run FDA Digital Twin analysis (parallel requests with graceful partial failure)
+  // Run FDA Digital Twin analysis (parallel via Promise.allSettled)
   const runDigitalTwinAnalysis = async () => {
     setDtLoading(true);
-    const headers = { 'Content-Type': 'application/json' };
+    const dtHeaders = { 'Content-Type': 'application/json' };
     const subType = moduleType === 'full' ? 'NDA' : '510k';
-
     try {
       const [rtfResult, qResult, mcResult] = await Promise.allSettled([
         fetch('/api/regulatory-digital-twin/rtf-assessment', {
-          method: 'POST', credentials: 'include', headers,
+          method: 'POST',
+          credentials: 'include',
+          headers: dtHeaders,
           body: JSON.stringify({
             submissionId: submissionId || 'current',
             submissionType: subType,
             sections: validationCategories.map(c => ({
-              id: c.id, name: c.name,
+              id: c.id,
+              name: c.name,
               completeness: validationStatus.categories[c.id]?.score || 75,
             })),
           }),
-        }).then(r => r.ok ? r.json() : Promise.reject(`RTF: ${r.status}`)),
+        }).then(r => (r.ok ? r.json() : Promise.reject(`RTF: ${r.status}`))),
         fetch('/api/regulatory-digital-twin/predict-questions', {
-          method: 'POST', credentials: 'include', headers,
+          method: 'POST',
+          credentials: 'include',
+          headers: dtHeaders,
           body: JSON.stringify({
-            submissionType: subType, therapeuticArea: 'general',
+            submissionType: subType,
+            therapeuticArea: 'general',
             sections: ['clinical', 'nonclinical', 'cmc', 'statistics'],
           }),
-        }).then(r => r.ok ? r.json() : Promise.reject(`Questions: ${r.status}`)),
+        }).then(r => (r.ok ? r.json() : Promise.reject(`Questions: ${r.status}`))),
         fetch('/api/regulatory-digital-twin/monte-carlo-timing', {
-          method: 'POST', credentials: 'include', headers,
+          method: 'POST',
+          credentials: 'include',
+          headers: dtHeaders,
           body: JSON.stringify({
-            submissionType: subType, complexity: 'moderate',
-            hasAcceleratedDesignation: false, simulationCount: 1000,
+            submissionType: subType,
+            complexity: 'moderate',
+            hasAcceleratedDesignation: false,
+            simulationCount: 1000,
           }),
-        }).then(r => r.ok ? r.json() : Promise.reject(`MC: ${r.status}`)),
+        }).then(r => (r.ok ? r.json() : Promise.reject(`Monte Carlo: ${r.status}`))),
       ]);
 
       if (rtfResult.status === 'fulfilled') setRtfAssessment(rtfResult.value);
-      else console.warn('RTF assessment failed:', rtfResult.reason);
       if (qResult.status === 'fulfilled') setPredictedQuestions(qResult.value);
-      else console.warn('Question prediction failed:', qResult.reason);
       if (mcResult.status === 'fulfilled') setMonteCarloTiming(mcResult.value);
-      else console.warn('Monte Carlo timing failed:', mcResult.reason);
 
-      const succeeded = [rtfResult, qResult, mcResult].filter(r => r.status === 'fulfilled').length;
+      const failures = [rtfResult, qResult, mcResult].filter(r => r.status === 'rejected');
       toast({
-        title: succeeded === 3 ? 'Digital Twin Analysis Complete' : `Partial Results (${succeeded}/3)`,
-        description: succeeded === 3 ? 'FDA reviewer simulation results are ready.' : 'Some analyses could not be completed. Available results are shown.',
-        variant: succeeded === 3 ? 'default' : 'destructive',
+        title: failures.length === 0 ? 'Digital Twin Analysis Complete' : 'Partial Analysis',
+        description:
+          failures.length === 0
+            ? 'FDA reviewer simulation results are ready.'
+            : `${3 - failures.length}/3 analyses completed. Some endpoints unavailable.`,
+        variant: failures.length === 3 ? 'destructive' : 'default',
       });
     } catch (err) {
       console.error('Digital twin error:', err);

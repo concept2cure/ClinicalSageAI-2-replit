@@ -80,7 +80,7 @@ export default function AuditTrailDashboard() {
       } else {
         toast({
           title: 'Verification Failed',
-          description: `Server returned status ${res.status}. Try again later.`,
+          description: `Chain integrity endpoint returned ${res.status}. Contact support.`,
           variant: 'destructive',
         });
       }

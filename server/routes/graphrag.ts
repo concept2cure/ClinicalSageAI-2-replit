@@ -384,9 +384,9 @@ async function traverseGraph(
           createdAt: new Date(),
         });
       }
-    } catch (err) {
+    } catch (dbErr) {
       // Tables may not exist — log and return what we have
-      console.warn('[GraphRAG] Graph traversal query failed:', err);
+      console.warn('[GraphRAG] Traversal hop failed:', (dbErr as Error).message);
       break;
     }
   }
@@ -576,12 +576,12 @@ router.post('/query', async (req: Request, res: Response) => {
         ORDER BY embedding <=> (SELECT embedding FROM knowledge_graph_nodes WHERE name ILIKE $1 LIMIT 1)
         LIMIT $2
       `,
-        [body.query, topK]
+        [body.query.split(' ')[0], topK]
       );
       vectorHits = vectorResult.rows.map((r: any) => ({ id: r.id, score: r.similarity || 0.5 }));
-    } catch (err) {
-      console.warn('[GraphRAG] pgvector search failed:', err);
+    } catch (vecErr) {
       // pgvector tables may not exist yet
+      console.warn('[GraphRAG] Vector search unavailable:', (vecErr as Error).message);
     }
     const vectorSearchMs = Date.now() - vectorStart;
 
@@ -706,8 +706,9 @@ router.post('/ingest', async (req: Request, res: Response) => {
           ]
         );
         nodesCreated++;
-      } catch (err) {
-        console.warn('[GraphRAG] Entity insert failed:', err);
+      } catch (insErr) {
+        // Log individual entity insert failure
+        console.warn('[GraphRAG] Entity insert failed:', (insErr as Error).message);
       }
     }
 
@@ -731,8 +732,9 @@ router.post('/ingest', async (req: Request, res: Response) => {
           ]
         );
         edgesCreated++;
-      } catch (err) {
-        console.warn('[GraphRAG] Edge insert failed:', err);
+      } catch (edgeErr) {
+        // Log individual edge insert failure
+        console.warn('[GraphRAG] Edge insert failed:', (edgeErr as Error).message);
       }
     }
 
@@ -895,7 +897,8 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
           newDocIds.push(row.source_document_id, row.target_document_id);
         }
         currentDocIds = [...new Set(newDocIds)].filter(id => !currentDocIds.includes(id));
-      } catch {
+      } catch (citErr) {
+        console.warn('[GraphRAG] Citation trace query failed:', (citErr as Error).message);
         break; // Table doesn't exist yet
       }
     }

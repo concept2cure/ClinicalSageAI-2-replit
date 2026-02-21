@@ -399,9 +399,11 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
       });
 
       if (!response.ok) {
-        console.error(`[LumenCortex] OpenAI API error: ${response.status} ${response.statusText}`);
+        const errBody = await response.text().catch(() => 'unknown');
+        console.error(`[Lumen Cortex] OpenAI API error ${response.status}:`, errBody);
         throw new Error(`OpenAI API returned ${response.status}`);
       }
+
       const data = (await response.json()) as any;
       content = data.choices?.[0]?.message?.content || '';
 

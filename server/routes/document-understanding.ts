@@ -567,18 +567,25 @@ router.post('/extract-tables', async (req: Request, res: Response) => {
 
   let text = content || '';
   if (!content && filePath) {
-    // Path traversal protection — same validation as /analyze
     const ALLOWED_ROOTS = [
-      path.resolve('uploads'), path.resolve('exports'), path.resolve('generated_documents'),
-      path.resolve('csrs'), path.resolve('ectd'), path.resolve('storage'),
+      path.resolve('uploads'),
+      path.resolve('exports'),
+      path.resolve('generated_documents'),
+      path.resolve('csrs'),
+      path.resolve('ectd'),
+      path.resolve('storage'),
     ];
     const fullPath = path.resolve(filePath);
     if (!ALLOWED_ROOTS.some(root => fullPath.startsWith(root))) {
-      return res.status(403).json({ error: 'Access denied: file path outside allowed directories' });
+      return res
+        .status(403)
+        .json({ error: 'Access denied: file path outside allowed directories' });
     }
-    if (!fs.existsSync(fullPath)) return res.status(404).json({ error: `File not found: ${filePath}` });
+    if (!fs.existsSync(fullPath))
+      return res.status(404).json({ error: `File not found: ${filePath}` });
     text = fs.readFileSync(fullPath, 'utf-8');
   }
+
   const elements = analyzeLayout(text, 1);
   const tables = extractTables(elements);
 
@@ -602,18 +609,25 @@ router.post('/extract-form-fields', async (req: Request, res: Response) => {
 
   let text = content || '';
   if (!content && filePath) {
-    // Path traversal protection — same validation as /analyze
     const ALLOWED_ROOTS = [
-      path.resolve('uploads'), path.resolve('exports'), path.resolve('generated_documents'),
-      path.resolve('csrs'), path.resolve('ectd'), path.resolve('storage'),
+      path.resolve('uploads'),
+      path.resolve('exports'),
+      path.resolve('generated_documents'),
+      path.resolve('csrs'),
+      path.resolve('ectd'),
+      path.resolve('storage'),
     ];
     const fullPath = path.resolve(filePath);
     if (!ALLOWED_ROOTS.some(root => fullPath.startsWith(root))) {
-      return res.status(403).json({ error: 'Access denied: file path outside allowed directories' });
+      return res
+        .status(403)
+        .json({ error: 'Access denied: file path outside allowed directories' });
     }
-    if (!fs.existsSync(fullPath)) return res.status(404).json({ error: `File not found: ${filePath}` });
+    if (!fs.existsSync(fullPath))
+      return res.status(404).json({ error: `File not found: ${filePath}` });
     text = fs.readFileSync(fullPath, 'utf-8');
   }
+
   const elements = analyzeLayout(text, 1);
   const fields = extractFormFields(elements);
 

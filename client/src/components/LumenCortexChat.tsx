@@ -46,7 +46,7 @@ interface LumenCortexChatProps {
   placeholder?: string;
 }
 
-// Escape HTML entities to prevent XSS when using dangerouslySetInnerHTML
+// Escape HTML entities to prevent XSS before markdown rendering
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -58,10 +58,8 @@ function escapeHtml(str: string): string {
 
 // Simple markdown-to-HTML renderer for regulatory content
 function renderMarkdown(text: string): string {
-  // Sanitize input first to prevent XSS, then apply markdown transforms
-  const escaped = escapeHtml(text);
   return (
-    escaped
+    escapeHtml(text)
       // Headers
       .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-4 mb-2 text-gray-800">$1</h3>')
       .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mt-5 mb-3 text-gray-900">$1</h2>')
@@ -241,21 +239,19 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
   const copyToClipboard = async (text: string, id: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      // Fallback for non-HTTPS or denied permission
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
+      // Fallback for non-HTTPS or permission denied
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
       document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
+      document.body.removeChild(el);
     }
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   // Start new conversation

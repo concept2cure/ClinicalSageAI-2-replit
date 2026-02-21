@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import queryClient, { apiRequest } from '@/lib/queryClient';
@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../contexts/TenantContext';
 import { OrganizationSwitcher } from '../components/tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../components/tenant/ClientWorkspaceSwitcher';
-
 import {
   FileText,
   Users,
@@ -193,14 +192,14 @@ export default function UnifiedSubmissionCenter() {
   const [activeSwarm, setActiveSwarm] = useState(null);
   const [swarmLoading, setSwarmLoading] = useState(false);
   const [hitlTasks, setHitlTasks] = useState([]);
-  const pollIntervalRef = useRef(null);
-  const pollTimeoutRef = useRef(null);
+  const swarmPollRef = useRef(null);
+  const swarmTimeoutRef = useRef(null);
 
-  // Cleanup polling on unmount to prevent memory leaks
+  // Cleanup polling on unmount
   useEffect(() => {
     return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+      if (swarmPollRef.current) clearInterval(swarmPollRef.current);
+      if (swarmTimeoutRef.current) clearTimeout(swarmTimeoutRef.current);
     };
   }, []);
 
@@ -244,15 +243,15 @@ export default function UnifiedSubmissionCenter() {
 
   // Poll swarm status for HITL tasks and completion
   const pollSwarmStatus = swarmId => {
-    // Clear any existing polling
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+    if (swarmPollRef.current) clearInterval(swarmPollRef.current);
+    if (swarmTimeoutRef.current) clearTimeout(swarmTimeoutRef.current);
 
-    pollIntervalRef.current = setInterval(async () => {
+    const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/agent-swarm/swarms/${swarmId}`, { credentials: 'include' });
         if (!res.ok) {
-          clearInterval(pollIntervalRef.current);
+          clearInterval(interval);
+          swarmPollRef.current = null;
           return;
         }
         const data = await res.json();
@@ -261,18 +260,24 @@ export default function UnifiedSubmissionCenter() {
         const pending = (data.tasks || []).filter(t => t.status === 'needs-human-review');
         setHitlTasks(pending);
         if (data.status === 'completed' || data.status === 'failed') {
-          clearInterval(pollIntervalRef.current);
+          clearInterval(interval);
+          swarmPollRef.current = null;
           toast({
             title: data.status === 'completed' ? 'Swarm Complete' : 'Swarm Failed',
             description: `Agent swarm finished with status: ${data.status}`,
           });
         }
       } catch {
-        clearInterval(pollIntervalRef.current);
+        clearInterval(interval);
+        swarmPollRef.current = null;
       }
     }, 3000);
+    swarmPollRef.current = interval;
     // Auto-stop polling after 5 minutes
-    pollTimeoutRef.current = setTimeout(() => clearInterval(pollIntervalRef.current), 300000);
+    swarmTimeoutRef.current = setTimeout(() => {
+      clearInterval(interval);
+      swarmPollRef.current = null;
+    }, 300000);
   };
 
   // Approve a HITL task

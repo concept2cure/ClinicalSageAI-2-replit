@@ -372,16 +372,19 @@ async function queryFHIR(resourceType: string, params: Record<string, string>): 
 
 async function queryFAERS(query: FAERSQuery): Promise<FAERSResult> {
   try {
-    // Sanitize inputs to prevent FAERS query injection
-    const sanitize = (s: string) => s.replace(/["+\\]/g, '');
     const searchTerms: string[] = [];
-    if (query.drugName) searchTerms.push(`patient.drug.medicinalproduct:"${sanitize(query.drugName)}"`);
-    if (query.reactionTerm)
-      searchTerms.push(`patient.reaction.reactionmeddrapt:"${sanitize(query.reactionTerm)}"`);
+    if (query.drugName) {
+      const safeDrug = query.drugName.replace(/["\\+&]/g, '');
+      searchTerms.push(`patient.drug.medicinalproduct:"${safeDrug}"`);
+    }
+    if (query.reactionTerm) {
+      const safeReaction = query.reactionTerm.replace(/["\\+&]/g, '');
+      searchTerms.push(`patient.reaction.reactionmeddrapt:"${safeReaction}"`);
+    }
     if (query.seriousOnly) searchTerms.push('serious:1');
 
     const search = searchTerms.join('+AND+');
-    const limit = Math.min(query.limit || 100, 1000);
+    const limit = query.limit || 100;
 
     const response = await fetch(
       `https://api.fda.gov/drug/event.json?search=${encodeURIComponent(search)}&limit=${limit}`
@@ -413,7 +416,11 @@ async function queryFAERS(query: FAERSQuery): Promise<FAERSResult> {
     const topReactions = Array.from(reactions.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 20)
-      .map(([term, count]) => ({ term, count, percentage: results.length > 0 ? (count / results.length) * 100 : 0 }));
+      .map(([term, count]) => ({
+        term,
+        count,
+        percentage: results.length > 0 ? (count / results.length) * 100 : 0,
+      }));
 
     const topIndications = Array.from(indications.entries())
       .sort((a, b) => b[1] - a[1])

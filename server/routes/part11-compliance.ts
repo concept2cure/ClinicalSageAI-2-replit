@@ -312,8 +312,11 @@ router.post('/signatures', async (req: Request, res: Response) => {
       ]
     );
   } catch (dbErr) {
-    console.error('[Part11] Failed to persist electronic signature to DB:', dbErr);
-    // Continue with in-memory — signature returned but persistence is degraded
+    // Table may not exist — log and continue with in-memory
+    console.warn(
+      '[Part11] Signature DB insert failed (table may not exist):',
+      (dbErr as Error).message
+    );
   }
 
   // Audit trail entry for signature
