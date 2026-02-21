@@ -6,6 +6,14 @@
  * Version: 6.0.0 - May 12, 2025
  * Status: STABLE - GOOGLE DOCS INTEGRATION ACTIVE - STRUCTURED CONTENT BLOCKS ENABLED - AI ENHANCED - eCTD EXPORT - VECTOR SEARCH
  *
+ * TODO: REFACTOR — This file is 15,000+ lines. Decompose into:
+ *   - CoAuthorEditor (core editing surface)
+ *   - CoAuthorSidebar (CTD navigation, content atoms)
+ *   - CoAuthorToolbar (formatting, AI actions)
+ *   - CoAuthorValidation (regulatory compliance scoring)
+ *   - CoAuthorExport (eCTD XML backbone generation)
+ *   - hooks/useCoAuthorState, useCoAuthorAI, useCoAuthorExport
+ *
  * Features:
  * - Enhanced structured content blocks with ICH-compliant validation rules
  * - CTD structure navigation with section-specific badges

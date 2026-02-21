@@ -837,6 +837,26 @@ try {
   console.error('❌ Failed to mount eCTD Validation routes:', error);
 }
 
+// Mount eCTD Compile routes (INDWorkspace compile button backend)
+try {
+  const ectdCompileModule = await import('./routes/ectd-compile.ts');
+  const ectdCompileRoutes = ectdCompileModule.default;
+  app.use('/api/ectd-compile', ectdCompileRoutes);
+  console.log('✅ eCTD Compile routes mounted (compile, validate, readiness, history)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Compile routes:', error);
+}
+
+// Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
+try {
+  const indPdfModule = await import('./routes/ind-pdf.ts');
+  const indPdfRoutes = indPdfModule.default;
+  app.use('/api/ind-pdf', indPdfRoutes);
+  console.log('✅ IND PDF generation routes mounted (Puppeteer-powered)');
+} catch (error) {
+  console.error('❌ Failed to mount IND PDF routes:', error);
+}
+
 // Mount IND Sections API (live CTD section map with document status)
 try {
   const indSectionsModule = await import('./routes/ind-sections.ts');
@@ -5357,6 +5377,82 @@ async function startServer() {
     );
   } catch (error) {
     console.error('❌ Failed to mount Audit Services routes:', error);
+  }
+
+  // Mount Integration Test routes (development/QA only — full-flow smoke test)
+  try {
+    const integrationTestModule = await import('./routes/integration-test.ts');
+    app.use('/api/integration-test', integrationTestModule.default);
+    console.log('✅ Integration Test routes mounted (health, full-flow)');
+  } catch (error) {
+    console.error('❌ Failed to mount Integration Test routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ADVANCED PLATFORM CAPABILITIES (GraphRAG, Digital Twin, RWE, etc.)
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const realtimeCollabRoutes = await import('./routes/realtime-collab.ts');
+    app.use('/api/realtime-collab', realtimeCollabRoutes.default);
+    console.log('✅ Real-time Collaboration routes mounted at /api/realtime-collab');
+  } catch (error) {
+    console.error('❌ Failed to mount real-time collaboration routes:', error);
+  }
+
+  try {
+    const graphragRoutes = await import('./routes/graphrag.ts');
+    app.use('/api/graphrag', graphragRoutes.default);
+    console.log('✅ GraphRAG routes mounted at /api/graphrag');
+  } catch (error) {
+    console.error('❌ Failed to mount GraphRAG routes:', error);
+  }
+
+  try {
+    const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft.ts');
+    app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
+    console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+  } catch (error) {
+    console.error('❌ Failed to mount Lumen Cortex FT routes:', error);
+  }
+
+  try {
+    const part11Routes = await import('./routes/part11-compliance.ts');
+    app.use('/api/part11', part11Routes.default);
+    console.log('✅ 21 CFR Part 11 Compliance routes mounted at /api/part11');
+  } catch (error) {
+    console.error('❌ Failed to mount Part 11 compliance routes:', error);
+  }
+
+  try {
+    const docUnderstandingRoutes = await import('./routes/document-understanding.ts');
+    app.use('/api/document-understanding', docUnderstandingRoutes.default);
+    console.log('✅ Document Understanding routes mounted at /api/document-understanding');
+  } catch (error) {
+    console.error('❌ Failed to mount document understanding routes:', error);
+  }
+
+  try {
+    const agentSwarmRoutes = await import('./routes/agent-swarm.ts');
+    app.use('/api/agent-swarm', agentSwarmRoutes.default);
+    console.log('✅ Agent Swarm routes mounted at /api/agent-swarm');
+  } catch (error) {
+    console.error('❌ Failed to mount agent swarm routes:', error);
+  }
+
+  try {
+    const rweRoutes = await import('./routes/real-world-evidence.ts');
+    app.use('/api/real-world-evidence', rweRoutes.default);
+    console.log('✅ Real-World Evidence routes mounted at /api/real-world-evidence');
+  } catch (error) {
+    console.error('❌ Failed to mount real-world evidence routes:', error);
+  }
+
+  try {
+    const digitalTwinRoutes = await import('./routes/regulatory-digital-twin.ts');
+    app.use('/api/regulatory-digital-twin', digitalTwinRoutes.default);
+    console.log('✅ Regulatory Digital Twin routes mounted at /api/regulatory-digital-twin');
+  } catch (error) {
+    console.error('❌ Failed to mount regulatory digital twin routes:', error);
   }
 
   // ──────────────────────────────────────────────────────────────────────────
