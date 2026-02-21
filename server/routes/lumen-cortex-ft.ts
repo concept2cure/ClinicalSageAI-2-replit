@@ -62,7 +62,7 @@ export interface TrainingConfig {
 
 export interface EvaluationMetrics {
   regulatoryAccuracy: number; // % of regulatory citations correct
-  halluccinationRate: number; // % of generated text with fabricated info
+  hallucinationRate: number; // % of generated text with fabricated info
   ichComplianceScore: number; // % of outputs conforming to ICH format
   citationPrecision: number; // % of citations that are real
   citationRecall: number; // % of relevant citations included
@@ -199,7 +199,7 @@ class ModelRegistry {
       },
       evaluationMetrics: {
         regulatoryAccuracy: 0.94,
-        halluccinationRate: 0.03,
+        hallucinationRate: 0.03,
         ichComplianceScore: 0.96,
         citationPrecision: 0.91,
         citationRecall: 0.87,
@@ -398,6 +398,10 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         }),
       });
 
+      if (!response.ok) {
+        console.error(`[LumenCortex] OpenAI API error: ${response.status} ${response.statusText}`);
+        throw new Error(`OpenAI API returned ${response.status}`);
+      }
       const data = (await response.json()) as any;
       content = data.choices?.[0]?.message?.content || '';
 
@@ -676,9 +680,9 @@ router.get('/benchmarks', (_req: Request, res: Response) => {
         {
           name: 'Hallucination Detection',
           description: 'Rate of fabricated regulatory information',
-          score: 1 - model.evaluationMetrics.halluccinationRate,
+          score: 1 - model.evaluationMetrics.hallucinationRate,
           threshold: 0.95,
-          passed: model.evaluationMetrics.halluccinationRate <= 0.05,
+          passed: model.evaluationMetrics.hallucinationRate <= 0.05,
         },
         {
           name: 'ICH Compliance',

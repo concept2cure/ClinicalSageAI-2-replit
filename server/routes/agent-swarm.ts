@@ -591,6 +591,10 @@ class SwarmManager {
   }
 
   private async simulateExecution(swarm: SwarmExecution): Promise<void> {
+    // Guard against re-entry — prevent duplicate timer chains
+    if ((swarm as any)._simulating) return;
+    (swarm as any)._simulating = true;
+
     // In production, this runs actual LLM calls through each agent
     // For now, simulate progress through the task graph
     let delay = 0;
@@ -627,6 +631,10 @@ class SwarmManager {
           }
         }
         this.updateProgress(swarm);
+        // Clear re-entry guard after final task
+        if (swarm.tasks.every(t => t.status === 'completed' || t.status === 'hitl_review')) {
+          (swarm as any)._simulating = false;
+        }
       }, delay);
     }
   }
@@ -681,6 +689,7 @@ class SwarmManager {
 
     // Resume execution
     if (swarm.state === 'hitl_paused') swarm.state = 'executing';
+    (swarm as any)._simulating = false; // Allow new simulation pass
     this.simulateExecution(swarm);
 
     return true;

@@ -8,7 +8,18 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, Copy, Check, RefreshCw, Brain, FileText } from 'lucide-react';
+import {
+  Send,
+  Sparkles,
+  Loader2,
+  Copy,
+  Check,
+  RefreshCw,
+  Brain,
+  FileText,
+  ChevronDown,
+  Zap,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -18,6 +29,15 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  modelUsed?: string;
+}
+
+interface ModelInfo {
+  modelId: string;
+  name: string;
+  type: 'base' | 'fine-tuned';
+  status: string;
+  domain?: string;
 }
 
 interface LumenCortexChatProps {
@@ -26,10 +46,22 @@ interface LumenCortexChatProps {
   placeholder?: string;
 }
 
+// Escape HTML entities to prevent XSS when using dangerouslySetInnerHTML
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Simple markdown-to-HTML renderer for regulatory content
 function renderMarkdown(text: string): string {
+  // Sanitize input first to prevent XSS, then apply markdown transforms
+  const escaped = escapeHtml(text);
   return (
-    text
+    escaped
       // Headers
       .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-4 mb-2 text-gray-800">$1</h3>')
       .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mt-5 mb-3 text-gray-900">$1</h2>')
@@ -73,6 +105,16 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Fine-tuned model state
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [activeModel, setActiveModel] = useState<string>('base');
+  const [showModelSelector, setShowModelSelector] = useState(false);
+
+  // Load available models on mount
+  useEffect(() => {
+    loadModels();
+  }, []);
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -85,6 +127,20 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [input]);
+
+  // Load available fine-tuned models
+  const loadModels = async () => {
+    try {
+      const res = await fetch('/api/lumen-cortex-ft/models');
+      if (res.ok) {
+        const data = await res.json();
+        setModels(data.models || []);
+      }
+    } catch (error) {
+      // Graceful degradation — model selector just won't show fine-tuned options
+      console.warn('Fine-tuned models unavailable:', (error as Error).message);
+    }
+  };
 
   // Handle send message
   const handleSend = async () => {
@@ -102,27 +158,58 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat/send-message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage.content,
-          thread_id: threadId,
-        }),
-      });
+      let data: { answer?: string; response?: string; thread_id?: string; modelId?: string };
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+      // Route through fine-tuned model if one is selected
+      if (activeModel !== 'base') {
+        const ftResponse = await fetch('/api/lumen-cortex-ft/inference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: userMessage.content,
+            modelId: activeModel,
+            context: threadId ? `thread:${threadId}` : undefined,
+            parameters: { temperature: 0.3, maxTokens: 2048 },
+          }),
+        });
+
+        if (ftResponse.ok) {
+          const ftData = await ftResponse.json();
+          data = {
+            answer: ftData.response || ftData.content || ftData.text,
+            modelId: ftData.modelId || activeModel,
+          };
+        } else {
+          // Fallback to base model
+          console.warn('Fine-tuned model unavailable, falling back to base');
+          const response = await fetch('/api/chat/send-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage.content, thread_id: threadId }),
+          });
+          data = await response.json();
+        }
+      } else {
+        // Base model path (original flow)
+        const response = await fetch('/api/chat/send-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage.content, thread_id: threadId }),
+        });
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        data = await response.json();
       }
 
-      const data = await response.json();
-      setThreadId(data.thread_id);
+      if (data.thread_id) setThreadId(data.thread_id);
 
+      const modelLabel = models.find(m => m.modelId === activeModel)?.name || 'base';
       const assistantMessage: Message = {
         id: `msg_${Date.now()}_assistant`,
         role: 'assistant',
-        content: data.answer,
+        content: data.answer || data.response || 'No response received.',
         timestamp: new Date(),
+        modelUsed: activeModel !== 'base' ? modelLabel : undefined,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -152,9 +239,23 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
 
   // Copy message to clipboard
   const copyToClipboard = async (text: string, id: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // Fallback for non-HTTPS or denied permission
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
   };
 
   // Start new conversation
@@ -186,6 +287,65 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
             <h2 className="font-semibold text-gray-900">Lumen Cortex</h2>
             <p className="text-xs text-gray-500">Regulatory Intelligence Assistant</p>
           </div>
+          {/* Model selector — shown when fine-tuned models are available */}
+          {models.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowModelSelector(!showModelSelector)}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+                  activeModel !== 'base'
+                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                )}
+              >
+                {activeModel !== 'base' && <Zap className="w-3 h-3" />}
+                {activeModel === 'base'
+                  ? 'Base Model'
+                  : models.find(m => m.modelId === activeModel)?.name || 'Fine-tuned'}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {showModelSelector && (
+                <div className="absolute top-full left-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-50 py-1">
+                  <button
+                    onClick={() => {
+                      setActiveModel('base');
+                      setShowModelSelector(false);
+                    }}
+                    className={cn(
+                      'w-full text-left px-3 py-2 text-sm hover:bg-gray-50',
+                      activeModel === 'base' && 'bg-indigo-50'
+                    )}
+                  >
+                    <span className="font-medium">Base Model</span>
+                    <span className="block text-xs text-gray-400">General regulatory AI</span>
+                  </button>
+                  {models
+                    .filter(m => m.status === 'active')
+                    .map(model => (
+                      <button
+                        key={model.modelId}
+                        onClick={() => {
+                          setActiveModel(model.modelId);
+                          setShowModelSelector(false);
+                        }}
+                        className={cn(
+                          'w-full text-left px-3 py-2 text-sm hover:bg-gray-50',
+                          activeModel === model.modelId && 'bg-indigo-50'
+                        )}
+                      >
+                        <span className="font-medium flex items-center gap-1">
+                          {model.name} <Zap className="w-3 h-3 text-indigo-500" />
+                        </span>
+                        <span className="block text-xs text-gray-400">
+                          {model.domain || model.type}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <Button variant="ghost" size="sm" onClick={handleNewChat} className="text-gray-500">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -263,24 +423,32 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
                     />
                   )}
 
-                  {/* Copy button for assistant messages */}
+                  {/* Copy button + model badge for assistant messages */}
                   {message.role === 'assistant' && (
-                    <button
-                      onClick={() => copyToClipboard(message.content, message.id)}
-                      className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      {copiedId === message.id ? (
-                        <>
-                          <Check className="w-3 h-3" />
-                          Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          Copy
-                        </>
+                    <div className="mt-2 flex items-center gap-3">
+                      <button
+                        onClick={() => copyToClipboard(message.content, message.id)}
+                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {copiedId === message.id ? (
+                          <>
+                            <Check className="w-3 h-3" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            Copy
+                          </>
+                        )}
+                      </button>
+                      {message.modelUsed && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100">
+                          <Zap className="w-2.5 h-2.5" />
+                          {message.modelUsed}
+                        </span>
                       )}
-                    </button>
+                    </div>
                   )}
                 </div>
               </div>

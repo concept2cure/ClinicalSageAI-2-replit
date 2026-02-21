@@ -384,8 +384,9 @@ async function traverseGraph(
           createdAt: new Date(),
         });
       }
-    } catch {
-      // Tables may not exist — return what we have
+    } catch (err) {
+      // Tables may not exist — log and return what we have
+      console.warn('[GraphRAG] Graph traversal query failed:', err);
       break;
     }
   }
@@ -575,10 +576,11 @@ router.post('/query', async (req: Request, res: Response) => {
         ORDER BY embedding <=> (SELECT embedding FROM knowledge_graph_nodes WHERE name ILIKE $1 LIMIT 1)
         LIMIT $2
       `,
-        [body.query.split(' ')[0], topK]
+        [body.query, topK]
       );
       vectorHits = vectorResult.rows.map((r: any) => ({ id: r.id, score: r.similarity || 0.5 }));
-    } catch {
+    } catch (err) {
+      console.warn('[GraphRAG] pgvector search failed:', err);
       // pgvector tables may not exist yet
     }
     const vectorSearchMs = Date.now() - vectorStart;
@@ -704,8 +706,8 @@ router.post('/ingest', async (req: Request, res: Response) => {
           ]
         );
         nodesCreated++;
-      } catch {
-        // Continue on individual entity insert failure
+      } catch (err) {
+        console.warn('[GraphRAG] Entity insert failed:', err);
       }
     }
 
@@ -729,8 +731,8 @@ router.post('/ingest', async (req: Request, res: Response) => {
           ]
         );
         edgesCreated++;
-      } catch {
-        // Continue on individual edge insert failure
+      } catch (err) {
+        console.warn('[GraphRAG] Edge insert failed:', err);
       }
     }
 
