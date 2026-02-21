@@ -97,7 +97,7 @@ const LoadingPage = () => (
 
 // Eagerly load the landing pages for faster initial render
 import HomeLanding from './pages/HomeLanding';
-import UnifiedSubmissionCenter from './pages/UnifiedSubmissionCenter';
+import UnifiedSubmissionCenter from './pages/ind/UnifiedSubmissionCenter';
 const ClientPortalV2 = lazy(() => import('./portal-v2/components/client-portal'));
 const ClientPortalV3 = lazy(() => import('./pages/client-portal/v3'));
 
@@ -109,89 +109,89 @@ const Concept2CureApp = lazy(() => import('./concept2cure'));
 const ZenRouter = lazy(() => import('./concept2cure/router/ZenRouter'));
 
 // Admin & Management Pages
-const AdminPage = lazy(() => import('./pages/AdminPage'));
-const AdminProfile = lazy(() => import('./pages/AdminProfile'));
+const AdminPage = lazy(() => import('./pages/admin/AdminPage'));
+const AdminProfile = lazy(() => import('./pages/admin/AdminProfile'));
 const UserManagementPage = lazy(() => import('./pages/admin/UserManagementPage'));
 const RoleManagementPage = lazy(() => import('./pages/admin/RoleManagementPage'));
 const BatchOpsDashboard = lazy(() => import('./pages/admin/BatchOpsDashboard'));
-const TenantManagement = lazy(() => import('./pages/TenantManagement'));
-const AuditTrailDashboard = lazy(() => import('./pages/AuditTrailDashboard'));
+const TenantManagement = lazy(() => import('./pages/admin/TenantManagement'));
+const AuditTrailDashboard = lazy(() => import('./pages/admin/AuditTrailDashboard'));
 
 // Lazy load all other pages grouped by related functionality
 // Stability-related pages - REMOVED: Stability only exists within CMC Blueprint
 
 // CER-related pages
-const CERPage = lazy(() => import('./pages/CerPage'));
+const CERPage = lazy(() => import('./pages/csr/CerPage'));
 // Import the original CERV2Page directly, not the wrapper
-const CERV2Page = lazy(() => import('./pages/CERV2Page'));
+const CERV2Page = lazy(() => import('./pages/csr/CERV2Page'));
 // Phase 7.3 – CERV2 Editor AI Integration
-const CERV2EditorAI = lazy(() => import('./pages/CERV2EditorAI'));
+const CERV2EditorAI = lazy(() => import('./pages/csr/CERV2EditorAI'));
 
 const CerGenerator = lazy(() => import('./modules/CerGenerator'));
 
 // VAULT Document Browser page
-const VaultBrowserPage = lazy(() => import('./pages/VaultBrowser'));
-const EmbeddedVaultBrowser = lazy(() => import('./pages/EmbeddedVaultBrowser'));
+const VaultBrowserPage = lazy(() => import('./pages/vault/VaultBrowser'));
+const EmbeddedVaultBrowser = lazy(() => import('./pages/vault/EmbeddedVaultBrowser'));
 
 // CMC-related pages
 const CmcWizard = lazy(() => import('./modules/CmcWizard'));
-const CMCPage = lazy(() => import('./pages/CMCPage'));
-const CMCGenerator = lazy(() => import('./pages/CMC/CMCGenerator'));
+const CMCPage = lazy(() => import('./pages/cmc/CMCPage'));
+const CMCGenerator = lazy(() => import('./pages/cmc/CMCGenerator'));
 const CMCBlueprintGenerator = lazy(() => import('./components/cmc/CMCBlueprintGenerator'));
 
 // Modern Task Management Dashboard
-const ModernTaskDashboard = lazy(() => import('./pages/ModernTaskDashboard'));
+const ModernTaskDashboard = lazy(() => import('./pages/admin/ModernTaskDashboard'));
 
 // IND-related pages - DELETED per user request
 // const INDWizard = lazy(() => import('./pages/IND/INDWizard')); // DELETED
 // const UnifiedECTD = lazy(() => import('./pages/UnifiedECTD')); // DELETED
-const UnifiedECTD = lazy(() => import('./pages/UnifiedECTD'));
+const UnifiedECTD = lazy(() => import('./pages/ind/UnifiedECTD'));
 
 // CSR-related pages
 const CsrAnalyzer = lazy(() => import('./modules/CsrAnalyzer'));
-const CSRPage = lazy(() => import('./pages/CSRPage'));
-const CSRDetail = lazy(() => import('./pages/CSRDetail'));
-const CSRIntelligence = lazy(() => import('./pages/CSRIntelligence'));
+const CSRPage = lazy(() => import('./pages/csr/CSRPage'));
+const CSRDetail = lazy(() => import('./pages/csr/CSRDetail'));
+const CSRIntelligence = lazy(() => import('./pages/csr/CSRIntelligence'));
 
 // Vault-related pages
 const Vault = lazy(() => import('./modules/Vault'));
-const VaultPage = lazy(() => import('./pages/VaultPage'));
-const DataRoomPage = lazy(() => import('./pages/DataRoomPage'));
+const VaultPage = lazy(() => import('./pages/vault/VaultPage'));
+const DataRoomPage = lazy(() => import('./pages/vault/DataRoomPage'));
 // VaultTestPage removed - was demo content
 // VaultDocumentViewer removed - functionality included in VaultPage
-const PredictiveVaultPage = lazy(() => import('./pages/PredictiveVaultPage'));
+const PredictiveVaultPage = lazy(() => import('./pages/vault/PredictiveVaultPage'));
 
 // CoAuthor and Canvas-related pages
-const CoAuthor = lazy(() => import('./pages/CoAuthor'));
-const RealCoAuthor = lazy(() => import('./pages/RealCoAuthor'));
+const CoAuthor = lazy(() => import('./pages/coauthor/CoAuthor'));
+const RealCoAuthor = lazy(() => import('./pages/coauthor/RealCoAuthor'));
 const ComponentManagementSystem = lazy(
   () => import('./components/coauthor/ComponentManagementSystem')
 );
 // DocumentEditor removed - using enhanced CMC document authoring module instead
 
 // FixedDocumentEditor removed during cleanup
-const SimpleDocumentCreator = lazy(() => import('./pages/SimpleDocumentCreator'));
-const CanvasPage = lazy(() => import('./pages/CanvasPage'));
-const TimelinePage = lazy(() => import('./pages/TimelinePage'));
-const ModuleSectionEditorPage = lazy(() => import('./pages/ModuleSectionEditorPage'));
+const SimpleDocumentCreator = lazy(() => import('./pages/coauthor/SimpleDocumentCreator'));
+const CanvasPage = lazy(() => import('./pages/coauthor/CanvasPage'));
+const TimelinePage = lazy(() => import('./pages/coauthor/TimelinePage'));
+const ModuleSectionEditorPage = lazy(() => import('./pages/coauthor/ModuleSectionEditorPage'));
 
 // eCTD Co-Author Module subpages
-const ValidationDashboard = lazy(() => import('./pages/ValidationDashboard'));
+const ValidationDashboard = lazy(() => import('./pages/admin/ValidationDashboard'));
 
-const DocumentTemplates = lazy(() => import('./pages/DocumentTemplates'));
-const DocumentViewer = lazy(() => import('./pages/DocumentViewer'));
+const DocumentTemplates = lazy(() => import('./pages/coauthor/DocumentTemplates'));
+const DocumentViewer = lazy(() => import('./pages/coauthor/DocumentViewer'));
 
 // DOCX Factory — Phase 6.4.A
-const DocxFactory = lazy(() => import('./pages/DocxFactory'));
+const DocxFactory = lazy(() => import('./pages/coauthor/DocxFactory'));
 
 // Predicate Intelligence — Phase 6.6
-const PredicateIntelligence = lazy(() => import('./pages/PredicateIntelligence'));
+const PredicateIntelligence = lazy(() => import('./pages/csr/PredicateIntelligence'));
 
 // Regulatory-related pages (excluding Regulatory Submissions Hub)
-const RegulatoryRiskDashboard = lazy(() => import('./pages/RegulatoryRiskDashboard'));
-const EnhancedRegulatoryDashboard = lazy(() => import('./pages/EnhancedRegulatoryDashboard'));
-const RegulatoryDashboard = lazy(() => import('./pages/RegulatoryDashboard'));
-const RegulatoryAITesting = lazy(() => import('./pages/RegulatoryAITesting'));
+const RegulatoryRiskDashboard = lazy(() => import('./pages/admin/RegulatoryRiskDashboard'));
+const EnhancedRegulatoryDashboard = lazy(() => import('./pages/admin/EnhancedRegulatoryDashboard'));
+const RegulatoryDashboard = lazy(() => import('./pages/admin/RegulatoryDashboard'));
+const RegulatoryAITesting = lazy(() => import('./pages/admin/RegulatoryAITesting'));
 // RegulatoryAITestPage removed - was test content
 
 // Unified Study & Regulatory Intelligence Suite - comprehensive module combining all features
@@ -201,8 +201,8 @@ const StudyRegulatoryIntelligenceSuite = lazy(
 
 // IND Wizard DEPRECATED — rolled into eCTD Co-Author
 // const IndWizardLayout = lazy(() => import('./layout/IndWizardLayout')); // DEPRECATED
-const QualityDashboard = lazy(() => import('./pages/QualityDashboard'));
-const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
+const QualityDashboard = lazy(() => import('./pages/admin/QualityDashboard'));
+const DocumentsPage = lazy(() => import('./pages/vault/DocumentsPage'));
 // import INDWizardModule from './components/ind-wizard/INDWizardModule'; // DELETED
 // const INDWizardDashboard = lazy(() => import('./pages/INDWizardDashboard')); // DELETED
 // const INDFullSolution = lazy(() => import('./pages/INDFullSolution')); // DELETED
@@ -217,31 +217,31 @@ const StudyArchitect = lazy(() => import('./modules/StudyArchitect'));
 
 // Analytics and Dashboard pages
 const AnalyticsDashboard = lazy(() => import('./modules/AnalyticsDashboard'));
-const ModuleDashboard = lazy(() => import('./pages/ModuleDashboard'));
+const ModuleDashboard = lazy(() => import('./pages/coauthor/ModuleDashboard'));
 
 // eCTD Co-Author components
-const FulleCTDCoAuthor = lazy(() => import('./pages/FulleCTDCoAuthor'));
+const FulleCTDCoAuthor = lazy(() => import('./pages/coauthor/FulleCTDCoAuthor'));
 
 // Other utility pages
 // ContextDemoPage removed - was demo content
-const BlueprintPage = lazy(() => import('./pages/BlueprintPage'));
-const CitationManagerPage = lazy(() => import('./pages/CitationManagerPage'));
-const AuditPage = lazy(() => import('./pages/AuditPage'));
-const SignaturePage = lazy(() => import('./pages/SignaturePage'));
+const BlueprintPage = lazy(() => import('./pages/coauthor/BlueprintPage'));
+const CitationManagerPage = lazy(() => import('./pages/coauthor/CitationManagerPage'));
+const AuditPage = lazy(() => import('./pages/admin/AuditPage'));
+const SignaturePage = lazy(() => import('./pages/admin/SignaturePage'));
 // RoleTest removed - was test content
 
 // Analytical and Stability modules
-const AnalyticalMethodsStubPage = lazy(() => import('./pages/AnalyticalMethodsStubPage'));
-const ComparabilityStudiesStubPage = lazy(() => import('./pages/ComparabilityStudiesStubPage'));
-const ReportsPage = lazy(() => import('./pages/ReportsPage'));
-const ReportsDashboard = lazy(() => import('./pages/ReportsDashboard'));
+const AnalyticalMethodsStubPage = lazy(() => import('./pages/cmc/AnalyticalMethodsStubPage'));
+const ComparabilityStudiesStubPage = lazy(() => import('./pages/cmc/ComparabilityStudiesStubPage'));
+const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
+const ReportsDashboard = lazy(() => import('./pages/reports/ReportsDashboard'));
 
 // Client Management and Settings Pages (TenantManagement already declared above)
-const ClientManagement = lazy(() => import('./pages/ClientManagement'));
-const ClientLicenseManagement = lazy(() => import('./pages/ClientLicenseManagement'));
-const Settings = lazy(() => import('./pages/Settings'));
-const ModuleSettingsPage = lazy(() => import('./pages/ModuleSettingsPage'));
-const PreSubmissionValidation = lazy(() => import('./pages/PreSubmissionValidation'));
+const ClientManagement = lazy(() => import('./pages/admin/ClientManagement'));
+const ClientLicenseManagement = lazy(() => import('./pages/admin/ClientLicenseManagement'));
+const Settings = lazy(() => import('./pages/admin/Settings'));
+const ModuleSettingsPage = lazy(() => import('./pages/admin/ModuleSettingsPage'));
+const PreSubmissionValidation = lazy(() => import('./pages/ind/PreSubmissionValidation'));
 
 // Help pages
 const QualityHelp = lazy(() => import('./routes/help/QualityHelp'));
@@ -253,7 +253,7 @@ const QualityHelp = lazy(() => import('./routes/help/QualityHelp'));
 const NewProjectWizard = lazy(() => import('./pages/NewProjectWizard'));
 
 // Platform Readiness Dashboard — interactive Phase 0–1 audit visualization
-const PlatformReadinessDashboard = lazy(() => import('./pages/PlatformReadinessDashboard'));
+const PlatformReadinessDashboard = lazy(() => import('./pages/admin/PlatformReadinessDashboard'));
 
 // Protected Route wrapper - redirects to Concept2Cure login if not authenticated
 const ProtectedRoute = ({ children }) => {
