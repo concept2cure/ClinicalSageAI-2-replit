@@ -23,6 +23,7 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card';
+import { CitationList, ConfidenceBadge } from '@/components/ai/AIResponseBlock';
 
 // Default welcome message
 const defaultMessages = [
@@ -103,6 +104,8 @@ export default function LumenChatPane({ contextId }) {
         timestamp: new Date(),
         model: data.model,
         source: 'api',
+        citations: data.citations || data.sources || [],
+        confidence: typeof data.confidence === 'number' ? data.confidence : null,
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -177,6 +180,17 @@ export default function LumenChatPane({ contextId }) {
                     )}
                     {message.content}
                   </div>
+                  {/* Citation / Source rendering — regulatory traceability */}
+                  {message.role === 'assistant' && message.source === 'api' && (
+                    <div className="mt-2">
+                      {message.confidence !== null && message.confidence !== undefined && (
+                        <div className="mb-1">
+                          <ConfidenceBadge score={message.confidence} />
+                        </div>
+                      )}
+                      <CitationList citations={message.citations || []} />
+                    </div>
+                  )}
                   <div
                     className={`text-xs ${message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'} justify-between flex`}
                   >

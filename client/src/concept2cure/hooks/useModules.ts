@@ -84,6 +84,7 @@ export const MODULE_IDS = {
   CMC: 'cmc-module',
   MED_DEVICE: 'med-device',
   VAULT: 'vault',
+  IVDR: 'ivdr-module',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════

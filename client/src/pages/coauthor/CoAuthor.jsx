@@ -4415,10 +4415,12 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           regulatoryRegion: source.region || 'unknown',
           dateCreated: source.createdAt || source.dateCreated || new Date().toISOString(),
           excerpt: (source.content || source.text || '').substring(0, 120) + '...',
+          provenance: 'cortex_search',
         }));
       } else {
         console.warn('Cortex search returned', response.status, '— using local fallback');
         // Fallback: search local vectorized documents by simple text matching
+        // NOTE: These are labeled as local_text_match to distinguish from semantic results
         if (vectorizedDocuments.length > 0) {
           const queryLower = text.toLowerCase();
           results = vectorizedDocuments
@@ -4437,10 +4439,19 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                 regulatoryRegion: 'unknown',
                 dateCreated: new Date().toISOString(),
                 excerpt: (chunk.chunk?.text || '').substring(0, 120) + '...',
+                provenance: 'local_text_match',
               }))
             )
             .filter(r => r.content.toLowerCase().includes(queryLower))
             .slice(0, 8);
+        } else {
+          // No local documents available and API failed — surface explicit error
+          toast({
+            title: 'Search Unavailable',
+            description: `Cortex search returned HTTP ${response.status} and no local documents are available. Results cannot be provided.`,
+            variant: 'destructive',
+          });
+          return [];
         }
       }
 
@@ -4525,10 +4536,12 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           content: source.content || source.text || '',
           similarity: source.score || source.similarity || 0,
           url: source.url || `#doc-${source.documentId || idx}`,
+          provenance: 'cortex_search',
         }));
       } else {
         console.warn('Cortex search returned', response.status, '— using local text match');
         // Fallback: simple text matching against local vectorized documents
+        // Labeled as local_text_match so UI can render provenance badge
         if (vectorizedDocuments.length > 0) {
           const queryLower = query.toLowerCase();
           searchResults = vectorizedDocuments
@@ -4542,10 +4555,19 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                 content: chunk.chunk?.text || '',
                 similarity: 0,
                 url: `#doc-${doc.id}`,
+                provenance: 'local_text_match',
               }))
             )
             .filter(r => r.content.toLowerCase().includes(queryLower))
             .slice(0, 5);
+        } else {
+          // No local documents available and API failed — surface explicit error
+          toast({
+            title: 'Search Unavailable',
+            description: `Cortex search returned HTTP ${response.status} and no local documents are available. Results cannot be provided.`,
+            variant: 'destructive',
+          });
+          return [];
         }
       }
 
@@ -4862,15 +4884,30 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   };
 
   // Compute SHA-256 checksum of content for eCTD compliance
+  // REGULATORY: If checksum computation fails (insecure context, missing API),
+  // we return null to block downstream signing/submission actions.
   const computeChecksum = async content => {
     try {
+      if (typeof crypto === 'undefined' || !crypto.subtle) {
+        throw new Error('crypto.subtle unavailable — secure context (HTTPS) required');
+      }
       const encoder = new TextEncoder();
-      const data = encoder.encode(typeof content === 'string' ? content : JSON.stringify(content));
+      // Canonical UTF-8 encoding: normalize string to NFC before hashing for stable bytes
+      const normalized = typeof content === 'string'
+        ? content.normalize('NFC')
+        : JSON.stringify(content);
+      const data = encoder.encode(normalized);
       const hashBuffer = await crypto.subtle.digest('SHA-256', data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch {
-      return 'checksum-unavailable';
+    } catch (err) {
+      console.error('Checksum computation failed:', err);
+      toast({
+        title: 'Checksum Unavailable',
+        description: 'SHA-256 computation failed. Signing and submission actions are blocked until this is resolved. Ensure you are using HTTPS.',
+        variant: 'destructive',
+      });
+      return null; // null signals "cannot proceed" — callers must check
     }
   };
 
@@ -4900,10 +4937,17 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
             lifecycle: documentLifecycle.status,
             version: documentLifecycle.version,
             dtd: 'ectd-2-0',
-            checksums: {
-              md5: 'not-computed', // MD5 not available via Web Crypto API
-              sha256: await computeChecksum(documentText || selectedDocument?.content || ''),
-            },
+            checksums: await (async () => {
+              const sha256 = await computeChecksum(documentText || selectedDocument?.content || '');
+              if (sha256 === null) {
+                // Checksum unavailable — block serialization for regulatory safety
+                throw new Error('SHA-256 checksum unavailable — cannot serialize for submission. Ensure HTTPS context.');
+              }
+              return {
+                md5: 'not-computed', // MD5 not available via Web Crypto API
+                sha256,
+              };
+            })(),
           },
         },
       };

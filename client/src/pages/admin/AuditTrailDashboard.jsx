@@ -476,6 +476,16 @@ export default function AuditTrailDashboard() {
                     <p>
                       <strong>Time:</strong> {new Date(log.timestamp).toLocaleString()}
                     </p>
+                    {log.hash && (
+                      <p className="font-mono" title={log.hash}>
+                        <strong>Hash:</strong> {log.hash.substring(0, 12)}…
+                      </p>
+                    )}
+                    {(log.sequenceNumber !== undefined && log.sequenceNumber !== null) && (
+                      <p>
+                        <strong>Seq #:</strong> {log.sequenceNumber}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -577,6 +587,29 @@ export default function AuditTrailDashboard() {
                   <p className="text-gray-900">
                     <strong>Timestamp:</strong> {new Date(selectedLog.timestamp).toLocaleString()}
                   </p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Chain Integrity</h3>
+                  {selectedLog.hash ? (
+                    <p className="text-gray-900 mt-1 font-mono text-xs break-all">
+                      <strong>SHA-256:</strong> {selectedLog.hash}
+                    </p>
+                  ) : (
+                    <p className="text-gray-400 mt-1 italic text-xs">Hash not recorded for this entry</p>
+                  )}
+                  {(selectedLog.sequenceNumber !== undefined && selectedLog.sequenceNumber !== null) ? (
+                    <p className="text-gray-900 mt-1">
+                      <strong>Sequence #:</strong> {selectedLog.sequenceNumber}
+                    </p>
+                  ) : (
+                    <p className="text-gray-400 mt-1 italic text-xs">Sequence number not available</p>
+                  )}
+                  {selectedLog.previousHash && (
+                    <p className="text-gray-900 mt-1 font-mono text-xs break-all">
+                      <strong>Previous Hash:</strong> {selectedLog.previousHash}
+                    </p>
+                  )}
                 </div>
               </div>
 

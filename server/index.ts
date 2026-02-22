@@ -706,6 +706,16 @@ try {
   console.error('❌ Failed to mount Medical Device routes:', error);
 }
 
+// Mount IVDR (In Vitro Diagnostic Regulation EU 2017/746) routes
+try {
+  const ivdrModule = await import('./routes/ivdr-routes.ts');
+  const createIVDRRoutes = ivdrModule.default;
+  app.use('/api/ivdr', createIVDRRoutes(pool));
+  console.log('✅ IVDR API routes mounted successfully (EU 2017/746 compliant)');
+} catch (error) {
+  console.error('❌ Failed to mount IVDR routes:', error);
+}
+
 // Mount FDA Integration routes
 try {
   const fdaIntegrationModule = await import('./routes/fda-integration-simple.ts');

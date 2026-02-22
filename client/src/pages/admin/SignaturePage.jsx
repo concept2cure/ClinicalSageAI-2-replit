@@ -55,8 +55,25 @@ const SignaturePage = () => {
 
   // Signer name is bound to authenticated user — not editable
   const signatureName = authenticatedUser?.display_name || authenticatedUser?.username || '';
-  // Date is server-generated per §11.50(b) — not user-editable
-  const signatureDate = new Date().toISOString().slice(0, 10);
+  // Display date — server generates the authoritative NIST timestamp on POST /api/part11/signatures.
+  // This client-side date is for UI display only; the record of truth is the server-signed timestamp
+  // returned in the API response and stored in the database.
+  const [signatureDate, setSignatureDate] = useState(new Date().toISOString().slice(0, 10));
+
+  // Fetch server time for display accuracy (NIST-synced)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/time');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.iso) setSignatureDate(data.iso.slice(0, 10));
+        }
+      } catch {
+        // Falls back to client time — authoritative timestamp is still server-side on sign.
+      }
+    })();
+  }, []);
 
   // Initialize signature pad when component mounts
   useEffect(() => {
