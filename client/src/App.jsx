@@ -230,6 +230,9 @@ const AuditPage = lazy(() => import('./pages/admin/AuditPage'));
 const SignaturePage = lazy(() => import('./pages/admin/SignaturePage'));
 // RoleTest removed - was test content
 
+// IVDR Module — EU IVDR 2017/746 compliance
+const IVDRModulePage = lazy(() => import('./pages/regulatory/IVDRModulePage'));
+
 // Analytical and Stability modules
 const AnalyticalMethodsStubPage = lazy(() => import('./pages/cmc/AnalyticalMethodsStubPage'));
 const ComparabilityStudiesStubPage = lazy(() => import('./pages/cmc/ComparabilityStudiesStubPage'));
@@ -2011,6 +2014,13 @@ function MainApp() {
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <PlatformReadinessDashboard />
+                </Suspense>
+              )}
+            </Route>
+            <Route path="/ivdr">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <IVDRModulePage />
                 </Suspense>
               )}
             </Route>

@@ -25,13 +25,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -217,7 +211,7 @@ export default function CDxWorkflow() {
     loadWorkflows();
   }, [loadWorkflows]);
 
-  const selected = workflows.find((w) => w.id === selectedId) || null;
+  const selected = workflows.find(w => w.id === selectedId) || null;
 
   // ── Create workflow ────────────────────────────────────────────────────
   const handleCreate = async () => {
@@ -239,7 +233,7 @@ export default function CDxWorkflow() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        setWorkflows((prev) => [data.workflow, ...prev]);
+        setWorkflows(prev => [data.workflow, ...prev]);
         setSelectedId(data.workflow.id);
         setShowCreate(false);
         setFormProduct('');
@@ -282,13 +276,9 @@ export default function CDxWorkflow() {
   };
 
   // ── Current stage index ────────────────────────────────────────────────
-  const currentStageIdx = selected
-    ? CDX_STAGES.findIndex((s) => s.id === selected.status)
-    : -1;
+  const currentStageIdx = selected ? CDX_STAGES.findIndex(s => s.id === selected.status) : -1;
   const stageProgress =
-    currentStageIdx >= 0
-      ? Math.round(((currentStageIdx + 1) / CDX_STAGES.length) * 100)
-      : 0;
+    currentStageIdx >= 0 ? Math.round(((currentStageIdx + 1) / CDX_STAGES.length) * 100) : 0;
 
   // ═════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -306,8 +296,8 @@ export default function CDxWorkflow() {
                 Companion Diagnostic (CDx) Workflow
               </CardTitle>
               <CardDescription className="mt-1">
-                IVDR Article 2(7) — Manage IVD/therapeutic product co-development through the
-                full CDx regulatory lifecycle (initiation → post-market)
+                IVDR Article 2(7) — Manage IVD/therapeutic product co-development through the full
+                CDx regulatory lifecycle (initiation → post-market)
               </CardDescription>
             </div>
             <Button onClick={() => setShowCreate(true)}>
@@ -334,7 +324,7 @@ export default function CDxWorkflow() {
                 <Input
                   placeholder="e.g., Keytruda® (pembrolizumab)"
                   value={formProduct}
-                  onChange={(e) => setFormProduct(e.target.value)}
+                  onChange={e => setFormProduct(e.target.value)}
                 />
               </div>
               <div>
@@ -342,7 +332,7 @@ export default function CDxWorkflow() {
                 <Input
                   placeholder="e.g., Pembrolizumab"
                   value={formSubstance}
-                  onChange={(e) => setFormSubstance(e.target.value)}
+                  onChange={e => setFormSubstance(e.target.value)}
                 />
               </div>
               <div>
@@ -350,7 +340,7 @@ export default function CDxWorkflow() {
                 <Input
                   placeholder="e.g., Non-small cell lung cancer (NSCLC)"
                   value={formIndication}
-                  onChange={(e) => setFormIndication(e.target.value)}
+                  onChange={e => setFormIndication(e.target.value)}
                 />
               </div>
               <div>
@@ -358,7 +348,7 @@ export default function CDxWorkflow() {
                 <Input
                   placeholder="e.g., PD-L1 (22C3 antibody, TPS ≥50%)"
                   value={formBiomarker}
-                  onChange={(e) => setFormBiomarker(e.target.value)}
+                  onChange={e => setFormBiomarker(e.target.value)}
                 />
               </div>
               <div>
@@ -366,7 +356,7 @@ export default function CDxWorkflow() {
                 <Input
                   placeholder="e.g., Patient selection for first-line monotherapy"
                   value={formDecision}
-                  onChange={(e) => setFormDecision(e.target.value)}
+                  onChange={e => setFormDecision(e.target.value)}
                 />
               </div>
               <div>
@@ -374,7 +364,7 @@ export default function CDxWorkflow() {
                 <Input
                   placeholder="e.g., EMA/CHMP/BWP/187338/2014"
                   value={formRegRef}
-                  onChange={(e) => setFormRegRef(e.target.value)}
+                  onChange={e => setFormRegRef(e.target.value)}
                 />
               </div>
               <div>
@@ -382,7 +372,7 @@ export default function CDxWorkflow() {
                 <Input
                   placeholder="e.g., NB 0123 (TÜV SÜD)"
                   value={formNB}
-                  onChange={(e) => setFormNB(e.target.value)}
+                  onChange={e => setFormNB(e.target.value)}
                 />
               </div>
             </div>
@@ -412,13 +402,11 @@ export default function CDxWorkflow() {
               </p>
             )}
             <div className="space-y-2">
-              {workflows.map((w) => (
+              {workflows.map(w => (
                 <div
                   key={w.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedId === w.id
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:bg-muted/30'
+                    selectedId === w.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/30'
                   }`}
                   onClick={() => setSelectedId(w.id)}
                 >
@@ -427,7 +415,7 @@ export default function CDxWorkflow() {
                       {w.medicinal_product_name}
                     </span>
                     <Badge className={STATUS_COLORS[w.status] || ''}>
-                      {CDX_STAGES.find((s) => s.id === w.status)?.label || w.status}
+                      {CDX_STAGES.find(s => s.id === w.status)?.label || w.status}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -495,8 +483,8 @@ export default function CDxWorkflow() {
                           isCurrent
                             ? 'border-primary bg-primary/5 shadow-sm'
                             : isCompleted
-                            ? 'border-green-200 bg-green-50/50'
-                            : 'border-muted/50 bg-muted/10 opacity-60'
+                              ? 'border-green-200 bg-green-50/50'
+                              : 'border-muted/50 bg-muted/10 opacity-60'
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -505,8 +493,8 @@ export default function CDxWorkflow() {
                               isCurrent
                                 ? 'bg-primary text-primary-foreground'
                                 : isCompleted
-                                ? 'bg-green-600 text-white'
-                                : 'bg-muted text-muted-foreground'
+                                  ? 'bg-green-600 text-white'
+                                  : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             {isCompleted ? (
@@ -529,9 +517,7 @@ export default function CDxWorkflow() {
                                 </Badge>
                               )}
                               {isCompleted && (
-                                <Badge className="bg-green-600 text-white text-xs">
-                                  COMPLETED
-                                </Badge>
+                                <Badge className="bg-green-600 text-white text-xs">COMPLETED</Badge>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
@@ -548,13 +534,11 @@ export default function CDxWorkflow() {
                                   className="text-sm min-h-[60px]"
                                   placeholder="Notes for advancing to next stage (optional)..."
                                   value={advanceNotes}
-                                  onChange={(e) => setAdvanceNotes(e.target.value)}
+                                  onChange={e => setAdvanceNotes(e.target.value)}
                                 />
                                 <Button
                                   size="sm"
-                                  onClick={() =>
-                                    handleAdvanceStatus(CDX_STAGES[idx + 1].id)
-                                  }
+                                  onClick={() => handleAdvanceStatus(CDX_STAGES[idx + 1].id)}
                                   disabled={saving}
                                 >
                                   <ArrowRight className="h-3 w-3 mr-1" />
@@ -584,8 +568,8 @@ export default function CDxWorkflow() {
                       value: new Date(selected.created_at).toLocaleDateString(),
                     },
                   ]
-                    .filter((item) => item.value)
-                    .map((item) => (
+                    .filter(item => item.value)
+                    .map(item => (
                       <div key={item.label} className="p-3 rounded-lg border bg-muted/20">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                           {item.label}

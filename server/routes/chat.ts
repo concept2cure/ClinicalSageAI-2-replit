@@ -17,6 +17,7 @@ import {
   getThreadMessages,
   saveChatMessage as saveMessage,
 } from '../services/chat-thread-helpers.js';
+import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 
 const router = Router();
 
@@ -352,11 +353,45 @@ router.post('/send-message', async (req: Request, res: Response) => {
     await saveMessage(threadId, 'user', message, model);
     await saveMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
 
+    // Retrieve relevant sources via embedding search for citation/provenance.
+    // This runs AFTER the AI call so it doesn't block response time if embedding
+    // service is slow. Sources are used by the frontend to render CitationList.
+    let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
+    let confidence: number | null = null;
+    try {
+      const embeddingService = getEmbeddingService(pool);
+      const orgUuid =
+        (req as any).tenantContext?.organizationUuid ||
+        (req.headers['x-org-uuid'] as string | undefined);
+      const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
+      sources = searchResults.map(r => ({
+        id: r.id,
+        title: r.title,
+        content: r.content.length > 300 ? r.content.substring(0, 300) + '…' : r.content,
+        score: r.score,
+      }));
+      // Confidence = average of top source scores, capped at 1.0
+      if (sources.length > 0) {
+        confidence = Math.min(1, sources.reduce((sum, s) => sum + s.score, 0) / sources.length);
+      }
+    } catch (srcErr: any) {
+      // Non-fatal — chat still works, just without source attribution
+      console.warn('[Lumen Cortex] Source retrieval for citations failed:', srcErr.message);
+    }
+
     res.json({
       answer: assistantMessage,
       thread_id: threadId,
       usage,
       model,
+      sources,
+      citations: sources.map((s, i) => ({
+        id: `cite-${i + 1}`,
+        title: s.title,
+        snippet: s.content,
+        relevanceScore: s.score,
+      })),
+      confidence,
     });
   } catch (error: any) {
     console.error('[Lumen Cortex] Chat error:', error);

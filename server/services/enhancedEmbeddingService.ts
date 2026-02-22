@@ -418,12 +418,15 @@ export class EnhancedEmbeddingService {
   }
 
   /**
-   * Hybrid search combining semantic and keyword search
+   * Hybrid search combining semantic and keyword search.
+   * When organizationUuid is provided, results are filtered to that org
+   * (defense-in-depth multi-tenant isolation).
    */
   async searchHybrid(
     query: string,
     limit = 10,
-    semanticWeight = 0.7
+    semanticWeight = 0.7,
+    organizationUuid?: string
   ): Promise<
     Array<{
       id: string;
@@ -445,7 +448,25 @@ export class EnhancedEmbeddingService {
       [query, `[${queryResult.embedding.join(',')}]`, limit, semanticWeight]
     );
 
-    return rows.map(row => ({
+    // Org-scoped post-filter: if organizationUuid is provided, only return
+    // atoms belonging to that org. This is defense-in-depth — the DB function
+    // does not currently accept an org filter, so we filter here.
+    let filteredRows = rows;
+    if (organizationUuid) {
+      const atomIds = rows.map((r: any) => r.id);
+      if (atomIds.length > 0) {
+        const orgFilter = await this.pool.query(
+          `SELECT id FROM lumen_data_atoms WHERE id = ANY($1) AND organization_id = (
+             SELECT id FROM organizations WHERE uuid = $2 LIMIT 1
+           )`,
+          [atomIds, organizationUuid]
+        );
+        const allowedIds = new Set(orgFilter.rows.map((r: any) => r.id));
+        filteredRows = rows.filter((r: any) => allowedIds.has(r.id));
+      }
+    }
+
+    return filteredRows.map((row: any) => ({
       id: row.id,
       content: row.content,
       title: row.title,

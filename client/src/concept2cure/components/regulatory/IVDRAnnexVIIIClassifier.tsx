@@ -21,13 +21,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -272,7 +266,7 @@ function classifyLocally(answers: WizardAnswers): ClassificationResult {
   return {
     classification: classResult,
     ruleTrace,
-    matchedRules: ruleTrace.filter((r) => r.matched),
+    matchedRules: ruleTrace.filter(r => r.matched),
     regulatoryPath: getRegulatoryPath(classResult),
   };
 }
@@ -283,7 +277,8 @@ function getRegulatoryPath(cls: IVDRClass): RegulatoryPath {
       class: 'D',
       conformityAssessment: 'EU Reference Laboratory + Notified Body (Annex IX Ch. I & III)',
       technicalDocumentation: 'Full Annex II + Annex III',
-      performanceEvaluation: 'Required: Annex XIII Part A (scientific validity, analytical & clinical performance)',
+      performanceEvaluation:
+        'Required: Annex XIII Part A (scientific validity, analytical & clinical performance)',
       qualityManagement: 'Full QMS, ISO 13485 certified, Notified Body audits',
       postMarket: 'PMCF plan mandatory, PSUR every year, proactive safety updates',
       euDeclaration: 'Required, CE mark with Notified Body number',
@@ -341,13 +336,20 @@ export default function IVDRAnnexVIIIClassifier() {
 
   const canAdvance = useCallback((): boolean => {
     switch (currentStep) {
-      case 0: return answers.deviceName.trim().length > 0 && answers.intendedPurpose.trim().length > 0;
-      case 1: return answers.bloodScreening !== null && answers.detectsTransmissibleAgent !== null;
-      case 2: return answers.isCompanionDiagnostic !== null && answers.detectsCancer !== null;
-      case 3: return answers.isGeneticTest !== null && answers.prenatalScreening !== null;
-      case 4: return answers.isSelfTest !== null && answers.isNearPatient !== null;
-      case 5: return answers.riskToPatient !== null;
-      default: return true;
+      case 0:
+        return answers.deviceName.trim().length > 0 && answers.intendedPurpose.trim().length > 0;
+      case 1:
+        return answers.bloodScreening !== null && answers.detectsTransmissibleAgent !== null;
+      case 2:
+        return answers.isCompanionDiagnostic !== null && answers.detectsCancer !== null;
+      case 3:
+        return answers.isGeneticTest !== null && answers.prenatalScreening !== null;
+      case 4:
+        return answers.isSelfTest !== null && answers.isNearPatient !== null;
+      case 5:
+        return answers.riskToPatient !== null;
+      default:
+        return true;
     }
   }, [currentStep, answers]);
 
@@ -376,7 +378,7 @@ export default function IVDRAnnexVIIIClassifier() {
   };
 
   const setBool = (field: keyof WizardAnswers, val: boolean) =>
-    setAnswers((prev) => ({ ...prev, [field]: val }));
+    setAnswers(prev => ({ ...prev, [field]: val }));
 
   // ── Save to server ─────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -390,13 +392,13 @@ export default function IVDRAnnexVIIIClassifier() {
           ...answers,
           analytes: answers.analytes
             .split(',')
-            .map((a) => a.trim())
+            .map(a => a.trim())
             .filter(Boolean),
         }),
       });
       if (!resp.ok) throw new Error(await resp.text());
       const data = await resp.json();
-      setRecords((prev) => [data.record, ...prev]);
+      setRecords(prev => [data.record, ...prev]);
     } catch (err) {
       console.error('Save classification failed:', err);
     } finally {
@@ -455,8 +457,8 @@ export default function IVDRAnnexVIIIClassifier() {
                 IVDR Annex VIII — Classification Wizard
               </CardTitle>
               <CardDescription className="mt-1">
-                EU 2017/746 In Vitro Diagnostic Regulation — Risk-based device classification
-                (Rules 1–7) with full rule trace for regulatory audit
+                EU 2017/746 In Vitro Diagnostic Regulation — Risk-based device classification (Rules
+                1–7) with full rule trace for regulatory audit
               </CardDescription>
             </div>
             <Button variant="outline" onClick={loadHistory}>
@@ -479,8 +481,8 @@ export default function IVDRAnnexVIIIClassifier() {
                   idx === currentStep
                     ? 'text-primary font-semibold'
                     : idx < currentStep
-                    ? 'text-green-600'
-                    : ''
+                      ? 'text-green-600'
+                      : ''
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -503,8 +505,8 @@ export default function IVDRAnnexVIIIClassifier() {
                 Step 1: Device Information
               </h3>
               <p className="text-sm text-muted-foreground">
-                Provide the device name and intended purpose. The intended purpose is the basis
-                for classification under IVDR Annex VIII.
+                Provide the device name and intended purpose. The intended purpose is the basis for
+                classification under IVDR Annex VIII.
               </p>
               <div className="space-y-3">
                 <div>
@@ -513,9 +515,7 @@ export default function IVDRAnnexVIIIClassifier() {
                     id="deviceName"
                     placeholder="e.g., Rapid COVID-19 Antigen Test"
                     value={answers.deviceName}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({ ...prev, deviceName: e.target.value }))
-                    }
+                    onChange={e => setAnswers(prev => ({ ...prev, deviceName: e.target.value }))}
                   />
                 </div>
                 <div>
@@ -525,8 +525,8 @@ export default function IVDRAnnexVIIIClassifier() {
                     className="min-h-[100px]"
                     placeholder="e.g., In vitro qualitative detection of SARS-CoV-2 nucleocapsid protein antigen in human nasopharyngeal swab specimens from individuals suspected of COVID-19 by their healthcare provider."
                     value={answers.intendedPurpose}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({ ...prev, intendedPurpose: e.target.value }))
+                    onChange={e =>
+                      setAnswers(prev => ({ ...prev, intendedPurpose: e.target.value }))
                     }
                   />
                 </div>
@@ -536,9 +536,7 @@ export default function IVDRAnnexVIIIClassifier() {
                     id="analytes"
                     placeholder="e.g., SARS-CoV-2 N protein, IgG, IgM"
                     value={answers.analytes}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({ ...prev, analytes: e.target.value }))
-                    }
+                    onChange={e => setAnswers(prev => ({ ...prev, analytes: e.target.value }))}
                   />
                 </div>
               </div>
@@ -554,8 +552,8 @@ export default function IVDRAnnexVIIIClassifier() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 Determines applicability of <strong>Rule 1 (Class D)</strong> — blood/tissue
-                donation screening for transmissible agents, and <strong>Rule 2 (Class D)</strong>{' '}
-                — blood grouping / tissue typing.
+                donation screening for transmissible agents, and <strong>Rule 2 (Class D)</strong> —
+                blood grouping / tissue typing.
               </p>
               <div className="space-y-4">
                 <div>
@@ -798,8 +796,8 @@ export default function IVDRAnnexVIIIClassifier() {
                 </Label>
                 <Select
                   value={answers.riskToPatient || ''}
-                  onValueChange={(val) =>
-                    setAnswers((prev) => ({
+                  onValueChange={val =>
+                    setAnswers(prev => ({
                       ...prev,
                       riskToPatient: val as 'low' | 'medium' | 'high',
                     }))
@@ -809,15 +807,11 @@ export default function IVDRAnnexVIIIClassifier() {
                     <SelectValue placeholder="Select risk level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">
-                      Low — Minimal clinical consequence
-                    </SelectItem>
+                    <SelectItem value="low">Low — Minimal clinical consequence</SelectItem>
                     <SelectItem value="medium">
                       Medium — Could lead to suboptimal treatment
                     </SelectItem>
-                    <SelectItem value="high">
-                      High — Could cause serious harm or death
-                    </SelectItem>
+                    <SelectItem value="high">High — Could cause serious harm or death</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -842,9 +836,7 @@ export default function IVDRAnnexVIIIClassifier() {
                   {result.classification}
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold">
-                    IVDR Class {result.classification}
-                  </h4>
+                  <h4 className="text-lg font-semibold">IVDR Class {result.classification}</h4>
                   <p className="text-sm text-muted-foreground max-w-lg">
                     {CLASS_DESCRIPTIONS[result.classification]}
                   </p>
@@ -864,13 +856,8 @@ export default function IVDRAnnexVIIIClassifier() {
                   </TableHeader>
                   <TableBody>
                     {result.ruleTrace.map((entry, idx) => (
-                      <TableRow
-                        key={idx}
-                        className={entry.matched ? 'bg-green-50' : ''}
-                      >
-                        <TableCell className="font-mono text-xs">
-                          {entry.rule}
-                        </TableCell>
+                      <TableRow key={idx} className={entry.matched ? 'bg-green-50' : ''}>
+                        <TableCell className="font-mono text-xs">{entry.rule}</TableCell>
                         <TableCell className="text-sm">{entry.description}</TableCell>
                         <TableCell className="text-center">
                           {entry.matched ? (
@@ -895,10 +882,7 @@ export default function IVDRAnnexVIIIClassifier() {
                 <h4 className="font-semibold mb-2">Regulatory Pathway</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {Object.entries(result.regulatoryPath).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="p-3 rounded-lg border bg-muted/30"
-                    >
+                    <div key={key} className="p-3 rounded-lg border bg-muted/30">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </p>
@@ -924,11 +908,7 @@ export default function IVDRAnnexVIIIClassifier() {
           {/* Navigation */}
           {currentStep < totalSteps - 1 && (
             <div className="flex justify-between mt-8 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 0}
-              >
+              <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Back
               </Button>
@@ -967,7 +947,7 @@ export default function IVDRAnnexVIIIClassifier() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map((rec) => (
+                  {records.map(rec => (
                     <TableRow key={rec.id}>
                       <TableCell className="font-medium">{rec.device_name}</TableCell>
                       <TableCell>
@@ -976,11 +956,7 @@ export default function IVDRAnnexVIIIClassifier() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {rec.is_cdx ? (
-                          <Badge variant="default">CDx</Badge>
-                        ) : (
-                          '—'
-                        )}
+                        {rec.is_cdx ? <Badge variant="default">CDx</Badge> : '—'}
                       </TableCell>
                       <TableCell className="text-xs">
                         {(rec.rule_trace || [])

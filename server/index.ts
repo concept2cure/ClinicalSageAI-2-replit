@@ -335,6 +335,19 @@ app.get('/api/health', async (req: Request, res: Response) => {
   res.json(healthData);
 });
 
+// Server-authoritative time (NIST-synced via OS NTP).
+// Used by SignaturePage to display accurate date before signing.
+// The authoritative signature timestamp is still generated server-side
+// on POST /api/part11/signatures — this is purely for display.
+app.get('/api/time', (_req: Request, res: Response) => {
+  const now = new Date();
+  res.json({
+    iso: now.toISOString(),
+    epoch: now.getTime(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+});
+
 // Diagnostic page — serves without React/Vite to test Simple Browser rendering
 app.get('/api/diag', (_req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/html');
@@ -1769,7 +1782,8 @@ async function queryAuditEvents(queryParams: any, limitVal = 10, offsetVal = 0) 
   params.push(offsetVal);
   const result = await pool.query(
     `SELECT id, organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role,
-            ip_address, timestamp, reason, comments, regulatory_significant, gxp_relevant, metadata, created_at
+            ip_address, timestamp, reason, comments, regulatory_significant, gxp_relevant, metadata,
+            record_hash, previous_hash, sequence_number, created_at
      FROM audit_events ${where} ORDER BY timestamp DESC LIMIT $${idx++} OFFSET $${idx++}`,
     params
   );
@@ -1796,6 +1810,10 @@ function formatAuditRow(row: any) {
     org_id: String(row.organization_id || ''),
     project_id: String(row.entity_id || ''),
     timestamp: row.timestamp || row.created_at,
+    // Hash chain fields for Part 11 chain integrity display
+    hash: row.record_hash || null,
+    sequenceNumber: row.sequence_number ?? null,
+    previousHash: row.previous_hash || null,
   };
 }
 

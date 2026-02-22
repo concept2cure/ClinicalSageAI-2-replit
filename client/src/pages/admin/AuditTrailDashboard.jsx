@@ -481,7 +481,7 @@ export default function AuditTrailDashboard() {
                         <strong>Hash:</strong> {log.hash.substring(0, 12)}…
                       </p>
                     )}
-                    {(log.sequenceNumber !== undefined && log.sequenceNumber !== null) && (
+                    {log.sequenceNumber !== undefined && log.sequenceNumber !== null && (
                       <p>
                         <strong>Seq #:</strong> {log.sequenceNumber}
                       </p>
@@ -596,14 +596,19 @@ export default function AuditTrailDashboard() {
                       <strong>SHA-256:</strong> {selectedLog.hash}
                     </p>
                   ) : (
-                    <p className="text-gray-400 mt-1 italic text-xs">Hash not recorded for this entry</p>
+                    <p className="text-gray-400 mt-1 italic text-xs">
+                      Hash not recorded for this entry
+                    </p>
                   )}
-                  {(selectedLog.sequenceNumber !== undefined && selectedLog.sequenceNumber !== null) ? (
+                  {selectedLog.sequenceNumber !== undefined &&
+                  selectedLog.sequenceNumber !== null ? (
                     <p className="text-gray-900 mt-1">
                       <strong>Sequence #:</strong> {selectedLog.sequenceNumber}
                     </p>
                   ) : (
-                    <p className="text-gray-400 mt-1 italic text-xs">Sequence number not available</p>
+                    <p className="text-gray-400 mt-1 italic text-xs">
+                      Sequence number not available
+                    </p>
                   )}
                   {selectedLog.previousHash && (
                     <p className="text-gray-900 mt-1 font-mono text-xs break-all">

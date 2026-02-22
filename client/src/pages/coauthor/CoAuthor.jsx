@@ -4893,9 +4893,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       }
       const encoder = new TextEncoder();
       // Canonical UTF-8 encoding: normalize string to NFC before hashing for stable bytes
-      const normalized = typeof content === 'string'
-        ? content.normalize('NFC')
-        : JSON.stringify(content);
+      const normalized =
+        typeof content === 'string' ? content.normalize('NFC') : JSON.stringify(content);
       const data = encoder.encode(normalized);
       const hashBuffer = await crypto.subtle.digest('SHA-256', data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -4904,7 +4903,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       console.error('Checksum computation failed:', err);
       toast({
         title: 'Checksum Unavailable',
-        description: 'SHA-256 computation failed. Signing and submission actions are blocked until this is resolved. Ensure you are using HTTPS.',
+        description:
+          'SHA-256 computation failed. Signing and submission actions are blocked until this is resolved. Ensure you are using HTTPS.',
         variant: 'destructive',
       });
       return null; // null signals "cannot proceed" — callers must check
@@ -4941,7 +4941,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
               const sha256 = await computeChecksum(documentText || selectedDocument?.content || '');
               if (sha256 === null) {
                 // Checksum unavailable — block serialization for regulatory safety
-                throw new Error('SHA-256 checksum unavailable — cannot serialize for submission. Ensure HTTPS context.');
+                throw new Error(
+                  'SHA-256 checksum unavailable — cannot serialize for submission. Ensure HTTPS context.'
+                );
               }
               return {
                 md5: 'not-computed', // MD5 not available via Web Crypto API
@@ -12756,6 +12758,20 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                         <BarChart className="h-3 w-3 mr-1" />
                         {Math.round(result.similarity * 100)}% match
                       </span>
+                      {result.provenance && (
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] px-1.5 py-0 ${
+                            result.provenance === 'cortex_search'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
+                        >
+                          {result.provenance === 'cortex_search'
+                            ? 'Semantic'
+                            : 'Text match (fallback)'}
+                        </Badge>
+                      )}
                     </div>
 
                     <div className="bg-gray-50 p-3 rounded text-sm mb-3">{result.content}</div>
@@ -13604,6 +13620,20 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                           >
                             {(result.similarity * 100).toFixed(0)}% match
                           </Badge>
+                          {result.provenance && (
+                            <Badge
+                              variant="outline"
+                              className={`ml-1 px-1.5 py-0 text-[10px] ${
+                                result.provenance === 'cortex_search'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : 'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}
+                            >
+                              {result.provenance === 'cortex_search'
+                                ? 'Semantic'
+                                : 'Text match (fallback)'}
+                            </Badge>
+                          )}
                         </div>
                         <Badge variant="secondary" className="text-xs">
                           {result.module}

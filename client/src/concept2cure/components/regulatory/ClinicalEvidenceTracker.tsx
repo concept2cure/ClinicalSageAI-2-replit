@@ -19,13 +19,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,21 +117,14 @@ interface CalculatedMetrics {
  * Wilson score confidence interval for a proportion.
  * More accurate than Wald for small samples or extreme proportions.
  */
-function wilsonCI(
-  successes: number,
-  total: number,
-  z = 1.96
-): [number, number] | null {
+function wilsonCI(successes: number, total: number, z = 1.96): [number, number] | null {
   if (total === 0) return null;
   const p = successes / total;
   const z2 = z * z;
   const denom = 1 + z2 / total;
   const centre = p + z2 / (2 * total);
   const margin = z * Math.sqrt((p * (1 - p) + z2 / (4 * total)) / total);
-  return [
-    Math.max(0, (centre - margin) / denom),
-    Math.min(1, (centre + margin) / denom),
-  ];
+  return [Math.max(0, (centre - margin) / denom), Math.min(1, (centre + margin) / denom)];
 }
 
 function calcMetrics(table: ContingencyTable): CalculatedMetrics {
@@ -145,16 +132,24 @@ function calcMetrics(table: ContingencyTable): CalculatedMetrics {
   const total = tp + fp + tn + fn;
   if (total === 0) {
     return {
-      sensitivity: null, specificity: null, ppv: null, npv: null,
-      accuracy: null, prevalence: null, total: 0,
-      sensitivityCI: null, specificityCI: null, ppvCI: null, npvCI: null,
+      sensitivity: null,
+      specificity: null,
+      ppv: null,
+      npv: null,
+      accuracy: null,
+      prevalence: null,
+      total: 0,
+      sensitivityCI: null,
+      specificityCI: null,
+      ppvCI: null,
+      npvCI: null,
     };
   }
 
-  const sensitivity = (tp + fn) > 0 ? tp / (tp + fn) : null;
-  const specificity = (tn + fp) > 0 ? tn / (tn + fp) : null;
-  const ppv = (tp + fp) > 0 ? tp / (tp + fp) : null;
-  const npv = (tn + fn) > 0 ? tn / (tn + fn) : null;
+  const sensitivity = tp + fn > 0 ? tp / (tp + fn) : null;
+  const specificity = tn + fp > 0 ? tn / (tn + fp) : null;
+  const ppv = tp + fp > 0 ? tp / (tp + fp) : null;
+  const npv = tn + fn > 0 ? tn / (tn + fn) : null;
   const accuracy = (tp + tn) / total;
   const prevalence = (tp + fn) / total;
 
@@ -166,10 +161,10 @@ function calcMetrics(table: ContingencyTable): CalculatedMetrics {
     accuracy,
     prevalence,
     total,
-    sensitivityCI: (tp + fn) > 0 ? wilsonCI(tp, tp + fn) : null,
-    specificityCI: (tn + fp) > 0 ? wilsonCI(tn, tn + fp) : null,
-    ppvCI: (tp + fp) > 0 ? wilsonCI(tp, tp + fp) : null,
-    npvCI: (tn + fn) > 0 ? wilsonCI(tn, tn + fn) : null,
+    sensitivityCI: tp + fn > 0 ? wilsonCI(tp, tp + fn) : null,
+    specificityCI: tn + fp > 0 ? wilsonCI(tn, tn + fp) : null,
+    ppvCI: tp + fp > 0 ? wilsonCI(tp, tp + fp) : null,
+    npvCI: tn + fn > 0 ? wilsonCI(tn, tn + fn) : null,
   };
 }
 
@@ -235,7 +230,7 @@ export default function ClinicalEvidenceTracker() {
   }, [loadRecords]);
 
   // When selecting a record, pre-populate the 2×2 table
-  const selected = records.find((r) => r.id === selectedId) || null;
+  const selected = records.find(r => r.id === selectedId) || null;
   useEffect(() => {
     if (selected) {
       setTable({
@@ -266,7 +261,7 @@ export default function ClinicalEvidenceTracker() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        setRecords((prev) => [data.evidence, ...prev]);
+        setRecords(prev => [data.evidence, ...prev]);
         setSelectedId(data.evidence.id);
         setShowCreate(false);
         setNewStudyTitle('');
@@ -348,7 +343,7 @@ export default function ClinicalEvidenceTracker() {
                 <Input
                   placeholder="e.g., Prospective evaluation of XYZ IVD vs reference PCR"
                   value={newStudyTitle}
-                  onChange={(e) => setNewStudyTitle(e.target.value)}
+                  onChange={e => setNewStudyTitle(e.target.value)}
                 />
               </div>
               <div>
@@ -358,7 +353,7 @@ export default function ClinicalEvidenceTracker() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {STUDY_TYPES.map((st) => (
+                    {STUDY_TYPES.map(st => (
                       <SelectItem key={st.value} value={st.value}>
                         {st.label}
                       </SelectItem>
@@ -371,7 +366,7 @@ export default function ClinicalEvidenceTracker() {
                 <Input
                   placeholder="e.g., NCT12345678 or ISRCTN12345678"
                   value={newRegistryId}
-                  onChange={(e) => setNewRegistryId(e.target.value)}
+                  onChange={e => setNewRegistryId(e.target.value)}
                 />
               </div>
               <div>
@@ -380,7 +375,7 @@ export default function ClinicalEvidenceTracker() {
                   type="number"
                   placeholder="e.g., 500"
                   value={newSampleSize}
-                  onChange={(e) => setNewSampleSize(e.target.value)}
+                  onChange={e => setNewSampleSize(e.target.value)}
                 />
               </div>
             </div>
@@ -410,13 +405,11 @@ export default function ClinicalEvidenceTracker() {
               </p>
             )}
             <div className="space-y-2">
-              {records.map((r) => (
+              {records.map(r => (
                 <div
                   key={r.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedId === r.id
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:bg-muted/30'
+                    selectedId === r.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/30'
                   }`}
                   onClick={() => setSelectedId(r.id)}
                 >
@@ -432,7 +425,7 @@ export default function ClinicalEvidenceTracker() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {STUDY_TYPES.find((s) => s.value === r.study_type)?.label || r.study_type}
+                    {STUDY_TYPES.find(s => s.value === r.study_type)?.label || r.study_type}
                   </p>
                   {r.registry_id && (
                     <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
@@ -501,8 +494,8 @@ export default function ClinicalEvidenceTracker() {
                       2×2 Contingency Table
                     </h4>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Enter the number of patients/samples in each cell. Performance metrics
-                      are calculated automatically using Wilson score 95% CI.
+                      Enter the number of patients/samples in each cell. Performance metrics are
+                      calculated automatically using Wilson score 95% CI.
                     </p>
 
                     <div className="overflow-x-auto">
@@ -544,8 +537,8 @@ export default function ClinicalEvidenceTracker() {
                                   min={0}
                                   className="mx-auto w-24 text-center mt-1"
                                   value={table.tp || ''}
-                                  onChange={(e) =>
-                                    setTable((p) => ({
+                                  onChange={e =>
+                                    setTable(p => ({
                                       ...p,
                                       tp: parseInt(e.target.value) || 0,
                                     }))
@@ -563,8 +556,8 @@ export default function ClinicalEvidenceTracker() {
                                   min={0}
                                   className="mx-auto w-24 text-center mt-1"
                                   value={table.fp || ''}
-                                  onChange={(e) =>
-                                    setTable((p) => ({
+                                  onChange={e =>
+                                    setTable(p => ({
                                       ...p,
                                       fp: parseInt(e.target.value) || 0,
                                     }))
@@ -587,8 +580,8 @@ export default function ClinicalEvidenceTracker() {
                                   min={0}
                                   className="mx-auto w-24 text-center mt-1"
                                   value={table.fn || ''}
-                                  onChange={(e) =>
-                                    setTable((p) => ({
+                                  onChange={e =>
+                                    setTable(p => ({
                                       ...p,
                                       fn: parseInt(e.target.value) || 0,
                                     }))
@@ -606,8 +599,8 @@ export default function ClinicalEvidenceTracker() {
                                   min={0}
                                   className="mx-auto w-24 text-center mt-1"
                                   value={table.tn || ''}
-                                  onChange={(e) =>
-                                    setTable((p) => ({
+                                  onChange={e =>
+                                    setTable(p => ({
                                       ...p,
                                       tn: parseInt(e.target.value) || 0,
                                     }))
@@ -649,21 +642,27 @@ export default function ClinicalEvidenceTracker() {
                   {metrics.total > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       {[
-                        { label: 'Sensitivity', value: metrics.sensitivity, ci: metrics.sensitivityCI },
-                        { label: 'Specificity', value: metrics.specificity, ci: metrics.specificityCI },
+                        {
+                          label: 'Sensitivity',
+                          value: metrics.sensitivity,
+                          ci: metrics.sensitivityCI,
+                        },
+                        {
+                          label: 'Specificity',
+                          value: metrics.specificity,
+                          ci: metrics.specificityCI,
+                        },
                         { label: 'PPV', value: metrics.ppv, ci: metrics.ppvCI },
                         { label: 'NPV', value: metrics.npv, ci: metrics.npvCI },
                         { label: 'Accuracy', value: metrics.accuracy, ci: null },
-                      ].map((m) => (
+                      ].map(m => (
                         <div
                           key={m.label}
                           className="p-3 rounded-lg border bg-muted/20 text-center"
                         >
                           <p className="text-xs text-muted-foreground">{m.label}</p>
                           <p className="text-xl font-bold mt-1">{pct(m.value)}</p>
-                          {m.ci && (
-                            <p className="text-xs text-muted-foreground">{ciStr(m.ci)}</p>
-                          )}
+                          {m.ci && <p className="text-xs text-muted-foreground">{ciStr(m.ci)}</p>}
                         </div>
                       ))}
                     </div>
@@ -721,9 +720,7 @@ export default function ClinicalEvidenceTracker() {
                           <TableCell className="font-medium">
                             Positive Predictive Value (PPV)
                           </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {pct(metrics.ppv)}
-                          </TableCell>
+                          <TableCell className="text-right font-mono">{pct(metrics.ppv)}</TableCell>
                           <TableCell className="text-right text-xs font-mono">
                             {ciStr(metrics.ppvCI)}
                           </TableCell>
@@ -735,9 +732,7 @@ export default function ClinicalEvidenceTracker() {
                           <TableCell className="font-medium">
                             Negative Predictive Value (NPV)
                           </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {pct(metrics.npv)}
-                          </TableCell>
+                          <TableCell className="text-right font-mono">{pct(metrics.npv)}</TableCell>
                           <TableCell className="text-right text-xs font-mono">
                             {ciStr(metrics.npvCI)}
                           </TableCell>
@@ -756,9 +751,7 @@ export default function ClinicalEvidenceTracker() {
                           </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium">
-                            Apparent Prevalence
-                          </TableCell>
+                          <TableCell className="font-medium">Apparent Prevalence</TableCell>
                           <TableCell className="text-right font-mono">
                             {pct(metrics.prevalence)}
                           </TableCell>
@@ -784,7 +777,7 @@ export default function ClinicalEvidenceTracker() {
                       <div>
                         <Label className="text-xs text-muted-foreground">Study Type</Label>
                         <p className="font-medium">
-                          {STUDY_TYPES.find((s) => s.value === selected.study_type)?.label ||
+                          {STUDY_TYPES.find(s => s.value === selected.study_type)?.label ||
                             selected.study_type}
                         </p>
                       </div>
@@ -799,7 +792,9 @@ export default function ClinicalEvidenceTracker() {
                       )}
                       {selected.sample_size && (
                         <div>
-                          <Label className="text-xs text-muted-foreground">Target Sample Size</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Target Sample Size
+                          </Label>
                           <p className="font-medium">{selected.sample_size}</p>
                         </div>
                       )}
@@ -823,7 +818,7 @@ export default function ClinicalEvidenceTracker() {
                         <Input
                           placeholder="e.g., Gold-standard RT-PCR (Cepheid GeneXpert)"
                           value={comparisonMethod}
-                          onChange={(e) => setComparisonMethod(e.target.value)}
+                          onChange={e => setComparisonMethod(e.target.value)}
                         />
                       </div>
                       <div>
@@ -832,7 +827,7 @@ export default function ClinicalEvidenceTracker() {
                           className="min-h-[120px]"
                           placeholder="Summarize the clinical performance findings and whether the device meets the claimed performance characteristics..."
                           value={conclusionText}
-                          onChange={(e) => setConclusionText(e.target.value)}
+                          onChange={e => setConclusionText(e.target.value)}
                         />
                       </div>
                     </div>

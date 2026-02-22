@@ -7561,6 +7561,10 @@ export const auditEvents = pgTable(
     // Compliance
     regulatorySignificant: boolean('regulatory_significant').default(false),
     gxpRelevant: boolean('gxp_relevant').default(false),
+    // Hash chain (Part 11 chain integrity)
+    recordHash: text('record_hash'),
+    previousHash: text('previous_hash'),
+    sequenceNumber: integer('sequence_number'),
     // Metadata
     metadata: json('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),

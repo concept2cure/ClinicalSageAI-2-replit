@@ -155,8 +155,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       // Persist classification result
       const insertResult = await pool.query(
-        `INSERT INTO ivdr_classifications 
-         (device_name, intended_purpose, classification, is_cdx, is_self_test, 
+        `INSERT INTO ivdr_classifications
+         (device_name, intended_purpose, classification, is_cdx, is_self_test,
           is_near_patient, rule_trace, analytes, organization_id, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
          RETURNING *`,
@@ -176,7 +176,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       return res.json({
         classification: classResult,
         ruleTrace,
-        matchedRules: ruleTrace.filter((r) => r.matched),
+        matchedRules: ruleTrace.filter(r => r.matched),
         record: insertResult.rows[0],
         regulatoryPath: getClassPath(classResult),
       });
@@ -214,13 +214,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/validations', async (req: Request, res: Response) => {
     try {
-      const {
-        classificationId,
-        deviceName,
-        analyteName,
-        validationType,
-        organizationId,
-      } = req.body;
+      const { classificationId, deviceName, analyteName, validationType, organizationId } =
+        req.body;
 
       if (!deviceName || !analyteName) {
         return res.status(400).json({ error: 'deviceName and analyteName are required' });
@@ -228,7 +223,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       const result = await pool.query(
         `INSERT INTO ivdr_analytical_validations
-         (classification_id, device_name, analyte_name, validation_type, 
+         (classification_id, device_name, analyte_name, validation_type,
           status, organization_id, created_at)
          VALUES ($1, $2, $3, $4, 'in_progress', $5, NOW())
          RETURNING *`,
@@ -330,13 +325,20 @@ export default function createIVDRRoutes(pool: Pool): Router {
          RETURNING *`,
         [
           id,
-          lod, loq, precisionCV, withinRunCV, betweenRunCV, betweenDayCV,
+          lod,
+          loq,
+          precisionCV,
+          withinRunCV,
+          betweenRunCV,
+          betweenDayCV,
           reproducibilityCV,
           interferenceStudy ? JSON.stringify(interferenceStudy) : null,
           stability ? JSON.stringify(stability) : null,
-          sensitivity, specificity,
+          sensitivity,
+          specificity,
           linearity ? JSON.stringify(linearity) : null,
-          accuracy, carryOver,
+          accuracy,
+          carryOver,
           hookEffect !== undefined ? JSON.stringify(hookEffect) : null,
           referenceRange ? JSON.stringify(referenceRange) : null,
         ]
@@ -452,8 +454,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
       const calculatedMetrics = {
         sensitivity: total > 0 ? tp / (tp + fn) : null,
         specificity: total > 0 ? tn / (tn + fp) : null,
-        ppv: (tp + fp) > 0 ? tp / (tp + fp) : null, // Positive Predictive Value
-        npv: (tn + fn) > 0 ? tn / (tn + fn) : null, // Negative Predictive Value
+        ppv: tp + fp > 0 ? tp / (tp + fp) : null, // Positive Predictive Value
+        npv: tn + fn > 0 ? tn / (tn + fn) : null, // Negative Predictive Value
         accuracy: total > 0 ? (tp + tn) / total : null,
         prevalence: prevalence || (total > 0 ? (tp + fn) / total : null),
         total,
@@ -487,7 +489,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
          WHERE id = $1
          RETURNING *`,
         [
-          id, tp, fp, tn, fn,
+          id,
+          tp,
+          fp,
+          tn,
+          fn,
           calculatedMetrics.sensitivity,
           calculatedMetrics.specificity,
           calculatedMetrics.ppv,
@@ -532,9 +538,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       } = req.body;
 
       if (!medicinalProductName || !biomarker) {
-        return res
-          .status(400)
-          .json({ error: 'medicinalProductName and biomarker are required' });
+        return res.status(400).json({ error: 'medicinalProductName and biomarker are required' });
       }
 
       const result = await pool.query(
@@ -664,19 +668,27 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       return res.json({
         classifications: {
-          byClass: Object.fromEntries(classResults.rows.map((r: any) => [r.classification, Number(r.count)])),
+          byClass: Object.fromEntries(
+            classResults.rows.map((r: any) => [r.classification, Number(r.count)])
+          ),
           total: classResults.rows.reduce((s: number, r: any) => s + Number(r.count), 0),
         },
         validations: {
-          byStatus: Object.fromEntries(validResults.rows.map((r: any) => [r.status, Number(r.count)])),
+          byStatus: Object.fromEntries(
+            validResults.rows.map((r: any) => [r.status, Number(r.count)])
+          ),
           total: validResults.rows.reduce((s: number, r: any) => s + Number(r.count), 0),
         },
         clinicalEvidence: {
-          byStatus: Object.fromEntries(evidResults.rows.map((r: any) => [r.status, Number(r.count)])),
+          byStatus: Object.fromEntries(
+            evidResults.rows.map((r: any) => [r.status, Number(r.count)])
+          ),
           total: evidResults.rows.reduce((s: number, r: any) => s + Number(r.count), 0),
         },
         cdxWorkflows: {
-          byStatus: Object.fromEntries(cdxResults.rows.map((r: any) => [r.status, Number(r.count)])),
+          byStatus: Object.fromEntries(
+            cdxResults.rows.map((r: any) => [r.status, Number(r.count)])
+          ),
           total: cdxResults.rows.reduce((s: number, r: any) => s + Number(r.count), 0),
         },
       });
@@ -700,7 +712,8 @@ function getClassPath(classification: string) {
         class: 'D',
         conformityAssessment: 'EU Reference Laboratory + Notified Body (Annex IX Chapters I & III)',
         technicalDocumentation: 'Full Annex II + Annex III',
-        performanceEvaluation: 'Required: Annex XIII Part A (scientific validity, analytical & clinical performance)',
+        performanceEvaluation:
+          'Required: Annex XIII Part A (scientific validity, analytical & clinical performance)',
         qualityManagement: 'Full QMS, ISO 13485 certified, Notified Body audits',
         postMarket: 'PMCF plan mandatory, PSUR every year, proactive safety updates',
         euDeclaration: 'Required, CE mark with Notified Body number',
@@ -720,7 +733,8 @@ function getClassPath(classification: string) {
     case 'B':
       return {
         class: 'B',
-        conformityAssessment: 'Notified Body (Annex IX Chapter I + Annex IX Chapter III or Annex XI Part A)',
+        conformityAssessment:
+          'Notified Body (Annex IX Chapter I + Annex IX Chapter III or Annex XI Part A)',
         technicalDocumentation: 'Full Annex II',
         performanceEvaluation: 'Required: Annex XIII Part A',
         qualityManagement: 'QMS, ISO 13485 recommended',

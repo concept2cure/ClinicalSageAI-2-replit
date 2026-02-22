@@ -79,20 +79,24 @@ CREATE TRIGGER trg_audit_events_no_truncate
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- VERIFICATION: Confirm triggers are installed
+-- Uses pg_trigger + pg_class (not information_schema.triggers, which omits
+-- TRUNCATE triggers in PostgreSQL).
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
 DECLARE
   trigger_count INTEGER;
 BEGIN
   SELECT COUNT(*) INTO trigger_count
-  FROM information_schema.triggers
-  WHERE event_object_table = 'audit_events'
-    AND trigger_name LIKE 'trg_audit_events_no_%';
+  FROM pg_trigger t
+  JOIN pg_class c ON t.tgrelid = c.oid
+  WHERE c.relname = 'audit_events'
+    AND t.tgname LIKE 'trg_audit_events_no_%'
+    AND NOT t.tgisinternal;
 
-  IF trigger_count < 2 THEN
-    RAISE WARNING 'Expected at least 2 immutability triggers on audit_events, found %', trigger_count;
+  IF trigger_count < 3 THEN
+    RAISE WARNING 'Expected 3 immutability triggers on audit_events (UPDATE, DELETE, TRUNCATE), found %', trigger_count;
   ELSE
-    RAISE NOTICE 'audit_events immutability enforced: % triggers installed', trigger_count;
+    RAISE NOTICE 'audit_events immutability enforced: % triggers installed (UPDATE, DELETE, TRUNCATE)', trigger_count;
   END IF;
 END;
 $$;

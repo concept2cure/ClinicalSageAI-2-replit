@@ -24,13 +24,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -299,7 +293,9 @@ export default function AnalyticalValidationTracker() {
 
   // Parameter edit state — flat key/value map
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
-  const [paramStatuses, setParamStatuses] = useState<Record<string, 'pass' | 'fail' | 'pending'>>({});
+  const [paramStatuses, setParamStatuses] = useState<Record<string, 'pass' | 'fail' | 'pending'>>(
+    {}
+  );
 
   // ── Load validations ───────────────────────────────────────────────────
   const loadValidations = useCallback(async () => {
@@ -322,7 +318,7 @@ export default function AnalyticalValidationTracker() {
   }, [loadValidations]);
 
   // ── Selected record ────────────────────────────────────────────────────
-  const selected = validations.find((v) => v.id === selectedId) || null;
+  const selected = validations.find(v => v.id === selectedId) || null;
 
   useEffect(() => {
     if (selected) {
@@ -334,7 +330,8 @@ export default function AnalyticalValidationTracker() {
       if (selected.within_run_cv != null) vals.withinRunCV = String(selected.within_run_cv);
       if (selected.between_run_cv != null) vals.betweenRunCV = String(selected.between_run_cv);
       if (selected.between_day_cv != null) vals.betweenDayCV = String(selected.between_day_cv);
-      if (selected.reproducibility_cv != null) vals.reproducibilityCV = String(selected.reproducibility_cv);
+      if (selected.reproducibility_cv != null)
+        vals.reproducibilityCV = String(selected.reproducibility_cv);
       if (selected.precision_cv != null) vals.precisionCV = String(selected.precision_cv);
       if (selected.sensitivity != null) vals.sensitivity = String(selected.sensitivity);
       if (selected.specificity != null) vals.specificity = String(selected.specificity);
@@ -351,12 +348,10 @@ export default function AnalyticalValidationTracker() {
         vals.stabilityFreezeThaw = String(selected.stability.freezeThaw?.cycles || '');
       }
       if (selected.interference_study) {
-        vals.interferenceSubstances = String(
-          (selected.interference_study.substances || []).length
-        );
+        vals.interferenceSubstances = String((selected.interference_study.substances || []).length);
       }
       // Determine pass/fail per param
-      Object.keys(vals).forEach((k) => {
+      Object.keys(vals).forEach(k => {
         stats[k] = vals[k] && vals[k] !== '' && vals[k] !== '0' ? 'pass' : 'pending';
       });
       setParamValues(vals);
@@ -380,7 +375,7 @@ export default function AnalyticalValidationTracker() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        setValidations((prev) => [data.validation, ...prev]);
+        setValidations(prev => [data.validation, ...prev]);
         setSelectedId(data.validation.id);
         setShowCreate(false);
         setNewDeviceName('');
@@ -405,7 +400,8 @@ export default function AnalyticalValidationTracker() {
       if (paramValues.withinRunCV) body.withinRunCV = Number(paramValues.withinRunCV);
       if (paramValues.betweenRunCV) body.betweenRunCV = Number(paramValues.betweenRunCV);
       if (paramValues.betweenDayCV) body.betweenDayCV = Number(paramValues.betweenDayCV);
-      if (paramValues.reproducibilityCV) body.reproducibilityCV = Number(paramValues.reproducibilityCV);
+      if (paramValues.reproducibilityCV)
+        body.reproducibilityCV = Number(paramValues.reproducibilityCV);
       if (paramValues.sensitivity) body.sensitivity = Number(paramValues.sensitivity);
       if (paramValues.specificity) body.specificity = Number(paramValues.specificity);
       if (paramValues.accuracy) body.accuracy = Number(paramValues.accuracy);
@@ -417,7 +413,11 @@ export default function AnalyticalValidationTracker() {
           rSquared: Number(paramValues.linearityR2) || null,
         };
       }
-      if (paramValues.stabilityRealTime || paramValues.stabilityAccelerated || paramValues.stabilityFreezeThaw) {
+      if (
+        paramValues.stabilityRealTime ||
+        paramValues.stabilityAccelerated ||
+        paramValues.stabilityFreezeThaw
+      ) {
         body.stability = {
           realTime: { months: Number(paramValues.stabilityRealTime) || null },
           accelerated: { months: Number(paramValues.stabilityAccelerated) || null },
@@ -442,9 +442,7 @@ export default function AnalyticalValidationTracker() {
 
   // ── Completeness calculation ───────────────────────────────────────────
   const totalParams = Object.keys(PARAM_METADATA).length;
-  const filledParams = Object.values(paramValues).filter(
-    (v) => v !== '' && v !== undefined
-  ).length;
+  const filledParams = Object.values(paramValues).filter(v => v !== '' && v !== undefined).length;
   const completeness = totalParams > 0 ? Math.round((filledParams / totalParams) * 100) : 0;
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -488,7 +486,7 @@ export default function AnalyticalValidationTracker() {
                 <Input
                   placeholder="e.g., Rapid HbA1c Analyzer"
                   value={newDeviceName}
-                  onChange={(e) => setNewDeviceName(e.target.value)}
+                  onChange={e => setNewDeviceName(e.target.value)}
                 />
               </div>
               <div>
@@ -496,7 +494,7 @@ export default function AnalyticalValidationTracker() {
                 <Input
                   placeholder="e.g., Glycated hemoglobin (HbA1c)"
                   value={newAnalyteName}
-                  onChange={(e) => setNewAnalyteName(e.target.value)}
+                  onChange={e => setNewAnalyteName(e.target.value)}
                 />
               </div>
               <div>
@@ -539,13 +537,11 @@ export default function AnalyticalValidationTracker() {
               </p>
             )}
             <div className="space-y-2">
-              {validations.map((v) => (
+              {validations.map(v => (
                 <div
                   key={v.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedId === v.id
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:bg-muted/30'
+                    selectedId === v.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/30'
                   }`}
                   onClick={() => setSelectedId(v.id)}
                 >
@@ -553,9 +549,7 @@ export default function AnalyticalValidationTracker() {
                     <span className="font-medium text-sm">{v.device_name}</span>
                     <Badge
                       variant={v.status === 'completed' ? 'default' : 'outline'}
-                      className={
-                        v.status === 'completed' ? 'bg-green-600' : ''
-                      }
+                      className={v.status === 'completed' ? 'bg-green-600' : ''}
                     >
                       {v.status}
                     </Badge>
@@ -580,12 +574,12 @@ export default function AnalyticalValidationTracker() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg">
-                  {selected ? `${selected.device_name} — ${selected.analyte_name}` : 'Select a Validation'}
+                  {selected
+                    ? `${selected.device_name} — ${selected.analyte_name}`
+                    : 'Select a Validation'}
                 </CardTitle>
                 {selected && (
-                  <CardDescription className="mt-1">
-                    Completeness: {completeness}%
-                  </CardDescription>
+                  <CardDescription className="mt-1">Completeness: {completeness}%</CardDescription>
                 )}
               </div>
               {selected && (
@@ -605,7 +599,7 @@ export default function AnalyticalValidationTracker() {
             ) : (
               <Tabs defaultValue="detection">
                 <TabsList className="flex flex-wrap gap-1 h-auto">
-                  {PARAMETER_GROUPS.map((group) => {
+                  {PARAMETER_GROUPS.map(group => {
                     const Icon = group.icon;
                     return (
                       <TabsTrigger key={group.id} value={group.id} className="text-xs">
@@ -616,19 +610,16 @@ export default function AnalyticalValidationTracker() {
                   })}
                 </TabsList>
 
-                {PARAMETER_GROUPS.map((group) => (
+                {PARAMETER_GROUPS.map(group => (
                   <TabsContent key={group.id} value={group.id} className="mt-4">
                     <div className="space-y-4">
-                      {group.params.map((paramKey) => {
+                      {group.params.map(paramKey => {
                         const meta = PARAM_METADATA[paramKey];
                         if (!meta) return null;
                         const val = paramValues[paramKey] || '';
                         const status = paramStatuses[paramKey] || 'pending';
                         return (
-                          <div
-                            key={paramKey}
-                            className="p-4 rounded-lg border space-y-2"
-                          >
+                          <div key={paramKey} className="p-4 rounded-lg border space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
                                 <Label className="font-semibold">{meta.label}</Label>
@@ -662,22 +653,19 @@ export default function AnalyticalValidationTracker() {
                                 className="max-w-[200px]"
                                 placeholder={`Value (${meta.unit})`}
                                 value={val}
-                                onChange={(e) => {
-                                  setParamValues((prev) => ({
+                                onChange={e => {
+                                  setParamValues(prev => ({
                                     ...prev,
                                     [paramKey]: e.target.value,
                                   }));
-                                  setParamStatuses((prev) => ({
+                                  setParamStatuses(prev => ({
                                     ...prev,
-                                    [paramKey]:
-                                      e.target.value.trim() !== '' ? 'pass' : 'pending',
+                                    [paramKey]: e.target.value.trim() !== '' ? 'pass' : 'pending',
                                   }));
                                 }}
                               />
                               {meta.unit && (
-                                <span className="text-sm text-muted-foreground">
-                                  {meta.unit}
-                                </span>
+                                <span className="text-sm text-muted-foreground">{meta.unit}</span>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground italic">
