@@ -720,11 +720,103 @@ try {
 }
 
 // Mount IVDR (In Vitro Diagnostic Regulation EU 2017/746) routes
+// Triple-gated: auth → feature flag → module entitlement → RBAC
 try {
   const ivdrModule = await import('./routes/ivdr-routes.ts');
   const createIVDRRoutes = ivdrModule.default;
-  app.use('/api/ivdr', createIVDRRoutes(pool));
-  console.log('✅ IVDR API routes mounted successfully (EU 2017/746 compliant)');
+
+  /**
+   * requireIVDRAccess — defense-in-depth gate for all /api/ivdr/* routes
+   *
+   * Layer 1: Auth (req.userId must exist)
+   * Layer 2: Feature flag (ENABLE_IVDR_MODULE env var kill switch)
+   * Layer 3: Tenant context (org must be present — no anonymous)
+   * Layer 4: Module entitlement (org has active module_subscriptions for ivdr_module)
+   * Layer 5: RBAC (write ops require elevated roles)
+   *
+   * Error shape: { error: string, code: string } with 401/403/503
+   */
+  const requireIVDRAccess = async (req: Request, res: Response, next: NextFunction) => {
+    // Layer 1: Authenticated user (global authMiddleware sets req.userId)
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required to access IVDR module',
+        code: 'AUTH_REQUIRED',
+      });
+    }
+
+    // Layer 2: Feature flag (kill switch)
+    if (process.env.ENABLE_IVDR_MODULE === 'false') {
+      return res.status(403).json({
+        error: 'IVDR module is not enabled for this environment',
+        code: 'IVDR_MODULE_DISABLED',
+      });
+    }
+
+    // Layer 3: Tenant must exist — no anonymous org access
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    if (!tenantId) {
+      return res.status(403).json({
+        error: 'Organization context required to access IVDR module',
+        code: 'IVDR_NO_TENANT',
+      });
+    }
+
+    // Layer 4: Module entitlement — org must have active ivdr_module subscription
+    try {
+      const entitlement = await pool.query(
+        `SELECT 1 FROM module_subscriptions ms
+         JOIN available_modules am ON ms.module_id = am.id
+         WHERE ms.organization_id = $1
+           AND am.module_key = 'ivdr_module'
+           AND ms.status = 'active'
+         LIMIT 1`,
+        [tenantId]
+      );
+      if (entitlement.rows.length === 0) {
+        return res.status(403).json({
+          error: 'Organization does not have an active IVDR module subscription',
+          code: 'IVDR_NOT_LICENSED',
+        });
+      }
+    } catch (err: any) {
+      // If table doesn't exist yet, deny — no silent passthrough
+      if (err?.code === '42P01') {
+        // 42P01 = undefined_table — module_subscriptions not yet migrated
+        console.warn('[IVDR] module_subscriptions table not found — denying access until migrated');
+        return res.status(503).json({
+          error: 'IVDR module licensing tables not yet provisioned',
+          code: 'IVDR_NOT_PROVISIONED',
+        });
+      }
+      throw err; // unexpected DB error — let Express error handler catch it
+    }
+
+    // Layer 5: RBAC — write ops require elevated roles
+    const userRole = (req as any).userRole || (req as any).tenantContext?.role || '';
+    const writeRoles = [
+      'admin',
+      'regulatory_lead',
+      'quality_assurance',
+      'regulatory',
+      'superadmin',
+    ];
+    const isReadOnly = req.method === 'GET' || req.method === 'HEAD';
+
+    if (!isReadOnly && !writeRoles.includes(userRole)) {
+      return res.status(403).json({
+        error: 'Insufficient permissions for IVDR write operations',
+        code: 'IVDR_WRITE_DENIED',
+        requiredRoles: writeRoles,
+      });
+    }
+
+    next();
+  };
+
+  app.use('/api/ivdr', requireIVDRAccess, createIVDRRoutes(pool));
+  console.log('✅ IVDR API routes mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
 } catch (error) {
   console.error('❌ Failed to mount IVDR routes:', error);
 }

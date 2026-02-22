@@ -440,33 +440,42 @@ export class EnhancedEmbeddingService {
     // Generate query embedding
     const queryResult = await this.embed(query, this.defaultModel);
 
-    // Use the database hybrid search function
-    const { rows } = await this.pool.query(
-      `
-      SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
-    `,
-      [query, `[${queryResult.embedding.join(',')}]`, limit, semanticWeight]
-    );
-
-    // Org-scoped post-filter: if organizationUuid is provided, only return
-    // atoms belonging to that org. This is defense-in-depth — the DB function
-    // does not currently accept an org filter, so we filter here.
-    let filteredRows = rows;
+    // Push org filter INTO the query to avoid cross-tenant data leakage.
+    // When organizationUuid is provided, wrap search_atoms_hybrid with a
+    // CTE that restricts candidates to the tenant's atoms BEFORE scoring.
+    let rows: any[];
     if (organizationUuid) {
-      const atomIds = rows.map((r: any) => r.id);
-      if (atomIds.length > 0) {
-        const orgFilter = await this.pool.query(
-          `SELECT id FROM lumen_data_atoms WHERE id = ANY($1) AND organization_id = (
-             SELECT id FROM organizations WHERE uuid = $2 LIMIT 1
-           )`,
-          [atomIds, organizationUuid]
-        );
-        const allowedIds = new Set(orgFilter.rows.map((r: any) => r.id));
-        filteredRows = rows.filter((r: any) => allowedIds.has(r.id));
-      }
+      const { rows: orgRows } = await this.pool.query(
+        `
+        WITH org_atoms AS (
+          SELECT a.id
+          FROM lumen_data_atoms a
+          JOIN organizations o ON a.organization_id = o.id
+          WHERE o.uuid = $5
+        ),
+        hybrid AS (
+          SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
+        )
+        SELECT h.*
+        FROM hybrid h
+        INNER JOIN org_atoms oa ON h.id = oa.id
+        ORDER BY h.combined_score DESC
+        LIMIT $4
+        `,
+        [query, `[${queryResult.embedding.join(',')}]`, semanticWeight, limit, organizationUuid]
+      );
+      rows = orgRows;
+    } else {
+      const { rows: allRows } = await this.pool.query(
+        `
+        SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
+        `,
+        [query, `[${queryResult.embedding.join(',')}]`, limit, semanticWeight]
+      );
+      rows = allRows;
     }
 
-    return filteredRows.map((row: any) => ({
+    return rows.map((row: any) => ({
       id: row.id,
       content: row.content,
       title: row.title,

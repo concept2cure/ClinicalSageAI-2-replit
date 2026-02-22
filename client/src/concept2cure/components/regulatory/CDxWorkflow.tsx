@@ -39,33 +39,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+
 import {
   Pill,
-  GitBranch,
   ArrowRight,
   Plus,
-  Save,
   CheckCircle2,
   Clock,
-  Shield,
   Building2,
   FileCheck,
-  BarChart3,
   AlertTriangle,
   Target,
   Dna,
   FlaskConical,
   Stethoscope,
-  Globe,
   Eye,
+  History,
+  X,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,6 +72,9 @@ interface CDxWorkflowRecord {
   treatment_decision: string | null;
   regulatory_reference: string | null;
   notified_body_id: string | null;
+  intended_use_statement: string | null;
+  biomarker_type: string | null;
+  clinical_evidence_ids: number[] | null;
   status: CDxStatus;
   device_name: string | null;
   classification: string | null;
@@ -187,9 +180,16 @@ export default function CDxWorkflow() {
   const [formDecision, setFormDecision] = useState('');
   const [formRegRef, setFormRegRef] = useState('');
   const [formNB, setFormNB] = useState('');
+  const [formIntendedUse, setFormIntendedUse] = useState('');
+  const [formBiomarkerType, setFormBiomarkerType] = useState('');
+  const [formEvidenceIds, setFormEvidenceIds] = useState<string[]>([]);
+  const [formEvidenceInput, setFormEvidenceInput] = useState('');
 
   // Status update
   const [advanceNotes, setAdvanceNotes] = useState('');
+
+  // Immutable transition history
+  const [workflowHistory, setWorkflowHistory] = useState<any[]>([]);
 
   // ── Load workflows ─────────────────────────────────────────────────────
   const loadWorkflows = useCallback(async () => {
@@ -213,6 +213,16 @@ export default function CDxWorkflow() {
 
   const selected = workflows.find(w => w.id === selectedId) || null;
 
+  // Fetch workflow transition history on selection
+  useEffect(() => {
+    if (selected) {
+      fetch(`/api/ivdr/cdx-workflows/${selected.id}/history`)
+        .then(r => (r.ok ? r.json() : { history: [] }))
+        .then(data => setWorkflowHistory(data.history || []))
+        .catch(() => setWorkflowHistory([]));
+    }
+  }, [selected]);
+
   // ── Create workflow ────────────────────────────────────────────────────
   const handleCreate = async () => {
     if (!formProduct.trim() || !formBiomarker.trim()) return;
@@ -229,6 +239,12 @@ export default function CDxWorkflow() {
           treatmentDecision: formDecision || undefined,
           regulatoryReference: formRegRef || undefined,
           notifiedBodyId: formNB || undefined,
+          intendedUseStatement: formIntendedUse || undefined,
+          biomarkerType: formBiomarkerType || undefined,
+          clinicalEvidenceIds:
+            formEvidenceIds.length > 0
+              ? formEvidenceIds.map(Number).filter(n => !isNaN(n))
+              : undefined,
         }),
       });
       if (resp.ok) {
@@ -243,6 +259,10 @@ export default function CDxWorkflow() {
         setFormDecision('');
         setFormRegRef('');
         setFormNB('');
+        setFormIntendedUse('');
+        setFormBiomarkerType('');
+        setFormEvidenceIds([]);
+        setFormEvidenceInput('');
       }
     } catch (err) {
       console.error('Create CDx workflow failed:', err);
@@ -374,6 +394,98 @@ export default function CDxWorkflow() {
                   value={formNB}
                   onChange={e => setFormNB(e.target.value)}
                 />
+              </div>
+              <div>
+                <Label>Biomarker Type</Label>
+                <Select value={formBiomarkerType} onValueChange={setFormBiomarkerType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select biomarker type..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="genomic">Genomic (DNA mutation / amplification)</SelectItem>
+                    <SelectItem value="proteomic">Proteomic (protein expression / IHC)</SelectItem>
+                    <SelectItem value="transcriptomic">
+                      Transcriptomic (RNA / gene expression)
+                    </SelectItem>
+                    <SelectItem value="metabolomic">Metabolomic</SelectItem>
+                    <SelectItem value="epigenetic">Epigenetic (methylation)</SelectItem>
+                    <SelectItem value="circulating">Circulating (ctDNA / liquid biopsy)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Intended Use & Clinical Evidence Links — IVDR Art. 2(7) */}
+            <div className="space-y-3 border-t pt-4 mt-4">
+              <h4 className="text-sm font-semibold text-muted-foreground">
+                Intended Use & Evidence Linking (IVDR Art. 2(7))
+              </h4>
+              <div>
+                <Label>Intended Use Statement</Label>
+                <Textarea
+                  className="min-h-[80px]"
+                  placeholder="e.g., This in vitro diagnostic device is intended for the qualitative detection of PD-L1 protein expression in FFPE tissue specimens from patients with NSCLC, as an aid in identifying patients for treatment with pembrolizumab..."
+                  value={formIntendedUse}
+                  onChange={e => setFormIntendedUse(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Link Clinical Evidence Studies</Label>
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Enter clinical evidence study ID"
+                      type="number"
+                      value={formEvidenceInput}
+                      onChange={e => setFormEvidenceInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && formEvidenceInput.trim()) {
+                          e.preventDefault();
+                          if (!formEvidenceIds.includes(formEvidenceInput.trim())) {
+                            setFormEvidenceIds(prev => [...prev, formEvidenceInput.trim()]);
+                          }
+                          setFormEvidenceInput('');
+                        }
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!formEvidenceInput.trim()}
+                    onClick={() => {
+                      if (!formEvidenceIds.includes(formEvidenceInput.trim())) {
+                        setFormEvidenceIds(prev => [...prev, formEvidenceInput.trim()]);
+                      }
+                      setFormEvidenceInput('');
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Link
+                  </Button>
+                </div>
+                {formEvidenceIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formEvidenceIds.map((eid, idx) => (
+                      <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                        Study #{eid}
+                        <button
+                          className="ml-1 hover:text-red-500"
+                          onClick={() =>
+                            setFormEvidenceIds(prev => prev.filter((_, i) => i !== idx))
+                          }
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Link to Clinical Evidence Tracker study IDs to establish traceability between CDx
+                  and clinical performance data.
+                </p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -563,6 +675,7 @@ export default function CDxWorkflow() {
                     { label: 'Treatment Decision', value: selected.treatment_decision },
                     { label: 'Regulatory Reference', value: selected.regulatory_reference },
                     { label: 'Notified Body', value: selected.notified_body_id },
+                    { label: 'Biomarker Type', value: selected.biomarker_type },
                     {
                       label: 'Created',
                       value: new Date(selected.created_at).toLocaleDateString(),
@@ -577,6 +690,75 @@ export default function CDxWorkflow() {
                         <p className="text-sm mt-1">{item.value}</p>
                       </div>
                     ))}
+                </div>
+
+                {/* Intended Use Statement */}
+                {selected.intended_use_statement && (
+                  <div className="p-4 rounded-lg border bg-blue-50/50 border-blue-200 space-y-1">
+                    <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide">
+                      Intended Use Statement
+                    </p>
+                    <p className="text-sm text-blue-900">{selected.intended_use_statement}</p>
+                  </div>
+                )}
+
+                {/* Linked Clinical Evidence */}
+                {selected.clinical_evidence_ids &&
+                  Array.isArray(selected.clinical_evidence_ids) &&
+                  selected.clinical_evidence_ids.length > 0 && (
+                    <div className="p-3 rounded-lg border bg-muted/20 space-y-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Linked Clinical Evidence Studies
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {selected.clinical_evidence_ids.map((eid: number, idx: number) => (
+                          <Badge key={idx} variant="outline">
+                            Study #{eid}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Status Transition History */}
+                <div className="pt-4 border-t space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2 text-sm">
+                    <History className="h-4 w-4" />
+                    Status Transition History
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Immutable audit trail of all status transitions (IVDR traceability).
+                  </p>
+                  {workflowHistory.length === 0 ? (
+                    <div className="p-4 border rounded-lg bg-muted/20 text-center text-sm text-muted-foreground">
+                      No transition history yet. Advance the workflow to create audit records.
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {workflowHistory.map((entry: any, idx: number) => (
+                        <div
+                          key={entry.id || idx}
+                          className="p-3 border rounded-lg bg-muted/10 flex items-start gap-3"
+                        >
+                          <div className="mt-0.5">
+                            <Badge
+                              className={STATUS_COLORS[entry.new_status as CDxStatus] || 'bg-muted'}
+                            >
+                              {CDX_STAGES.find(s => s.id === entry.new_status)?.label ||
+                                entry.new_status}
+                            </Badge>
+                          </div>
+                          <div className="flex-1">
+                            {entry.notes && <p className="text-sm">{entry.notes}</p>}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {entry.updated_by || 'system'} —{' '}
+                              {entry.created_at ? new Date(entry.created_at).toLocaleString() : '—'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* CDx-specific regulatory note */}

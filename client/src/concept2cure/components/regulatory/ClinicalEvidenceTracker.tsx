@@ -25,7 +25,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -48,13 +47,13 @@ import {
   Calculator,
   Plus,
   Save,
-  CheckCircle2,
   ExternalLink,
-  ClipboardList,
-  TrendingUp,
   Users,
   BarChart3,
   AlertTriangle,
+  History,
+  Link2,
+  X,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,6 +80,10 @@ interface EvidenceRecord {
   performance_claims: any;
   comparison_method: string | null;
   conclusion_text: string | null;
+  population_definition: string | null;
+  inclusion_criteria: string | null;
+  exclusion_criteria: string | null;
+  source_documents: string[] | null;
   status: string;
   device_name: string | null;
   classification: string | null;
@@ -201,11 +204,26 @@ export default function ClinicalEvidenceTracker() {
   const [newStudyType, setNewStudyType] = useState('prospective');
   const [newRegistryId, setNewRegistryId] = useState('');
   const [newSampleSize, setNewSampleSize] = useState('');
+  const [newPopulationDef, setNewPopulationDef] = useState('');
+  const [newInclusionCriteria, setNewInclusionCriteria] = useState('');
+  const [newExclusionCriteria, setNewExclusionCriteria] = useState('');
+  const [newSourceDocs, setNewSourceDocs] = useState<string[]>([]);
+  const [newSourceDocInput, setNewSourceDocInput] = useState('');
 
   // 2×2 table edit
   const [table, setTable] = useState<ContingencyTable>({ tp: 0, fp: 0, tn: 0, fn: 0 });
   const [comparisonMethod, setComparisonMethod] = useState('');
   const [conclusionText, setConclusionText] = useState('');
+
+  // Population & evidence fields for selected study
+  const [populationDef, setPopulationDef] = useState('');
+  const [inclusionCriteria, setInclusionCriteria] = useState('');
+  const [exclusionCriteria, setExclusionCriteria] = useState('');
+  const [sourceDocUrls, setSourceDocUrls] = useState<string[]>([]);
+  const [sourceDocInput, setSourceDocInput] = useState('');
+
+  // Immutable audit history
+  const [evidenceHistory, setEvidenceHistory] = useState<any[]>([]);
 
   const metrics = useMemo(() => calcMetrics(table), [table]);
 
@@ -229,7 +247,7 @@ export default function ClinicalEvidenceTracker() {
     loadRecords();
   }, [loadRecords]);
 
-  // When selecting a record, pre-populate the 2×2 table
+  // When selecting a record, pre-populate the 2×2 table and population fields
   const selected = records.find(r => r.id === selectedId) || null;
   useEffect(() => {
     if (selected) {
@@ -241,6 +259,29 @@ export default function ClinicalEvidenceTracker() {
       });
       setComparisonMethod(selected.comparison_method || '');
       setConclusionText(selected.conclusion_text || '');
+      setPopulationDef(selected.population_definition || '');
+      setInclusionCriteria(selected.inclusion_criteria || '');
+      setExclusionCriteria(selected.exclusion_criteria || '');
+      setSourceDocUrls(
+        Array.isArray(selected.source_documents)
+          ? selected.source_documents
+          : typeof selected.source_documents === 'string'
+            ? (() => {
+                try {
+                  return JSON.parse(selected.source_documents as string);
+                } catch {
+                  return [];
+                }
+              })()
+            : []
+      );
+      setSourceDocInput('');
+
+      // Fetch immutable audit history
+      fetch(`/api/ivdr/clinical-evidence/${selected.id}/history`)
+        .then(r => (r.ok ? r.json() : { history: [] }))
+        .then(data => setEvidenceHistory(data.history || []))
+        .catch(() => setEvidenceHistory([]));
     }
   }, [selected]);
 
@@ -257,6 +298,10 @@ export default function ClinicalEvidenceTracker() {
           studyType: newStudyType,
           registryId: newRegistryId || undefined,
           sampleSize: newSampleSize ? Number(newSampleSize) : undefined,
+          populationDefinition: newPopulationDef || undefined,
+          inclusionCriteria: newInclusionCriteria || undefined,
+          exclusionCriteria: newExclusionCriteria || undefined,
+          sourceDocuments: newSourceDocs.length > 0 ? newSourceDocs : undefined,
         }),
       });
       if (resp.ok) {
@@ -267,6 +312,11 @@ export default function ClinicalEvidenceTracker() {
         setNewStudyTitle('');
         setNewRegistryId('');
         setNewSampleSize('');
+        setNewPopulationDef('');
+        setNewInclusionCriteria('');
+        setNewExclusionCriteria('');
+        setNewSourceDocs([]);
+        setNewSourceDocInput('');
       }
     } catch (err) {
       console.error('Create study failed:', err);
@@ -290,6 +340,10 @@ export default function ClinicalEvidenceTracker() {
           falseNegative: table.fn,
           comparisonMethod,
           conclusionText,
+          populationDefinition: populationDef || undefined,
+          inclusionCriteria: inclusionCriteria || undefined,
+          exclusionCriteria: exclusionCriteria || undefined,
+          sourceDocuments: sourceDocUrls.length > 0 ? sourceDocUrls : undefined,
         }),
       });
       if (resp.ok) {
@@ -377,6 +431,90 @@ export default function ClinicalEvidenceTracker() {
                   value={newSampleSize}
                   onChange={e => setNewSampleSize(e.target.value)}
                 />
+              </div>
+            </div>
+
+            {/* Population & Criteria — IVDR Annex XIII Part A required fields */}
+            <div className="space-y-3 border-t pt-4 mt-4">
+              <h4 className="text-sm font-semibold text-muted-foreground">
+                Population & Eligibility (IVDR Annex XIII)
+              </h4>
+              <div>
+                <Label>Population Definition</Label>
+                <Textarea
+                  className="min-h-[80px]"
+                  placeholder="Define the target population, e.g., adult patients ≥18 y presenting with suspected SARS-CoV-2 infection at point-of-care facilities..."
+                  value={newPopulationDef}
+                  onChange={e => setNewPopulationDef(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Inclusion Criteria</Label>
+                  <Textarea
+                    className="min-h-[80px]"
+                    placeholder="• Aged ≥18 years&#10;• Symptomatic within 7 days of onset&#10;• Willing to provide informed consent"
+                    value={newInclusionCriteria}
+                    onChange={e => setNewInclusionCriteria(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Exclusion Criteria</Label>
+                  <Textarea
+                    className="min-h-[80px]"
+                    placeholder="• Immunocompromised patients on biologics&#10;• Previous participation in the same study&#10;• Unable to provide adequate specimen"
+                    value={newExclusionCriteria}
+                    onChange={e => setNewExclusionCriteria(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Source Documents</Label>
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Add URL or document reference (e.g., DOI, protocol ID)"
+                      value={newSourceDocInput}
+                      onChange={e => setNewSourceDocInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && newSourceDocInput.trim()) {
+                          e.preventDefault();
+                          setNewSourceDocs(prev => [...prev, newSourceDocInput.trim()]);
+                          setNewSourceDocInput('');
+                        }
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!newSourceDocInput.trim()}
+                    onClick={() => {
+                      setNewSourceDocs(prev => [...prev, newSourceDocInput.trim()]);
+                      setNewSourceDocInput('');
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+                {newSourceDocs.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {newSourceDocs.map((doc, idx) => (
+                      <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                        <Link2 className="h-3 w-3" />
+                        <span className="max-w-[200px] truncate">{doc}</span>
+                        <button
+                          className="ml-1 hover:text-red-500"
+                          onClick={() => setNewSourceDocs(prev => prev.filter((_, i) => i !== idx))}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex gap-2">
@@ -483,6 +621,10 @@ export default function ClinicalEvidenceTracker() {
                   <TabsTrigger value="details">
                     <FileText className="h-3 w-3 mr-1" />
                     Study Details
+                  </TabsTrigger>
+                  <TabsTrigger value="history">
+                    <History className="h-3 w-3 mr-1" />
+                    Change History
                   </TabsTrigger>
                 </TabsList>
 
@@ -832,6 +974,163 @@ export default function ClinicalEvidenceTracker() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Population & Eligibility — IVDR Annex XIII Part A */}
+                  <div className="border-t pt-4 space-y-4">
+                    <h4 className="font-semibold flex items-center gap-2 text-sm">
+                      <Users className="h-4 w-4" />
+                      Population & Eligibility (IVDR Annex XIII)
+                    </h4>
+                    <div>
+                      <Label>Population Definition</Label>
+                      <Textarea
+                        className="min-h-[80px]"
+                        placeholder="Define the target population for this study..."
+                        value={populationDef}
+                        onChange={e => setPopulationDef(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Inclusion Criteria</Label>
+                        <Textarea
+                          className="min-h-[80px]"
+                          placeholder="List the inclusion criteria..."
+                          value={inclusionCriteria}
+                          onChange={e => setInclusionCriteria(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>Exclusion Criteria</Label>
+                        <Textarea
+                          className="min-h-[80px]"
+                          placeholder="List the exclusion criteria..."
+                          value={exclusionCriteria}
+                          onChange={e => setExclusionCriteria(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Source Documents */}
+                  <div className="border-t pt-4 space-y-3">
+                    <h4 className="font-semibold flex items-center gap-2 text-sm">
+                      <Link2 className="h-4 w-4" />
+                      Source Documents
+                    </h4>
+                    <div className="flex gap-2 items-center">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Add URL or document reference"
+                          value={sourceDocInput}
+                          onChange={e => setSourceDocInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && sourceDocInput.trim()) {
+                              e.preventDefault();
+                              setSourceDocUrls(prev => [...prev, sourceDocInput.trim()]);
+                              setSourceDocInput('');
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!sourceDocInput.trim()}
+                        onClick={() => {
+                          setSourceDocUrls(prev => [...prev, sourceDocInput.trim()]);
+                          setSourceDocInput('');
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+                    {sourceDocUrls.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {sourceDocUrls.map((doc, idx) => (
+                          <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                            <Link2 className="h-3 w-3" />
+                            <span className="max-w-[250px] truncate">{doc}</span>
+                            <button
+                              className="ml-1 hover:text-red-500"
+                              onClick={() =>
+                                setSourceDocUrls(prev => prev.filter((_, i) => i !== idx))
+                              }
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        No source documents linked yet.
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+
+                {/* Change History (Immutable Audit Trail) */}
+                <TabsContent value="history" className="mt-4 space-y-4">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <History className="h-4 w-4" />
+                    Immutable Change History
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Every result update is append-only. Records cannot be modified or deleted (IVDR
+                    Annex XIII traceability requirement).
+                  </p>
+                  {evidenceHistory.length === 0 ? (
+                    <div className="p-4 border rounded-lg bg-muted/20 text-center text-sm text-muted-foreground">
+                      No change history yet. Save results to create the first audit record.
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                      {evidenceHistory.map((entry: any, idx: number) => {
+                        let parsedResults: any = {};
+                        try {
+                          parsedResults =
+                            typeof entry.results === 'string'
+                              ? JSON.parse(entry.results)
+                              : entry.results || {};
+                        } catch {
+                          /* ignore parse error */
+                        }
+
+                        return (
+                          <div key={entry.id || idx} className="p-3 border rounded-lg bg-muted/10">
+                            <div className="flex items-center justify-between mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                Rev #{evidenceHistory.length - idx}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {entry.updated_by || 'system'} —{' '}
+                                {entry.created_at
+                                  ? new Date(entry.created_at).toLocaleString()
+                                  : '—'}
+                              </span>
+                            </div>
+                            {entry.reason && (
+                              <p className="text-xs text-muted-foreground italic mb-1">
+                                Reason: {entry.reason}
+                              </p>
+                            )}
+                            {parsedResults.calculatedMetrics && (
+                              <div className="flex gap-3 text-xs font-mono mt-1">
+                                <span>Se: {pct(parsedResults.calculatedMetrics.sensitivity)}</span>
+                                <span>Sp: {pct(parsedResults.calculatedMetrics.specificity)}</span>
+                                <span>PPV: {pct(parsedResults.calculatedMetrics.ppv)}</span>
+                                <span>NPV: {pct(parsedResults.calculatedMetrics.npv)}</span>
+                                <span>N: {parsedResults.calculatedMetrics.total ?? '—'}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             )}

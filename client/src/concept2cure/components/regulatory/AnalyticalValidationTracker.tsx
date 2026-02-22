@@ -28,7 +28,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,14 +39,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   FlaskConical,
   Target,
   BarChart3,
@@ -56,13 +47,10 @@ import {
   Plus,
   Save,
   CheckCircle2,
-  AlertTriangle,
   XCircle,
   Beaker,
   TrendingUp,
   Thermometer,
-  RefreshCw,
-  FileText,
   Link2,
   History,
 } from 'lucide-react';
@@ -97,16 +85,6 @@ interface ValidationRecord {
   classification?: string;
   is_cdx?: boolean;
   created_at: string;
-}
-
-interface ParameterEntry {
-  key: string;
-  label: string;
-  value: string;
-  unit: string;
-  acceptanceCriteria: string;
-  status: 'pass' | 'fail' | 'pending';
-  standard: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -158,125 +136,189 @@ const PARAMETER_GROUPS = [
   },
 ] as const;
 
+/** Acceptance threshold: if operator is 'lte', value must be ≤ max; if 'gte', ≥ min */
+interface AcceptanceThreshold {
+  operator: 'lte' | 'gte' | 'range' | 'none';
+  min?: number;
+  max?: number;
+}
+
 const PARAM_METADATA: Record<
   string,
-  { label: string; unit: string; standard: string; criteria: string }
+  {
+    label: string;
+    unit: string;
+    standard: string;
+    criteria: string;
+    threshold: AcceptanceThreshold;
+  }
 > = {
   lod: {
     label: 'Limit of Detection (LoD)',
     unit: 'copies/mL or ng/mL',
     standard: 'CLSI EP17-A2',
     criteria: 'Should detect ≥95% of true positive samples at stated concentration',
+    threshold: { operator: 'none' }, // device-specific, user sets
   },
   loq: {
     label: 'Limit of Quantitation (LoQ)',
     unit: 'copies/mL or ng/mL',
     standard: 'CLSI EP17-A2',
     criteria: 'Quantification with ≤20% CV at stated concentration',
+    threshold: { operator: 'none' },
   },
   withinRunCV: {
     label: 'Within-Run Precision (Repeatability)',
     unit: '% CV',
     standard: 'CLSI EP05-A3 / ISO 5725',
     criteria: '≤5% CV for quantitative assays (analyte-dependent)',
+    threshold: { operator: 'lte', max: 5 },
   },
   betweenRunCV: {
     label: 'Between-Run Precision',
     unit: '% CV',
     standard: 'CLSI EP05-A3',
     criteria: '≤10% CV for quantitative assays',
+    threshold: { operator: 'lte', max: 10 },
   },
   betweenDayCV: {
     label: 'Between-Day Precision',
     unit: '% CV',
     standard: 'CLSI EP05-A3',
     criteria: '≤10% CV for quantitative assays',
+    threshold: { operator: 'lte', max: 10 },
   },
   reproducibilityCV: {
     label: 'Reproducibility (Total Precision)',
     unit: '% CV',
     standard: 'CLSI EP05-A3 / ISO 5725',
     criteria: '≤15% CV (total imprecision across sites/operators/lots)',
+    threshold: { operator: 'lte', max: 15 },
   },
   precisionCV: {
     label: 'Overall Precision',
     unit: '% CV',
     standard: 'CLSI EP05-A3',
     criteria: 'Within manufacturer specifications',
+    threshold: { operator: 'none' },
   },
   sensitivity: {
     label: 'Diagnostic Sensitivity',
     unit: '%',
     standard: 'CLSI EP12-A2',
     criteria: '≥95% for screening assays (indication-specific)',
+    threshold: { operator: 'gte', min: 95 },
   },
   specificity: {
     label: 'Diagnostic Specificity',
     unit: '%',
     standard: 'CLSI EP12-A2',
     criteria: '≥95% for screening assays (indication-specific)',
+    threshold: { operator: 'gte', min: 95 },
   },
   accuracy: {
     label: 'Accuracy (Trueness / Bias)',
     unit: '% bias',
     standard: 'CLSI EP09-A3',
     criteria: '≤±10% bias vs reference method',
+    threshold: { operator: 'lte', max: 10 },
   },
   linearityLow: {
     label: 'Linearity Range — Lower Limit',
     unit: 'concentration units',
     standard: 'CLSI EP06-A',
     criteria: 'Demonstrated linear response across claimed range',
+    threshold: { operator: 'none' },
   },
   linearityHigh: {
     label: 'Linearity Range — Upper Limit',
     unit: 'concentration units',
     standard: 'CLSI EP06-A',
     criteria: 'Demonstrated linear response across claimed range',
+    threshold: { operator: 'none' },
   },
   linearityR2: {
     label: 'Linearity R² Value',
     unit: '',
     standard: 'CLSI EP06-A',
     criteria: '≥0.99 for quantitative assays',
+    threshold: { operator: 'gte', min: 0.99 },
   },
   interferenceSubstances: {
     label: 'Interference Substances Tested',
     unit: 'count',
     standard: 'CLSI EP07-A3',
     criteria: 'Hemolysis, lipemia, icterus, common medications — <10% effect',
+    threshold: { operator: 'none' },
   },
   stabilityRealTime: {
     label: 'Real-Time Stability',
     unit: 'months',
     standard: 'ICH Q5C / ISO 23640',
     criteria: 'Meets specifications throughout claimed shelf life',
+    threshold: { operator: 'none' },
   },
   stabilityAccelerated: {
     label: 'Accelerated Stability',
     unit: 'months',
     standard: 'ICH Q5C',
     criteria: 'Predictive of real-time stability at elevated conditions',
+    threshold: { operator: 'none' },
   },
   stabilityFreezeThaw: {
     label: 'Freeze-Thaw Stability',
     unit: 'cycles',
     standard: 'ICH Q5C',
     criteria: '≥3 cycles without significant degradation',
+    threshold: { operator: 'gte', min: 3 },
   },
   carryOver: {
     label: 'Carry-Over',
     unit: '%',
     standard: 'CLSI EP10-A3',
     criteria: '<0.1% carry-over between samples',
+    threshold: { operator: 'lte', max: 0.1 },
   },
   hookEffect: {
     label: 'High-Dose Hook Effect',
     unit: 'concentration',
     standard: 'CLSI EP34-ED1',
     criteria: 'No hook effect at concentrations ≤10× upper linearity',
+    threshold: { operator: 'none' },
   },
 };
+
+/** Evaluate pass/fail against the threshold. Returns 'pending' if value is empty. */
+function evaluateThreshold(
+  value: string,
+  threshold: AcceptanceThreshold,
+  customMax?: number,
+  customMin?: number
+): 'pass' | 'fail' | 'pending' {
+  if (!value || value.trim() === '') return 'pending';
+  const num = parseFloat(value);
+  if (isNaN(num)) return 'pending';
+
+  // Use custom overrides if provided, else fall back to metadata defaults
+  const effectiveMin = customMin ?? threshold.min;
+  const effectiveMax = customMax ?? threshold.max;
+
+  switch (threshold.operator) {
+    case 'lte':
+      if (effectiveMax == null) return num !== 0 ? 'pass' : 'pending';
+      return num <= effectiveMax ? 'pass' : 'fail';
+    case 'gte':
+      if (effectiveMin == null) return num !== 0 ? 'pass' : 'pending';
+      return num >= effectiveMin ? 'pass' : 'fail';
+    case 'range':
+      if (effectiveMin != null && num < effectiveMin) return 'fail';
+      if (effectiveMax != null && num > effectiveMax) return 'fail';
+      return 'pass';
+    case 'none':
+    default:
+      return num !== 0 ? 'pass' : 'pending';
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT
@@ -299,6 +341,17 @@ export default function AnalyticalValidationTracker() {
   const [paramStatuses, setParamStatuses] = useState<Record<string, 'pass' | 'fail' | 'pending'>>(
     {}
   );
+
+  // Evidence document references per parameter
+  const [evidenceDocs, setEvidenceDocs] = useState<Record<string, string>>({});
+
+  // Custom acceptance thresholds (user-editable overrides)
+  const [customThresholds, setCustomThresholds] = useState<
+    Record<string, { min?: string; max?: string }>
+  >({});
+
+  // Parameter change history
+  const [paramHistory, setParamHistory] = useState<any[]>([]);
 
   // ── Load validations ───────────────────────────────────────────────────
   const loadValidations = useCallback(async () => {
@@ -353,12 +406,28 @@ export default function AnalyticalValidationTracker() {
       if (selected.interference_study) {
         vals.interferenceSubstances = String((selected.interference_study.substances || []).length);
       }
-      // Determine pass/fail per param
+      // Determine pass/fail per param using threshold-based evaluation
       Object.keys(vals).forEach(k => {
-        stats[k] = vals[k] && vals[k] !== '' && vals[k] !== '0' ? 'pass' : 'pending';
+        const meta = PARAM_METADATA[k];
+        if (meta) {
+          stats[k] = evaluateThreshold(vals[k], meta.threshold);
+        } else {
+          stats[k] = vals[k] && vals[k] !== '' ? 'pass' : 'pending';
+        }
       });
       setParamValues(vals);
       setParamStatuses(stats);
+
+      // Load parameter history for the selected validation
+      try {
+        const histResp = await fetch(`/api/ivdr/validations/${selected.id}/history`);
+        if (histResp.ok) {
+          const histData = await histResp.json();
+          setParamHistory(histData.history || []);
+        }
+      } catch {
+        setParamHistory([]);
+      }
     }
   }, [selected]);
 
@@ -611,6 +680,10 @@ export default function AnalyticalValidationTracker() {
                       </TabsTrigger>
                     );
                   })}
+                  <TabsTrigger value="history" className="text-xs">
+                    <History className="h-3 w-3 mr-1" />
+                    Change History
+                  </TabsTrigger>
                 </TabsList>
 
                 {PARAMETER_GROUPS.map(group => (
@@ -657,13 +730,23 @@ export default function AnalyticalValidationTracker() {
                                 placeholder={`Value (${meta.unit})`}
                                 value={val}
                                 onChange={e => {
+                                  const newVal = e.target.value;
                                   setParamValues(prev => ({
                                     ...prev,
-                                    [paramKey]: e.target.value,
+                                    [paramKey]: newVal,
                                   }));
+                                  // Threshold-based pass/fail on every keystroke
+                                  const ct = customThresholds[paramKey];
+                                  const cMin = ct?.min ? parseFloat(ct.min) : undefined;
+                                  const cMax = ct?.max ? parseFloat(ct.max) : undefined;
                                   setParamStatuses(prev => ({
                                     ...prev,
-                                    [paramKey]: e.target.value.trim() !== '' ? 'pass' : 'pending',
+                                    [paramKey]: evaluateThreshold(
+                                      newVal,
+                                      meta.threshold,
+                                      cMax,
+                                      cMin
+                                    ),
                                   }));
                                 }}
                               />
@@ -671,6 +754,91 @@ export default function AnalyticalValidationTracker() {
                                 <span className="text-sm text-muted-foreground">{meta.unit}</span>
                               )}
                             </div>
+
+                            {/* Custom acceptance thresholds (editable min/max) */}
+                            {meta.threshold.operator !== 'none' && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-muted-foreground w-20">
+                                  Threshold:
+                                </span>
+                                {(meta.threshold.operator === 'gte' ||
+                                  meta.threshold.operator === 'range') && (
+                                  <Input
+                                    className="max-w-[100px] text-xs"
+                                    type="number"
+                                    step="any"
+                                    placeholder={`Min (${meta.threshold.min ?? '—'})`}
+                                    value={customThresholds[paramKey]?.min ?? ''}
+                                    onChange={e => {
+                                      const minVal = e.target.value;
+                                      setCustomThresholds(prev => ({
+                                        ...prev,
+                                        [paramKey]: { ...prev[paramKey], min: minVal },
+                                      }));
+                                      // Re-evaluate
+                                      const cMax = customThresholds[paramKey]?.max
+                                        ? parseFloat(customThresholds[paramKey].max!)
+                                        : undefined;
+                                      setParamStatuses(prev => ({
+                                        ...prev,
+                                        [paramKey]: evaluateThreshold(
+                                          val,
+                                          meta.threshold,
+                                          cMax,
+                                          minVal ? parseFloat(minVal) : undefined
+                                        ),
+                                      }));
+                                    }}
+                                  />
+                                )}
+                                {(meta.threshold.operator === 'lte' ||
+                                  meta.threshold.operator === 'range') && (
+                                  <Input
+                                    className="max-w-[100px] text-xs"
+                                    type="number"
+                                    step="any"
+                                    placeholder={`Max (${meta.threshold.max ?? '—'})`}
+                                    value={customThresholds[paramKey]?.max ?? ''}
+                                    onChange={e => {
+                                      const maxVal = e.target.value;
+                                      setCustomThresholds(prev => ({
+                                        ...prev,
+                                        [paramKey]: { ...prev[paramKey], max: maxVal },
+                                      }));
+                                      const cMin = customThresholds[paramKey]?.min
+                                        ? parseFloat(customThresholds[paramKey].min!)
+                                        : undefined;
+                                      setParamStatuses(prev => ({
+                                        ...prev,
+                                        [paramKey]: evaluateThreshold(
+                                          val,
+                                          meta.threshold,
+                                          maxVal ? parseFloat(maxVal) : undefined,
+                                          cMin
+                                        ),
+                                      }));
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            )}
+
+                            {/* Evidence document reference */}
+                            <div className="flex items-center gap-2 mt-1">
+                              <Link2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <Input
+                                className="text-xs"
+                                placeholder="Evidence document URL or reference (e.g., DOC-VAL-001 Rev 3)"
+                                value={evidenceDocs[paramKey] || ''}
+                                onChange={e =>
+                                  setEvidenceDocs(prev => ({
+                                    ...prev,
+                                    [paramKey]: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+
                             <p className="text-xs text-muted-foreground italic">
                               Acceptance: {meta.criteria}
                             </p>
@@ -680,6 +848,54 @@ export default function AnalyticalValidationTracker() {
                     </div>
                   </TabsContent>
                 ))}
+
+                {/* Parameter Change History (immutable audit trail) */}
+                <TabsContent value="history" className="mt-4">
+                  <h4 className="font-semibold flex items-center gap-2 mb-3">
+                    <History className="h-4 w-4" />
+                    Parameter Change History
+                  </h4>
+                  {paramHistory.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No parameter changes recorded yet. Save parameters to create history entries.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                      {paramHistory.map((entry: any, idx: number) => (
+                        <div key={entry.id || idx} className="p-3 rounded-lg border text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              {entry.parameter_name || 'Parameters'}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(entry.changed_at || entry.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          {entry.old_value != null && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Previous:{' '}
+                              <span className="font-mono">{JSON.stringify(entry.old_value)}</span>
+                            </p>
+                          )}
+                          {entry.new_value != null && (
+                            <p className="text-xs mt-1">
+                              New:{' '}
+                              <span className="font-mono">{JSON.stringify(entry.new_value)}</span>
+                            </p>
+                          )}
+                          {entry.changed_by && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              By: {entry.changed_by}
+                            </p>
+                          )}
+                          {entry.reason && (
+                            <p className="text-xs italic mt-1">Reason: {entry.reason}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
               </Tabs>
             )}
           </CardContent>

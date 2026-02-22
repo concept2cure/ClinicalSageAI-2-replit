@@ -21,12 +21,14 @@
 CREATE OR REPLACE FUNCTION enforce_audit_events_no_update()
 RETURNS TRIGGER AS $$
 BEGIN
-  RAISE EXCEPTION USING
-    ERRCODE = 'TS001',
-    MESSAGE = 'IMMUTABILITY_VIOLATION: UPDATE on audit_events is prohibited. '
-              'Audit trail records are append-only per 21 CFR Part 11 §11.10(e). '
-              'Attempted to update row id=' || OLD.id,
-    HINT = 'Audit events are immutable. Create a new corrective event instead.';
+  RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_events are append-only'
+  USING
+    ERRCODE = 'P0A01',
+    MESSAGE = 'IMMUTABILITY_VIOLATION',
+    DETAIL  = 'UPDATE is not permitted on audit_events. '
+              'Attempted to update row id=' || OLD.id || '. '
+              '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
+    HINT    = 'Insert a new corrective event (e.g., AMENDMENT, REVOCATION) rather than modifying history.';
   RETURN NULL; -- never reached
 END;
 $$ LANGUAGE plpgsql;
@@ -44,12 +46,14 @@ CREATE TRIGGER trg_audit_events_no_update
 CREATE OR REPLACE FUNCTION enforce_audit_events_no_delete()
 RETURNS TRIGGER AS $$
 BEGIN
-  RAISE EXCEPTION USING
-    ERRCODE = 'TS002',
-    MESSAGE = 'IMMUTABILITY_VIOLATION: DELETE on audit_events is prohibited. '
-              'Audit trail records are append-only per 21 CFR Part 11 §11.10(e). '
-              'Attempted to delete row id=' || OLD.id,
-    HINT = 'Audit events cannot be deleted. Create a superseding event instead.';
+  RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_events are append-only'
+  USING
+    ERRCODE = 'P0A02',
+    MESSAGE = 'IMMUTABILITY_VIOLATION',
+    DETAIL  = 'DELETE is not permitted on audit_events. '
+              'Attempted to delete row id=' || OLD.id || '. '
+              '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
+    HINT    = 'Insert a superseding event rather than deleting history.';
   RETURN NULL; -- never reached
 END;
 $$ LANGUAGE plpgsql;
@@ -67,11 +71,13 @@ CREATE TRIGGER trg_audit_events_no_delete
 CREATE OR REPLACE FUNCTION enforce_audit_events_no_truncate()
 RETURNS TRIGGER AS $$
 BEGIN
-  RAISE EXCEPTION USING
-    ERRCODE = 'TS003',
-    MESSAGE = 'IMMUTABILITY_VIOLATION: TRUNCATE on audit_events is prohibited. '
-              'Audit trail records are append-only per 21 CFR Part 11 §11.10(e).',
-    HINT = 'Audit events table cannot be truncated. This is a regulatory compliance control.';
+  RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_events are append-only'
+  USING
+    ERRCODE = 'P0A03',
+    MESSAGE = 'IMMUTABILITY_VIOLATION',
+    DETAIL  = 'TRUNCATE is not permitted on audit_events. '
+              '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
+    HINT    = 'This is a regulatory compliance control. Archive via partitioning instead of truncating.';
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;

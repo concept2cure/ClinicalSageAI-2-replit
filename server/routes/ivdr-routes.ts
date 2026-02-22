@@ -19,6 +19,21 @@ import { Pool } from 'pg';
 export default function createIVDRRoutes(pool: Pool): Router {
   const router = Router();
 
+  // ── Server-side org extraction (NEVER trust client-provided org) ───────
+  // Uses the authenticated session's tenantId / tenantContext set by authMiddleware.
+  // requireIVDRAccess has already verified tenantId exists, so this is safe.
+  function getServerOrgId(req: Request): number {
+    const fromTenant = (req as any).tenantId;
+    const fromContext = (req as any).tenantContext?.organizationId;
+    const orgId = fromTenant || fromContext;
+    if (!orgId) {
+      // Should never reach here — requireIVDRAccess gates this.
+      // Defensive: throw rather than silently default to org 1.
+      throw new Error('IVDR_NO_TENANT: organization context is missing from session');
+    }
+    return typeof orgId === 'string' ? parseInt(orgId, 10) : orgId;
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ANNEX VIII CLASSIFICATION
   // ═══════════════════════════════════════════════════════════════════════════
@@ -42,8 +57,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
         riskToPatient,
         isGeneticTest,
         analytes = [],
-        organizationId,
       } = req.body;
+
+      // Org from authenticated session — NEVER from req.body
+      const orgId = getServerOrgId(req);
 
       if (!deviceName || !intendedPurpose) {
         return res.status(400).json({ error: 'deviceName and intendedPurpose are required' });
@@ -169,7 +186,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           isNearPatient || false,
           JSON.stringify(ruleTrace),
           JSON.stringify(analytes),
-          organizationId || 1,
+          orgId,
         ]
       );
 
@@ -192,7 +209,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/classifications', async (req: Request, res: Response) => {
     try {
-      const orgId = req.headers['x-organization-id'] || '1';
+      const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
         [orgId]
@@ -261,8 +278,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/validations', async (req: Request, res: Response) => {
     try {
-      const { classificationId, deviceName, analyteName, validationType, organizationId } =
-        req.body;
+      const { classificationId, deviceName, analyteName, validationType } = req.body;
+      const orgId = getServerOrgId(req);
 
       if (!deviceName || !analyteName) {
         return res.status(400).json({ error: 'deviceName and analyteName are required' });
@@ -274,13 +291,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           status, organization_id, created_at)
          VALUES ($1, $2, $3, $4, 'in_progress', $5, NOW())
          RETURNING *`,
-        [
-          classificationId || null,
-          deviceName,
-          analyteName,
-          validationType || 'quantitative',
-          organizationId || 1,
-        ]
+        [classificationId || null, deviceName, analyteName, validationType || 'quantitative', orgId]
       );
 
       return res.json({ validation: result.rows[0] });
@@ -296,7 +307,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/validations', async (req: Request, res: Response) => {
     try {
-      const orgId = req.headers['x-organization-id'] || '1';
+      const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT v.*, c.classification, c.is_cdx
          FROM ivdr_analytical_validations v
@@ -478,12 +489,12 @@ export default function createIVDRRoutes(pool: Pool): Router {
         registryId, // ISRCTN / ClinicalTrials.gov
         sampleSize,
         performanceClaims,
-        organizationId,
         populationDefinition,
         inclusionCriteria,
         exclusionCriteria,
         sourceDocuments,
       } = req.body;
+      const orgId = getServerOrgId(req);
 
       if (!studyTitle || !studyType) {
         return res.status(400).json({ error: 'studyTitle and studyType are required' });
@@ -509,7 +520,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           inclusionCriteria || null,
           exclusionCriteria || null,
           sourceDocuments ? JSON.stringify(sourceDocuments) : '[]',
-          organizationId || 1,
+          orgId,
         ]
       );
 
@@ -526,7 +537,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/clinical-evidence', async (req: Request, res: Response) => {
     try {
-      const orgId = req.headers['x-organization-id'] || '1';
+      const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT e.*, c.device_name, c.classification, c.is_cdx
          FROM ivdr_clinical_evidence e
@@ -555,7 +566,6 @@ export default function createIVDRRoutes(pool: Pool): Router {
         trueNegative,
         falseNegative,
         prevalence,
-        confidenceInterval,
         performanceClaims,
         comparisonMethod,
         conclusionText,
@@ -689,11 +699,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
         treatmentDecision,
         regulatoryReference,
         notifiedBodyId,
-        organizationId,
         intendedUseStatement,
         biomarkerType,
         clinicalEvidenceIds,
       } = req.body;
+      const orgId = getServerOrgId(req);
 
       if (!medicinalProductName || !biomarker) {
         return res.status(400).json({ error: 'medicinalProductName and biomarker are required' });
@@ -720,7 +730,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           intendedUseStatement || null,
           biomarkerType || null,
           clinicalEvidenceIds && clinicalEvidenceIds.length > 0 ? clinicalEvidenceIds : '{}',
-          organizationId || 1,
+          orgId,
         ]
       );
 
@@ -737,7 +747,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/cdx-workflows', async (req: Request, res: Response) => {
     try {
-      const orgId = req.headers['x-organization-id'] || '1';
+      const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT w.*, c.device_name, c.classification
          FROM ivdr_cdx_workflows w
@@ -826,7 +836,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/dashboard', async (req: Request, res: Response) => {
     try {
-      const orgId = req.headers['x-organization-id'] || '1';
+      const orgId = getServerOrgId(req);
 
       const [classResults, validResults, evidResults, cdxResults] = await Promise.all([
         pool.query(
