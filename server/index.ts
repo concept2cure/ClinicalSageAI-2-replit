@@ -220,6 +220,38 @@ app.use(httpLogger); // Add structured logging
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// IMMUTABILITY POLICY ENFORCEMENT — 21 CFR Part 11 Compliance
+// Audit trail records and document version history are append-only.
+// No DELETE or PUT operations allowed on immutable resources.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const IMMUTABLE_ROUTE_PATTERNS = [
+  /^\/api\/audit\/events/, // Audit trail events — append-only
+  /^\/api\/audit\/bulk-delete/, // Explicit bulk-delete block
+];
+
+app.use((req: Request, res: Response, next: Function) => {
+  const isDestructive =
+    req.method === 'DELETE' || (req.method === 'POST' && req.path.includes('bulk-delete'));
+  if (isDestructive) {
+    const isImmutable = IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(req.path));
+    if (isImmutable) {
+      console.warn(
+        `[IMMUTABILITY] Blocked ${req.method} ${req.path} — audit records are append-only`
+      );
+      return res.status(403).json({
+        error: 'IMMUTABILITY_VIOLATION',
+        message:
+          'This resource is protected by the immutability policy (21 CFR Part 11). Records can only be appended, never modified or deleted.',
+        path: req.path,
+        method: req.method,
+      });
+    }
+  }
+  next();
+});
+debugLog('Immutability policy enforcement middleware installed');
+
 // CORS now handled by enterprise-security middleware (origin whitelist instead of wildcard '*')
 
 // Input sanitization and organization validation now handled by enterprise-security middleware
@@ -1856,6 +1888,57 @@ app.post('/api/audit/events', async (req: Request, res: Response) => {
   }
 });
 
+// Batch audit events endpoint for efficient multi-event flushing from the client
+app.post('/api/audit/events/batch', async (req: Request, res: Response) => {
+  try {
+    const { events } = req.body || {};
+    if (!Array.isArray(events) || events.length === 0) {
+      return res.status(400).json({ error: 'events array is required and must not be empty' });
+    }
+
+    // Limit batch size to prevent abuse
+    const batch = events.slice(0, 50);
+    const results: { eventId: number; action: string }[] = [];
+
+    for (const evt of batch) {
+      try {
+        const result = await pool.query(
+          `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
+          [
+            evt.organizationId || 1,
+            evt.eventType || evt.action || 'general',
+            evt.entityType || 'document',
+            evt.entityId || 0,
+            evt.userId || evt.user?.id || 0,
+            evt.userName || evt.user?.name || 'System',
+            evt.userRole || evt.user?.role || 'user',
+            req.ip || '',
+            evt.reason || null,
+            JSON.stringify(evt.metadata || evt.details || {}),
+            evt.regulatorySignificant || false,
+            evt.gxpRelevant !== undefined ? evt.gxpRelevant : true,
+          ]
+        );
+        results.push({ eventId: result.rows[0].id, action: evt.eventType || evt.action || '' });
+      } catch (err) {
+        console.error('Failed to insert batch audit event:', err);
+        // Continue processing remaining events
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      inserted: results.length,
+      total: batch.length,
+      receivedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Failed to process batch audit events:', error);
+    return res.status(500).json({ error: 'Failed to process batch audit events' });
+  }
+});
+
 app.post('/api/audit/signatures', async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
@@ -1975,22 +2058,17 @@ app.get('/api/audit/export', async (req: Request, res: Response) => {
   }
 });
 
+// IMMUTABILITY POLICY: Audit records are append-only per 21 CFR Part 11.
+// Bulk-delete is disabled. Audit events cannot be modified or deleted.
 app.post('/api/audit/bulk-delete', async (req: Request, res: Response) => {
-  try {
-    const body = req.body || {};
-    // Only allow deletion of non-regulatory-significant events
-    const result = await pool.query(
-      `DELETE FROM audit_events WHERE regulatory_significant = false AND gxp_relevant = false RETURNING id`
-    );
-    return res.json({
-      success: true,
-      deletedCount: result.rowCount || 0,
-      reason: body.reason || null,
-    });
-  } catch (error) {
-    console.error('Failed to bulk-delete audit logs:', error);
-    return res.status(500).json({ error: 'Failed to bulk-delete audit logs' });
-  }
+  return res.status(403).json({
+    error: 'IMMUTABILITY_VIOLATION',
+    message:
+      'Audit records are immutable per 21 CFR Part 11 compliance. ' +
+      'Deletion of audit trail events is prohibited. ' +
+      'Records can only be appended, never modified or deleted.',
+    policy: 'append-only',
+  });
 });
 
 // Search compatibility facade (P0 route recovery)

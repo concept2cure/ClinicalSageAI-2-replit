@@ -789,7 +789,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   const [showAskDataRoom, setShowAskDataRoom] = useState(false); // Ask Data Room side panel visibility
   // Document editor integration state
   const [msWordPopupOpen, setMsWordPopupOpen] = useState(false);
-  const [msWordAvailable, setMsWordAvailable] = useState(true); // Set to true for demo
+  const [msWordAvailable, setMsWordAvailable] = useState(false); // Detected at runtime via MS integration check
   // Assignment and collaboration state
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [assignedTo, setAssignedTo] = useState(null);
@@ -1158,16 +1158,16 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       }
     } catch (error) {
       console.error('Error selecting document:', error);
-      // For now, just create a mock document
+      // Create a temporary document with temp- prefix so it can be saved to server later
       const newDocument = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: `temp-${Date.now()}`,
         title: `${sectionId} ${sectionTitle}`,
         module: `Module ${sectionId.split('.')[0]}`,
         lastEdited: 'Just now',
         status: 'Draft',
         content: getTemplateForSection(sectionId, sectionTitle),
         sectionId: sectionId,
-        saveStatus: 'saved',
+        saveStatus: 'unsaved',
         scrollPosition: 0,
         cursorPosition: 0,
       };
@@ -2827,58 +2827,76 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   };
 
   // Version comparison functionality
-  const handleCompareVersions = (version1, version2) => {
+  const handleCompareVersions = async (version1, version2) => {
     if (!selectedDocument) return;
 
     setShowVersionComparison(true);
     setCompareVersions({ version1, version2 });
 
-    // In a real implementation, fetch version content from backend
-    const mockVersion1Content = `
-      <h1>${selectedDocument.title} - Version ${version1}</h1>
-      <p>This is the content from version ${version1}.</p>
-      <p>Key changes in this version:</p>
-      <ul>
-        <li>Updated safety profile section</li>
-        <li>Revised dosing recommendations</li>
-        <li>Added new clinical trial data</li>
-      </ul>
-    `;
+    try {
+      // Fetch actual version content from backend API
+      const [v1Response, v2Response] = await Promise.all([
+        fetch(`/api/coauthor/documents/${selectedDocument.id}/versions/${version1}`, {
+          headers: { 'x-organization-id': localStorage.getItem('selectedOrganizationId') || '1' },
+        }),
+        fetch(`/api/coauthor/documents/${selectedDocument.id}/versions/${version2}`, {
+          headers: { 'x-organization-id': localStorage.getItem('selectedOrganizationId') || '1' },
+        }),
+      ]);
 
-    const mockVersion2Content = `
-      <h1>${selectedDocument.title} - Version ${version2}</h1>
-      <p>This is the content from version ${version2}.</p>
-      <p>Key changes in this version:</p>
-      <ul>
-        <li>Updated safety profile section with latest data</li>
-        <li>Revised dosing recommendations based on FDA feedback</li>
-        <li>Added new clinical trial data from Phase III</li>
-        <li>Incorporated reviewer comments</li>
-      </ul>
-    `;
+      const v1Data = v1Response.ok ? await v1Response.json() : null;
+      const v2Data = v2Response.ok ? await v2Response.json() : null;
 
-    setVersionComparisonData({
-      version1: {
-        number: version1,
-        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-        author: 'Author',
-        content: mockVersion1Content,
-        changes: 45,
-      },
-      version2: {
-        number: version2,
-        date: new Date().toLocaleDateString(),
-        author: 'Author',
-        content: mockVersion2Content,
-        changes: 62,
-      },
-      differences: [
-        { type: 'added', line: 8, content: 'Incorporated reviewer comments' },
-        { type: 'modified', line: 6, content: 'Updated with latest data' },
-        { type: 'modified', line: 7, content: 'Based on FDA feedback' },
-        { type: 'added', line: 9, content: 'from Phase III' },
-      ],
-    });
+      const v1Content =
+        v1Data?.content || v1Data?.version?.content || selectedDocument.content || '';
+      const v2Content =
+        v2Data?.content || v2Data?.version?.content || selectedDocument.content || '';
+      const v1Author = v1Data?.author || v1Data?.version?.author || user?.display_name || 'Unknown';
+      const v2Author = v2Data?.author || v2Data?.version?.author || user?.display_name || 'Unknown';
+      const v1Date = v1Data?.updatedAt || v1Data?.version?.updatedAt || '';
+      const v2Date = v2Data?.updatedAt || v2Data?.version?.updatedAt || '';
+
+      // Compute simple line-level differences
+      const lines1 = v1Content.split('\n');
+      const lines2 = v2Content.split('\n');
+      const differences = [];
+      const maxLen = Math.max(lines1.length, lines2.length);
+      for (let i = 0; i < maxLen; i++) {
+        if (i >= lines1.length) {
+          differences.push({ type: 'added', line: i + 1, content: lines2[i] });
+        } else if (i >= lines2.length) {
+          differences.push({ type: 'removed', line: i + 1, content: lines1[i] });
+        } else if (lines1[i] !== lines2[i]) {
+          differences.push({ type: 'modified', line: i + 1, content: lines2[i] });
+        }
+      }
+
+      setVersionComparisonData({
+        version1: {
+          number: version1,
+          date: v1Date ? new Date(v1Date).toLocaleDateString() : 'N/A',
+          author: v1Author,
+          content: v1Content,
+          changes: differences.filter(d => d.type === 'removed' || d.type === 'modified').length,
+        },
+        version2: {
+          number: version2,
+          date: v2Date ? new Date(v2Date).toLocaleDateString() : 'N/A',
+          author: v2Author,
+          content: v2Content,
+          changes: differences.filter(d => d.type === 'added' || d.type === 'modified').length,
+        },
+        differences: differences.slice(0, 100), // Limit to first 100 diffs
+      });
+    } catch (error) {
+      console.error('Error fetching version content for comparison:', error);
+      toast({
+        title: 'Version Comparison Error',
+        description: 'Could not load version content. Please try again.',
+        variant: 'destructive',
+      });
+      setShowVersionComparison(false);
+    }
   };
 
   // Function to highlight differences between versions
@@ -3212,27 +3230,36 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
     setAiError(null);
 
     try {
+      // Get the actual document content - use editor content, selected document, or empty
+      const actualDocumentContent = documentText || selectedDocument?.content || '';
+
+      if (!actualDocumentContent && aiAssistantMode !== 'suggestions') {
+        setAiError('No document content available. Please open a document first.');
+        setAiIsLoading(false);
+        return;
+      }
+
       // Determine which AI service to call based on active mode
       let response;
       if (aiAssistantMode === 'compliance') {
         response = await aiService.checkComplianceAI(
           selectedDocument?.id || 'current-doc',
-          'The safety profile of Drug X was assessed in 6 randomized controlled trials involving 1,245 subjects. Adverse events were mild to moderate in nature, with headache being the most commonly reported event (12% of subjects).',
+          actualDocumentContent,
           ['ICH', 'FDA']
         );
       } else if (aiAssistantMode === 'formatting') {
         response = await aiService.analyzeFormattingAI(
           selectedDocument?.id || 'current-doc',
-          'The safety profile of Drug X was assessed in 6 randomized controlled trials involving 1,245 subjects. Adverse events were mild to moderate in nature, with headache being the most commonly reported event (12% of subjects).',
-          'clinicalOverview'
+          actualDocumentContent,
+          selectedDocument?.module || 'clinicalOverview'
         );
       } else {
         // Default mode: suggestions
         if (selectedDocument) {
           response = await aiService.generateContentSuggestions(
             selectedDocument.id || 'current-doc',
-            '2.5.5',
-            'The safety profile of Drug X was assessed in 6 randomized controlled trials involving 1,245 subjects. Adverse events were mild to moderate in nature, with headache being the most commonly reported event (12% of subjects).',
+            selectedDocument.sectionId || '2.5',
+            actualDocumentContent,
             aiUserQuery
           );
         } else {
@@ -3420,12 +3447,15 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   // Auto-save functionality for Draft documents
   useEffect(() => {
     if (documentStatus === 'draft' && selectedDocument && editorType === 'tiptap') {
-      const autoSaveInterval = setInterval(() => {
-        setAutoSaveStatus('saving');
-        // Auto-save logic here (would call handleSaveDocument in production)
-        setTimeout(() => {
-          setAutoSaveStatus('saved');
-        }, 1000);
+      const autoSaveInterval = setInterval(async () => {
+        try {
+          setAutoSaveStatus('saving');
+          await handleSaveDocument();
+          // handleSaveDocument already sets autoSaveStatus to 'saved' on success
+        } catch (err) {
+          console.warn('Auto-save failed:', err);
+          setAutoSaveStatus('error');
+        }
       }, 30000); // Auto-save every 30 seconds
 
       return () => clearInterval(autoSaveInterval);
@@ -3443,30 +3473,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
     }
   }, [documentStatus]);
 
-  // Mock AI suggestions (will be replaced by actual AI responses)
-  const [aiSuggestions, setAiSuggestions] = useState([
-    {
-      id: 1,
-      type: 'completion',
-      text: 'The safety profile is consistent with other drugs in this class...',
-      section: '2.5.5',
-      accepted: false,
-    },
-    {
-      id: 2,
-      type: 'formatting',
-      text: 'Table formatting for efficacy data does not meet ICH guidelines. Suggested template available.',
-      section: '2.5.4.2',
-      accepted: false,
-    },
-    {
-      id: 3,
-      type: 'compliance',
-      text: 'Missing Integrated Summary of Benefits and Risks required by FDA guidance.',
-      section: '2.5.6',
-      accepted: false,
-    },
-  ]);
+  // AI suggestions — populated by real AI responses via aiService
+  const [aiSuggestions, setAiSuggestions] = useState([]);
 
   // Version history state - fetches real data from API
   const [versionHistory, setVersionHistory] = useState([]);
@@ -4253,13 +4261,14 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
   /**
    * Generates a chat response using RAG (Retrieval-Augmented Generation)
+   * Calls /api/cortex/query in 'generate' mode with retrieved context
    * @param {string} query - User query
-   * @returns {Promise<Object>} - The generated response
+   * @returns {Promise<Object>} - The generated response with sources
    */
   const generateChatResponse = async query => {
-    if (!query || !vectorizedDocuments.length) {
+    if (!query) {
       return {
-        text: "I don't have enough information to answer that question. Please try again after more documents have been approved and indexed.",
+        text: 'Please enter a question to get started.',
         sources: [],
       };
     }
@@ -4267,122 +4276,78 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
     try {
       setIsGeneratingChatResponse(true);
 
-      // First, perform semantic search to retrieve relevant context
+      // Step 1: Perform semantic search to retrieve relevant context
       const searchResults = await performSemanticSearch(query);
 
-      // In a real implementation, we would:
-      // 1. Format the search results as context
-      // 2. Call OpenAI's API with the context and query
-      // 3. Return the structured response with source attribution
-
-      // For now, simulate the RAG process with improved context awareness
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Extract contextual information from search results
+      // Step 2: Build context from search results for RAG
       const contextSections = searchResults.map(result => ({
-        source: result.documentTitle,
-        module: result.module,
-        section: result.section,
-        content: result.content,
+        source: result.documentTitle || result.title || 'Unknown',
+        module: result.module || '',
+        section: result.section || '',
+        content: result.content || result.text || '',
       }));
 
-      // Use the contextual information to generate a more informed response
-      let responseText = '';
-      const hasRelevantContext = searchResults.length > 0;
+      const contextText = contextSections
+        .map(s => `[${s.source} — ${s.module} ${s.section}]: ${s.content}`)
+        .join('\n\n');
 
-      // Simulate different responses based on query content and retrieved context
-      if (query.toLowerCase().includes('safety') || query.toLowerCase().includes('signal')) {
-        const safetyDocCount = searchResults.filter(
-          r =>
-            r.content.toLowerCase().includes('safety') ||
-            r.content.toLowerCase().includes('adverse') ||
-            r.section.toLowerCase().includes('safety')
-        ).length;
+      // Step 3: Call Cortex generate endpoint with RAG context
+      const cortexResponse = await fetch('/api/cortex/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: query,
+          mode: 'generate',
+          options: {
+            context: contextText,
+            documentId: selectedDocument?.id || null,
+            sectionCode: selectedDocument?.sectionId || null,
+            sourceCount: searchResults.length,
+          },
+        }),
+      });
 
-        responseText =
-          `Based on the analysis of ${safetyDocCount || 'available'} safety-related documents, I found the following safety signals:\n\n` +
-          '• Elevated liver enzymes (ALT/AST) in 4.2% of treated subjects vs 1.1% in placebo\n' +
-          '• Mild to moderate headache in 12.7% of treated subjects\n' +
-          '• Insomnia reported in 8.3% of treated subjects vs 2.9% in placebo\n\n' +
-          'No serious adverse events were attributed to the study drug based on investigator assessment.';
+      if (cortexResponse.ok) {
+        const data = await cortexResponse.json();
+        const responseText =
+          data.results?.response || data.results?.text || data.response || data.text || '';
 
-        // Add specific context if available
-        if (hasRelevantContext) {
-          const safetyContext = searchResults.find(
-            r =>
-              r.content.toLowerCase().includes('safety') ||
-              r.content.toLowerCase().includes('adverse')
-          );
+        // Extract sources from cortex response or fall back to search results
+        const sources =
+          data.results?.sources ||
+          searchResults.slice(0, 5).map(r => ({
+            documentTitle: r.documentTitle || r.title,
+            module: r.module,
+            section: r.section,
+            content: (r.content || '').substring(0, 200),
+            similarity: r.similarity || r.score || 0,
+          }));
 
-          if (safetyContext) {
-            responseText += `\n\nFrom ${safetyContext.documentTitle} (${safetyContext.section}): "${safetyContext.content.substring(0, 150)}..."`;
-          }
-        }
-      } else if (
-        query.toLowerCase().includes('efficacy') ||
-        query.toLowerCase().includes('endpoint')
-      ) {
-        const efficacyDocCount = contextSections.filter(
-          c =>
-            c.content.toLowerCase().includes('efficacy') ||
-            c.content.toLowerCase().includes('endpoint') ||
-            c.section.toLowerCase().includes('efficacy')
-        ).length;
-
-        responseText =
-          `Based on ${efficacyDocCount || 'multiple'} efficacy-related documents, the clinical studies showed:\n\n` +
-          '• Statistically significant improvement in the primary endpoint (p<0.001)\n' +
-          '• 37% reduction in symptom severity compared to baseline\n' +
-          '• Clinically meaningful response in 72% of treated subjects vs 45% in placebo\n\n' +
-          'Secondary endpoints generally supported the primary findings with consistent effect sizes.';
-
-        // Add specific context if available
-        if (hasRelevantContext) {
-          const efficacyContext = searchResults.find(
-            r =>
-              r.content.toLowerCase().includes('efficacy') ||
-              r.content.toLowerCase().includes('endpoint')
-          );
-
-          if (efficacyContext) {
-            responseText += `\n\nFrom ${efficacyContext.documentTitle} (${efficacyContext.section}): "${efficacyContext.content.substring(0, 150)}..."`;
-          }
-        }
-      } else {
-        // For general queries, use more of the retrieved context
-        const sourcesText = hasRelevantContext
-          ? `${searchResults.length} documents including ${searchResults
-              .slice(0, 2)
-              .map(r => r.documentTitle)
-              .join(', ')}`
-          : 'the available indexed documents';
-
-        responseText = `Based on my analysis of ${sourcesText}, I found the following information related to your query:\n\n`;
-
-        if (hasRelevantContext && searchResults.length > 0) {
-          // Extract key points from the retrieved context
-          responseText += searchResults
-            .slice(0, 3)
-            .map(
-              (result, index) =>
-                `• ${result.documentTitle} (${result.section}): ${result.content.substring(0, 100)}...`
-            )
-            .join('\n\n');
-        } else {
-          responseText +=
-            '• The submission includes comprehensive data from 3 Phase III clinical trials\n' +
-            '• Study population included subjects across multiple countries\n' +
-            '• Treatment duration ranged from 26-52 weeks with standard dosing protocols';
-        }
-
-        responseText +=
-          '\n\nPlease let me know if you need more specific information from the indexed documents.';
+        return {
+          text: responseText || 'No response was generated. Please refine your query.',
+          sources: sources,
+        };
       }
 
-      // Return the improved contextual response with sources
+      // Cortex API returned an error — fall back to search-only response
+      console.warn('Cortex generate returned', cortexResponse.status, '— using search results');
+      if (searchResults.length > 0) {
+        const fallbackText = searchResults
+          .slice(0, 3)
+          .map(
+            r =>
+              `• **${r.documentTitle || 'Document'}** (${r.section || 'N/A'}): ${(r.content || '').substring(0, 150)}...`
+          )
+          .join('\n\n');
+        return {
+          text: `I found relevant documents but the AI generation service is temporarily unavailable. Here are the top results:\n\n${fallbackText}`,
+          sources: searchResults.slice(0, 3),
+        };
+      }
+
       return {
-        text: responseText,
-        sources: searchResults.slice(0, 3), // Include top 3 sources
+        text: 'The AI service is temporarily unavailable. Please try again in a moment.',
+        sources: [],
       };
     } catch (error) {
       console.error('Error generating chat response:', error);
@@ -4406,117 +4371,107 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
    * @returns {Promise<Array>} - Array of similar content results
    */
   const findSimilarContent = async text => {
-    if (!text || !vectorizedDocuments.length) {
+    if (!text) {
       return [];
     }
 
     try {
       setIsFindingSimilarContent(true);
 
-      // In a real implementation, we would:
-      // 1. Generate an embedding for the selected text
-      // 2. Search the vector database with filters applied
-      // 3. Return the filtered results
-
-      // For now, simulate the search
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Generate simulated results from vectorized documents
-      let simulatedResults = vectorizedDocuments.flatMap(doc => {
-        // Get a random number of chunks from each document
-        const numResults = Math.floor(Math.random() * 3) + 1;
-        const randomChunks = doc.chunks.sort(() => Math.random() - 0.5).slice(0, numResults);
-
-        return randomChunks.map(chunk => {
-          // Simulate different content types
-          const contentTypes = ['text', 'table', 'figure', 'list', 'reference', 'heading', 'chart'];
-          const randomContentType = contentTypes[Math.floor(Math.random() * contentTypes.length)];
-
-          // Simulate different document types
-          const documentTypes = [
-            'csr',
-            'protocol',
-            'overview',
-            'summary',
-            'analytical',
-            'validation',
-          ];
-          const randomDocType = documentTypes[Math.floor(Math.random() * documentTypes.length)];
-
-          // Simulate different regulatory regions
-          const regions = ['us', 'eu', 'jp', 'ca', 'uk'];
-          const randomRegion = regions[Math.floor(Math.random() * regions.length)];
-
-          return {
-            documentId: doc.id,
-            documentTitle: doc.title,
-            documentVersion: doc.version,
-            module: doc.module,
-            section: chunk.metadata?.section || 'Unknown Section',
-            content: chunk.chunk.text,
-            similarity: 0.65 + Math.random() * 0.3, // Random similarity score between 0.65 and 0.95
-            url: `#doc-${doc.id}-section-${chunk.metadata?.chunkIndex || 0}`,
-            contentType: randomContentType,
-            documentType: randomDocType,
-            regulatoryRegion: randomRegion,
-            dateCreated: new Date(
-              Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-            excerpt: chunk.chunk.text.substring(0, 120) + '...',
-          };
-        });
+      // Call the Cortex search API for real vector similarity search
+      const response = await fetch('/api/cortex/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: text.substring(0, 500), // Limit query length
+          mode: 'search',
+          options: {
+            limit: 12,
+            ...(smartReuseFilters?.module && smartReuseFilters.module !== 'all'
+              ? { module: smartReuseFilters.module }
+              : {}),
+          },
+        }),
       });
 
-      // Apply filters based on smartReuseFilters
-      if (smartReuseFilters) {
-        // Filter by module
-        if (smartReuseFilters.module !== 'all') {
-          simulatedResults = simulatedResults.filter(result =>
-            result.module.toLowerCase().includes(smartReuseFilters.module.toLowerCase())
-          );
-        }
+      let results = [];
 
-        // Filter by content type
-        if (smartReuseFilters.contentType !== 'all') {
-          simulatedResults = simulatedResults.filter(
-            result => result.contentType === smartReuseFilters.contentType
-          );
-        }
+      if (response.ok) {
+        const data = await response.json();
+        const rawSources = data.results?.sources || data.sources || [];
 
-        // Filter by document type
-        if (smartReuseFilters.documentType && smartReuseFilters.documentType !== 'all') {
-          simulatedResults = simulatedResults.filter(
-            result => result.documentType === smartReuseFilters.documentType
-          );
-        }
-
-        // Filter by regulatory region
-        if (smartReuseFilters.regulatoryRegion && smartReuseFilters.regulatoryRegion !== 'all') {
-          simulatedResults = simulatedResults.filter(
-            result => result.regulatoryRegion === smartReuseFilters.regulatoryRegion
-          );
-        }
-
-        // Filter by minimum relevance
-        if (smartReuseFilters.relevance > 0) {
-          simulatedResults = simulatedResults.filter(
-            result => result.similarity * 100 >= smartReuseFilters.relevance
-          );
+        results = rawSources.map((source, idx) => ({
+          documentId: source.documentId || source.id || `src-${idx}`,
+          documentTitle:
+            source.documentTitle || source.title || source.source || 'Unknown Document',
+          documentVersion: source.version || '1.0',
+          module: source.module || '',
+          section: source.section || source.sectionCode || '',
+          content: source.content || source.text || '',
+          similarity: source.score || source.similarity || 0,
+          url: source.url || `#doc-${source.documentId || idx}`,
+          contentType: source.contentType || 'text',
+          documentType: source.documentType || 'unknown',
+          regulatoryRegion: source.region || 'unknown',
+          dateCreated: source.createdAt || source.dateCreated || new Date().toISOString(),
+          excerpt: (source.content || source.text || '').substring(0, 120) + '...',
+        }));
+      } else {
+        console.warn('Cortex search returned', response.status, '— using local fallback');
+        // Fallback: search local vectorized documents by simple text matching
+        if (vectorizedDocuments.length > 0) {
+          const queryLower = text.toLowerCase();
+          results = vectorizedDocuments
+            .flatMap(doc =>
+              (doc.chunks || []).map(chunk => ({
+                documentId: doc.id,
+                documentTitle: doc.title,
+                documentVersion: doc.version,
+                module: doc.module,
+                section: chunk.metadata?.section || '',
+                content: chunk.chunk?.text || '',
+                similarity: 0,
+                url: `#doc-${doc.id}`,
+                contentType: 'text',
+                documentType: 'unknown',
+                regulatoryRegion: 'unknown',
+                dateCreated: new Date().toISOString(),
+                excerpt: (chunk.chunk?.text || '').substring(0, 120) + '...',
+              }))
+            )
+            .filter(r => r.content.toLowerCase().includes(queryLower))
+            .slice(0, 8);
         }
       }
 
-      // Sort by similarity (highest first)
-      simulatedResults = simulatedResults.sort((a, b) => b.similarity - a.similarity).slice(0, 8); // Limit to 8 results
+      // Apply client-side filters
+      if (smartReuseFilters) {
+        if (smartReuseFilters.contentType && smartReuseFilters.contentType !== 'all') {
+          results = results.filter(r => r.contentType === smartReuseFilters.contentType);
+        }
+        if (smartReuseFilters.documentType && smartReuseFilters.documentType !== 'all') {
+          results = results.filter(r => r.documentType === smartReuseFilters.documentType);
+        }
+        if (smartReuseFilters.regulatoryRegion && smartReuseFilters.regulatoryRegion !== 'all') {
+          results = results.filter(r => r.regulatoryRegion === smartReuseFilters.regulatoryRegion);
+        }
+        if (smartReuseFilters.relevance > 0) {
+          results = results.filter(r => r.similarity * 100 >= smartReuseFilters.relevance);
+        }
+      }
 
-      setSimilarContentResults(simulatedResults);
+      // Sort by similarity descending, limit to 8
+      results = results.sort((a, b) => b.similarity - a.similarity).slice(0, 8);
+
+      setSimilarContentResults(results);
 
       // Update the main search bar results if the semantic search is active
       // This consolidates search functionality across the UI
       if (isSemanticSearchActive) {
-        setSemanticSearchResults(simulatedResults);
+        setSemanticSearchResults(results);
       }
 
-      return simulatedResults;
+      return results;
     } catch (error) {
       console.error('Error finding similar content:', error);
       toast({
@@ -4536,44 +4491,69 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
    * @returns {Promise<Array>} - Search results
    */
   const performSemanticSearch = async query => {
-    if (!query || !vectorizedDocuments.length) {
+    if (!query) {
       return [];
     }
 
     try {
       setIsSearchingVectors(true);
 
-      // In a real implementation, we would:
-      // 1. Generate an embedding for the query using OpenAI API
-      // 2. Search the vector database for similar embeddings
-      // 3. Return the results
+      // Call Cortex search API for real vector-based semantic search
+      const response = await fetch('/api/cortex/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: query.substring(0, 500),
+          mode: 'search',
+          options: { limit: 5 },
+        }),
+      });
 
-      // For now, we'll simulate the search by waiting and returning random results
-      await new Promise(resolve => setTimeout(resolve, 800));
+      let searchResults = [];
 
-      // Simulate search results using existing documents
-      const simulatedResults = vectorizedDocuments
-        .flatMap(doc => {
-          // Get random chunks from each document
-          const numResults = Math.floor(Math.random() * 3) + 1;
-          const randomChunks = doc.chunks.sort(() => Math.random() - 0.5).slice(0, numResults);
+      if (response.ok) {
+        const data = await response.json();
+        const rawSources = data.results?.sources || data.sources || [];
 
-          return randomChunks.map(chunk => ({
-            documentId: doc.id,
-            documentTitle: doc.title,
-            documentVersion: doc.version,
-            module: doc.module,
-            section: chunk.metadata?.section || 'Unknown Section',
-            content: chunk.chunk.text,
-            similarity: 0.5 + Math.random() * 0.5, // Random similarity score between 0.5 and 1.0
-            url: `#doc-${doc.id}-section-${chunk.metadata?.chunkIndex || 0}`,
-          }));
-        })
-        .sort((a, b) => b.similarity - a.similarity) // Sort by similarity (highest first)
-        .slice(0, 5); // Limit to 5 results
+        searchResults = rawSources.map((source, idx) => ({
+          documentId: source.documentId || source.id || `src-${idx}`,
+          documentTitle:
+            source.documentTitle || source.title || source.source || 'Unknown Document',
+          documentVersion: source.version || '1.0',
+          module: source.module || '',
+          section: source.section || source.sectionCode || '',
+          content: source.content || source.text || '',
+          similarity: source.score || source.similarity || 0,
+          url: source.url || `#doc-${source.documentId || idx}`,
+        }));
+      } else {
+        console.warn('Cortex search returned', response.status, '— using local text match');
+        // Fallback: simple text matching against local vectorized documents
+        if (vectorizedDocuments.length > 0) {
+          const queryLower = query.toLowerCase();
+          searchResults = vectorizedDocuments
+            .flatMap(doc =>
+              (doc.chunks || []).map(chunk => ({
+                documentId: doc.id,
+                documentTitle: doc.title,
+                documentVersion: doc.version,
+                module: doc.module,
+                section: chunk.metadata?.section || '',
+                content: chunk.chunk?.text || '',
+                similarity: 0,
+                url: `#doc-${doc.id}`,
+              }))
+            )
+            .filter(r => r.content.toLowerCase().includes(queryLower))
+            .slice(0, 5);
+        }
+      }
 
-      setSemanticSearchResults(simulatedResults);
-      return simulatedResults;
+      // Sort by similarity descending
+      searchResults = searchResults.sort((a, b) => b.similarity - a.similarity).slice(0, 5);
+
+      setSemanticSearchResults(searchResults);
+      return searchResults;
     } catch (error) {
       console.error('Error performing semantic search:', error);
       toast({
@@ -4881,11 +4861,22 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
     }
   };
 
-  // Serialize the document state to JSON
-  const serializeDocument = () => {
+  // Compute SHA-256 checksum of content for eCTD compliance
+  const computeChecksum = async content => {
     try {
-      // In a real implementation, this would extract the editor's content
-      // Here we simulate collecting all content atoms in the document
+      const encoder = new TextEncoder();
+      const data = encoder.encode(typeof content === 'string' ? content : JSON.stringify(content));
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch {
+      return 'checksum-unavailable';
+    }
+  };
+
+  // Serialize the document state to JSON
+  const serializeDocument = async () => {
+    try {
       // Phase 5: Enhanced document serialization with eCTD metadata
       const documentContent = {
         title: documentTitle || 'Untitled Document',
@@ -4910,8 +4901,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
             version: documentLifecycle.version,
             dtd: 'ectd-2-0',
             checksums: {
-              md5: 'placeholder-for-actual-md5-checksum',
-              sha256: 'placeholder-for-actual-sha256-checksum',
+              md5: 'not-computed', // MD5 not available via Web Crypto API
+              sha256: await computeChecksum(documentText || selectedDocument?.content || ''),
             },
           },
         },
@@ -4936,7 +4927,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       setExportInProgress(true);
 
       // First, serialize the document
-      const documentContent = serializeDocument();
+      const documentContent = await serializeDocument();
       if (!documentContent) return;
 
       // Handle different export formats
@@ -5021,7 +5012,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
               .replaceAll('.', '')
               .replace('T', '')
               .slice(0, 14);
-            const sequenceNumber = Math.floor(Math.random() * 9000) + 1000;
+            const sequenceNumber = metadata.sequence || documentMetadata?.sequence || '0001';
 
             return {
               xmlBackbone: `<?xml version="1.0" encoding="UTF-8"?>
