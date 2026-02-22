@@ -21,10 +21,12 @@
 CREATE OR REPLACE FUNCTION enforce_audit_events_no_update()
 RETURNS TRIGGER AS $$
 BEGIN
-  RAISE EXCEPTION
-    'IMMUTABILITY_VIOLATION: UPDATE on audit_events is prohibited. '
-    'Audit trail records are append-only per 21 CFR Part 11 §11.10(e). '
-    'Attempted to update row id=%', OLD.id;
+  RAISE EXCEPTION USING
+    ERRCODE = 'TS001',
+    MESSAGE = 'IMMUTABILITY_VIOLATION: UPDATE on audit_events is prohibited. '
+              'Audit trail records are append-only per 21 CFR Part 11 §11.10(e). '
+              'Attempted to update row id=' || OLD.id,
+    HINT = 'Audit events are immutable. Create a new corrective event instead.';
   RETURN NULL; -- never reached
 END;
 $$ LANGUAGE plpgsql;
@@ -42,10 +44,12 @@ CREATE TRIGGER trg_audit_events_no_update
 CREATE OR REPLACE FUNCTION enforce_audit_events_no_delete()
 RETURNS TRIGGER AS $$
 BEGIN
-  RAISE EXCEPTION
-    'IMMUTABILITY_VIOLATION: DELETE on audit_events is prohibited. '
-    'Audit trail records are append-only per 21 CFR Part 11 §11.10(e). '
-    'Attempted to delete row id=%', OLD.id;
+  RAISE EXCEPTION USING
+    ERRCODE = 'TS002',
+    MESSAGE = 'IMMUTABILITY_VIOLATION: DELETE on audit_events is prohibited. '
+              'Audit trail records are append-only per 21 CFR Part 11 §11.10(e). '
+              'Attempted to delete row id=' || OLD.id,
+    HINT = 'Audit events cannot be deleted. Create a superseding event instead.';
   RETURN NULL; -- never reached
 END;
 $$ LANGUAGE plpgsql;
@@ -63,9 +67,11 @@ CREATE TRIGGER trg_audit_events_no_delete
 CREATE OR REPLACE FUNCTION enforce_audit_events_no_truncate()
 RETURNS TRIGGER AS $$
 BEGIN
-  RAISE EXCEPTION
-    'IMMUTABILITY_VIOLATION: TRUNCATE on audit_events is prohibited. '
-    'Audit trail records are append-only per 21 CFR Part 11 §11.10(e).';
+  RAISE EXCEPTION USING
+    ERRCODE = 'TS003',
+    MESSAGE = 'IMMUTABILITY_VIOLATION: TRUNCATE on audit_events is prohibited. '
+              'Audit trail records are append-only per 21 CFR Part 11 §11.10(e).',
+    HINT = 'Audit events table cannot be truncated. This is a regulatory compliance control.';
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;

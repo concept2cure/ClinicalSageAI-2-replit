@@ -295,15 +295,60 @@ router.post('/send-message', async (req: Request, res: Response) => {
     const threadId = await getOrCreateThread(thread_id, (req as any).user?.id);
     const previousMessages = await getThreadMessages(threadId);
 
+    // ── STEP 1: RETRIEVE FIRST (real RAG — not post-hoc citation theater) ──
+    // Retrieve org-scoped evidence BEFORE calling the model so the answer
+    // is grounded in actual knowledge-base atoms. The model is instructed
+    // to cite sources by [SRC-n] ID; returned citations map to these IDs.
+    let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
+    let confidence: number | null = null;
+    const orgUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+
+    try {
+      const embeddingService = getEmbeddingService(pool);
+      // Bail early if org UUID is provided but clearly invalid
+      if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
+        console.warn('[Lumen Cortex] Invalid org UUID, skipping retrieval');
+      } else {
+        const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
+        sources = searchResults.map(r => ({
+          id: r.id,
+          title: r.title,
+          content: r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content,
+          score: r.score,
+        }));
+        if (sources.length > 0) {
+          confidence = Math.min(1, sources.reduce((sum, s) => sum + s.score, 0) / sources.length);
+        }
+      }
+    } catch (srcErr: any) {
+      // Non-fatal — chat still works, just without grounded evidence
+      console.warn('[Lumen Cortex] Source retrieval failed:', srcErr.message);
+    }
+
+    // ── STEP 2: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
+    // If we have retrieved evidence, inject it into the system prompt so
+    // the model can ground its answer and cite by [SRC-n] reference.
+    let evidenceBlock = '';
+    if (sources.length > 0) {
+      evidenceBlock =
+        '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
+        sources.map((s, i) => `[SRC-${i + 1}] "${s.title}"\n${s.content}`).join('\n\n') +
+        '\n--- END EVIDENCE ---\n\n' +
+        'When your answer relies on information from the evidence above, cite it inline using [SRC-n]. ' +
+        'If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.';
+    }
+
     let assistantMessage: string;
     let model = 'lumen-cortex-demo';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
-    // Route through AI Gateway — falls back to demo responses
+    // ── STEP 3: GENERATE ANSWER GROUNDED IN EVIDENCE ───────────────────
     const gw = ensureGateway();
     if (gw && gw.getEnabledProviders().length > 0) {
       try {
-        const systemPrompt = system_prompt || REGULATORY_SYSTEM_PROMPT;
+        const systemPrompt = (system_prompt || REGULATORY_SYSTEM_PROMPT) + evidenceBlock;
 
         const gwMessages = [
           { role: 'system' as const, content: systemPrompt },
@@ -314,7 +359,9 @@ router.post('/send-message', async (req: Request, res: Response) => {
           { role: 'user' as const, content: message },
         ];
 
-        console.log('[Lumen Cortex] Sending message through AI Gateway...');
+        console.log(
+          `[Lumen Cortex] Sending message through AI Gateway (${sources.length} sources retrieved)...`
+        );
 
         const gwResponse: GatewayResponse = await gw.route({
           taskType: 'chat',
@@ -353,31 +400,25 @@ router.post('/send-message', async (req: Request, res: Response) => {
     await saveMessage(threadId, 'user', message, model);
     await saveMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
 
-    // Retrieve relevant sources via embedding search for citation/provenance.
-    // This runs AFTER the AI call so it doesn't block response time if embedding
-    // service is slow. Sources are used by the frontend to render CitationList.
-    let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
-    let confidence: number | null = null;
-    try {
-      const embeddingService = getEmbeddingService(pool);
-      const orgUuid =
-        (req as any).tenantContext?.organizationUuid ||
-        (req.headers['x-org-uuid'] as string | undefined);
-      const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
-      sources = searchResults.map(r => ({
-        id: r.id,
-        title: r.title,
-        content: r.content.length > 300 ? r.content.substring(0, 300) + '…' : r.content,
-        score: r.score,
-      }));
-      // Confidence = average of top source scores, capped at 1.0
-      if (sources.length > 0) {
-        confidence = Math.min(1, sources.reduce((sum, s) => sum + s.score, 0) / sources.length);
-      }
-    } catch (srcErr: any) {
-      // Non-fatal — chat still works, just without source attribution
-      console.warn('[Lumen Cortex] Source retrieval for citations failed:', srcErr.message);
+    // ── STEP 4: BUILD CITATIONS MAP ────────────────────────────────────
+    // Parse [SRC-n] references from the model output to build a citations
+    // map that ties specific claims to specific evidence atoms.
+    const citedRefs = new Set<number>();
+    const refPattern = /\[SRC-(\d+)\]/g;
+    let match;
+    while ((match = refPattern.exec(assistantMessage)) !== null) {
+      const idx = parseInt(match[1], 10) - 1;
+      if (idx >= 0 && idx < sources.length) citedRefs.add(idx);
     }
+
+    const citations = sources.map((s, i) => ({
+      id: `SRC-${i + 1}`,
+      sourceAtomId: s.id,
+      title: s.title,
+      snippet: s.content,
+      relevanceScore: s.score,
+      cited: citedRefs.has(i), // true only if model actually referenced this source
+    }));
 
     res.json({
       answer: assistantMessage,
@@ -385,13 +426,13 @@ router.post('/send-message', async (req: Request, res: Response) => {
       usage,
       model,
       sources,
-      citations: sources.map((s, i) => ({
-        id: `cite-${i + 1}`,
-        title: s.title,
-        snippet: s.content,
-        relevanceScore: s.score,
-      })),
+      citations,
       confidence,
+      retrievalMeta: {
+        retrievedCount: sources.length,
+        citedCount: citedRefs.size,
+        orgScoped: !!orgUuid,
+      },
     });
   } catch (error: any) {
     console.error('[Lumen Cortex] Chat error:', error);

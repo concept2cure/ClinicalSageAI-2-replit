@@ -1,9 +1,9 @@
 /**
  * Concept2Cure Types
- * 
+ *
  * Type definitions for the Claude.ai-style regulatory interface.
  * Designed for FDA 21 CFR Part 11 compliance.
- * 
+ *
  * @module concept2cure/types
  * @version 2.0.0
  * @license Proprietary - Concept2Cure, Inc.
@@ -47,7 +47,7 @@ export interface AuditEntry {
 /**
  * Audit action types for 21 CFR Part 11 compliance.
  */
-export type AuditAction = 
+export type AuditAction =
   | 'CREATE'
   | 'READ'
   | 'UPDATE'
@@ -87,7 +87,16 @@ export interface ElectronicSignature {
 /**
  * Regulatory submission types supported by Concept2Cure.
  */
-export type SubmissionType = '510K' | 'IND' | 'NDA' | 'BLA' | 'MAA' | 'PMA' | 'DE_NOVO' | 'EUA';
+export type SubmissionType =
+  | '510K'
+  | 'IND'
+  | 'NDA'
+  | 'BLA'
+  | 'MAA'
+  | 'PMA'
+  | 'DE_NOVO'
+  | 'EUA'
+  | 'IVDR';
 
 /**
  * A regulatory submission project.
@@ -133,7 +142,13 @@ export interface Project {
 /**
  * Project lifecycle status.
  */
-export type ProjectStatus = 'draft' | 'active' | 'in_review' | 'approved' | 'archived' | 'submitted';
+export type ProjectStatus =
+  | 'draft'
+  | 'active'
+  | 'in_review'
+  | 'approved'
+  | 'archived'
+  | 'submitted';
 
 /**
  * Project metadata for regulatory context.
@@ -251,7 +266,7 @@ export interface Citation {
 // ARTIFACT TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ArtifactType = 
+export type ArtifactType =
   // Document artifacts
   | 'cover_letter'
   | 'device_description'

@@ -94,6 +94,16 @@ export const featureFlags: Record<string, FeatureFlag> = {
     enabled: true,
   },
 
+  // IVDR module flags
+  ENABLE_IVDR_MODULE: {
+    id: 'ENABLE_IVDR_MODULE',
+    name: 'EU IVDR Module',
+    description:
+      'Enables the EU In Vitro Diagnostic Regulation module for classification, performance evaluation, and technical documentation',
+    defaultValue: true,
+    enabled: true,
+  },
+
   // MAUD validation flags
   ENABLE_MAUD_VALIDATION: {
     id: 'ENABLE_MAUD_VALIDATION',

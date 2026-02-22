@@ -141,6 +141,7 @@ export function useModules() {
     [canAccessModule]
   );
   const isVaultEnabled = useMemo(() => canAccessModule(MODULE_IDS.VAULT), [canAccessModule]);
+  const isIvdrEnabled = useMemo(() => canAccessModule(MODULE_IDS.IVDR), [canAccessModule]);
 
   return {
     isLoading,
@@ -157,6 +158,7 @@ export function useModules() {
     isCmcEnabled,
     isMedDeviceEnabled,
     isVaultEnabled,
+    isIvdrEnabled,
 
     // Generic access check
     canAccess: canAccessModule,

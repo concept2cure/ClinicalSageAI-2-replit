@@ -877,7 +877,7 @@ router.get('/health', (_req: Request, res: Response) => {
       authorityChecks: true,
       soc2Evidence: true,
       gamp5Validation: true,
-      nistTimestamps: !!process.env.NIST_TIMESTAMP_SERVICE,
+      trustedTimestamps: !!process.env.TRUSTED_TIMESTAMP_SERVICE, // TSA integration (only true if actually configured)
     },
     hashAlgorithm: 'SHA-256',
     auditChainLength: 'active',

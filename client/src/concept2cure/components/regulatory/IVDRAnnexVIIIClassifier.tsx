@@ -59,6 +59,7 @@ import {
   ClipboardList,
   ArrowRight,
   Info,
+  Download,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -419,7 +420,43 @@ export default function IVDRAnnexVIIIClassifier() {
     }
     setShowHistory(true);
   };
-
+  // ── Export classification report as JSON artifact ─────────────────
+  const handleExportReport = () => {
+    if (!result) return;
+    const report = {
+      reportType: 'IVDR Annex VIII Classification Report',
+      generatedAt: new Date().toISOString(),
+      regulation: 'EU 2017/746 (IVDR)',
+      device: {
+        name: answers.deviceName,
+        intendedPurpose: answers.intendedPurpose,
+        analytes: answers.analytes
+          .split(',')
+          .map(a => a.trim())
+          .filter(Boolean),
+      },
+      classification: {
+        class: result.classification,
+        isCDx: answers.isCompanionDiagnostic,
+        isSelfTest: answers.isSelfTest,
+        isNearPatient: answers.isNearPatient,
+      },
+      ruleTrace: result.ruleTrace,
+      matchedRules: result.matchedRules,
+      regulatoryPath: result.regulatoryPath,
+      deviceJustification:
+        result.matchedRules.length > 0
+          ? `Device "${answers.deviceName}" is classified as Class ${result.classification} because it matched: ${result.matchedRules.map(r => r.rule).join('; ')}. The device's intended purpose "${answers.intendedPurpose}" specifically triggers ${result.matchedRules.length === 1 ? 'this rule' : 'these rules'} under Annex VIII of IVDR 2017/746.`
+          : `Device "${answers.deviceName}" is classified as Class A (default) because no higher-risk classification rules (Rules 1–6) were triggered. The device's intended purpose "${answers.intendedPurpose}" falls under the general Rule 7 catch-all category.`,
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ivdr-classification-${answers.deviceName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   // ── Render helpers ─────────────────────────────────────────────────────
   const BoolButton = ({
     label,
@@ -892,11 +929,41 @@ export default function IVDRAnnexVIIIClassifier() {
                 </div>
               </div>
 
+              {/* Device-Specific Justification */}
+              {result.matchedRules.length > 0 && (
+                <div className="p-4 rounded-lg border bg-blue-50 border-blue-200">
+                  <h4 className="font-semibold mb-2 text-blue-800">
+                    Device-Specific Classification Justification
+                  </h4>
+                  <p className="text-sm text-blue-700">
+                    Device <strong>"{answers.deviceName}"</strong> is classified as{' '}
+                    <strong>Class {result.classification}</strong> because its intended purpose
+                    triggers: {result.matchedRules.map(r => r.rule).join('; ')}.
+                    {answers.intendedPurpose && (
+                      <>
+                        {' '}
+                        The stated intended purpose —{' '}
+                        <em>
+                          "{answers.intendedPurpose.slice(0, 200)}
+                          {answers.intendedPurpose.length > 200 ? '...' : ''}"
+                        </em>{' '}
+                        — directly satisfies the criteria of{' '}
+                        {result.matchedRules.length === 1 ? 'this rule' : 'these rules'}.
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex gap-3">
                 <Button onClick={handleSave} disabled={saving}>
                   <FileCheck className="h-4 w-4 mr-2" />
                   {saving ? 'Saving...' : 'Save Classification'}
+                </Button>
+                <Button variant="outline" onClick={handleExportReport}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Report (JSON)
                 </Button>
                 <Button variant="outline" onClick={handleReset}>
                   New Classification

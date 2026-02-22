@@ -39,13 +39,30 @@ $$;
 CREATE INDEX IF NOT EXISTS audit_events_hash_chain_idx
   ON audit_events (organization_id, sequence_number);
 
+-- Unique constraint prevents duplicate sequence numbers per org (race-condition defense)
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'audit_events_org_seq_unique'
+  ) THEN
+    ALTER TABLE audit_events
+      ADD CONSTRAINT audit_events_org_seq_unique UNIQUE (organization_id, sequence_number);
+  END IF;
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
 -- Auto-populate hash chain on INSERT via trigger
+-- Uses pg_advisory_xact_lock to serialize per-org inserts within the
+-- same transaction, preventing sequence_number collisions under concurrency.
 CREATE OR REPLACE FUNCTION audit_events_hash_chain()
 RETURNS TRIGGER AS $$
 DECLARE
   prev_hash TEXT;
   prev_seq INTEGER;
 BEGIN
+  -- Advisory lock keyed on org_id serializes concurrent inserts to the
+  -- same org. Lock is released automatically at transaction end.
+  PERFORM pg_advisory_xact_lock(hashtext('audit_events_chain_' || COALESCE(NEW.organization_id, 0)::text));
+
   -- Get previous row's hash and sequence for this org
   SELECT record_hash, sequence_number INTO prev_hash, prev_seq
   FROM audit_events
@@ -84,7 +101,8 @@ CREATE TRIGGER trg_audit_events_hash_chain
   FOR EACH ROW
   EXECUTE FUNCTION audit_events_hash_chain();
 
--- Backfill existing rows that have NULL hashes (in sequence order)
+-- Backfill existing rows that have NULL hashes (in deterministic order: org, created_at, id)
+-- Runs in a single transaction (implicit in DO block) with advisory lock per org.
 DO $$
 DECLARE
   r RECORD;
@@ -97,9 +115,11 @@ BEGIN
            user_id, user_name, timestamp, reason
     FROM audit_events
     WHERE record_hash IS NULL
-    ORDER BY organization_id, id
+    ORDER BY organization_id, COALESCE(timestamp, created_at), id  -- stable deterministic order
   LOOP
     IF r.organization_id IS DISTINCT FROM cur_org THEN
+      -- Lock this org while we backfill its chain
+      PERFORM pg_advisory_xact_lock(hashtext('audit_events_chain_' || COALESCE(r.organization_id, 0)::text));
       -- Reset chain for new org
       SELECT record_hash, sequence_number INTO prev_hash, seq
       FROM audit_events

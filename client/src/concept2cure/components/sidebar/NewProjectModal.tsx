@@ -1,6 +1,6 @@
 /**
  * Concept2Cure - New Project Modal
- * 
+ *
  * Modal for creating new regulatory submission projects.
  * Following Claude.ai pattern: simple selection of project type.
  */
@@ -31,6 +31,7 @@ import {
   Sparkles,
   Loader2,
   CheckCircle2,
+  Microscope,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -120,6 +121,16 @@ const submissionTypes: SubmissionTypeOption[] = [
     color: 'text-red-600',
     bgColor: 'bg-red-50 hover:bg-red-100 border-red-200',
   },
+  {
+    type: 'IVDR',
+    name: 'EU IVDR',
+    fullName: 'EU In Vitro Diagnostic Regulation',
+    description:
+      'EU IVDR 2017/746 — Classification, performance evaluation & technical documentation for IVDs',
+    icon: Microscope,
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,9 +218,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
                     <Icon className={cn('h-5 w-5', option.color)} />
                     <span className="font-semibold text-gray-900">{option.name}</span>
                   </div>
-                  <span className="text-xs text-gray-600 line-clamp-2">
-                    {option.description}
-                  </span>
+                  <span className="text-xs text-gray-600 line-clamp-2">{option.description}</span>
                 </button>
               );
             })}
@@ -220,7 +229,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
         {step === 'details' && selectedTypeOption && (
           <div className="space-y-4 py-4">
             {/* Selected type indicator */}
-            <div className={cn('flex items-center gap-3 p-3 rounded-lg', selectedTypeOption.bgColor)}>
+            <div
+              className={cn('flex items-center gap-3 p-3 rounded-lg', selectedTypeOption.bgColor)}
+            >
               <selectedTypeOption.icon className={cn('h-5 w-5', selectedTypeOption.color)} />
               <div>
                 <div className="font-medium text-gray-900">{selectedTypeOption.name}</div>
@@ -243,7 +254,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
                 id="project-name"
                 placeholder={`e.g., ${selectedTypeOption.type === '510K' ? 'Glucose Monitor XYZ' : 'Drug Candidate ABC'}`}
                 value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
+                onChange={e => setProjectName(e.target.value)}
                 autoFocus
               />
             </div>
@@ -255,7 +266,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
                 id="project-description"
                 placeholder="Brief description of your submission project..."
                 value={projectDescription}
-                onChange={(e) => setProjectDescription(e.target.value)}
+                onChange={e => setProjectDescription(e.target.value)}
                 rows={3}
               />
             </div>
@@ -286,10 +297,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={!projectName.trim() || isCreating}
-              >
+              <Button onClick={handleCreate} disabled={!projectName.trim() || isCreating}>
                 {isCreating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

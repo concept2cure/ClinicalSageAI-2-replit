@@ -55,12 +55,12 @@ const SignaturePage = () => {
 
   // Signer name is bound to authenticated user — not editable
   const signatureName = authenticatedUser?.display_name || authenticatedUser?.username || '';
-  // Display date — server generates the authoritative NIST timestamp on POST /api/part11/signatures.
-  // This client-side date is for UI display only; the record of truth is the server-signed timestamp
+  // Display date — server generates the authoritative timestamp on POST /api/part11/signatures.
+  // This client-side date is for UI display only; the record of truth is the server-generated timestamp
   // returned in the API response and stored in the database.
   const [signatureDate, setSignatureDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // Fetch server time for display accuracy (NIST-synced)
+  // Fetch server time for display accuracy (server-generated)
   useEffect(() => {
     (async () => {
       try {
@@ -172,7 +172,7 @@ const SignaturePage = () => {
 
     setLoading(true);
     try {
-      // Part 11 compliant endpoint (includes meaning, NIST timestamp, SHA-256 hash)
+      // Part 11 compliant endpoint (includes meaning, server-generated timestamp, SHA-256 hash)
       const part11Response = await fetch('/api/part11/signatures', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

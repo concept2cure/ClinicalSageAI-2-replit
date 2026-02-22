@@ -62,6 +62,9 @@ import {
   TrendingUp,
   Thermometer,
   RefreshCw,
+  FileText,
+  Link2,
+  History,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────

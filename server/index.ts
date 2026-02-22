@@ -335,9 +335,9 @@ app.get('/api/health', async (req: Request, res: Response) => {
   res.json(healthData);
 });
 
-// Server-authoritative time (NIST-synced via OS NTP).
+// Server-authoritative timestamp.
 // Used by SignaturePage to display accurate date before signing.
-// The authoritative signature timestamp is still generated server-side
+// The authoritative signature timestamp is generated server-side
 // on POST /api/part11/signatures — this is purely for display.
 app.get('/api/time', (_req: Request, res: Response) => {
   const now = new Date();

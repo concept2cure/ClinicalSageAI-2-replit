@@ -204,6 +204,53 @@ export default function createIVDRRoutes(pool: Pool): Router {
     }
   });
 
+  /**
+   * GET /api/ivdr/classify/:id/report
+   * Download full classification report artifact (JSON) for technical file
+   */
+  router.get('/classify/:id/report', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(`SELECT * FROM ivdr_classifications WHERE id = $1`, [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Classification not found' });
+      }
+      const record = result.rows[0];
+      const ruleTrace =
+        typeof record.rule_trace === 'string' ? JSON.parse(record.rule_trace) : record.rule_trace;
+      const report = {
+        reportType: 'IVDR Annex VIII Classification Report',
+        generatedAt: new Date().toISOString(),
+        regulation: 'EU 2017/746 (IVDR)',
+        device: {
+          name: record.device_name,
+          intendedPurpose: record.intended_purpose,
+          analytes: record.analytes,
+        },
+        classification: {
+          class: record.classification,
+          isCDx: record.is_cdx,
+          isSelfTest: record.is_self_test,
+          isNearPatient: record.is_near_patient,
+        },
+        ruleTrace,
+        matchedRules: (ruleTrace || []).filter((r: any) => r.matched),
+        regulatoryPath: getClassPath(record.classification),
+        metadata: {
+          recordId: record.id,
+          organizationId: record.organization_id,
+          createdAt: record.created_at,
+        },
+      };
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${id}.json"`);
+      return res.json(report);
+    } catch (error: any) {
+      console.error('[IVDR] Classification report error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ANALYTICAL VALIDATION
   // ═══════════════════════════════════════════════════════════════════════════
@@ -269,6 +316,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    * PUT /api/ivdr/validations/:id/parameters
    * Update analytical validation parameters (LoD, LoQ, precision, etc.)
    * Append-only: creates a parameter_history entry, then updates current.
+   * Now also accepts evidenceDocuments, acceptanceCriteria, and reason.
    */
   router.put('/validations/:id/parameters', async (req: Request, res: Response) => {
     try {
@@ -291,17 +339,53 @@ export default function createIVDRRoutes(pool: Pool): Router {
         hookEffect, // boolean / threshold
         referenceRange, // JSON: lower, upper, unit, method
         updatedBy,
+        evidenceDocuments, // Array of { type, title, url, version }
+        acceptanceCriteria, // { paramKey: { min?, max?, unit } }
+        reason, // Change reason for audit trail
       } = req.body;
+
+      // ── Compute real pass/fail against acceptance criteria ──────────
+      const paramVals: Record<string, number | null> = {
+        lod,
+        loq,
+        precisionCV,
+        withinRunCV,
+        betweenRunCV,
+        betweenDayCV,
+        reproducibilityCV,
+        sensitivity,
+        specificity,
+        accuracy,
+        carryOver,
+      };
+      const criteria = acceptanceCriteria || {};
+      const passFailStatus: Record<string, string> = {};
+      for (const [key, val] of Object.entries(paramVals)) {
+        if (val == null) {
+          passFailStatus[key] = 'pending';
+          continue;
+        }
+        const crit = criteria[key];
+        if (!crit) {
+          passFailStatus[key] = 'recorded';
+          continue;
+        }
+        const numVal = Number(val);
+        let pass = true;
+        if (crit.min != null && numVal < Number(crit.min)) pass = false;
+        if (crit.max != null && numVal > Number(crit.max)) pass = false;
+        passFailStatus[key] = pass ? 'pass' : 'fail';
+      }
 
       // Append to parameter history (immutable audit trail)
       await pool.query(
         `INSERT INTO ivdr_validation_parameter_history
-         (validation_id, parameters, updated_by, created_at)
-         VALUES ($1, $2, $3, NOW())`,
-        [id, JSON.stringify(req.body), updatedBy || 'system']
+         (validation_id, parameters, updated_by, reason, created_at)
+         VALUES ($1, $2, $3, $4, NOW())`,
+        [id, JSON.stringify(req.body), updatedBy || 'system', reason || null]
       );
 
-      // Update current parameters
+      // Update current parameters + new columns
       const result = await pool.query(
         `UPDATE ivdr_analytical_validations SET
            lod = COALESCE($2, lod),
@@ -320,6 +404,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
            carry_over = COALESCE($15, carry_over),
            hook_effect = COALESCE($16, hook_effect),
            reference_range = COALESCE($17, reference_range),
+           evidence_documents = COALESCE($18, evidence_documents),
+           acceptance_criteria = COALESCE($19, acceptance_criteria),
+           pass_fail_status = $20,
            updated_at = NOW()
          WHERE id = $1
          RETURNING *`,
@@ -341,12 +428,34 @@ export default function createIVDRRoutes(pool: Pool): Router {
           carryOver,
           hookEffect !== undefined ? JSON.stringify(hookEffect) : null,
           referenceRange ? JSON.stringify(referenceRange) : null,
+          evidenceDocuments ? JSON.stringify(evidenceDocuments) : null,
+          acceptanceCriteria ? JSON.stringify(acceptanceCriteria) : null,
+          JSON.stringify(passFailStatus),
         ]
       );
 
-      return res.json({ validation: result.rows[0] });
+      return res.json({ validation: result.rows[0], passFailStatus });
     } catch (error: any) {
       console.error('[IVDR] Update validation params error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * GET /api/ivdr/validations/:id/history
+   * Retrieve immutable parameter change history for audit
+   */
+  router.get('/validations/:id/history', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        `SELECT * FROM ivdr_validation_parameter_history
+         WHERE validation_id = $1 ORDER BY created_at DESC`,
+        [id]
+      );
+      return res.json({ history: result.rows });
+    } catch (error: any) {
+      console.error('[IVDR] Validation history error:', error);
       return res.status(500).json({ error: error.message });
     }
   });
@@ -370,6 +479,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
         sampleSize,
         performanceClaims,
         organizationId,
+        populationDefinition,
+        inclusionCriteria,
+        exclusionCriteria,
+        sourceDocuments,
       } = req.body;
 
       if (!studyTitle || !studyType) {
@@ -380,8 +493,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
         `INSERT INTO ivdr_clinical_evidence
          (classification_id, validation_id, study_title, study_type,
           registry_id, sample_size, performance_claims, status,
-          organization_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'planned', $8, NOW())
+          population_definition, inclusion_criteria, exclusion_criteria,
+          source_documents, organization_id, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'planned', $8, $9, $10, $11, $12, NOW())
          RETURNING *`,
         [
           classificationId || null,
@@ -391,6 +505,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
           registryId || null,
           sampleSize || null,
           performanceClaims ? JSON.stringify(performanceClaims) : null,
+          populationDefinition || null,
+          inclusionCriteria || null,
+          exclusionCriteria || null,
+          sourceDocuments ? JSON.stringify(sourceDocuments) : '[]',
           organizationId || 1,
         ]
       );
@@ -426,7 +544,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
   /**
    * PUT /api/ivdr/clinical-evidence/:id/results
-   * Record 2x2 contingency table results + performance metrics
+   * Record 2x2 contingency table results + performance metrics + population
    */
   router.put('/clinical-evidence/:id/results', async (req: Request, res: Response) => {
     try {
@@ -442,6 +560,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
         comparisonMethod,
         conclusionText,
         updatedBy,
+        populationDefinition,
+        inclusionCriteria,
+        exclusionCriteria,
+        sourceDocuments,
+        reason,
       } = req.body;
 
       // Calculate derived metrics from 2x2 table
@@ -464,12 +587,17 @@ export default function createIVDRRoutes(pool: Pool): Router {
       // Append to history (immutable)
       await pool.query(
         `INSERT INTO ivdr_evidence_result_history
-         (evidence_id, results, updated_by, created_at)
-         VALUES ($1, $2, $3, NOW())`,
-        [id, JSON.stringify({ ...req.body, calculatedMetrics }), updatedBy || 'system']
+         (evidence_id, results, updated_by, reason, created_at)
+         VALUES ($1, $2, $3, $4, NOW())`,
+        [
+          id,
+          JSON.stringify({ ...req.body, calculatedMetrics }),
+          updatedBy || 'system',
+          reason || null,
+        ]
       );
 
-      // Update current record
+      // Update current record including population + source docs
       const result = await pool.query(
         `UPDATE ivdr_clinical_evidence SET
            true_positive = $2,
@@ -484,6 +612,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
            performance_claims = COALESCE($11, performance_claims),
            comparison_method = $12,
            conclusion_text = $13,
+           population_definition = COALESCE($14, population_definition),
+           inclusion_criteria = COALESCE($15, inclusion_criteria),
+           exclusion_criteria = COALESCE($16, exclusion_criteria),
+           source_documents = COALESCE($17, source_documents),
            status = 'completed',
            updated_at = NOW()
          WHERE id = $1
@@ -502,6 +634,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
           performanceClaims ? JSON.stringify(performanceClaims) : null,
           comparisonMethod || null,
           conclusionText || null,
+          populationDefinition || null,
+          inclusionCriteria || null,
+          exclusionCriteria || null,
+          sourceDocuments ? JSON.stringify(sourceDocuments) : null,
         ]
       );
 
@@ -511,6 +647,25 @@ export default function createIVDRRoutes(pool: Pool): Router {
       });
     } catch (error: any) {
       console.error('[IVDR] Update evidence results error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * GET /api/ivdr/clinical-evidence/:id/history
+   * Retrieve immutable result change history for audit
+   */
+  router.get('/clinical-evidence/:id/history', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        `SELECT * FROM ivdr_evidence_result_history
+         WHERE evidence_id = $1 ORDER BY created_at DESC`,
+        [id]
+      );
+      return res.json({ history: result.rows });
+    } catch (error: any) {
+      console.error('[IVDR] Evidence history error:', error);
       return res.status(500).json({ error: error.message });
     }
   });
@@ -535,6 +690,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
         regulatoryReference,
         notifiedBodyId,
         organizationId,
+        intendedUseStatement,
+        biomarkerType,
+        clinicalEvidenceIds,
       } = req.body;
 
       if (!medicinalProductName || !biomarker) {
@@ -546,8 +704,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
          (classification_id, medicinal_product_name, active_substance,
           therapeutic_indication, biomarker, treatment_decision,
           regulatory_reference, notified_body_id, status,
+          intended_use_statement, biomarker_type, clinical_evidence_ids,
           organization_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'initiation', $9, NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'initiation', $9, $10, $11, $12, NOW())
          RETURNING *`,
         [
           classificationId || null,
@@ -558,6 +717,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
           treatmentDecision || null,
           regulatoryReference || null,
           notifiedBodyId || null,
+          intendedUseStatement || null,
+          biomarkerType || null,
+          clinicalEvidenceIds && clinicalEvidenceIds.length > 0 ? clinicalEvidenceIds : '{}',
           organizationId || 1,
         ]
       );
@@ -631,6 +793,25 @@ export default function createIVDRRoutes(pool: Pool): Router {
       return res.json({ workflow: result.rows[0] });
     } catch (error: any) {
       console.error('[IVDR] Update CDx status error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * GET /api/ivdr/cdx-workflows/:id/history
+   * Retrieve immutable status transition history for audit
+   */
+  router.get('/cdx-workflows/:id/history', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        `SELECT * FROM ivdr_cdx_status_history
+         WHERE workflow_id = $1 ORDER BY created_at DESC`,
+        [id]
+      );
+      return res.json({ history: result.rows });
+    } catch (error: any) {
+      console.error('[IVDR] CDx history error:', error);
       return res.status(500).json({ error: error.message });
     }
   });
