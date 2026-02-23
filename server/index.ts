@@ -732,7 +732,12 @@ try {
    * Layer 2: Feature flag (ENABLE_IVDR_MODULE env var kill switch)
    * Layer 3: Tenant context (org must be present — no anonymous)
    * Layer 4: Module entitlement (org has active module_subscriptions for ivdr_module)
-   * Layer 5: RBAC (write ops require elevated roles)
+   * Layer 5: Permission-based RBAC (ivdr:read for reads, ivdr:write for mutations)
+   *
+   * Permission resolution order:
+   *   1. req.user.permissions (JWT-decoded array from auth middleware)
+   *   2. req.tenant.permissions (from tenantIsolation middleware)
+   *   3. Fallback: role → permission map for backwards compatibility
    *
    * Error shape: { error: string, code: string } with 401/403/503
    */
@@ -793,24 +798,44 @@ try {
       throw err; // unexpected DB error — let Express error handler catch it
     }
 
-    // Layer 5: RBAC — write ops require elevated roles
-    const userRole = (req as any).userRole || (req as any).tenantContext?.role || '';
-    const writeRoles = [
-      'admin',
-      'regulatory_lead',
-      'quality_assurance',
-      'regulatory',
-      'superadmin',
-    ];
-    const isReadOnly = req.method === 'GET' || req.method === 'HEAD';
+    // Layer 5: Permission-based RBAC
+    // Resolve permissions from JWT / tenant middleware / role fallback
+    const userPermissions: string[] =
+      (req as any).user?.permissions || (req as any).tenant?.permissions || [];
 
-    if (!isReadOnly && !writeRoles.includes(userRole)) {
+    // Role → permission fallback map (compat for JWTs that carry role but not permissions)
+    const rolePermMap: Record<string, string[]> = {
+      superadmin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve'],
+      admin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve'],
+      regulatory_lead: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve'],
+      regulatory: ['ivdr:read', 'ivdr:write', 'ivdr:classify'],
+      quality_assurance: ['ivdr:read', 'ivdr:write'],
+      viewer: ['ivdr:read'],
+      user: ['ivdr:read'],
+    };
+
+    const userRole = (req as any).userRole || (req as any).tenantContext?.role || '';
+    const effectivePerms: Set<string> = new Set([
+      ...userPermissions,
+      ...(rolePermMap[userRole] || []),
+    ]);
+
+    // Wildcard '*' grants all permissions (admin / dev mode)
+    const hasWildcard = effectivePerms.has('*');
+
+    const isReadOnly = req.method === 'GET' || req.method === 'HEAD';
+    const requiredPerm = isReadOnly ? 'ivdr:read' : 'ivdr:write';
+
+    if (!hasWildcard && !effectivePerms.has(requiredPerm)) {
       return res.status(403).json({
-        error: 'Insufficient permissions for IVDR write operations',
-        code: 'IVDR_WRITE_DENIED',
-        requiredRoles: writeRoles,
+        error: `Insufficient permissions: ${requiredPerm} required`,
+        code: 'IVDR_PERMISSION_DENIED',
+        required: requiredPerm,
       });
     }
+
+    // Attach resolved permissions for downstream route handlers
+    (req as any).ivdrPermissions = effectivePerms;
 
     next();
   };

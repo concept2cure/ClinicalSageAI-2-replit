@@ -31,7 +31,45 @@ export default function createIVDRRoutes(pool: Pool): Router {
       // Defensive: throw rather than silently default to org 1.
       throw new Error('IVDR_NO_TENANT: organization context is missing from session');
     }
-    return typeof orgId === 'string' ? parseInt(orgId, 10) : orgId;
+    const n = typeof orgId === 'string' ? Number(orgId) : orgId;
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new Error('IVDR_BAD_TENANT: invalid organization ID in session');
+    }
+    return n;
+  }
+
+  /**
+   * Safe error response — never leaks raw error.message to client.
+   * Returns 503 IVDR_NOT_PROVISIONED for missing IVDR tables (42P01).
+   */
+  function safeError(res: Response, error: any, code: string, label: string): Response {
+    // 42P01 = undefined_table — IVDR tables not yet migrated
+    if (error?.code === '42P01') {
+      console.warn(`[IVDR] ${label}: table not found — denying until migrated`);
+      return res.status(503).json({
+        error: 'IVDR tables not yet provisioned — run migrations',
+        code: 'IVDR_NOT_PROVISIONED',
+      });
+    }
+    // IVDR_BAD_TENANT from getServerOrgId → 403
+    if (error?.message?.includes('IVDR_BAD_TENANT')) {
+      return res.status(403).json({
+        error: 'Invalid organization context',
+        code: 'IVDR_BAD_TENANT',
+      });
+    }
+    // IVDR_NO_TENANT from getServerOrgId → 403
+    if (error?.message?.includes('IVDR_NO_TENANT')) {
+      return res.status(403).json({
+        error: 'Organization context required',
+        code: 'IVDR_NO_TENANT',
+      });
+    }
+    console.error(`[IVDR] ${label}:`, error);
+    return res.status(500).json({
+      error: `${label} failed`,
+      code,
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -198,8 +236,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         regulatoryPath: getClassPath(classResult),
       });
     } catch (error: any) {
-      console.error('[IVDR] Classification error:', error);
-      return res.status(500).json({ error: 'Classification failed: ' + error.message });
+      return safeError(res, error, 'IVDR_CLASSIFY_ERROR', 'Classification');
     }
   });
 
@@ -216,8 +253,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
       return res.json({ classifications: result.rows });
     } catch (error: any) {
-      console.error('[IVDR] List classifications error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_LIST_CLASS_ERROR', 'List classifications');
     }
   });
 
@@ -263,8 +299,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${id}.json"`);
       return res.json(report);
     } catch (error: any) {
-      console.error('[IVDR] Classification report error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_CLASS_REPORT_ERROR', 'Classification report');
     }
   });
 
@@ -296,8 +331,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       return res.json({ validation: result.rows[0] });
     } catch (error: any) {
-      console.error('[IVDR] Create validation error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_CREATE_VALID_ERROR', 'Create validation');
     }
   });
 
@@ -318,8 +352,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
       return res.json({ validations: result.rows });
     } catch (error: any) {
-      console.error('[IVDR] List validations error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_LIST_VALID_ERROR', 'List validations');
     }
   });
 
@@ -447,8 +480,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       return res.json({ validation: result.rows[0], passFailStatus });
     } catch (error: any) {
-      console.error('[IVDR] Update validation params error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_UPDATE_VALID_ERROR', 'Update validation parameters');
     }
   });
 
@@ -466,8 +498,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
       return res.json({ history: result.rows });
     } catch (error: any) {
-      console.error('[IVDR] Validation history error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_VALID_HISTORY_ERROR', 'Validation history');
     }
   });
 
@@ -526,8 +557,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       return res.json({ evidence: result.rows[0] });
     } catch (error: any) {
-      console.error('[IVDR] Create clinical evidence error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_CREATE_EVID_ERROR', 'Create clinical evidence');
     }
   });
 
@@ -548,8 +578,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
       return res.json({ evidence: result.rows });
     } catch (error: any) {
-      console.error('[IVDR] List clinical evidence error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_LIST_EVID_ERROR', 'List clinical evidence');
     }
   });
 
@@ -656,8 +685,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         metrics: calculatedMetrics,
       });
     } catch (error: any) {
-      console.error('[IVDR] Update evidence results error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_UPDATE_EVID_ERROR', 'Update evidence results');
     }
   });
 
@@ -675,8 +703,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
       return res.json({ history: result.rows });
     } catch (error: any) {
-      console.error('[IVDR] Evidence history error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_EVID_HISTORY_ERROR', 'Evidence history');
     }
   });
 
@@ -736,8 +763,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       return res.json({ workflow: result.rows[0] });
     } catch (error: any) {
-      console.error('[IVDR] Create CDx workflow error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_CREATE_CDX_ERROR', 'Create CDx workflow');
     }
   });
 
@@ -758,8 +784,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
       return res.json({ workflows: result.rows });
     } catch (error: any) {
-      console.error('[IVDR] List CDx workflows error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_LIST_CDX_ERROR', 'List CDx workflows');
     }
   });
 
@@ -802,8 +827,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       return res.json({ workflow: result.rows[0] });
     } catch (error: any) {
-      console.error('[IVDR] Update CDx status error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_UPDATE_CDX_ERROR', 'Update CDx status');
     }
   });
 
@@ -821,8 +845,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
       return res.json({ history: result.rows });
     } catch (error: any) {
-      console.error('[IVDR] CDx history error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_CDX_HISTORY_ERROR', 'CDx history');
     }
   });
 
@@ -884,8 +907,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         },
       });
     } catch (error: any) {
-      console.error('[IVDR] Dashboard error:', error);
-      return res.status(500).json({ error: error.message });
+      return safeError(res, error, 'IVDR_DASHBOARD_ERROR', 'Dashboard');
     }
   });
 
