@@ -310,6 +310,7 @@ export default function ClinicalEvidenceTracker() {
         setSelectedId(data.evidence.id);
         setShowCreate(false);
         setNewStudyTitle('');
+        setNewStudyType('prospective');
         setNewRegistryId('');
         setNewSampleSize('');
         setNewPopulationDef('');
@@ -479,7 +480,10 @@ export default function ClinicalEvidenceTracker() {
                       onKeyDown={e => {
                         if (e.key === 'Enter' && newSourceDocInput.trim()) {
                           e.preventDefault();
-                          setNewSourceDocs(prev => [...prev, newSourceDocInput.trim()]);
+                          const trimmed = newSourceDocInput.trim();
+                          if (!newSourceDocs.includes(trimmed)) {
+                            setNewSourceDocs(prev => [...prev, trimmed]);
+                          }
                           setNewSourceDocInput('');
                         }
                       }}
@@ -491,7 +495,10 @@ export default function ClinicalEvidenceTracker() {
                     size="sm"
                     disabled={!newSourceDocInput.trim()}
                     onClick={() => {
-                      setNewSourceDocs(prev => [...prev, newSourceDocInput.trim()]);
+                      const trimmed = newSourceDocInput.trim();
+                      if (!newSourceDocs.includes(trimmed)) {
+                        setNewSourceDocs(prev => [...prev, trimmed]);
+                      }
                       setNewSourceDocInput('');
                     }}
                   >
@@ -682,7 +689,7 @@ export default function ClinicalEvidenceTracker() {
                                   onChange={e =>
                                     setTable(p => ({
                                       ...p,
-                                      tp: parseInt(e.target.value) || 0,
+                                      tp: Math.max(0, Math.floor(Number(e.target.value) || 0)),
                                     }))
                                   }
                                 />
@@ -701,7 +708,7 @@ export default function ClinicalEvidenceTracker() {
                                   onChange={e =>
                                     setTable(p => ({
                                       ...p,
-                                      fp: parseInt(e.target.value) || 0,
+                                      fp: Math.max(0, Math.floor(Number(e.target.value) || 0)),
                                     }))
                                   }
                                 />
@@ -725,7 +732,7 @@ export default function ClinicalEvidenceTracker() {
                                   onChange={e =>
                                     setTable(p => ({
                                       ...p,
-                                      fn: parseInt(e.target.value) || 0,
+                                      fn: Math.max(0, Math.floor(Number(e.target.value) || 0)),
                                     }))
                                   }
                                 />
@@ -744,7 +751,7 @@ export default function ClinicalEvidenceTracker() {
                                   onChange={e =>
                                     setTable(p => ({
                                       ...p,
-                                      tn: parseInt(e.target.value) || 0,
+                                      tn: Math.max(0, Math.floor(Number(e.target.value) || 0)),
                                     }))
                                   }
                                 />

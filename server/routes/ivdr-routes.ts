@@ -82,6 +82,15 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/classify', async (req: Request, res: Response) => {
     try {
+      // Route-level permission: classification requires ivdr:classify
+      const perms: Set<string> = (req as any).ivdrPermissions || new Set();
+      if (!perms.has('*') && !perms.has('ivdr:classify')) {
+        return res.status(403).json({
+          error: 'Classification requires ivdr:classify permission',
+          code: 'IVDR_CLASSIFY_DENIED',
+        });
+      }
+
       const {
         deviceName,
         intendedPurpose,
@@ -598,13 +607,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
         performanceClaims,
         comparisonMethod,
         conclusionText,
-        updatedBy,
         populationDefinition,
         inclusionCriteria,
         exclusionCriteria,
         sourceDocuments,
         reason,
       } = req.body;
+      const userId = (req as any).userId || 'system';
 
       // Calculate derived metrics from 2x2 table
       const tp = Number(truePositive) || 0;
@@ -628,12 +637,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         `INSERT INTO ivdr_evidence_result_history
          (evidence_id, results, updated_by, reason, created_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [
-          id,
-          JSON.stringify({ ...req.body, calculatedMetrics }),
-          updatedBy || 'system',
-          reason || null,
-        ]
+        [id, JSON.stringify({ ...req.body, calculatedMetrics }), userId, reason || null]
       );
 
       // Update current record including population + source docs
@@ -794,8 +798,18 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.put('/cdx-workflows/:id/status', async (req: Request, res: Response) => {
     try {
+      // Route-level permission: stage advancement requires ivdr:approve
+      const perms: Set<string> = (req as any).ivdrPermissions || new Set();
+      if (!perms.has('*') && !perms.has('ivdr:approve')) {
+        return res.status(403).json({
+          error: 'Stage advancement requires ivdr:approve permission',
+          code: 'IVDR_APPROVE_DENIED',
+        });
+      }
+
       const { id } = req.params;
-      const { status, notes, updatedBy } = req.body;
+      const { status, notes } = req.body;
+      const userId = (req as any).userId || 'system';
 
       const validStatuses = [
         'initiation',
@@ -817,7 +831,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         `INSERT INTO ivdr_cdx_status_history
          (workflow_id, status, notes, updated_by, created_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [id, status, notes || null, updatedBy || 'system']
+        [id, status, notes || null, userId]
       );
 
       const result = await pool.query(

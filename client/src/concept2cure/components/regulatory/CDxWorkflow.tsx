@@ -742,10 +742,9 @@ export default function CDxWorkflow() {
                         >
                           <div className="mt-0.5">
                             <Badge
-                              className={STATUS_COLORS[entry.new_status as CDxStatus] || 'bg-muted'}
+                              className={STATUS_COLORS[entry.status as CDxStatus] || 'bg-muted'}
                             >
-                              {CDX_STAGES.find(s => s.id === entry.new_status)?.label ||
-                                entry.new_status}
+                              {CDX_STAGES.find(s => s.id === entry.status)?.label || entry.status}
                             </Badge>
                           </div>
                           <div className="flex-1">
