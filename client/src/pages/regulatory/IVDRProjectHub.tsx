@@ -34,12 +34,16 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  Package,
+  Link2,
 } from 'lucide-react';
 import {
   IVDRAnnexVIIIClassifier,
   AnalyticalValidationTracker,
   ClinicalEvidenceTracker,
   CDxWorkflow,
+  EvidenceBinderTable,
+  PackBuilderPanel,
 } from '@/concept2cure/components/regulatory';
 import { useModules } from '@/concept2cure/hooks/useModules';
 import { isFeatureEnabled } from '@/flags/featureFlags';
@@ -348,7 +352,7 @@ export default function IVDRProjectHub() {
 
       {/* ── Tabbed Content ────────────────────────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-6 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-8 w-full max-w-4xl">
           <TabsTrigger value="overview" className="flex items-center gap-1.5">
             <ClipboardCheck className="h-3.5 w-3.5" />
             Overview
@@ -368,6 +372,14 @@ export default function IVDRProjectHub() {
           <TabsTrigger value="cdx" className="flex items-center gap-1.5">
             <GitBranch className="h-3.5 w-3.5" />
             CDx
+          </TabsTrigger>
+          <TabsTrigger value="binder" className="flex items-center gap-1.5">
+            <Link2 className="h-3.5 w-3.5" />
+            Binder
+          </TabsTrigger>
+          <TabsTrigger value="packs" className="flex items-center gap-1.5">
+            <Package className="h-3.5 w-3.5" />
+            Packs
           </TabsTrigger>
           <TabsTrigger value="audit" className="flex items-center gap-1.5">
             <FileCheck className="h-3.5 w-3.5" />
@@ -461,6 +473,16 @@ export default function IVDRProjectHub() {
         </TabsContent>
         <TabsContent value="cdx">
           <CDxWorkflow />
+        </TabsContent>
+
+        {/* ── Evidence Binder Tab ───────────────────────────────────────── */}
+        <TabsContent value="binder" className="mt-4">
+          <EvidenceBinderTable projectId="default" />
+        </TabsContent>
+
+        {/* ── Pack Builder Tab ──────────────────────────────────────────── */}
+        <TabsContent value="packs" className="mt-4">
+          <PackBuilderPanel projectId="default" />
         </TabsContent>
 
         {/* ── Audit Trail Tab ───────────────────────────────────────────── */}

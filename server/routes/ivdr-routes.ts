@@ -273,7 +273,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/classify/:id/report', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const result = await pool.query(`SELECT * FROM ivdr_classifications WHERE id = $1`, [id]);
+      const orgId = getServerOrgId(req);
+      const result = await pool.query(
+        `SELECT * FROM ivdr_classifications WHERE id = $1 AND organization_id = $2`,
+        [id, orgId]
+      );
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Classification not found' });
       }
@@ -374,6 +378,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.put('/validations/:id/parameters', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const orgId = getServerOrgId(req);
+      const userId = (req as any).userId || (req as any).user?.id || 'system';
       const {
         lod, // Limit of Detection
         loq, // Limit of Quantitation
@@ -391,7 +397,6 @@ export default function createIVDRRoutes(pool: Pool): Router {
         carryOver, // %
         hookEffect, // boolean / threshold
         referenceRange, // JSON: lower, upper, unit, method
-        updatedBy,
         evidenceDocuments, // Array of { type, title, url, version }
         acceptanceCriteria, // { paramKey: { min?, max?, unit } }
         reason, // Change reason for audit trail
@@ -435,7 +440,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         `INSERT INTO ivdr_validation_parameter_history
          (validation_id, parameters, updated_by, reason, created_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [id, JSON.stringify(req.body), updatedBy || 'system', reason || null]
+        [id, JSON.stringify(req.body), userId, reason || null]
       );
 
       // Update current parameters + new columns
@@ -461,7 +466,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
            acceptance_criteria = COALESCE($19, acceptance_criteria),
            pass_fail_status = $20,
            updated_at = NOW()
-         WHERE id = $1
+         WHERE id = $1 AND organization_id = $21
          RETURNING *`,
         [
           id,
@@ -484,6 +489,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           evidenceDocuments ? JSON.stringify(evidenceDocuments) : null,
           acceptanceCriteria ? JSON.stringify(acceptanceCriteria) : null,
           JSON.stringify(passFailStatus),
+          orgId,
         ]
       );
 
@@ -500,10 +506,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/validations/:id/history', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const orgId = getServerOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM ivdr_validation_parameter_history
-         WHERE validation_id = $1 ORDER BY created_at DESC`,
-        [id]
+        `SELECT h.* FROM ivdr_validation_parameter_history h
+         INNER JOIN ivdr_analytical_validations v ON v.id = h.validation_id
+         WHERE h.validation_id = $1 AND v.organization_id = $2
+         ORDER BY h.created_at DESC`,
+        [id, orgId]
       );
       return res.json({ history: result.rows });
     } catch (error: any) {
@@ -598,6 +607,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.put('/clinical-evidence/:id/results', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const orgId = getServerOrgId(req);
       const {
         truePositive,
         falsePositive,
@@ -661,7 +671,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
            source_documents = COALESCE($17, source_documents),
            status = 'completed',
            updated_at = NOW()
-         WHERE id = $1
+         WHERE id = $1 AND organization_id = $18
          RETURNING *`,
         [
           id,
@@ -681,6 +691,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           inclusionCriteria || null,
           exclusionCriteria || null,
           sourceDocuments ? JSON.stringify(sourceDocuments) : null,
+          orgId,
         ]
       );
 
@@ -700,10 +711,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/clinical-evidence/:id/history', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const orgId = getServerOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM ivdr_evidence_result_history
-         WHERE evidence_id = $1 ORDER BY created_at DESC`,
-        [id]
+        `SELECT h.* FROM ivdr_evidence_result_history h
+         INNER JOIN ivdr_clinical_evidence e ON e.id = h.evidence_id
+         WHERE h.evidence_id = $1 AND e.organization_id = $2
+         ORDER BY h.created_at DESC`,
+        [id, orgId]
       );
       return res.json({ history: result.rows });
     } catch (error: any) {
@@ -808,6 +822,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       }
 
       const { id } = req.params;
+      const orgId = getServerOrgId(req);
       const { status, notes } = req.body;
       const userId = (req as any).userId || 'system';
 
@@ -835,8 +850,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
       );
 
       const result = await pool.query(
-        `UPDATE ivdr_cdx_workflows SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING *`,
-        [id, status]
+        `UPDATE ivdr_cdx_workflows SET status = $2, updated_at = NOW() WHERE id = $1 AND organization_id = $3 RETURNING *`,
+        [id, status, orgId]
       );
 
       return res.json({ workflow: result.rows[0] });
@@ -852,10 +867,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/cdx-workflows/:id/history', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const orgId = getServerOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM ivdr_cdx_status_history
-         WHERE workflow_id = $1 ORDER BY created_at DESC`,
-        [id]
+        `SELECT h.* FROM ivdr_cdx_status_history h
+         INNER JOIN ivdr_cdx_workflows w ON w.id = h.workflow_id
+         WHERE h.workflow_id = $1 AND w.organization_id = $2
+         ORDER BY h.created_at DESC`,
+        [id, orgId]
       );
       return res.json({ history: result.rows });
     } catch (error: any) {

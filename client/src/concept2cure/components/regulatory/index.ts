@@ -38,6 +38,8 @@ export { default as IVDRAnnexVIIIClassifier } from './IVDRAnnexVIIIClassifier';
 export { default as AnalyticalValidationTracker } from './AnalyticalValidationTracker';
 export { default as ClinicalEvidenceTracker } from './ClinicalEvidenceTracker';
 export { default as CDxWorkflow } from './CDxWorkflow';
+export { default as EvidenceBinderTable } from './EvidenceBinderTable';
+export { default as PackBuilderPanel } from './PackBuilderPanel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RE-EXPORTS FROM SERVICES
@@ -129,6 +131,20 @@ export const REGULATORY_COMPONENTS = {
     title: 'CDx Workflow',
     description: 'Companion Diagnostic co-development lifecycle (IVD ↔ therapeutic product)',
     icon: 'Pill',
+    roles: ['ra_lead', 'ra_associate', 'regulatory_ops', 'executive'],
+  },
+  ivdr_binder: {
+    component: 'EvidenceBinderTable',
+    title: 'Evidence Binder',
+    description: 'Regulatory claim management with vault-linked supporting evidence',
+    icon: 'FileCheck',
+    roles: ['ra_lead', 'ra_associate', 'qa_manager', 'regulatory_ops'],
+  },
+  ivdr_packs: {
+    component: 'PackBuilderPanel',
+    title: 'Pack Builder',
+    description: 'Immutable, hash-verified technical file and submission pack generator',
+    icon: 'Package',
     roles: ['ra_lead', 'ra_associate', 'regulatory_ops', 'executive'],
   },
 } as const;

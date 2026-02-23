@@ -805,9 +805,9 @@ try {
 
     // Role → permission fallback map (compat for JWTs that carry role but not permissions)
     const rolePermMap: Record<string, string[]> = {
-      superadmin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve'],
-      admin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve'],
-      regulatory_lead: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve'],
+      superadmin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
+      admin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
+      regulatory_lead: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
       regulatory: ['ivdr:read', 'ivdr:write', 'ivdr:classify'],
       quality_assurance: ['ivdr:read', 'ivdr:write'],
       viewer: ['ivdr:read'],
@@ -842,6 +842,25 @@ try {
 
   app.use('/api/ivdr', requireIVDRAccess, createIVDRRoutes(pool));
   console.log('✅ IVDR API routes mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
+
+  // Mount IVDR Evidence Binder + Pack Builder routes (same middleware gate)
+  try {
+    const binderModule = await import('./routes/ivdr-binder-routes.ts');
+    const createBinderRoutes = binderModule.default;
+    app.use('/api/ivdr', requireIVDRAccess, createBinderRoutes(pool));
+    console.log('✅ IVDR Evidence Binder + Pack Builder routes mounted');
+  } catch (binderErr) {
+    console.error('❌ Failed to mount IVDR Binder routes:', binderErr);
+  }
+
+  // Start IVDR Pack Build Worker (async in-process job processor)
+  try {
+    const workerModule = await import('./workers/ivdr-pack-worker.ts');
+    workerModule.startPackBuildWorker(pool, 2000);
+    console.log('✅ IVDR Pack Build Worker started (2s interval)');
+  } catch (workerErr) {
+    console.error('❌ Failed to start IVDR Pack Worker:', workerErr);
+  }
 } catch (error) {
   console.error('❌ Failed to mount IVDR routes:', error);
 }
