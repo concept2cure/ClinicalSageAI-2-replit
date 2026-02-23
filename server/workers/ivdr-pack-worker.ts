@@ -348,12 +348,12 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     const manifestStable = stableStringify(manifestContent);
     const manifestHash = sha256(manifestStable);
 
-    // Insert pack row
+    // Insert pack row with BUILDING status — NOT SUCCEEDED yet
     const packResult = await client.query(
       `INSERT INTO ivdr_packs
          (organization_id, project_id, pack_type, pack_version, status,
           created_by_user_id, manifest_hash_sha256, snapshot_hash_sha256)
-       VALUES ($1, $2, $3, $4, 'SUCCEEDED', $5, $6, $7)
+       VALUES ($1, $2, $3, $4, 'BUILDING', $5, $6, $7)
        RETURNING id`,
       [orgId, projectId, packType, packVersion, userId, manifestHash, snapshotHash]
     );
@@ -367,6 +367,9 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
        VALUES ($1, $2, $3, $4::jsonb, $5)`,
       [orgId, projectId, packId, snapshotStable, snapshotHash]
     );
+
+    // Promote to SUCCEEDED only after snapshot is persisted
+    await client.query(`UPDATE ivdr_packs SET status = 'SUCCEEDED' WHERE id = $1`, [packId]);
 
     await client.query('COMMIT');
   } catch (e) {
@@ -401,6 +404,13 @@ let workerTimer: ReturnType<typeof setInterval> | null = null;
  * Polls every `intervalMs` (default 2000ms) for QUEUED jobs.
  */
 export function startPackBuildWorker(pool: Pool, intervalMs = 2000): void {
+  // Environment gate: only start worker if explicitly enabled.
+  // Prevents every server instance from running the worker in multi-instance deployments.
+  if (process.env.ENABLE_IVDR_WORKER !== 'true') {
+    console.log('[IVDR-PackWorker] Worker disabled (set ENABLE_IVDR_WORKER=true to enable)');
+    return;
+  }
+
   if (workerTimer) {
     console.warn('[IVDR-PackWorker] Worker already running');
     return;

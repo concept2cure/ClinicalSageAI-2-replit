@@ -46,6 +46,7 @@ import {
   PackBuilderPanel,
 } from '@/concept2cure/components/regulatory';
 import { useModules } from '@/concept2cure/hooks/useModules';
+import { useActiveProject } from '@/concept2cure/contexts/ZenWorkspaceContext';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -179,6 +180,7 @@ export default function IVDRProjectHub() {
   const [activeTab, setActiveTab] = useState('overview');
   const { isIvdrEnabled, isLoading: modulesLoading } = useModules();
   const featureFlagEnabled = isFeatureEnabled('ENABLE_IVDR_MODULE');
+  const activeProject = useActiveProject();
 
   // Fetch IVDR project tasks from submission center (if project exists)
   const { data: projectData } = useQuery({
@@ -240,6 +242,10 @@ export default function IVDRProjectHub() {
 
   const stages = projectData?.stages || IVDR_STAGES;
   const auditEvents: IVDRAuditEvent[] = auditData || [];
+
+  // Derive project ID from submission center query or active workspace project — never hardcoded
+  const ivdrProjectId: string | undefined =
+    projectData?.project?.id?.toString() || activeProject?.id || undefined;
 
   // Compute readiness score
   const readinessScore = useMemo(() => {
@@ -477,12 +483,24 @@ export default function IVDRProjectHub() {
 
         {/* ── Evidence Binder Tab ───────────────────────────────────────── */}
         <TabsContent value="binder" className="mt-4">
-          <EvidenceBinderTable projectId="default" />
+          {ivdrProjectId ? (
+            <EvidenceBinderTable projectId={ivdrProjectId} />
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              Select or create an IVDR project to manage evidence binder.
+            </p>
+          )}
         </TabsContent>
 
         {/* ── Pack Builder Tab ──────────────────────────────────────────── */}
         <TabsContent value="packs" className="mt-4">
-          <PackBuilderPanel projectId="default" />
+          {ivdrProjectId ? (
+            <PackBuilderPanel projectId={ivdrProjectId} />
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              Select or create an IVDR project to build packs.
+            </p>
+          )}
         </TabsContent>
 
         {/* ── Audit Trail Tab ───────────────────────────────────────────── */}

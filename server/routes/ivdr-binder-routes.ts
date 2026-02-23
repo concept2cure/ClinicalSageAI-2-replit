@@ -121,7 +121,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
   router.get('/binder', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
-      const projectId = (req.query.projectId as string) || 'default';
+      const projectId = req.query.projectId as string;
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId query parameter is required', code: 'BINDER_INVALID_INPUT' });
+      }
 
       const claimsResult = await pool.query(
         `SELECT id, claim_key, title, description, status, required_for_pack,
@@ -210,7 +215,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
       const {
-        projectId = 'default',
+        projectId,
         claimKey,
         title,
         description,
@@ -219,6 +224,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         ownerUserId,
         status = 'DRAFT',
       } = req.body;
+
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId is required', code: 'BINDER_INVALID_INPUT' });
+      }
 
       if (!claimKey || !title) {
         return res
@@ -306,7 +317,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       const userId = getUserId(req);
       const { claimId } = req.params;
       const {
-        projectId = 'default',
+        projectId,
         vaultFileId,
         vaultVersionId,
         excerptStart,
@@ -391,7 +402,13 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
       const { evidenceId } = req.params;
-      const { projectId = 'default', reason } = req.body;
+      const { projectId, reason } = req.body;
+
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId is required', code: 'BINDER_INVALID_INPUT' });
+      }
 
       if (!reason) {
         return res
@@ -446,7 +463,13 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
       const { claimId } = req.params;
-      const { projectId = 'default', reason } = req.body;
+      const { projectId, reason } = req.body;
+
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId is required', code: 'BINDER_INVALID_INPUT' });
+      }
 
       // Check evidence exists (at least 1 non-removed)
       const evidenceCheck = await pool.query(
@@ -508,7 +531,13 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
       const { claimId } = req.params;
-      const { projectId = 'default', reason } = req.body;
+      const { projectId, reason } = req.body;
+
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId is required', code: 'BINDER_INVALID_INPUT' });
+      }
 
       if (!reason) {
         return res
@@ -554,7 +583,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
   router.get('/packs/readiness', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
-      const projectId = (req.query.projectId as string) || 'default';
+      const projectId = req.query.projectId as string;
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId query parameter is required', code: 'BINDER_INVALID_INPUT' });
+      }
       const packType = (req.query.packType as string) || 'IVDR_TECHDOC';
 
       // Get required claims for this pack type
@@ -630,12 +664,18 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       const orgId = getServerOrgId(req);
       const userId = getUserId(req);
       const {
-        projectId = 'default',
+        projectId,
         packType = 'IVDR_TECHDOC',
         outputs = ['MANIFEST'],
         useLatestApprovedOnly = true,
         signBuild = false,
       } = req.body;
+
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId is required', code: 'BINDER_INVALID_INPUT' });
+      }
 
       // Insert job
       const result = await pool.query(
@@ -716,7 +756,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
   router.get('/packs', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
-      const projectId = (req.query.projectId as string) || 'default';
+      const projectId = req.query.projectId as string;
+      if (!projectId) {
+        return res
+          .status(400)
+          .json({ error: 'projectId query parameter is required', code: 'BINDER_INVALID_INPUT' });
+      }
       const packType = req.query.packType as string;
 
       let query = `SELECT id, pack_type, pack_version, status, created_at,
