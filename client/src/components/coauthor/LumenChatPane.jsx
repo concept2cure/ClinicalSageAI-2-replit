@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Send,
   Bot,
@@ -10,10 +11,18 @@ import {
   ListChecks,
   RefreshCw,
   ChevronDown,
+  ChevronUp,
   Code,
   Image,
   Copy,
   AlertTriangle,
+  Link2,
+  ShieldCheck,
+  ShieldAlert,
+  Info,
+  Plus,
+  Eye,
+  X,
 } from 'lucide-react';
 import {
   Card,
@@ -37,13 +46,225 @@ const defaultMessages = [
   },
 ];
 
-export default function LumenChatPane({ contextId }) {
+// ── Claim Status UI ──────────────────────────────────────────────────────────
+
+const CLAIM_STATUS_CONFIG = {
+  SUPPORTED: {
+    label: 'Supported',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    border: 'border-l-emerald-500',
+    icon: ShieldCheck,
+  },
+  WEAK: {
+    label: 'Weak',
+    color: 'bg-amber-100 text-amber-800 border-amber-200',
+    border: 'border-l-amber-500',
+    icon: Info,
+  },
+  UNSUPPORTED: {
+    label: 'Unsupported',
+    color: 'bg-red-100 text-red-800 border-red-200',
+    border: 'border-l-red-500',
+    icon: ShieldAlert,
+  },
+};
+
+function ClaimStatusPill({ status }) {
+  const config = CLAIM_STATUS_CONFIG[status] || CLAIM_STATUS_CONFIG.UNSUPPORTED;
+  const Icon = config.icon;
+  return (
+    <Badge variant="outline" className={`${config.color} text-[10px] font-medium gap-1`}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </Badge>
+  );
+}
+
+function ClaimCard({ claim, onAddToBinder, binderLoading }) {
+  const [expanded, setExpanded] = useState(false);
+  const config = CLAIM_STATUS_CONFIG[claim.status] || CLAIM_STATUS_CONFIG.UNSUPPORTED;
+
+  return (
+    <div className={`border-l-4 ${config.border} bg-muted/30 rounded-r-md px-3 py-2 space-y-1.5`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="prose prose-sm whitespace-pre-line break-words text-sm">
+            {claim.claimText}
+          </div>
+        </div>
+        <ClaimStatusPill status={claim.status} />
+      </div>
+
+      {/* Citation count + expand toggle */}
+      {claim.citations && claim.citations.length > 0 && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <Link2 className="h-3 w-3" />
+            {claim.citations.length} citation{claim.citations.length !== 1 ? 's' : ''}
+            {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+        </div>
+      )}
+
+      {/* Expanded citations */}
+      {expanded && claim.citations && (
+        <div className="space-y-1 pl-2 border-l-2 border-blue-200">
+          {claim.citations.map((cit, i) => (
+            <div
+              key={cit.chunkId || i}
+              className="text-xs text-muted-foreground flex items-center gap-1.5"
+            >
+              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-0.5 text-[9px] font-bold bg-blue-100 text-blue-700 rounded-sm">
+                {i + 1}
+              </span>
+              <span className="truncate">{cit.title || 'Unknown source'}</span>
+              <span className="text-[10px] text-muted-foreground/60 shrink-0">
+                {Math.round((cit.score || 0) * 100)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add to Binder button */}
+      {onAddToBinder && claim.status !== 'UNSUPPORTED' && claim.claimId && (
+        <div className="pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 text-[10px] px-2"
+            disabled={binderLoading}
+            onClick={() => onAddToBinder(claim.claimId)}
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Add to Binder
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChainDrawer({ chain, onClose }) {
+  if (!chain) return null;
+
+  return (
+    <div className="fixed inset-y-0 right-0 w-80 bg-background border-l shadow-lg z-50 flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <Eye className="h-4 w-4" />
+          Provenance Chain
+        </h3>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 text-xs">
+        {/* Retrieval */}
+        <div className="space-y-1">
+          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+            Retrieval
+          </div>
+          <div className="bg-muted/50 rounded-md p-2 space-y-1 font-mono">
+            <div>
+              <span className="text-muted-foreground">runId: </span>
+              <span className="break-all">{chain.retrievalRunId || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">snapshotHash: </span>
+              <span className="break-all">{chain.snapshotHashSha256 || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">sources: </span>
+              {chain.retrievalMeta?.retrievedCount ?? 0} retrieved,{' '}
+              {chain.retrievalMeta?.citedCount ?? 0} cited
+            </div>
+            <div>
+              <span className="text-muted-foreground">orgScoped: </span>
+              {chain.retrievalMeta?.orgScoped ? 'true' : 'false'}
+            </div>
+          </div>
+        </div>
+
+        {/* Generation */}
+        <div className="space-y-1">
+          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+            Generation
+          </div>
+          <div className="bg-muted/50 rounded-md p-2 space-y-1 font-mono">
+            <div>
+              <span className="text-muted-foreground">runId: </span>
+              <span className="break-all">{chain.generationRunId || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">model: </span>
+              {chain.model || 'unknown'}
+            </div>
+            <div>
+              <span className="text-muted-foreground">tokens: </span>
+              {chain.usage?.total_tokens ?? 0}
+            </div>
+          </div>
+        </div>
+
+        {/* Claims summary */}
+        {chain.claims && chain.claims.length > 0 && (
+          <div className="space-y-1">
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+              Claims ({chain.claims.length})
+            </div>
+            <div className="space-y-1">
+              {chain.claims.map((c, i) => (
+                <div key={i} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1">
+                  <span className="text-muted-foreground">#{i + 1}</span>
+                  <ClaimStatusPill status={c.status} />
+                  <span className="text-[10px] text-muted-foreground">
+                    {c.citations?.length || 0} cit.
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Sources */}
+        {chain.sources && chain.sources.length > 0 && (
+          <div className="space-y-1">
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+              Retrieved Sources
+            </div>
+            {chain.sources.map((s, i) => (
+              <div key={s.id || i} className="bg-muted/50 rounded-md p-2">
+                <div className="font-medium">
+                  [SRC-{i + 1}] {s.title}
+                </div>
+                <div className="text-muted-foreground mt-0.5 line-clamp-2">
+                  {s.content?.substring(0, 150)}...
+                </div>
+                <div className="text-muted-foreground mt-0.5">
+                  Score: {Math.round((s.score || 0) * 100)}%
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function LumenChatPane({ contextId, projectId }) {
   const [messages, setMessages] = useState(defaultMessages);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [threadId, setThreadId] = useState(null);
   const [aiModel, setAiModel] = useState(null);
   const [error, setError] = useState(null);
+  const [chainDrawerData, setChainDrawerData] = useState(null);
+  const [binderLoading, setBinderLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Reset chat when context changes
@@ -82,6 +303,7 @@ export default function LumenChatPane({ contextId }) {
         body: JSON.stringify({
           message: userInput,
           thread_id: threadId,
+          project_id: projectId || undefined,
           system_prompt: contextId
             ? `You are a regulatory affairs AI assistant helping with eCTD section ${contextId}. Provide specific, actionable guidance for this regulatory document section. Include ICH guideline references where applicable.`
             : undefined,
@@ -89,7 +311,12 @@ export default function LumenChatPane({ contextId }) {
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(
+          errBody.code === 'AI_PROVIDER_UNAVAILABLE'
+            ? 'AI providers are unavailable. Please configure OPENAI_API_KEY.'
+            : `Server returned ${response.status}`
+        );
       }
 
       const data = await response.json();
@@ -106,6 +333,14 @@ export default function LumenChatPane({ contextId }) {
         source: 'api',
         citations: data.citations || data.sources || [],
         confidence: typeof data.confidence === 'number' ? data.confidence : null,
+        // Provenance chain
+        claims: data.claims || null,
+        retrievalRunId: data.retrievalRunId || null,
+        snapshotHashSha256: data.snapshotHashSha256 || null,
+        generationRunId: data.generationRunId || null,
+        retrievalMeta: data.retrievalMeta || null,
+        sources: data.sources || [],
+        usage: data.usage || null,
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -138,6 +373,39 @@ export default function LumenChatPane({ contextId }) {
   const formatTime = timestamp => {
     return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  const handleAddToBinder = useCallback(
+    async claimId => {
+      if (!projectId) {
+        setError('No project selected — cannot add to binder.');
+        return;
+      }
+      setBinderLoading(true);
+      try {
+        const resp = await fetch(`/api/ai/claims/${claimId}/add-to-binder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId }),
+        });
+        if (!resp.ok) {
+          const errBody = await resp.json().catch(() => ({}));
+          throw new Error(errBody.error || `Server returned ${resp.status}`);
+        }
+        const result = await resp.json();
+        // Brief success indicator
+        setError(null);
+        alert(
+          `Claim added to binder (${result.claimKey}, ${result.evidenceCount} evidence attached)`
+        );
+      } catch (err) {
+        console.error('Add to binder failed:', err);
+        setError(`Failed to add claim to binder: ${err.message}`);
+      } finally {
+        setBinderLoading(false);
+      }
+    },
+    [projectId]
+  );
 
   return (
     <Card className="border shadow-sm">
@@ -174,12 +442,29 @@ export default function LumenChatPane({ contextId }) {
                 className={`max-w-[80%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : message.source === 'error' ? 'bg-destructive/10 border border-destructive/20' : 'bg-muted'} rounded-xl px-4 py-2.5`}
               >
                 <div className="space-y-2">
-                  <div className="prose prose-sm whitespace-pre-line break-words">
-                    {message.source === 'error' && (
-                      <AlertTriangle className="h-4 w-4 inline mr-1 text-destructive" />
-                    )}
-                    {message.content}
-                  </div>
+                  {/* Claim cards rendering (provenance-tracked) */}
+                  {message.role === 'assistant' &&
+                  message.source === 'api' &&
+                  message.claims &&
+                  message.claims.length > 0 ? (
+                    <div className="space-y-2">
+                      {message.claims.map(claim => (
+                        <ClaimCard
+                          key={claim.claimIndex}
+                          claim={claim}
+                          onAddToBinder={projectId ? handleAddToBinder : null}
+                          binderLoading={binderLoading}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="prose prose-sm whitespace-pre-line break-words">
+                      {message.source === 'error' && (
+                        <AlertTriangle className="h-4 w-4 inline mr-1 text-destructive" />
+                      )}
+                      {message.content}
+                    </div>
+                  )}
                   {/* Citation / Source rendering — regulatory traceability */}
                   {message.role === 'assistant' && message.source === 'api' && (
                     <div className="mt-2">
@@ -189,6 +474,18 @@ export default function LumenChatPane({ contextId }) {
                         </div>
                       )}
                       <CitationList citations={message.citations || []} />
+                      {/* Show Chain button */}
+                      {(message.retrievalRunId || message.generationRunId) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 mt-1"
+                          onClick={() => setChainDrawerData(message)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Show Chain
+                        </Button>
+                      )}
                     </div>
                   )}
                   <div
@@ -291,6 +588,11 @@ export default function LumenChatPane({ contextId }) {
           </Button>
         </div>
       </CardFooter>
+
+      {/* Provenance Chain Drawer */}
+      {chainDrawerData && (
+        <ChainDrawer chain={chainDrawerData} onClose={() => setChainDrawerData(null)} />
+      )}
     </Card>
   );
 }

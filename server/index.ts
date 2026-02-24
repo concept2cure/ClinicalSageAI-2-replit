@@ -2532,6 +2532,16 @@ import chatRoutes from './routes/chat.ts';
 app.use('/api/chat', chatRoutes);
 console.log('✅ Lumen Cortex Chat API routes mounted successfully');
 
+// Mount AI Claims → Binder provenance route
+try {
+  const claimsModule = await import('./routes/ai-claims-routes.ts');
+  const createAIClaimsRoutes = claimsModule.default;
+  app.use('/api/ai', createAIClaimsRoutes(pool));
+  console.log('✅ AI Claims → Binder routes mounted (/api/ai/claims)');
+} catch (claimsErr) {
+  console.error('❌ Failed to mount AI Claims routes:', claimsErr);
+}
+
 // Mount Concept2Cure routes (Claude.ai-style regulatory interface)
 import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);

@@ -18,6 +18,7 @@ import {
   saveChatMessage as saveMessage,
 } from '../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
+import { createHash } from 'crypto';
 
 const router = Router();
 
@@ -276,13 +277,38 @@ Thank you for your query. I'm Lumen Cortex, your AI-powered regulatory affairs a
 What regulatory challenge can I help you with today?`;
 }
 
+// ── Provenance helpers ─────────────────────────────────────────────────────
+
+/** SHA-256 hex digest of a UTF-8 string */
+function sha256(data: string): string {
+  return createHash('sha256').update(data, 'utf8').digest('hex');
+}
+
+/** Deterministic JSON.stringify — sorted keys, undefined omitted */
+function stableStringify(obj: any): string {
+  if (obj === null || obj === undefined) return '';
+  if (typeof obj !== 'object') return JSON.stringify(obj);
+  if (Array.isArray(obj)) return '[' + obj.map(stableStringify).join(',') + ']';
+  const keys = Object.keys(obj).sort();
+  return (
+    '{' +
+    keys
+      .filter(k => obj[k] !== undefined)
+      .map(k => JSON.stringify(k) + ':' + stableStringify(obj[k]))
+      .join(',') +
+    '}'
+  );
+}
+
 /**
  * POST /api/chat/send-message
- * Main chat endpoint - handles user messages and returns AI responses
+ * Main chat endpoint — 9-step provenance-tracked RAG pipeline.
+ *
+ * Steps: RESOLVE_ORG → THREAD → USER_MSG → RETRIEVE → PROMPT → GENERATE → PERSIST → CLAIMS → CITATIONS
  */
 router.post('/send-message', async (req: Request, res: Response) => {
   try {
-    const { message, thread_id, file_id, system_prompt } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -291,16 +317,49 @@ router.post('/send-message', async (req: Request, res: Response) => {
       });
     }
 
-    // Get or create thread in DB
+    // ── STEP 1: RESOLVE ORG (from session only — no header fallback for org) ──
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+    const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
+
+    // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const threadId = await getOrCreateThread(thread_id, (req as any).user?.id);
+
+    // Upsert provenance thread (org-scoped)
+    if (numericOrgId) {
+      try {
+        await pool.query(
+          `INSERT INTO ai_threads (id, organization_id, project_id, created_by)
+           VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+          [threadId, numericOrgId, project_id || null, userId]
+        );
+      } catch (e: any) {
+        if (e?.code !== '42P01') throw e;
+        console.warn('[Lumen Cortex] ai_threads table missing — provenance disabled');
+      }
+    }
+
     const previousMessages = await getThreadMessages(threadId);
 
-    // ── STEP 1: RETRIEVE FIRST (real RAG — not post-hoc citation theater) ──
-    // Retrieve org-scoped evidence BEFORE calling the model so the answer
-    // is grounded in actual knowledge-base atoms. The model is instructed
-    // to cite sources by [SRC-n] ID; returned citations map to these IDs.
+    // ── STEP 3: PERSIST USER MESSAGE (provenance chain) ─────────────────
+    if (numericOrgId) {
+      try {
+        await pool.query(
+          `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
+          [threadId, message]
+        );
+      } catch (e: any) {
+        if (e?.code !== '42P01')
+          console.warn('[Lumen Cortex] ai_messages insert failed:', e.message);
+      }
+    }
+
+    // ── STEP 4: RETRIEVE (org-scoped pgvector hybrid search) ────────────
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
     let confidence: number | null = null;
+    let retrievalRunId: string | null = null;
+    let snapshotHashSha256: string | null = null;
+    const chunkRows: Array<{ id: string; rank: number; atomId: string; score: number }> = [];
     const orgUuid =
       (req as any).tenantContext?.organizationUuid ||
       (req.headers['x-org-uuid'] as string | undefined);
@@ -321,13 +380,75 @@ router.post('/send-message', async (req: Request, res: Response) => {
         if (sources.length > 0) {
           confidence = Math.min(1, sources.reduce((sum, s) => sum + s.score, 0) / sources.length);
         }
+
+        // Persist retrieval run + chunks (provenance chain)
+        if (numericOrgId) {
+          try {
+            const queryHash = sha256(message);
+            const snapshotData = sources.map((s, i) => ({
+              rank: i + 1,
+              atomId: s.id,
+              score: s.score,
+            }));
+            snapshotHashSha256 = sha256(stableStringify(snapshotData));
+
+            const rrResult = await pool.query(
+              `INSERT INTO ai_retrieval_runs
+                 (organization_id, project_id, user_id, scope, embedding_model,
+                  query_text, query_hash_sha256, snapshot_hash_sha256, top_k, threshold, result_count)
+               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, 5, 0.7, $8)
+               RETURNING id`,
+              [
+                numericOrgId,
+                project_id || null,
+                userId,
+                orgUuid ? 'org' : 'global',
+                message,
+                queryHash,
+                snapshotHashSha256,
+                sources.length,
+              ]
+            );
+            retrievalRunId = rrResult.rows[0].id;
+
+            for (let i = 0; i < sources.length; i++) {
+              const s = sources[i];
+              const excerptHash = sha256(s.content);
+              const crResult = await pool.query(
+                `INSERT INTO ai_retrieval_chunks
+                   (retrieval_run_id, rank, source_type, atom_id, title,
+                    excerpt_hash_sha256, excerpt_preview, score)
+                 VALUES ($1, $2, 'atom', $3, $4, $5, $6, $7)
+                 RETURNING id`,
+                [
+                  retrievalRunId,
+                  i + 1,
+                  s.id,
+                  s.title,
+                  excerptHash,
+                  s.content.substring(0, 500),
+                  s.score,
+                ]
+              );
+              chunkRows.push({
+                id: crResult.rows[0].id,
+                rank: i + 1,
+                atomId: s.id,
+                score: s.score,
+              });
+            }
+          } catch (e: any) {
+            if (e?.code !== '42P01')
+              console.warn('[Lumen Cortex] Retrieval persist failed:', e.message);
+          }
+        }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
       console.warn('[Lumen Cortex] Source retrieval failed:', srcErr.message);
     }
 
-    // ── STEP 2: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
+    // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
     // If we have retrieved evidence, inject it into the system prompt so
     // the model can ground its answer and cite by [SRC-n] reference.
     let evidenceBlock = '';
@@ -341,68 +462,190 @@ router.post('/send-message', async (req: Request, res: Response) => {
     }
 
     let assistantMessage: string;
-    let model = 'lumen-cortex-demo';
+    let model: string;
+    let provider = '';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    let latencyMs: number | null = null;
 
-    // ── STEP 3: GENERATE ANSWER GROUNDED IN EVIDENCE ───────────────────
+    // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
-    if (gw && gw.getEnabledProviders().length > 0) {
-      try {
-        const systemPrompt = (system_prompt || REGULATORY_SYSTEM_PROMPT) + evidenceBlock;
-
-        const gwMessages = [
-          { role: 'system' as const, content: systemPrompt },
-          ...previousMessages.map((m: any) => ({
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-          })),
-          { role: 'user' as const, content: message },
-        ];
-
-        console.log(
-          `[Lumen Cortex] Sending message through AI Gateway (${sources.length} sources retrieved)...`
-        );
-
-        const gwResponse: GatewayResponse = await gw.route({
-          taskType: 'chat',
-          messages: gwMessages,
-          temperature: 0.7,
-          maxTokens: 2000,
-          callerModule: 'lumen-cortex-chat',
-          organizationId: (req as any).tenantId || (req as any).tenantContext?.organizationId,
-          userId: (req as any).userId,
-        });
-
-        assistantMessage =
-          gwResponse.content ||
-          'I apologize, but I was unable to generate a response. Please try again.';
-        model = `${gwResponse.provider}/${gwResponse.model}`;
-        usage = {
-          prompt_tokens: gwResponse.usage.inputTokens,
-          completion_tokens: gwResponse.usage.outputTokens,
-          total_tokens: gwResponse.usage.totalTokens,
-        };
-
-        console.log(
-          `[Lumen Cortex] AI Gateway response via ${model} (${gwResponse.latencyMs}ms, req=${gwResponse.requestId})`
-        );
-      } catch (gwError: any) {
-        console.warn('[Lumen Cortex] AI Gateway call failed, using demo mode:', gwError.message);
-        assistantMessage = generateDemoResponse(message);
-        model = 'lumen-cortex-demo';
-      }
-    } else {
-      console.log('[Lumen Cortex] Using demo mode (no AI providers available)');
-      assistantMessage = generateDemoResponse(message);
+    if (!gw || gw.getEnabledProviders().length === 0) {
+      return res.status(503).json({
+        error: 'No AI providers available. Configure OPENAI_API_KEY or another provider.',
+        code: 'AI_PROVIDER_UNAVAILABLE',
+      });
     }
 
-    // Save messages to database
+    try {
+      const systemPrompt = (system_prompt || REGULATORY_SYSTEM_PROMPT) + evidenceBlock;
+
+      const gwMessages = [
+        { role: 'system' as const, content: systemPrompt },
+        ...previousMessages.map((m: any) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })),
+        { role: 'user' as const, content: message },
+      ];
+
+      console.log(
+        `[Lumen Cortex] Sending through AI Gateway (${sources.length} sources retrieved)...`
+      );
+
+      const gwResponse: GatewayResponse = await gw.route({
+        taskType: 'chat',
+        messages: gwMessages,
+        temperature: 0.7,
+        maxTokens: 2000,
+        callerModule: 'lumen-cortex-chat',
+        organizationId: numericOrgId ?? undefined,
+        userId,
+      });
+
+      assistantMessage =
+        gwResponse.content ||
+        'I apologize, but I was unable to generate a response. Please try again.';
+      model = `${gwResponse.provider}/${gwResponse.model}`;
+      provider = gwResponse.provider;
+      usage = {
+        prompt_tokens: gwResponse.usage.inputTokens,
+        completion_tokens: gwResponse.usage.outputTokens,
+        total_tokens: gwResponse.usage.totalTokens,
+      };
+      latencyMs = gwResponse.latencyMs;
+
+      console.log(
+        `[Lumen Cortex] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+      );
+    } catch (gwError: any) {
+      console.error('[Lumen Cortex] AI Gateway call failed:', gwError.message);
+      return res.status(503).json({
+        error: 'AI provider call failed',
+        code: 'AI_PROVIDER_UNAVAILABLE',
+        message: gwError.message,
+      });
+    }
+
+    // Save to legacy chat_messages for backward compat
     await saveMessage(threadId, 'user', message, model);
     await saveMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
 
-    // ── STEP 4: BUILD CITATIONS MAP ────────────────────────────────────
-    // Parse [SRC-n] references from the model output to build a citations
-    // map that ties specific claims to specific evidence atoms.
+    // ── STEP 7: PERSIST GENERATION RUN (provenance chain) ──────────────
+    let generationRunId: string | null = null;
+    if (numericOrgId) {
+      try {
+        const answerHash = sha256(assistantMessage);
+        const genResult = await pool.query(
+          `INSERT INTO ai_generation_runs
+             (retrieval_run_id, thread_id, model, provider, answer_hash_sha256,
+              prompt_tokens, completion_tokens, total_tokens, latency_ms, is_demo)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false)
+           RETURNING id`,
+          [
+            retrievalRunId,
+            threadId,
+            model,
+            provider,
+            answerHash,
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            usage.total_tokens,
+            latencyMs,
+          ]
+        );
+        generationRunId = genResult.rows[0].id;
+
+        // Persist assistant ai_message with generation linkage
+        await pool.query(
+          `INSERT INTO ai_messages (thread_id, role, content, generation_run_id)
+           VALUES ($1, 'assistant', $2, $3)`,
+          [threadId, assistantMessage, generationRunId]
+        );
+      } catch (e: any) {
+        if (e?.code !== '42P01')
+          console.warn('[Lumen Cortex] Generation persist failed:', e.message);
+      }
+    }
+
+    // ── STEP 8: CLAIM SPLIT (paragraph-level) ─────────────────────────
+    const claimTexts = assistantMessage
+      .split(/\n\n+/)
+      .map(c => c.trim())
+      .filter(c => c.length > 0);
+
+    interface ClaimResponse {
+      claimId: string | null;
+      claimIndex: number;
+      claimText: string;
+      status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED';
+      citations: Array<{ chunkId: string; sourceId: string; title: string; score: number }>;
+    }
+    const claims: ClaimResponse[] = [];
+
+    // ── STEP 9: CITATION LINKAGE (per-claim) ──────────────────────────
+    for (let ci = 0; ci < claimTexts.length; ci++) {
+      const claimText = claimTexts[ci];
+      const claimHash = sha256(claimText);
+
+      // Find [SRC-n] refs in this specific claim
+      const claimRefPattern = /\[SRC-(\d+)\]/g;
+      const claimRefs = new Set<number>();
+      let refMatch;
+      while ((refMatch = claimRefPattern.exec(claimText)) !== null) {
+        const idx = parseInt(refMatch[1], 10) - 1;
+        if (idx >= 0 && idx < sources.length) claimRefs.add(idx);
+      }
+
+      // Status: SUPPORTED (≥1 citation), WEAK (0 but sources exist), UNSUPPORTED (no sources)
+      const status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED' =
+        claimRefs.size > 0 ? 'SUPPORTED' : sources.length > 0 ? 'WEAK' : 'UNSUPPORTED';
+
+      let claimId: string | null = null;
+      const citationLinks: ClaimResponse['citations'] = [];
+
+      if (numericOrgId && generationRunId) {
+        try {
+          const claimResult = await pool.query(
+            `INSERT INTO ai_claims
+               (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+            [
+              generationRunId,
+              ci,
+              claimText,
+              claimHash,
+              claimRefs.size > 0 ? confidence : null,
+              status,
+            ]
+          );
+          claimId = claimResult.rows[0].id;
+
+          // Persist citation linkages
+          for (const refIdx of claimRefs) {
+            const chunk = chunkRows[refIdx];
+            if (chunk) {
+              await pool.query(
+                `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
+                 VALUES ($1, $2, $3)`,
+                [claimId, chunk.id, chunk.score]
+              );
+              citationLinks.push({
+                chunkId: chunk.id,
+                sourceId: chunk.atomId,
+                title: sources[refIdx]?.title || '',
+                score: chunk.score,
+              });
+            }
+          }
+        } catch (e: any) {
+          if (e?.code !== '42P01') console.warn('[Lumen Cortex] Claim persist failed:', e.message);
+        }
+      }
+
+      claims.push({ claimId, claimIndex: ci, claimText, status, citations: citationLinks });
+    }
+
+    // ── BUILD BACKWARD-COMPAT CITATIONS MAP ────────────────────────────
     const citedRefs = new Set<number>();
     const refPattern = /\[SRC-(\d+)\]/g;
     let match;
@@ -417,9 +660,10 @@ router.post('/send-message', async (req: Request, res: Response) => {
       title: s.title,
       snippet: s.content,
       relevanceScore: s.score,
-      cited: citedRefs.has(i), // true only if model actually referenced this source
+      cited: citedRefs.has(i),
     }));
 
+    // ── RESPONSE (backward compat + provenance chain) ──────────────────
     res.json({
       answer: assistantMessage,
       thread_id: threadId,
@@ -433,6 +677,11 @@ router.post('/send-message', async (req: Request, res: Response) => {
         citedCount: citedRefs.size,
         orgScoped: !!orgUuid,
       },
+      // Provenance chain
+      retrievalRunId,
+      snapshotHashSha256,
+      generationRunId,
+      claims,
     });
   } catch (error: any) {
     console.error('[Lumen Cortex] Chat error:', error);
