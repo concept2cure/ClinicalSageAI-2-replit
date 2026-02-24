@@ -128,33 +128,59 @@ export default function createAIClaimsRoutes(pool: Pool): Router {
       const binderClaimId = binderClaimResult.rows[0].id;
 
       // ── Attach evidence rows from citations ──────────────────────────
+      // Discriminate vault vs atom sources — never stuff non-vault strings into vault columns
       let evidenceCount = 0;
       for (const cit of citationsResult.rows) {
-        // Use vault refs if available, otherwise label as atom-source explicitly
-        const vaultFileId = cit.vault_file_id || `atom:${cit.atom_id || 'unknown'}`;
-        const vaultVersionId = cit.vault_version_id || `unversioned:${cit.retrieval_chunk_id}`;
+        const hasVaultRef = !!(cit.vault_file_id && cit.vault_version_id);
+        const sourceType = hasVaultRef ? 'vault' : 'atom';
 
         try {
-          await pool.query(
-            `INSERT INTO ivdr_binder_evidence
-               (organization_id, project_id, claim_id, vault_file_id, vault_version_id,
-                excerpt_start, excerpt_end, excerpt_hash_sha256, excerpt_preview,
-                notes, created_by_user_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-            [
-              orgId,
-              projectId,
-              binderClaimId,
-              vaultFileId,
-              vaultVersionId,
-              cit.excerpt_start,
-              cit.excerpt_end,
-              cit.excerpt_hash_sha256,
-              cit.excerpt_preview,
-              `Source: ${cit.title || 'unknown'} (relevance: ${Math.round((cit.relevance_score || 0) * 100)}%)`,
-              userId,
-            ]
-          );
+          if (sourceType === 'vault') {
+            await pool.query(
+              `INSERT INTO ivdr_binder_evidence
+                 (organization_id, project_id, claim_id, source_type,
+                  vault_file_id, vault_version_id,
+                  excerpt_start, excerpt_end, excerpt_hash_sha256, excerpt_preview,
+                  notes, created_by_user_id)
+               VALUES ($1, $2, $3, 'vault', $4, $5, $6, $7, $8, $9, $10, $11)`,
+              [
+                orgId,
+                projectId,
+                binderClaimId,
+                cit.vault_file_id,
+                cit.vault_version_id,
+                cit.excerpt_start,
+                cit.excerpt_end,
+                cit.excerpt_hash_sha256,
+                cit.excerpt_preview,
+                `Source: ${cit.title || 'unknown'} (relevance: ${Math.round((cit.relevance_score || 0) * 100)}%)`,
+                userId,
+              ]
+            );
+          } else {
+            // Atom-sourced evidence: vault columns stay NULL, atom IDs populated
+            await pool.query(
+              `INSERT INTO ivdr_binder_evidence
+                 (organization_id, project_id, claim_id, source_type,
+                  source_atom_id, source_retrieval_chunk_id,
+                  excerpt_start, excerpt_end, excerpt_hash_sha256, excerpt_preview,
+                  notes, created_by_user_id)
+               VALUES ($1, $2, $3, 'atom', $4, $5, $6, $7, $8, $9, $10, $11)`,
+              [
+                orgId,
+                projectId,
+                binderClaimId,
+                cit.atom_id || 'unknown',
+                cit.retrieval_chunk_id,
+                cit.excerpt_start,
+                cit.excerpt_end,
+                cit.excerpt_hash_sha256,
+                cit.excerpt_preview,
+                `Source: ${cit.title || 'unknown'} (relevance: ${Math.round((cit.relevance_score || 0) * 100)}%) [atom]`,
+                userId,
+              ]
+            );
+          }
           evidenceCount++;
         } catch (evErr: any) {
           // Duplicate evidence is fine — skip quietly

@@ -405,9 +405,10 @@ router.post('/send-message', async (req: Request, res: Response) => {
         if (idx >= 0 && idx < sources.length) claimRefs.add(idx);
       }
 
-      // Status: SUPPORTED (≥1 citation), WEAK (0 but sources exist), UNSUPPORTED (no sources)
+      // Status: SUPPORTED (≥1 citation), UNSUPPORTED (no citations)
+      // WEAK is reserved for future verifier (citations exist but low quality/score)
       const status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED' =
-        claimRefs.size > 0 ? 'SUPPORTED' : sources.length > 0 ? 'WEAK' : 'UNSUPPORTED';
+        claimRefs.size > 0 ? 'SUPPORTED' : 'UNSUPPORTED';
 
       let claimId: string | null = null;
       const citationLinks: ClaimResponse['citations'] = [];
@@ -468,7 +469,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
       sourceAtomId: s.id,
       sourceType: 'atom' as const, // Rule 5: explicit source type
       title: s.title,
-      snippet: s.content,
+      snippet: s.content?.length > 500 ? s.content.substring(0, 500) + '…' : s.content,
       relevanceScore: s.score,
       cited: citedRefs.has(i),
     }));
