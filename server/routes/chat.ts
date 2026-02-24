@@ -1,9 +1,9 @@
 /**
  * Chat API Routes - Lumen Cortex AI Chat Interface
  *
- * Provides Claude-like conversational AI for regulatory guidance.
- * Connects to OpenAI GPT-4 with context-aware regulatory knowledge.
- * Includes intelligent fallback for demo/development environments.
+ * 9-step provenance-tracked RAG pipeline for regulatory guidance.
+ * Connects to OpenAI GPT-4 via AI Gateway with org-scoped retrieval.
+ * No demo fallback — returns 503 if no provider is available.
  *
  * @module server/routes/chat
  */
@@ -35,8 +35,6 @@ function ensureGateway() {
   return gateway;
 }
 
-const isDev = process.env.NODE_ENV !== 'production';
-
 // System prompt for regulatory AI assistant
 const REGULATORY_SYSTEM_PROMPT = `You are Lumen Cortex, an expert AI assistant for regulatory affairs in the life sciences industry. You specialize in:
 
@@ -63,219 +61,6 @@ Format your responses with clear structure using:
 - Bullet points for lists
 - **Bold** for key terms
 - Code blocks for regulatory references`;
-
-/**
- * Intelligent demo response generator for when OpenAI is unavailable
- */
-function generateDemoResponse(message: string): string {
-  const lowerMessage = message.toLowerCase();
-
-  // 510(k) related queries
-  if (lowerMessage.includes('510(k)') || lowerMessage.includes('510k')) {
-    return `## FDA 510(k) Premarket Notification Requirements
-
-A 510(k) submission requires demonstrating **substantial equivalence** to a legally marketed predicate device. Here are the key requirements:
-
-### Essential Components
-
-1. **Device Description**
-   - Intended use and indications for use
-   - Technological characteristics
-   - Operating principles and specifications
-
-2. **Predicate Device Comparison**
-   - Identify predicate device(s) with 510(k) number
-   - Side-by-side comparison table
-   - Technological and performance equivalence
-
-3. **Performance Testing**
-   - Bench testing data
-   - Biocompatibility (if applicable per ISO 10993)
-   - Electrical safety (IEC 60601-1 for powered devices)
-   - Software documentation (IEC 62304 for devices with software)
-
-4. **Labeling**
-   - Package labeling
-   - Instructions for Use (IFU)
-   - User manual
-
-### Regulatory References
-- **21 CFR Part 807 Subpart E** - Premarket Notification Procedures
-- **FDA Guidance**: "The 510(k) Program: Evaluating Substantial Equivalence"
-- **FDA Guidance**: "Refuse to Accept Policy for 510(k)s"
-
-### Timeline
-Typical FDA review: **90-180 days** (Traditional 510(k))
-
-Would you like me to elaborate on any specific aspect of the 510(k) process?`;
-  }
-
-  // IND related queries
-  if (lowerMessage.includes('ind') || lowerMessage.includes('investigational new drug')) {
-    return `## IND (Investigational New Drug) Application Overview
-
-An IND application enables a sponsor to begin clinical trials in humans for a new drug. Here's the essential structure:
-
-### IND Components (21 CFR 312.23)
-
-1. **Form FDA 1571** - Cover sheet
-2. **Table of Contents**
-3. **Introductory Statement**
-4. **General Investigational Plan**
-5. **Investigator's Brochure (IB)**
-6. **Protocols**
-   - Phase 1, 2, or 3 protocol(s)
-   - Informed consent forms
-7. **Chemistry, Manufacturing, and Controls (CMC)**
-   - Drug substance
-   - Drug product
-   - Placebo (if applicable)
-8. **Pharmacology and Toxicology**
-   - Nonclinical studies
-   - ADME studies
-9. **Previous Human Experience**
-10. **Additional Information**
-
-### Key Regulatory References
-- **21 CFR Part 312** - Investigational New Drug Application
-- **ICH M4** - Common Technical Document (CTD) format
-- **ICH E6(R2)** - Good Clinical Practice
-
-### Timeline
-- FDA has **30 days** to review and place on hold if concerns exist
-- No response = "safe to proceed"
-
-Would you like details on any specific IND section?`;
-  }
-
-  // CER related queries
-  if (lowerMessage.includes('cer') || lowerMessage.includes('clinical evaluation')) {
-    return `## Clinical Evaluation Report (CER) Requirements
-
-A CER demonstrates clinical safety and performance of medical devices under **EU MDR 2017/745** and **IVDR 2017/746**.
-
-### CER Structure (MEDDEV 2.7/1 Rev 4)
-
-1. **Scope**
-   - Device description and specifications
-   - Intended purpose and target population
-
-2. **Clinical Background**
-   - Current knowledge and standards
-   - State of the art for indication
-
-3. **Literature Search Protocol**
-   - Databases searched (PubMed, Embase, Cochrane)
-   - Search strings and date ranges
-   - Selection criteria
-
-4. **Clinical Data Analysis**
-   - Appraisal methodology
-   - Data extraction tables
-   - Equivalence demonstration (if applicable)
-
-5. **Clinical Evidence Summary**
-   - Benefit-risk analysis
-   - Gap analysis
-   - Residual risks
-
-6. **Conclusions**
-   - Conformity with GSPRs
-   - Post-market surveillance needs
-
-### Key Standards
-- **MEDDEV 2.7/1 Rev 4** - Clinical Evaluation Guidelines
-- **EU MDR Annex XIV** - Clinical Evaluation Requirements
-- **ISO 14155** - Clinical Investigation of Medical Devices
-
-Would you like me to explain any section in more detail?`;
-  }
-
-  // Compliance queries
-  if (
-    lowerMessage.includes('compliance') ||
-    lowerMessage.includes('21 cfr') ||
-    lowerMessage.includes('part 11')
-  ) {
-    return `## 21 CFR Part 11 Compliance Requirements
-
-Part 11 establishes requirements for electronic records and electronic signatures in FDA-regulated industries.
-
-### Core Requirements
-
-**1. Electronic Records**
-- System validation
-- Audit trails (date, time, operator ID)
-- Record retention and retrieval
-- Limited system access
-- Operational checks
-
-**2. Electronic Signatures**
-- Unique user identification
-- Signature manifestation (name, date/time, meaning)
-- Signature linking to records
-- Non-repudiation controls
-
-**3. Closed vs Open Systems**
-- **Closed**: Additional controls for access
-- **Open**: Encryption and digital signatures required
-
-### Key Controls
-| Control | Requirement |
-|---------|-------------|
-| Access | Role-based permissions |
-| Audit Trail | Immutable, timestamped |
-| Passwords | Unique, periodically updated |
-| Training | Documented training records |
-
-### FDA Guidance
-- **Scope and Application** (2003 Guidance)
-- **Data Integrity and Compliance** (2018)
-
-Would you like specific guidance on implementing any of these controls?`;
-  }
-
-  // Default comprehensive response
-  return `## Lumen Cortex Regulatory Intelligence
-
-Thank you for your query. I'm Lumen Cortex, your AI-powered regulatory affairs assistant. I can help with:
-
-### My Capabilities
-
-**🏥 Medical Devices**
-- FDA 510(k) submissions
-- De Novo classification requests
-- PMA applications
-- EU MDR compliance & CER preparation
-
-**💊 Pharmaceuticals**
-- IND applications
-- NDA/ANDA submissions
-- CMC documentation
-- Clinical trial design
-
-**📋 Compliance**
-- 21 CFR Part 11 (electronic records)
-- GxP requirements (GMP, GLP, GCP)
-- ISO 13485 quality management
-- Risk management (ISO 14971)
-
-**📄 Documentation**
-- eCTD structure and formatting
-- Regulatory strategy development
-- Gap analysis and remediation
-- Submission timeline planning
-
-### How I Can Help
-
-1. **Ask specific questions** about regulatory requirements
-2. **Request document reviews** for compliance gaps
-3. **Get submission checklists** for your product type
-4. **Explore predicate devices** for 510(k) submissions
-5. **Understand timelines** for different submission pathways
-
-What regulatory challenge can I help you with today?`;
-}
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 
@@ -324,6 +109,29 @@ router.post('/send-message', async (req: Request, res: Response) => {
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const threadId = await getOrCreateThread(thread_id, (req as any).user?.id);
+
+    // Fix B: Enforce thread ownership — if thread_id was supplied, verify org match
+    if (thread_id && numericOrgId) {
+      try {
+        const ownerCheck = await pool.query(
+          `SELECT organization_id FROM ai_threads WHERE id = $1`,
+          [threadId]
+        );
+        if (ownerCheck.rows.length > 0) {
+          const threadOrg = Number(ownerCheck.rows[0].organization_id);
+          if (threadOrg !== numericOrgId) {
+            return res.status(403).json({
+              error: 'Thread does not belong to this organization',
+              code: 'THREAD_ORG_MISMATCH',
+            });
+          }
+        }
+      } catch (e: any) {
+        // ai_threads table might not exist yet — skip check
+        if (e?.code !== '42P01')
+          console.warn('[Lumen Cortex] Thread ownership check failed:', e.message);
+      }
+    }
 
     // Upsert provenance thread (org-scoped)
     if (numericOrgId) {
@@ -385,9 +193,11 @@ router.post('/send-message', async (req: Request, res: Response) => {
         if (numericOrgId) {
           try {
             const queryHash = sha256(message);
+            // Fix C: Snapshot hash includes sourceType + sourceRefId, sorted by rank
             const snapshotData = sources.map((s, i) => ({
               rank: i + 1,
-              atomId: s.id,
+              sourceType: 'atom' as const,
+              sourceRefId: s.id,
               score: s.score,
             }));
             snapshotHashSha256 = sha256(stableStringify(snapshotData));
@@ -522,7 +332,6 @@ router.post('/send-message', async (req: Request, res: Response) => {
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
-        message: gwError.message,
       });
     }
 
@@ -657,11 +466,17 @@ router.post('/send-message', async (req: Request, res: Response) => {
     const citations = sources.map((s, i) => ({
       id: `SRC-${i + 1}`,
       sourceAtomId: s.id,
+      sourceType: 'atom' as const, // Rule 5: explicit source type
       title: s.title,
       snippet: s.content,
       relevanceScore: s.score,
       cited: citedRefs.has(i),
     }));
+
+    // Fix D: coverage metrics
+    const supportedClaims = claims.filter(c => c.status === 'SUPPORTED').length;
+    const citationCoverage = sources.length > 0 ? citedRefs.size / sources.length : 0;
+    const supportedClaimRate = claims.length > 0 ? supportedClaims / claims.length : 0;
 
     // ── RESPONSE (backward compat + provenance chain) ──────────────────
     res.json({
@@ -676,6 +491,8 @@ router.post('/send-message', async (req: Request, res: Response) => {
         retrievedCount: sources.length,
         citedCount: citedRefs.size,
         orgScoped: !!orgUuid,
+        citationCoverage,
+        supportedClaimRate,
       },
       // Provenance chain
       retrievalRunId,
@@ -686,10 +503,10 @@ router.post('/send-message', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Lumen Cortex] Chat error:', error);
 
+    // Rule 6: no raw error.message leak
     res.status(500).json({
       error: 'Failed to process message',
       code: 'CHAT_ERROR',
-      message: error.message || 'An unexpected error occurred',
     });
   }
 });
@@ -726,7 +543,7 @@ router.post('/upload', async (req: Request, res: Response) => {
     console.error('[Lumen Cortex] Upload error:', error);
     res.status(500).json({
       error: 'Failed to upload file',
-      message: error.message,
+      code: 'UPLOAD_ERROR',
     });
   }
 });
@@ -760,7 +577,7 @@ router.get('/thread/:threadId', async (req: Request, res: Response) => {
     console.error('[Lumen Cortex] Thread retrieval error:', error);
     res.status(500).json({
       error: 'Failed to retrieve thread',
-      message: error.message,
+      code: 'THREAD_RETRIEVAL_ERROR',
     });
   }
 });
@@ -783,7 +600,7 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
     console.error('[Lumen Cortex] Thread deletion error:', error);
     res.status(500).json({
       error: 'Failed to delete thread',
-      message: error.message,
+      code: 'THREAD_DELETE_ERROR',
     });
   }
 });

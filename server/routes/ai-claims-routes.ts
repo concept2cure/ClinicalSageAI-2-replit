@@ -211,7 +211,7 @@ export default function createAIClaimsRoutes(pool: Pool): Router {
       console.error('[AI Claims] add-to-binder error:', error);
 
       if (error.message?.startsWith('NO_TENANT') || error.message?.startsWith('BAD_TENANT')) {
-        return res.status(401).json({ error: error.message, code: 'AUTH_ERROR' });
+        return res.status(401).json({ error: 'Authentication failed', code: 'AUTH_ERROR' });
       }
       if (error?.code === '42P01') {
         return res.status(503).json({
@@ -223,7 +223,6 @@ export default function createAIClaimsRoutes(pool: Pool): Router {
       res.status(500).json({
         error: 'Failed to add claim to binder',
         code: 'ADD_TO_BINDER_ERROR',
-        message: error.message,
       });
     }
   });

@@ -186,6 +186,14 @@ function ChainDrawer({ chain, onClose }) {
               <span className="text-muted-foreground">orgScoped: </span>
               {chain.retrievalMeta?.orgScoped ? 'true' : 'false'}
             </div>
+            <div>
+              <span className="text-muted-foreground">citationCoverage: </span>
+              {Math.round((chain.retrievalMeta?.citationCoverage ?? 0) * 100)}%
+            </div>
+            <div>
+              <span className="text-muted-foreground">supportedClaimRate: </span>
+              {Math.round((chain.retrievalMeta?.supportedClaimRate ?? 0) * 100)}%
+            </div>
           </div>
         </div>
 
@@ -240,6 +248,9 @@ function ChainDrawer({ chain, onClose }) {
               <div key={s.id || i} className="bg-muted/50 rounded-md p-2">
                 <div className="font-medium">
                   [SRC-{i + 1}] {s.title}
+                </div>
+                <div className="text-[10px] text-muted-foreground/70 mt-0.5">
+                  Source Type: {(s.sourceType || 'atom').toUpperCase()}
                 </div>
                 <div className="text-muted-foreground mt-0.5 line-clamp-2">
                   {s.content?.substring(0, 150)}...
