@@ -124,16 +124,22 @@ function verifyClaim(
   }
 
   // Rule 2: Claim contains numbers but no citation snippet does
-  const claimNumbers = claimText.match(/\d+\.?\d*/g) || [];
+  // Normalize: strip commas from numbers, ignore years (1900-2100) and trivial refs (≤9)
+  const stripCommas = (s: string) => s.replace(/(\d),(\d)/g, '$1$2');
+  const normalizedClaim = stripCommas(claimText);
+  const normalizedSnippets = stripCommas(snippets.join(' '));
+
+  const claimNumbers = normalizedClaim.match(/\d+\.?\d*/g) || [];
   const significantNumbers = claimNumbers.filter(n => {
     const val = parseFloat(n);
-    // Filter out trivial references (SRC-1, 1, 2, etc.) — keep numbers > 9 or decimals
-    return val > 9 || n.includes('.');
+    // Filter out: trivial refs (≤9), years (1900-2100)
+    if (val <= 9 && !n.includes('.')) return false;
+    if (val >= 1900 && val <= 2100 && !n.includes('.')) return false;
+    return true;
   });
 
   if (significantNumbers.length > 0) {
-    const allSnippetText = snippets.join(' ');
-    const unmatchedNumbers = significantNumbers.filter(n => !allSnippetText.includes(n));
+    const unmatchedNumbers = significantNumbers.filter(n => !normalizedSnippets.includes(n));
     if (unmatchedNumbers.length > 0) {
       flags.push({
         rule: 'UNGROUNDED_NUMBERS',
@@ -525,7 +531,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
               claimHash,
               claimRefs.size > 0 ? confidence : null,
               status,
-              verifierFlags.length > 0 ? JSON.stringify(verifierFlags) : null,
+              JSON.stringify(verifierFlags),
             ]
           );
           claimId = claimResult.rows[0].id;
