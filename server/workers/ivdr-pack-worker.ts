@@ -388,6 +388,12 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     client.release();
   }
 
+  // ── Steps 4-9: Artifact generation + vault storage ─────────────────────
+  // Wrapped in try/catch so pack row is marked FAILED on error
+  // (not left BUILDING forever).
+
+  try {
+
   // ── Step 4: Generate manifest via manifest builder ─────────────────────
 
   console.log(`[IVDR-PackWorker] Generating artifacts for pack ${packId}`);
@@ -453,8 +459,8 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
 
   // Inject into manifest so the ZIP contains the self-referencing manifest
   manifest.hashes.artifactHashes = {
-    'docx': docxSha256,
-    'pdf': pdfSha256,
+    docx: docxSha256,
+    pdf: pdfSha256,
   };
   if (buildWarnings.length > 0) {
     (manifest as any).buildWarnings = buildWarnings;
@@ -588,6 +594,38 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
   });
 
   return packId;
+
+  } catch (artifactError: any) {
+    // ── Pack row must reflect reality: mark FAILED with error details ────
+    const { code, label } = safePackError(artifactError);
+    try {
+      await pool.query(
+        `UPDATE ivdr_packs SET
+           status = 'FAILED',
+           has_warnings = true,
+           warnings_jsonb = $2
+         WHERE id = $1 AND status = 'BUILDING'`,
+        [
+          packId,
+          JSON.stringify([{
+            code: 'PACK_BUILD_FAILED',
+            errorCode: code,
+            message: label,
+            timestamp: new Date().toISOString(),
+          }]),
+        ]
+      );
+      console.error(
+        `[IVDR-PackWorker] Pack ${packId} marked FAILED: ${code} — ${label}`
+      );
+    } catch (updateErr) {
+      // Best-effort: if we can't update the pack, still propagate the original error
+      console.error(
+        `[IVDR-PackWorker] Failed to mark pack ${packId} as FAILED:`, updateErr
+      );
+    }
+    throw artifactError;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
