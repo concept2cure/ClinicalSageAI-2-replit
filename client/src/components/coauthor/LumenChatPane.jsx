@@ -129,6 +129,21 @@ function ClaimCard({ claim, onAddToBinder, binderLoading }) {
         </div>
       )}
 
+      {/* Verifier flags */}
+      {claim.verifierFlags && claim.verifierFlags.length > 0 && (
+        <div className="space-y-1 pt-0.5">
+          {claim.verifierFlags.map((flag, i) => (
+            <div
+              key={flag.rule || i}
+              className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1"
+            >
+              <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+              <span>{flag.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Add to Binder button */}
       {onAddToBinder && claim.status !== 'UNSUPPORTED' && claim.claimId && (
         <div className="pt-1">

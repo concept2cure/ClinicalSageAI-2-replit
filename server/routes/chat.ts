@@ -85,6 +85,77 @@ function stableStringify(obj: any): string {
   );
 }
 
+// ── Verifier v1 (deterministic, no model needed) ───────────────────────────
+
+interface VerifierFlag {
+  rule: string;
+  severity: 'warn' | 'downgrade';
+  message: string;
+}
+
+const VERIFIER_LOW_SCORE_THRESHOLD = 0.55;
+const VERIFIER_LONG_CLAIM_CHARS = 300;
+
+/**
+ * Run deterministic verifier rules on a claim + its citations.
+ * Returns flags (possibly empty) and whether the claim should be downgraded to WEAK.
+ */
+function verifyClaim(
+  claimText: string,
+  citationScores: number[],
+  snippets: string[]
+): { flags: VerifierFlag[]; shouldDowngrade: boolean } {
+  const flags: VerifierFlag[] = [];
+
+  if (citationScores.length === 0) {
+    // No citations — nothing to verify (already UNSUPPORTED)
+    return { flags, shouldDowngrade: false };
+  }
+
+  const bestScore = Math.max(...citationScores);
+
+  // Rule 1: Best citation score below threshold
+  if (bestScore < VERIFIER_LOW_SCORE_THRESHOLD) {
+    flags.push({
+      rule: 'LOW_RELEVANCE',
+      severity: 'downgrade',
+      message: `Best citation relevance (${Math.round(bestScore * 100)}%) is below threshold (${Math.round(VERIFIER_LOW_SCORE_THRESHOLD * 100)}%)`,
+    });
+  }
+
+  // Rule 2: Claim contains numbers but no citation snippet does
+  const claimNumbers = claimText.match(/\d+\.?\d*/g) || [];
+  const significantNumbers = claimNumbers.filter(n => {
+    const val = parseFloat(n);
+    // Filter out trivial references (SRC-1, 1, 2, etc.) — keep numbers > 9 or decimals
+    return val > 9 || n.includes('.');
+  });
+
+  if (significantNumbers.length > 0) {
+    const allSnippetText = snippets.join(' ');
+    const unmatchedNumbers = significantNumbers.filter(n => !allSnippetText.includes(n));
+    if (unmatchedNumbers.length > 0) {
+      flags.push({
+        rule: 'UNGROUNDED_NUMBERS',
+        severity: 'downgrade',
+        message: `Claim contains numbers (${unmatchedNumbers.slice(0, 3).join(', ')}) not found in any citation`,
+      });
+    }
+  }
+
+  // Rule 3: Claim is long but only one citation
+  if (claimText.length > VERIFIER_LONG_CLAIM_CHARS && citationScores.length === 1) {
+    flags.push({
+      rule: 'THIN_SUPPORT',
+      severity: 'downgrade',
+      message: `Claim is ${claimText.length} chars but supported by only 1 citation`,
+    });
+  }
+
+  const shouldDowngrade = flags.some(f => f.severity === 'downgrade');
+  return { flags, shouldDowngrade };
+}
+
 /**
  * POST /api/chat/send-message
  * Main chat endpoint — 9-step provenance-tracked RAG pipeline.
@@ -388,10 +459,11 @@ router.post('/send-message', async (req: Request, res: Response) => {
       claimText: string;
       status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED';
       citations: Array<{ chunkId: string; sourceId: string; title: string; score: number }>;
+      verifierFlags: VerifierFlag[];
     }
     const claims: ClaimResponse[] = [];
 
-    // ── STEP 9: CITATION LINKAGE (per-claim) ──────────────────────────
+    // ── STEP 9: CITATION LINKAGE + VERIFIER (per-claim) ───────────────
     for (let ci = 0; ci < claimTexts.length; ci++) {
       const claimText = claimTexts[ci];
       const claimHash = sha256(claimText);
@@ -405,9 +477,8 @@ router.post('/send-message', async (req: Request, res: Response) => {
         if (idx >= 0 && idx < sources.length) claimRefs.add(idx);
       }
 
-      // Status: SUPPORTED (≥1 citation), UNSUPPORTED (no citations)
-      // WEAK is reserved for future verifier (citations exist but low quality/score)
-      const status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED' =
+      // Initial status: SUPPORTED (≥1 citation), UNSUPPORTED (no citations)
+      let status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED' =
         claimRefs.size > 0 ? 'SUPPORTED' : 'UNSUPPORTED';
 
       let claimId: string | null = null;
@@ -415,30 +486,10 @@ router.post('/send-message', async (req: Request, res: Response) => {
 
       if (numericOrgId && generationRunId) {
         try {
-          const claimResult = await pool.query(
-            `INSERT INTO ai_claims
-               (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-            [
-              generationRunId,
-              ci,
-              claimText,
-              claimHash,
-              claimRefs.size > 0 ? confidence : null,
-              status,
-            ]
-          );
-          claimId = claimResult.rows[0].id;
-
-          // Persist citation linkages
+          // Collect citation links first (needed for verifier)
           for (const refIdx of claimRefs) {
             const chunk = chunkRows[refIdx];
             if (chunk) {
-              await pool.query(
-                `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
-                 VALUES ($1, $2, $3)`,
-                [claimId, chunk.id, chunk.score]
-              );
               citationLinks.push({
                 chunkId: chunk.id,
                 sourceId: chunk.atomId,
@@ -447,12 +498,79 @@ router.post('/send-message', async (req: Request, res: Response) => {
               });
             }
           }
+
+          // ── STEP 9b: VERIFIER v1 (deterministic) ────────────────────
+          const citScores = citationLinks.map(c => c.score);
+          const citSnippets = Array.from(claimRefs).map(idx => sources[idx]?.content || '');
+          const { flags: verifierFlags, shouldDowngrade } = verifyClaim(
+            claimText,
+            citScores,
+            citSnippets
+          );
+
+          // Downgrade SUPPORTED → WEAK if verifier flags it
+          if (status === 'SUPPORTED' && shouldDowngrade) {
+            status = 'WEAK';
+          }
+
+          // Persist claim with final status + verifier flags
+          const claimResult = await pool.query(
+            `INSERT INTO ai_claims
+               (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status, verifier_flags)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [
+              generationRunId,
+              ci,
+              claimText,
+              claimHash,
+              claimRefs.size > 0 ? confidence : null,
+              status,
+              verifierFlags.length > 0 ? JSON.stringify(verifierFlags) : null,
+            ]
+          );
+          claimId = claimResult.rows[0].id;
+
+          // Persist citation linkages
+          for (const link of citationLinks) {
+            await pool.query(
+              `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
+               VALUES ($1, $2, $3)`,
+              [claimId, link.chunkId, link.score]
+            );
+          }
+
+          claims.push({
+            claimId,
+            claimIndex: ci,
+            claimText,
+            status,
+            citations: citationLinks,
+            verifierFlags,
+          });
+          continue; // skip fallback below
         } catch (e: any) {
           if (e?.code !== '42P01') console.warn('[Lumen Cortex] Claim persist failed:', e.message);
         }
       }
 
-      claims.push({ claimId, claimIndex: ci, claimText, status, citations: citationLinks });
+      // Fallback: no org/generation — still run verifier for response
+      const fallbackScores = citationLinks.map(c => c.score);
+      const fallbackSnippets = Array.from(claimRefs).map(idx => sources[idx]?.content || '');
+      const { flags: fallbackFlags, shouldDowngrade: fallbackDown } = verifyClaim(
+        claimText,
+        fallbackScores,
+        fallbackSnippets
+      );
+      if (status === 'SUPPORTED' && fallbackDown) status = 'WEAK';
+
+      claims.push({
+        claimId,
+        claimIndex: ci,
+        claimText,
+        status,
+        citations: citationLinks,
+        verifierFlags: fallbackFlags,
+      });
     }
 
     // ── BUILD BACKWARD-COMPAT CITATIONS MAP ────────────────────────────
