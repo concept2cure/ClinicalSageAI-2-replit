@@ -411,6 +411,8 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
 
   // ── Step 5: Build content model → DOCX & PDF ───────────────────────────
 
+  const buildWarnings: Array<{ code: string; message: string; timestamp: string }> = [];
+
   const packContent = await buildIvdrPackContent({
     pool,
     organizationId: orgId,
@@ -427,17 +429,40 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
   const { buffer: pdfBuf, usedFallback } = await renderHtmlToPdfTracked(html);
 
   if (usedFallback) {
+    const warning = {
+      code: 'PDF_FALLBACK',
+      message: 'PDF rendered via PDFKit plain-text fallback (Puppeteer unavailable)',
+      timestamp: new Date().toISOString(),
+    };
+    buildWarnings.push(warning);
     console.warn(
       `[IVDR-PackWorker] Puppeteer unavailable — PDF rendered via plain-text fallback for pack ${packId}`
     );
     await emitAudit(pool, orgId, projectId, userId, userId, 'PACK_BUILD_WARNING', {
       packId,
       packVersion,
-      warning: 'PDF rendered via PDFKit plain-text fallback (Puppeteer unavailable)',
+      warning: warning.message,
     });
   }
 
-  // ── Step 6: Package ZIP ────────────────────────────────────────────────
+  // ── Step 6: Back-fill artifact hashes into manifest, then package ZIP ───
+
+  // Compute artifact content hashes
+  const docxSha256 = createHash('sha256').update(docxBuf).digest('hex');
+  const pdfSha256 = createHash('sha256').update(pdfBuf).digest('hex');
+
+  // Inject into manifest so the ZIP contains the self-referencing manifest
+  manifest.hashes.artifactHashes = {
+    'docx': docxSha256,
+    'pdf': pdfSha256,
+  };
+  if (buildWarnings.length > 0) {
+    (manifest as any).buildWarnings = buildWarnings;
+  }
+
+  // Re-serialize manifest with artifact hashes
+  const finalManifestJson = JSON.stringify(manifest, null, 2);
+  const manifestBufFinal = Buffer.from(finalManifestJson, 'utf8');
 
   const zipBuf = await new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -447,7 +472,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     archive.on('error', reject);
 
     const baseName = `IVDR_${packType}_v${packVersion}`;
-    archive.append(manifestBuf, { name: `${baseName}_manifest.json` });
+    archive.append(manifestBufFinal, { name: `${baseName}_manifest.json` });
     archive.append(docxBuf, { name: `${baseName}.docx` });
     archive.append(pdfBuf, { name: `${baseName}.pdf` });
     archive.finalize();
@@ -467,7 +492,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
       orgId,
       projectId,
       filename: `${baseName}_manifest.json`,
-      bytes: manifestBuf,
+      bytes: manifestBufFinal,
       mime: 'application/json',
       metadata: vaultMeta,
     }),
@@ -501,7 +526,9 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     `[IVDR-PackWorker] Stored 4 artifacts in vault: manifest=${manifestVault.sha256.substring(0, 12)}… docx=${docxVault.sha256.substring(0, 12)}… pdf=${pdfVault.sha256.substring(0, 12)}… zip=${zipVault.sha256.substring(0, 12)}…`
   );
 
-  // ── Step 8: Update pack with vault refs + promote to SUCCEEDED ─────────
+  // ── Step 8: Update pack with vault refs, artifact hashes, warnings → promote ──
+
+  const hasWarnings = buildWarnings.length > 0;
 
   await pool.query(
     `UPDATE ivdr_packs SET
@@ -510,7 +537,12 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
        manifest_vault_file_id = $3, manifest_vault_version_id = $4,
        pdf_vault_file_id = $5, pdf_vault_version_id = $6,
        docx_vault_file_id = $7, docx_vault_version_id = $8,
-       zip_vault_file_id = $9, zip_vault_version_id = $10
+       zip_vault_file_id = $9, zip_vault_version_id = $10,
+       manifest_sha256 = $11, manifest_size_bytes = $12,
+       pdf_sha256 = $13, pdf_size_bytes = $14,
+       docx_sha256 = $15, docx_size_bytes = $16,
+       zip_sha256 = $17, zip_size_bytes = $18,
+       has_warnings = $19, warnings_jsonb = $20
      WHERE id = $1`,
     [
       packId,
@@ -523,6 +555,16 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
       docxVault.vaultVersionId,
       zipVault.vaultFileId,
       zipVault.vaultVersionId,
+      manifestVault.sha256,
+      manifestVault.sizeBytes,
+      pdfVault.sha256,
+      pdfVault.sizeBytes,
+      docxVault.sha256,
+      docxVault.sizeBytes,
+      zipVault.sha256,
+      zipVault.sizeBytes,
+      hasWarnings,
+      hasWarnings ? JSON.stringify(buildWarnings) : null,
     ]
   );
 
@@ -535,6 +577,8 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     snapshotHash,
     claimCount: allClaims.rows.length,
     evidenceCount: evidenceIds.length,
+    hasWarnings,
+    warnings: buildWarnings,
     artifacts: {
       manifest: { sha256: manifestVault.sha256, sizeBytes: manifestVault.sizeBytes },
       docx: { sha256: docxVault.sha256, sizeBytes: docxVault.sizeBytes },
