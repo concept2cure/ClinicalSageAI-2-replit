@@ -19,6 +19,13 @@
 
 import { Pool, PoolClient } from 'pg';
 import { createHash } from 'crypto';
+import { buildManifestV1 } from '../services/ivdrPackManifest';
+import { buildIvdrPackContent } from '../services/ivdrPackContent';
+import { generateIvdrDocx } from '../services/docxGenerator';
+import { renderIvdrPackHtml } from '../services/ivdrPackHtml';
+import { renderHtmlToPdfTracked } from '../export/renderers';
+import { putBytes, isVaultAvailable } from '../services/vaultService';
+import archiver from 'archiver';
 
 // ── Stable stringify (in-line to avoid import issues in worker context) ──────
 
@@ -69,6 +76,10 @@ function safePackError(error: any): SafePackError {
     return { code: 'IVDR_SNAPSHOT_FAILED', label: 'Snapshot generation failed' };
   if (msg.includes('IVDR_HASH_FAILED'))
     return { code: 'IVDR_HASH_FAILED', label: 'Hash computation failed' };
+  if (msg.includes('IVDR_VAULT_UNAVAILABLE'))
+    return { code: 'IVDR_VAULT_UNAVAILABLE', label: 'Vault storage not available' };
+  if (msg.includes('IVDR_ARTIFACT'))
+    return { code: 'IVDR_ARTIFACT_FAILED', label: 'Artifact generation or upload failed' };
   if (error?.code === '42P01')
     return { code: 'IVDR_NOT_PROVISIONED', label: 'IVDR tables not yet provisioned' };
   if (error?.code === '23503')
@@ -368,9 +379,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
       [orgId, projectId, packId, snapshotStable, snapshotHash]
     );
 
-    // Promote to SUCCEEDED only after snapshot is persisted
-    await client.query(`UPDATE ivdr_packs SET status = 'SUCCEEDED' WHERE id = $1`, [packId]);
-
+    // Pack stays BUILDING — promoted after artifacts are stored
     await client.query('COMMIT');
   } catch (e) {
     await client.query('ROLLBACK');
@@ -379,15 +388,159 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     client.release();
   }
 
-  // ── Step 4: Emit audit event ───────────────────────────────────────────
+  // ── Step 4: Generate manifest via manifest builder ─────────────────────
+
+  console.log(`[IVDR-PackWorker] Generating artifacts for pack ${packId}`);
+
+  const {
+    manifest,
+    manifestJson,
+    manifestHash: mHash,
+  } = await buildManifestV1({
+    pool,
+    packId,
+    packType,
+    packVersion,
+    organizationId: orgId,
+    projectId,
+    snapshotHashSha256: snapshotHash,
+    claimIds,
+  });
+
+  const manifestBuf = Buffer.from(manifestJson, 'utf8');
+
+  // ── Step 5: Build content model → DOCX & PDF ───────────────────────────
+
+  const packContent = await buildIvdrPackContent({
+    pool,
+    organizationId: orgId,
+    projectId,
+    packId,
+    packType,
+    packVersion,
+    manifest,
+  });
+
+  const docxBuf = await generateIvdrDocx(packContent);
+
+  const html = renderIvdrPackHtml(packContent);
+  const { buffer: pdfBuf, usedFallback } = await renderHtmlToPdfTracked(html);
+
+  if (usedFallback) {
+    console.warn(
+      `[IVDR-PackWorker] Puppeteer unavailable — PDF rendered via plain-text fallback for pack ${packId}`
+    );
+    await emitAudit(pool, orgId, projectId, userId, userId, 'PACK_BUILD_WARNING', {
+      packId,
+      packVersion,
+      warning: 'PDF rendered via PDFKit plain-text fallback (Puppeteer unavailable)',
+    });
+  }
+
+  // ── Step 6: Package ZIP ────────────────────────────────────────────────
+
+  const zipBuf = await new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('data', (c: Buffer) => chunks.push(c));
+    archive.on('end', () => resolve(Buffer.concat(chunks)));
+    archive.on('error', reject);
+
+    const baseName = `IVDR_${packType}_v${packVersion}`;
+    archive.append(manifestBuf, { name: `${baseName}_manifest.json` });
+    archive.append(docxBuf, { name: `${baseName}.docx` });
+    archive.append(pdfBuf, { name: `${baseName}.pdf` });
+    archive.finalize();
+  });
+
+  // ── Step 7: Upload all artifacts to vault ───────────────────────────────
+
+  if (!isVaultAvailable()) {
+    throw new Error('IVDR_VAULT_UNAVAILABLE');
+  }
+
+  const baseName = `IVDR_${packType}_v${packVersion}`;
+  const vaultMeta = { packId, packType, packVersion: String(packVersion) };
+
+  const [manifestVault, docxVault, pdfVault, zipVault] = await Promise.all([
+    putBytes({
+      orgId,
+      projectId,
+      filename: `${baseName}_manifest.json`,
+      bytes: manifestBuf,
+      mime: 'application/json',
+      metadata: vaultMeta,
+    }),
+    putBytes({
+      orgId,
+      projectId,
+      filename: `${baseName}.docx`,
+      bytes: docxBuf,
+      mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      metadata: vaultMeta,
+    }),
+    putBytes({
+      orgId,
+      projectId,
+      filename: `${baseName}.pdf`,
+      bytes: pdfBuf,
+      mime: 'application/pdf',
+      metadata: vaultMeta,
+    }),
+    putBytes({
+      orgId,
+      projectId,
+      filename: `${baseName}.zip`,
+      bytes: zipBuf,
+      mime: 'application/zip',
+      metadata: vaultMeta,
+    }),
+  ]);
+
+  console.log(
+    `[IVDR-PackWorker] Stored 4 artifacts in vault: manifest=${manifestVault.sha256.substring(0, 12)}… docx=${docxVault.sha256.substring(0, 12)}… pdf=${pdfVault.sha256.substring(0, 12)}… zip=${zipVault.sha256.substring(0, 12)}…`
+  );
+
+  // ── Step 8: Update pack with vault refs + promote to SUCCEEDED ─────────
+
+  await pool.query(
+    `UPDATE ivdr_packs SET
+       status = 'SUCCEEDED',
+       manifest_hash_sha256 = $2,
+       manifest_vault_file_id = $3, manifest_vault_version_id = $4,
+       pdf_vault_file_id = $5, pdf_vault_version_id = $6,
+       docx_vault_file_id = $7, docx_vault_version_id = $8,
+       zip_vault_file_id = $9, zip_vault_version_id = $10
+     WHERE id = $1`,
+    [
+      packId,
+      mHash,
+      manifestVault.vaultFileId,
+      manifestVault.vaultVersionId,
+      pdfVault.vaultFileId,
+      pdfVault.vaultVersionId,
+      docxVault.vaultFileId,
+      docxVault.vaultVersionId,
+      zipVault.vaultFileId,
+      zipVault.vaultVersionId,
+    ]
+  );
+
+  // ── Step 9: Emit audit event ───────────────────────────────────────────
 
   await emitAudit(pool, orgId, projectId, userId, userId, 'PACK_BUILD_COMPLETED', {
     packId,
     packVersion,
-    manifestHash: sha256(stableStringify({ ...snapshot, packId })),
+    manifestHash: mHash,
     snapshotHash,
     claimCount: allClaims.rows.length,
     evidenceCount: evidenceIds.length,
+    artifacts: {
+      manifest: { sha256: manifestVault.sha256, sizeBytes: manifestVault.sizeBytes },
+      docx: { sha256: docxVault.sha256, sizeBytes: docxVault.sizeBytes },
+      pdf: { sha256: pdfVault.sha256, sizeBytes: pdfVault.sizeBytes },
+      zip: { sha256: zipVault.sha256, sizeBytes: zipVault.sizeBytes },
+    },
   });
 
   return packId;

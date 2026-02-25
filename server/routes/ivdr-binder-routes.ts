@@ -18,6 +18,7 @@
 
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
+import { streamVersion } from '../services/vaultService';
 
 export default function createIVDRBinderRoutes(pool: Pool): Router {
   const router = Router();
@@ -906,7 +907,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       const packResult = await pool.query(
         `SELECT id, project_id, pack_type, pack_version, status,
-                manifest_hash_sha256, snapshot_hash_sha256
+                manifest_hash_sha256, snapshot_hash_sha256,
+                manifest_vault_version_id,
+                pdf_vault_version_id,
+                docx_vault_version_id,
+                zip_vault_version_id
          FROM ivdr_packs
          WHERE id = $1 AND organization_id = $2`,
         [packId, orgId]
@@ -927,6 +932,18 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       // For now, return the manifest JSON from the snapshot
       if (format === 'manifest') {
+        // Try vault first, fall back to snapshot table
+        if (pack.manifest_vault_version_id) {
+          const vaultResult = await streamVersion(pack.manifest_vault_version_id);
+          if (vaultResult) {
+            res.setHeader('Content-Type', vaultResult.mime);
+            res.setHeader('Content-Length', String(vaultResult.sizeBytes));
+            res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
+            res.setHeader('X-Content-SHA256', vaultResult.sha256);
+            return vaultResult.stream.pipe(res);
+          }
+        }
+
         const snapResult = await pool.query(
           `SELECT snapshot_json FROM ivdr_pack_snapshots WHERE pack_id = $1`,
           [packId]
@@ -946,11 +963,34 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         return res.send(JSON.stringify(snapResult.rows[0].snapshot_json, null, 2));
       }
 
-      // For PDF/DOCX/ZIP — placeholder until Vault file streaming is wired
-      return res.status(501).json({
-        error: `${format.toUpperCase()} download not yet available — manifest download is active`,
-        code: 'PACK_FORMAT_NOT_READY',
-      });
+      // PDF / DOCX / ZIP — stream from vault
+      const vaultVersionMap: Record<string, string | null> = {
+        pdf: pack.pdf_vault_version_id,
+        docx: pack.docx_vault_version_id,
+        zip: pack.zip_vault_version_id,
+      };
+
+      const vaultVersionId = vaultVersionMap[format];
+      if (!vaultVersionId) {
+        return res.status(404).json({
+          error: `${format.toUpperCase()} artifact not yet generated for this pack`,
+          code: 'PACK_ARTIFACT_NOT_AVAILABLE',
+        });
+      }
+
+      const vaultResult = await streamVersion(vaultVersionId);
+      if (!vaultResult) {
+        return res.status(404).json({
+          error: `${format.toUpperCase()} artifact file not found in vault`,
+          code: 'PACK_ARTIFACT_MISSING',
+        });
+      }
+
+      res.setHeader('Content-Type', vaultResult.mime);
+      res.setHeader('Content-Length', String(vaultResult.sizeBytes));
+      res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
+      res.setHeader('X-Content-SHA256', vaultResult.sha256);
+      return vaultResult.stream.pipe(res);
     } catch (error) {
       return safeError(res, error, 'PACK_DOWNLOAD_FAILED', 'Download pack');
     }
