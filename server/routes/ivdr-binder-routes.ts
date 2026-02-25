@@ -767,7 +767,8 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
 
       let query = `SELECT id, pack_type, pack_version, status, created_at,
                           created_by_user_id, manifest_hash_sha256, snapshot_hash_sha256,
-                          manifest_vault_file_id, pdf_vault_file_id, docx_vault_file_id, zip_vault_file_id
+                          manifest_vault_file_id, pdf_vault_file_id, docx_vault_file_id, zip_vault_file_id,
+                          has_warnings, warnings_jsonb
                    FROM ivdr_packs
                    WHERE organization_id = $1 AND project_id = $2`;
       const params: any[] = [orgId, projectId];
@@ -790,6 +791,8 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         createdByUserId: row.created_by_user_id,
         manifestHashSha256: row.manifest_hash_sha256,
         snapshotHashSha256: row.snapshot_hash_sha256,
+        hasWarnings: row.has_warnings || false,
+        warnings: row.warnings_jsonb || null,
         downloads: {
           manifest: !!row.manifest_vault_file_id,
           pdf: !!row.pdf_vault_file_id,
@@ -819,7 +822,12 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
                 manifest_vault_file_id, manifest_vault_version_id,
                 pdf_vault_file_id, pdf_vault_version_id,
                 docx_vault_file_id, docx_vault_version_id,
-                zip_vault_file_id, zip_vault_version_id
+                zip_vault_file_id, zip_vault_version_id,
+                has_warnings, warnings_jsonb,
+                manifest_sha256, manifest_size_bytes,
+                pdf_sha256, pdf_size_bytes,
+                docx_sha256, docx_size_bytes,
+                zip_sha256, zip_size_bytes
          FROM ivdr_packs
          WHERE id = $1 AND organization_id = $2`,
         [packId, orgId]
@@ -844,27 +852,31 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         vaultFileId: string | null;
         vaultVersionId: string | null;
         hashSha256: string;
+        sizeBytes: number | null;
       }> = [];
       if (pack.pdf_vault_file_id)
         artifacts.push({
           type: 'PDF',
           vaultFileId: pack.pdf_vault_file_id,
           vaultVersionId: pack.pdf_vault_version_id,
-          hashSha256: '',
+          hashSha256: pack.pdf_sha256 || '',
+          sizeBytes: pack.pdf_size_bytes ? Number(pack.pdf_size_bytes) : null,
         });
       if (pack.docx_vault_file_id)
         artifacts.push({
           type: 'DOCX',
           vaultFileId: pack.docx_vault_file_id,
           vaultVersionId: pack.docx_vault_version_id,
-          hashSha256: '',
+          hashSha256: pack.docx_sha256 || '',
+          sizeBytes: pack.docx_size_bytes ? Number(pack.docx_size_bytes) : null,
         });
       if (pack.zip_vault_file_id)
         artifacts.push({
           type: 'ZIP',
           vaultFileId: pack.zip_vault_file_id,
           vaultVersionId: pack.zip_vault_version_id,
-          hashSha256: '',
+          hashSha256: pack.zip_sha256 || '',
+          sizeBytes: pack.zip_size_bytes ? Number(pack.zip_size_bytes) : null,
         });
 
       return res.json({
@@ -873,10 +885,14 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         packVersion: pack.pack_version,
         status: pack.status,
         createdAt: pack.created_at,
+        hasWarnings: pack.has_warnings || false,
+        warnings: pack.warnings_jsonb || null,
         manifest: {
           vaultFileId: pack.manifest_vault_file_id,
           vaultVersionId: pack.manifest_vault_version_id,
           hashSha256: pack.manifest_hash_sha256,
+          sha256: pack.manifest_sha256 || null,
+          sizeBytes: pack.manifest_size_bytes ? Number(pack.manifest_size_bytes) : null,
         },
         artifacts,
         snapshot:
