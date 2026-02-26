@@ -165,3 +165,24 @@ export async function downloadPackManifest(
   const res = await apiRequest('GET', `${BASE}/packs/${packId}/download?format=${format}`);
   return json<Record<string, unknown>>(res);
 }
+
+/**
+ * Download pack artifact as a Blob (for PDF, DOCX, ZIP binary files).
+ * Returns the blob along with the SHA-256 integrity header if present.
+ */
+export async function downloadPackArtifact(
+  packId: string,
+  format: 'pdf' | 'docx' | 'zip'
+): Promise<{ blob: Blob; sha256: string | null; filename: string }> {
+  const res = await apiRequest('GET', `${BASE}/packs/${packId}/download?format=${format}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error || `Download failed: ${res.status}`);
+  }
+  const sha256 = res.headers.get('X-Content-SHA256');
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+  const filename = filenameMatch?.[1] || `pack-${packId}.${format}`;
+  const blob = await res.blob();
+  return { blob, sha256, filename };
+}

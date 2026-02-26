@@ -43,7 +43,6 @@ import {
 import {
   Package,
   Play,
-  Download,
   CheckCircle2,
   XCircle,
   Clock,
@@ -52,14 +51,22 @@ import {
   Shield,
   Hash,
   FileJson,
+  FileText,
+  FileArchive,
+  Eye,
+  Copy,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   fetchPackReadiness,
   buildPack,
   fetchJobStatus,
   fetchPacks,
+  fetchPackDetail,
   downloadPackManifest,
+  downloadPackArtifact,
 } from '@/services/ivdrBinderApi';
+import type { PackDetailResponse } from '@shared/ivdr/manifest';
 
 interface PackBuilderPanelProps {
   projectId: string;
@@ -94,6 +101,67 @@ function JobStatusBadge({ status }: { status: string }) {
         </Badge>
       );
   }
+}
+
+function PackStatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case 'SUCCEEDED':
+      return (
+        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          <Shield className="mr-1 h-3 w-3" /> Sealed
+        </Badge>
+      );
+    case 'BUILDING':
+      return (
+        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Building
+        </Badge>
+      );
+    case 'FAILED':
+      return (
+        <Badge variant="destructive">
+          <XCircle className="mr-1 h-3 w-3" /> Failed
+        </Badge>
+      );
+    case 'REVOKED':
+      return (
+        <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+          <AlertTriangle className="mr-1 h-3 w-3" /> Revoked
+        </Badge>
+      );
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
+
+function WarningsBadge({ hasWarnings, count }: { hasWarnings: boolean; count: number }) {
+  if (!hasWarnings) return null;
+  return (
+    <Badge
+      variant="outline"
+      className="border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400"
+    >
+      <AlertTriangle className="mr-1 h-3 w-3" />
+      {count} warning{count !== 1 ? 's' : ''}
+    </Badge>
+  );
+}
+
+function formatBytes(bytes: number | null | undefined): string {
+  if (bytes == null || bytes === 0) return '—';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let size = bytes;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function truncateHash(hash: string | null | undefined, len = 12): string {
+  if (!hash) return '—';
+  return hash.length > len ? hash.substring(0, len) + '…' : hash;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -181,19 +249,51 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
   }, [activeJobId, queryClient, packListKey]);
 
   // ── Download handler ───────────────────────────────────────────────────────
-  const handleDownload = async (packId: string) => {
+  const handleDownloadManifest = async (packId: string) => {
     try {
       const manifest = await downloadPackManifest(packId, 'manifest');
       const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ivdr-pack-${packId}.json`;
+      a.download = `ivdr-pack-${packId}-manifest.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Download failed:', err);
+      console.error('Manifest download failed:', err);
     }
+  };
+
+  const handleDownloadArtifact = async (packId: string, format: 'pdf' | 'docx' | 'zip') => {
+    try {
+      const { blob, filename } = await downloadPackArtifact(packId, format);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(`${format.toUpperCase()} download failed:`, err);
+    }
+  };
+
+  // ── Pack detail dialog state ───────────────────────────────────────────────
+  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
+
+  const { data: packDetail, isLoading: detailLoading } = useQuery<PackDetailResponse>({
+    queryKey: ['ivdr-pack-detail', selectedPackId],
+    queryFn: () => fetchPackDetail(selectedPackId!),
+    enabled: !!selectedPackId,
+    staleTime: 30_000,
+  });
+
+  const copyToClipboard = (hash: string, label: string) => {
+    navigator.clipboard.writeText(hash).then(() => {
+      setCopiedHash(label);
+      setTimeout(() => setCopiedHash(null), 2000);
+    });
   };
 
   return (
@@ -296,42 +396,94 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                   <TableHead>Version</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Warnings</TableHead>
                   <TableHead>Integrity</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {packs.map(pack => (
-                  <TableRow key={pack.id}>
-                    <TableCell className="font-mono font-medium">v{pack.pack_version}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{pack.pack_type?.replace(/_/g, ' ')}</Badge>
+                {packs.map((pack: any) => (
+                  <TableRow key={pack.packId || pack.id}>
+                    <TableCell className="font-mono font-medium">
+                      v{pack.packVersion ?? pack.pack_version}
                     </TableCell>
                     <TableCell>
-                      {pack.status === 'SEALED' ? (
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                          <Shield className="mr-1 h-3 w-3" /> Sealed
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">{pack.status}</Badge>
-                      )}
+                      <Badge variant="outline">
+                        {(pack.packType ?? pack.pack_type)?.replace(/_/g, ' ')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <PackStatusBadge status={pack.status} />
+                    </TableCell>
+                    <TableCell>
+                      <WarningsBadge
+                        hasWarnings={pack.hasWarnings ?? false}
+                        count={Array.isArray(pack.warnings) ? pack.warnings.length : 0}
+                      />
                     </TableCell>
                     <TableCell>
                       <span className="font-mono text-xs text-muted-foreground">
                         <Hash className="inline h-3 w-3 mr-0.5" />
-                        {pack.snapshot_hash_sha256
-                          ? pack.snapshot_hash_sha256.substring(0, 12) + '…'
-                          : '—'}
+                        {truncateHash(pack.snapshotHashSha256 ?? pack.snapshot_hash_sha256)}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {pack.created_at ? new Date(pack.created_at).toLocaleString() : '—'}
+                      {(pack.createdAt ?? pack.created_at)
+                        ? new Date(pack.createdAt ?? pack.created_at).toLocaleString()
+                        : '—'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => handleDownload(pack.id)}>
-                        <Download className="h-3 w-3 mr-1" /> Manifest
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedPackId(pack.packId || pack.id)}
+                          title="View details"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                        {pack.downloads?.manifest && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadManifest(pack.packId || pack.id)}
+                            title="Download manifest"
+                          >
+                            <FileJson className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {pack.downloads?.pdf && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadArtifact(pack.packId || pack.id, 'pdf')}
+                            title="Download PDF"
+                          >
+                            <FileText className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {pack.downloads?.docx && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadArtifact(pack.packId || pack.id, 'docx')}
+                            title="Download DOCX"
+                          >
+                            <FileText className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {pack.downloads?.zip && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadArtifact(pack.packId || pack.id, 'zip')}
+                            title="Download ZIP bundle"
+                          >
+                            <FileArchive className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -438,6 +590,209 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
               Build Pack
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Pack Detail Dialog ────────────────────────────────────────────── */}
+      <Dialog open={!!selectedPackId} onOpenChange={(open) => { if (!open) setSelectedPackId(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Pack Details
+              {packDetail && (
+                <span className="text-muted-foreground font-normal text-sm ml-2">
+                  v{packDetail.packVersion}
+                </span>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Integrity hashes, artifact sizes, and quality warnings
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : packDetail ? (
+            <div className="space-y-5">
+              {/* ── Status + Warnings ────────────────────────────────────── */}
+              <div className="flex items-center gap-3">
+                <PackStatusBadge status={packDetail.status} />
+                {packDetail.hasWarnings && (
+                  <WarningsBadge
+                    hasWarnings
+                    count={Array.isArray(packDetail.warnings) ? packDetail.warnings.length : 0}
+                  />
+                )}
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {new Date(packDetail.createdAt).toLocaleString()}
+                </span>
+              </div>
+
+              {/* ── Warning Details ──────────────────────────────────────── */}
+              {packDetail.hasWarnings && Array.isArray(packDetail.warnings) && packDetail.warnings.length > 0 && (
+                <div className="rounded-md border border-amber-200 dark:border-amber-800 p-3">
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-2">
+                    <AlertTriangle className="inline h-4 w-4 mr-1" /> Quality Warnings
+                  </p>
+                  <ul className="space-y-1">
+                    {packDetail.warnings.map((w: any, i: number) => (
+                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1 py-0 mt-0.5 shrink-0"
+                        >
+                          {w.code}
+                        </Badge>
+                        <span>{w.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* ── Integrity Hashes ─────────────────────────────────────── */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium flex items-center gap-1">
+                  <ShieldCheck className="h-4 w-4" /> Integrity Verification
+                </p>
+
+                {/* Manifest */}
+                <div className="rounded-md border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Manifest</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatBytes(packDetail.manifest.sizeBytes)}
+                    </span>
+                  </div>
+                  {packDetail.manifest.hashSha256 && (
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs font-mono bg-muted px-2 py-1 rounded flex-1 truncate">
+                        SHA-256: {packDetail.manifest.hashSha256}
+                      </code>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 shrink-0"
+                        onClick={() => copyToClipboard(packDetail.manifest.hashSha256, 'manifest')}
+                        title="Copy hash"
+                      >
+                        {copiedHash === 'manifest' ? (
+                          <CheckCircle2 className="h-3 w-3 text-green-600" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Artifacts */}
+                {packDetail.artifacts.map((art: any) => (
+                  <div key={art.type} className="rounded-md border p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium flex items-center gap-1.5">
+                        {art.type === 'PDF' && <FileText className="h-3.5 w-3.5" />}
+                        {art.type === 'DOCX' && <FileText className="h-3.5 w-3.5" />}
+                        {art.type === 'ZIP' && <FileArchive className="h-3.5 w-3.5" />}
+                        {art.type}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatBytes(art.sizeBytes)}
+                      </span>
+                    </div>
+                    {art.hashSha256 && (
+                      <div className="flex items-center gap-2">
+                        <code className="text-xs font-mono bg-muted px-2 py-1 rounded flex-1 truncate">
+                          SHA-256: {art.hashSha256}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 shrink-0"
+                          onClick={() => copyToClipboard(art.hashSha256, art.type)}
+                          title="Copy hash"
+                        >
+                          {copiedHash === art.type ? (
+                            <CheckCircle2 className="h-3 w-3 text-green-600" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Snapshot Hash ─────────────────────────────────────────── */}
+              {packDetail.snapshot && (
+                <div className="rounded-md border p-3 space-y-1">
+                  <span className="text-sm font-medium">Snapshot Hash</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-mono bg-muted px-2 py-1 rounded flex-1 truncate">
+                      SHA-256: {packDetail.snapshot.snapshotHashSha256}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 shrink-0"
+                      onClick={() => copyToClipboard(packDetail.snapshot!.snapshotHashSha256, 'snapshot')}
+                      title="Copy hash"
+                    >
+                      {copiedHash === 'snapshot' ? (
+                        <CheckCircle2 className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Download Actions ──────────────────────────────────────── */}
+              <div className="flex flex-wrap gap-2 pt-2 border-t">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDownloadManifest(packDetail.packId)}
+                >
+                  <FileJson className="h-3 w-3 mr-1" /> Manifest
+                </Button>
+                {packDetail.artifacts.some((a: any) => a.type === 'PDF') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownloadArtifact(packDetail.packId, 'pdf')}
+                  >
+                    <FileText className="h-3 w-3 mr-1" /> PDF
+                  </Button>
+                )}
+                {packDetail.artifacts.some((a: any) => a.type === 'DOCX') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownloadArtifact(packDetail.packId, 'docx')}
+                  >
+                    <FileText className="h-3 w-3 mr-1" /> DOCX
+                  </Button>
+                )}
+                {packDetail.artifacts.some((a: any) => a.type === 'ZIP') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownloadArtifact(packDetail.packId, 'zip')}
+                  >
+                    <FileArchive className="h-3 w-3 mr-1" /> ZIP Bundle
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">Unable to load pack details</p>
+          )}
         </DialogContent>
       </Dialog>
     </div>

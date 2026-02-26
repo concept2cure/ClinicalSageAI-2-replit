@@ -34,7 +34,7 @@ export type BiomarkerType =
 
 export type ThresholdOperator = 'lte' | 'gte' | 'range' | 'none';
 
-export type PackStatus = 'SUCCEEDED' | 'REVOKED';
+export type PackStatus = 'BUILDING' | 'SUCCEEDED' | 'FAILED' | 'REVOKED';
 export type JobStatus = 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
 export type OutputFormat = 'PDF' | 'DOCX' | 'ZIP' | 'MANIFEST';
 
@@ -434,15 +434,24 @@ export interface BuildPackRequest {
   signBuild: boolean;
 }
 
+export interface PackWarning {
+  code: string;
+  message: string;
+  severity?: 'low' | 'medium' | 'high';
+  timestamp?: ISODateTime;
+}
+
 export interface PackListItem {
   packId: UUID;
   packType: PackType;
   packVersion: number;
-  status: string;
+  status: PackStatus | string;
   createdAt: ISODateTime;
   createdByUserId: string | null;
   manifestHashSha256: string;
   snapshotHashSha256: string;
+  hasWarnings: boolean;
+  warnings: PackWarning[] | null;
   downloads: {
     manifest: boolean;
     pdf: boolean;
@@ -455,18 +464,23 @@ export interface PackDetailResponse {
   packId: UUID;
   packType: PackType;
   packVersion: number;
-  status: string;
+  status: PackStatus | string;
   createdAt: ISODateTime;
+  hasWarnings: boolean;
+  warnings: PackWarning[] | null;
   manifest: {
     vaultFileId: string | null;
     vaultVersionId: string | null;
     hashSha256: string;
+    sha256: string | null;
+    sizeBytes: number | null;
   };
   artifacts: Array<{
     type: string;
     vaultFileId: string | null;
     vaultVersionId: string | null;
     hashSha256: string;
+    sizeBytes: number | null;
   }>;
   snapshot: {
     snapshotHashSha256: string;
