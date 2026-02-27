@@ -1654,3 +1654,5 @@ export const unifiedUpload = multer({
 
 // Export singleton instance
 export const unifiedDocumentIngestion = new UnifiedDocumentIngestion();
+
+export { extractPdfWithPython };

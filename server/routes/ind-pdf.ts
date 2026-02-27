@@ -20,6 +20,8 @@ import PDFDocument from 'pdfkit';
 import { pool } from '../db';
 import fs from 'fs';
 import path from 'path';
+import multer from 'multer';
+import { extractPdfWithPython } from '../services/unifiedDocumentIngestion.js';
 
 const router = Router();
 
@@ -557,6 +559,113 @@ router.get('/:projectId/download/:filename', async (req: Request, res: Response)
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PDF EXTRACTION (Python multi-strategy bridge)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    cb(null, file.mimetype === 'application/pdf');
+  },
+});
+
+/**
+ * POST /:projectId/extract
+ *
+ * Upload a PDF and extract its full text using the Python multi-strategy
+ * pipeline (pymupdf → pypdf2 → pdfminer → OCR → enhanced OCR).
+ *
+ * Body: multipart/form-data, field "file" (PDF)
+ */
+router.post('/:projectId/extract', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No PDF file provided. Use field name "file".' });
+    }
+
+    const result = await (extractPdfWithPython as any)(req.file.buffer, { filename: req.file.originalname });
+
+    if (!result.success) {
+      return res.status(422).json({ error: 'PDF extraction failed', detail: result.error });
+    }
+
+    const wordCount = result.text ? (result.text as string).split(/\s+/).filter(Boolean).length : 0;
+
+    res.json({
+      success:     true,
+      projectId,
+      text:        result.text,
+      strategy:    result.strategy,
+      pageCount:   result.pageCount ?? null,
+      wordCount,
+      filename:    req.file.originalname,
+      extractedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('[IND-PDF] Extraction failed:', error);
+    res.status(500).json({ error: 'PDF extraction failed', message: error.message });
+  }
+});
+
+/**
+ * POST /:projectId/import-content
+ *
+ * Upload a source PDF, extract its text, then store it as AI generation
+ * context for the specified IND section (sectionCode in body).
+ *
+ * Body: multipart/form-data with fields:
+ *   file         — PDF file
+ *   sectionCode  — CTD section code (e.g. "2.7")
+ */
+router.post('/:projectId/import-content', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const sectionCode = (req.body?.sectionCode as string) || '2';
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No PDF file provided. Use field name "file".' });
+    }
+
+    const extraction = await (extractPdfWithPython as any)(req.file.buffer, { filename: req.file.originalname });
+
+    if (!extraction.success || !(extraction.text as string)?.trim()) {
+      return res.status(422).json({ error: 'Could not extract usable text from the PDF' });
+    }
+
+    if (pool) {
+      await pool.query(
+        `INSERT INTO ind_source_documents
+           (project_id, section_code, filename, extracted_text, strategy, created_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         ON CONFLICT (project_id, section_code, filename) DO UPDATE
+           SET extracted_text = EXCLUDED.extracted_text,
+               strategy       = EXCLUDED.strategy,
+               created_at     = NOW()`,
+        [projectId, sectionCode, req.file.originalname, extraction.text, extraction.strategy]
+      ).catch(() => { /* table may not exist yet; non-fatal */ });
+    }
+
+    res.json({
+      success:    true,
+      projectId,
+      sectionCode,
+      filename:   req.file.originalname,
+      strategy:   extraction.strategy,
+      wordCount:  (extraction.text as string).split(/\s+/).filter(Boolean).length,
+      importedAt: new Date().toISOString(),
+      message:    'PDF imported and stored as source context for AI generation.',
+    });
+  } catch (error: any) {
+    console.error('[IND-PDF] Import-content failed:', error);
+    res.status(500).json({ error: 'Import failed', message: error.message });
+  }
+});
+
+
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
