@@ -594,7 +594,12 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
       </Dialog>
 
       {/* ── Pack Detail Dialog ────────────────────────────────────────────── */}
-      <Dialog open={!!selectedPackId} onOpenChange={(open) => { if (!open) setSelectedPackId(null); }}>
+      <Dialog
+        open={!!selectedPackId}
+        onOpenChange={open => {
+          if (!open) setSelectedPackId(null);
+        }}
+      >
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -632,26 +637,31 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
               </div>
 
               {/* ── Warning Details ──────────────────────────────────────── */}
-              {packDetail.hasWarnings && Array.isArray(packDetail.warnings) && packDetail.warnings.length > 0 && (
-                <div className="rounded-md border border-amber-200 dark:border-amber-800 p-3">
-                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-2">
-                    <AlertTriangle className="inline h-4 w-4 mr-1" /> Quality Warnings
-                  </p>
-                  <ul className="space-y-1">
-                    {packDetail.warnings.map((w: any, i: number) => (
-                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] px-1 py-0 mt-0.5 shrink-0"
+              {packDetail.hasWarnings &&
+                Array.isArray(packDetail.warnings) &&
+                packDetail.warnings.length > 0 && (
+                  <div className="rounded-md border border-amber-200 dark:border-amber-800 p-3">
+                    <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-2">
+                      <AlertTriangle className="inline h-4 w-4 mr-1" /> Quality Warnings
+                    </p>
+                    <ul className="space-y-1">
+                      {packDetail.warnings.map((w: any, i: number) => (
+                        <li
+                          key={i}
+                          className="text-xs text-muted-foreground flex items-start gap-2"
                         >
-                          {w.code}
-                        </Badge>
-                        <span>{w.message}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1 py-0 mt-0.5 shrink-0"
+                          >
+                            {w.code}
+                          </Badge>
+                          <span>{w.message}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
               {/* ── Integrity Hashes ─────────────────────────────────────── */}
               <div className="space-y-2">
@@ -739,7 +749,9 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                       size="sm"
                       variant="ghost"
                       className="h-7 w-7 p-0 shrink-0"
-                      onClick={() => copyToClipboard(packDetail.snapshot!.snapshotHashSha256, 'snapshot')}
+                      onClick={() =>
+                        copyToClipboard(packDetail.snapshot!.snapshotHashSha256, 'snapshot')
+                      }
                       title="Copy hash"
                     >
                       {copiedHash === 'snapshot' ? (
