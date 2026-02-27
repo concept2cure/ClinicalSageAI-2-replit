@@ -4,9 +4,17 @@ Enhanced Section Generation Agent for eCTD CoAuthor Module
 This agent provides LLM-powered, source-based generation for regulatory document sections
 within the existing eCTD CoAuthor workflow. It integrates directly with the document
 workspace and maintains full traceability of generated content.
+
+New capabilities (2026-02):
+- load_project_documents()     — auto-load all ingested project files as context
+- generate_docx_document()     — produce a formatted .docx from generated sections
+- generate_ind_package_docx()  — generate a complete CTD-structured IND .docx
+- generate_document_from_project() — end-to-end: context → AI → .docx in one call
 """
 
 import os
+import io
+import sys
 import json
 import asyncio
 from typing import Dict, List, Optional, Any
@@ -15,6 +23,10 @@ import openai
 from dataclasses import dataclass, asdict
 import hashlib
 import uuid
+from pathlib import Path
+
+# Allow imports from project root (for knowledge_ingestion)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Set up OpenAI client
 openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -297,12 +309,344 @@ class EnhancedSectionGenerator:
         """Get history of all generated sections"""
         return [asdict(section) for section in self.generation_history]
     
-    def get_section_by_id(self, section_id: str) -> Optional[GeneratedSection]:
+    def get_section_by_id(self, section_id: str) -> Optional[Any]:
         """Retrieve a specific generated section by ID"""
         for section in self.generation_history:
             if section.section_id == section_id:
                 return section
         return None
+
+    # ── Project-context integration ──────────────────────────────────────────
+
+    def load_project_documents(self, project_id: str,
+                                max_chars_per_doc: int = 4000,
+                                max_total_chars: int = 80_000) -> List[Dict]:
+        """
+        Load all ingested documents for *project_id* from the knowledge store
+        and return them as the context_documents list expected by
+        generate_regulatory_section().
+
+        Falls back to [] if knowledge_ingestion is unavailable.
+        """
+        try:
+            from knowledge_ingestion import get_project_context
+            ctx = get_project_context(
+                project_id,
+                max_chars_per_doc=max_chars_per_doc,
+                max_total_chars=max_total_chars,
+            )
+            documents = []
+            for doc in ctx.get("documents", []):
+                documents.append({
+                    "id":      doc["id"],
+                    "title":   doc["title"],
+                    "type":    doc["type"],
+                    "content": doc["excerpt"],
+                })
+            return documents
+        except ImportError:
+            print("[generateSection] knowledge_ingestion not available")
+            return []
+
+    # ── DOCX generation ──────────────────────────────────────────────────────
+
+    def generate_docx_document(
+        self,
+        sections: List[Dict[str, Any]],
+        document_title: str = "Regulatory Document",
+        organization: str = "",
+        author: str = "",
+        output_path: Optional[str] = None,
+    ) -> bytes:
+        """
+        Produce a formatted .docx from a list of generated section dicts.
+
+        Each section dict must have at least:
+            section_title (str)
+            content       (str)
+
+        Optional fields used when present:
+            citations     (list of str)
+            validation    (dict with score)
+
+        Returns raw docx bytes. If output_path is given, also saves to disk.
+        """
+        from docx import Document
+        from docx.shared import Inches, Pt, RGBColor
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
+
+        doc = Document()
+
+        # ── Page setup
+        section_prop = doc.sections[0]
+        section_prop.page_width  = Inches(8.5)
+        section_prop.page_height = Inches(11)
+        section_prop.left_margin   = Inches(1.25)
+        section_prop.right_margin  = Inches(1.25)
+        section_prop.top_margin    = Inches(1)
+        section_prop.bottom_margin = Inches(1)
+
+        # ── Styles
+        styles = doc.styles
+        normal = styles["Normal"]
+        normal.font.name = "Times New Roman"
+        normal.font.size = Pt(12)
+
+        # ── Cover page
+        title_para = doc.add_paragraph()
+        title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = title_para.add_run(document_title)
+        run.bold = True
+        run.font.size = Pt(18)
+
+        if organization:
+            org_para = doc.add_paragraph()
+            org_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            org_para.add_run(organization).font.size = Pt(12)
+
+        date_para = doc.add_paragraph()
+        date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        date_para.add_run(
+            f"Generated: {datetime.now().strftime('%B %d, %Y')}"
+        ).font.size = Pt(11)
+
+        if author:
+            auth_para = doc.add_paragraph()
+            auth_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            auth_para.add_run(f"Prepared by: {author}").font.size = Pt(11)
+
+        doc.add_page_break()
+
+        # ── Table of Contents placeholder
+        toc_heading = doc.add_heading("Table of Contents", level=1)
+        for s in sections:
+            toc_item = doc.add_paragraph(style="List Number")
+            toc_item.add_run(s.get("section_title", "Untitled"))
+        doc.add_page_break()
+
+        # ── Document sections
+        for s in sections:
+            title_text = s.get("section_title", "Untitled Section")
+            content    = s.get("content", "")
+            citations  = s.get("citations", [])
+            validation = s.get("validation", {})
+
+            # Section heading
+            doc.add_heading(title_text, level=2)
+
+            # Compliance / quality badge
+            score = validation.get("score") if validation else None
+            if score is not None:
+                badge = doc.add_paragraph()
+                run   = badge.add_run(f"Quality Score: {score:.0%}  |  FDA Compliance Check")
+                run.italic = True
+                run.font.size = Pt(9)
+                run.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
+
+            # Content — split on newlines to preserve paragraphs
+            for para_text in content.split("\n"):
+                para_text = para_text.strip()
+                if not para_text:
+                    continue
+                if para_text.startswith("##"):
+                    doc.add_heading(para_text.lstrip("#").strip(), level=3)
+                else:
+                    doc.add_paragraph(para_text)
+
+            # Citations block
+            if citations:
+                doc.add_heading("References", level=3)
+                for cite in citations:
+                    ref_para = doc.add_paragraph(style="List Bullet")
+                    if isinstance(cite, dict):
+                        ref_para.add_run(
+                            f"{cite.get('title', '')} — {cite.get('source', '')}"
+                        )
+                    else:
+                        ref_para.add_run(str(cite))
+
+            # Separator
+            doc.add_paragraph("─" * 60).runs[0].font.size = Pt(8)
+
+        # ── Footer: confidentiality notice
+        for sec in doc.sections:
+            footer_para = sec.footer.paragraphs[0]
+            footer_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            footer_para.add_run(
+                "CONFIDENTIAL — For Regulatory Submission Purposes Only"
+            ).font.size = Pt(8)
+
+        # ── Serialise
+        buf = io.BytesIO()
+        doc.save(buf)
+        docx_bytes = buf.getvalue()
+
+        if output_path:
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, "wb") as fh:
+                fh.write(docx_bytes)
+
+        return docx_bytes
+
+    async def generate_ind_package_docx(
+        self,
+        project_id: str,
+        drug_name: str = "Investigational Drug",
+        sponsor: str = "",
+        indication: str = "",
+        ctd_sections: Optional[List[str]] = None,
+        compliance_region: str = "FDA",
+        output_path: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        End-to-end IND package generation:
+        1. Load all project documents from the knowledge store
+        2. Generate AI content for each requested CTD section
+        3. Assemble a formatted .docx with all sections
+        4. Return { docx_bytes, sections, metadata }
+
+        ctd_sections defaults to the IND-minimum set (Modules 1–5 summaries).
+        """
+        if ctd_sections is None:
+            ctd_sections = [
+                "1.0 - Cover Letter & Form FDA 1571",
+                "2.1 - Comprehensive Table of Contents",
+                "2.2 - Introduction to the Summary",
+                "2.3 - Quality Overall Summary (QOS)",
+                "2.4 - Nonclinical Overview",
+                "2.5 - Clinical Overview",
+                "3.2.S - Drug Substance (CMC)",
+                "3.2.P - Drug Product (CMC)",
+                "4.1 - Nonclinical Study Reports Table of Contents",
+                "5.1 - Clinical Study Reports Table of Contents",
+            ]
+
+        # Load project context
+        project_docs = self.load_project_documents(project_id)
+
+        user_base_requirements = {
+            "drug_name":  drug_name,
+            "sponsor":    sponsor,
+            "indication": indication,
+            "user_id":    f"project:{project_id}",
+        }
+
+        generated_sections: List[Dict[str, Any]] = []
+        errors: List[str] = []
+
+        for ctd_section in ctd_sections:
+            try:
+                requirements = {
+                    **user_base_requirements,
+                    "title":       ctd_section,
+                    "focus_areas": [ctd_section],
+                    "length":      "standard",
+                }
+                result = await self.generate_regulatory_section(
+                    section_type=ctd_section,
+                    context_documents=project_docs,
+                    user_requirements=requirements,
+                    compliance_region=compliance_region,
+                )
+                generated_sections.append({
+                    "section_title": ctd_section,
+                    "content":       result.content,
+                    "citations":     [asdict(r) for r in result.source_references],
+                    "validation":    {
+                        "score":              result.regulatory_compliance_score,
+                        "quality_score":      result.quality_score,
+                        "section_id":         result.section_id,
+                    },
+                })
+            except Exception as e:
+                errors.append(f"{ctd_section}: {str(e)}")
+
+        # Build DOCX
+        doc_title = f"IND Application — {drug_name}"
+        docx_bytes = self.generate_docx_document(
+            sections=generated_sections,
+            document_title=doc_title,
+            organization=sponsor,
+            output_path=output_path,
+        )
+
+        return {
+            "success":            len(generated_sections) > 0,
+            "project_id":         project_id,
+            "drug_name":          drug_name,
+            "document_title":     doc_title,
+            "sections_generated": len(generated_sections),
+            "sections_failed":    len(errors),
+            "errors":             errors,
+            "docx_bytes":         docx_bytes,
+            "docx_size_bytes":    len(docx_bytes),
+            "generated_at":       datetime.now().isoformat(),
+        }
+
+    async def generate_document_from_project(
+        self,
+        project_id: str,
+        document_type: str,
+        document_config: Optional[Dict[str, Any]] = None,
+        output_path: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        High-level entry point: synthesise project knowledge → AI draft → .docx.
+
+        document_type examples:
+            "ind_package"         — full IND CTD sections
+            "clinical_overview"   — Module 2.5 clinical overview only
+            "quality_summary"     — Module 2.3 QOS only
+            "safety_summary"      — Module 2.4 nonclinical overview
+            "investigator_brochure" — complete IB
+
+        document_config may include: drug_name, sponsor, indication, sections,
+            compliance_region, max_chars_per_doc, max_total_chars
+        """
+        cfg = document_config or {}
+        drug_name  = cfg.get("drug_name",  "Investigational Drug")
+        sponsor    = cfg.get("sponsor",    "")
+        indication = cfg.get("indication", "")
+        region     = cfg.get("compliance_region", "FDA")
+
+        DOCUMENT_SECTION_MAP: Dict[str, List[str]] = {
+            "ind_package": [
+                "1.0 - Cover Letter & Form FDA 1571",
+                "2.3 - Quality Overall Summary",
+                "2.4 - Nonclinical Overview",
+                "2.5 - Clinical Overview",
+                "3.2.S - Drug Substance",
+                "3.2.P - Drug Product",
+                "4.1 - Nonclinical Study Table of Contents",
+                "5.1 - Clinical Study Table of Contents",
+            ],
+            "clinical_overview": ["2.5 - Clinical Overview"],
+            "quality_summary":   ["2.3 - Quality Overall Summary (QOS)"],
+            "safety_summary":    ["2.4 - Nonclinical Overview"],
+            "investigator_brochure": [
+                "IB Section 1 - Introduction & Summary",
+                "IB Section 2 - Physical, Chemical & Pharmaceutical Properties",
+                "IB Section 3 - Nonclinical Studies",
+                "IB Section 4 - Effects in Humans",
+                "IB Section 5 - Summary",
+            ],
+        }
+
+        sections = cfg.get("sections") or DOCUMENT_SECTION_MAP.get(document_type, [
+            f"{document_type} - Main Section"
+        ])
+
+        return await self.generate_ind_package_docx(
+            project_id=project_id,
+            drug_name=drug_name,
+            sponsor=sponsor,
+            indication=indication,
+            ctd_sections=sections,
+            compliance_region=region,
+            output_path=output_path,
+        )
 
 # Global instance for use in the eCTD CoAuthor module
 section_generator = EnhancedSectionGenerator()
@@ -325,30 +669,6 @@ async def generate_ectd_section(
     )
     
     return asdict(generated_section)
-
-if __name__ == "__main__":
-    # Test the generator
-    test_docs = [
-        {
-            "id": "doc1",
-            "title": "Clinical Study Report 001",
-            "type": "csr",
-            "content": "This study evaluated the safety and efficacy of the investigational drug..."
-        }
-    ]
-    
-    test_requirements = {
-        "title": "Safety Overview",
-        "length": "standard",
-        "focus_areas": ["adverse_events", "serious_aes"],
-        "user_id": "test_user"
-    }
-    
-    result = asyncio.run(generate_ectd_section(
-        "safety_overview", test_docs, test_requirements
-    ))
-    
-    print(json.dumps(result, indent=2))
 
 if __name__ == "__main__":
     import sys

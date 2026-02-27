@@ -65,6 +65,11 @@ async def root():
             "/analysis-status/{analysis_id}",
             "/extract-pdf",
             "/extract-pdf-upload",
+            "/ingest-files",
+            "/project-context/{project_id}",
+            "/generate-docx",
+            "/generate-ind-package",
+            "/generate-ind-section",
             "/health"
         ]
     }
@@ -330,6 +335,255 @@ async def extract_pdf_upload_endpoint(
         raise
     except Exception as e:
         logger.exception("PDF upload extraction failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Project Knowledge-Base & Document Generation endpoints ──────────────────
+
+class ProjectContextRequest(BaseModel):
+    project_id: str
+    max_chars_per_doc: Optional[int] = 4000
+    max_total_chars: Optional[int] = 80000
+
+
+class DocxGenerationRequest(BaseModel):
+    sections: List[Dict[str, Any]]
+    document_title: Optional[str] = "Regulatory Document"
+    organization: Optional[str] = ""
+    author: Optional[str] = ""
+
+
+class INDGenerationRequest(BaseModel):
+    project_id: str
+    drug_name: Optional[str] = "Investigational Drug"
+    sponsor: Optional[str] = ""
+    indication: Optional[str] = ""
+    ctd_sections: Optional[List[str]] = None
+    compliance_region: Optional[str] = "FDA"
+    document_type: Optional[str] = "ind_package"
+    document_config: Optional[Dict[str, Any]] = None
+
+
+class INDSectionRequest(BaseModel):
+    section_type: str
+    project_id: Optional[str] = None
+    documents: Optional[List[Dict[str, Any]]] = None
+    requirements: Optional[Dict[str, Any]] = {}
+    compliance_region: Optional[str] = "FDA"
+
+
+@app.post("/ingest-files")
+async def ingest_files_endpoint(
+    project_id: str = Form(...),
+    files: List[UploadFile] = File(...),
+):
+    """
+    Upload one or more files (PDF, DOCX, XLSX, TXT, CSV, MD) into a project
+    knowledge base. Files are extracted and indexed for later synthesis.
+    """
+    try:
+        from backend.knowledge_ingestion import ingest_project_bytes
+
+        file_data = []
+        for uf in files:
+            content = await uf.read()
+            file_data.append({
+                "filename": uf.filename or "upload",
+                "content":  content,
+                "content_type": uf.content_type or "application/octet-stream",
+            })
+
+        result = ingest_project_bytes(file_data, project_id)
+        return {
+            "success": True,
+            "project_id": project_id,
+            "ingested": result.get("ingested", []),
+            "failed":   result.get("failed", []),
+            "total_files": len(file_data),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"Ingestion module unavailable: {e}")
+    except Exception as e:
+        logger.exception("File ingestion failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/project-context/{project_id}")
+async def get_project_context_endpoint(
+    project_id: str,
+    max_chars_per_doc: int = 4000,
+    max_total_chars: int = 80000,
+):
+    """
+    Return the synthesised knowledge context for a project:
+      - list of documents with excerpts
+      - combined_context string (all docs concatenated)
+      - summary_prompt suitable for direct LLM injection
+      - extracted keywords
+    """
+    try:
+        from backend.knowledge_ingestion import get_project_context
+
+        ctx = get_project_context(
+            project_id,
+            max_chars_per_doc=max_chars_per_doc,
+            max_total_chars=max_total_chars,
+        )
+        return ctx
+
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"Knowledge module unavailable: {e}")
+    except Exception as e:
+        logger.exception("Project context retrieval failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate-docx")
+async def generate_docx_endpoint(request: DocxGenerationRequest):
+    """
+    Generate a formatted .docx from a list of pre-built section dicts.
+    Returns the raw DOCX bytes as application/vnd.openxmlformats-officedocument...
+    """
+    from fastapi.responses import Response
+
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from backend.generateSection import section_generator
+
+        docx_bytes = section_generator.generate_docx_document(
+            sections=request.sections,
+            document_title=request.document_title or "Regulatory Document",
+            organization=request.organization or "",
+            author=request.author or "",
+        )
+        filename = (request.document_title or "document").replace(" ", "_") + ".docx"
+        return Response(
+            content=docx_bytes,
+            media_type=(
+                "application/vnd.openxmlformats-officedocument"
+                ".wordprocessingml.document"
+            ),
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"Document generator unavailable: {e}")
+    except Exception as e:
+        logger.exception("DOCX generation failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate-ind-package")
+async def generate_ind_package_endpoint(request: INDGenerationRequest):
+    """
+    End-to-end IND package generation:
+    1. Loads all uploaded project documents
+    2. Uses AI to draft each requested CTD section
+    3. Assembles a formatted .docx
+    Returns DOCX bytes as a file download.
+    """
+    from fastapi.responses import Response
+    import asyncio
+
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from backend.generateSection import section_generator
+
+        # Use document_from_project for named types, or direct IND package
+        if request.document_type and request.document_type != "ind_package":
+            config = request.document_config or {}
+            config.update({
+                "drug_name":          request.drug_name,
+                "sponsor":            request.sponsor,
+                "indication":         request.indication,
+                "compliance_region":  request.compliance_region,
+            })
+            result = await section_generator.generate_document_from_project(
+                project_id=request.project_id,
+                document_type=request.document_type,
+                document_config=config,
+            )
+        else:
+            result = await section_generator.generate_ind_package_docx(
+                project_id=request.project_id,
+                drug_name=request.drug_name or "Investigational Drug",
+                sponsor=request.sponsor or "",
+                indication=request.indication or "",
+                ctd_sections=request.ctd_sections,
+                compliance_region=request.compliance_region or "FDA",
+            )
+
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=500,
+                detail={"errors": result.get("errors", [])},
+            )
+
+        docx_bytes = result["docx_bytes"]
+        filename = (
+            (result.get("document_title") or "IND_Package")
+            .replace(" ", "_")
+            .replace("/", "-")
+            + ".docx"
+        )
+
+        return Response(
+            content=docx_bytes,
+            media_type=(
+                "application/vnd.openxmlformats-officedocument"
+                ".wordprocessingml.document"
+            ),
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Sections-Generated": str(result.get("sections_generated", 0)),
+                "X-Sections-Failed":    str(result.get("sections_failed", 0)),
+            },
+        )
+
+    except HTTPException:
+        raise
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"Generation module unavailable: {e}")
+    except Exception as e:
+        logger.exception("IND package generation failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate-ind-section")
+async def generate_ind_section_endpoint(request: INDSectionRequest):
+    """
+    Generate a single IND/eCTD section as JSON.
+    Accepts either an explicit documents list OR a project_id (auto-loads context).
+    Returns the section content + citations + scores.
+    """
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from backend.generateSection import section_generator
+
+        docs = request.documents or []
+        if not docs and request.project_id:
+            docs = section_generator.load_project_documents(request.project_id)
+
+        result = await section_generator.generate_regulatory_section(
+            section_type=request.section_type,
+            context_documents=docs,
+            user_requirements=request.requirements or {},
+            compliance_region=request.compliance_region or "FDA",
+        )
+
+        from dataclasses import asdict
+        return {
+            "success":   True,
+            "section":   asdict(result),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"Generation module unavailable: {e}")
+    except Exception as e:
+        logger.exception("Section generation failed")
         raise HTTPException(status_code=500, detail=str(e))
 
 
