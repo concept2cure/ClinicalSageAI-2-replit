@@ -1160,6 +1160,21 @@ try {
   console.error('❌ Failed to mount DOCX Factory BFF proxy routes:', error);
 }
 
+// Mount Knowledge Base + AI Document Generation BFF proxy (Phase 7.1)
+// POST /api/knowledge-base/upload            → /knowledge/ingest-files
+// GET  /api/knowledge-base/context/:id       → /knowledge/project-context/{id}
+// POST /api/knowledge-base/generate-docx     → /knowledge/generate-docx
+// POST /api/knowledge-base/generate-ind-package → /knowledge/generate-ind-package
+// POST /api/knowledge-base/generate-ind-section → /knowledge/generate-ind-section
+try {
+  const knowledgeBaseModule = await import('./routes/knowledge-base.js');
+  const knowledgeBaseRoutes = knowledgeBaseModule.default;
+  app.use('/api/knowledge-base', knowledgeBaseRoutes);
+  console.log('✅ Knowledge Base BFF proxy routes mounted (Phase 7.1 — AI document synthesis)');
+} catch (error) {
+  console.error('❌ Failed to mount Knowledge Base BFF proxy routes:', error);
+}
+
 // Mount Predicate Intelligence BFF proxy (Phase 6.6 — Predicate Intelligence)
 // Proxies browser calls to Shadow Service /predicate/* with admin token injected server-side
 try {

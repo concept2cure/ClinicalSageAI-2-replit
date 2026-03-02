@@ -15,6 +15,7 @@ from .pdf_extractor import (
     extract_pdf_text,
     extract_pdf_text_from_bytes,
     extract_pdf_text_from_file,
+    extract_image_ocr,
     ExtractionResult,
 )
 

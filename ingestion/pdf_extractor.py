@@ -6,7 +6,15 @@ Production-grade PDF text extraction with automatic fallback cascade:
   1. PyMuPDF (fitz) — fastest, best layout preservation for native PDFs
   2. PyPDF2 — fallback for native PDFs if fitz fails
   3. pdfminer.six — layout-aware extraction with better text flow
-  4. Tesseract OCR — for scanned/image PDFs when text extraction returns empty
+  4. Tesseract OCR via PyMuPDF — scanned PDFs (300 DPI, plain)
+  5. Tesseract OCR + OpenCV — low-quality scans with denoise/binarise
+  6. Tesseract OCR via pdf2image — fallback when PyMuPDF unavailable
+
+Standalone image OCR:
+  extract_image_ocr() — PNG / JPG / TIFF / BMP / WEBP → text
+    • adaptive binarisation + deskew preprocessing
+    • multi-PSM fallback for challenging layouts
+    • configurable language packs, OEM, DPI
 
 Usage:
     from ingestion.pdf_extractor import extract_pdf_text
@@ -411,6 +419,221 @@ def _extract_with_ocr_enhanced(pdf_input: Union[str, bytes]) -> Optional[Extract
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HELPER: Deskew
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _deskew_image(gray_array):
+    """
+    Deskew a grayscale numpy array using OpenCV moments.
+    Returns corrected numpy array.  Skips silently if cv2 not available.
+    """
+    try:
+        import cv2
+        import numpy as np
+
+        coords = np.column_stack(np.where(gray_array < 128))
+        if len(coords) < 50:
+            return gray_array
+        angle = cv2.minAreaRect(coords)[-1]
+        if angle < -45:
+            angle = -(90 + angle)
+        else:
+            angle = -angle
+        if abs(angle) < 0.5:
+            return gray_array
+        (h, w) = gray_array.shape[:2]
+        center = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        rotated = cv2.warpAffine(
+            gray_array, M, (w, h),
+            flags=cv2.INTER_CUBIC,
+            borderMode=cv2.BORDER_REPLICATE,
+        )
+        return rotated
+    except Exception:
+        return gray_array
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STRATEGY 6: OCR via pdf2image (fallback when PyMuPDF unavailable)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _extract_with_pdf2image_ocr(pdf_input: Union[str, bytes]) -> Optional[ExtractionResult]:
+    """
+    Convert PDF pages to images using poppler/pdf2image, then run Tesseract.
+    Used as a fallback when PyMuPDF (fitz) is not available.
+    """
+    try:
+        from pdf2image import convert_from_path, convert_from_bytes
+        import pytesseract
+
+        if isinstance(pdf_input, bytes):
+            pages = convert_from_bytes(pdf_input, dpi=300)
+        else:
+            pages = convert_from_path(pdf_input, dpi=300)
+
+        text_parts = []
+        warnings_list = []
+
+        for page_num, pil_img in enumerate(pages):
+            try:
+                page_text = pytesseract.image_to_string(
+                    pil_img, lang='eng',
+                    config='--oem 3 --psm 6',
+                )
+                if page_text.strip():
+                    text_parts.append(f"--- Page {page_num + 1} (pdf2image OCR) ---\n{page_text}")
+                else:
+                    warnings_list.append(f"Page {page_num + 1}: pdf2image OCR returned empty")
+            except Exception as e:
+                warnings_list.append(f"Page {page_num + 1}: pdf2image OCR error - {str(e)}")
+
+        full_text = "\n\n".join(text_parts)
+        if not full_text.strip():
+            return None
+
+        return ExtractionResult(
+            text=full_text,
+            strategy="ocr_pdf2image",
+            page_count=len(pages),
+            char_count=len(full_text),
+            success=True,
+            warnings=warnings_list,
+            metadata={"library": "pdf2image+tesseract", "ocr": True, "dpi": 300},
+        )
+
+    except ImportError as e:
+        logger.warning(f"pdf2image OCR dependencies not installed: {e}")
+        return None
+    except Exception as e:
+        logger.warning(f"pdf2image OCR extraction failed: {e}")
+        return None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STANDALONE IMAGE OCR  (PNG / JPG / TIFF / BMP / WEBP)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def extract_image_ocr(
+    image_input: Union[str, bytes, "Path"],
+    lang: str = "eng",
+    langs: Optional[List[str]] = None,
+    psm: int = 6,
+    oem: int = 3,
+    dpi: int = 300,
+    preprocess: bool = True,
+    multi_psm_fallback: bool = True,
+) -> Dict[str, Any]:
+    """
+    Run Tesseract OCR on a single image file or raw bytes.
+
+    Args:
+        image_input : file path (str/Path) or raw image bytes
+        lang        : Tesseract language code, e.g. 'eng', 'fra', 'deu'
+        langs       : list of language codes (overrides `lang`)
+        psm         : Tesseract page segmentation mode (default 6 = uniform block)
+        oem         : Tesseract OCR engine mode  (default 3 = LSTM + legacy)
+        dpi         : resolution hint passed to Tesseract
+        preprocess  : apply OpenCV denoise + binarise + deskew before OCR
+        multi_psm_fallback : if primary PSM returns <50 chars, retry with PSM 3/11/4
+
+    Returns:
+        Dict with: text, strategy, char_count, success, warnings, metadata
+    """
+    try:
+        import pytesseract
+        from PIL import Image as _PilImage
+
+        # Load
+        if isinstance(image_input, (str, Path)):
+            img = _PilImage.open(str(image_input))
+        else:
+            img = _PilImage.open(io.BytesIO(image_input))
+
+        if img.mode not in ("RGB", "L", "RGBA"):
+            img = img.convert("RGB")
+
+        warnings_list: List[str] = []
+        original_size = img.size
+
+        # Upscale narrow images
+        if img.width < 1200:
+            scale = 1200 / img.width
+            new_size = (int(img.width * scale), int(img.height * scale))
+            img = img.resize(new_size, _PilImage.LANCZOS)
+            warnings_list.append(f"Upscaled {original_size} → {new_size} for OCR")
+
+        # OpenCV preprocessing
+        if preprocess:
+            try:
+                import cv2
+                import numpy as np
+                img_array = np.array(img.convert("RGB"))
+                gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+                gray = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+                gray = _deskew_image(gray)
+                binary = cv2.adaptiveThreshold(
+                    gray, 255,
+                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                    cv2.THRESH_BINARY, 11, 2,
+                )
+                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
+                binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+                img = _PilImage.fromarray(binary)
+            except Exception as cv_err:
+                warnings_list.append(f"OpenCV preprocessing skipped: {cv_err}")
+
+        lang_str = "+".join(langs) if langs else lang
+        tess_config = f"--oem {oem} --psm {psm} --dpi {dpi}"
+        text = pytesseract.image_to_string(img, lang=lang_str, config=tess_config)
+
+        # Multi-PSM fallback
+        if multi_psm_fallback and len(text.strip()) < 50:
+            for fallback_psm in (3, 11, 4, 1):
+                if fallback_psm == psm:
+                    continue
+                try:
+                    fb_text = pytesseract.image_to_string(
+                        img, lang=lang_str,
+                        config=f"--oem {oem} --psm {fallback_psm} --dpi {dpi}",
+                    )
+                    if len(fb_text.strip()) > len(text.strip()):
+                        text = fb_text
+                        warnings_list.append(f"Used fallback PSM {fallback_psm}")
+                        psm = fallback_psm
+                        break
+                except Exception:
+                    pass
+
+        return {
+            "text":       text,
+            "strategy":   "tesseract_image_ocr",
+            "char_count": len(text),
+            "success":    bool(text.strip()),
+            "warnings":   warnings_list,
+            "metadata": {
+                "library":        "pytesseract",
+                "tesseract":      "5.x",
+                "lang":           lang_str,
+                "psm":            psm,
+                "oem":            oem,
+                "dpi":            dpi,
+                "preprocessed":   preprocess,
+                "original_size":  original_size,
+            },
+        }
+
+    except ImportError as e:
+        return {"text": "", "strategy": "tesseract_image_ocr", "char_count": 0,
+                "success": False, "warnings": [f"OCR deps missing: {e}"], "metadata": {}}
+    except Exception as e:
+        logger.warning(f"Image OCR failed: {e}")
+        return {"text": "", "strategy": "tesseract_image_ocr", "char_count": 0,
+                "success": False, "warnings": [f"Image OCR error: {str(e)}"], "metadata": {}}
+
+
 # MAIN EXTRACTION FUNCTION
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -456,9 +679,9 @@ def extract_pdf_text(
     # Default strategy order
     if strategies is None:
         if force_ocr:
-            strategies = ['ocr', 'ocr_enhanced']
+            strategies = ['ocr', 'ocr_enhanced', 'ocr_pdf2image']
         else:
-            strategies = ['pymupdf', 'pypdf2', 'pdfminer', 'ocr', 'ocr_enhanced']
+            strategies = ['pymupdf', 'pypdf2', 'pdfminer', 'ocr', 'ocr_enhanced', 'ocr_pdf2image']
 
     strategy_map = {
         'pymupdf': _extract_with_pymupdf,

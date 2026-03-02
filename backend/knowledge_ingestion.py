@@ -139,10 +139,47 @@ def extract_text_from_txt(txt_path: str) -> Optional[str]:
     return None
 
 
+def extract_text_from_image(image_path: str) -> Optional[str]:
+    """
+    OCR a raster image (PNG / JPG / JPEG / TIFF / BMP / WEBP) via Tesseract.
+    Delegates to ingestion.pdf_extractor.extract_image_ocr so preprocessing
+    (deskew, denoise, adaptive binarise, multi-PSM fallback) is applied.
+    Returns extracted text or None on failure.
+    """
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from ingestion.pdf_extractor import extract_image_ocr
+        result = extract_image_ocr(image_path)
+        text = result.get("text", "")
+        if result.get("warnings"):
+            for w in result["warnings"]:
+                logger.debug(f"Image OCR [{image_path}]: {w}")
+        return text if text.strip() else None
+    except ImportError:
+        # Fallback: use pytesseract directly
+        try:
+            import pytesseract
+            from PIL import Image
+            img = Image.open(image_path)
+            text = pytesseract.image_to_string(img, lang="eng", config="--oem 3 --psm 6")
+            return text if text.strip() else None
+        except Exception as e:
+            logger.warning(f"Image OCR fallback failed [{image_path}]: {e}")
+            return None
+    except Exception as e:
+        logger.warning(f"Image OCR failed [{image_path}]: {e}")
+        return None
+
+
+# Image extensions supported via Tesseract OCR
+_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp", ".webp", ".gif"})
+
+
 def extract_text_from_file(file_path: str) -> Optional[str]:
     """
     Unified dispatcher: routes to the correct extractor based on file extension.
-    Supported: .pdf, .docx, .doc, .xlsx, .xls, .txt, .md, .csv
+    Supported: .pdf, .docx, .doc, .xlsx, .xls, .txt, .md, .csv,
+               .png, .jpg, .jpeg, .tiff, .bmp, .webp (→ Tesseract OCR)
     """
     ext = Path(file_path).suffix.lower()
     if ext == ".pdf":
@@ -153,6 +190,8 @@ def extract_text_from_file(file_path: str) -> Optional[str]:
         return extract_text_from_xlsx(file_path)
     if ext in (".txt", ".md", ".csv"):
         return extract_text_from_txt(file_path)
+    if ext in _IMAGE_EXTENSIONS:
+        return extract_text_from_image(file_path)
     logger.warning(f"Unsupported file type: {ext}  ({file_path})")
     return None
 
@@ -278,9 +317,14 @@ def process_file(file_path: str, project_id: Optional[str] = None,
     return doc_id
 
 def process_directory(directory=PDF_DIR):
-    """Process all supported files in a directory (PDFs, DOCX, XLSX, TXT)."""
+    """Process all supported files in a directory (PDFs, DOCX, XLSX, TXT, images)."""
     processed_files = []
-    supported_exts = {".pdf", ".docx", ".doc", ".xlsx", ".xls", ".txt", ".md"}
+    supported_exts = {
+        ".pdf", ".docx", ".doc", ".xlsx", ".xls",
+        ".txt", ".md", ".csv",
+        # Raster images — extracted via Tesseract OCR
+        ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp", ".webp",
+    }
 
     all_files = [
         f for f in os.listdir(directory)
@@ -347,7 +391,7 @@ def ingest_project_files(
 ) -> Dict[str, Any]:
     """
     Ingest a list of file paths into the knowledge store under a project namespace.
-    Supports PDFs, DOCX, XLSX, and TXT.
+    Supports: PDF, DOCX, XLSX, TXT, CSV, MD, and raster images (PNG/JPG/TIFF/BMP/WEBP via OCR).
 
     Returns a summary dict: { project_id, ingested, failed, documents: [...] }
     """
