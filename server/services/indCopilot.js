@@ -17,7 +17,8 @@ import path from 'path';
 // Initialize clients
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Only init Supabase if credentials are present (not required in PostgreSQL-only deployments)
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

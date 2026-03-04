@@ -421,42 +421,75 @@ export class CortexService {
       }
 
       const decoder = new TextDecoder();
-      let fullResponse = '';
       let threadId = params.threadId || crypto.randomUUID();
+      const isSSE = response.headers.get('content-type')?.includes('text/event-stream');
 
-      let done = false;
-      while (!done) {
-        const result = await reader.read();
-        done = result.done;
-        if (done) break;
+      if (isSSE) {
+        // Real SSE streaming — parse `data: {...}` lines as they arrive
+        let buffer = '';
+        let finalContent = '';
 
-        const chunk = decoder.decode(result.value, { stream: true });
-        fullResponse += chunk;
-      }
+        while (true) {
+          const result = await reader.read();
+          if (result.done) break;
+          buffer += decoder.decode(result.value, { stream: true });
 
-      // Handle both JSON responses (non-streaming server) and plain text SSE streams
-      let displayContent = fullResponse;
-      try {
-        const parsed = JSON.parse(fullResponse);
-        // Server returned JSON — extract the answer text
-        if (parsed && (parsed.answer || parsed.response)) {
-          displayContent = parsed.answer || parsed.response;
-          // Use the real thread_id from the response
-          if (parsed.thread_id) {
-            threadId = parsed.thread_id;
+          // Process all complete lines in the buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? ''; // Keep last (possibly incomplete) line
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const jsonStr = line.slice(6).trim();
+            if (!jsonStr) continue;
+            try {
+              const event = JSON.parse(jsonStr) as {
+                type: string;
+                text?: string;
+                thread_id?: string;
+              };
+              if (event.type === 'chunk' && event.text) {
+                finalContent += event.text;
+                params.onChunk(event.text);
+              } else if (event.type === 'done') {
+                if (event.thread_id) threadId = event.thread_id;
+              }
+            } catch {
+              /* ignore malformed lines */
+            }
           }
         }
-      } catch {
-        // Not JSON — treat as raw streaming text (future SSE support)
+
+        params.onComplete({
+          threadId,
+          artifacts: this.parseArtifacts(finalContent),
+        });
+      } else {
+        // Non-streaming JSON response (fallback)
+        let fullResponse = '';
+        while (true) {
+          const result = await reader.read();
+          if (result.done) break;
+          fullResponse += decoder.decode(result.value, { stream: true });
+        }
+
+        let displayContent = fullResponse;
+        try {
+          const parsed = JSON.parse(fullResponse);
+          if (parsed && (parsed.answer || parsed.response)) {
+            displayContent = parsed.answer || parsed.response;
+            if (parsed.thread_id) threadId = parsed.thread_id;
+          }
+        } catch {
+          // Not JSON — use raw text
+        }
+
+        params.onChunk(displayContent);
+        params.onComplete({
+          threadId,
+          artifacts: this.parseArtifacts(displayContent),
+        });
       }
-
-      // Emit the clean content as a single chunk
-      params.onChunk(displayContent);
-
-      params.onComplete({
-        threadId,
-        artifacts: this.parseArtifacts(displayContent),
-      });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         return; // Request was cancelled

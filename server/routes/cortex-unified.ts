@@ -15,6 +15,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import OpenAI from 'openai';
 import { createScopedLogger } from '../utils/logger';
 import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
 import { getGateway } from '../services/ai-gateway/index.js';
@@ -208,6 +209,62 @@ router.post('/chat', async (req: Request, res: Response) => {
     const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
     const previousMessages = await getThreadMessages(threadId);
 
+    // Shared message array for both paths
+    const aiMessages = [
+      { role: 'system' as const, content: systemPrompt },
+      ...previousMessages.map((m: any) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+      { role: 'user' as const, content: message },
+    ];
+
+    // ── STREAMING PATH (SSE) ────────────────────────────────────────────────
+    if (stream === true) {
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders();
+
+      let fullContent = '';
+      let streamModel = 'lumen-cortex-demo';
+
+      try {
+        const openaiKey = process.env.OPENAI_API_KEY;
+        if (!openaiKey) throw new Error('OPENAI_API_KEY not set');
+        const openai = new OpenAI({ apiKey: openaiKey });
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: aiMessages,
+          stream: true,
+          max_tokens: 4000,
+          temperature: 0.7,
+        });
+        streamModel = 'openai/gpt-4o-mini';
+        for await (const chunk of completion) {
+          const text = chunk.choices[0]?.delta?.content || '';
+          if (text) {
+            fullContent += text;
+            res.write(`data: ${JSON.stringify({ type: 'chunk', text })}\n\n`);
+          }
+        }
+      } catch (streamErr: any) {
+        logger.warn(`[Chat] OpenAI stream failed, using demo response: ${streamErr.message}`);
+        fullContent = generateContextAwareDemoResponse(message, context);
+        res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
+      }
+
+      // Persist both messages after stream completes
+      await saveChatMessage(threadId, 'user', message, streamModel);
+      await saveChatMessage(threadId, 'assistant', fullContent, streamModel, 0);
+
+      res.write(`data: ${JSON.stringify({ type: 'done', thread_id: threadId })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // ── NON-STREAMING PATH (JSON) ───────────────────────────────────────────
     let assistantMessage: string;
     let model = 'lumen-cortex-demo';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -216,22 +273,13 @@ router.post('/chat', async (req: Request, res: Response) => {
     const gw = ensureChatGateway();
     if (gw && gw.getEnabledProviders().length > 0) {
       try {
-        const gwMessages = [
-          { role: 'system' as const, content: systemPrompt },
-          ...previousMessages.map((m: any) => ({
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-          })),
-          { role: 'user' as const, content: message },
-        ];
-
         logger.info(
           `[Chat] Sending context-aware message (project=${numericProjectId || 'none'}, sub=${context.project?.submissionType || 'none'}, section=${section_code || 'none'})`
         );
 
         const gwResponse: GatewayResponse = await gw.route({
           taskType: 'chat',
-          messages: gwMessages,
+          messages: aiMessages,
           temperature: 0.7,
           maxTokens: 4000,
           callerModule: 'lumen-cortex-chat',
