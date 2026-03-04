@@ -291,12 +291,31 @@ export const ZenApp: React.FC = () => {
     deleteProject: deleteProjectMutation,
   } = useProjects();
 
+  // Map DB submission type strings to the UI SubmissionType enum
+  function mapSubmissionType(raw: string): string {
+    const map: Record<string, string> = {
+      clinical_trial: 'IND',
+      regulatory_submission: 'NDA',
+      medical_device: '510K',
+      literature_review: 'NDA',
+      ind: 'IND',
+      nda: 'NDA',
+      bla: 'BLA',
+      pma: 'PMA',
+      maa: 'MAA',
+      eua: 'EUA',
+      de_novo: 'DE_NOVO',
+    };
+    if (['510K', 'IND', 'NDA', 'BLA', 'PMA', 'MAA', 'DE_NOVO', 'EUA'].includes(raw)) return raw;
+    return map[raw?.toLowerCase()] || 'IND';
+  }
+
   // Transform projects for UI
   const projects = useMemo(() => {
     return rawProjects.map(p => ({
       id: p.id,
       name: p.name,
-      type: p.submissionType,
+      type: mapSubmissionType(p.submissionType),
       color: getProjectColor(p.submissionType),
       description: p.description,
       lastUpdated: p.updatedAt,
@@ -362,9 +381,11 @@ export const ZenApp: React.FC = () => {
   }, [projects, activeProjectId]);
 
   const handleNewChat = useCallback(() => {
-    // Clear active conversation/thread to start fresh
+    // Clear active conversation/thread and ensure we're in chat mode
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
+    setLayoutMode('assistant');
+    setActiveToolPanel(null);
   }, []);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -777,7 +798,7 @@ export const ZenApp: React.FC = () => {
   }, []);
 
   return (
-    <div className="zen flex h-screen w-screen overflow-hidden bg-stone-50">
+    <div className="zen flex h-screen w-full overflow-hidden bg-stone-50">
       {/* CSS Variables */}
       <style>{`
         .zen {
@@ -809,11 +830,11 @@ export const ZenApp: React.FC = () => {
         }
       `}</style>
 
-      {/* Connection Status */}
-      {!isConnected && (
+      {/* Connection Status - only show if confirmed offline after health check loaded */}
+      {cortexHealth && !isConnected && (
         <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 bg-amber-50 border-b border-amber-200 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>Connecting to Lumen Cortex...</span>
+          <span>AI running in offline mode — chat still available</span>
         </div>
       )}
 

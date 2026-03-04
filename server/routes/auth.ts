@@ -122,6 +122,25 @@ router.get('/session', async (req: Request, res: Response) => {
 
     const userData = user[0];
 
+    // Extract firstName/lastName from name field
+    const sessionNameParts = (userData.name || '').trim().split(/\s+/);
+    const sessionFirstName = sessionNameParts[0] || '';
+    const sessionLastName = sessionNameParts.slice(1).join(' ') || '';
+    const sessionDisplayName = (userData.name || '').trim() || userData.email;
+
+    // Get role from organization_users
+    let sessionRole = 'user';
+    if (decoded.organizationId) {
+      const [sessionMembership] = await db
+        .select({ role: organizationUsers.role })
+        .from(organizationUsers)
+        .where(eq(organizationUsers.userId, userData.id))
+        .limit(1);
+      sessionRole = sessionMembership?.role || 'user';
+    }
+    const sessionRoles =
+      sessionRole === 'admin' ? ['admin', 'user'] : [sessionRole === 'editor' ? 'editor' : 'user'];
+
     // Get organization
     let orgName = 'TrialSage';
     if (decoded.organizationId) {
@@ -140,13 +159,12 @@ router.get('/session', async (req: Request, res: Response) => {
       user: {
         id: userData.id.toString(),
         email: userData.email,
-        firstName: userData.firstName || '',
-        lastName: userData.lastName || '',
-        displayName:
-          `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
-        roles: ['user'],
+        firstName: sessionFirstName,
+        lastName: sessionLastName,
+        displayName: sessionDisplayName,
+        roles: sessionRoles,
         permissions: [],
-        organizationId: decoded.organizationId || '2',
+        organizationId: decoded.organizationId || '1',
         organizationName: orgName,
         mfaEnabled: false,
         mfaMethods: [],
@@ -269,6 +287,22 @@ router.post('/login', async (req: Request, res: Response) => {
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
+    // Extract firstName/lastName from the name field (users table has name, not firstName/lastName)
+    const nameParts = (userData.name || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const displayName = (userData.name || '').trim() || userData.email;
+
+    // Get the actual role from organization_users
+    const [membershipRole] = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, userData.id))
+      .limit(1);
+    const userRole = membershipRole?.role || 'user';
+    const roles =
+      userRole === 'admin' ? ['admin', 'user'] : [userRole === 'editor' ? 'editor' : 'user'];
+
     res.json({
       success: true,
       accessToken,
@@ -277,11 +311,10 @@ router.post('/login', async (req: Request, res: Response) => {
       user: {
         id: userData.id.toString(),
         email: userData.email,
-        firstName: userData.firstName || '',
-        lastName: userData.lastName || '',
-        displayName:
-          `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
-        roles: ['user'],
+        firstName,
+        lastName,
+        displayName,
+        roles,
         permissions: [],
         organizationId: organizationId.toString(),
         organizationName: organization?.name || 'Organization',
@@ -516,7 +549,11 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      userId: string;
+      email: string;
+      organizationId?: string;
+    };
 
     const user = await db
       .select()
@@ -532,17 +569,33 @@ router.get('/me', async (req: Request, res: Response) => {
 
     const userData = user[0];
 
+    // Extract name parts from name column
+    const meParts = (userData.name || '').trim().split(/\s+/);
+    const meFirstName = meParts[0] || '';
+    const meLastName = meParts.slice(1).join(' ') || '';
+    const meDisplayName = (userData.name || '').trim() || userData.email;
+
+    // Get role
+    const [meMembership] = await db
+      .select({ role: organizationUsers.role, organizationId: organizationUsers.organizationId })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, userData.id))
+      .limit(1);
+    const meRole = meMembership?.role || 'user';
+    const meRoles =
+      meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
+    const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString() || '1';
+
     res.json({
       id: userData.id.toString(),
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
-      roles: ['user'],
+      firstName: meFirstName,
+      lastName: meLastName,
+      displayName: meDisplayName,
+      roles: meRoles,
       permissions: [],
-      organizationId: '2',
-      organizationName: 'TrialSage Demo',
+      organizationId: meOrgId,
+      organizationName: 'Concept2Cure Inc.',
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {

@@ -81,11 +81,16 @@ const extractOrgContext = (req, res, next) => {
   if (!orgIdHeader) {
     if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
       // Use default development organization ID
-      req.organizationId = 2; // Default dev org
-      req.userId = req.headers['x-user-id'] || 'dev-user';
+      req.organizationId = req.organizationId || 2; // Default dev org (don't overwrite if already set)
+      // Only set userId if not already set by auth middleware (integer = valid JWT auth)
+      if (req.userId === undefined || req.userId === null || typeof req.userId === 'string') {
+        req.userId = req.headers['x-user-id'] || 'dev-user';
+      }
       req.sessionId = req.headers['x-session-id'] || null;
       req.ipAddress = req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
-      console.log(`[Phase3 AI] Using default org ID (2) for dev mode - path: ${req.path}`);
+      console.log(
+        `[Phase3 AI] Using default org ID (${req.organizationId}) for dev mode - path: ${req.path}`
+      );
       return next();
     }
 
@@ -115,7 +120,10 @@ const extractOrgContext = (req, res, next) => {
     req.organizationId = parsedOrgId;
   }
 
-  req.userId = req.headers['x-user-id'] || null;
+  // Only set userId from header if not already set by auth middleware
+  if (req.userId === undefined || req.userId === null) {
+    req.userId = req.headers['x-user-id'] || null;
+  }
   req.sessionId = req.headers['x-session-id'] || null;
   req.ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   next();

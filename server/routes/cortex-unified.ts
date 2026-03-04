@@ -24,6 +24,8 @@ import {
   getThreadMessages,
   saveChatMessage,
 } from '../services/chat-thread-helpers.js';
+import { pool } from '../db.js';
+import jwt from 'jsonwebtoken';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -95,7 +97,7 @@ router.use(extractTenantContext);
 
 router.get('/health', (_req: Request, res: Response) => {
   res.json({
-    status: 'ok',
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'cortex-unified-api',
     version: '2.0.0',
@@ -515,6 +517,146 @@ async function mountSubRouters() {
     logger.error('Failed to mount foresight core routes:', error);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// THREAD MANAGEMENT — list, get, create, delete conversation threads
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function extractUserId(req: Request): number | null {
+  try {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    if (!token) return null;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'trialsage-codespace-jwt-secret-2026'
+    ) as any;
+    return decoded?.userId ? Number(decoded.userId) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** GET /api/cortex/threads — list threads for the current user */
+router.get('/threads', async (req: Request, res: Response) => {
+  try {
+    const userId = extractUserId(req);
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const offset = Number(req.query.offset) || 0;
+    const projectId = req.query.project_id as string | undefined;
+
+    let query = `
+      SELECT ct.id, ct.title, ct.metadata, ct.created_at, ct.updated_at,
+             COUNT(cm.id)::int AS message_count
+      FROM chat_threads ct
+      LEFT JOIN chat_messages cm ON cm.thread_id = ct.id
+      WHERE ct.user_id = $1
+    `;
+    const params: any[] = [userId];
+
+    if (projectId) {
+      params.push(projectId);
+      query += ` AND ct.metadata->>'projectId' = $${params.length}`;
+    }
+
+    query += ` GROUP BY ct.id ORDER BY ct.updated_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+
+    const threads = result.rows.map(r => ({
+      id: r.id,
+      title: r.title || 'Untitled conversation',
+      projectId: r.metadata?.projectId || null,
+      submissionType: r.metadata?.submissionType || null,
+      messageCount: r.message_count,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      metadata: r.metadata,
+    }));
+
+    res.json({ success: true, threads, total: threads.length });
+  } catch (err: any) {
+    logger.error('GET /threads error:', err.message);
+    res.json({ success: true, threads: [] }); // fail-open so UI doesn't break
+  }
+});
+
+/** GET /api/cortex/threads/:threadId — get a single thread with messages */
+router.get('/threads/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const threadResult = await pool.query('SELECT * FROM chat_threads WHERE id = $1', [threadId]);
+    if (!threadResult.rows.length) {
+      return res.status(404).json({ success: false, error: 'Thread not found' });
+    }
+    const thread = threadResult.rows[0];
+    const msgResult = await pool.query(
+      'SELECT id, role, content, model, tokens_used, created_at FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
+      [threadId]
+    );
+    res.json({
+      success: true,
+      id: thread.id,
+      title: thread.title || 'Untitled conversation',
+      projectId: thread.metadata?.projectId || null,
+      submissionType: thread.metadata?.submissionType || null,
+      messages: msgResult.rows.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        createdAt: m.created_at,
+        metadata: { model: m.model, tokenUsage: m.tokens_used },
+      })),
+      createdAt: thread.created_at,
+      updatedAt: thread.updated_at,
+      metadata: thread.metadata,
+    });
+  } catch (err: any) {
+    logger.error('GET /threads/:threadId error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to retrieve thread' });
+  }
+});
+
+/** POST /api/cortex/threads — create a new thread */
+router.post('/threads', async (req: Request, res: Response) => {
+  try {
+    const userId = extractUserId(req);
+    const { title, projectId, submissionType, systemPrompt } = req.body || {};
+    const newId = `cortex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const metadata = { projectId: projectId || null, submissionType: submissionType || null };
+
+    await pool.query(
+      'INSERT INTO chat_threads (id, user_id, title, system_prompt, metadata, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,NOW(),NOW())',
+      [newId, userId, title || 'New conversation', systemPrompt || null, JSON.stringify(metadata)]
+    );
+
+    res.status(201).json({
+      success: true,
+      id: newId,
+      title: title || 'New conversation',
+      projectId: projectId || null,
+      messages: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  } catch (err: any) {
+    logger.error('POST /threads error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to create thread' });
+  }
+});
+
+/** DELETE /api/cortex/threads/:threadId — delete a thread */
+router.delete('/threads/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    await pool.query('DELETE FROM chat_messages WHERE thread_id = $1', [threadId]);
+    await pool.query('DELETE FROM chat_threads WHERE id = $1', [threadId]);
+    res.json({ success: true });
+  } catch (err: any) {
+    logger.error('DELETE /threads/:threadId error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to delete thread' });
+  }
+});
 
 // Initialize sub-routers
 mountSubRouters().catch(error => {

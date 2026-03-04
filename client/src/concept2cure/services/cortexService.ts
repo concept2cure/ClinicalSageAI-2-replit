@@ -432,12 +432,30 @@ export class CortexService {
 
         const chunk = decoder.decode(result.value, { stream: true });
         fullResponse += chunk;
-        params.onChunk(chunk);
       }
+
+      // Handle both JSON responses (non-streaming server) and plain text SSE streams
+      let displayContent = fullResponse;
+      try {
+        const parsed = JSON.parse(fullResponse);
+        // Server returned JSON — extract the answer text
+        if (parsed && (parsed.answer || parsed.response)) {
+          displayContent = parsed.answer || parsed.response;
+          // Use the real thread_id from the response
+          if (parsed.thread_id) {
+            threadId = parsed.thread_id;
+          }
+        }
+      } catch {
+        // Not JSON — treat as raw streaming text (future SSE support)
+      }
+
+      // Emit the clean content as a single chunk
+      params.onChunk(displayContent);
 
       params.onComplete({
         threadId,
-        artifacts: this.parseArtifacts(fullResponse),
+        artifacts: this.parseArtifacts(displayContent),
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {

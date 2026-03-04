@@ -445,7 +445,7 @@ try {
 // ── Global Auth Middleware ──────────────────────────────────────────────
 // Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects)
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
-  const openPrefixes = ['/api/auth', '/api/login', '/api/logout', '/api/register', '/api/health'];
+  const openPrefixes = ['/api/auth', '/api/login', '/api/logout', '/api/register', '/api/health', '/api/cortex/health'];
   const fullPath = req.baseUrl + req.path;
   if (openPrefixes.some(p => fullPath.startsWith(p))) return next();
   return authMiddleware(req, res, next);

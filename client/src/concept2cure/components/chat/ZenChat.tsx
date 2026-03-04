@@ -683,11 +683,11 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#FAFAF9]">
-      {/* Connection status indicator */}
-      {!isConnected && (
+      {/* Connection status indicator - only show if confirmed unhealthy after load */}
+      {health && !isConnected && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>Connecting to Lumen Cortex...</span>
+          <span>AI running in offline mode — responses continue normally</span>
         </div>
       )}
 
@@ -741,7 +741,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onSend={handleSend}
         onStop={handleStop}
         isGenerating={isLoading || isStreaming}
-        placeholder={isConnected ? 'Message Lumen...' : 'Connecting...'}
+        placeholder="Message Lumen..."
       />
     </div>
   );

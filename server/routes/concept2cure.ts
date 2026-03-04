@@ -30,7 +30,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { eq, desc, and, isNull, inArray } from 'drizzle-orm';
-import { db } from '../db';
+import { db, pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import * as metricsModule from '../metrics.js';
 import { authMiddleware } from '../auth';
@@ -727,31 +727,28 @@ router.get('/projects', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
 
-    // Query projects with tenant isolation - only return projects for this organization
-    const dbProjects = await db
-      .select()
-      .from(projects)
-      .where(
-        and(
-          eq(projects.organizationId, organizationId),
-          eq(projects.type, 'concept2cure'),
-          isNull(projects.actualEndDate) // Not archived/deleted
-        )
-      )
-      .orderBy(desc(projects.updatedAt));
+    // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
+    const result = await pool.query(
+      `SELECT id, name, description, status, type, metadata, created_at, updated_at
+       FROM projects
+       WHERE organization_id = $1
+         AND actual_end_date IS NULL
+       ORDER BY updated_at DESC
+       LIMIT 100`,
+      [organizationId]
+    );
 
-    // Transform to API response format with conversations from DB
     const response = await Promise.all(
-      dbProjects.map(async p => ({
+      result.rows.map(async (p: any) => ({
         id: `proj_${p.id}`,
         name: p.name,
-        submissionType: (p.metadata as any)?.submissionType || 'IND',
+        submissionType: p.metadata?.submissionType || p.type || 'IND',
         description: p.description,
-        status: p.status,
-        organizationId: p.organizationId,
+        status: p.status || 'active',
+        organizationId,
         conversations: await getConversationsFromDb(p.id, organizationId),
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
+        createdAt: p.created_at,
+        updatedAt: p.updated_at,
       }))
     );
 
