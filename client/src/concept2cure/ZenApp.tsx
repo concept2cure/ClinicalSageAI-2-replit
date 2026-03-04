@@ -888,51 +888,25 @@ export const ZenApp: React.FC = () => {
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Single clean top bar */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-white/80 backdrop-blur-sm">
-          {/* Project name */}
+        {/* Minimal top bar — project name + status only */}
+        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-100 bg-white">
+          {/* Project selector */}
           <button
             onClick={() => setProjectSwitcherOpen(true)}
-            className="flex items-center gap-2 text-sm font-medium text-zinc-800 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-blue-600 transition-colors"
           >
-            <div className="w-2 h-2 rounded-full bg-blue-500" />
-            {activeProject?.name || 'Select a project'}
+            <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+            <span className="truncate max-w-[200px]">{activeProject?.name || 'Select a project'}</span>
             {activeProject?.type && (
-              <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-xs font-normal">
+              <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-xs font-normal flex-shrink-0">
                 {activeProject.type}
               </span>
             )}
           </button>
 
-          <div className="h-4 w-px bg-zinc-200 mx-1" />
-
-          {/* Mode tabs */}
-          <div className="flex items-center gap-1">
-            {layoutModes.map(mode => (
-              <button
-                key={mode.id}
-                onClick={() => handleLayoutModeChange(mode.id)}
-                className={cn(
-                  'px-3 py-1 text-xs rounded-full border transition-colors flex items-center gap-1',
-                  layoutMode === mode.id
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700'
-                )}
-              >
-                {mode.icon && <mode.icon className="w-3 h-3" />}
-                {mode.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="ml-auto flex items-center gap-1 text-xs">
-            <div
-              className={cn(
-                'w-2 h-2 rounded-full',
-                isConnected ? 'bg-emerald-500' : 'bg-amber-400'
-              )}
-            />
-            <span className="text-zinc-500">{isConnected ? 'AI connected' : 'Connecting...'}</span>
+          <div className="ml-auto flex items-center gap-2 text-xs text-zinc-400">
+            <div className={cn('w-2 h-2 rounded-full flex-shrink-0', isConnected ? 'bg-emerald-400' : 'bg-amber-400')} />
+            <span>{isConnected ? 'Lumen AI ready' : 'Connecting...'}</span>
           </div>
         </div>
 

@@ -102,11 +102,11 @@ const NAV_ITEMS: NavItem[] = [
 
 const TYPE_COLORS: Record<string, string> = {
   '510K': 'bg-blue-500',
-  'IND': 'bg-purple-500',
-  'NDA': 'bg-green-500',
-  'BLA': 'bg-orange-500',
-  'PMA': 'bg-red-500',
-  'MAA': 'bg-pink-500',
+  IND: 'bg-purple-500',
+  NDA: 'bg-green-500',
+  BLA: 'bg-orange-500',
+  PMA: 'bg-red-500',
+  MAA: 'bg-pink-500',
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -179,7 +179,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
 
       {/* Menu button */}
       <button
-        onClick={(e) => {
+        onClick={e => {
           e.stopPropagation();
           setShowMenu(!showMenu);
         }}
@@ -193,14 +193,14 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
         <>
           <div
             className="fixed inset-0 z-10"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               setShowMenu(false);
             }}
           />
           <div className="absolute right-0 top-8 z-20 w-36 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 animate-in fade-in zoom-in-95 duration-100">
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onTogglePin();
                 setShowMenu(false);
@@ -211,7 +211,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
               {conversation.pinned ? 'Unpin' : 'Pin'}
             </button>
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onToggleStar();
                 setShowMenu(false);
@@ -223,7 +223,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
             </button>
             <div className="my-1 border-t border-zinc-100" />
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onDelete();
                 setShowMenu(false);
@@ -273,20 +273,20 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   // Group by time
   const today = new Date();
   const todayConvos = sortedConversations.filter(
-    (c) => new Date(c.timestamp).toDateString() === today.toDateString()
+    c => new Date(c.timestamp).toDateString() === today.toDateString()
   );
-  const yesterdayConvos = sortedConversations.filter((c) => {
+  const yesterdayConvos = sortedConversations.filter(c => {
     const d = new Date(c.timestamp);
     const yesterday = new Date(Date.now() - 86400000);
     return d.toDateString() === yesterday.toDateString();
   });
-  const olderConvos = sortedConversations.filter((c) => {
+  const olderConvos = sortedConversations.filter(c => {
     const d = new Date(c.timestamp);
     const yesterday = new Date(Date.now() - 86400000);
     return d < yesterday && d.toDateString() !== today.toDateString();
   });
 
-  const activeProject = projects.find((p) => p.id === activeProjectId);
+  const activeProject = projects.find(p => p.id === activeProjectId);
 
   return (
     <aside
@@ -315,11 +315,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
           title={isCollapsed ? 'Expand' : 'Collapse'}
         >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
@@ -366,65 +362,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         </div>
       </div>
 
-      {/* Access points */}
-      <div className={cn('px-2 pb-2', isCollapsed && 'px-3')}>
-        {!isCollapsed && (
-          <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Access</h3>
-        )}
-        <div className={cn('space-y-1', isCollapsed && 'flex flex-col items-center')}
-          role="navigation"
-          aria-label="Primary"
-        >
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate?.(item.id)}
-                className={cn(
-                  'flex items-center gap-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors',
-                  isCollapsed ? 'w-10 h-10 justify-center' : 'w-full px-3 py-2'
-                )}
-                title={item.label}
-              >
-                <Icon className="w-4 h-4" />
-                {!isCollapsed && <span className="text-sm">{item.label}</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Active project indicator */}
-      {activeProject && !isCollapsed && (
-        <div className="px-3 pb-2">
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-zinc-200/50 cursor-pointer hover:border-zinc-300 transition-colors"
-            onClick={onOpenProjects}
-          >
-            <div
-              className={cn(
-                'w-2 h-2 rounded-full',
-                TYPE_COLORS[activeProject.type] || 'bg-zinc-400'
-              )}
-            />
-            <span className="text-sm font-medium text-zinc-900 truncate">
-              {activeProject.name}
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Conversations */}
       <div className="flex-1 overflow-y-auto px-2 py-2 zen-scroll">
         {/* Today */}
         {todayConvos.length > 0 && (
           <div className="mb-3">
-            {!isCollapsed && (
-              <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Today</h3>
-            )}
+            {!isCollapsed && <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Today</h3>}
             <div className={cn('space-y-0.5', isCollapsed && 'flex flex-col items-center')}>
-              {todayConvos.map((convo) => (
+              {todayConvos.map(convo => (
                 <ConversationItem
                   key={convo.id}
                   conversation={convo}
@@ -447,7 +392,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Yesterday</h3>
             )}
             <div className={cn('space-y-0.5', isCollapsed && 'flex flex-col items-center')}>
-              {yesterdayConvos.map((convo) => (
+              {yesterdayConvos.map(convo => (
                 <ConversationItem
                   key={convo.id}
                   conversation={convo}
@@ -470,7 +415,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Previous 7 days</h3>
             )}
             <div className={cn('space-y-0.5', isCollapsed && 'flex flex-col items-center')}>
-              {olderConvos.slice(0, 10).map((convo) => (
+              {olderConvos.slice(0, 10).map(convo => (
                 <ConversationItem
                   key={convo.id}
                   conversation={convo}
