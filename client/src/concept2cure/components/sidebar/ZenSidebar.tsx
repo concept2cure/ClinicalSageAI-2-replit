@@ -13,8 +13,15 @@ import {
   FolderOpen,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   User,
   Sparkles,
+  Activity,
+  FileText,
+  Beaker,
+  Layers,
+  Stethoscope,
+  FlaskConical,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,6 +60,52 @@ export interface ZenSidebarProps {
   onNavigate?: (id: string) => void;
 }
 
+// ─── Workspace item ───────────────────────────────────────────────────────────
+
+const WorkspaceItem: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  badge?: string;
+  onClick: () => void;
+}> = ({ icon, label, badge, onClick }) => (
+  <button
+    onClick={onClick}
+    className="w-full flex items-center gap-2.5 pl-7 pr-3 py-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors rounded-lg"
+  >
+    <span className="flex-shrink-0 text-zinc-400">{icon}</span>
+    <span className="flex-1 text-left truncate">{label}</span>
+    {badge && (
+      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none flex-shrink-0">
+        {badge}
+      </span>
+    )}
+  </button>
+);
+
+// ─── Workspace group ──────────────────────────────────────────────────────────
+
+const WorkspaceGroup: React.FC<{
+  label: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}> = ({ label, defaultOpen = true, children }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-600 transition-colors"
+      >
+        <ChevronDown
+          className={cn('w-3 h-3 flex-shrink-0 transition-transform', !open && '-rotate-90')}
+        />
+        <span>{label}</span>
+      </button>
+      {open && <div className="pb-1">{children}</div>}
+    </div>
+  );
+};
+
 // ─── Single conversation row ──────────────────────────────────────────────────
 
 const ConvoRow: React.FC<{
@@ -70,14 +123,19 @@ const ConvoRow: React.FC<{
       onClick={onSelect}
       className={cn(
         'group relative flex items-center gap-2 mx-2 px-3 py-2 rounded-lg cursor-pointer select-none transition-colors',
-        isActive ? 'bg-zinc-200/80 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+        isActive
+          ? 'bg-zinc-200/80 text-zinc-900'
+          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
       )}
     >
       <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-50" />
       <span className="flex-1 text-sm truncate leading-5">{convo.title}</span>
       {hovered && (
         <button
-          onClick={e => { e.stopPropagation(); onDelete(); }}
+          onClick={e => {
+            e.stopPropagation();
+            onDelete();
+          }}
           className="flex-shrink-0 p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-red-500 transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -107,6 +165,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onOpenProjects,
   onOpenSettings,
   onDeleteConversation,
+  onNavigate,
 }) => {
   // Group conversations by time
   const now = new Date();
@@ -168,7 +227,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   // ── Full expanded sidebar ──────────────────────────────────────────────────
   return (
     <aside className="flex flex-col h-full w-64 bg-zinc-50 border-r border-zinc-200 flex-shrink-0">
-
       {/* Brand header */}
       <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
         <div className="flex items-center gap-2.5">
@@ -176,7 +234,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="font-semibold text-zinc-900 text-sm">Lumen AI</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none">Regulatory</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none">
+            Regulatory
+          </span>
         </div>
         <button
           onClick={onToggleCollapse}
@@ -210,13 +270,58 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
       <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
+      {/* ── Workspaces / submission modules ───────────────────────────────── */}
+      <div className="flex-shrink-0 px-1 pt-2 pb-1">
+        <WorkspaceGroup label="Medical Device &amp; Diagnostics" defaultOpen>
+          <WorkspaceItem
+            icon={<Activity className="w-3.5 h-3.5" />}
+            label="510(k) / De Novo / PMA"
+            badge="eSTAR"
+            onClick={() => onNavigate?.('medtech-dashboard')}
+          />
+          <WorkspaceItem
+            icon={<Stethoscope className="w-3.5 h-3.5" />}
+            label="IVD / CDx Workflow"
+            onClick={() => onNavigate?.('medtech-dashboard')}
+          />
+        </WorkspaceGroup>
+        <WorkspaceGroup label="Pharma / Biotech" defaultOpen>
+          <WorkspaceItem
+            icon={<FlaskConical className="w-3.5 h-3.5" />}
+            label="IND Workspace"
+            onClick={() => onNavigate?.('ind-workspace')}
+          />
+          <WorkspaceItem
+            icon={<FileText className="w-3.5 h-3.5" />}
+            label="eCTD Co-Author"
+            onClick={() => onNavigate?.('ectd-coauthor')}
+          />
+          <WorkspaceItem
+            icon={<Beaker className="w-3.5 h-3.5" />}
+            label="CMC Module"
+            badge="M3"
+            onClick={() => onNavigate?.('cmc')}
+          />
+          <WorkspaceItem
+            icon={<Layers className="w-3.5 h-3.5" />}
+            label="Dossier Navigator"
+            onClick={() => onNavigate?.('dossier')}
+          />
+        </WorkspaceGroup>
+      </div>
+
+      <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
+
       {/* Conversation history */}
       <div className="flex-1 overflow-y-auto min-h-0 py-1" style={{ scrollbarWidth: 'thin' }}>
-
         {conversations.length === 0 && (
           <div className="px-4 py-10 text-center">
             <MessageSquare className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400 leading-relaxed">No conversations yet.<br />Start one above.</p>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              No conversations yet.
+              <br />
+              Start one above.
+            </p>
           </div>
         )}
 
@@ -264,7 +369,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             ))}
           </>
         )}
-
       </div>
 
       {/* User / settings footer */}
@@ -279,7 +383,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <span className="truncate">Account &amp; settings</span>
         </button>
       </div>
-
     </aside>
   );
 };

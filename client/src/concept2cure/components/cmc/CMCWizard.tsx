@@ -52,16 +52,16 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type ICHGuideline = 
-  | 'Q1A'    // Stability
-  | 'Q1B'    // Photostability
-  | 'Q2'     // Analytical Validation
-  | 'Q3A'    // Impurities (Drug Substances)
-  | 'Q3B'    // Impurities (Drug Products)
-  | 'Q3C'    // Residual Solvents
-  | 'Q3D'    // Elemental Impurities
-  | 'Q6A'    // Specifications: Chemical
-  | 'Q6B';   // Specifications: Biotech
+export type ICHGuideline =
+  | 'Q1A' // Stability
+  | 'Q1B' // Photostability
+  | 'Q2' // Analytical Validation
+  | 'Q3A' // Impurities (Drug Substances)
+  | 'Q3B' // Impurities (Drug Products)
+  | 'Q3C' // Residual Solvents
+  | 'Q3D' // Elemental Impurities
+  | 'Q6A' // Specifications: Chemical
+  | 'Q6B'; // Specifications: Biotech
 
 export type GuardrailStatus = 'pass' | 'warning' | 'fail' | 'info' | 'pending';
 
@@ -98,9 +98,9 @@ export interface Impurity {
 
 export interface StabilityCondition {
   id: string;
-  condition: string;           // e.g., "25°C/60% RH"
-  duration: string;            // e.g., "24 months"
-  timePoint: string;           // e.g., "12M"
+  condition: string; // e.g., "25°C/60% RH"
+  duration: string; // e.g., "24 months"
+  timePoint: string; // e.g., "12M"
   parameters: StabilityParameter[];
 }
 
@@ -116,7 +116,7 @@ export interface StabilityParameter {
 export interface DrugSubstance {
   id: string;
   name: string;
-  inn?: string;                // International Nonproprietary Name
+  inn?: string; // International Nonproprietary Name
   casNumber?: string;
   molecularFormula: string;
   molecularWeight: number;
@@ -147,11 +147,14 @@ interface CMCWizardProps {
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const GUIDELINE_CONFIG: Record<ICHGuideline, {
-  name: string;
-  fullName: string;
-  color: string;
-}> = {
+const GUIDELINE_CONFIG: Record<
+  ICHGuideline,
+  {
+    name: string;
+    fullName: string;
+    color: string;
+  }
+> = {
   Q1A: { name: 'Q1A(R2)', fullName: 'Stability Testing', color: 'text-blue-600' },
   Q1B: { name: 'Q1B', fullName: 'Photostability Testing', color: 'text-cyan-600' },
   Q2: { name: 'Q2(R1)', fullName: 'Analytical Validation', color: 'text-purple-600' },
@@ -163,17 +166,45 @@ const GUIDELINE_CONFIG: Record<ICHGuideline, {
   Q6B: { name: 'Q6B', fullName: 'Specifications: Biotech Products', color: 'text-emerald-600' },
 };
 
-const STATUS_CONFIG: Record<GuardrailStatus, {
-  label: string;
-  color: string;
-  bgColor: string;
-  icon: React.ReactNode;
-}> = {
-  pass: { label: 'Pass', color: 'text-green-600', bgColor: 'bg-green-100', icon: <CheckCircle className="w-4 h-4" /> },
-  warning: { label: 'Warning', color: 'text-amber-600', bgColor: 'bg-amber-100', icon: <AlertTriangle className="w-4 h-4" /> },
-  fail: { label: 'Fail', color: 'text-red-600', bgColor: 'bg-red-100', icon: <AlertOctagon className="w-4 h-4" /> },
-  info: { label: 'Info', color: 'text-blue-600', bgColor: 'bg-blue-100', icon: <Info className="w-4 h-4" /> },
-  pending: { label: 'Pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: <Clock className="w-4 h-4" /> },
+const STATUS_CONFIG: Record<
+  GuardrailStatus,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    icon: React.ReactNode;
+  }
+> = {
+  pass: {
+    label: 'Pass',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    icon: <CheckCircle className="w-4 h-4" />,
+  },
+  warning: {
+    label: 'Warning',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
+    icon: <AlertTriangle className="w-4 h-4" />,
+  },
+  fail: {
+    label: 'Fail',
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
+    icon: <AlertOctagon className="w-4 h-4" />,
+  },
+  info: {
+    label: 'Info',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    icon: <Info className="w-4 h-4" />,
+  },
+  pending: {
+    label: 'Pending',
+    color: 'text-slate-500',
+    bgColor: 'bg-slate-100',
+    icon: <Clock className="w-4 h-4" />,
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -186,21 +217,24 @@ const GuardrailCard: React.FC<{
 }> = ({ guardrail, onGenerateJustification }) => {
   const statusConfig = STATUS_CONFIG[guardrail.status];
   const guidelineConfig = GUIDELINE_CONFIG[guardrail.guideline];
-  
-  const percentOfThreshold = guardrail.thresholdType === 'max'
-    ? (guardrail.currentValue / guardrail.thresholdValue) * 100
-    : guardrail.thresholdType === 'min'
-    ? (guardrail.thresholdValue / guardrail.currentValue) * 100
-    : 50;
-  
+
+  const percentOfThreshold =
+    guardrail.thresholdType === 'max'
+      ? (guardrail.currentValue / guardrail.thresholdValue) * 100
+      : guardrail.thresholdType === 'min'
+        ? (guardrail.thresholdValue / guardrail.currentValue) * 100
+        : 50;
+
   return (
-    <div className={cn(
-      'p-4 rounded-lg border-l-4 bg-white shadow-sm',
-      guardrail.status === 'pass' && 'border-l-green-500',
-      guardrail.status === 'warning' && 'border-l-amber-500',
-      guardrail.status === 'fail' && 'border-l-red-500',
-      guardrail.status === 'info' && 'border-l-blue-500'
-    )}>
+    <div
+      className={cn(
+        'p-4 rounded-lg border-l-4 bg-white shadow-sm',
+        guardrail.status === 'pass' && 'border-l-green-500',
+        guardrail.status === 'warning' && 'border-l-amber-500',
+        guardrail.status === 'fail' && 'border-l-red-500',
+        guardrail.status === 'info' && 'border-l-blue-500'
+      )}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
@@ -209,15 +243,18 @@ const GuardrailCard: React.FC<{
           </span>
           <h4 className="font-medium text-slate-800">{guardrail.parameter}</h4>
         </div>
-        <span className={cn(
-          'flex items-center gap-1 px-2 py-1 text-xs font-medium rounded',
-          statusConfig.bgColor, statusConfig.color
-        )}>
+        <span
+          className={cn(
+            'flex items-center gap-1 px-2 py-1 text-xs font-medium rounded',
+            statusConfig.bgColor,
+            statusConfig.color
+          )}
+        >
           {statusConfig.icon}
           {statusConfig.label}
         </span>
       </div>
-      
+
       {/* Value Bar */}
       <div className="mb-3">
         <div className="flex justify-between text-xs mb-1">
@@ -249,10 +286,10 @@ const GuardrailCard: React.FC<{
           </span>
         </div>
       </div>
-      
+
       {/* Message */}
       <p className="text-xs text-slate-600 mb-3">{guardrail.message}</p>
-      
+
       {/* Actions */}
       {guardrail.requiresJustification && (
         <div className="flex items-center justify-between pt-2 border-t border-slate-100">
@@ -276,11 +313,9 @@ const GuardrailCard: React.FC<{
           )}
         </div>
       )}
-      
+
       {/* ICH Reference */}
-      <div className="text-[10px] text-slate-400 mt-2">
-        Ref: {guardrail.ichReference}
-      </div>
+      <div className="text-[10px] text-slate-400 mt-2">Ref: {guardrail.ichReference}</div>
     </div>
   );
 };
@@ -317,12 +352,14 @@ const ImpurityTable: React.FC<{
                 <td className="px-3 py-2">
                   <div>
                     <span className="font-medium text-slate-800">{imp.name}</span>
-                    <span className={cn(
-                      'ml-2 px-1.5 py-0.5 text-[10px] rounded',
-                      imp.type === 'specified' && 'bg-blue-100 text-blue-700',
-                      imp.type === 'unspecified' && 'bg-slate-100 text-slate-600',
-                      imp.type === 'total' && 'bg-purple-100 text-purple-700'
-                    )}>
+                    <span
+                      className={cn(
+                        'ml-2 px-1.5 py-0.5 text-[10px] rounded',
+                        imp.type === 'specified' && 'bg-blue-100 text-blue-700',
+                        imp.type === 'unspecified' && 'bg-slate-100 text-slate-600',
+                        imp.type === 'total' && 'bg-purple-100 text-purple-700'
+                      )}
+                    >
                       {imp.type}
                     </span>
                   </div>
@@ -341,10 +378,13 @@ const ImpurityTable: React.FC<{
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex justify-center">
-                    <span className={cn(
-                      'flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
-                      statusConfig.bgColor, statusConfig.color
-                    )}>
+                    <span
+                      className={cn(
+                        'flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
+                        statusConfig.bgColor,
+                        statusConfig.color
+                      )}
+                    >
                       {statusConfig.icon}
                       {statusConfig.label}
                     </span>
@@ -397,20 +437,31 @@ const StabilityChart: React.FC<{
         <div key={cond.id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
           <div className="flex items-center justify-between mb-2">
             <span className="font-medium text-slate-700">{cond.condition}</span>
-            <span className="text-xs text-slate-500">{cond.timePoint} / {cond.duration}</span>
+            <span className="text-xs text-slate-500">
+              {cond.timePoint} / {cond.duration}
+            </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {cond.parameters.map(param => {
               const statusConfig = STATUS_CONFIG[param.status];
               return (
-                <div key={param.id} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                <div
+                  key={param.id}
+                  className="flex items-center justify-between p-2 bg-slate-50 rounded"
+                >
                   <div>
                     <span className="text-xs text-slate-600">{param.name}</span>
                     {param.trend && (
                       <span className="ml-1">
-                        {param.trend === 'stable' && <Activity className="w-3 h-3 text-green-500 inline" />}
-                        {param.trend === 'increasing' && <TrendingUp className="w-3 h-3 text-amber-500 inline" />}
-                        {param.trend === 'decreasing' && <TrendingDown className="w-3 h-3 text-red-500 inline" />}
+                        {param.trend === 'stable' && (
+                          <Activity className="w-3 h-3 text-green-500 inline" />
+                        )}
+                        {param.trend === 'increasing' && (
+                          <TrendingUp className="w-3 h-3 text-amber-500 inline" />
+                        )}
+                        {param.trend === 'decreasing' && (
+                          <TrendingDown className="w-3 h-3 text-red-500 inline" />
+                        )}
                       </span>
                     )}
                   </div>
@@ -438,26 +489,32 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
   onExportData,
   className,
 }) => {
-  const [activeTab, setActiveTab] = useState<'guardrails' | 'impurities' | 'stability' | 'specs'>('guardrails');
-  
+  const [activeTab, setActiveTab] = useState<'guardrails' | 'impurities' | 'stability' | 'specs'>(
+    'guardrails'
+  );
+
   // Metrics
   const metrics = useMemo(() => {
     const passCount = substance.guardrails.filter(g => g.status === 'pass').length;
     const warningCount = substance.guardrails.filter(g => g.status === 'warning').length;
     const failCount = substance.guardrails.filter(g => g.status === 'fail').length;
-    const needsJustification = substance.guardrails.filter(g => g.requiresJustification && !g.justificationDrafted).length;
-    const impurityIssues = substance.impurities.filter(i => i.status === 'warning' || i.status === 'fail').length;
-    
+    const needsJustification = substance.guardrails.filter(
+      g => g.requiresJustification && !g.justificationDrafted
+    ).length;
+    const impurityIssues = substance.impurities.filter(
+      i => i.status === 'warning' || i.status === 'fail'
+    ).length;
+
     return { passCount, warningCount, failCount, needsJustification, impurityIssues };
   }, [substance]);
-  
+
   const tabs = [
     { id: 'guardrails', label: 'ICH Guardrails', count: metrics.warningCount + metrics.failCount },
     { id: 'impurities', label: 'Impurities', count: metrics.impurityIssues },
     { id: 'stability', label: 'Stability', count: 0 },
     { id: 'specs', label: 'Specifications', count: 0 },
   ];
-  
+
   return (
     <div className={cn('flex flex-col h-full bg-slate-50', className)}>
       {/* Header */}
@@ -472,7 +529,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
               <p className="text-green-100 text-sm">ICH Quality Guardrails • The Gear Master</p>
             </div>
           </div>
-          
+
           <button
             onClick={onExportData}
             className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg flex items-center gap-2"
@@ -481,7 +538,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             Export Module 3
           </button>
         </div>
-        
+
         {/* Substance Info */}
         <div className="p-4 bg-white/10 rounded-xl backdrop-blur mb-4">
           <div className="flex items-center gap-6">
@@ -500,32 +557,52 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* Metrics */}
         <div className="grid grid-cols-5 gap-3">
           <div className="p-3 bg-white/10 rounded-lg">
             <p className="text-xs text-green-200">Guardrails Pass</p>
             <p className="text-2xl font-bold text-green-300">{metrics.passCount}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.warningCount > 0 ? 'bg-amber-500/30' : 'bg-white/10')}>
+          <div
+            className={cn(
+              'p-3 rounded-lg',
+              metrics.warningCount > 0 ? 'bg-amber-500/30' : 'bg-white/10'
+            )}
+          >
             <p className="text-xs text-amber-200">Warnings</p>
             <p className="text-2xl font-bold text-amber-300">{metrics.warningCount}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.failCount > 0 ? 'bg-red-500/30' : 'bg-white/10')}>
+          <div
+            className={cn(
+              'p-3 rounded-lg',
+              metrics.failCount > 0 ? 'bg-red-500/30' : 'bg-white/10'
+            )}
+          >
             <p className="text-xs text-red-200">Failures</p>
             <p className="text-2xl font-bold text-red-300">{metrics.failCount}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.needsJustification > 0 ? 'bg-purple-500/30' : 'bg-white/10')}>
+          <div
+            className={cn(
+              'p-3 rounded-lg',
+              metrics.needsJustification > 0 ? 'bg-purple-500/30' : 'bg-white/10'
+            )}
+          >
             <p className="text-xs text-purple-200">Need Justification</p>
             <p className="text-2xl font-bold text-purple-300">{metrics.needsJustification}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.impurityIssues > 0 ? 'bg-orange-500/30' : 'bg-white/10')}>
+          <div
+            className={cn(
+              'p-3 rounded-lg',
+              metrics.impurityIssues > 0 ? 'bg-orange-500/30' : 'bg-white/10'
+            )}
+          >
             <p className="text-xs text-orange-200">Impurity Issues</p>
             <p className="text-2xl font-bold text-orange-300">{metrics.impurityIssues}</p>
           </div>
         </div>
       </div>
-      
+
       {/* Tabs */}
       <div className="flex-shrink-0 bg-white border-b border-slate-200">
         <div className="flex gap-1 p-2">
@@ -550,7 +627,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
           ))}
         </div>
       </div>
-      
+
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {activeTab === 'guardrails' && (
@@ -564,18 +641,13 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             ))}
           </div>
         )}
-        
+
         {activeTab === 'impurities' && (
-          <ImpurityTable
-            impurities={substance.impurities}
-            onReview={onReviewImpurity}
-          />
+          <ImpurityTable impurities={substance.impurities} onReview={onReviewImpurity} />
         )}
-        
-        {activeTab === 'stability' && (
-          <StabilityChart conditions={substance.stability} />
-        )}
-        
+
+        {activeTab === 'stability' && <StabilityChart conditions={substance.stability} />}
+
         {activeTab === 'specs' && (
           <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
             <div className="p-3 bg-slate-50 border-b border-slate-200">
@@ -599,13 +671,18 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
                       <td className="px-3 py-2 font-medium text-slate-800">{spec.parameter}</td>
                       <td className="px-3 py-2 text-slate-600">{spec.method}</td>
                       <td className="px-3 py-2 font-mono text-slate-600">{spec.acceptance}</td>
-                      <td className="px-3 py-2 font-mono font-medium text-slate-800">{spec.result}</td>
+                      <td className="px-3 py-2 font-mono font-medium text-slate-800">
+                        {spec.result}
+                      </td>
                       <td className="px-3 py-2">
                         <div className="flex justify-center">
-                          <span className={cn(
-                            'flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
-                            statusConfig.bgColor, statusConfig.color
-                          )}>
+                          <span
+                            className={cn(
+                              'flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
+                              statusConfig.bgColor,
+                              statusConfig.color
+                            )}
+                          >
                             {statusConfig.icon}
                           </span>
                         </div>
@@ -623,3 +700,186 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
 };
 
 export default CMCWizard;
+
+// ─── Standalone (self-contained demo entry point for ZenApp) ──────────────────
+
+const DEMO_CMC_SUBSTANCE: DrugSubstance = {
+  id: 'lemizumab-001',
+  name: 'Lemizumab',
+  inn: 'lemizumab',
+  casNumber: '2025001-78-9',
+  molecularFormula: 'C6482H9964N1716O2020S44',
+  molecularWeight: 146300,
+  specifications: [
+    {
+      id: 's1',
+      parameter: 'Appearance',
+      method: 'Visual',
+      acceptance: 'Clear, colorless',
+      result: 'Clear, colorless',
+      status: 'pass',
+    },
+    {
+      id: 's2',
+      parameter: 'pH',
+      method: 'USP <791>',
+      acceptance: '5.8–6.2',
+      result: '6.0',
+      status: 'pass',
+    },
+    {
+      id: 's3',
+      parameter: 'Protein Concentration',
+      method: 'A280',
+      acceptance: '20 ± 2 mg/mL',
+      result: '19.8 mg/mL',
+      status: 'pass',
+    },
+    {
+      id: 's4',
+      parameter: 'Purity (SE-HPLC)',
+      method: 'SE-HPLC',
+      acceptance: '≥95%',
+      result: '96.2%',
+      status: 'pass',
+    },
+  ],
+  impurities: [
+    {
+      id: 'i1',
+      name: 'High Molecular Weight Species',
+      type: 'specified',
+      currentLevel: 1.8,
+      unit: '%',
+      reportingThreshold: 0.1,
+      identificationThreshold: 0.2,
+      qualificationThreshold: 0.5,
+      status: 'fail',
+      isIdentified: true,
+      isQualified: false,
+    },
+    {
+      id: 'i2',
+      name: 'Acidic Variants',
+      type: 'specified',
+      currentLevel: 12,
+      unit: '%',
+      reportingThreshold: 0.1,
+      identificationThreshold: 0.2,
+      qualificationThreshold: 5,
+      status: 'warning',
+      isIdentified: true,
+      isQualified: false,
+    },
+    {
+      id: 'i3',
+      name: 'Residual HCP',
+      type: 'specified',
+      currentLevel: 18,
+      unit: 'ng/mg',
+      reportingThreshold: 0.1,
+      identificationThreshold: 0.2,
+      qualificationThreshold: 100,
+      status: 'pass',
+      isIdentified: true,
+      isQualified: true,
+    },
+  ],
+  stability: [
+    {
+      id: 'st1',
+      condition: '25°C / 60% RH',
+      duration: '24 months',
+      timePoint: '12M',
+      parameters: [
+        {
+          id: 'sp1',
+          name: 'Purity (SE-HPLC)',
+          specification: '≥95%',
+          result: '95.8%',
+          status: 'pass',
+          trend: 'decreasing',
+        },
+        {
+          id: 'sp2',
+          name: 'Potency',
+          specification: '80–120%',
+          result: '102%',
+          status: 'pass',
+          trend: 'stable',
+        },
+      ],
+    },
+    {
+      id: 'st2',
+      condition: '40°C / 75% RH',
+      duration: '6 months (accelerated)',
+      timePoint: '3M',
+      parameters: [
+        {
+          id: 'sp3',
+          name: 'Purity (SE-HPLC)',
+          specification: '≥95%',
+          result: '93.1%',
+          status: 'warning',
+          trend: 'decreasing',
+        },
+        {
+          id: 'sp4',
+          name: 'Aggregates',
+          specification: '<2%',
+          result: '2.8%',
+          status: 'fail',
+          trend: 'increasing',
+        },
+      ],
+    },
+  ],
+  guardrails: [
+    {
+      id: 'g1',
+      guideline: 'Q3A',
+      parameter: 'HMWS',
+      currentValue: 1.8,
+      unit: '%',
+      thresholdType: 'max',
+      thresholdValue: 0.5,
+      status: 'fail',
+      message: 'HMWS exceeds qualification threshold. ICH Q3A justification narrative required.',
+      ichReference: 'ICH Q3A(R2) §3.2',
+      requiresJustification: true,
+      justificationDrafted: false,
+    },
+    {
+      id: 'g2',
+      guideline: 'Q1A',
+      parameter: 'Purity (40°C/6M)',
+      currentValue: 93.1,
+      unit: '%',
+      thresholdType: 'min',
+      thresholdValue: 95,
+      status: 'warning',
+      message: 'Purity at accelerated conditions approaching specification limit. Monitor closely.',
+      ichReference: 'ICH Q1A(R2)',
+      requiresJustification: false,
+      justificationDrafted: false,
+    },
+    {
+      id: 'g3',
+      guideline: 'Q6B',
+      parameter: 'Potency',
+      currentValue: 102,
+      unit: '%',
+      thresholdType: 'range',
+      thresholdValue: 80,
+      thresholdMax: 120,
+      status: 'pass',
+      message: 'Potency within specification.',
+      ichReference: 'ICH Q6B §3.3',
+      requiresJustification: false,
+      justificationDrafted: false,
+    },
+  ],
+};
+
+export const CMCWizardStandalone: React.FC = () => <CMCWizard substance={DEMO_CMC_SUBSTANCE} />;

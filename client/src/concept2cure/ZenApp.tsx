@@ -81,6 +81,28 @@ const INDWorkspace = lazy(() =>
   import('./pages/INDWorkspace').then(m => ({ default: m.INDWorkspace }))
 );
 
+// ─── Regulatory module standalones ────────────────────────────────────────────
+// Medical Device & Diagnostics
+const MedicalDeviceDashboardStandalone = lazy(() =>
+  import('./components/medtech/MedicalDeviceDashboard').then(m => ({
+    default: m.MedicalDeviceDashboardStandalone,
+  }))
+);
+// eCTD Co-Author (IND / NDA / BLA / 510k document authoring)
+const ECTDCoAuthorStandalone = lazy(() =>
+  import('./components/coauthor/eCTDCoAuthor').then(m => ({ default: m.ECTDCoAuthorStandalone }))
+);
+// CMC Wizard (Module 3 — Chemistry, Manufacturing & Controls)
+const CMCWizardStandalone = lazy(() =>
+  import('./components/cmc/CMCWizard').then(m => ({ default: m.CMCWizardStandalone }))
+);
+// Submission Dossier Navigator (eCTD module-by-module tracker)
+const DossierNavigatorStandalone = lazy(() =>
+  import('./components/submission/DossierNavigator').then(m => ({
+    default: m.DossierNavigatorStandalone,
+  }))
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -106,7 +128,11 @@ type LayoutMode =
   | 'mission-control'
   | 'rules'
   | 'ind-workspace'
-  | 'submission-workspace';
+  | 'submission-workspace'
+  | 'medtech-dashboard'
+  | 'ectd-coauthor'
+  | 'cmc'
+  | 'dossier';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -880,6 +906,25 @@ export const ZenApp: React.FC = () => {
             case 'analytics':
               setLayoutMode('analytics');
               break;
+            // ── Regulatory module routes ──────────────────────────────
+            case 'ind-workspace':
+              setLayoutMode('ind-workspace');
+              break;
+            case 'medtech-dashboard':
+              setLayoutMode('medtech-dashboard');
+              break;
+            case 'ectd-coauthor':
+              setLayoutMode('ectd-coauthor');
+              break;
+            case 'cmc':
+              setLayoutMode('cmc');
+              break;
+            case 'dossier':
+              setLayoutMode('dossier');
+              break;
+            case 'mission-control':
+              setLayoutMode('mission-control');
+              break;
             default:
               break;
           }
@@ -888,7 +933,6 @@ export const ZenApp: React.FC = () => {
 
       {/* Main area — no top bar, exactly like Claude.ai */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* Sherpa Mode - Convergent Canvas */}
@@ -992,6 +1036,70 @@ export const ZenApp: React.FC = () => {
                 }}
                 onNavigateToCoAuthor={() => setLayoutMode('editor')}
               />
+            </Suspense>
+          )}
+
+          {/* ── Medical Device & Diagnostics Dashboard ──────────────────────── */}
+          {layoutMode === 'medtech-dashboard' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading Medical Device Dashboard...</p>
+                  </div>
+                </div>
+              }
+            >
+              <MedicalDeviceDashboardStandalone />
+            </Suspense>
+          )}
+
+          {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ───────────── */}
+          {layoutMode === 'ectd-coauthor' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading eCTD Co-Author...</p>
+                  </div>
+                </div>
+              }
+            >
+              <ECTDCoAuthorStandalone />
+            </Suspense>
+          )}
+
+          {/* ── CMC Wizard (Chemistry, Manufacturing & Controls — Module 3) ──── */}
+          {layoutMode === 'cmc' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-green-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading CMC Wizard...</p>
+                  </div>
+                </div>
+              }
+            >
+              <CMCWizardStandalone />
+            </Suspense>
+          )}
+
+          {/* ── Submission Dossier Navigator (eCTD module tracker) ───────────── */}
+          {layoutMode === 'dossier' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-amber-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading Dossier Navigator...</p>
+                  </div>
+                </div>
+              }
+            >
+              <DossierNavigatorStandalone />
             </Suspense>
           )}
 

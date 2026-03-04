@@ -62,7 +62,7 @@ import {
 
 export type DocumentModule = 'm1' | 'm2' | 'm3' | 'm4' | 'm5';
 
-export type SectionStatus = 
+export type SectionStatus =
   | 'empty'
   | 'ai_drafting'
   | 'ai_draft'
@@ -137,12 +137,15 @@ interface eCTDCoAuthorProps {
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const MODULE_CONFIG: Record<DocumentModule, {
-  label: string;
-  fullName: string;
-  color: string;
-  bgColor: string;
-}> = {
+const MODULE_CONFIG: Record<
+  DocumentModule,
+  {
+    label: string;
+    fullName: string;
+    color: string;
+    bgColor: string;
+  }
+> = {
   m1: { label: 'M1', fullName: 'Administrative', color: 'text-slate-600', bgColor: 'bg-slate-100' },
   m2: { label: 'M2', fullName: 'Summaries', color: 'text-blue-600', bgColor: 'bg-blue-100' },
   m3: { label: 'M3', fullName: 'Quality (CMC)', color: 'text-green-600', bgColor: 'bg-green-100' },
@@ -150,19 +153,57 @@ const MODULE_CONFIG: Record<DocumentModule, {
   m5: { label: 'M5', fullName: 'Clinical', color: 'text-purple-600', bgColor: 'bg-purple-100' },
 };
 
-const STATUS_CONFIG: Record<SectionStatus, {
-  label: string;
-  color: string;
-  bgColor: string;
-  icon: React.ReactNode;
-}> = {
-  empty: { label: 'Empty', color: 'text-slate-400', bgColor: 'bg-slate-50', icon: <div className="w-3 h-3 rounded-full border-2 border-dashed border-slate-300" /> },
-  ai_drafting: { label: 'AI Drafting...', color: 'text-blue-600', bgColor: 'bg-blue-50', icon: <Sparkles className="w-3 h-3 animate-pulse" /> },
-  ai_draft: { label: 'AI Draft', color: 'text-violet-600', bgColor: 'bg-violet-50', icon: <Sparkles className="w-3 h-3" /> },
-  editing: { label: 'Editing', color: 'text-amber-600', bgColor: 'bg-amber-50', icon: <Edit3 className="w-3 h-3" /> },
-  in_review: { label: 'In Review', color: 'text-orange-600', bgColor: 'bg-orange-50', icon: <Eye className="w-3 h-3" /> },
-  approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-50', icon: <CheckCircle className="w-3 h-3" /> },
-  locked: { label: 'Locked', color: 'text-slate-600', bgColor: 'bg-slate-100', icon: <Shield className="w-3 h-3" /> },
+const STATUS_CONFIG: Record<
+  SectionStatus,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    icon: React.ReactNode;
+  }
+> = {
+  empty: {
+    label: 'Empty',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-50',
+    icon: <div className="w-3 h-3 rounded-full border-2 border-dashed border-slate-300" />,
+  },
+  ai_drafting: {
+    label: 'AI Drafting...',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    icon: <Sparkles className="w-3 h-3 animate-pulse" />,
+  },
+  ai_draft: {
+    label: 'AI Draft',
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-50',
+    icon: <Sparkles className="w-3 h-3" />,
+  },
+  editing: {
+    label: 'Editing',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    icon: <Edit3 className="w-3 h-3" />,
+  },
+  in_review: {
+    label: 'In Review',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
+    icon: <Eye className="w-3 h-3" />,
+  },
+  approved: {
+    label: 'Approved',
+    color: 'text-green-600',
+    bgColor: 'bg-green-50',
+    icon: <CheckCircle className="w-3 h-3" />,
+  },
+  locked: {
+    label: 'Locked',
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-100',
+    icon: <Shield className="w-3 h-3" />,
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -175,17 +216,14 @@ const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting
       <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl">
         <Mountain className="w-10 h-10 text-white" />
       </div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-3">
-        Your Sherpa is Ready
-      </h2>
+      <h2 className="text-2xl font-bold text-slate-800 mb-3">Your Sherpa is Ready</h2>
       <p className="text-slate-600 mb-6 leading-relaxed">
-        I'll help you draft your regulatory documents, verify every claim against 
-        your source data, and ensure you reach the summit of approval safely.
+        I'll help you draft your regulatory documents, verify every claim against your source data,
+        and ensure you reach the summit of approval safely.
       </p>
       <p className="text-sm text-slate-500 mb-6 italic">
-        "You don't write from scratch. Click 'Draft' and I'll carry the burden 
-        of the first draft - citing every claim with Smart Tags that connect 
-        you to your data."
+        "You don't write from scratch. Click 'Draft' and I'll carry the burden of the first draft -
+        citing every claim with Smart Tags that connect you to your data."
       </p>
       <button
         onClick={onStartDrafting}
@@ -209,7 +247,7 @@ const OutlineTree: React.FC<{
   depth?: number;
 }> = ({ sections, selectedId, onSelect, depth = 0 }) => {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  
+
   return (
     <div className="space-y-0.5">
       {sections.map(section => {
@@ -218,7 +256,7 @@ const OutlineTree: React.FC<{
         const isSelected = section.id === selectedId;
         const statusConfig = STATUS_CONFIG[section.status];
         const moduleConfig = MODULE_CONFIG[section.module];
-        
+
         return (
           <div key={section.id}>
             <button
@@ -233,7 +271,7 @@ const OutlineTree: React.FC<{
               {/* Expand/Collapse */}
               {hasChildren ? (
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     setExpanded(prev => ({ ...prev, [section.id]: !isExpanded }));
                   }}
@@ -248,21 +286,23 @@ const OutlineTree: React.FC<{
               ) : (
                 <div className="w-4" />
               )}
-              
+
               {/* Status Icon */}
               <div className={statusConfig.color}>{statusConfig.icon}</div>
-              
+
               {/* Section Number & Title */}
               <div className="flex-1 min-w-0">
                 <span className="text-xs font-mono text-slate-400 mr-2">{section.number}</span>
-                <span className={cn(
-                  'text-sm truncate',
-                  isSelected ? 'font-medium text-blue-700' : 'text-slate-700'
-                )}>
+                <span
+                  className={cn(
+                    'text-sm truncate',
+                    isSelected ? 'font-medium text-blue-700' : 'text-slate-700'
+                  )}
+                >
                   {section.title}
                 </span>
               </div>
-              
+
               {/* Alerts Badge */}
               {section.redlineAlerts && section.redlineAlerts.length > 0 && (
                 <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded">
@@ -270,7 +310,7 @@ const OutlineTree: React.FC<{
                 </span>
               )}
             </button>
-            
+
             {/* Children */}
             {hasChildren && isExpanded && (
               <OutlineTree
@@ -296,15 +336,30 @@ const SmartTagBadge: React.FC<{
   onVerify?: () => void;
 }> = ({ tag, onVerify }) => {
   const config: Record<SmartTagType, { color: string; icon: React.ReactNode }> = {
-    data: { color: 'bg-green-100 text-green-700 border-green-200', icon: <Target className="w-3 h-3" /> },
-    citation: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <BookOpen className="w-3 h-3" /> },
-    cross_ref: { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: <Link className="w-3 h-3" /> },
-    guideline: { color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Shield className="w-3 h-3" /> },
-    warning: { color: 'bg-red-100 text-red-700 border-red-200', icon: <AlertTriangle className="w-3 h-3" /> },
+    data: {
+      color: 'bg-green-100 text-green-700 border-green-200',
+      icon: <Target className="w-3 h-3" />,
+    },
+    citation: {
+      color: 'bg-blue-100 text-blue-700 border-blue-200',
+      icon: <BookOpen className="w-3 h-3" />,
+    },
+    cross_ref: {
+      color: 'bg-purple-100 text-purple-700 border-purple-200',
+      icon: <Link className="w-3 h-3" />,
+    },
+    guideline: {
+      color: 'bg-amber-100 text-amber-700 border-amber-200',
+      icon: <Shield className="w-3 h-3" />,
+    },
+    warning: {
+      color: 'bg-red-100 text-red-700 border-red-200',
+      icon: <AlertTriangle className="w-3 h-3" />,
+    },
   };
-  
+
   const c = config[tag.type];
-  
+
   return (
     <span
       className={cn(
@@ -333,7 +388,7 @@ const RedlineAlertPanel: React.FC<{
   onResolve?: (alert: RedlineAlert) => void;
 }> = ({ alerts, onResolve }) => {
   if (alerts.length === 0) return null;
-  
+
   return (
     <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
       <div className="flex items-center gap-2 mb-3">
@@ -347,12 +402,14 @@ const RedlineAlertPanel: React.FC<{
         {alerts.map(alert => (
           <div key={alert.id} className="bg-white rounded-lg p-3 border border-red-200">
             <div className="flex items-start justify-between mb-2">
-              <span className={cn(
-                'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
-                alert.severity === 'critical' && 'bg-red-600 text-white',
-                alert.severity === 'warning' && 'bg-amber-500 text-white',
-                alert.severity === 'info' && 'bg-blue-500 text-white'
-              )}>
+              <span
+                className={cn(
+                  'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
+                  alert.severity === 'critical' && 'bg-red-600 text-white',
+                  alert.severity === 'warning' && 'bg-amber-500 text-white',
+                  alert.severity === 'info' && 'bg-blue-500 text-white'
+                )}
+              >
                 {alert.severity}
               </span>
               <button
@@ -389,14 +446,20 @@ const SectionEditor: React.FC<{
 }> = ({ section, onDraft, onVerifyClaim, onResolveAlert }) => {
   const statusConfig = STATUS_CONFIG[section.status];
   const moduleConfig = MODULE_CONFIG[section.module];
-  
+
   return (
     <div className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className={cn('px-2 py-0.5 text-xs font-bold rounded', moduleConfig.bgColor, moduleConfig.color)}>
+            <span
+              className={cn(
+                'px-2 py-0.5 text-xs font-bold rounded',
+                moduleConfig.bgColor,
+                moduleConfig.color
+              )}
+            >
               {moduleConfig.label}
             </span>
             <span className="text-sm font-mono text-slate-500">{section.number}</span>
@@ -404,16 +467,19 @@ const SectionEditor: React.FC<{
           <h2 className="text-lg font-semibold text-slate-800">{section.title}</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg',
-            statusConfig.bgColor, statusConfig.color
-          )}>
+          <span
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg',
+              statusConfig.bgColor,
+              statusConfig.color
+            )}
+          >
             {statusConfig.icon}
             {statusConfig.label}
           </span>
         </div>
       </div>
-      
+
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-3 border-b border-slate-200 bg-slate-50/50">
         <button
@@ -440,17 +506,14 @@ const SectionEditor: React.FC<{
           <MessageSquare className="w-4 h-4" />
         </button>
       </div>
-      
+
       {/* Redline Alerts */}
       {section.redlineAlerts && section.redlineAlerts.length > 0 && (
         <div className="p-4 border-b border-slate-200">
-          <RedlineAlertPanel
-            alerts={section.redlineAlerts}
-            onResolve={onResolveAlert}
-          />
+          <RedlineAlertPanel alerts={section.redlineAlerts} onResolve={onResolveAlert} />
         </div>
       )}
-      
+
       {/* Content Area */}
       <div className="flex-1 overflow-auto p-6">
         {section.status === 'empty' ? (
@@ -460,8 +523,8 @@ const SectionEditor: React.FC<{
             </div>
             <h3 className="text-lg font-medium text-slate-600 mb-2">Section Not Yet Drafted</h3>
             <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">
-              Click "Draft with AI" and your Sherpa will carry the burden of the first draft,
-              citing every claim against your source documents.
+              Click "Draft with AI" and your Sherpa will carry the burden of the first draft, citing
+              every claim against your source documents.
             </p>
             <button
               onClick={onDraft}
@@ -490,7 +553,7 @@ const SectionEditor: React.FC<{
             ) : (
               <p className="text-slate-400 italic">No content available</p>
             )}
-            
+
             {/* Smart Tags Display */}
             {section.smartTags.length > 0 && (
               <div className="mt-6 pt-4 border-t border-slate-200">
@@ -499,11 +562,7 @@ const SectionEditor: React.FC<{
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {section.smartTags.map(tag => (
-                    <SmartTagBadge
-                      key={tag.id}
-                      tag={tag}
-                      onVerify={() => onVerifyClaim?.(tag)}
-                    />
+                    <SmartTagBadge key={tag.id} tag={tag} onVerify={() => onVerifyClaim?.(tag)} />
                   ))}
                 </div>
               </div>
@@ -511,17 +570,13 @@ const SectionEditor: React.FC<{
           </div>
         )}
       </div>
-      
+
       {/* Footer */}
       <div className="flex items-center justify-between p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
         <div className="flex items-center gap-4">
           <span>{section.wordCount.toLocaleString()} words</span>
-          {section.lastEdited && (
-            <span>Last edited: {section.lastEdited}</span>
-          )}
-          {section.editedBy && (
-            <span>by {section.editedBy}</span>
-          )}
+          {section.lastEdited && <span>Last edited: {section.lastEdited}</span>}
+          {section.editedBy && <span>by {section.editedBy}</span>}
         </div>
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1">
@@ -538,6 +593,137 @@ const SectionEditor: React.FC<{
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ─── Standalone demo document (used by ECTDCoAuthorStandalone) ─────────────
+export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
+  id: 'ectd-ind-001',
+  name: 'Lemizumab IND Application',
+  submissionType: 'IND',
+  project: 'Lemizumab Phase 1/2 Program',
+  version: '0.3 DRAFT',
+  status: 'draft',
+  overallProgress: 28,
+  unverifiedClaims: 14,
+  redlineAlerts: 3,
+  sections: [
+    {
+      id: 'm1-cover',
+      number: '1.1',
+      title: 'Cover Letter',
+      module: 'm1',
+      status: 'approved',
+      content:
+        'Concept2Cure Therapeutics, Inc. hereby submits this Investigational New Drug application for lemizumab...',
+      smartTags: [],
+      wordCount: 420,
+      lastEdited: '2026-02-20',
+      editedBy: 'Sarah Chen',
+    },
+    {
+      id: 'm1-1571',
+      number: '1.2',
+      title: 'Form FDA 1571',
+      module: 'm1',
+      status: 'approved',
+      content: '',
+      smartTags: [],
+      wordCount: 0,
+      lastEdited: '2026-02-19',
+      editedBy: 'James Mitchell',
+    },
+    {
+      id: 'm2-qual',
+      number: '2.3',
+      title: 'Quality Overall Summary',
+      module: 'm2',
+      status: 'ai_draft',
+      content:
+        'Lemizumab is a recombinant humanized monoclonal antibody (IgG4) directed against interleukin-17A (IL-17A). The drug substance is manufactured by Chinese hamster ovary (CHO) cell fermentation using a fed-batch process validated per ICH Q11 principles.',
+      smartTags: [],
+      wordCount: 2140,
+      lastEdited: '2026-03-01',
+      editedBy: 'Lumen AI',
+    },
+    {
+      id: 'm2-nonclin',
+      number: '2.4',
+      title: 'Nonclinical Overview',
+      module: 'm2',
+      status: 'editing',
+      content: '',
+      smartTags: [],
+      wordCount: 3820,
+      lastEdited: '2026-02-28',
+      editedBy: 'Dr. Marcus Rivera',
+    },
+    {
+      id: 'm2-clin',
+      number: '2.5',
+      title: 'Clinical Overview',
+      module: 'm2',
+      status: 'empty',
+      content: '',
+      smartTags: [],
+      wordCount: 0,
+    },
+    {
+      id: 'm3-drug',
+      number: '3.2.S',
+      title: 'Drug Substance (CMC)',
+      module: 'm3',
+      status: 'in_review',
+      content: '',
+      smartTags: [],
+      wordCount: 8900,
+      lastEdited: '2026-02-25',
+      editedBy: 'Dr. Chen',
+    },
+    {
+      id: 'm3-product',
+      number: '3.2.P',
+      title: 'Drug Product',
+      module: 'm3',
+      status: 'empty',
+      content: '',
+      smartTags: [],
+      wordCount: 0,
+    },
+    {
+      id: 'm4-pharm',
+      number: '4.2.1',
+      title: 'Primary Pharmacology',
+      module: 'm4',
+      status: 'ai_draft',
+      content: '',
+      smartTags: [],
+      wordCount: 5200,
+      lastEdited: '2026-03-02',
+      editedBy: 'Lumen AI',
+    },
+    {
+      id: 'm4-tox',
+      number: '4.2.3',
+      title: 'Toxicology',
+      module: 'm4',
+      status: 'empty',
+      content: '',
+      smartTags: [],
+      wordCount: 0,
+    },
+    {
+      id: 'm5-protocol',
+      number: '5.3.5.1',
+      title: 'Phase 1 Clinical Protocol',
+      module: 'm5',
+      status: 'editing',
+      content: '',
+      smartTags: [],
+      wordCount: 12800,
+      lastEdited: '2026-03-01',
+      editedBy: 'Dr. Lisa Wang',
+    },
+  ],
+};
+
 export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
   document,
   selectedSection,
@@ -548,12 +734,12 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
   className,
 }) => {
   const [activeSection, setActiveSection] = useState<DocumentSection | undefined>(selectedSection);
-  
+
   const handleSectionSelect = (section: DocumentSection) => {
     setActiveSection(section);
     onSectionSelect?.(section);
   };
-  
+
   return (
     <div className={cn('flex h-full bg-slate-50', className)}>
       {/* Left Panel: Document Outline */}
@@ -566,10 +752,12 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
             </div>
             <div>
               <h2 className="font-semibold text-slate-800">{document.name}</h2>
-              <p className="text-xs text-slate-500">{document.submissionType} • v{document.version}</p>
+              <p className="text-xs text-slate-500">
+                {document.submissionType} • v{document.version}
+              </p>
             </div>
           </div>
-          
+
           {/* Progress */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
@@ -583,7 +771,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
               />
             </div>
           </div>
-          
+
           {/* Alerts Summary */}
           {(document.unverifiedClaims > 0 || document.redlineAlerts > 0) && (
             <div className="flex gap-2 mt-3">
@@ -602,7 +790,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* Outline */}
         <div className="flex-1 overflow-auto p-2">
           <OutlineTree
@@ -611,7 +799,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
             onSelect={handleSectionSelect}
           />
         </div>
-        
+
         {/* Add Section */}
         <div className="p-3 border-t border-slate-200">
           <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
@@ -620,7 +808,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
           </button>
         </div>
       </div>
-      
+
       {/* Right Panel: Editor */}
       <div className="flex-1 flex flex-col p-4">
         {activeSection ? (
@@ -631,11 +819,13 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
             onResolveAlert={onResolveAlert}
           />
         ) : (
-          <ZeroState onStartDrafting={() => {
-            if (document.sections[0]) {
-              handleSectionSelect(document.sections[0]);
-            }
-          }} />
+          <ZeroState
+            onStartDrafting={() => {
+              if (document.sections[0]) {
+                handleSectionSelect(document.sections[0]);
+              }
+            }}
+          />
         )}
       </div>
     </div>
@@ -643,3 +833,8 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
 };
 
 export default eCTDCoAuthor;
+
+// ─── Standalone (zero-prop entry point using DEMO_ECTD_DOCUMENT) ────────────
+export const ECTDCoAuthorStandalone: React.FC = () => (
+  <eCTDCoAuthor document={DEMO_ECTD_DOCUMENT} />
+);

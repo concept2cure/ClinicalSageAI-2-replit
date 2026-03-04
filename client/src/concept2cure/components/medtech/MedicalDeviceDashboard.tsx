@@ -5,7 +5,7 @@
  *
  * @description
  * Dashboard designed for how MEDICAL DEVICE companies actually operate:
- * 
+ *
  * MEDTECH REALITY:
  * - 510(k) is the most common pathway (Substantial Equivalence)
  * - Predicate device selection is CRITICAL (wrong choice = death)
@@ -65,7 +65,7 @@ export type RegulatoryPathway = '510k' | 'pma' | 'de_novo' | 'hde' | 'exempt';
 
 export type DeviceClass = 'I' | 'II' | 'III';
 
-export type SubmissionStatus = 
+export type SubmissionStatus =
   | 'planning'
   | 'predicate_search'
   | 'testing'
@@ -83,24 +83,24 @@ export type RecallClass = 'I' | 'II' | 'III';
 
 export interface PredicateDevice {
   id: string;
-  kNumber: string;           // K123456
+  kNumber: string; // K123456
   deviceName: string;
   manufacturer: string;
   decisionDate: string;
   productCode: string;
   regulationNumber: string;
-  
+
   // Risk Assessment
   hasRecalls: boolean;
   recallCount: number;
   recallClasses: RecallClass[];
   lastRecallDate?: string;
-  
+
   // Similarity Score
-  similarityScore: number;   // 0-100
+  similarityScore: number; // 0-100
   matchingIndications: string[];
   technologicalDifferences: string[];
-  
+
   // Recommendation
   recommendation: 'strong' | 'acceptable' | 'caution' | 'avoid';
   reasonCodes: string[];
@@ -128,30 +128,30 @@ export interface DeviceSubmission {
   deviceClass: DeviceClass;
   pathway: RegulatoryPathway;
   status: SubmissionStatus;
-  
+
   // Predicate Info (for 510k)
   predicateDevice?: PredicateDevice;
   predicateCandidates?: PredicateDevice[];
-  
+
   // Key Dates
   projectStartDate: string;
   targetSubmissionDate?: string;
   submittedDate?: string;
   clearanceDate?: string;
-  
+
   // eSTAR
-  estarProgress: number;      // 0-100
+  estarProgress: number; // 0-100
   estarSections: ESTARSection[];
-  
+
   // Testing
   testingStatus: 'not_started' | 'in_progress' | 'complete';
   requiredTests: string[];
   completedTests: string[];
-  
+
   // Documents
   cerRequired: boolean;
   cerStatus?: 'not_started' | 'drafting' | 'review' | 'complete';
-  
+
   // Team
   projectLead: string;
   raSpecialist: string;
@@ -172,18 +172,24 @@ export interface CERDocument {
   deviceId: string;
   deviceName: string;
   version: string;
-  status: 'drafting' | 'literature_review' | 'clinical_data' | 'risk_benefit' | 'final_review' | 'approved';
+  status:
+    | 'drafting'
+    | 'literature_review'
+    | 'clinical_data'
+    | 'risk_benefit'
+    | 'final_review'
+    | 'approved';
   lastUpdated: string;
-  
+
   // EU MDR Compliance
   mdrCompliant: boolean;
-  gspr: number;              // General Safety & Performance Requirements covered
+  gspr: number; // General Safety & Performance Requirements covered
   totalGspr: number;
-  
+
   // Literature
   articlesReviewed: number;
   clinicalStudies: number;
-  pmsData: boolean;          // Post-Market Surveillance
+  pmsData: boolean; // Post-Market Surveillance
 }
 
 interface MedicalDeviceDashboardProps {
@@ -200,44 +206,109 @@ interface MedicalDeviceDashboardProps {
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const PATHWAY_CONFIG: Record<RegulatoryPathway, {
-  label: string;
-  description: string;
-  color: string;
-  bgColor: string;
-}> = {
-  '510k': { label: '510(k)', description: 'Substantial Equivalence', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  pma: { label: 'PMA', description: 'Premarket Approval', color: 'text-violet-600', bgColor: 'bg-violet-100' },
-  de_novo: { label: 'De Novo', description: 'Novel Low-Moderate Risk', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-  hde: { label: 'HDE', description: 'Humanitarian Device Exemption', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  exempt: { label: 'Exempt', description: 'Class I Exempt', color: 'text-zinc-600', bgColor: 'bg-zinc-100' },
+const PATHWAY_CONFIG: Record<
+  RegulatoryPathway,
+  {
+    label: string;
+    description: string;
+    color: string;
+    bgColor: string;
+  }
+> = {
+  '510k': {
+    label: '510(k)',
+    description: 'Substantial Equivalence',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+  },
+  pma: {
+    label: 'PMA',
+    description: 'Premarket Approval',
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-100',
+  },
+  de_novo: {
+    label: 'De Novo',
+    description: 'Novel Low-Moderate Risk',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-100',
+  },
+  hde: {
+    label: 'HDE',
+    description: 'Humanitarian Device Exemption',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
+  },
+  exempt: {
+    label: 'Exempt',
+    description: 'Class I Exempt',
+    color: 'text-zinc-600',
+    bgColor: 'bg-zinc-100',
+  },
 };
 
-const STATUS_CONFIG: Record<SubmissionStatus, {
-  label: string;
-  color: string;
-  bgColor: string;
-  step: number;
-}> = {
+const STATUS_CONFIG: Record<
+  SubmissionStatus,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+    step: number;
+  }
+> = {
   planning: { label: 'Planning', color: 'text-zinc-600', bgColor: 'bg-zinc-100', step: 1 },
-  predicate_search: { label: 'Predicate Search', color: 'text-blue-600', bgColor: 'bg-blue-100', step: 2 },
+  predicate_search: {
+    label: 'Predicate Search',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    step: 2,
+  },
   testing: { label: 'Testing', color: 'text-amber-600', bgColor: 'bg-amber-100', step: 3 },
   drafting: { label: 'Drafting', color: 'text-violet-600', bgColor: 'bg-violet-100', step: 4 },
-  internal_review: { label: 'Internal Review', color: 'text-purple-600', bgColor: 'bg-purple-100', step: 5 },
+  internal_review: {
+    label: 'Internal Review',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100',
+    step: 5,
+  },
   estar_prep: { label: 'eSTAR Prep', color: 'text-cyan-600', bgColor: 'bg-cyan-100', step: 6 },
   submitted: { label: 'Submitted', color: 'text-indigo-600', bgColor: 'bg-indigo-100', step: 7 },
   fda_review: { label: 'FDA Review', color: 'text-orange-600', bgColor: 'bg-orange-100', step: 8 },
-  additional_info: { label: 'Additional Info Requested', color: 'text-red-600', bgColor: 'bg-red-100', step: 8 },
+  additional_info: {
+    label: 'Additional Info Requested',
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
+    step: 8,
+  },
   cleared: { label: 'Cleared', color: 'text-green-600', bgColor: 'bg-green-100', step: 9 },
   approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-100', step: 9 },
   rejected: { label: 'Rejected', color: 'text-red-600', bgColor: 'bg-red-100', step: 9 },
 };
 
-const RECOMMENDATION_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  strong: { label: 'Strong Match', color: 'text-green-600 bg-green-50 border-green-200', icon: <CheckCircle className="w-4 h-4" /> },
-  acceptable: { label: 'Acceptable', color: 'text-blue-600 bg-blue-50 border-blue-200', icon: <Target className="w-4 h-4" /> },
-  caution: { label: 'Use Caution', color: 'text-amber-600 bg-amber-50 border-amber-200', icon: <AlertTriangle className="w-4 h-4" /> },
-  avoid: { label: 'Avoid', color: 'text-red-600 bg-red-50 border-red-200', icon: <AlertOctagon className="w-4 h-4" /> },
+const RECOMMENDATION_CONFIG: Record<
+  string,
+  { label: string; color: string; icon: React.ReactNode }
+> = {
+  strong: {
+    label: 'Strong Match',
+    color: 'text-green-600 bg-green-50 border-green-200',
+    icon: <CheckCircle className="w-4 h-4" />,
+  },
+  acceptable: {
+    label: 'Acceptable',
+    color: 'text-blue-600 bg-blue-50 border-blue-200',
+    icon: <Target className="w-4 h-4" />,
+  },
+  caution: {
+    label: 'Use Caution',
+    color: 'text-amber-600 bg-amber-50 border-amber-200',
+    icon: <AlertTriangle className="w-4 h-4" />,
+  },
+  avoid: {
+    label: 'Avoid',
+    color: 'text-red-600 bg-red-50 border-red-200',
+    icon: <AlertOctagon className="w-4 h-4" />,
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -249,7 +320,11 @@ const getDaysUntil = (date: string): number => {
 };
 
 const formatDate = (date: string): string => {
-  return new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(date).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -262,7 +337,7 @@ const PredicatePathfinder: React.FC<{
 }> = ({ submission, onPredicateSearch }) => {
   const candidates = submission.predicateCandidates || [];
   const selected = submission.predicateDevice;
-  
+
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -273,7 +348,9 @@ const PredicatePathfinder: React.FC<{
             </div>
             <div>
               <h3 className="text-sm font-semibold text-zinc-900">Predicate Pathfinder</h3>
-              <p className="text-xs text-zinc-500">The Scout finds safe paths others have climbed</p>
+              <p className="text-xs text-zinc-500">
+                The Scout finds safe paths others have climbed
+              </p>
             </div>
           </div>
           <button
@@ -285,7 +362,7 @@ const PredicatePathfinder: React.FC<{
           </button>
         </div>
       </div>
-      
+
       {/* Selected Predicate */}
       {selected && (
         <div className="p-4 border-b border-zinc-200 bg-green-50">
@@ -301,13 +378,17 @@ const PredicatePathfinder: React.FC<{
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1">
-                <span className="text-2xl font-bold text-green-600">{selected.similarityScore}</span>
+                <span className="text-2xl font-bold text-green-600">
+                  {selected.similarityScore}
+                </span>
                 <span className="text-xs text-green-600">% Match</span>
               </div>
-              <span className={cn(
-                'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
-                RECOMMENDATION_CONFIG[selected.recommendation].color
-              )}>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
+                  RECOMMENDATION_CONFIG[selected.recommendation].color
+                )}
+              >
                 {RECOMMENDATION_CONFIG[selected.recommendation].icon}
                 {RECOMMENDATION_CONFIG[selected.recommendation].label}
               </span>
@@ -315,14 +396,14 @@ const PredicatePathfinder: React.FC<{
           </div>
         </div>
       )}
-      
+
       {/* Candidate List */}
       <div className="max-h-[300px] overflow-y-auto">
         {candidates.length > 0 ? (
           candidates.map(candidate => {
             const recConfig = RECOMMENDATION_CONFIG[candidate.recommendation];
             const isSelected = selected?.id === candidate.id;
-            
+
             return (
               <div
                 key={candidate.id}
@@ -334,7 +415,9 @@ const PredicatePathfinder: React.FC<{
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-bold text-blue-600">{candidate.kNumber}</span>
+                      <span className="font-mono text-sm font-bold text-blue-600">
+                        {candidate.kNumber}
+                      </span>
                       {candidate.hasRecalls && (
                         <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
                           <AlertTriangle className="w-3 h-3" />
@@ -343,25 +426,34 @@ const PredicatePathfinder: React.FC<{
                       )}
                     </div>
                     <p className="text-sm text-zinc-700">{candidate.deviceName}</p>
-                    <p className="text-xs text-zinc-500">{candidate.manufacturer} • {formatDate(candidate.decisionDate)}</p>
+                    <p className="text-xs text-zinc-500">
+                      {candidate.manufacturer} • {formatDate(candidate.decisionDate)}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-zinc-900">{candidate.similarityScore}%</div>
-                    <span className={cn(
-                      'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded border',
-                      recConfig.color
-                    )}>
+                    <div className="text-lg font-bold text-zinc-900">
+                      {candidate.similarityScore}%
+                    </div>
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded border',
+                        recConfig.color
+                      )}
+                    >
                       {recConfig.icon}
                       {recConfig.label}
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Matching Indications */}
                 {candidate.matchingIndications.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {candidate.matchingIndications.slice(0, 3).map(ind => (
-                      <span key={ind} className="px-2 py-0.5 text-[10px] bg-zinc-100 text-zinc-600 rounded">
+                      <span
+                        key={ind}
+                        className="px-2 py-0.5 text-[10px] bg-zinc-100 text-zinc-600 rounded"
+                      >
                         {ind}
                       </span>
                     ))}
@@ -393,7 +485,7 @@ const MAUDEHazardMonitor: React.FC<{
   const deaths = alerts.filter(a => a.eventType === 'death');
   const injuries = alerts.filter(a => a.eventType === 'injury');
   const malfunctions = alerts.filter(a => a.eventType === 'malfunction');
-  
+
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-red-50 to-orange-50">
@@ -407,15 +499,39 @@ const MAUDEHazardMonitor: React.FC<{
           </div>
         </div>
       </div>
-      
+
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-2 p-3 bg-zinc-50 border-b border-zinc-200">
-        <div className={cn('p-2 rounded-lg text-center', deaths.length > 0 ? 'bg-red-100' : 'bg-zinc-100')}>
-          <p className={cn('text-lg font-bold', deaths.length > 0 ? 'text-red-700' : 'text-zinc-400')}>{deaths.length}</p>
+        <div
+          className={cn(
+            'p-2 rounded-lg text-center',
+            deaths.length > 0 ? 'bg-red-100' : 'bg-zinc-100'
+          )}
+        >
+          <p
+            className={cn(
+              'text-lg font-bold',
+              deaths.length > 0 ? 'text-red-700' : 'text-zinc-400'
+            )}
+          >
+            {deaths.length}
+          </p>
           <p className="text-[10px] text-zinc-500">Deaths</p>
         </div>
-        <div className={cn('p-2 rounded-lg text-center', injuries.length > 0 ? 'bg-amber-100' : 'bg-zinc-100')}>
-          <p className={cn('text-lg font-bold', injuries.length > 0 ? 'text-amber-700' : 'text-zinc-400')}>{injuries.length}</p>
+        <div
+          className={cn(
+            'p-2 rounded-lg text-center',
+            injuries.length > 0 ? 'bg-amber-100' : 'bg-zinc-100'
+          )}
+        >
+          <p
+            className={cn(
+              'text-lg font-bold',
+              injuries.length > 0 ? 'text-amber-700' : 'text-zinc-400'
+            )}
+          >
+            {injuries.length}
+          </p>
           <p className="text-[10px] text-zinc-500">Injuries</p>
         </div>
         <div className="p-2 rounded-lg text-center bg-zinc-100">
@@ -423,7 +539,7 @@ const MAUDEHazardMonitor: React.FC<{
           <p className="text-[10px] text-zinc-500">Malfunctions</p>
         </div>
       </div>
-      
+
       {/* Alert List */}
       <div className="max-h-[300px] overflow-y-auto">
         {alerts.slice(0, 10).map(alert => (
@@ -439,12 +555,14 @@ const MAUDEHazardMonitor: React.FC<{
           >
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-2">
-                <span className={cn(
-                  'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
-                  alert.eventType === 'death' && 'bg-red-100 text-red-700',
-                  alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
-                  alert.eventType === 'malfunction' && 'bg-blue-100 text-blue-700'
-                )}>
+                <span
+                  className={cn(
+                    'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
+                    alert.eventType === 'death' && 'bg-red-100 text-red-700',
+                    alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
+                    alert.eventType === 'malfunction' && 'bg-blue-100 text-blue-700'
+                  )}
+                >
                   {alert.eventType}
                 </span>
                 {alert.isCompetitor && (
@@ -453,14 +571,18 @@ const MAUDEHazardMonitor: React.FC<{
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-zinc-400 font-mono">{formatDate(alert.eventDate)}</span>
+              <span className="text-[10px] text-zinc-400 font-mono">
+                {formatDate(alert.eventDate)}
+              </span>
             </div>
             <p className="text-sm font-medium text-zinc-900">{alert.deviceName}</p>
-            <p className="text-xs text-zinc-500">{alert.manufacturer} • {alert.brandName}</p>
+            <p className="text-xs text-zinc-500">
+              {alert.manufacturer} • {alert.brandName}
+            </p>
             <p className="text-xs text-zinc-600 mt-1 line-clamp-2">{alert.narrative}</p>
           </button>
         ))}
-        
+
         {alerts.length === 0 && (
           <div className="p-8 text-center">
             <Shield className="w-12 h-12 text-green-300 mx-auto mb-3" />
@@ -483,7 +605,7 @@ const ESTARProgressTracker: React.FC<{
   const sections = submission.estarSections || [];
   const completed = sections.filter(s => s.status === 'complete').length;
   const total = sections.filter(s => s.status !== 'na').length;
-  
+
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       <div className="p-4 border-b border-zinc-200">
@@ -494,7 +616,7 @@ const ESTARProgressTracker: React.FC<{
           </div>
           <span className="text-sm font-bold text-cyan-600">{submission.estarProgress}%</span>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="h-3 bg-zinc-100 rounded-full overflow-hidden">
           <div
@@ -502,9 +624,11 @@ const ESTARProgressTracker: React.FC<{
             style={{ width: `${submission.estarProgress}%` }}
           />
         </div>
-        <p className="text-xs text-zinc-500 mt-2">{completed} of {total} sections complete</p>
+        <p className="text-xs text-zinc-500 mt-2">
+          {completed} of {total} sections complete
+        </p>
       </div>
-      
+
       {/* Section List */}
       <div className="max-h-[250px] overflow-y-auto">
         {sections.map(section => (
@@ -519,8 +643,12 @@ const ESTARProgressTracker: React.FC<{
             <div className="flex items-center gap-2">
               {section.status === 'complete' && <CheckCircle className="w-4 h-4 text-green-500" />}
               {section.status === 'in_progress' && <Clock className="w-4 h-4 text-blue-500" />}
-              {section.status === 'not_started' && <div className="w-4 h-4 rounded-full border-2 border-zinc-300" />}
-              {section.status === 'na' && <span className="w-4 h-4 text-center text-xs text-zinc-400">—</span>}
+              {section.status === 'not_started' && (
+                <div className="w-4 h-4 rounded-full border-2 border-zinc-300" />
+              )}
+              {section.status === 'na' && (
+                <span className="w-4 h-4 text-center text-xs text-zinc-400">—</span>
+              )}
               <div>
                 <span className="text-xs font-mono text-zinc-500">{section.sectionNumber}</span>
                 <p className="text-sm text-zinc-700">{section.title}</p>
@@ -528,10 +656,12 @@ const ESTARProgressTracker: React.FC<{
             </div>
             {section.status !== 'na' && (
               <div className="text-right">
-                <span className={cn(
-                  'text-xs font-medium',
-                  section.completionPct === 100 ? 'text-green-600' : 'text-zinc-500'
-                )}>
+                <span
+                  className={cn(
+                    'text-xs font-medium',
+                    section.completionPct === 100 ? 'text-green-600' : 'text-zinc-500'
+                  )}
+                >
                   {section.completionPct}%
                 </span>
                 {section.requiredAttachments > 0 && (
@@ -558,8 +688,10 @@ const SubmissionCard: React.FC<{
 }> = ({ submission, onClick }) => {
   const pathwayConfig = PATHWAY_CONFIG[submission.pathway];
   const statusConfig = STATUS_CONFIG[submission.status];
-  const daysToTarget = submission.targetSubmissionDate ? getDaysUntil(submission.targetSubmissionDate) : null;
-  
+  const daysToTarget = submission.targetSubmissionDate
+    ? getDaysUntil(submission.targetSubmissionDate)
+    : null;
+
   return (
     <button
       onClick={onClick}
@@ -568,22 +700,34 @@ const SubmissionCard: React.FC<{
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className={cn('px-2 py-1 text-xs font-bold rounded', pathwayConfig.bgColor, pathwayConfig.color)}>
+          <span
+            className={cn(
+              'px-2 py-1 text-xs font-bold rounded',
+              pathwayConfig.bgColor,
+              pathwayConfig.color
+            )}
+          >
             {pathwayConfig.label}
           </span>
           <span className="px-2 py-0.5 text-xs font-medium text-zinc-500 bg-zinc-100 rounded">
             Class {submission.deviceClass}
           </span>
         </div>
-        <span className={cn('px-2 py-1 text-xs font-medium rounded', statusConfig.bgColor, statusConfig.color)}>
+        <span
+          className={cn(
+            'px-2 py-1 text-xs font-medium rounded',
+            statusConfig.bgColor,
+            statusConfig.color
+          )}
+        >
           {statusConfig.label}
         </span>
       </div>
-      
+
       {/* Device Info */}
       <h3 className="font-semibold text-zinc-900 mb-1">{submission.projectName}</h3>
       <p className="text-sm text-zinc-600 mb-3">{submission.deviceName}</p>
-      
+
       {/* Predicate (if 510k) */}
       {submission.pathway === '510k' && submission.predicateDevice && (
         <div className="p-2 bg-blue-50 rounded-lg mb-3">
@@ -592,7 +736,7 @@ const SubmissionCard: React.FC<{
           <p className="text-xs text-zinc-500">{submission.predicateDevice.deviceName}</p>
         </div>
       )}
-      
+
       {/* Progress */}
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-4">
@@ -602,23 +746,29 @@ const SubmissionCard: React.FC<{
           </div>
           <div>
             <p className="text-zinc-400">Tests</p>
-            <p className="font-bold text-zinc-900">{submission.completedTests.length}/{submission.requiredTests.length}</p>
+            <p className="font-bold text-zinc-900">
+              {submission.completedTests.length}/{submission.requiredTests.length}
+            </p>
           </div>
         </div>
-        
+
         {daysToTarget !== null && (
-          <div className={cn(
-            'px-3 py-1.5 rounded-lg text-right',
-            daysToTarget <= 14 && 'bg-red-50',
-            daysToTarget > 14 && daysToTarget <= 30 && 'bg-amber-50',
-            daysToTarget > 30 && 'bg-zinc-50'
-          )}>
-            <p className={cn(
-              'text-lg font-bold',
-              daysToTarget <= 14 && 'text-red-600',
-              daysToTarget > 14 && daysToTarget <= 30 && 'text-amber-600',
-              daysToTarget > 30 && 'text-zinc-600'
-            )}>
+          <div
+            className={cn(
+              'px-3 py-1.5 rounded-lg text-right',
+              daysToTarget <= 14 && 'bg-red-50',
+              daysToTarget > 14 && daysToTarget <= 30 && 'bg-amber-50',
+              daysToTarget > 30 && 'bg-zinc-50'
+            )}
+          >
+            <p
+              className={cn(
+                'text-lg font-bold',
+                daysToTarget <= 14 && 'text-red-600',
+                daysToTarget > 14 && daysToTarget <= 30 && 'text-amber-600',
+                daysToTarget > 30 && 'text-zinc-600'
+              )}
+            >
               {daysToTarget}d
             </p>
             <p className="text-[10px] text-zinc-500">to submit</p>
@@ -649,14 +799,16 @@ const CERTracker: React.FC<{
           </div>
         </div>
       </div>
-      
+
       <div className="max-h-[250px] overflow-y-auto">
         {documents.map(doc => (
           <div key={doc.id} className="p-3 border-b border-zinc-100 hover:bg-zinc-50">
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="text-sm font-medium text-zinc-900">{doc.deviceName}</p>
-                <p className="text-xs text-zinc-500">v{doc.version} • {formatDate(doc.lastUpdated)}</p>
+                <p className="text-xs text-zinc-500">
+                  v{doc.version} • {formatDate(doc.lastUpdated)}
+                </p>
               </div>
               {doc.mdrCompliant ? (
                 <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded flex items-center gap-1">
@@ -669,9 +821,11 @@ const CERTracker: React.FC<{
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center gap-4 text-xs text-zinc-500">
-              <span>GSPR: {doc.gspr}/{doc.totalGspr}</span>
+              <span>
+                GSPR: {doc.gspr}/{doc.totalGspr}
+              </span>
               <span>•</span>
               <span>{doc.articlesReviewed} articles</span>
               <span>•</span>
@@ -679,7 +833,7 @@ const CERTracker: React.FC<{
             </div>
           </div>
         ))}
-        
+
         {documents.length === 0 && (
           <div className="p-8 text-center">
             <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
@@ -707,15 +861,19 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
   const [selectedSubmission, setSelectedSubmission] = useState<DeviceSubmission | null>(
     submissions[0] || null
   );
-  
+
   // Metrics
   const metrics = useMemo(() => {
     const in510k = submissions.filter(s => s.pathway === '510k');
     const inPMA = submissions.filter(s => s.pathway === 'pma');
-    const submitted = submissions.filter(s => s.status === 'submitted' || s.status === 'fda_review');
+    const submitted = submissions.filter(
+      s => s.status === 'submitted' || s.status === 'fda_review'
+    );
     const needsAction = submissions.filter(s => s.status === 'additional_info');
-    const criticalAlerts = maudeAlerts.filter(a => a.eventType === 'death' || a.eventType === 'injury');
-    
+    const criticalAlerts = maudeAlerts.filter(
+      a => a.eventType === 'death' || a.eventType === 'injury'
+    );
+
     return {
       total510k: in510k.length,
       totalPMA: inPMA.length,
@@ -724,7 +882,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
       criticalAlerts: criticalAlerts.length,
     };
   }, [submissions, maudeAlerts]);
-  
+
   return (
     <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
       {/* Header - THE SHERPA BANNER */}
@@ -739,7 +897,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               <p className="text-blue-200 text-sm">Your Sherpa to FDA Clearance</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <button className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur transition-colors flex items-center gap-2">
               <Database className="w-4 h-4" />
@@ -751,7 +909,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             </button>
           </div>
         </div>
-        
+
         {/* Metrics */}
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
@@ -766,17 +924,27 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             <p className="text-xs text-blue-200">Submitted</p>
             <p className="text-2xl font-bold">{metrics.submitted}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.needsAction > 0 ? 'bg-amber-500/30' : 'bg-white/10')}>
+          <div
+            className={cn(
+              'p-3 rounded-lg',
+              metrics.needsAction > 0 ? 'bg-amber-500/30' : 'bg-white/10'
+            )}
+          >
             <p className="text-xs text-amber-200">Needs Action</p>
             <p className="text-2xl font-bold">{metrics.needsAction}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.criticalAlerts > 0 ? 'bg-red-500/30' : 'bg-white/10')}>
+          <div
+            className={cn(
+              'p-3 rounded-lg',
+              metrics.criticalAlerts > 0 ? 'bg-red-500/30' : 'bg-white/10'
+            )}
+          >
             <p className="text-xs text-red-200">MAUDE Alerts</p>
             <p className="text-2xl font-bold">{metrics.criticalAlerts}</p>
           </div>
         </div>
       </div>
-      
+
       {/* Content */}
       <div className="flex-1 p-6 overflow-auto">
         <div className="grid grid-cols-3 gap-6">
@@ -797,7 +965,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               />
             ))}
           </div>
-          
+
           {/* Center: Selected Submission Detail */}
           <div className="space-y-6">
             {selectedSubmission ? (
@@ -817,13 +985,10 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               </div>
             )}
           </div>
-          
+
           {/* Right: Monitoring */}
           <div className="space-y-6">
-            <MAUDEHazardMonitor
-              alerts={maudeAlerts}
-              onAlertClick={onAlertClick}
-            />
+            <MAUDEHazardMonitor alerts={maudeAlerts} onAlertClick={onAlertClick} />
             <CERTracker documents={cerDocuments} />
           </div>
         </div>
@@ -833,3 +998,184 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
 };
 
 export default MedicalDeviceDashboard;
+
+// ─── Standalone (self-contained demo entry point for ZenApp) ──────────────────
+
+const DEMO_DEVICE_SUBMISSIONS: DeviceSubmission[] = [
+  {
+    id: 'sub-001',
+    projectName: 'CardioSense Pro 510(k)',
+    deviceName: 'CardioSense Pro Cardiac Monitor',
+    productCode: 'DPS',
+    deviceClass: 'II',
+    pathway: '510k',
+    status: 'drafting',
+    projectStartDate: '2025-09-01',
+    targetSubmissionDate: '2026-06-30',
+    estarProgress: 42,
+    estarSections: [
+      {
+        id: 'e1',
+        sectionNumber: '1',
+        title: 'Device Identification',
+        status: 'complete',
+        completionPct: 100,
+        requiredAttachments: 2,
+        uploadedAttachments: 2,
+      },
+      {
+        id: 'e2',
+        sectionNumber: '2',
+        title: 'Indications for Use',
+        status: 'complete',
+        completionPct: 100,
+        requiredAttachments: 1,
+        uploadedAttachments: 1,
+      },
+      {
+        id: 'e3',
+        sectionNumber: '3',
+        title: 'Substantial Equivalence',
+        status: 'in_progress',
+        completionPct: 60,
+        requiredAttachments: 4,
+        uploadedAttachments: 2,
+      },
+      {
+        id: 'e4',
+        sectionNumber: '4',
+        title: 'Performance Testing',
+        status: 'not_started',
+        completionPct: 0,
+        requiredAttachments: 6,
+        uploadedAttachments: 0,
+      },
+    ],
+    testingStatus: 'in_progress',
+    requiredTests: [
+      'Electrical Safety (IEC 60601)',
+      'EMC Testing (IEC 60601-1-2)',
+      'Biocompatibility (ISO 10993)',
+      'Software Validation (IEC 62304)',
+      'Cybersecurity (FDA 2023 Guidance)',
+    ],
+    completedTests: ['Electrical Safety (IEC 60601)', 'Biocompatibility (ISO 10993)'],
+    cerRequired: true,
+    cerStatus: 'drafting',
+    projectLead: 'Dr. Sarah Chen',
+    raSpecialist: 'James Mitchell, RAC',
+  },
+  {
+    id: 'sub-002',
+    projectName: 'OncoDx PMA Application',
+    deviceName: 'OncoDx Companion Diagnostic',
+    productCode: 'PYP',
+    deviceClass: 'III',
+    pathway: 'pma',
+    status: 'internal_review',
+    projectStartDate: '2024-03-15',
+    targetSubmissionDate: '2026-12-01',
+    estarProgress: 78,
+    estarSections: [
+      {
+        id: 'e5',
+        sectionNumber: '1',
+        title: 'Administrative',
+        status: 'complete',
+        completionPct: 100,
+        requiredAttachments: 5,
+        uploadedAttachments: 5,
+      },
+      {
+        id: 'e6',
+        sectionNumber: '2',
+        title: 'Nonclinical Studies',
+        status: 'complete',
+        completionPct: 100,
+        requiredAttachments: 8,
+        uploadedAttachments: 8,
+      },
+      {
+        id: 'e7',
+        sectionNumber: '3',
+        title: 'Clinical Studies',
+        status: 'in_progress',
+        completionPct: 75,
+        requiredAttachments: 10,
+        uploadedAttachments: 7,
+      },
+    ],
+    testingStatus: 'complete',
+    requiredTests: [
+      'Analytical Validation',
+      'Clinical Validation',
+      'Biocompatibility',
+      'Software Validation',
+    ],
+    completedTests: [
+      'Analytical Validation',
+      'Clinical Validation',
+      'Biocompatibility',
+      'Software Validation',
+    ],
+    cerRequired: false,
+    projectLead: 'Dr. Marcus Rivera',
+    raSpecialist: 'Linda Park, RAC-D',
+  },
+];
+
+const DEMO_MAUDE_ALERTS: MAUDEAlert[] = [
+  {
+    id: 'm1',
+    reportNumber: 'MW2026-0814',
+    eventDate: '2026-01-15',
+    eventType: 'malfunction',
+    deviceName: 'CardioTrack ECG Monitor',
+    manufacturer: 'MedVision Corp',
+    productCode: 'DPS',
+    brandName: 'CardioTrack 3000',
+    narrative:
+      'Device displayed incorrect arrhythmia alert at rest. Patient was not harmed. Firmware version 2.4.1 identified as root cause.',
+    relevanceScore: 87,
+    isCompetitor: true,
+  },
+  {
+    id: 'm2',
+    reportNumber: 'MW2026-0921',
+    eventDate: '2026-02-03',
+    eventType: 'injury',
+    deviceName: 'PulseGuard Wearable Monitor',
+    manufacturer: 'HealthStream Inc',
+    productCode: 'DTB',
+    brandName: 'PulseGuard X2',
+    narrative:
+      'Mild skin irritation reported after 72-hour continuous wear. Resolved without treatment.',
+    relevanceScore: 52,
+    isCompetitor: false,
+  },
+];
+
+const DEMO_CER_DOCUMENTS: CERDocument[] = [
+  {
+    id: 'c1',
+    deviceId: 'sub-001',
+    deviceName: 'CardioSense Pro Cardiac Monitor',
+    version: '1.0 DRAFT',
+    status: 'literature_review',
+    lastUpdated: '2026-02-28',
+    mdrCompliant: false,
+    gspr: 14,
+    totalGspr: 23,
+    articlesReviewed: 47,
+    clinicalStudies: 8,
+    pmsData: false,
+  },
+];
+
+export const MedicalDeviceDashboardStandalone: React.FC = () => (
+  <MedicalDeviceDashboard
+    submissions={DEMO_DEVICE_SUBMISSIONS}
+    maudeAlerts={DEMO_MAUDE_ALERTS}
+    cerDocuments={DEMO_CER_DOCUMENTS}
+  />
+);
