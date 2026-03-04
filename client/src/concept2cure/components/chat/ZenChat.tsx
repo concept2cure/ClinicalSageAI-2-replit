@@ -682,7 +682,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   const showWelcome = displayMessages.length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-[#FAFAF9]">
+    <div className="flex flex-col flex-1 min-h-0 bg-[#FAFAF9]">
       {/* Connection status indicator - only show if confirmed unhealthy after load */}
       {health && !isConnected && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
@@ -703,7 +703,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto zen-scroll"
+        className="flex-1 min-h-0 overflow-y-auto zen-scroll"
       >
         {showWelcome ? (
           <WelcomeScreen

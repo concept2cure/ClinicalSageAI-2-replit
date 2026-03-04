@@ -887,86 +887,57 @@ export const ZenApp: React.FC = () => {
       />
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Ambient Context Bar */}
-        <div className="border-b border-zinc-100 bg-white/80 backdrop-blur-sm transition-colors duration-normal ease-standard">
-          <div className="flex flex-wrap items-center gap-3 px-4 py-2 text-xs text-zinc-600">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="font-medium text-zinc-800">
-                {activeProject?.name || 'Select a project'}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        {/* Single clean top bar */}
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-white/80 backdrop-blur-sm">
+          {/* Project name */}
+          <button
+            onClick={() => setProjectSwitcherOpen(true)}
+            className="flex items-center gap-2 text-sm font-medium text-zinc-800 hover:text-blue-600 transition-colors"
+          >
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            {activeProject?.name || 'Select a project'}
+            {activeProject?.type && (
+              <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-xs font-normal">
+                {activeProject.type}
               </span>
-              {activeProject?.type && (
-                <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
-                  {activeProject.type}
-                </span>
-              )}
-            </div>
+            )}
+          </button>
 
-            <div className="h-4 w-px bg-zinc-200" />
+          <div className="h-4 w-px bg-zinc-200 mx-1" />
 
-            <div className="flex items-center gap-1.5">
-              <CalendarClock className="w-3.5 h-3.5 text-amber-600" />
-              <span>Target: {contextMetrics.deadlineDays} days</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Compliance {Math.round(contextMetrics.complianceScore * 100)}%</span>
-            </div>
-
-            <a
-              href={`/concept2cure/proofs/${workflowRunId}`}
-              className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700 hover:bg-emerald-100"
-            >
-              <ShieldCheck className="w-3 h-3" />
-              <span>Proofs</span>
-            </a>
-
-            <div className="flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-              <span>{contextMetrics.riskCount} risks detected</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-zinc-500" />
-              <span>{contextMetrics.lastActivity}</span>
-            </div>
-
-            <div className="ml-auto flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-emerald-700">{contextMetrics.auditStatus}</span>
-            </div>
-          </div>
-
-          {/* Layout Mode Switcher */}
-          <div className="flex items-center gap-2 px-4 pb-2">
+          {/* Mode tabs */}
+          <div className="flex items-center gap-1">
             {layoutModes.map(mode => (
               <button
                 key={mode.id}
                 onClick={() => handleLayoutModeChange(mode.id)}
                 className={cn(
-                  'px-3 py-1 text-xs rounded-full border transition-colors duration-normal ease-standard flex items-center gap-1.5',
+                  'px-3 py-1 text-xs rounded-full border transition-colors flex items-center gap-1',
                   layoutMode === mode.id
-                    ? mode.id === 'sherpa'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700'
                 )}
               >
-                {mode.icon && <mode.icon className="w-3.5 h-3.5" />}
+                {mode.icon && <mode.icon className="w-3 h-3" />}
                 {mode.label}
               </button>
             ))}
-            <div className="ml-auto flex items-center gap-1 text-xs text-zinc-500">
-              {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-              <span>{isConnected ? 'Lumen connected' : 'Lumen offline'}</span>
-            </div>
+          </div>
+
+          <div className="ml-auto flex items-center gap-1 text-xs">
+            <div
+              className={cn(
+                'w-2 h-2 rounded-full',
+                isConnected ? 'bg-emerald-500' : 'bg-amber-400'
+              )}
+            />
+            <span className="text-zinc-500">{isConnected ? 'AI connected' : 'Connecting...'}</span>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 flex min-w-0">
+        <div className="flex-1 flex min-w-0 min-h-0">
           {/* Sherpa Mode - Convergent Canvas */}
           {layoutMode === 'sherpa' && (
             <Suspense
@@ -1092,7 +1063,7 @@ export const ZenApp: React.FC = () => {
               {/* Chat - Connected to Cortex */}
               <div
                 className={cn(
-                  'flex-1 min-w-0 transition-all duration-200',
+                  'flex-1 flex flex-col min-w-0 min-h-0 transition-all duration-200',
                   activeToolPanel && !toolPanelFullscreen && 'flex-shrink-0'
                 )}
                 style={{
@@ -1124,53 +1095,7 @@ export const ZenApp: React.FC = () => {
                 />
               </div>
 
-              {!activeToolPanel && !toolPanelFullscreen && (
-                <div className="hidden lg:flex w-[360px] flex-col border-l border-zinc-200 bg-white animate-in fade-in slide-in-from-right-4">
-                  <div className="border-b border-zinc-100 px-4 py-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-800">
-                      <Users className="h-4 w-4 text-zinc-500" />
-                      Agent Workspace
-                    </div>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      Active agents and priority actions across projects.
-                    </p>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto zen-scroll p-4 space-y-4">
-                    <section className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
-                        <ClipboardCheck className="h-3.5 w-3.5" />
-                        Active Agents
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {agentRoster.map(agent => (
-                          <div
-                            key={agent.id}
-                            className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm"
-                          >
-                            <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
-                            <div className="min-w-0">
-                              <p className="font-medium text-zinc-800 truncate">{agent.name}</p>
-                              <p className="text-xs text-zinc-500 truncate">
-                                {agent.status} • {agent.focus}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-
-                    <section>
-                      <NextActionsPanel
-                        actions={nextActions}
-                        maxItems={3}
-                        showEmpty
-                        className="shadow-none"
-                      />
-                    </section>
-                  </div>
-                </div>
-              )}
+              {/* Agent Workspace panel hidden by default - accessible via Tools */}
 
               {/* Tool panel */}
               {activeToolPanel && (
