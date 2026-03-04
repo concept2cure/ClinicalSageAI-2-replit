@@ -36,6 +36,8 @@ import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
+import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
+import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
 import {
@@ -115,6 +117,7 @@ type ToolPanel =
   | 'pms'
   | 'inspection'
   | 'intelligence'
+  | 'vault'
   | null;
 
 type LayoutMode =
@@ -187,6 +190,11 @@ const TOOL_PANELS: Record<
     title: 'Regulatory Intelligence',
     icon: Globe,
     component: 'RegulatoryIntelligence',
+  },
+  vault: {
+    title: 'Document Vault',
+    icon: FileText,
+    component: 'VaultBrowser',
   },
 };
 
@@ -309,6 +317,9 @@ export const ZenApp: React.FC = () => {
     nextTask,
   } = usePlatformContext();
 
+  // Workspace summary — real counts, org, recent activity, next actions
+  const { data: workspaceSummary, isLoading: summaryLoading } = useWorkspaceSummary();
+
   // Projects from database
   const {
     projects: rawProjects,
@@ -399,12 +410,35 @@ export const ZenApp: React.FC = () => {
     }));
   }, [threads, activeProjectId]);
 
-  // Set active project when projects load
+  // Set active project when projects load (prefer summary's last-touched project)
   useEffect(() => {
-    if (projects.length > 0 && !activeProjectId) {
-      setActiveProjectId(projects[0].id);
+    if (!activeProjectId) {
+      const summaryProject = workspaceSummary?.active?.projectId;
+      if (summaryProject) {
+        setActiveProjectId(summaryProject);
+      } else if (projects.length > 0) {
+        setActiveProjectId(projects[0].id);
+      }
     }
-  }, [projects, activeProjectId]);
+  }, [projects, activeProjectId, workspaceSummary]);
+
+  // Open a tool panel from the ?panel= URL query param on first load
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const panelParam = params.get('panel') as ToolPanel | null;
+      if (panelParam && panelParam in TOOL_PANELS) {
+        setActiveToolPanel(panelParam);
+        // Strip the query param so a refresh doesn't re-open it
+        const url = new URL(window.location.href);
+        url.searchParams.delete('panel');
+        window.history.replaceState({}, '', url.toString());
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleNewChat = useCallback(() => {
     // Clear active conversation/thread and ensure we're in chat mode
@@ -1206,6 +1240,15 @@ export const ZenApp: React.FC = () => {
                   display: toolPanelFullscreen ? 'none' : 'flex',
                 }}
               >
+                {/* Workspace Readiness Strip — real counts from backend */}
+                <div className="flex-shrink-0 px-4 sm:px-6 pt-2 pb-0 border-b border-zinc-100/60 bg-zinc-50/40">
+                  <WorkspaceReadinessStrip
+                    counts={workspaceSummary?.counts}
+                    isLoading={summaryLoading}
+                    orgName={workspaceSummary?.org?.name}
+                  />
+                </div>
+
                 <ZenChat
                   projectId={activeProjectId}
                   projectName={activeProject?.name}
@@ -1218,6 +1261,24 @@ export const ZenApp: React.FC = () => {
                       ? { taskTitle: nextTask.taskTitle, taskDescription: nextTask.taskDescription }
                       : null
                   }
+                  suggestedActions={workspaceSummary?.nextActions}
+                  onNavigate={(path: string) => {
+                    // If path opens a panel, do it inline
+                    try {
+                      const params = new URLSearchParams(
+                        new URL(path, window.location.origin).search
+                      );
+                      const p = params.get('panel') as ToolPanel | null;
+                      if (p && p in TOOL_PANELS) {
+                        setActiveToolPanel(p);
+                        return;
+                      }
+                    } catch (_) {
+                      /* fallback */
+                    }
+                    setLayoutMode('assistant');
+                  }}
+                  onNewProject={() => setNewProjectOpen(true)}
                   initialMessage={
                     pendingDraftSection
                       ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`

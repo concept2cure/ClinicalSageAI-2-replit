@@ -53,6 +53,8 @@ const renderMarkdown = (content: string): string => {
 };
 import { useCortexChat, useCortexHealth } from '../../hooks/useCortex';
 import type { CortexArtifact } from '../../services/cortexService';
+import { ActionCard } from './ActionCard';
+import type { ActionCardDef } from './ActionCard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -93,6 +95,12 @@ interface ZenChatProps {
   lastWork?: { contextTitle: string; contextType: string } | null;
   /** AI-recommended next task */
   nextTask?: { taskTitle: string; taskDescription?: string } | null;
+  /** Suggested actions from workspace summary (real backend data) */
+  suggestedActions?: ActionCardDef[];
+  /** Navigate to a path (e.g. /concept2cure?panel=vault) */
+  onNavigate?: (path: string) => void;
+  /** Open the new-project dialog */
+  onNewProject?: () => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -329,9 +337,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
+  onNavigate?: (path: string) => void;
+  onNewProject?: () => void;
   greeting?: { text: string; subtitle?: string } | null;
   lastWork?: { contextTitle: string; contextType: string } | null;
   nextTask?: { taskTitle: string; taskDescription?: string } | null;
+  suggestedActions?: ActionCardDef[];
 }
 
 const DEVICE_PROMPTS = [
@@ -390,9 +401,12 @@ const BIOTECH_PROMPTS = [
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onSuggestionClick,
+  onNavigate,
+  onNewProject,
   greeting,
   lastWork,
   nextTask,
+  suggestedActions,
 }) => {
   const [activeTab, setActiveTab] = useState<'device' | 'biotech'>('device');
 
@@ -465,6 +479,27 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 Continue: {lastWork.contextTitle}
               </button>
             )}
+          </div>
+        )}
+
+        {/* Workspace-driven suggested actions (real data from /api/workspace/summary) */}
+        {suggestedActions && suggestedActions.length > 0 && (
+          <div className="mb-6">
+            <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+              Suggested next steps
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {suggestedActions.map(action => (
+                <ActionCard
+                  key={action.id}
+                  {...action}
+                  onSend={onSuggestionClick}
+                  onNavigate={onNavigate}
+                  onNewProject={onNewProject}
+                  compact
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -670,10 +705,23 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   lastWork,
   nextTask,
   userName,
+  suggestedActions,
+  onNavigate: onNavigateProp,
+  onNewProject,
 }) => {
   const [, setLocation] = useLocation();
 
-  // Compute user initials from name
+  const handleNavigate = (href: string) => {
+    if (onNavigateProp) {
+      onNavigateProp(href);
+      return;
+    }
+    if (href.startsWith('http')) {
+      window.open(href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setLocation(href);
+  };
   const userInitials = (() => {
     if (!userName) return 'U';
     const parts = userName.trim().split(/\s+/);
@@ -778,14 +826,6 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     navigator.clipboard.writeText(content);
   };
 
-  const handleNavigate = (href: string) => {
-    if (href.startsWith('http')) {
-      window.open(href, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    setLocation(href);
-  };
-
   // Handle suggestion click — auto-send immediately (Claude.ai behavior)
   const handleSuggestionClick = (text: string) => {
     if (!isLoading && !isStreaming) {
@@ -834,9 +874,12 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         {showWelcome ? (
           <WelcomeScreen
             onSuggestionClick={handleSuggestionClick}
+            onNavigate={handleNavigate}
+            onNewProject={onNewProject}
             greeting={greeting}
             lastWork={lastWork}
             nextTask={nextTask}
+            suggestedActions={suggestedActions}
           />
         ) : (
           <div className="py-4">

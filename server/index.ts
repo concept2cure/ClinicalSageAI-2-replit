@@ -5767,6 +5767,28 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // WORKSPACE SUMMARY — GET /api/workspace/summary
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const workspaceSummaryRoutes = await import('./routes/workspace-summary.ts');
+    app.use('/api', workspaceSummaryRoutes.default);
+    console.log('✅ Workspace summary route registered (GET /api/workspace/summary)');
+  } catch (error) {
+    console.error('❌ Failed to mount workspace-summary:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // CHAT ACTIONS — POST /api/chat/actions/run
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const chatActionsRoutes = await import('./routes/chat-actions.ts');
+    app.use('/api', chatActionsRoutes.default);
+    console.log('✅ Chat actions route registered (POST /api/chat/actions/run)');
+  } catch (error) {
+    console.error('❌ Failed to mount chat-actions:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // CATCH-ALL FOR UNMATCHED API ROUTES - MUST RETURN JSON, NOT HTML
   // ──────────────────────────────────────────────────────────────────────────
   app.all('/api/*', (req, res) => {
