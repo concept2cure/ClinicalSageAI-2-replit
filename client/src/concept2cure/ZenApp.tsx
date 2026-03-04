@@ -823,8 +823,35 @@ export const ZenApp: React.FC = () => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  // ── Workspace header — shared nav bar for non-chat modules ─────────────────
+  const WorkspaceHeader = ({
+    title,
+    subtitle,
+    icon,
+    onBack,
+  }: {
+    title: string;
+    subtitle?: string;
+    icon?: React.ReactNode;
+    onBack: () => void;
+  }) => (
+    <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        <span>Chat</span>
+      </button>
+      <div className="w-px h-4 bg-zinc-200" />
+      {icon && <span className="text-zinc-400">{icon}</span>}
+      <span className="text-sm font-medium text-zinc-900">{title}</span>
+      {subtitle && <span className="text-xs text-zinc-400 ml-1">{subtitle}</span>}
+    </div>
+  );
+
   return (
-    <div className="zen flex h-screen w-full overflow-hidden bg-stone-50">
+    <div className="zen flex h-screen w-full overflow-hidden bg-white">
       {/* CSS Variables */}
       <style>{`
         .zen {
@@ -1009,98 +1036,140 @@ export const ZenApp: React.FC = () => {
 
           {/* IND Filing Workspace */}
           {layoutMode === 'ind-workspace' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-emerald-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading IND Workspace...</p>
-                  </div>
-                </div>
-              }
-            >
-              <INDWorkspace
-                projectId={activeProjectId}
-                projectName={activeProject?.name || 'Untitled Project'}
-                submissionType={activeProject?.type || 'IND'}
-                onOpenSection={sectionCode => {
-                  // Navigate to CoAuthor/editor with the section context
-                  // TODO: pass sectionCode to CoAuthor to open the correct document
-                  console.log(`[IND] Opening section ${sectionCode} in editor`);
-                  setLayoutMode('editor');
-                }}
-                onDraftWithAI={(sectionCode, sectionTitle) => {
-                  // Store section context so ZenChat can auto-populate the draft request
-                  setPendingDraftSection({ code: sectionCode, title: sectionTitle });
-                  setLayoutMode('assistant');
-                }}
-                onNavigateToCoAuthor={() => setLayoutMode('editor')}
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title={submissionWorkspaceLabel}
+                subtitle="IND · NDA · BLA · 21 CFR 312 · CTD-formatted sections"
+                onBack={() => setLayoutMode('assistant')}
               />
-            </Suspense>
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-emerald-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading IND Workspace...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <INDWorkspace
+                    projectId={activeProjectId}
+                    projectName={activeProject?.name || 'Untitled Project'}
+                    submissionType={activeProject?.type || 'IND'}
+                    onOpenSection={sectionCode => {
+                      console.log(`[IND] Opening section ${sectionCode} in editor`);
+                      setLayoutMode('editor');
+                    }}
+                    onDraftWithAI={(sectionCode, sectionTitle) => {
+                      setPendingDraftSection({ code: sectionCode, title: sectionTitle });
+                      setLayoutMode('assistant');
+                    }}
+                    onNavigateToCoAuthor={() => setLayoutMode('editor')}
+                  />
+                </Suspense>
+              </div>
+            </div>
           )}
 
           {/* ── Medical Device & Diagnostics Dashboard ──────────────────────── */}
           {layoutMode === 'medtech-dashboard' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading Medical Device Dashboard...</p>
-                  </div>
-                </div>
-              }
-            >
-              <MedicalDeviceDashboardStandalone />
-            </Suspense>
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Medical Device & Diagnostics"
+                subtitle="510(k) · PMA · De Novo · IVD / CDx · CER authoring"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Medical Device Dashboard...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <MedicalDeviceDashboardStandalone />
+                </Suspense>
+              </div>
+            </div>
           )}
 
-          {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ───────────── */}
+          {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
           {layoutMode === 'ectd-coauthor' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading eCTD Co-Author...</p>
-                  </div>
-                </div>
-              }
-            >
-              <ECTDCoAuthorStandalone />
-            </Suspense>
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="eCTD Co-Author"
+                subtitle="IND · NDA · BLA · 510(k) · CTD section-by-section drafting"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading eCTD Co-Author...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <ECTDCoAuthorStandalone />
+                </Suspense>
+              </div>
+            </div>
           )}
 
-          {/* ── CMC Wizard (Chemistry, Manufacturing & Controls — Module 3) ──── */}
+          {/* ── CMC Wizard (Chemistry, Manufacturing & Controls — Module 3) ── */}
           {layoutMode === 'cmc' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-green-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading CMC Wizard...</p>
-                  </div>
-                </div>
-              }
-            >
-              <CMCWizardStandalone />
-            </Suspense>
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="CMC Module 3"
+                subtitle="Chemistry, Manufacturing & Controls · ICH Q3A / Q1A / Q6B"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-green-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading CMC Wizard...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <CMCWizardStandalone />
+                </Suspense>
+              </div>
+            </div>
           )}
 
           {/* ── Submission Dossier Navigator (eCTD module tracker) ───────────── */}
           {layoutMode === 'dossier' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-amber-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading Dossier Navigator...</p>
-                  </div>
-                </div>
-              }
-            >
-              <DossierNavigatorStandalone />
-            </Suspense>
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Dossier Navigator"
+                subtitle="eCTD Module 1–5 tracker · NDA / BLA / IND · Target filing dashboard"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-amber-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Dossier Navigator...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <DossierNavigatorStandalone />
+                </Suspense>
+              </div>
+            </div>
           )}
 
           {/* Rules Engine Manager */}

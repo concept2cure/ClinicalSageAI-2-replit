@@ -369,7 +369,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const prompts = activeTab === 'device' ? DEVICE_PROMPTS : BIOTECH_PROMPTS;
 
   return (
-    <div className="flex flex-col items-center w-full px-4 py-10 overflow-y-auto">
+    <div className="flex flex-col items-center w-full px-4 py-10">
       <div className="w-full max-w-2xl">
         {/* Hero */}
         <div className="text-center mb-8">
@@ -563,6 +563,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
             rows={1}
+            autoFocus
             className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-base leading-6 min-h-[24px] max-h-[200px]"
           />
 
@@ -746,9 +747,13 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     setLocation(href);
   };
 
-  // Handle suggestion click
+  // Handle suggestion click — auto-send immediately (Claude.ai behavior)
   const handleSuggestionClick = (text: string) => {
-    setInput(text);
+    if (!isLoading && !isStreaming) {
+      streamMessage(text);
+    } else {
+      setInput(text);
+    }
   };
 
   // Auto-send initial message (e.g., from IND Workspace → Draft with AI)
