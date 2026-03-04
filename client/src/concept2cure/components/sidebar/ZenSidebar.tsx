@@ -1,44 +1,23 @@
 /**
- * @fileoverview Zen Minimal Sidebar
+ * @fileoverview Lumen Sidebar — Claude.ai-style, regulatory-focused
  * @module concept2cure/components/sidebar/ZenSidebar
- * @version 3.0.0
- *
- * @description
- * Ultra-minimal Claude.ai-style sidebar.
- * Collapses to icons, expands to show labels.
- * Smooth, elegant transitions.
- *
- * @compliance
- * - FDA 21 CFR Part 11: Navigation changes logged
- * - WCAG 2.1 AA: Full keyboard navigation
  */
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  MessageSquare,
   Plus,
-  Search,
+  MessageSquare,
+  Trash2,
   Settings,
+  FolderOpen,
   ChevronLeft,
   ChevronRight,
+  User,
   Sparkles,
-  FolderOpen,
-  Star,
-  MoreHorizontal,
-  Trash2,
-  Pin,
-  Home,
-  LayoutGrid,
-  BookOpen,
-  BarChart2,
-  Users,
-  ClipboardList,
 } from 'lucide-react';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Conversation {
   id: string;
@@ -56,15 +35,7 @@ interface Project {
   color: string;
 }
 
-interface NavItem {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  shortcut?: string;
-  badge?: number;
-}
-
-interface ZenSidebarProps {
+export interface ZenSidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   conversations: Conversation[];
@@ -82,375 +53,233 @@ interface ZenSidebarProps {
   onNavigate?: (id: string) => void;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// NAV ITEMS
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Single conversation row ──────────────────────────────────────────────────
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'projects', label: 'Projects', icon: FolderOpen },
-  { id: 'tools', label: 'Tools', icon: LayoutGrid },
-  { id: 'agents', label: 'Agents', icon: Users },
-  { id: 'tasks', label: 'Tasks', icon: ClipboardList },
-  { id: 'templates', label: 'Templates', icon: BookOpen },
-  { id: 'analytics', label: 'Analytics', icon: BarChart2 },
-];
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TYPE COLORS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const TYPE_COLORS: Record<string, string> = {
-  '510K': 'bg-blue-500',
-  IND: 'bg-purple-500',
-  NDA: 'bg-green-500',
-  BLA: 'bg-orange-500',
-  PMA: 'bg-red-500',
-  MAA: 'bg-pink-500',
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// CONVERSATION ITEM
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface ConversationItemProps {
-  conversation: Conversation;
+const ConvoRow: React.FC<{
+  convo: Conversation;
   isActive: boolean;
-  isCollapsed: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onToggleStar: () => void;
-  onTogglePin: () => void;
-}
-
-const ConversationItem: React.FC<ConversationItemProps> = ({
-  conversation,
-  isActive,
-  isCollapsed,
-  onSelect,
-  onDelete,
-  onToggleStar,
-  onTogglePin,
-}) => {
-  const [showMenu, setShowMenu] = useState(false);
-
-  if (isCollapsed) {
-    return (
-      <button
-        onClick={onSelect}
-        className={cn(
-          'w-10 h-10 rounded-lg flex items-center justify-center transition-all',
-          isActive
-            ? 'bg-blue-100 text-blue-700'
-            : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
-        )}
-        title={conversation.title}
-      >
-        <MessageSquare className="w-4 h-4" />
-      </button>
-    );
-  }
+}> = ({ convo, isActive, onSelect, onDelete }) => {
+  const [hovered, setHovered] = useState(false);
 
   return (
     <div
-      className={cn(
-        'group relative flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all cursor-pointer',
-        isActive
-          ? 'bg-zinc-100 text-zinc-900'
-          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
-      )}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={onSelect}
+      className={cn(
+        'group relative flex items-center gap-2 mx-2 px-3 py-2 rounded-lg cursor-pointer select-none transition-colors',
+        isActive ? 'bg-zinc-200/80 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+      )}
     >
-      {/* Pin indicator */}
-      {conversation.pinned && (
-        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-blue-500 rounded-full" />
-      )}
-
-      {/* Icon */}
-      <MessageSquare className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-
-      {/* Title */}
-      <span className="flex-1 text-sm truncate">{conversation.title}</span>
-
-      {/* Star */}
-      {conversation.starred && (
-        <Star className="w-3 h-3 text-amber-500 fill-current flex-shrink-0" />
-      )}
-
-      {/* Menu button */}
-      <button
-        onClick={e => {
-          e.stopPropagation();
-          setShowMenu(!showMenu);
-        }}
-        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-200 transition-all"
-      >
-        <MoreHorizontal className="w-3.5 h-3.5" />
-      </button>
-
-      {/* Dropdown menu */}
-      {showMenu && (
-        <>
-          <div
-            className="fixed inset-0 z-10"
-            onClick={e => {
-              e.stopPropagation();
-              setShowMenu(false);
-            }}
-          />
-          <div className="absolute right-0 top-8 z-20 w-36 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 animate-in fade-in zoom-in-95 duration-100">
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                onTogglePin();
-                setShowMenu(false);
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
-            >
-              <Pin className="w-3.5 h-3.5" />
-              {conversation.pinned ? 'Unpin' : 'Pin'}
-            </button>
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                onToggleStar();
-                setShowMenu(false);
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
-            >
-              <Star className="w-3.5 h-3.5" />
-              {conversation.starred ? 'Unstar' : 'Star'}
-            </button>
-            <div className="my-1 border-t border-zinc-100" />
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                onDelete();
-                setShowMenu(false);
-              }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Delete
-            </button>
-          </div>
-        </>
+      <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-50" />
+      <span className="flex-1 text-sm truncate leading-5">{convo.title}</span>
+      {hovered && (
+        <button
+          onClick={e => { e.stopPropagation(); onDelete(); }}
+          className="flex-shrink-0 p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-red-500 transition-colors"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
       )}
     </div>
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN ZEN SIDEBAR
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Section label ────────────────────────────────────────────────────────────
+
+const SectionLabel: React.FC<{ label: string }> = ({ label }) => (
+  <div className="px-5 pt-4 pb-1">
+    <span className="text-xs font-medium text-zinc-400">{label}</span>
+  </div>
+);
+
+// ─── Main sidebar ─────────────────────────────────────────────────────────────
 
 export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   conversations,
-  projects,
   activeConversationId,
-  activeProjectId,
   onSelectConversation,
   onNewChat,
   onOpenProjects,
-  onOpenSearch,
   onOpenSettings,
   onDeleteConversation,
-  onToggleStar,
-  onTogglePin,
-  onNavigate,
 }) => {
-  // Sort conversations
-  const sortedConversations = [...conversations].sort((a, b) => {
-    // Pinned first
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    // Then by date
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-  });
+  // Group conversations by time
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday.getTime() - 86400000);
+  const sevenDaysAgo = new Date(startOfToday.getTime() - 7 * 86400000);
 
-  // Group by time
-  const today = new Date();
-  const todayConvos = sortedConversations.filter(
-    c => new Date(c.timestamp).toDateString() === today.toDateString()
+  const sorted = [...conversations].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
-  const yesterdayConvos = sortedConversations.filter(c => {
-    const d = new Date(c.timestamp);
-    const yesterday = new Date(Date.now() - 86400000);
-    return d.toDateString() === yesterday.toDateString();
-  });
-  const olderConvos = sortedConversations.filter(c => {
-    const d = new Date(c.timestamp);
-    const yesterday = new Date(Date.now() - 86400000);
-    return d < yesterday && d.toDateString() !== today.toDateString();
-  });
 
-  const activeProject = projects.find(p => p.id === activeProjectId);
+  const todayConvos = sorted.filter(c => new Date(c.timestamp) >= startOfToday);
+  const yesterdayConvos = sorted.filter(
+    c => new Date(c.timestamp) >= startOfYesterday && new Date(c.timestamp) < startOfToday
+  );
+  const olderConvos = sorted.filter(
+    c => new Date(c.timestamp) >= sevenDaysAgo && new Date(c.timestamp) < startOfYesterday
+  );
 
-  return (
-    <aside
-      className={cn(
-        'flex flex-col h-full bg-zinc-50/80 backdrop-blur-sm border-r border-zinc-200/50 transition-all duration-200 ease-in-out',
-        isCollapsed ? 'w-16' : 'w-64'
-      )}
-    >
-      {/* Header */}
-      <div
-        className={cn(
-          'flex items-center h-14 border-b border-zinc-200/50 px-3',
-          isCollapsed ? 'justify-center' : 'justify-between'
-        )}
-      >
-        {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-sm">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-zinc-900">Concept2Cure</span>
-          </div>
-        )}
-        <button
-          onClick={onToggleCollapse}
-          className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
-          title={isCollapsed ? 'Expand' : 'Collapse'}
-        >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* New chat button */}
-      <div className={cn('p-2', isCollapsed && 'px-3')}>
+  // ── Collapsed icon-only strip ──────────────────────────────────────────────
+  if (isCollapsed) {
+    return (
+      <aside className="flex flex-col h-full w-14 bg-zinc-50 border-r border-zinc-200 items-center py-3 gap-2 flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+          <Sparkles className="w-4 h-4 text-white" />
+        </div>
         <button
           onClick={onNewChat}
-          className={cn(
-            'flex items-center justify-center gap-2 rounded-xl font-medium transition-all',
-            'bg-zinc-900 text-white hover:bg-zinc-800 shadow-sm',
-            isCollapsed ? 'w-10 h-10' : 'w-full px-4 py-2.5'
-          )}
+          title="New chat"
+          className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          {!isCollapsed && <span>New chat</span>}
         </button>
-      </div>
-
-      {/* Quick actions */}
-      <div className={cn('px-2 pb-2', isCollapsed && 'px-3')}>
-        <div className={cn('flex', isCollapsed ? 'flex-col gap-1' : 'gap-1')}>
-          <button
-            onClick={onOpenSearch}
-            className={cn(
-              'flex items-center gap-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors',
-              isCollapsed ? 'w-10 h-10 justify-center' : 'flex-1 px-3 py-2'
-            )}
-            title="Search"
-          >
-            <Search className="w-4 h-4" />
-            {!isCollapsed && <span className="text-sm">Search</span>}
-          </button>
-          <button
-            onClick={onOpenProjects}
-            className={cn(
-              'flex items-center gap-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors',
-              isCollapsed ? 'w-10 h-10 justify-center' : 'flex-1 px-3 py-2'
-            )}
-            title="Projects"
-          >
-            <FolderOpen className="w-4 h-4" />
-            {!isCollapsed && <span className="text-sm">Projects</span>}
-          </button>
-        </div>
-      </div>
-
-      {/* Conversations */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 zen-scroll">
-        {/* Today */}
-        {todayConvos.length > 0 && (
-          <div className="mb-3">
-            {!isCollapsed && <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Today</h3>}
-            <div className={cn('space-y-0.5', isCollapsed && 'flex flex-col items-center')}>
-              {todayConvos.map(convo => (
-                <ConversationItem
-                  key={convo.id}
-                  conversation={convo}
-                  isActive={convo.id === activeConversationId}
-                  isCollapsed={isCollapsed}
-                  onSelect={() => onSelectConversation(convo.id)}
-                  onDelete={() => onDeleteConversation(convo.id)}
-                  onToggleStar={() => onToggleStar(convo.id)}
-                  onTogglePin={() => onTogglePin(convo.id)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Yesterday */}
-        {yesterdayConvos.length > 0 && (
-          <div className="mb-3">
-            {!isCollapsed && (
-              <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Yesterday</h3>
-            )}
-            <div className={cn('space-y-0.5', isCollapsed && 'flex flex-col items-center')}>
-              {yesterdayConvos.map(convo => (
-                <ConversationItem
-                  key={convo.id}
-                  conversation={convo}
-                  isActive={convo.id === activeConversationId}
-                  isCollapsed={isCollapsed}
-                  onSelect={() => onSelectConversation(convo.id)}
-                  onDelete={() => onDeleteConversation(convo.id)}
-                  onToggleStar={() => onToggleStar(convo.id)}
-                  onTogglePin={() => onTogglePin(convo.id)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Older */}
-        {olderConvos.length > 0 && (
-          <div className="mb-3">
-            {!isCollapsed && (
-              <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Previous 7 days</h3>
-            )}
-            <div className={cn('space-y-0.5', isCollapsed && 'flex flex-col items-center')}>
-              {olderConvos.slice(0, 10).map(convo => (
-                <ConversationItem
-                  key={convo.id}
-                  conversation={convo}
-                  isActive={convo.id === activeConversationId}
-                  isCollapsed={isCollapsed}
-                  onSelect={() => onSelectConversation(convo.id)}
-                  onDelete={() => onDeleteConversation(convo.id)}
-                  onToggleStar={() => onToggleStar(convo.id)}
-                  onTogglePin={() => onTogglePin(convo.id)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div
-        className={cn(
-          'border-t border-zinc-200/50 p-2',
-          isCollapsed && 'flex flex-col items-center'
-        )}
-      >
+        <button
+          onClick={onOpenProjects}
+          title="Projects"
+          className="w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+        >
+          <FolderOpen className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onToggleCollapse}
+          title="Expand sidebar"
+          className="mt-auto w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
         <button
           onClick={onOpenSettings}
-          className={cn(
-            'flex items-center gap-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors',
-            isCollapsed ? 'w-10 h-10 justify-center' : 'w-full px-3 py-2'
-          )}
           title="Settings"
+          className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 transition-colors"
         >
           <Settings className="w-4 h-4" />
-          {!isCollapsed && <span className="text-sm">Settings</span>}
+        </button>
+      </aside>
+    );
+  }
+
+  // ── Full expanded sidebar ──────────────────────────────────────────────────
+  return (
+    <aside className="flex flex-col h-full w-64 bg-zinc-50 border-r border-zinc-200 flex-shrink-0">
+
+      {/* Brand header */}
+      <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="font-semibold text-zinc-900 text-sm">Lumen AI</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none">Regulatory</span>
+        </div>
+        <button
+          onClick={onToggleCollapse}
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
         </button>
       </div>
+
+      {/* New conversation */}
+      <div className="px-3 pb-2 flex-shrink-0">
+        <button
+          onClick={onNewChat}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-700 transition-colors"
+        >
+          <Plus className="w-4 h-4 flex-shrink-0" />
+          New conversation
+        </button>
+      </div>
+
+      {/* Projects shortcut */}
+      <div className="px-3 pb-2 flex-shrink-0">
+        <button
+          onClick={onOpenProjects}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+        >
+          <FolderOpen className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+          My projects
+        </button>
+      </div>
+
+      <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
+
+      {/* Conversation history */}
+      <div className="flex-1 overflow-y-auto min-h-0 py-1" style={{ scrollbarWidth: 'thin' }}>
+
+        {conversations.length === 0 && (
+          <div className="px-4 py-10 text-center">
+            <MessageSquare className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+            <p className="text-xs text-zinc-400 leading-relaxed">No conversations yet.<br />Start one above.</p>
+          </div>
+        )}
+
+        {todayConvos.length > 0 && (
+          <>
+            <SectionLabel label="Today" />
+            {todayConvos.map(c => (
+              <ConvoRow
+                key={c.id}
+                convo={c}
+                isActive={c.id === activeConversationId}
+                onSelect={() => onSelectConversation(c.id)}
+                onDelete={() => onDeleteConversation(c.id)}
+              />
+            ))}
+          </>
+        )}
+
+        {yesterdayConvos.length > 0 && (
+          <>
+            <SectionLabel label="Yesterday" />
+            {yesterdayConvos.map(c => (
+              <ConvoRow
+                key={c.id}
+                convo={c}
+                isActive={c.id === activeConversationId}
+                onSelect={() => onSelectConversation(c.id)}
+                onDelete={() => onDeleteConversation(c.id)}
+              />
+            ))}
+          </>
+        )}
+
+        {olderConvos.length > 0 && (
+          <>
+            <SectionLabel label="Previous 7 days" />
+            {olderConvos.map(c => (
+              <ConvoRow
+                key={c.id}
+                convo={c}
+                isActive={c.id === activeConversationId}
+                onSelect={() => onSelectConversation(c.id)}
+                onDelete={() => onDeleteConversation(c.id)}
+              />
+            ))}
+          </>
+        )}
+
+      </div>
+
+      {/* User / settings footer */}
+      <div className="flex-shrink-0 border-t border-zinc-200 p-3">
+        <button
+          onClick={onOpenSettings}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+        >
+          <div className="w-6 h-6 rounded-full bg-zinc-300 flex items-center justify-center flex-shrink-0">
+            <User className="w-3.5 h-3.5 text-zinc-600" />
+          </div>
+          <span className="truncate">Account &amp; settings</span>
+        </button>
+      </div>
+
     </aside>
   );
 };

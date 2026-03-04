@@ -886,29 +886,8 @@ export const ZenApp: React.FC = () => {
         }}
       />
 
-      {/* Main area */}
+      {/* Main area — no top bar, exactly like Claude.ai */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Minimal top bar — project name + status only */}
-        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-100 bg-white">
-          {/* Project selector */}
-          <button
-            onClick={() => setProjectSwitcherOpen(true)}
-            className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-blue-600 transition-colors"
-          >
-            <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-            <span className="truncate max-w-[200px]">{activeProject?.name || 'Select a project'}</span>
-            {activeProject?.type && (
-              <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-xs font-normal flex-shrink-0">
-                {activeProject.type}
-              </span>
-            )}
-          </button>
-
-          <div className="ml-auto flex items-center gap-2 text-xs text-zinc-400">
-            <div className={cn('w-2 h-2 rounded-full flex-shrink-0', isConnected ? 'bg-emerald-400' : 'bg-amber-400')} />
-            <span>{isConnected ? 'Lumen AI ready' : 'Connecting...'}</span>
-          </div>
-        </div>
 
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
