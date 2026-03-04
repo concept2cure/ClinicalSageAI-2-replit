@@ -724,7 +724,11 @@ export const ZenApp: React.FC = () => {
     typeof rawIndustry === 'string' ? rawIndustry : undefined
   );
   const rawDisplayName = userProfile?.preferences?.displayName;
-  const userName = typeof rawDisplayName === 'string' ? rawDisplayName : 'User';
+  const userName =
+    (typeof rawDisplayName === 'string' && rawDisplayName) ||
+    userIntelligence?.identity?.name ||
+    'User';
+  const userEmail = userIntelligence?.identity?.email ?? undefined;
 
   const agentRoster = useMemo(
     () => [
@@ -956,6 +960,8 @@ export const ZenApp: React.FC = () => {
               break;
           }
         }}
+        userName={userName}
+        userEmail={userEmail}
       />
 
       {/* Main area — no top bar, exactly like Claude.ai */}

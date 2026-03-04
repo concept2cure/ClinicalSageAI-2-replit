@@ -152,6 +152,9 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
       setError(null);
       streamingMessageRef.current = '';
 
+      // Track if this is the first message (for auto-title)
+      const isFirstMessage = messages.length === 0;
+
       // Add user message
       const userMessage: CortexMessage = {
         id: crypto.randomUUID(),
@@ -200,6 +203,16 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
           if (result.artifacts && options.onArtifact) {
             result.artifacts.forEach(options.onArtifact);
           }
+
+          // Auto-title: set thread title from first user message
+          if (isFirstMessage && result.threadId) {
+            const derived = content.trim().slice(0, 60) + (content.length > 60 ? '...' : '');
+            cortexService.updateThreadTitle(result.threadId, derived).then(() => {
+              queryClient.invalidateQueries({ queryKey: cortexQueryKeys.threads() });
+            });
+          } else {
+            queryClient.invalidateQueries({ queryKey: cortexQueryKeys.threads() });
+          }
         },
         onError: err => {
           setIsStreaming(false);
@@ -209,7 +222,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         },
       });
     },
-    [threadId, options, queryClient]
+    [threadId, options, queryClient, messages.length]
   );
 
   const cancelStream = useCallback(() => {

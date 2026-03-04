@@ -645,6 +645,26 @@ router.post('/threads', async (req: Request, res: Response) => {
   }
 });
 
+/** PATCH /api/cortex/threads/:threadId — update thread title */
+router.patch('/threads/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const { title } = req.body || {};
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ success: false, error: 'title is required' });
+    }
+    const trimmed = title.trim().slice(0, 200);
+    await pool.query(
+      'UPDATE chat_threads SET title = $1, updated_at = NOW() WHERE id = $2',
+      [trimmed, threadId]
+    );
+    res.json({ success: true, title: trimmed });
+  } catch (err: any) {
+    logger.error('PATCH /threads/:threadId error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to update thread title' });
+  }
+});
+
 /** DELETE /api/cortex/threads/:threadId — delete a thread */
 router.delete('/threads/:threadId', async (req: Request, res: Response) => {
   try {

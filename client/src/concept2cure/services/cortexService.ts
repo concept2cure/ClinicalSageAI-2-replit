@@ -789,6 +789,21 @@ export class CortexService {
     }
   }
 
+  /**
+   * Update a thread title
+   */
+  async updateThreadTitle(threadId: string, title: string): Promise<void> {
+    try {
+      await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, {
+        method: 'PATCH',
+        headers: { ...this.withAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+    } catch {
+      // Non-critical — silently ignore title update failures
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // UTILITIES
   // ─────────────────────────────────────────────────────────────────────────────

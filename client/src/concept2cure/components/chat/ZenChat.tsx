@@ -22,6 +22,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { marked } from 'marked';
 import {
   Paperclip,
   Sparkles,
@@ -29,7 +30,6 @@ import {
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
-  MoreHorizontal,
   Check,
   FileText,
   ChevronDown,
@@ -38,7 +38,20 @@ import {
   AlertCircle,
   WifiOff,
   ExternalLink,
+  Send,
 } from 'lucide-react';
+
+// Configure marked for safe, clean HTML output
+marked.setOptions({ breaks: true, gfm: true });
+
+/** Render markdown string to safe HTML — synchronous */
+const renderMarkdown = (content: string): string => {
+  try {
+    return marked.parse(content) as string;
+  } catch {
+    return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+};
 import { useCortexChat, useCortexHealth } from '../../hooks/useCortex';
 import type { CortexArtifact } from '../../services/cortexService';
 
@@ -69,6 +82,8 @@ interface ZenChatProps {
   projectName?: string;
   submissionType?: string;
   threadId?: string;
+  /** Logged-in user's display name for avatar initials */
+  userName?: string;
   /** Auto-send this message on mount (e.g., from IND Workspace "Draft with AI") */
   initialMessage?: string | null;
   onNewArtifact?: (artifact: CortexArtifact) => void;
@@ -103,6 +118,7 @@ interface MessageBubbleProps {
   onRegenerate?: () => void;
   onFeedback?: (positive: boolean) => void;
   onNavigate?: (href: string) => void;
+  userInitials?: string;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -111,41 +127,29 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onRegenerate,
   onFeedback,
   onNavigate,
+  userInitials = 'U',
 }) => {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
   const [showActions, setShowActions] = useState(false);
 
+  // Parse markdown once when content changes
+  const htmlContent = useMemo(() => {
+    if (!message.content) return '';
+    return renderMarkdown(message.content);
+  }, [message.content]);
+
   const actionLinks = useMemo(() => {
     const links: Array<{ href: string; label: string }> = [];
-    const markdownRegex = /\[([^\]]+)\]\(((https?:\/\/[^\s)]+)|(\/[^\s)]+))\)/g;
+    const urlRegex = /(https?:\/\/[^\s)"<>]+)/g;
     let match;
-    while ((match = markdownRegex.exec(message.content)) !== null) {
-      links.push({ href: match[2], label: match[1] });
-    }
-
-    const urlRegex = /(https?:\/\/[^\s)]+)/g;
-    const urls = message.content.match(urlRegex) || [];
-    urls.forEach(href => {
+    while ((match = urlRegex.exec(message.content)) !== null) {
+      const href = match[1];
       if (!links.some(l => l.href === href)) {
-        const label = href.replace(/^https?:\/\//, '').split('/')[0];
-        links.push({ href, label });
+        links.push({ href, label: href.replace(/^https?:\/\//, '').split('/')[0] });
       }
-    });
-
-    const internalRegex =
-      /(^|[\s(])\/(concept2cure|csr|vault|analytics|dashboard|coauthor|admin)[^\s)]*/g;
-    const internalMatches = message.content.match(internalRegex) || [];
-    internalMatches
-      .map(raw => raw.trim())
-      .forEach(raw => {
-        const href = raw.startsWith('/') ? raw : raw.slice(1);
-        if (!links.some(l => l.href === href)) {
-          links.push({ href, label: `Open ${href}` });
-        }
-      });
-
-    return links;
+    }
+    return links.slice(0, 4); // cap at 4
   }, [message.content]);
 
   const handleCopy = () => {
@@ -154,12 +158,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // When streaming and content is empty → show dots; when content exists → show it
+  const showTypingDots = message.isStreaming && !message.content;
+
   return (
     <div
       className={cn(
-        'group px-4 sm:px-6 py-7 border-b border-zinc-100 last:border-b-0',
-        'transition-all duration-200 animate-in fade-in slide-in-from-bottom-2',
-        !isUser && 'bg-white'
+        'group py-6 px-4 sm:px-6',
+        !isUser && 'bg-white border-b border-zinc-100/80',
+        isUser && 'bg-zinc-50/60'
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -169,12 +176,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           {/* Avatar */}
           <div
             className={cn(
-              'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm',
-              isUser ? 'bg-zinc-900' : 'bg-gradient-to-br from-violet-500 to-violet-600'
+              'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm mt-0.5',
+              isUser ? 'bg-zinc-800 text-white' : 'bg-gradient-to-br from-violet-500 to-violet-700'
             )}
           >
             {isUser ? (
-              <span className="text-xs font-semibold text-white">U</span>
+              <span className="text-xs font-bold text-white">{userInitials}</span>
             ) : (
               <Sparkles className="w-4 h-4 text-white" />
             )}
@@ -182,25 +189,56 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            {/* Name */}
-            <div className="flex items-center gap-2 mb-2">
+            {/* Role label */}
+            <div className="flex items-center gap-2 mb-1.5">
               <span className="text-sm font-semibold text-zinc-900">
                 {isUser ? 'You' : 'Lumen'}
               </span>
-            </div>
-
-            {/* Message content */}
-            <div className="prose prose-zinc prose-sm max-w-none">
-              {message.isStreaming ? (
-                <div className="flex items-center gap-2">
-                  <TypingIndicator />
-                </div>
-              ) : (
-                <p className="text-zinc-700 leading-relaxed whitespace-pre-wrap">
-                  {message.content}
-                </p>
+              {message.isStreaming && message.content && (
+                <span className="inline-flex gap-0.5 items-center">
+                  <span
+                    className="w-1 h-1 rounded-full bg-violet-400 animate-bounce"
+                    style={{ animationDelay: '0ms' }}
+                  />
+                  <span
+                    className="w-1 h-1 rounded-full bg-violet-400 animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  />
+                  <span
+                    className="w-1 h-1 rounded-full bg-violet-400 animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  />
+                </span>
               )}
             </div>
+
+            {/* Message body */}
+            {showTypingDots ? (
+              <TypingIndicator />
+            ) : isUser ? (
+              // User messages: plain text (preserving whitespace)
+              <p className="text-zinc-800 leading-relaxed whitespace-pre-wrap text-sm">
+                {message.content}
+              </p>
+            ) : (
+              // Assistant messages: rendered markdown
+              <div
+                className="prose prose-sm prose-zinc max-w-none
+                  prose-headings:font-semibold prose-headings:text-zinc-900 prose-headings:leading-snug
+                  prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
+                  prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
+                  prose-strong:text-zinc-900 prose-strong:font-semibold
+                  prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+                  prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
+                  prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600 prose-blockquote:not-italic
+                  prose-ul:text-zinc-700 prose-ol:text-zinc-700
+                  prose-li:my-0.5
+                  prose-table:text-sm prose-th:bg-zinc-50 prose-th:font-semibold prose-td:border-zinc-200
+                  prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                  [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                dangerouslySetInnerHTML={{ __html: htmlContent }}
+              />
+            )}
 
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (
@@ -217,73 +255,66 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               </div>
             )}
 
-            {/* Actions - appear on hover */}
-            {!message.isStreaming && actionLinks.length > 0 && !isUser && (
+            {/* External links from assistant response */}
+            {!message.isStreaming && !isUser && actionLinks.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {actionLinks.map(link => (
                   <button
                     key={link.href}
                     onClick={() => onNavigate?.(link.href)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
                   >
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3 w-3" />
                     {link.label}
                   </button>
                 ))}
               </div>
             )}
 
+            {/* Hover actions */}
             {!message.isStreaming && (
               <div
                 className={cn(
-                  'flex items-center gap-1 mt-3 transition-opacity duration-150',
-                  showActions ? 'opacity-100' : 'opacity-0'
+                  'flex items-center gap-0.5 mt-2 transition-opacity duration-150',
+                  showActions ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 )}
               >
                 <button
                   onClick={handleCopy}
-                  className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
                   title="Copy"
                 >
                   {copied ? (
-                    <Check className="w-4 h-4 text-green-600" />
+                    <Check className="w-3.5 h-3.5 text-green-600" />
                   ) : (
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-3.5 h-3.5" />
                   )}
                 </button>
-
                 {!isUser && (
                   <>
                     <button
                       onClick={() => onFeedback?.(true)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
                       title="Good response"
                     >
-                      <ThumbsUp className="w-4 h-4" />
+                      <ThumbsUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onFeedback?.(false)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
                       title="Bad response"
                     >
-                      <ThumbsDown className="w-4 h-4" />
+                      <ThumbsDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={onRegenerate}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
                       title="Regenerate"
                     >
-                      <RotateCcw className="w-4 h-4" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                     </button>
                   </>
                 )}
-
-                <button
-                  className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
-                  title="More"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
               </div>
             )}
           </div>
@@ -595,7 +626,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-zinc-400 mt-2">
-          Lumen can make mistakes. Verify important regulatory information.
+          Lumen can make mistakes. Verify critical regulatory decisions with qualified experts.
         </p>
       </div>
     </div>
@@ -639,8 +670,17 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   greeting,
   lastWork,
   nextTask,
+  userName,
 }) => {
   const [, setLocation] = useLocation();
+
+  // Compute user initials from name
+  const userInitials = (() => {
+    if (!userName) return 'U';
+    const parts = userName.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return userName.slice(0, 2).toUpperCase();
+  })();
   // Cortex integration
   const {
     messages: cortexMessages,
@@ -769,7 +809,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   const showWelcome = displayMessages.length === 0;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 bg-[#FAFAF9]">
+    <div className="flex flex-col flex-1 min-h-0 bg-white">
       {/* Connection status indicator - only show if confirmed unhealthy after load */}
       {health && !isConnected && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
@@ -790,7 +830,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto zen-scroll"
+        className="flex-1 min-h-0 overflow-y-auto zen-scroll bg-zinc-50/30"
       >
         {showWelcome ? (
           <WelcomeScreen
@@ -805,6 +845,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
               <MessageBubble
                 key={message.id}
                 message={message}
+                userInitials={userInitials}
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? () => {} : undefined}
                 onFeedback={positive =>

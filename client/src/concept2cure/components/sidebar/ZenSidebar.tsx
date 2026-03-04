@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  User,
   Sparkles,
   Activity,
   FileText,
@@ -58,6 +57,8 @@ export interface ZenSidebarProps {
   onToggleStar: (id: string) => void;
   onTogglePin: (id: string) => void;
   onNavigate?: (id: string) => void;
+  userName?: string;
+  userEmail?: string;
 }
 
 // ─── Workspace item ───────────────────────────────────────────────────────────
@@ -166,7 +167,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onOpenSettings,
   onDeleteConversation,
   onNavigate,
+  userName,
+  userEmail,
 }) => {
+  const displayName = userName || 'My Account';
+  const avatarInitial = displayName[0].toUpperCase();
   // Group conversations by time
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -377,10 +382,19 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           onClick={onOpenSettings}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
         >
-          <div className="w-6 h-6 rounded-full bg-zinc-300 flex items-center justify-center flex-shrink-0">
-            <User className="w-3.5 h-3.5 text-zinc-600" />
+          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-xs font-bold text-violet-700 leading-none">{avatarInitial}</span>
           </div>
-          <span className="truncate">Account &amp; settings</span>
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-medium text-zinc-900 truncate leading-tight">{displayName}</p>
+              {userEmail ? (
+                <p className="text-[11px] text-zinc-400 truncate leading-tight">{userEmail}</p>
+              ) : (
+                <p className="text-[11px] text-zinc-400 leading-tight">Settings &amp; preferences</p>
+              )}
+            </div>
+          )}
         </button>
       </div>
     </aside>
