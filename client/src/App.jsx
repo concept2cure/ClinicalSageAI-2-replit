@@ -460,10 +460,10 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Main Portal Landing Pages - both root and /client-portal go to same component */}
-            <Route path="/" component={ClientPortalV2} />
+            {/* Root and legacy portal routes → redirect to Concept2Cure home */}
+            <Route path="/">{() => <Redirect to="/concept2cure" />}</Route>
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
-            <Route path="/client-portal" component={ClientPortalV2} />
+            <Route path="/client-portal">{() => <Redirect to="/concept2cure" />}</Route>
             {/* Lumen Cortex AI Assistant - Full Page */}
             <Route path="/lumen-cortex">
               {() => (
@@ -493,7 +493,7 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            <Route path="/dashboard" component={ClientPortalV2} />
+            <Route path="/dashboard">{() => <Redirect to="/concept2cure" />}</Route>
             {/* Client Portal Sub-Pages */}
             <Route path="/client-portal/vault">
               {() => (
