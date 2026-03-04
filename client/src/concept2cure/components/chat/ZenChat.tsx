@@ -294,7 +294,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// WELCOME SCREEN - Personalized, like Claude.ai
+// WELCOME SCREEN - Role-aware, value-forward
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface WelcomeScreenProps {
@@ -304,103 +304,185 @@ interface WelcomeScreenProps {
   nextTask?: { taskTitle: string; taskDescription?: string } | null;
 }
 
+const DEVICE_PROMPTS = [
+  {
+    label: '510(k) Submission',
+    prompt:
+      'I need to prepare a 510(k) submission. Help me identify a predicate device, structure the substantial equivalence argument, and list the required sections.',
+    sub: 'Predicate selection · SE argument · document checklist',
+  },
+  {
+    label: 'PMA Strategy',
+    prompt:
+      'Walk me through the PMA pathway for a Class III device. What clinical evidence do I need, and what are the key milestones?',
+    sub: 'Clinical evidence · IDE requirements · panel review',
+  },
+  {
+    label: 'Design Controls (21 CFR 820)',
+    prompt:
+      'Help me set up a design controls framework for my medical device under 21 CFR 820.30. Generate the design history file outline.',
+    sub: 'DHF · design inputs/outputs · V&V plan',
+  },
+  {
+    label: 'De Novo Request',
+    prompt:
+      'My device has no predicate. Walk me through the De Novo classification request process and help me draft the request package.',
+    sub: 'Novel device pathway · classification criteria',
+  },
+];
+
+const BIOTECH_PROMPTS = [
+  {
+    label: 'IND Application',
+    prompt:
+      'Help me prepare an IND application for a Phase 1 oncology trial. Generate the CTD-formatted outline and identify the critical chemistry, manufacturing and controls sections.',
+    sub: 'CTD format · CMC · preclinical summary · protocol',
+  },
+  {
+    label: 'Clinical Trial Protocol',
+    prompt:
+      'Draft a Phase 1 dose-escalation protocol for a small molecule oncology drug. Include eligibility criteria, endpoints, and safety monitoring plan.',
+    sub: 'Dose escalation · endpoints · DSMB plan',
+  },
+  {
+    label: 'NDA / BLA Readiness',
+    prompt:
+      'We are approaching NDA submission. What are the FDA priority review criteria, and how do I structure the integrated summary of efficacy and safety?',
+    sub: 'Module 5 · ISE · ISS · labeling strategy',
+  },
+  {
+    label: 'FDA Meeting Request',
+    prompt:
+      'Help me draft a Type B pre-IND meeting request with FDA. What questions should I include and how should I structure the briefing document?',
+    sub: 'Pre-IND · Type B · briefing document format',
+  },
+];
+
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onSuggestionClick,
   greeting,
   lastWork,
   nextTask,
 }) => {
-  const suggestions = [
-    // If we have AI-recommended next task, show it first
-    ...(nextTask
-      ? [
-          {
-            title: nextTask.taskTitle,
-            description: nextTask.taskDescription || 'AI-recommended next step',
-            highlight: true,
-          },
-        ]
-      : []),
-    // If we have last work context, offer to continue
-    ...(lastWork
-      ? [
-          {
-            title: `Continue: ${lastWork.contextTitle}`,
-            description: `Pick up where you left off with ${lastWork.contextType.replace(/_/g, ' ')}`,
-            highlight: false,
-          },
-        ]
-      : []),
-    {
-      title: 'Start a 510(k) submission',
-      description: 'Guide me through the predicate device selection',
-      highlight: false,
-    },
-    {
-      title: 'Draft an IND protocol',
-      description: 'Help me design a Phase 1 clinical trial',
-      highlight: false,
-    },
-    {
-      title: 'Analyze regulatory pathway',
-      description: 'Compare 510(k) vs PMA for my device',
-      highlight: false,
-    },
-    {
-      title: 'Generate submission documents',
-      description: 'Create an indications for use statement',
-      highlight: false,
-    },
-  ].slice(0, 5); // Show max 5 suggestions
+  const [activeTab, setActiveTab] = useState<'device' | 'biotech'>('device');
+
+  const prompts = activeTab === 'device' ? DEVICE_PROMPTS : BIOTECH_PROMPTS;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-full px-4 py-12">
-      {/* Logo & personalized greeting */}
-      <div className="mb-6 text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-md shadow-violet-500/20">
-          <Sparkles className="w-7 h-7 text-white" />
+    <div className="flex flex-col items-center w-full px-4 py-10 overflow-y-auto">
+      <div className="w-full max-w-2xl">
+        {/* Hero */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 shadow-lg shadow-violet-500/20">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
+            {greeting?.text || 'Good morning — ready to work?'}
+          </h1>
+          <p className="text-sm text-zinc-500 max-w-lg mx-auto leading-relaxed">
+            Lumen is your AI co-author for FDA regulatory submissions, clinical trial design, and
+            compliance strategy. Tell me what you're working on and I'll generate documents,
+            identify gaps, and guide every step.
+          </p>
         </div>
-        <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
-          {greeting?.text || 'How can I help today?'}
-        </h1>
-        <p className="text-sm text-zinc-500 max-w-md">
-          {greeting?.subtitle
-            ? `${greeting.subtitle} · Lumen Cortex is ready`
-            : "I'm Lumen, your regulatory intelligence assistant."}
-        </p>
-      </div>
 
-      {/* Suggestions */}
-      <div className="flex flex-col gap-2 max-w-2xl w-full">
-        {suggestions.map((suggestion, index) => (
-          <button
-            key={index}
-            onClick={() => onSuggestionClick(suggestion.title)}
-            className={cn(
-              'group p-4 text-left rounded-xl border bg-white transition-all duration-150',
-              suggestion.highlight
-                ? 'border-violet-300 bg-violet-50/50 hover:border-violet-400 hover:bg-violet-50'
-                : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+        {/* What it does — 3 power pillars */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {[
+            {
+              icon: '📄',
+              title: 'Draft Documents',
+              body: 'Generate submission-ready regulatory documents — INDs, 510(k)s, protocols, CMC sections, labeling.',
+            },
+            {
+              icon: '🔍',
+              title: 'Analyze & Advise',
+              body: 'Get instant answers on FDA regulations, pathway selection, predicate strategy, and clinical evidence gaps.',
+            },
+            {
+              icon: '✅',
+              title: 'Check Compliance',
+              body: 'Validate your submissions against 21 CFR, ICH guidelines, and current FDA guidance documents.',
+            },
+          ].map(p => (
+            <div key={p.title} className="rounded-xl border border-zinc-200 bg-white p-4">
+              <div className="text-xl mb-2">{p.icon}</div>
+              <div className="text-sm font-semibold text-zinc-800 mb-1">{p.title}</div>
+              <div className="text-xs text-zinc-500 leading-relaxed">{p.body}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Continuing work */}
+        {(nextTask || lastWork) && (
+          <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+            <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">
+              Pick up where you left off
+            </div>
+            {nextTask && (
+              <button
+                onClick={() => onSuggestionClick(nextTask.taskTitle)}
+                className="block w-full text-left text-sm font-medium text-blue-900 hover:text-blue-700 transition-colors"
+              >
+                → {nextTask.taskTitle}
+              </button>
             )}
-          >
-            <div
-              className={cn(
-                'text-sm font-medium group-hover:text-zinc-950',
-                suggestion.highlight ? 'text-violet-900' : 'text-zinc-900'
-              )}
-            >
-              {suggestion.title}
-            </div>
-            <div
-              className={cn(
-                'text-xs mt-1',
-                suggestion.highlight ? 'text-violet-600' : 'text-zinc-500'
-              )}
-            >
-              {suggestion.description}
-            </div>
-          </button>
-        ))}
+            {lastWork && (
+              <button
+                onClick={() => onSuggestionClick(`Continue: ${lastWork.contextTitle}`)}
+                className="block w-full text-left text-xs text-blue-600 mt-1 hover:text-blue-800 transition-colors"
+              >
+                Continue: {lastWork.contextTitle}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Role tabs */}
+        <div className="mb-4">
+          <div className="flex items-center gap-1 mb-4">
+            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mr-2">
+              I work in:
+            </span>
+            {(['device', 'biotech'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
+                  activeTab === tab
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                )}
+              >
+                {tab === 'device' ? '🩺 Medical Device & Diagnostics' : '🧬 Biotech & Clinical'}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {prompts.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => onSuggestionClick(p.prompt)}
+                className="group flex items-start gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-300 hover:bg-blue-50/30 text-left transition-all duration-150"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-zinc-900 group-hover:text-blue-800 mb-0.5">
+                    {p.label}
+                  </div>
+                  <div className="text-xs text-zinc-400">{p.sub}</div>
+                </div>
+                <ArrowUp className="w-4 h-4 text-zinc-300 group-hover:text-blue-400 flex-shrink-0 mt-0.5 rotate-45" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-zinc-400">
+          Or type any question about FDA regulations, your submission, or your clinical program
+          below ↓
+        </p>
       </div>
     </div>
   );
