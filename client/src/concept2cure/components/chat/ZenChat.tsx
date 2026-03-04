@@ -38,7 +38,6 @@ import {
   AlertCircle,
   WifiOff,
   ExternalLink,
-  Send,
 } from 'lucide-react';
 
 // Configure marked for safe, clean HTML output
