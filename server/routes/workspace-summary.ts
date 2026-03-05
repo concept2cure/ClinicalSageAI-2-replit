@@ -38,7 +38,9 @@ function modeFromType(type: string | null): string {
 
 router.get('/workspace/summary', async (req: Request, res: Response) => {
   const userId: string = (req as any).userId;
-  const orgId: string = (req as any).organizationId || (req.query.orgId as string) || '1';
+  // Derive orgId from JWT only — never trust query params for multi-tenant security.
+  // The client must authenticate with a valid token; the org is embedded in the JWT.
+  const orgId: string = (req as any).organizationId || '1';
 
   try {
     // ── 1. Org details ──────────────────────────────────────────────────────
@@ -112,6 +114,15 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
               COALESCE(created_at, exported_at) AS created_at
        FROM cer_exports
        ORDER BY COALESCE(created_at, exported_at) DESC NULLS LAST LIMIT 5`
+    );
+
+    // ── 8b. Recent artifacts (generated outlines, validation reports, etc.) ──
+    const recentArtifactsRes = await sq(
+      `SELECT id, type, title, status, project_id, created_at
+       FROM artifacts
+       WHERE org_id = $1
+       ORDER BY created_at DESC LIMIT 5`,
+      [orgId]
     );
 
     // ── 9. Pending validations (open QC issues, advisory flags) ────────────
@@ -227,6 +238,14 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
           createdAt: e.created_at,
         })),
         validations: [],
+        artifacts: recentArtifactsRes.rows.map(a => ({
+          id: String(a.id),
+          type: a.type,
+          title: a.title,
+          status: a.status,
+          projectId: a.project_id ? String(a.project_id) : null,
+          createdAt: a.created_at,
+        })),
       },
       nextActions,
     };

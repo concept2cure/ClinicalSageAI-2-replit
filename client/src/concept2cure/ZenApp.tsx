@@ -63,6 +63,10 @@ import {
   Loader2,
   Target,
   FileText,
+  Plus,
+  Star,
+  MessageSquare,
+  FolderOpen,
 } from 'lucide-react';
 
 // Lazy load the Convergent Canvas for the Sherpa System
@@ -121,6 +125,7 @@ type ToolPanel =
   | null;
 
 type LayoutMode =
+  | 'projects'
   | 'assistant'
   | 'sherpa'
   | 'editor'
@@ -381,8 +386,8 @@ export const ZenApp: React.FC = () => {
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
   const [toolPanelFullscreen, setToolPanelFullscreen] = useState(false);
 
-  // Layout mode (polymorphic layout states)
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('assistant');
+  // Layout mode — default to 'projects' index so returning users always land on their work
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('projects');
 
   // Active selection
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
@@ -585,12 +590,24 @@ export const ZenApp: React.FC = () => {
   );
 
   const handleCreateProject = useCallback(
-    async (data: { name: string; type: string; description?: string }) => {
+    async (data: {
+      name: string;
+      type: string;
+      description?: string;
+      sponsor?: string;
+      product?: string;
+      region?: string;
+      goal?: string;
+    }) => {
       try {
         await createProjectMutation({
           name: data.name,
           submissionType: data.type as any,
           description: data.description,
+          sponsor: data.sponsor,
+          product: data.product,
+          region: data.region,
+          goal: data.goal,
           conversations: [],
         });
         setNewProjectOpen(false);
@@ -951,10 +968,10 @@ export const ZenApp: React.FC = () => {
         onNavigate={id => {
           switch (id) {
             case 'home':
-              setLayoutMode('assistant');
+              setLayoutMode('projects');
               break;
             case 'projects':
-              setProjectSwitcherOpen(true);
+              setLayoutMode('projects');
               break;
             case 'tools':
               setActiveToolPanel('intelligence');
@@ -1226,6 +1243,211 @@ export const ZenApp: React.FC = () => {
             >
               <RulesManager onBack={() => setLayoutMode('mission-control')} />
             </Suspense>
+          )}
+
+          {/* ── Projects Index ─────────────────────────────────────────────── */}
+          {layoutMode === 'projects' && (
+            <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
+              <div className="max-w-4xl mx-auto px-6 py-10">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h1 className="text-2xl font-semibold text-zinc-900">
+                      {workspaceSummary?.org?.name || 'Projects'}
+                    </h1>
+                    <p className="text-sm text-zinc-500 mt-1">
+                      {projects.filter(p => !p.archived).length} active project
+                      {projects.filter(p => !p.archived).length !== 1 ? 's' : ''}
+                      {workspaceSummary?.counts?.documents
+                        ? ` · ${workspaceSummary.counts.documents} documents`
+                        : ''}
+                      {workspaceSummary?.counts?.threads
+                        ? ` · ${workspaceSummary.counts.threads} conversations`
+                        : ''}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setNewProjectOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Project
+                  </button>
+                </div>
+
+                {/* Project cards */}
+                {projects.filter(p => !p.archived).length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                    {projects
+                      .filter(p => !p.archived)
+                      .map(project => {
+                        const typeColors: Record<
+                          string,
+                          { bg: string; text: string; dot: string }
+                        > = {
+                          '510K': { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
+                          IND: {
+                            bg: 'bg-violet-50',
+                            text: 'text-violet-700',
+                            dot: 'bg-violet-500',
+                          },
+                          NDA: {
+                            bg: 'bg-emerald-50',
+                            text: 'text-emerald-700',
+                            dot: 'bg-emerald-500',
+                          },
+                          BLA: { bg: 'bg-teal-50', text: 'text-teal-700', dot: 'bg-teal-500' },
+                          PMA: {
+                            bg: 'bg-orange-50',
+                            text: 'text-orange-700',
+                            dot: 'bg-orange-500',
+                          },
+                          CER: { bg: 'bg-pink-50', text: 'text-pink-700', dot: 'bg-pink-500' },
+                          MAA: {
+                            bg: 'bg-indigo-50',
+                            text: 'text-indigo-700',
+                            dot: 'bg-indigo-500',
+                          },
+                        };
+                        const tc = typeColors[project.type] ?? {
+                          bg: 'bg-zinc-50',
+                          text: 'text-zinc-600',
+                          dot: 'bg-zinc-400',
+                        };
+                        return (
+                          <button
+                            key={project.id}
+                            onClick={() => {
+                              setActiveProjectId(project.id);
+                              setLayoutMode('assistant');
+                            }}
+                            className="group text-left rounded-2xl border border-zinc-200 bg-white p-5 hover:border-blue-200 hover:shadow-md transition-all duration-150"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
+                                  tc.bg,
+                                  tc.text
+                                )}
+                              >
+                                <span className={cn('w-1.5 h-1.5 rounded-full', tc.dot)} />
+                                {project.type}
+                              </span>
+                              {project.starred && (
+                                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                              )}
+                            </div>
+                            <h3 className="text-sm font-semibold text-zinc-900 mb-1 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                              {project.name}
+                            </h3>
+                            {project.description && (
+                              <p className="text-xs text-zinc-500 line-clamp-2 mb-3">
+                                {project.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-3 text-xs text-zinc-400 mt-auto pt-2 border-t border-zinc-100">
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3" />
+                                {project.conversationCount} chats
+                              </span>
+                              <span className="ml-auto">
+                                {project.lastUpdated
+                                  ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
+                                      month: 'short',
+                                      day: 'numeric',
+                                    })
+                                  : '—'}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  /* Empty state */
+                  <div className="rounded-2xl border-2 border-dashed border-zinc-200 bg-white p-12 text-center mb-10">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-zinc-100 flex items-center justify-center">
+                      <FolderOpen className="w-6 h-6 text-zinc-400" />
+                    </div>
+                    <h3 className="text-base font-semibold text-zinc-900 mb-1">No projects yet</h3>
+                    <p className="text-sm text-zinc-500 mb-6 max-w-xs mx-auto">
+                      Create a project to organize your regulatory work — submissions, documents,
+                      and AI sessions all in one place.
+                    </p>
+                    <button
+                      onClick={() => setNewProjectOpen(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create your first project
+                    </button>
+                  </div>
+                )}
+
+                {/* Recent activity row */}
+                {(workspaceSummary?.recent?.artifacts?.length ?? 0) > 0 && (
+                  <div>
+                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                      Recent Artifacts
+                    </h2>
+                    <div className="space-y-2">
+                      {workspaceSummary!.recent.artifacts!.slice(0, 4).map((a: any) => (
+                        <div
+                          key={a.id}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-100 bg-white hover:border-zinc-200 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-4 h-4 text-violet-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-900 truncate">
+                              {a.title || a.type}
+                            </p>
+                            <p className="text-xs text-zinc-400">
+                              {a.type} · {a.status} ·{' '}
+                              {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent threads */}
+                {(workspaceSummary?.recent?.threads?.length ?? 0) > 0 && (
+                  <div className="mt-8">
+                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                      Recent Conversations
+                    </h2>
+                    <div className="space-y-1.5">
+                      {workspaceSummary!.recent.threads!.slice(0, 5).map((t: any) => (
+                        <button
+                          key={t.id}
+                          onClick={() => {
+                            setActiveThreadId(t.id);
+                            setLayoutMode('assistant');
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left hover:bg-zinc-100 transition-colors"
+                        >
+                          <MessageSquare className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                          <span className="text-sm text-zinc-700 truncate">{t.title}</span>
+                          <span className="ml-auto text-xs text-zinc-400 flex-shrink-0">
+                            {t.updatedAt
+                              ? new Date(t.updatedAt).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })
+                              : ''}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {(layoutMode === 'assistant' || layoutMode === 'editor' || layoutMode === 'ctd') && (

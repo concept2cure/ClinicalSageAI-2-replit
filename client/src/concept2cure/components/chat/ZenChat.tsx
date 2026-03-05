@@ -21,6 +21,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'wouter';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import {
@@ -339,6 +340,7 @@ interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
   onNavigate?: (path: string) => void;
   onNewProject?: () => void;
+  onRunIntent?: (intent: string) => void;
   greeting?: { text: string; subtitle?: string } | null;
   lastWork?: { contextTitle: string; contextType: string } | null;
   nextTask?: { taskTitle: string; taskDescription?: string } | null;
@@ -403,6 +405,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onSuggestionClick,
   onNavigate,
   onNewProject,
+  onRunIntent,
   greeting,
   lastWork,
   nextTask,
@@ -496,6 +499,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   onSend={onSuggestionClick}
                   onNavigate={onNavigate}
                   onNewProject={onNewProject}
+                  onRunIntent={onRunIntent}
                   compact
                 />
               ))}
@@ -710,6 +714,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   onNewProject,
 }) => {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const handleNavigate = (href: string) => {
     if (onNavigateProp) {
@@ -835,6 +840,35 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     }
   };
 
+  // Handle action card intent — call server action + invalidate workspace-summary cache
+  const handleRunIntent = useCallback(
+    async (intent: string) => {
+      try {
+        const orgId =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('currentOrganizationId') || '1'
+            : '1';
+        const token =
+          typeof window !== 'undefined' ? localStorage.getItem('accessToken') || '' : '';
+        const res = await fetch('/api/chat/actions/run', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ intent, params: { orgId } }),
+        });
+        if (res.ok) {
+          // Re-fetch workspace summary so counts/recent sections update immediately
+          queryClient.invalidateQueries({ queryKey: ['workspace-summary'] });
+        }
+      } catch {
+        // Fire-and-forget — silently ignore network errors
+      }
+    },
+    [queryClient]
+  );
+
   // Auto-send initial message (e.g., from IND Workspace → Draft with AI)
   const initialMessageSentRef = useRef(false);
   useEffect(() => {
@@ -876,6 +910,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
             onSuggestionClick={handleSuggestionClick}
             onNavigate={handleNavigate}
             onNewProject={onNewProject}
+            onRunIntent={handleRunIntent}
             greeting={greeting}
             lastWork={lastWork}
             nextTask={nextTask}

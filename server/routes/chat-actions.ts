@@ -96,13 +96,19 @@ async function handle510kGenerateOutline(params: Record<string, string>) {
 // ─── Route ────────────────────────────────────────────────────────────────────
 
 router.post('/chat/actions/run', async (req: Request, res: Response) => {
-  const { action, params = {} } = req.body as {
-    action: string;
+  // Accept both `action` (legacy) and `intent` (new client sends `intent`)
+  const body = req.body as {
+    action?: string;
+    intent?: string;
     params?: Record<string, string>;
   };
+  const action = body.intent || body.action || '';
+  const params = body.params || {};
+  const orgId: string = (req as any).organizationId || '1';
+  const userId: string = (req as any).userId || null;
 
   if (!action) {
-    return res.status(400).json({ ok: false, error: 'action is required' });
+    return res.status(400).json({ ok: false, error: 'action or intent is required' });
   }
 
   try {
@@ -134,6 +140,26 @@ router.post('/chat/actions/run', async (req: Request, res: Response) => {
             content: `Running action: ${action}. How can I help you proceed?`,
           },
         };
+    }
+
+    // Persist artifact to DB if one was generated (fire-and-forget; don't block response)
+    if (result.artifact?.id) {
+      const art = result.artifact;
+      sq(
+        `INSERT INTO artifacts (id, org_id, project_id, type, title, status, payload, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          art.id,
+          orgId,
+          art.projectId || null,
+          art.type || 'document',
+          art.title || null,
+          art.status || 'generated',
+          JSON.stringify({ action, params }),
+          userId || null,
+        ]
+      ).catch((e: any) => console.warn('[artifacts] persist failed:', e?.message));
     }
 
     return res.json({ ok: true, ...result });

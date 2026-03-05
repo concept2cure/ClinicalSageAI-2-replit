@@ -334,21 +334,45 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: { name: string; type: SubmissionType; description?: string }) => void;
+  onCreate: (data: {
+    name: string;
+    type: SubmissionType;
+    description?: string;
+    sponsor?: string;
+    product?: string;
+    region?: string;
+    goal?: string;
+  }) => void;
 }
 
 export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onCreate }) => {
   const [name, setName] = useState('');
   const [type, setType] = useState<SubmissionType>('510K');
   const [description, setDescription] = useState('');
+  const [sponsor, setSponsor] = useState('');
+  const [product, setProduct] = useState('');
+  const [region, setRegion] = useState('FDA');
+  const [goal, setGoal] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onCreate({ name: name.trim(), type, description: description.trim() || undefined });
+      onCreate({
+        name: name.trim(),
+        type,
+        description: description.trim() || undefined,
+        sponsor: sponsor.trim() || undefined,
+        product: product.trim() || undefined,
+        region: region || undefined,
+        goal: goal.trim() || undefined,
+      });
       setName('');
       setDescription('');
       setType('510K');
+      setSponsor('');
+      setProduct('');
+      setRegion('FDA');
+      setGoal('');
       onClose();
     }
   };
@@ -433,6 +457,69 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Brief description of the project..."
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+              />
+            </div>
+
+            {/* Sponsor */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Sponsor / Client <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={sponsor}
+                onChange={e => setSponsor(e.target.value)}
+                placeholder="e.g., Acme Biotech, Inc."
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Product / Device / Molecule */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Product / Device / Molecule <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={product}
+                onChange={e => setProduct(e.target.value)}
+                placeholder="e.g., CardioFlow HR-200, mRNA-7621"
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Region / Agency */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Region / Agency
+              </label>
+              <select
+                value={region}
+                onChange={e => setRegion(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all bg-white"
+              >
+                <option value="FDA">FDA (United States)</option>
+                <option value="EMA">EMA (European Union)</option>
+                <option value="MHRA">MHRA (United Kingdom)</option>
+                <option value="Health Canada">Health Canada</option>
+                <option value="TGA">TGA (Australia)</option>
+                <option value="PMDA">PMDA (Japan)</option>
+                <option value="ANVISA">ANVISA (Brazil)</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* Goal / Instructions */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Goal & Instructions <span className="text-zinc-400">(optional)</span>
+              </label>
+              <textarea
+                value={goal}
+                onChange={e => setGoal(e.target.value)}
+                placeholder="What are you trying to achieve? Any specific requirements or context for the AI..."
                 rows={3}
                 className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
               />
