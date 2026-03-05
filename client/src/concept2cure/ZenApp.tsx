@@ -35,6 +35,8 @@ import { ZenSettings } from './components/settings/ZenSettings';
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { ProjectKnowledge } from './components/knowledge/ProjectKnowledge';
+import { CustomInstructions } from './components/knowledge/CustomInstructions';
+import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
@@ -70,6 +72,8 @@ import {
   MessageSquare,
   FolderOpen,
   Upload,
+  Sparkles,
+  PenLine,
   Layers,
   Download,
 } from 'lucide-react';
@@ -399,8 +403,40 @@ export const ZenApp: React.FC = () => {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('projects');
 
   // Right panel tab in workspace mode
-  const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs'>('files');
+  const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs' | 'instructions'>(
+    'files'
+  );
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
+
+  // Run log — lightweight action execution transparency
+  const [runLog, setRunLog] = useState<
+    Array<{
+      id: string;
+      intent: string;
+      label: string;
+      status: 'running' | 'done' | 'failed';
+      ts: number;
+    }>
+  >([]);
+
+  const handleActionRun = useCallback(
+    (entry: {
+      id: string;
+      intent: string;
+      label: string;
+      status: 'running' | 'done' | 'failed';
+      ts: number;
+    }) => {
+      setRunLog(prev => {
+        const idx = prev.findIndex(e => e.id === entry.id);
+        if (idx === -1) return [entry, ...prev].slice(0, 20);
+        const next = [...prev];
+        next[idx] = entry;
+        return next;
+      });
+    },
+    []
+  );
 
   // Active selection
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
@@ -431,6 +467,9 @@ export const ZenApp: React.FC = () => {
     enabled: !!activeProjectId,
     staleTime: 30_000,
   });
+
+  // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
+  const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
 
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
@@ -1485,115 +1524,115 @@ export const ZenApp: React.FC = () => {
           {/* ── Project Workspace — entered by clicking a project card ──────── */}
           {layoutMode === 'workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
-              {/* ── Project Header Strip ────────────────────────────────── */}
-              <div className="flex-shrink-0 h-14 border-b border-zinc-100 bg-white flex items-center gap-2 px-4">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors text-sm mr-1"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Projects</span>
-                </button>
-                <div className="w-px h-5 bg-zinc-200 flex-shrink-0" />
-
-                {/* Type badge */}
-                {activeProject &&
-                  (() => {
-                    const typeColors: Record<string, { bg: string; text: string }> = {
-                      '510K': { bg: 'bg-blue-50', text: 'text-blue-700' },
-                      IND: { bg: 'bg-violet-50', text: 'text-violet-700' },
-                      NDA: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                      BLA: { bg: 'bg-teal-50', text: 'text-teal-700' },
-                      PMA: { bg: 'bg-orange-50', text: 'text-orange-700' },
-                      CER: { bg: 'bg-pink-50', text: 'text-pink-700' },
-                      MAA: { bg: 'bg-indigo-50', text: 'text-indigo-700' },
-                    };
-                    const tc = typeColors[activeProject.type] ?? {
-                      bg: 'bg-zinc-50',
-                      text: 'text-zinc-600',
-                    };
-                    return (
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold flex-shrink-0',
-                          tc.bg,
-                          tc.text
-                        )}
-                      >
-                        {activeProject.type}
-                      </span>
-                    );
-                  })()}
-
-                {/* Project name */}
-                <h2 className="font-semibold text-zinc-900 text-sm truncate max-w-[200px]">
-                  {activeProject?.name || 'Untitled Project'}
-                </h2>
-
-                {/* Metadata pills — sponsor, product, region */}
-                {activeProject?.sponsor && (
-                  <>
-                    <span className="text-zinc-300 flex-shrink-0">·</span>
-                    <span className="text-xs text-zinc-500 truncate max-w-[120px] flex-shrink-0 hidden md:block">
-                      {activeProject.sponsor}
-                    </span>
-                  </>
-                )}
-                {activeProject?.product && (
-                  <>
-                    <span className="text-zinc-300 flex-shrink-0">·</span>
-                    <span className="text-xs text-zinc-500 truncate max-w-[120px] flex-shrink-0 hidden lg:block">
-                      {activeProject.product}
-                    </span>
-                  </>
-                )}
-                {activeProject?.region && (
-                  <span className="hidden lg:inline-flex items-center px-2 py-0.5 rounded text-xs text-zinc-500 bg-zinc-50 border border-zinc-100 flex-shrink-0 ml-1">
-                    {activeProject.region}
-                  </span>
-                )}
-
-                {/* Right side — panel toggles */}
-                <div className="ml-auto flex items-center gap-1">
+              {/* ── Project Header Strip (two-line) ────────────────────── */}
+              <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-4 py-2">
+                {/* Row 1: nav + name + type + panel toggles */}
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      if (workspacePanelTab === 'files' && workspacePanelOpen) {
-                        setWorkspacePanelOpen(false);
-                      } else {
-                        setWorkspacePanelTab('files');
-                        setWorkspacePanelOpen(true);
-                      }
-                    }}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                      workspacePanelOpen && workspacePanelTab === 'files'
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
-                    )}
+                    onClick={() => setLayoutMode('projects')}
+                    className="flex items-center gap-1 text-zinc-400 hover:text-zinc-700 transition-colors text-xs mr-1 flex-shrink-0"
                   >
-                    <Upload className="w-3.5 h-3.5" />
-                    Files
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Projects</span>
                   </button>
-                  <button
-                    onClick={() => {
-                      if (workspacePanelTab === 'outputs' && workspacePanelOpen) {
-                        setWorkspacePanelOpen(false);
-                      } else {
-                        setWorkspacePanelTab('outputs');
-                        setWorkspacePanelOpen(true);
-                      }
-                    }}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                      workspacePanelOpen && workspacePanelTab === 'outputs'
-                        ? 'bg-violet-50 text-violet-700'
-                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
-                    )}
-                  >
-                    <Layers className="w-3.5 h-3.5" />
-                    Outputs
-                  </button>
+                  <div className="w-px h-4 bg-zinc-200 flex-shrink-0" />
+
+                  {/* Type badge */}
+                  {activeProject &&
+                    (() => {
+                      const typeColors: Record<string, { bg: string; text: string }> = {
+                        '510K': { bg: 'bg-blue-50', text: 'text-blue-700' },
+                        IND: { bg: 'bg-violet-50', text: 'text-violet-700' },
+                        NDA: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+                        BLA: { bg: 'bg-teal-50', text: 'text-teal-700' },
+                        PMA: { bg: 'bg-orange-50', text: 'text-orange-700' },
+                        CER: { bg: 'bg-pink-50', text: 'text-pink-700' },
+                        MAA: { bg: 'bg-indigo-50', text: 'text-indigo-700' },
+                      };
+                      const tc = typeColors[activeProject.type] ?? {
+                        bg: 'bg-zinc-50',
+                        text: 'text-zinc-600',
+                      };
+                      return (
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide flex-shrink-0',
+                            tc.bg,
+                            tc.text
+                          )}
+                        >
+                          {activeProject.type}
+                        </span>
+                      );
+                    })()}
+
+                  {/* Project name */}
+                  <h2 className="font-semibold text-zinc-900 text-sm truncate min-w-0 flex-1">
+                    {activeProject?.name || 'Untitled Project'}
+                  </h2>
+
+                  {/* Panel toggles */}
+                  <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
+                    {(['files', 'outputs', 'instructions'] as const).map(tab => {
+                      const cfg = {
+                        files: { icon: Upload, label: 'Files', active: 'bg-blue-50 text-blue-700' },
+                        outputs: {
+                          icon: Layers,
+                          label: 'Outputs',
+                          active: 'bg-violet-50 text-violet-700',
+                        },
+                        instructions: {
+                          icon: PenLine,
+                          label: 'Instructions',
+                          active: 'bg-amber-50 text-amber-700',
+                        },
+                      }[tab];
+                      const Icon = cfg.icon;
+                      const isActive = workspacePanelOpen && workspacePanelTab === tab;
+                      return (
+                        <button
+                          key={tab}
+                          onClick={() => {
+                            if (isActive) {
+                              setWorkspacePanelOpen(false);
+                            } else {
+                              setWorkspacePanelTab(tab);
+                              setWorkspacePanelOpen(true);
+                            }
+                          }}
+                          className={cn(
+                            'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
+                            isActive
+                              ? cfg.active
+                              : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
+                          )}
+                        >
+                          <Icon className="w-3 h-3" />
+                          <span className="hidden sm:inline">{cfg.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
+                {/* Row 2: sponsor · product · region (only when present) */}
+                {(activeProject?.sponsor || activeProject?.product || activeProject?.region) && (
+                  <div className="flex items-center gap-1.5 mt-0.5 pl-[calc(3.5rem)] text-xs text-zinc-400">
+                    {[activeProject?.sponsor, activeProject?.product]
+                      .filter(Boolean)
+                      .map((v, i) => (
+                        <React.Fragment key={i}>
+                          {i > 0 && <span className="text-zinc-200">·</span>}
+                          <span className="truncate max-w-[140px]">{v}</span>
+                        </React.Fragment>
+                      ))}
+                    {activeProject?.region && (
+                      <span className="ml-0.5 inline-flex items-center px-1.5 py-0 rounded border border-zinc-200 text-zinc-400 bg-zinc-50 text-[10px]">
+                        {activeProject.region}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* ── Workspace body: chat center + right panel ───────────── */}
@@ -1618,8 +1657,14 @@ export const ZenApp: React.FC = () => {
                     suggestedActions={(() => {
                       const t = (activeProject?.type || 'IND').toUpperCase();
                       const base = workspaceSummary?.nextActions ?? [];
-                      if (base.length > 0) return base;
-                      // Workflow-specific starter actions
+                      if (base.length > 0) return base.slice(0, 4);
+
+                      // Determine project state for smart ordering
+                      const hasFiles = (workspaceKnowledge.knowledge?.documents?.length ?? 0) > 0;
+                      const hasOutputs =
+                        projectArtifacts.length > 0 ||
+                        (workspaceSummary?.recent?.artifacts?.length ?? 0) > 0;
+
                       const starters: Record<
                         string,
                         Array<{ id: string; label: string; intent: string; description: string }>
@@ -1629,27 +1674,25 @@ export const ZenApp: React.FC = () => {
                             id: 'upload-device-docs',
                             label: 'Upload device documents',
                             intent: 'upload-source-documents',
-                            description:
-                              'Add device specs, test results, and labeling for context.',
+                            description: 'Add device specs, test results, and labeling.',
                           },
                           {
                             id: 'find-predicates',
                             label: 'Find likely predicates',
                             intent: 'find-likely-510k-predicates',
-                            description:
-                              'Search FDA database for substantially equivalent devices.',
+                            description: 'Search FDA for substantially equivalent devices.',
                           },
                           {
                             id: 'draft-device-desc',
                             label: 'Draft device description',
                             intent: 'draft-510k-device-description',
-                            description: 'Generate Section 3 device description for your 510(k).',
+                            description: 'Generate Section 3 device description.',
                           },
                           {
                             id: 'check-estar',
                             label: 'Check eSTAR readiness',
                             intent: 'check-estar-readiness',
-                            description: 'Review eSTAR template requirements for this submission.',
+                            description: 'Review eSTAR template requirements.',
                           },
                         ],
                         IND: [
@@ -1657,26 +1700,25 @@ export const ZenApp: React.FC = () => {
                             id: 'upload-source',
                             label: 'Upload source documents',
                             intent: 'upload-source-documents',
-                            description:
-                              'Add clinical study reports, CMC data, and preclinical files.',
+                            description: 'Add CSRs, CMC data, and preclinical files.',
                           },
                           {
                             id: 'draft-ind-outline',
                             label: 'Draft IND outline',
                             intent: 'draft-ind-outline',
-                            description: 'Generate a compliant IND outline per 21 CFR 312.23.',
+                            description: 'Generate IND outline per 21 CFR 312.23.',
                           },
                           {
                             id: 'missing-sections',
                             label: 'Identify missing sections',
                             intent: 'identify-missing-ind-sections',
-                            description: 'Audit your IND for missing or incomplete sections.',
+                            description: 'Audit your IND for incomplete sections.',
                           },
                           {
                             id: 'gen-cmc-workplan',
                             label: 'Generate CMC workplan',
                             intent: 'generate-cmc-workplan',
-                            description: 'Build a CMC Module 3 workplan and timeline.',
+                            description: 'Build Module 3 CMC workplan and timeline.',
                           },
                         ],
                         CER: [
@@ -1684,26 +1726,25 @@ export const ZenApp: React.FC = () => {
                             id: 'upload-evidence',
                             label: 'Upload evidence & literature',
                             intent: 'upload-source-documents',
-                            description:
-                              'Add clinical literature, PMS data, and equivalent device data.',
+                            description: 'Add clinical literature and PMS data.',
                           },
                           {
                             id: 'build-cer-outline',
                             label: 'Build CER outline',
                             intent: 'build-cer-outline',
-                            description: 'Structure your CER sections per MEDDEV 2.7/1 Rev 4.',
+                            description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.',
                           },
                           {
                             id: 'draft-benefit-risk',
                             label: 'Draft benefit-risk section',
                             intent: 'draft-cer-benefit-risk',
-                            description: 'Generate the benefit-risk analysis section.',
+                            description: 'Generate the benefit-risk analysis.',
                           },
                           {
                             id: 'review-pms-pmcf',
                             label: 'Review PMS / PMCF gaps',
                             intent: 'review-pms-pmcf-gaps',
-                            description: 'Identify post-market surveillance and PMCF gaps.',
+                            description: 'Identify post-market surveillance gaps.',
                           },
                         ],
                         NDA: [
@@ -1711,30 +1752,36 @@ export const ZenApp: React.FC = () => {
                             id: 'upload-source',
                             label: 'Upload source documents',
                             intent: 'upload-source-documents',
-                            description: 'Add clinical study reports, CMC data, and prior filings.',
+                            description: 'Add CSRs, CMC data, and prior filings.',
                           },
                           {
                             id: 'draft-nda-outline',
                             label: 'Draft NDA outline',
                             intent: 'draft-nda-outline',
-                            description: 'Generate a compliant NDA outline per 21 CFR 314.',
+                            description: 'Generate NDA outline per 21 CFR 314.',
                           },
                           {
                             id: 'nda-missing',
                             label: 'Identify missing sections',
                             intent: 'identify-missing-nda-sections',
-                            description: 'Audit your NDA for gaps and missing modules.',
+                            description: 'Audit NDA for gaps and missing modules.',
                           },
                           {
                             id: 'gen-summary',
                             label: 'Generate ISS/ISE outline',
                             intent: 'generate-iss-ise-outline',
-                            description: 'Outline the Integrated Summary of Safety and Efficacy.',
+                            description: 'Outline Integrated Summary of Safety/Efficacy.',
                           },
                         ],
                       };
-                      return starters[t] ?? starters['IND'];
+
+                      const all = starters[t] ?? starters['IND'];
+                      // State-aware ordering: no files → upload first; has files no outputs → generate first
+                      if (!hasFiles) return [all[0], ...all.slice(1, 4)]; // upload first
+                      if (!hasOutputs) return [all[1], all[2], all[3], all[0]].slice(0, 3); // generate first
+                      return all.slice(1, 4); // skip upload, show generate/audit
                     })()}
+                    onActionRun={handleActionRun}
                     onNavigate={(path: string) => {
                       try {
                         const params = new URLSearchParams(
@@ -1758,38 +1805,49 @@ export const ZenApp: React.FC = () => {
                   />
                 </div>
 
-                {/* Right panel: Files / Outputs */}
+                {/* Right panel: Files / Outputs / Instructions */}
                 {workspacePanelOpen && (
-                  <div className="w-72 xl:w-80 border-l border-zinc-200 bg-white flex flex-col flex-shrink-0">
+                  <div className="w-72 xl:w-80 border-l border-zinc-100 bg-zinc-50/30 flex flex-col flex-shrink-0">
                     {/* Tab bar */}
-                    <div className="flex items-center gap-0 border-b border-zinc-100 flex-shrink-0">
-                      <button
-                        onClick={() => setWorkspacePanelTab('files')}
-                        className={cn(
-                          'flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors border-b-2',
-                          workspacePanelTab === 'files'
-                            ? 'border-blue-500 text-blue-700 bg-blue-50/40'
-                            : 'border-transparent text-zinc-500 hover:text-zinc-700'
-                        )}
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        Files
-                      </button>
-                      <button
-                        onClick={() => setWorkspacePanelTab('outputs')}
-                        className={cn(
-                          'flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors border-b-2',
-                          workspacePanelTab === 'outputs'
-                            ? 'border-violet-500 text-violet-700 bg-violet-50/40'
-                            : 'border-transparent text-zinc-500 hover:text-zinc-700'
-                        )}
-                      >
-                        <Layers className="w-3.5 h-3.5" />
-                        Outputs
-                      </button>
+                    <div className="flex items-center border-b border-zinc-100 flex-shrink-0 bg-white">
+                      {(['files', 'outputs', 'instructions'] as const).map(tab => {
+                        const cfg = {
+                          files: {
+                            icon: Upload,
+                            label: 'Files',
+                            active: 'border-blue-500 text-blue-700',
+                          },
+                          outputs: {
+                            icon: Layers,
+                            label: 'Outputs',
+                            active: 'border-violet-500 text-violet-700',
+                          },
+                          instructions: {
+                            icon: PenLine,
+                            label: 'Instructions',
+                            active: 'border-amber-500 text-amber-700',
+                          },
+                        }[tab];
+                        const Icon = cfg.icon;
+                        return (
+                          <button
+                            key={tab}
+                            onClick={() => setWorkspacePanelTab(tab)}
+                            className={cn(
+                              'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors border-b-2',
+                              workspacePanelTab === tab
+                                ? cfg.active
+                                : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                            )}
+                          >
+                            <Icon className="w-3 h-3" />
+                            {cfg.label}
+                          </button>
+                        );
+                      })}
                     </div>
 
-                    {/* Files tab — ProjectKnowledge component */}
+                    {/* ── Files tab ── */}
                     {workspacePanelTab === 'files' && (
                       <div className="flex-1 overflow-y-auto zen-scroll">
                         <ProjectKnowledge
@@ -1799,24 +1857,61 @@ export const ZenApp: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Outputs tab — artifacts list */}
+                    {/* ── Outputs + Run Log tab ── */}
                     {workspacePanelTab === 'outputs' && (
                       <div className="flex-1 overflow-y-auto zen-scroll">
+                        {/* Run log — in-flight and recent actions */}
+                        {runLog.length > 0 && (
+                          <div className="p-3 border-b border-zinc-100">
+                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                              Activity
+                            </p>
+                            <div className="space-y-1.5">
+                              {runLog.slice(0, 8).map(entry => (
+                                <div
+                                  key={entry.id}
+                                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white border border-zinc-100"
+                                >
+                                  {entry.status === 'running' ? (
+                                    <Loader2 className="w-3 h-3 text-blue-500 animate-spin flex-shrink-0" />
+                                  ) : entry.status === 'done' ? (
+                                    <div className="w-3 h-3 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-3 h-3 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-medium text-zinc-700 truncate">
+                                      {entry.label}
+                                    </p>
+                                    <p className="text-[10px] text-zinc-400 capitalize">
+                                      {entry.status}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Artifacts */}
                         {projectArtifacts.length === 0 &&
                         (workspaceSummary?.recent?.artifacts?.length ?? 0) === 0 ? (
-                          <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center mb-3">
-                              <Layers className="w-5 h-5 text-zinc-400" />
+                          <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                            <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center mb-3">
+                              <Layers className="w-4 h-4 text-zinc-400" />
                             </div>
-                            <p className="text-sm font-medium text-zinc-700 mb-1">No outputs yet</p>
-                            <p className="text-xs text-zinc-400 max-w-[180px]">
-                              Run a workflow or ask the AI to draft a document — your outputs will
-                              appear here.
+                            <p className="text-xs font-medium text-zinc-600 mb-1">No outputs yet</p>
+                            <p className="text-[11px] text-zinc-400 max-w-[160px] leading-relaxed">
+                              Run a workflow or ask the AI to draft a document.
                             </p>
                           </div>
                         ) : (
-                          <div className="p-3 space-y-2">
-                            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider px-1 mb-2">
+                          <div className="p-3 space-y-1.5">
+                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider px-1 mb-2">
                               Generated
                             </p>
                             {[...projectArtifacts, ...(workspaceSummary?.recent?.artifacts ?? [])]
@@ -1828,27 +1923,19 @@ export const ZenApp: React.FC = () => {
                               .map((a: any) => (
                                 <div
                                   key={a.id}
-                                  className="flex items-start gap-2.5 p-2.5 rounded-xl border border-zinc-100 bg-zinc-50/50 hover:bg-white hover:border-zinc-200 transition-all cursor-default"
+                                  className="flex items-start gap-2 p-2.5 rounded-xl border border-zinc-100 bg-white hover:border-zinc-200 transition-all cursor-default"
                                 >
-                                  <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <FileText className="w-3.5 h-3.5 text-violet-600" />
+                                  <div className="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <FileText className="w-3 h-3 text-violet-600" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-zinc-900 truncate leading-tight">
+                                    <p className="text-[11px] font-medium text-zinc-900 truncate leading-tight">
                                       {a.title || a.type}
                                     </p>
-                                    <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
+                                    <p className="text-[10px] text-zinc-400 truncate">
                                       {a.type}
                                       {a.status ? ` · ${a.status}` : ''}
                                     </p>
-                                    {a.createdAt && (
-                                      <p className="text-[10px] text-zinc-400">
-                                        {new Date(a.createdAt).toLocaleDateString(undefined, {
-                                          month: 'short',
-                                          day: 'numeric',
-                                        })}
-                                      </p>
-                                    )}
                                   </div>
                                   <a
                                     href={a.downloadUrl || a.url || '#'}
@@ -1856,7 +1943,7 @@ export const ZenApp: React.FC = () => {
                                     onClick={e => {
                                       if (!a.downloadUrl && !a.url) e.preventDefault();
                                     }}
-                                    className="flex-shrink-0 p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200/60 transition-colors"
+                                    className="flex-shrink-0 p-1 rounded text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
                                     title="Download"
                                   >
                                     <Download className="w-3.5 h-3.5" />
@@ -1867,12 +1954,42 @@ export const ZenApp: React.FC = () => {
                         )}
                       </div>
                     )}
+
+                    {/* ── Instructions tab ── */}
+                    {workspacePanelTab === 'instructions' && (
+                      <div className="flex-1 overflow-y-auto zen-scroll">
+                        {workspaceKnowledge.isLoading ? (
+                          <div className="flex items-center justify-center py-12">
+                            <Loader2 className="w-5 h-5 text-zinc-300 animate-spin" />
+                          </div>
+                        ) : (
+                          <div className="p-3">
+                            <div className="mb-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                <p className="text-xs font-semibold text-zinc-700">
+                                  Project Instructions
+                                </p>
+                              </div>
+                              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                                These instructions guide the AI for every conversation in this
+                                project.
+                              </p>
+                            </div>
+                            <CustomInstructions
+                              value={workspaceKnowledge.knowledge?.customInstructions || ''}
+                              onChange={workspaceKnowledge.updateCustomInstructions}
+                              projectType={activeProject?.type}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
           )}
-
           {(layoutMode === 'assistant' || layoutMode === 'editor' || layoutMode === 'ctd') && (
             <>
               {/* Chat - Connected to Cortex */}

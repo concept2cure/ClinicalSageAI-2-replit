@@ -32,7 +32,7 @@ export interface ActionCardProps extends ActionCardDef {
   onNavigate?: (path: string) => void;
   onNewProject?: () => void;
   /** Called with the intent string after non-navigate/project actions fire — triggers server action + cache invalidation */
-  onRunIntent?: (intent: string) => void;
+  onRunIntent?: (intent: string, label: string) => void;
   compact?: boolean;
   className?: string;
 }
@@ -103,7 +103,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     }
     // Default: send a prompt to the chat, and fire the server action for state mutation
     onSend?.(intentToPrompt(action, primary?.label || label));
-    onRunIntent?.(action);
+    onRunIntent?.(action, primary?.label || label);
   };
 
   if (compact) {

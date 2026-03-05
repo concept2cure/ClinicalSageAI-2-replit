@@ -102,6 +102,14 @@ interface ZenChatProps {
   onNavigate?: (path: string) => void;
   /** Open the new-project dialog */
   onNewProject?: () => void;
+  /** Callback fired when an action starts/completes for run log visibility */
+  onActionRun?: (entry: {
+    id: string;
+    intent: string;
+    label: string;
+    status: 'running' | 'done' | 'failed';
+    ts: number;
+  }) => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -712,6 +720,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   suggestedActions,
   onNavigate: onNavigateProp,
   onNewProject,
+  onActionRun,
 }) => {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -842,7 +851,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
   // Handle action card intent — call server action + invalidate workspace-summary cache
   const handleRunIntent = useCallback(
-    async (intent: string) => {
+    async (intent: string, label = intent) => {
+      const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      onActionRun?.({ id: runId, intent, label, status: 'running', ts: Date.now() });
       try {
         const orgId =
           typeof window !== 'undefined'
@@ -863,12 +874,16 @@ export const ZenChat: React.FC<ZenChatProps> = ({
           queryClient.invalidateQueries({ queryKey: ['workspace-summary'] });
           // Also refresh project-level artifacts in the Outputs panel
           queryClient.invalidateQueries({ queryKey: ['project-artifacts'] });
+          onActionRun?.({ id: runId, intent, label, status: 'done', ts: Date.now() });
+        } else {
+          onActionRun?.({ id: runId, intent, label, status: 'failed', ts: Date.now() });
         }
       } catch {
         // Fire-and-forget — silently ignore network errors
+        onActionRun?.({ id: runId, intent, label, status: 'failed', ts: Date.now() });
       }
     },
-    [queryClient]
+    [queryClient, onActionRun]
   );
 
   // Auto-send initial message (e.g., from IND Workspace → Draft with AI)
