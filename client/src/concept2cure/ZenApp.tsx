@@ -374,9 +374,9 @@ export const ZenApp: React.FC = () => {
       type: mapSubmissionType(p.submissionType),
       color: getProjectColor(p.submissionType),
       description: p.description,
-      sponsor: (p as any).sponsor,
-      product: (p as any).product,
-      region: (p as any).region,
+      sponsor: p.sponsor,
+      product: p.product,
+      region: p.region,
       lastUpdated: p.updatedAt,
       conversationCount: p.conversations?.length ?? 0,
       starred: p.starred ?? false,
@@ -451,12 +451,15 @@ export const ZenApp: React.FC = () => {
     }) => {
       setRunLog(prev => {
         const idx = prev.findIndex(e => e.id === entry.id);
-        const next = idx === -1 ? [entry, ...prev].slice(0, 20) : prev.map((e, i) => (i === idx ? entry : e));
+        const next =
+          idx === -1 ? [entry, ...prev].slice(0, 20) : prev.map((e, i) => (i === idx ? entry : e));
         // Persist immediately in the updater so we always save the final value
         if (activeProjectId) {
           try {
             sessionStorage.setItem(`runlog:${activeProjectId}`, JSON.stringify(next));
-          } catch { /* quota exceeded */ }
+          } catch {
+            /* quota exceeded */
+          }
         }
         return next;
       });
@@ -599,6 +602,12 @@ export const ZenApp: React.FC = () => {
         setSettingsOpen(true);
       }
 
+      // Edit project: ⌘E or Ctrl+E (workspace mode only)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'e' && layoutMode === 'workspace' && activeProjectId) {
+        e.preventDefault();
+        setEditProjectOpen(true);
+      }
+
       // Close tool panel: Escape
       if (e.key === 'Escape' && activeToolPanel && !commandPaletteOpen && !settingsOpen) {
         setActiveToolPanel(null);
@@ -608,7 +617,7 @@ export const ZenApp: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activeToolPanel, commandPaletteOpen, settingsOpen, handleNewChat]);
+  }, [activeToolPanel, commandPaletteOpen, settingsOpen, handleNewChat, layoutMode, activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
@@ -1937,9 +1946,7 @@ export const ZenApp: React.FC = () => {
                     {/* ── Files tab ── */}
                     {workspacePanelTab === 'files' && (
                       <div className="flex-1 flex flex-col min-h-0">
-                        <ProjectFilesCompact
-                          projectId={activeProjectId ?? null}
-                        />
+                        <ProjectFilesCompact projectId={activeProjectId ?? null} />
                       </div>
                     )}
 
@@ -2206,9 +2213,9 @@ export const ZenApp: React.FC = () => {
         initialData={{
           name: activeProject?.name ?? '',
           description: activeProject?.description,
-          sponsor: (activeProject as any)?.sponsor,
-          product: (activeProject as any)?.product,
-          region: (activeProject as any)?.region,
+          sponsor: activeProject?.sponsor,
+          product: activeProject?.product,
+          region: activeProject?.region,
         }}
         onSave={handleEditProject}
       />
