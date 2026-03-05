@@ -413,7 +413,13 @@ export const ZenApp: React.FC = () => {
   );
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
 
+  // Active selection
+  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
+  const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
+
   // Run log — lightweight action execution transparency
+  // NOTE: declared after activeProjectId to avoid TDZ in deps arrays
   const [runLog, setRunLog] = useState<
     Array<{
       id: string;
@@ -424,7 +430,7 @@ export const ZenApp: React.FC = () => {
     }>
   >([]);
 
-  // Load run log from sessionStorage when the active project changes
+  // Load persisted run log from sessionStorage when the active project changes
   useEffect(() => {
     if (!activeProjectId) return;
     try {
@@ -434,16 +440,6 @@ export const ZenApp: React.FC = () => {
       setRunLog([]);
     }
   }, [activeProjectId]);
-
-  // Persist run log to sessionStorage whenever it changes
-  useEffect(() => {
-    if (!activeProjectId) return;
-    try {
-      sessionStorage.setItem(`runlog:${activeProjectId}`, JSON.stringify(runLog));
-    } catch {
-      /* quota exceeded — ignore */
-    }
-  }, [runLog, activeProjectId]);
 
   const handleActionRun = useCallback(
     (entry: {
@@ -455,19 +451,18 @@ export const ZenApp: React.FC = () => {
     }) => {
       setRunLog(prev => {
         const idx = prev.findIndex(e => e.id === entry.id);
-        if (idx === -1) return [entry, ...prev].slice(0, 20);
-        const next = [...prev];
-        next[idx] = entry;
+        const next = idx === -1 ? [entry, ...prev].slice(0, 20) : prev.map((e, i) => (i === idx ? entry : e));
+        // Persist immediately in the updater so we always save the final value
+        if (activeProjectId) {
+          try {
+            sessionStorage.setItem(`runlog:${activeProjectId}`, JSON.stringify(next));
+          } catch { /* quota exceeded */ }
+        }
         return next;
       });
     },
-    []
+    [activeProjectId]
   );
-
-  // Active selection
-  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
-  const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
-  const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
   // Pending draft request from IND Workspace → passed to ZenChat when switching to assistant mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
@@ -1944,10 +1939,6 @@ export const ZenApp: React.FC = () => {
                       <div className="flex-1 flex flex-col min-h-0">
                         <ProjectFilesCompact
                           projectId={activeProjectId ?? null}
-                          onOpenFullManager={() => {
-                            // Switch to the full ProjectKnowledge via a tool panel or inline
-                            setWorkspacePanelTab('files');
-                          }}
                         />
                       </div>
                     )}
