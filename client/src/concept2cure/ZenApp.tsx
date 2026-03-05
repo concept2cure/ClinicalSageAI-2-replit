@@ -32,9 +32,13 @@ import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 import { ZenSettings } from './components/settings/ZenSettings';
-import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
+import {
+  ProjectSwitcher,
+  NewProjectModal,
+  EditProjectModal,
+} from './components/projects/ProjectSwitcher';
 import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
-import { ProjectKnowledge } from './components/knowledge/ProjectKnowledge';
+import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
 import { CustomInstructions } from './components/knowledge/CustomInstructions';
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjects } from './hooks/useProjects';
@@ -394,6 +398,7 @@ export const ZenApp: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [editProjectOpen, setEditProjectOpen] = useState(false);
 
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
@@ -418,6 +423,27 @@ export const ZenApp: React.FC = () => {
       ts: number;
     }>
   >([]);
+
+  // Load run log from sessionStorage when the active project changes
+  useEffect(() => {
+    if (!activeProjectId) return;
+    try {
+      const stored = sessionStorage.getItem(`runlog:${activeProjectId}`);
+      setRunLog(stored ? JSON.parse(stored) : []);
+    } catch {
+      setRunLog([]);
+    }
+  }, [activeProjectId]);
+
+  // Persist run log to sessionStorage whenever it changes
+  useEffect(() => {
+    if (!activeProjectId) return;
+    try {
+      sessionStorage.setItem(`runlog:${activeProjectId}`, JSON.stringify(runLog));
+    } catch {
+      /* quota exceeded — ignore */
+    }
+  }, [runLog, activeProjectId]);
 
   const handleActionRun = useCallback(
     (entry: {
@@ -515,6 +541,36 @@ export const ZenApp: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Deep-link: open workspace from ?projectId= on first load
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlProjectId = params.get('projectId');
+      if (urlProjectId) {
+        setActiveProjectId(urlProjectId);
+        setLayoutMode('workspace');
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync URL ?projectId= whenever the active workspace changes
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (layoutMode === 'workspace' && activeProjectId) {
+        url.searchParams.set('projectId', activeProjectId);
+      } else {
+        url.searchParams.delete('projectId');
+      }
+      window.history.replaceState({}, '', url.toString());
+    } catch (_) {
+      /* ignore */
+    }
+  }, [layoutMode, activeProjectId]);
 
   const handleNewChat = useCallback(() => {
     // Clear active conversation/thread and enter workspace/assistant
@@ -723,6 +779,33 @@ export const ZenApp: React.FC = () => {
       }
     },
     [rawProjects, updateProjectMutation]
+  );
+
+  const handleEditProject = useCallback(
+    async (data: {
+      name: string;
+      description?: string;
+      sponsor?: string;
+      product?: string;
+      region?: string;
+    }) => {
+      const project = rawProjects.find(p => p.id === activeProjectId);
+      if (project) {
+        try {
+          await updateProjectMutation({
+            ...project,
+            name: data.name,
+            description: data.description,
+            sponsor: data.sponsor,
+            product: data.product,
+            region: data.region,
+          });
+        } catch (error) {
+          console.error('Failed to update project:', error);
+        }
+      }
+    },
+    [activeProjectId, rawProjects, updateProjectMutation]
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1571,7 +1654,16 @@ export const ZenApp: React.FC = () => {
                     {activeProject?.name || 'Untitled Project'}
                   </h2>
 
-                  {/* Panel toggles */}
+                  {/* Edit project button */}
+                  {activeProject && (
+                    <button
+                      onClick={() => setEditProjectOpen(true)}
+                      title="Edit project metadata"
+                      className="flex-shrink-0 p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                    >
+                      <PenLine className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
                     {(['files', 'outputs', 'instructions'] as const).map(tab => {
                       const cfg = {
@@ -1849,10 +1941,13 @@ export const ZenApp: React.FC = () => {
 
                     {/* ── Files tab ── */}
                     {workspacePanelTab === 'files' && (
-                      <div className="flex-1 overflow-y-auto zen-scroll">
-                        <ProjectKnowledge
-                          project={rawProjects.find(p => p.id === activeProjectId) ?? null}
-                          className="h-full"
+                      <div className="flex-1 flex flex-col min-h-0">
+                        <ProjectFilesCompact
+                          projectId={activeProjectId ?? null}
+                          onOpenFullManager={() => {
+                            // Switch to the full ProjectKnowledge via a tool panel or inline
+                            setWorkspacePanelTab('files');
+                          }}
                         />
                       </div>
                     )}
@@ -1980,6 +2075,7 @@ export const ZenApp: React.FC = () => {
                               value={workspaceKnowledge.knowledge?.customInstructions || ''}
                               onChange={workspaceKnowledge.updateCustomInstructions}
                               projectType={activeProject?.type}
+                              defaultOpen={!!workspaceKnowledge.knowledge?.customInstructions}
                             />
                           </div>
                         )}
@@ -2110,6 +2206,20 @@ export const ZenApp: React.FC = () => {
         isOpen={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
         onCreate={handleCreateProject}
+      />
+
+      {/* Edit project modal */}
+      <EditProjectModal
+        isOpen={editProjectOpen}
+        onClose={() => setEditProjectOpen(false)}
+        initialData={{
+          name: activeProject?.name ?? '',
+          description: activeProject?.description,
+          sponsor: (activeProject as any)?.sponsor,
+          product: (activeProject as any)?.product,
+          region: (activeProject as any)?.region,
+        }}
+        onSave={handleEditProject}
       />
     </div>
   );

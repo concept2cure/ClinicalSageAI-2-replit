@@ -715,4 +715,183 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
   );
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDIT PROJECT MODAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface EditProjectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: {
+    name: string;
+    description?: string;
+    sponsor?: string;
+    product?: string;
+    region?: string;
+  };
+  onSave: (data: {
+    name: string;
+    description?: string;
+    sponsor?: string;
+    product?: string;
+    region?: string;
+  }) => void;
+}
+
+export const EditProjectModal: React.FC<EditProjectModalProps> = ({
+  isOpen,
+  onClose,
+  initialData,
+  onSave,
+}) => {
+  const [name, setName] = useState(initialData.name);
+  const [description, setDescription] = useState(initialData.description ?? '');
+  const [sponsor, setSponsor] = useState(initialData.sponsor ?? '');
+  const [product, setProduct] = useState(initialData.product ?? '');
+  const [region, setRegion] = useState(initialData.region ?? 'FDA');
+
+  // Re-sync form when the modal opens with fresh data
+  React.useEffect(() => {
+    if (isOpen) {
+      setName(initialData.name);
+      setDescription(initialData.description ?? '');
+      setSponsor(initialData.sponsor ?? '');
+      setProduct(initialData.product ?? '');
+      setRegion(initialData.region ?? 'FDA');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onSave({
+        name: name.trim(),
+        description: description.trim() || undefined,
+        sponsor: sponsor.trim() || undefined,
+        product: product.trim() || undefined,
+        region: region || undefined,
+      });
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+        <form onSubmit={handleSubmit}>
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-zinc-100">
+            <h2 className="text-lg font-semibold text-zinc-900">Edit Project</h2>
+            <p className="text-sm text-zinc-500 mt-1">Update project metadata</p>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 py-4 space-y-4">
+            {/* Project name */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Project Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="e.g., CardioFlow Heart Monitor"
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                autoFocus
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Description <span className="text-zinc-400">(optional)</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Brief description of the project..."
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+              />
+            </div>
+
+            {/* Sponsor */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Sponsor / Client <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={sponsor}
+                onChange={e => setSponsor(e.target.value)}
+                placeholder="e.g., Acme Biotech, Inc."
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Product */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Product / Device / Molecule <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={product}
+                onChange={e => setProduct(e.target.value)}
+                placeholder="e.g., CardioFlow™, Atorvastatin 20 mg"
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Region */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Region / Agency
+              </label>
+              <select
+                value={region}
+                onChange={e => setRegion(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              >
+                {['FDA', 'EMA', 'MHRA', 'TGA', 'Health Canada', 'PMDA', 'ANVISA', 'Other'].map(
+                  r => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-zinc-100 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+};
+
 export default ProjectSwitcher;

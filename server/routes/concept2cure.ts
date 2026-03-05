@@ -808,6 +808,9 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       name: project.name,
       submissionType: (project.metadata as any)?.submissionType || 'IND',
       description: project.description,
+      sponsor: (project.metadata as any)?.sponsor,
+      product: (project.metadata as any)?.product,
+      region: (project.metadata as any)?.region,
       customInstructions: (project.settings as any)?.customInstructions,
       status: project.status,
       organizationId: project.organizationId,
@@ -950,11 +953,26 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     if (data.description !== undefined)
       updateData.description = data.description ? sanitizeContent(data.description) : null;
 
-    if (data.submissionType || data.targetSubmissionDate) {
+    if (
+      data.submissionType ||
+      data.targetSubmissionDate ||
+      data.sponsor !== undefined ||
+      data.product !== undefined ||
+      data.region !== undefined
+    ) {
       updateData.metadata = {
         ...((existing.metadata as object) || {}),
         ...(data.submissionType && { submissionType: data.submissionType }),
         ...(data.targetSubmissionDate && { targetSubmissionDate: data.targetSubmissionDate }),
+        ...(data.sponsor !== undefined && {
+          sponsor: data.sponsor ? sanitizeContent(data.sponsor) : null,
+        }),
+        ...(data.product !== undefined && {
+          product: data.product ? sanitizeContent(data.product) : null,
+        }),
+        ...(data.region !== undefined && {
+          region: data.region ? sanitizeContent(data.region) : null,
+        }),
       };
     }
 
@@ -983,6 +1001,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       name: updated.name,
       submissionType: (updated.metadata as any)?.submissionType || 'IND',
       description: updated.description,
+      sponsor: (updated.metadata as any)?.sponsor,
+      product: (updated.metadata as any)?.product,
+      region: (updated.metadata as any)?.region,
       conversations: await getConversationsFromDb(numericId, organizationId),
       status: updated.status,
       createdAt: updated.createdAt,
