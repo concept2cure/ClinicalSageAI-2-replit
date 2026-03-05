@@ -387,6 +387,9 @@ const createProjectSchema = z.object({
   description: z.string().max(2000, 'Description too long').optional(),
   customInstructions: z.string().max(5000).optional(),
   targetSubmissionDate: z.string().datetime().optional(),
+  sponsor: z.string().max(200).optional(),
+  product: z.string().max(200).optional(),
+  region: z.string().max(100).optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();
@@ -745,6 +748,9 @@ router.get('/projects', async (req: Request, res: Response) => {
         submissionType: p.metadata?.submissionType || p.type || 'IND',
         description: p.description,
         status: p.status || 'active',
+        sponsor: p.metadata?.sponsor,
+        product: p.metadata?.product,
+        region: p.metadata?.region,
         organizationId,
         conversations: await getConversationsFromDb(p.id, organizationId),
         createdAt: p.created_at,
@@ -853,6 +859,9 @@ router.post('/projects', async (req: Request, res: Response) => {
         metadata: {
           submissionType: data.submissionType,
           targetSubmissionDate: data.targetSubmissionDate,
+          sponsor: data.sponsor,
+          product: data.product,
+          region: data.region,
         },
         settings: {
           customInstructions: sanitizedData.customInstructions,
@@ -875,6 +884,9 @@ router.post('/projects', async (req: Request, res: Response) => {
       name: newProject.name,
       submissionType: data.submissionType,
       description: newProject.description,
+      sponsor: data.sponsor,
+      product: data.product,
+      region: data.region,
       conversations: [],
       status: newProject.status,
       organizationId: newProject.organizationId,

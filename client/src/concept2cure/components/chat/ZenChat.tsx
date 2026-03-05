@@ -861,6 +861,8 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         if (res.ok) {
           // Re-fetch workspace summary so counts/recent sections update immediately
           queryClient.invalidateQueries({ queryKey: ['workspace-summary'] });
+          // Also refresh project-level artifacts in the Outputs panel
+          queryClient.invalidateQueries({ queryKey: ['project-artifacts'] });
         }
       } catch {
         // Fire-and-forget — silently ignore network errors

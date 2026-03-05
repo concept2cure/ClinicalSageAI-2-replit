@@ -113,6 +113,12 @@ export interface Project {
   submissionType: SubmissionType;
   /** Project description */
   description?: string;
+  /** Sponsor or client organization */
+  sponsor?: string;
+  /** Product, device, or molecule name */
+  product?: string;
+  /** Target regulatory region/agency */
+  region?: string;
   /** ISO 8601 creation timestamp */
   createdAt: Date;
   /** ISO 8601 last update timestamp */

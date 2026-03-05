@@ -26,6 +26,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
@@ -33,6 +34,7 @@ import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 import { ZenSettings } from './components/settings/ZenSettings';
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
+import { ProjectKnowledge } from './components/knowledge/ProjectKnowledge';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
@@ -67,6 +69,9 @@ import {
   Star,
   MessageSquare,
   FolderOpen,
+  Upload,
+  Layers,
+  Download,
 } from 'lucide-react';
 
 // Lazy load the Convergent Canvas for the Sherpa System
@@ -126,6 +131,7 @@ type ToolPanel =
 
 type LayoutMode =
   | 'projects'
+  | 'workspace'
   | 'assistant'
   | 'sherpa'
   | 'editor'
@@ -360,6 +366,9 @@ export const ZenApp: React.FC = () => {
       type: mapSubmissionType(p.submissionType),
       color: getProjectColor(p.submissionType),
       description: p.description,
+      sponsor: (p as any).sponsor,
+      product: (p as any).product,
+      region: (p as any).region,
       lastUpdated: p.updatedAt,
       conversationCount: p.conversations?.length ?? 0,
       starred: p.starred ?? false,
@@ -389,6 +398,10 @@ export const ZenApp: React.FC = () => {
   // Layout mode — default to 'projects' index so returning users always land on their work
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('projects');
 
+  // Right panel tab in workspace mode
+  const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs'>('files');
+  const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
+
   // Active selection
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
@@ -399,6 +412,25 @@ export const ZenApp: React.FC = () => {
     code: string;
     title: string;
   } | null>(null);
+
+  // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
+  const { data: projectArtifacts = [] } = useQuery({
+    queryKey: ['project-artifacts', activeProjectId],
+    queryFn: async () => {
+      if (!activeProjectId) return [];
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
+    },
+    enabled: !!activeProjectId,
+    staleTime: 30_000,
+  });
 
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
@@ -446,12 +478,12 @@ export const ZenApp: React.FC = () => {
   }, []);
 
   const handleNewChat = useCallback(() => {
-    // Clear active conversation/thread and ensure we're in chat mode
+    // Clear active conversation/thread and enter workspace/assistant
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
-    setLayoutMode('assistant');
+    setLayoutMode(activeProjectId ? 'workspace' : 'assistant');
     setActiveToolPanel(null);
-  }, []);
+  }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS
@@ -1319,7 +1351,7 @@ export const ZenApp: React.FC = () => {
                             key={project.id}
                             onClick={() => {
                               setActiveProjectId(project.id);
-                              setLayoutMode('assistant');
+                              setLayoutMode('workspace');
                             }}
                             className="group text-left rounded-2xl border border-zinc-200 bg-white p-5 hover:border-blue-200 hover:shadow-md transition-all duration-150"
                           >
@@ -1427,7 +1459,7 @@ export const ZenApp: React.FC = () => {
                           key={t.id}
                           onClick={() => {
                             setActiveThreadId(t.id);
-                            setLayoutMode('assistant');
+                            setLayoutMode('workspace');
                           }}
                           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left hover:bg-zinc-100 transition-colors"
                         >
@@ -1444,6 +1476,397 @@ export const ZenApp: React.FC = () => {
                         </button>
                       ))}
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Project Workspace — entered by clicking a project card ──────── */}
+          {layoutMode === 'workspace' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* ── Project Header Strip ────────────────────────────────── */}
+              <div className="flex-shrink-0 h-14 border-b border-zinc-100 bg-white flex items-center gap-2 px-4">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors text-sm mr-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Projects</span>
+                </button>
+                <div className="w-px h-5 bg-zinc-200 flex-shrink-0" />
+
+                {/* Type badge */}
+                {activeProject &&
+                  (() => {
+                    const typeColors: Record<string, { bg: string; text: string }> = {
+                      '510K': { bg: 'bg-blue-50', text: 'text-blue-700' },
+                      IND: { bg: 'bg-violet-50', text: 'text-violet-700' },
+                      NDA: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+                      BLA: { bg: 'bg-teal-50', text: 'text-teal-700' },
+                      PMA: { bg: 'bg-orange-50', text: 'text-orange-700' },
+                      CER: { bg: 'bg-pink-50', text: 'text-pink-700' },
+                      MAA: { bg: 'bg-indigo-50', text: 'text-indigo-700' },
+                    };
+                    const tc = typeColors[activeProject.type] ?? {
+                      bg: 'bg-zinc-50',
+                      text: 'text-zinc-600',
+                    };
+                    return (
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold flex-shrink-0',
+                          tc.bg,
+                          tc.text
+                        )}
+                      >
+                        {activeProject.type}
+                      </span>
+                    );
+                  })()}
+
+                {/* Project name */}
+                <h2 className="font-semibold text-zinc-900 text-sm truncate max-w-[200px]">
+                  {activeProject?.name || 'Untitled Project'}
+                </h2>
+
+                {/* Metadata pills — sponsor, product, region */}
+                {activeProject?.sponsor && (
+                  <>
+                    <span className="text-zinc-300 flex-shrink-0">·</span>
+                    <span className="text-xs text-zinc-500 truncate max-w-[120px] flex-shrink-0 hidden md:block">
+                      {activeProject.sponsor}
+                    </span>
+                  </>
+                )}
+                {activeProject?.product && (
+                  <>
+                    <span className="text-zinc-300 flex-shrink-0">·</span>
+                    <span className="text-xs text-zinc-500 truncate max-w-[120px] flex-shrink-0 hidden lg:block">
+                      {activeProject.product}
+                    </span>
+                  </>
+                )}
+                {activeProject?.region && (
+                  <span className="hidden lg:inline-flex items-center px-2 py-0.5 rounded text-xs text-zinc-500 bg-zinc-50 border border-zinc-100 flex-shrink-0 ml-1">
+                    {activeProject.region}
+                  </span>
+                )}
+
+                {/* Right side — panel toggles */}
+                <div className="ml-auto flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      if (workspacePanelTab === 'files' && workspacePanelOpen) {
+                        setWorkspacePanelOpen(false);
+                      } else {
+                        setWorkspacePanelTab('files');
+                        setWorkspacePanelOpen(true);
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                      workspacePanelOpen && workspacePanelTab === 'files'
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
+                    )}
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Files
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (workspacePanelTab === 'outputs' && workspacePanelOpen) {
+                        setWorkspacePanelOpen(false);
+                      } else {
+                        setWorkspacePanelTab('outputs');
+                        setWorkspacePanelOpen(true);
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                      workspacePanelOpen && workspacePanelTab === 'outputs'
+                        ? 'bg-violet-50 text-violet-700'
+                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
+                    )}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    Outputs
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Workspace body: chat center + right panel ───────────── */}
+              <div className="flex-1 flex min-h-0">
+                {/* Center: ZenChat */}
+                <div className="flex-1 flex flex-col min-h-0 min-w-0">
+                  <ZenChat
+                    projectId={activeProjectId}
+                    projectName={activeProject?.name}
+                    submissionType={activeProject?.type}
+                    threadId={activeThreadId}
+                    greeting={platformGreeting}
+                    lastWork={lastWorkSummary}
+                    nextTask={
+                      nextTask
+                        ? {
+                            taskTitle: nextTask.taskTitle,
+                            taskDescription: nextTask.taskDescription,
+                          }
+                        : null
+                    }
+                    suggestedActions={(() => {
+                      const t = (activeProject?.type || 'IND').toUpperCase();
+                      const base = workspaceSummary?.nextActions ?? [];
+                      if (base.length > 0) return base;
+                      // Workflow-specific starter actions
+                      const starters: Record<
+                        string,
+                        Array<{ id: string; label: string; intent: string; description: string }>
+                      > = {
+                        '510K': [
+                          {
+                            id: 'upload-device-docs',
+                            label: 'Upload device documents',
+                            intent: 'upload-source-documents',
+                            description:
+                              'Add device specs, test results, and labeling for context.',
+                          },
+                          {
+                            id: 'find-predicates',
+                            label: 'Find likely predicates',
+                            intent: 'find-likely-510k-predicates',
+                            description:
+                              'Search FDA database for substantially equivalent devices.',
+                          },
+                          {
+                            id: 'draft-device-desc',
+                            label: 'Draft device description',
+                            intent: 'draft-510k-device-description',
+                            description: 'Generate Section 3 device description for your 510(k).',
+                          },
+                          {
+                            id: 'check-estar',
+                            label: 'Check eSTAR readiness',
+                            intent: 'check-estar-readiness',
+                            description: 'Review eSTAR template requirements for this submission.',
+                          },
+                        ],
+                        IND: [
+                          {
+                            id: 'upload-source',
+                            label: 'Upload source documents',
+                            intent: 'upload-source-documents',
+                            description:
+                              'Add clinical study reports, CMC data, and preclinical files.',
+                          },
+                          {
+                            id: 'draft-ind-outline',
+                            label: 'Draft IND outline',
+                            intent: 'draft-ind-outline',
+                            description: 'Generate a compliant IND outline per 21 CFR 312.23.',
+                          },
+                          {
+                            id: 'missing-sections',
+                            label: 'Identify missing sections',
+                            intent: 'identify-missing-ind-sections',
+                            description: 'Audit your IND for missing or incomplete sections.',
+                          },
+                          {
+                            id: 'gen-cmc-workplan',
+                            label: 'Generate CMC workplan',
+                            intent: 'generate-cmc-workplan',
+                            description: 'Build a CMC Module 3 workplan and timeline.',
+                          },
+                        ],
+                        CER: [
+                          {
+                            id: 'upload-evidence',
+                            label: 'Upload evidence & literature',
+                            intent: 'upload-source-documents',
+                            description:
+                              'Add clinical literature, PMS data, and equivalent device data.',
+                          },
+                          {
+                            id: 'build-cer-outline',
+                            label: 'Build CER outline',
+                            intent: 'build-cer-outline',
+                            description: 'Structure your CER sections per MEDDEV 2.7/1 Rev 4.',
+                          },
+                          {
+                            id: 'draft-benefit-risk',
+                            label: 'Draft benefit-risk section',
+                            intent: 'draft-cer-benefit-risk',
+                            description: 'Generate the benefit-risk analysis section.',
+                          },
+                          {
+                            id: 'review-pms-pmcf',
+                            label: 'Review PMS / PMCF gaps',
+                            intent: 'review-pms-pmcf-gaps',
+                            description: 'Identify post-market surveillance and PMCF gaps.',
+                          },
+                        ],
+                        NDA: [
+                          {
+                            id: 'upload-source',
+                            label: 'Upload source documents',
+                            intent: 'upload-source-documents',
+                            description: 'Add clinical study reports, CMC data, and prior filings.',
+                          },
+                          {
+                            id: 'draft-nda-outline',
+                            label: 'Draft NDA outline',
+                            intent: 'draft-nda-outline',
+                            description: 'Generate a compliant NDA outline per 21 CFR 314.',
+                          },
+                          {
+                            id: 'nda-missing',
+                            label: 'Identify missing sections',
+                            intent: 'identify-missing-nda-sections',
+                            description: 'Audit your NDA for gaps and missing modules.',
+                          },
+                          {
+                            id: 'gen-summary',
+                            label: 'Generate ISS/ISE outline',
+                            intent: 'generate-iss-ise-outline',
+                            description: 'Outline the Integrated Summary of Safety and Efficacy.',
+                          },
+                        ],
+                      };
+                      return starters[t] ?? starters['IND'];
+                    })()}
+                    onNavigate={(path: string) => {
+                      try {
+                        const params = new URLSearchParams(
+                          new URL(path, window.location.origin).search
+                        );
+                        const p = params.get('panel') as ToolPanel | null;
+                        if (p && p in TOOL_PANELS) {
+                          setActiveToolPanel(p);
+                          return;
+                        }
+                      } catch (_) {
+                        /* fallback */
+                      }
+                      setLayoutMode('workspace');
+                    }}
+                    onNewProject={() => setNewProjectOpen(true)}
+                    onThreadChange={tid => {
+                      handleThreadChange(tid);
+                      if (pendingDraftSection) setPendingDraftSection(null);
+                    }}
+                  />
+                </div>
+
+                {/* Right panel: Files / Outputs */}
+                {workspacePanelOpen && (
+                  <div className="w-72 xl:w-80 border-l border-zinc-200 bg-white flex flex-col flex-shrink-0">
+                    {/* Tab bar */}
+                    <div className="flex items-center gap-0 border-b border-zinc-100 flex-shrink-0">
+                      <button
+                        onClick={() => setWorkspacePanelTab('files')}
+                        className={cn(
+                          'flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors border-b-2',
+                          workspacePanelTab === 'files'
+                            ? 'border-blue-500 text-blue-700 bg-blue-50/40'
+                            : 'border-transparent text-zinc-500 hover:text-zinc-700'
+                        )}
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        Files
+                      </button>
+                      <button
+                        onClick={() => setWorkspacePanelTab('outputs')}
+                        className={cn(
+                          'flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors border-b-2',
+                          workspacePanelTab === 'outputs'
+                            ? 'border-violet-500 text-violet-700 bg-violet-50/40'
+                            : 'border-transparent text-zinc-500 hover:text-zinc-700'
+                        )}
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        Outputs
+                      </button>
+                    </div>
+
+                    {/* Files tab — ProjectKnowledge component */}
+                    {workspacePanelTab === 'files' && (
+                      <div className="flex-1 overflow-y-auto zen-scroll">
+                        <ProjectKnowledge
+                          project={rawProjects.find(p => p.id === activeProjectId) ?? null}
+                          className="h-full"
+                        />
+                      </div>
+                    )}
+
+                    {/* Outputs tab — artifacts list */}
+                    {workspacePanelTab === 'outputs' && (
+                      <div className="flex-1 overflow-y-auto zen-scroll">
+                        {projectArtifacts.length === 0 &&
+                        (workspaceSummary?.recent?.artifacts?.length ?? 0) === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center mb-3">
+                              <Layers className="w-5 h-5 text-zinc-400" />
+                            </div>
+                            <p className="text-sm font-medium text-zinc-700 mb-1">No outputs yet</p>
+                            <p className="text-xs text-zinc-400 max-w-[180px]">
+                              Run a workflow or ask the AI to draft a document — your outputs will
+                              appear here.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="p-3 space-y-2">
+                            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider px-1 mb-2">
+                              Generated
+                            </p>
+                            {[...projectArtifacts, ...(workspaceSummary?.recent?.artifacts ?? [])]
+                              .filter(
+                                (a: any, i: number, arr: any[]) =>
+                                  arr.findIndex((x: any) => x.id === a.id) === i
+                              )
+                              .slice(0, 15)
+                              .map((a: any) => (
+                                <div
+                                  key={a.id}
+                                  className="flex items-start gap-2.5 p-2.5 rounded-xl border border-zinc-100 bg-zinc-50/50 hover:bg-white hover:border-zinc-200 transition-all cursor-default"
+                                >
+                                  <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <FileText className="w-3.5 h-3.5 text-violet-600" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-zinc-900 truncate leading-tight">
+                                      {a.title || a.type}
+                                    </p>
+                                    <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
+                                      {a.type}
+                                      {a.status ? ` · ${a.status}` : ''}
+                                    </p>
+                                    {a.createdAt && (
+                                      <p className="text-[10px] text-zinc-400">
+                                        {new Date(a.createdAt).toLocaleDateString(undefined, {
+                                          month: 'short',
+                                          day: 'numeric',
+                                        })}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <a
+                                    href={a.downloadUrl || a.url || '#'}
+                                    download={a.title || a.type}
+                                    onClick={e => {
+                                      if (!a.downloadUrl && !a.url) e.preventDefault();
+                                    }}
+                                    className="flex-shrink-0 p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200/60 transition-colors"
+                                    title="Download"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </a>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
