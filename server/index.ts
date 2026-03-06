@@ -2592,6 +2592,11 @@ import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
 
+// Mount Regulatory Precedent Engine
+import precedentEngineRoutes from './routes/precedent-engine';
+app.use('/api/precedent-engine', precedentEngineRoutes);
+console.log('✅ Precedent Engine routes mounted successfully');
+
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
 

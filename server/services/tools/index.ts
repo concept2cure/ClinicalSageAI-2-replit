@@ -669,6 +669,314 @@ registerTool({
   },
 });
 
+// ─── Regulatory Precedent Engine Tools ─────────────────────────────────────
+
+import { precedentEngine } from '../precedent-engine';
+
+registerTool({
+  name: 'precedent.search',
+  label: 'Search Regulatory Precedents',
+  description:
+    'Search for closest regulatory precedents by submission type, indication, device class, product type, or free-text query. Returns clearing/approval records, predicate devices, and FDA decision history.',
+  category: 'analysis',
+  params: [
+    {
+      name: 'submissionType',
+      type: 'string',
+      required: true,
+      description: 'Submission type: 510(k), PMA, NDA, BLA, IND, CER, De_Novo',
+    },
+    { name: 'indication', type: 'string', description: 'Target indication or intended use' },
+    { name: 'deviceClass', type: 'string', description: 'Device class: 1, 2, or 3' },
+    {
+      name: 'productType',
+      type: 'string',
+      description: 'Product type: Device, Drug, Biologic, Combination',
+    },
+    {
+      name: 'therapeuticArea',
+      type: 'string',
+      description: 'Therapeutic area: Oncology, CNS, Cardiovascular, etc.',
+    },
+    {
+      name: 'deviceName',
+      type: 'string',
+      description: 'Device or product name for targeted search',
+    },
+    { name: 'productCode', type: 'string', description: 'FDA product code' },
+    { name: 'query', type: 'string', description: 'Free-text query for semantic search' },
+  ],
+  aliases: ['precedent.find', 'regulatory.precedents'],
+  execute: async (params): Promise<ToolResult> => {
+    try {
+      const results = await precedentEngine.search({
+        submissionType: params.submissionType || '510(k)',
+        indication: params.indication,
+        deviceClass: params.deviceClass,
+        productType: params.productType,
+        therapeuticArea: params.therapeuticArea,
+        deviceName: params.deviceName,
+        productCode: params.productCode,
+        query: params.query,
+        limit: 10,
+      });
+
+      if (results.length === 0) {
+        return {
+          ok: true,
+          artifact: null,
+          summary: 'No regulatory precedents found matching the criteria.',
+          message: {
+            role: 'assistant',
+            content:
+              'No regulatory precedents found matching the specified criteria. Try broadening your search parameters.',
+          },
+        };
+      }
+
+      const summary = results
+        .map(
+          r =>
+            `• **${r.clearanceNumber || r.id}**: ${r.deviceName || r.indication || 'Unknown'} — ${r.decisionOutcome} (${r.decisionDate || 'date unknown'})`
+        )
+        .join('\n');
+
+      return {
+        ok: true,
+        artifact: {
+          type: 'precedent_search',
+          id: `prec-search-${Date.now()}`,
+          title: 'Regulatory Precedent Search',
+          status: 'generated',
+          data: { resultCount: results.length, results },
+        },
+        summary: `${results.length} precedents found for ${params.submissionType}`,
+        message: {
+          role: 'assistant',
+          content: `Found **${results.length} regulatory precedent(s)**:\n\n${summary}`,
+        },
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: `Precedent search failed: ${err.message}` },
+      };
+    }
+  },
+});
+
+registerTool({
+  name: 'precedent.compare',
+  label: 'Compare Against Precedent',
+  description:
+    'Compare your submission against a specific regulatory precedent to identify similarities, differences, and risks. Provides dimension-by-dimension comparison with recommendations.',
+  category: 'analysis',
+  params: [
+    {
+      name: 'precedentId',
+      type: 'string',
+      required: true,
+      description: 'Precedent ID or K-number to compare against',
+    },
+    { name: 'submissionType', type: 'string', required: true, description: 'Your submission type' },
+    { name: 'deviceName', type: 'string', description: 'Your device/product name' },
+    { name: 'indication', type: 'string', description: 'Your target indication' },
+    { name: 'trialDesign', type: 'string', description: 'Your trial/study design' },
+    { name: 'sampleSize', type: 'number', description: 'Your study sample size' },
+    { name: 'primaryEndpoint', type: 'string', description: 'Your primary endpoint' },
+    {
+      name: 'testingApproach',
+      type: 'string',
+      description: 'Your testing approach (bench, clinical, etc.)',
+    },
+    { name: 'predicateDevice', type: 'string', description: 'Your predicate device (for 510k)' },
+  ],
+  aliases: ['precedent.diff', 'regulatory.compare'],
+  execute: async (params): Promise<ToolResult> => {
+    try {
+      const comparison = await precedentEngine.compare(
+        {
+          submissionType: params.submissionType || '510(k)',
+          deviceName: params.deviceName,
+          indication: params.indication,
+          trialDesign: params.trialDesign,
+          sampleSize: params.sampleSize ? parseInt(String(params.sampleSize), 10) : undefined,
+          primaryEndpoint: params.primaryEndpoint,
+          testingApproach: params.testingApproach,
+          predicateDevice: params.predicateDevice,
+        },
+        params.precedentId
+      );
+
+      const riskEmoji = { low: '🟢', medium: '🟡', high: '🟠', critical: '🔴' };
+      const simList = comparison.similarities
+        .map(s => `  ✅ ${s.dimension}: ${s.userValue}`)
+        .join('\n');
+      const diffList = comparison.differences
+        .map(d => `  ⚠️ ${d.dimension}: yours="${d.userValue}" vs precedent="${d.precedentValue}"`)
+        .join('\n');
+      const recList = comparison.recommendations.map(r => `  • ${r}`).join('\n');
+
+      return {
+        ok: true,
+        artifact: {
+          type: 'precedent_comparison',
+          id: `prec-cmp-${Date.now()}`,
+          title: `Comparison vs ${comparison.precedent.clearanceNumber || comparison.precedent.id}`,
+          status: 'generated',
+          data: comparison,
+        },
+        summary: `Compared against ${comparison.precedent.clearanceNumber}: ${Math.round(comparison.overallScore * 100)}% match, risk=${comparison.riskLevel}`,
+        message: {
+          role: 'assistant',
+          content: `## Precedent Comparison: ${comparison.precedent.clearanceNumber || comparison.precedent.deviceName}\n\n**Match Score:** ${Math.round(comparison.overallScore * 100)}% | **Risk Level:** ${riskEmoji[comparison.riskLevel]} ${comparison.riskLevel.toUpperCase()}\n\n**Similarities:**\n${simList || '  (none identified)'}\n\n**Differences:**\n${diffList || '  (none identified)'}\n\n**Recommendations:**\n${recList}`,
+        },
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: `Precedent comparison failed: ${err.message}` },
+      };
+    }
+  },
+});
+
+registerTool({
+  name: 'precedent.risk_analysis',
+  label: 'Regulatory Risk Analysis',
+  description:
+    'Analyze regulatory risks based on historical FDA objections, safety signals, and toxic predicates. Identifies failure modes and provides mitigation strategies.',
+  category: 'analysis',
+  params: [
+    {
+      name: 'submissionType',
+      type: 'string',
+      required: true,
+      description: 'Submission type: 510(k), PMA, NDA, BLA, IND',
+    },
+    { name: 'therapeuticArea', type: 'string', description: 'Therapeutic area' },
+    { name: 'indication', type: 'string', description: 'Target indication' },
+    { name: 'deviceName', type: 'string', description: 'Device/product name' },
+    {
+      name: 'productCode',
+      type: 'string',
+      description: 'FDA product code (for device safety signals)',
+    },
+    { name: 'deviceClass', type: 'string', description: 'Device class: 1, 2, or 3' },
+  ],
+  aliases: ['precedent.risk', 'regulatory.risk'],
+  execute: async (params): Promise<ToolResult> => {
+    try {
+      const analysis = await precedentEngine.analyzeRisk({
+        submissionType: params.submissionType || '510(k)',
+        therapeuticArea: params.therapeuticArea,
+        indication: params.indication,
+        deviceName: params.deviceName,
+        productCode: params.productCode,
+        deviceClass: params.deviceClass,
+      });
+
+      const riskEmoji = { low: '🟢', medium: '🟡', high: '🟠', critical: '🔴' };
+      const factorList = analysis.factors
+        .map(
+          f =>
+            `  ${riskEmoji[f.severity]} **${f.category}** (${f.precedentCount} precedent(s)): ${f.description}`
+        )
+        .join('\n');
+      const mitigationList = analysis.mitigationStrategies.map(m => `  • ${m}`).join('\n');
+
+      return {
+        ok: true,
+        artifact: {
+          type: 'risk_analysis',
+          id: `prec-risk-${Date.now()}`,
+          title: 'Regulatory Risk Analysis',
+          status: 'generated',
+          data: analysis,
+        },
+        summary: `Risk: ${analysis.overallRisk} (score ${Math.round(analysis.riskScore * 100)}%), ${analysis.factors.length} factors, ${analysis.safetySignals.length} safety signals`,
+        message: {
+          role: 'assistant',
+          content: `## Regulatory Risk Analysis\n\n**Overall Risk:** ${riskEmoji[analysis.overallRisk]} **${analysis.overallRisk.toUpperCase()}** (score: ${Math.round(analysis.riskScore * 100)}%)\n\n**Risk Factors:**\n${factorList || '  No risk factors identified.'}\n\n**Safety Signals:** ${analysis.safetySignals.length} found\n\n**Mitigation Strategies:**\n${mitigationList || '  No specific mitigations required.'}`,
+        },
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: `Risk analysis failed: ${err.message}` },
+      };
+    }
+  },
+});
+
+registerTool({
+  name: 'precedent.strategy',
+  label: 'Recommend Submission Strategy',
+  description:
+    'Recommend optimal regulatory submission strategy based on historical precedent patterns. Analyzes successful and failed submissions to identify the best approach, testing requirements, and timeline.',
+  category: 'analysis',
+  params: [
+    {
+      name: 'submissionType',
+      type: 'string',
+      required: true,
+      description: 'Submission type: 510(k), PMA, NDA, BLA, IND',
+    },
+    { name: 'indication', type: 'string', description: 'Target indication or intended use' },
+    { name: 'therapeuticArea', type: 'string', description: 'Therapeutic area' },
+    { name: 'deviceName', type: 'string', description: 'Device/product name' },
+    { name: 'deviceClass', type: 'string', description: 'Device class: 1, 2, or 3' },
+    { name: 'productCode', type: 'string', description: 'FDA product code' },
+  ],
+  aliases: ['regulatory.strategy', 'submission.strategy'],
+  execute: async (params): Promise<ToolResult> => {
+    try {
+      const strategy = await precedentEngine.recommendStrategy({
+        submissionType: params.submissionType || '510(k)',
+        indication: params.indication,
+        therapeuticArea: params.therapeuticArea,
+        deviceName: params.deviceName,
+        deviceClass: params.deviceClass,
+        productCode: params.productCode,
+      });
+
+      const altList = strategy.alternativeStrategies
+        .map(
+          a =>
+            `  • **${a.strategy}** — ${a.precedentCount} precedent(s), ${Math.round(a.successRate * 100)}% success rate`
+        )
+        .join('\n');
+      const testList = strategy.testingRequirements.map(t => `  • ${t}`).join('\n');
+      const riskList = strategy.keyRisks.map(r => `  ⚠️ ${r}`).join('\n');
+
+      return {
+        ok: true,
+        artifact: {
+          type: 'strategy_recommendation',
+          id: `prec-strat-${Date.now()}`,
+          title: 'Submission Strategy Recommendation',
+          status: 'generated',
+          data: strategy,
+        },
+        summary: `Recommended: "${strategy.recommendedStrategy}" (${Math.round(strategy.confidence * 100)}% confidence), ${strategy.supportingPrecedents.length} supporting precedents`,
+        message: {
+          role: 'assistant',
+          content: `## Submission Strategy Recommendation\n\n**Recommended Strategy:** ${strategy.recommendedStrategy}\n**Confidence:** ${Math.round(strategy.confidence * 100)}%\n**Estimated Timeline:** ${strategy.estimatedTimeline}\n\n**Supporting Precedents:** ${strategy.supportingPrecedents.length} successful submission(s)\n\n**Testing Requirements:**\n${testList || '  Standard testing requirements.'}\n\n**Alternative Strategies:**\n${altList || '  No alternatives identified.'}\n\n**Key Risks:**\n${riskList || '  No major risks identified.'}`,
+        },
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: `Strategy recommendation failed: ${err.message}` },
+      };
+    }
+  },
+});
+
 /**
  * Export the count for boot logging
  */
