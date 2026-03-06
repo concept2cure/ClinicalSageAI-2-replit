@@ -36,8 +36,12 @@ export interface ToolArtifact {
 }
 
 export interface ToolResult {
+  /** Whether the tool executed successfully */
+  ok: boolean;
   artifact: ToolArtifact | null;
   message: { role: 'assistant'; content: string };
+  /** Short summary for LLM context (keeps tool results compact) */
+  summary?: string;
   redirect?: string;
   openModal?: string;
   /** Additional tools the router should chain after this one */
@@ -65,6 +69,48 @@ export interface ToolDefinition {
   aliases?: string[];
   /** Execute the tool */
   execute: (params: Record<string, string>, ctx: ToolContext) => Promise<ToolResult>;
+}
+
+// ─── Tool Execution Logging ──────────────────────────────────────────────────
+
+import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger';
+const registryLogger = createScopedLogger('tool-registry');
+
+/** Persist a tool execution record for audit / replay / analytics */
+export async function logToolRun(params: {
+  threadId?: string;
+  projectId?: number | null;
+  userId?: number | null;
+  organizationId?: number | null;
+  toolName: string;
+  arguments: Record<string, unknown>;
+  result: Record<string, unknown>;
+  status: 'success' | 'error' | 'not_found';
+  errorMessage?: string;
+  latencyMs: number;
+}): Promise<void> {
+  try {
+    await pool.query(
+      `INSERT INTO chat_tool_runs
+         (thread_id, project_id, user_id, organization_id, tool_name, arguments, result, status, error_message, latency_ms)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        params.threadId || null,
+        params.projectId || null,
+        params.userId || null,
+        params.organizationId || null,
+        params.toolName,
+        JSON.stringify(params.arguments),
+        JSON.stringify(params.result),
+        params.status,
+        params.errorMessage || null,
+        params.latencyMs,
+      ]
+    );
+  } catch (err: any) {
+    registryLogger.warn(`Failed to log tool run: ${err.message}`);
+  }
 }
 
 // ─── Registry ─────────────────────────────────────────────────────────────────

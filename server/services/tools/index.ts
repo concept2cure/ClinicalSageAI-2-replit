@@ -23,6 +23,7 @@ registerTool({
   params: [],
   aliases: ['vault.open_upload'],
   execute: async (): Promise<ToolResult> => ({
+    ok: true,
     artifact: null,
     message: {
       role: 'assistant',
@@ -40,6 +41,7 @@ registerTool({
   category: 'workspace',
   params: [],
   execute: async (): Promise<ToolResult> => ({
+    ok: true,
     artifact: null,
     message: {
       role: 'assistant',
@@ -57,6 +59,7 @@ registerTool({
   category: 'chat',
   params: [{ name: 'prompt', type: 'string', description: 'Initial question' }],
   execute: async (params): Promise<ToolResult> => ({
+    ok: true,
     artifact: null,
     message: {
       role: 'assistant',
@@ -79,6 +82,7 @@ registerTool({
   execute: async (params, ctx): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'validation_report',
         id: `val-${Date.now()}`,
@@ -112,6 +116,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || params.project_id || null;
     return {
+      ok: true,
       artifact: {
         type: 'outline',
         id: `outline-510k-${Date.now()}`,
@@ -143,6 +148,7 @@ registerTool({
   execute: async (params, ctx): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'predicate_analysis',
         id: `pred-${Date.now()}`,
@@ -178,6 +184,7 @@ registerTool({
   execute: async (params, ctx): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'cer_document',
         id: `cer-${Date.now()}`,
@@ -209,6 +216,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'literature_review',
         id: `lit-${Date.now()}`,
@@ -242,6 +250,7 @@ registerTool({
     const projectId = params.projectId || null;
     const section = params.section || 'overview';
     return {
+      ok: true,
       artifact: {
         type: 'ind_section',
         id: `ind-${section}-${Date.now()}`,
@@ -273,6 +282,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'protocol_analysis',
         id: `proto-${Date.now()}`,
@@ -304,6 +314,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'similarity_report',
         id: `sim-${Date.now()}`,
@@ -339,6 +350,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'risk_prediction',
         id: `risk-${Date.now()}`,
@@ -372,6 +384,7 @@ registerTool({
   ],
   aliases: ['doc.export', 'export'],
   execute: async (params): Promise<ToolResult> => ({
+    ok: true,
     artifact: {
       type: 'export',
       id: `exp-${Date.now()}`,
@@ -397,6 +410,7 @@ registerTool({
   ],
   aliases: ['doc.compare', 'doc.diff'],
   execute: async (params): Promise<ToolResult> => ({
+    ok: true,
     artifact: {
       type: 'document_diff',
       id: `diff-${Date.now()}`,
@@ -427,6 +441,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'ectd_package',
         id: `ectd-${Date.now()}`,
@@ -459,6 +474,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'cmc_analysis',
         id: `cmc-${Date.now()}`,
@@ -491,6 +507,7 @@ registerTool({
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
+      ok: true,
       artifact: {
         type: 'ivdr_gap_analysis',
         id: `ivdr-${Date.now()}`,

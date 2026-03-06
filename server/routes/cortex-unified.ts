@@ -27,7 +27,7 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
-import { getTool, toOpenAITools, fromOpenAIName } from '../services/toolRegistry';
+import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 
 const logger = createScopedLogger('cortex-unified');
@@ -263,15 +263,29 @@ router.post('/chat', async (req: Request, res: Response) => {
           const MAX_TOOL_CALLS = 3;
           const toolCalls = firstChoice.tool_calls.slice(0, MAX_TOOL_CALLS);
 
+          // Loop detection: reject if LLM requests the same tool twice
+          const seenTools = new Set<string>();
+          const dedupedCalls = toolCalls.filter(tc => {
+            const name = fromOpenAIName(tc.function.name);
+            if (seenTools.has(name)) {
+              logger.warn(
+                `[Chat] Loop detected: LLM requested "${name}" twice — skipping duplicate`
+              );
+              return false;
+            }
+            seenTools.add(name);
+            return true;
+          });
+
           // Notify client that tools are being executed
           res.write(
-            `data: ${JSON.stringify({ type: 'status', text: `Running ${toolCalls.length} tool(s)...` })}\n\n`
+            `data: ${JSON.stringify({ type: 'status', text: `Running ${dedupedCalls.length} tool(s)...` })}\n\n`
           );
 
           // Push the assistant message with tool_calls
           aiMessages.push(firstChoice as any);
 
-          for (const toolCall of toolCalls) {
+          for (const toolCall of dedupedCalls) {
             const toolName = fromOpenAIName(toolCall.function.name);
             let toolArgs: Record<string, string>;
             try {
@@ -280,6 +294,7 @@ router.post('/chat', async (req: Request, res: Response) => {
               toolArgs = {};
             }
 
+            const t0 = Date.now();
             const tool = getTool(toolName);
             if (!tool) {
               logger.warn(`[Chat] LLM requested unknown tool: ${toolName}`);
@@ -287,6 +302,18 @@ router.post('/chat', async (req: Request, res: Response) => {
                 role: 'tool' as const,
                 tool_call_id: toolCall.id,
                 content: JSON.stringify({ error: `Tool "${toolName}" not found` }),
+              });
+              logToolRun({
+                threadId,
+                projectId: numericProjectId,
+                userId,
+                organizationId,
+                toolName,
+                arguments: toolArgs,
+                result: {},
+                status: 'not_found',
+                errorMessage: `Tool "${toolName}" not found`,
+                latencyMs: Date.now() - t0,
               });
               continue;
             }
@@ -297,25 +324,53 @@ router.post('/chat', async (req: Request, res: Response) => {
                 userId: userId ? String(userId) : null,
                 projectId: numericProjectId ? `proj_${numericProjectId}` : null,
               });
+              const latencyMs = Date.now() - t0;
 
               // Collect artifacts for the response
               if (result.artifact) {
                 toolArtifacts.push(result.artifact);
               }
 
+              const resultPayload = result.artifact || { message: result.message.content };
               aiMessages.push({
                 role: 'tool' as const,
                 tool_call_id: toolCall.id,
-                content: JSON.stringify(result.artifact || { message: result.message.content }),
+                content: JSON.stringify(resultPayload),
               });
 
-              logger.info(`[Chat] Tool "${toolName}" executed successfully`);
+              logger.info(`[Chat] Tool "${toolName}" executed in ${latencyMs}ms`);
+              logToolRun({
+                threadId,
+                projectId: numericProjectId,
+                userId,
+                organizationId,
+                toolName,
+                arguments: toolArgs,
+                result: resultPayload as Record<string, unknown>,
+                status: 'success',
+                latencyMs,
+              });
             } catch (toolErr: any) {
-              logger.error(`[Chat] Tool "${toolName}" failed: ${toolErr.message}`);
+              const latencyMs = Date.now() - t0;
+              logger.error(
+                `[Chat] Tool "${toolName}" failed in ${latencyMs}ms: ${toolErr.message}`
+              );
               aiMessages.push({
                 role: 'tool' as const,
                 tool_call_id: toolCall.id,
                 content: JSON.stringify({ error: toolErr.message }),
+              });
+              logToolRun({
+                threadId,
+                projectId: numericProjectId,
+                userId,
+                organizationId,
+                toolName,
+                arguments: toolArgs,
+                result: {},
+                status: 'error',
+                errorMessage: toolErr.message,
+                latencyMs,
               });
             }
           }
