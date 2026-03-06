@@ -129,6 +129,20 @@ export function hasTool(name: string): boolean {
  * Convert registered tools into OpenAI function-calling format.
  * Only includes tools with descriptions (skips internal/UI-only tools).
  */
+/** Convert dotted tool name to OpenAI-safe name (dots → underscores) */
+export function toOpenAIName(name: string): string {
+  return name.replace(/\./g, '_');
+}
+
+/** Reverse: OpenAI-safe name back to registry name (underscores → dots) */
+export function fromOpenAIName(oaiName: string): string {
+  // Try exact match first, then try converting underscores to dots
+  if (hasTool(oaiName)) return oaiName;
+  const dotted = oaiName.replace(/_/g, '.');
+  if (hasTool(dotted)) return dotted;
+  return oaiName;
+}
+
 export function toOpenAITools(): Array<{
   type: 'function';
   function: { name: string; description: string; parameters: Record<string, unknown> };
@@ -138,7 +152,7 @@ export function toOpenAITools(): Array<{
     .map(t => ({
       type: 'function' as const,
       function: {
-        name: t.name,
+        name: toOpenAIName(t.name),
         description: t.description,
         parameters: {
           type: 'object',

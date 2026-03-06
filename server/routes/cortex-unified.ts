@@ -27,7 +27,7 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
-import { getTool, toOpenAITools } from '../services/toolRegistry';
+import { getTool, toOpenAITools, fromOpenAIName } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 
 const logger = createScopedLogger('cortex-unified');
@@ -272,7 +272,7 @@ router.post('/chat', async (req: Request, res: Response) => {
           aiMessages.push(firstChoice as any);
 
           for (const toolCall of toolCalls) {
-            const toolName = toolCall.function.name;
+            const toolName = fromOpenAIName(toolCall.function.name);
             let toolArgs: Record<string, string>;
             try {
               toolArgs = JSON.parse(toolCall.function.arguments || '{}');
