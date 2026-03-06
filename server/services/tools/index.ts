@@ -13,6 +13,7 @@
 
 import { registerTool, ToolResult, ToolContext } from '../toolRegistry';
 import { generateRegulatory, type DocxInput } from '../docx/docxFactory';
+import { getTemplate, listTemplates, mergeWithTemplate } from '../docx/templateRegistry';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -487,7 +488,7 @@ registerTool({
   name: 'documents.generate_docx',
   label: 'Generate Regulatory DOCX',
   description:
-    'Generate a formatted Word document from structured content. Use for CER reports, 510(k) summaries, clinical narratives, and other regulatory documents.',
+    'Generate a formatted Word document from structured content. Use for CER reports, 510(k) summaries, clinical narratives, and other regulatory documents. Optionally use a template (cer-eu-mdr, fda-510k, csr-ich-e3) to enforce regulatory section structure.',
   category: 'documents',
   params: [
     { name: 'title', type: 'string', required: true, description: 'Document title' },
@@ -503,6 +504,13 @@ registerTool({
       required: true,
       description:
         'JSON string of sections: [{title, sectionCode?, paragraphs: string[], tables?: [{caption?, headers: string[], rows: string[][]}]}]',
+    },
+    {
+      name: 'templateId',
+      type: 'string',
+      required: false,
+      description:
+        'Regulatory template to use: cer-eu-mdr (EU MDR CER), fda-510k (FDA 510k), csr-ich-e3 (ICH E3 CSR). When set, the template defines required sections and the LLM content is merged into the blueprint.',
     },
   ],
   aliases: ['doc.generate', 'generate.docx'],
@@ -547,15 +555,17 @@ registerTool({
         pageBreak: s.pageBreak,
       }));
 
-      const input: DocxInput = {
-        metadata: {
-          title: params.title || 'Regulatory Document',
-          submissionType: params.submissionType || 'General',
-          projectId: ctx.projectId || undefined,
-          date: new Date().toISOString().split('T')[0],
-        },
-        sections,
+      const metadata = {
+        title: params.title || 'Regulatory Document',
+        submissionType: params.submissionType || 'General',
+        projectId: ctx.projectId || undefined,
+        date: new Date().toISOString().split('T')[0],
       };
+
+      // If a template is specified, merge LLM sections with the blueprint
+      const input: DocxInput = params.templateId
+        ? mergeWithTemplate(params.templateId, metadata, sections)
+        : { metadata, sections };
 
       const result = await generateRegulatory(input);
 
@@ -583,10 +593,10 @@ registerTool({
             sectionCount: sections.length,
           },
         },
-        summary: `Generated ${result.filename} (${Math.round(result.buffer.length / 1024)}KB, ${sections.length} sections)`,
+        summary: `Generated ${result.filename} (${Math.round(result.buffer.length / 1024)}KB, ${input.sections.length} sections${params.templateId ? `, template: ${params.templateId}` : ''})`,
         message: {
           role: 'assistant',
-          content: `Document generated: **${result.filename}** (${Math.round(result.buffer.length / 1024)}KB). The file contains ${sections.length} section(s) with regulatory-compliant formatting. A source JSON file was also saved for future regeneration.`,
+          content: `Document generated: **${result.filename}** (${Math.round(result.buffer.length / 1024)}KB). The file contains ${input.sections.length} section(s) with regulatory-compliant formatting.${params.templateId ? ` Template **${params.templateId}** was used to enforce regulatory section structure.` : ''} A source JSON file was also saved for future regeneration.`,
         },
       };
     } catch (err: any) {
@@ -599,6 +609,30 @@ registerTool({
         },
       };
     }
+  },
+});
+
+// ─── Template Listing Tool ────────────────────────────────────────────────────
+
+registerTool({
+  name: 'documents.list_templates',
+  label: 'List Document Templates',
+  description:
+    'List available regulatory document templates (CER, 510k, CSR). Returns template IDs, names, submission types, and regions. Use before generate_docx to pick the right template.',
+  category: 'documents',
+  params: [],
+  aliases: ['templates.list'],
+  execute: async (): Promise<ToolResult> => {
+    const templates = listTemplates();
+    return {
+      ok: true,
+      artifact: null,
+      summary: `${templates.length} templates: ${templates.map(t => t.id).join(', ')}`,
+      message: {
+        role: 'assistant',
+        content: `Available regulatory templates:\n${templates.map(t => `• **${t.id}** — ${t.name} (${t.region}, ${t.submissionType})`).join('\n')}`,
+      },
+    };
   },
 });
 
