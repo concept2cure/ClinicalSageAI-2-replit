@@ -12,6 +12,9 @@
  */
 
 import { registerTool, ToolResult, ToolContext } from '../toolRegistry';
+import { generateRegulatory, type DocxInput } from '../docx/docxFactory';
+import fs from 'fs/promises';
+import path from 'path';
 
 // ─── Workspace Tools ──────────────────────────────────────────────────────────
 
@@ -76,9 +79,7 @@ registerTool({
   description:
     'Check completeness against FDA/CE criteria and surface missing artifacts, labelling gaps, or clinical evidence requirements.',
   category: 'regulatory',
-  params: [
-    { name: 'projectId', type: 'string', description: 'Target project ID' },
-  ],
+  params: [{ name: 'projectId', type: 'string', description: 'Target project ID' }],
   execute: async (params, ctx): Promise<ToolResult> => {
     const projectId = params.projectId || null;
     return {
@@ -86,9 +87,7 @@ registerTool({
       artifact: {
         type: 'validation_report',
         id: `val-${Date.now()}`,
-        title: projectId
-          ? `Validation — Project ${projectId}`
-          : 'Regulatory Validation',
+        title: projectId ? `Validation — Project ${projectId}` : 'Regulatory Validation',
         status: 'queued',
         projectId,
       },
@@ -106,12 +105,9 @@ registerTool({
 registerTool({
   name: 'workflow.510k.generate_outline',
   label: 'Generate 510(k) Outline',
-  description:
-    'Generate an eSTAR-aligned 510(k) submission outline with all required sections.',
+  description: 'Generate an eSTAR-aligned 510(k) submission outline with all required sections.',
   category: 'regulatory',
-  params: [
-    { name: 'projectId', type: 'string', description: 'Target project ID' },
-  ],
+  params: [{ name: 'projectId', type: 'string', description: 'Target project ID' }],
   aliases: ['510k.outline'],
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || params.project_id || null;
@@ -136,8 +132,7 @@ registerTool({
 registerTool({
   name: 'workflow.510k.predicate_search',
   label: 'Find Predicate Devices',
-  description:
-    'Search FDA databases for predicate devices similar to the subject device.',
+  description: 'Search FDA databases for predicate devices similar to the subject device.',
   category: 'analysis',
   params: [
     { name: 'projectId', type: 'string', description: 'Target project ID' },
@@ -174,12 +169,9 @@ registerTool({
 registerTool({
   name: 'workflow.cer.generate',
   label: 'Generate Clinical Evaluation Report',
-  description:
-    'Generate a CER from project evidence, literature, and clinical data.',
+  description: 'Generate a CER from project evidence, literature, and clinical data.',
   category: 'regulatory',
-  params: [
-    { name: 'projectId', type: 'string', required: true, description: 'Target project ID' },
-  ],
+  params: [{ name: 'projectId', type: 'string', required: true, description: 'Target project ID' }],
   aliases: ['cer.generate'],
   execute: async (params, ctx): Promise<ToolResult> => {
     const projectId = params.projectId || null;
@@ -195,7 +187,7 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'CER generation started. I\'ll compile clinical data, literature review, risk-benefit analysis, and post-market surveillance into a MEDDEV 2.7/1 Rev 4 compliant report. This typically takes 2-5 minutes.',
+          "CER generation started. I'll compile clinical data, literature review, risk-benefit analysis, and post-market surveillance into a MEDDEV 2.7/1 Rev 4 compliant report. This typically takes 2-5 minutes.",
       },
       chain: ['analysis.literature_search'],
     };
@@ -205,8 +197,7 @@ registerTool({
 registerTool({
   name: 'workflow.cer.literature_review',
   label: 'Run Literature Review',
-  description:
-    'Search PubMed and regulatory databases for relevant clinical literature.',
+  description: 'Search PubMed and regulatory databases for relevant clinical literature.',
   category: 'analysis',
   params: [
     { name: 'projectId', type: 'string', description: 'Target project ID' },
@@ -228,7 +219,7 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'Literature search initiated across PubMed, MEDLINE, and Cochrane databases. I\'ll filter for clinical relevance, extract key findings, and generate a structured review summary.',
+          "Literature search initiated across PubMed, MEDLINE, and Cochrane databases. I'll filter for clinical relevance, extract key findings, and generate a structured review summary.",
       },
     };
   },
@@ -243,7 +234,12 @@ registerTool({
   category: 'regulatory',
   params: [
     { name: 'projectId', type: 'string', required: true, description: 'Target project ID' },
-    { name: 'section', type: 'string', required: true, description: 'Section number (e.g., 2.5, 3.2)' },
+    {
+      name: 'section',
+      type: 'string',
+      required: true,
+      description: 'Section number (e.g., 2.5, 3.2)',
+    },
   ],
   aliases: ['ind.draft'],
   execute: async (params): Promise<ToolResult> => {
@@ -275,9 +271,7 @@ registerTool({
   description:
     'Analyze a clinical trial protocol for design quality, endpoint selection, and regulatory risk.',
   category: 'analysis',
-  params: [
-    { name: 'projectId', type: 'string', description: 'Target project ID' },
-  ],
+  params: [{ name: 'projectId', type: 'string', description: 'Target project ID' }],
   aliases: ['protocol.analyze'],
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
@@ -293,7 +287,7 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'Protocol analysis started. I\'ll evaluate study design, primary/secondary endpoints, sample size justification, inclusion/exclusion criteria, and statistical analysis plan against FDA/ICH guidelines.',
+          "Protocol analysis started. I'll evaluate study design, primary/secondary endpoints, sample size justification, inclusion/exclusion criteria, and statistical analysis plan against FDA/ICH guidelines.",
       },
     };
   },
@@ -302,8 +296,7 @@ registerTool({
 registerTool({
   name: 'analysis.similarity_search',
   label: 'Find Similar Trials',
-  description:
-    'Search for historically similar clinical trials and compare outcomes.',
+  description: 'Search for historically similar clinical trials and compare outcomes.',
   category: 'analysis',
   params: [
     { name: 'projectId', type: 'string', description: 'Target project ID' },
@@ -329,7 +322,7 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'Searching CSR database for similar trials. I\'ll compare study design, patient population, endpoints, and outcomes to identify relevant precedents and success/failure patterns.',
+          "Searching CSR database for similar trials. I'll compare study design, patient population, endpoints, and outcomes to identify relevant precedents and success/failure patterns.",
       },
     };
   },
@@ -365,7 +358,7 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'Running endpoint risk analysis. I\'ll model the probability of success based on historical trial outcomes for similar indications, endpoints, and patient populations.',
+          "Running endpoint risk analysis. I'll model the probability of success based on historical trial outcomes for similar indications, endpoints, and patient populations.",
       },
     };
   },
@@ -421,7 +414,7 @@ registerTool({
     message: {
       role: 'assistant',
       content:
-        'Running document comparison. I\'ll highlight additions, deletions, and changes between the two versions with regulatory significance annotations.',
+        "Running document comparison. I'll highlight additions, deletions, and changes between the two versions with regulatory significance annotations.",
     },
   }),
 });
@@ -453,7 +446,7 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'eCTD compilation started. I\'ll assemble all modules (M1-M5), validate the XML backbone, check file references, and generate the submission-ready package.',
+          "eCTD compilation started. I'll assemble all modules (M1-M5), validate the XML backbone, check file references, and generate the submission-ready package.",
       },
     };
   },
@@ -464,12 +457,9 @@ registerTool({
 registerTool({
   name: 'workflow.cmc.analyze',
   label: 'Analyze CMC Data',
-  description:
-    'Analyze Chemistry, Manufacturing, and Controls data for regulatory readiness.',
+  description: 'Analyze Chemistry, Manufacturing, and Controls data for regulatory readiness.',
   category: 'regulatory',
-  params: [
-    { name: 'projectId', type: 'string', required: true, description: 'Target project ID' },
-  ],
+  params: [{ name: 'projectId', type: 'string', required: true, description: 'Target project ID' }],
   aliases: ['cmc.analyze'],
   execute: async (params): Promise<ToolResult> => {
     const projectId = params.projectId || null;
@@ -485,9 +475,130 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'CMC analysis started. I\'ll review manufacturing process descriptions, specifications, stability data, and analytical methods against ICH Q1-Q12 guidelines.',
+          "CMC analysis started. I'll review manufacturing process descriptions, specifications, stability data, and analytical methods against ICH Q1-Q12 guidelines.",
       },
     };
+  },
+});
+
+// ─── Document Generation Tool (DOCX Factory) ─────────────────────────────────
+
+registerTool({
+  name: 'documents.generate_docx',
+  label: 'Generate Regulatory DOCX',
+  description:
+    'Generate a formatted Word document from structured content. Use for CER reports, 510(k) summaries, clinical narratives, and other regulatory documents.',
+  category: 'documents',
+  params: [
+    { name: 'title', type: 'string', required: true, description: 'Document title' },
+    {
+      name: 'submissionType',
+      type: 'string',
+      required: true,
+      description: 'Submission type: CER, 510K, IND, NDA, BLA, CSR',
+    },
+    {
+      name: 'content',
+      type: 'string',
+      required: true,
+      description:
+        'JSON string of sections: [{title, sectionCode?, paragraphs: string[], tables?: [{caption?, headers: string[], rows: string[][]}]}]',
+    },
+  ],
+  aliases: ['doc.generate', 'generate.docx'],
+  execute: async (params, ctx): Promise<ToolResult> => {
+    try {
+      // Parse sections from the content parameter
+      let sections;
+      try {
+        const parsed = JSON.parse(params.content || '[]');
+        // Handle both array-of-sections and nested JSON-in-string
+        if (Array.isArray(parsed)) {
+          sections = parsed;
+        } else if (parsed && typeof parsed === 'object') {
+          // Single section object
+          sections = [parsed];
+        } else {
+          sections = [
+            {
+              title: params.title || 'Document',
+              paragraphs: [String(parsed)],
+            },
+          ];
+        }
+      } catch {
+        // If not JSON, treat as single section with the content as text
+        sections = [
+          {
+            title: params.title || 'Document',
+            paragraphs: (params.content || '').split('\n\n').filter(Boolean),
+          },
+        ];
+      }
+
+      // Ensure every section has a paragraphs array (not nested stringified JSON)
+      sections = sections.map((s: any) => ({
+        title: s.title || 'Section',
+        sectionCode: s.sectionCode,
+        paragraphs: Array.isArray(s.paragraphs)
+          ? s.paragraphs.map(String)
+          : [String(s.paragraphs || '')],
+        tables: Array.isArray(s.tables) ? s.tables : undefined,
+        pageBreak: s.pageBreak,
+      }));
+
+      const input: DocxInput = {
+        metadata: {
+          title: params.title || 'Regulatory Document',
+          submissionType: params.submissionType || 'General',
+          projectId: ctx.projectId || undefined,
+          date: new Date().toISOString().split('T')[0],
+        },
+        sections,
+      };
+
+      const result = await generateRegulatory(input);
+
+      // Save to generated_documents/
+      const outDir = path.resolve(process.cwd(), 'generated_documents');
+      await fs.mkdir(outDir, { recursive: true });
+      const docxPath = path.join(outDir, result.filename);
+      const jsonPath = docxPath.replace(/\.docx$/, '.source.json');
+      await fs.writeFile(docxPath, result.buffer);
+      await fs.writeFile(jsonPath, JSON.stringify(result.source, null, 2));
+
+      return {
+        ok: true,
+        artifact: {
+          type: 'docx_document',
+          id: `docx-${Date.now()}`,
+          title: params.title || 'Regulatory Document',
+          status: 'generated',
+          projectId: ctx.projectId || null,
+          data: {
+            filename: result.filename,
+            path: docxPath,
+            sourcePath: jsonPath,
+            sizeBytes: result.buffer.length,
+            sectionCount: sections.length,
+          },
+        },
+        summary: `Generated ${result.filename} (${Math.round(result.buffer.length / 1024)}KB, ${sections.length} sections)`,
+        message: {
+          role: 'assistant',
+          content: `Document generated: **${result.filename}** (${Math.round(result.buffer.length / 1024)}KB). The file contains ${sections.length} section(s) with regulatory-compliant formatting. A source JSON file was also saved for future regeneration.`,
+        },
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: `Document generation failed: ${err.message}`,
+        },
+      };
+    }
   },
 });
 
@@ -496,8 +607,7 @@ registerTool({
 registerTool({
   name: 'workflow.ivdr.gap_analysis',
   label: 'IVDR Gap Analysis',
-  description:
-    'Identify gaps in IVDR compliance documentation and classify risk.',
+  description: 'Identify gaps in IVDR compliance documentation and classify risk.',
   category: 'regulatory',
   params: [
     { name: 'projectId', type: 'string', required: true, description: 'Target project ID' },
@@ -519,7 +629,7 @@ registerTool({
       message: {
         role: 'assistant',
         content:
-          'IVDR gap analysis started. I\'ll map your documentation against Annex I General Safety and Performance Requirements, identify missing elements, and prioritize remediation steps.',
+          "IVDR gap analysis started. I'll map your documentation against Annex I General Safety and Performance Requirements, identify missing elements, and prioritize remediation steps.",
       },
     };
   },

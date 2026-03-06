@@ -2295,4 +2295,56 @@ router.get('/templates/:id', (req: Request, res: Response) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCX DOWNLOAD
+// GET /api/concept2cure/documents/download/:filename
+// Serves generated DOCX files from the agent's document factory
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/documents/download/:filename', async (req: Request, res: Response) => {
+  try {
+    const { filename } = req.params;
+    // Sanitize: only allow alphanumeric, dashes, underscores, dots
+    const safe = filename.replace(/[^a-zA-Z0-9_.\-]/g, '');
+    if (!safe || safe !== filename || safe.includes('..')) {
+      return sendError(res, 400, 'Invalid filename');
+    }
+
+    const { resolve, join } = await import('path');
+    const { access } = await import('fs/promises');
+    const { createReadStream } = await import('fs');
+
+    const docDir = resolve(process.cwd(), 'generated_documents');
+    const filePath = join(docDir, safe);
+
+    // Ensure the resolved path is within generated_documents (prevent traversal)
+    if (!filePath.startsWith(docDir)) {
+      return sendError(res, 400, 'Invalid path');
+    }
+
+    await access(filePath);
+
+    const isDocx = safe.endsWith('.docx');
+    const isJson = safe.endsWith('.json');
+
+    res.setHeader(
+      'Content-Type',
+      isDocx
+        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        : isJson
+          ? 'application/json'
+          : 'application/octet-stream'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${safe}"`);
+
+    createReadStream(filePath).pipe(res);
+  } catch (error: any) {
+    if (error?.code === 'ENOENT') {
+      return sendError(res, 404, 'Document not found');
+    }
+    logger.error('Download failed', { error: error.message });
+    return sendError(res, 500, 'Download failed');
+  }
+});
+
 export default router;

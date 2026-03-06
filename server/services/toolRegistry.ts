@@ -180,10 +180,15 @@ export function toOpenAIName(name: string): string {
   return name.replace(/\./g, '_');
 }
 
-/** Reverse: OpenAI-safe name back to registry name (underscores → dots) */
+/** Reverse: OpenAI-safe name back to registry name via exact reverse lookup */
 export function fromOpenAIName(oaiName: string): string {
-  // Try exact match first, then try converting underscores to dots
+  // Exact match (no dots in name)
   if (hasTool(oaiName)) return oaiName;
+  // Build reverse map from all registered tools
+  for (const def of tools.values()) {
+    if (toOpenAIName(def.name) === oaiName) return def.name;
+  }
+  // Fallback: naive replace (may not work for names with underscores in segments)
   const dotted = oaiName.replace(/_/g, '.');
   if (hasTool(dotted)) return dotted;
   return oaiName;
