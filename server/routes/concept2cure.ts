@@ -1360,6 +1360,90 @@ router.delete('/documents/:documentId', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AI EDITING ROUTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+const aiEditSchema = z.object({
+  action: z.enum(['rewrite', 'expand', 'summarize', 'regulatory-tone', 'add-references']),
+  text: z.string().min(1).max(50000),
+  sectionTitle: z.string().optional(),
+  submissionType: z.string().optional(),
+  context: z.string().optional(),
+});
+
+/**
+ * POST /api/concept2cure/ai/edit-section
+ * AI-powered section editing for regulatory documents.
+ */
+router.post('/ai/edit-section', async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const data = aiEditSchema.parse(req.body);
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return sendError(res, 503, 'AI service not configured');
+    }
+
+    const { default: OpenAI } = await import('openai');
+    const openai = new OpenAI({ apiKey });
+
+    const actionPrompts: Record<string, string> = {
+      rewrite:
+        'Rewrite the following regulatory document section to improve clarity, precision, and readability while preserving all factual claims and regulatory language. Return only the rewritten text.',
+      expand:
+        'Expand the following regulatory document section with additional detail, supporting evidence references, and regulatory justifications. Maintain the same tone and structure. Return only the expanded text.',
+      summarize:
+        'Summarize the following regulatory document section into a concise executive summary suitable for a regulatory submission cover letter. Return only the summary.',
+      'regulatory-tone':
+        'Revise the following text to use formal regulatory submission language appropriate for FDA/EMA filings. Ensure passive voice where appropriate, precise quantitative language, and proper regulatory terminology. Return only the revised text.',
+      'add-references':
+        'Add inline reference placeholders (e.g., [REF-001], [REF-002]) to claims in the following text that would require supporting evidence in a regulatory submission. After the text, add a "References" section listing what type of evidence each reference should cite. Return the full annotated text.',
+    };
+
+    const systemPrompt = [
+      'You are a senior regulatory medical writer with expertise in FDA and EMA submissions.',
+      data.submissionType ? `This is for a ${data.submissionType} submission.` : '',
+      data.sectionTitle ? `Section: "${data.sectionTitle}".` : '',
+      data.context || '',
+      actionPrompts[data.action],
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: data.text },
+      ],
+      temperature: data.action === 'summarize' ? 0.3 : 0.4,
+      max_tokens: 4000,
+    });
+
+    const result = completion.choices[0]?.message?.content || '';
+
+    // Audit log
+    await logAuditEntry(req, 'AI_EDIT', 'document_section', `ai-edit-${Date.now()}`, null, {
+      action: data.action,
+      sectionTitle: data.sectionTitle || null,
+      inputLength: data.text.length,
+      outputLength: result.length,
+      model: 'gpt-4o-mini',
+    });
+
+    logger.info('AI edit completed', { action: data.action, userId });
+    return sendSuccess(res, { result, action: data.action });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('AI edit failed', { error: error.message });
+    return sendError(res, 500, 'AI editing failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ERROR LOGGING ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 

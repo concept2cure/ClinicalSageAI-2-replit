@@ -101,6 +101,10 @@ const INDWorkspace = lazy(() =>
 );
 
 // ─── Regulatory module standalones ────────────────────────────────────────────
+// Document Editor panel (bridge to UnifiedDocumentEditor + live APIs)
+const EditorPanel = lazy(() =>
+  import('./components/editor/EditorPanel').then(m => ({ default: m.default }))
+);
 // Medical Device & Diagnostics
 const MedicalDeviceDashboardStandalone = lazy(() =>
   import('./components/medtech/MedicalDeviceDashboard').then(m => ({
@@ -135,6 +139,7 @@ type ToolPanel =
   | 'inspection'
   | 'intelligence'
   | 'vault'
+  | 'doc-editor'
   | null;
 
 type LayoutMode =
@@ -214,6 +219,11 @@ const TOOL_PANELS: Record<
     title: 'Document Vault',
     icon: FileText,
     component: 'VaultBrowser',
+  },
+  'doc-editor': {
+    title: 'Document Editor',
+    icon: PenLine,
+    component: 'EditorPanel',
   },
 };
 
@@ -720,7 +730,7 @@ export const ZenApp: React.FC = () => {
       }
 
       if (mode === 'editor') {
-        setActiveToolPanel(activeToolPanel || 'protocol');
+        setActiveToolPanel(null);
         setToolPanelFullscreen(false);
         return;
       }
@@ -2096,7 +2106,20 @@ export const ZenApp: React.FC = () => {
               </div>
             </div>
           )}
-          {(layoutMode === 'assistant' || layoutMode === 'editor' || layoutMode === 'ctd') && (
+          {layoutMode === 'editor' && (
+            <div className="flex-1 flex min-w-0 min-h-0">
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                  </div>
+                }
+              >
+                <EditorPanel projectId={activeProjectId} submissionType={activeProject?.type} />
+              </Suspense>
+            </div>
+          )}
+          {(layoutMode === 'assistant' || layoutMode === 'ctd') && (
             <>
               {/* Chat - Connected to Cortex */}
               <div
