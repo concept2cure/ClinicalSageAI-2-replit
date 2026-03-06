@@ -27,6 +27,8 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
+import { getTool, toOpenAITools } from '../services/toolRegistry';
+import '../services/tools/index'; // ensure tools are registered
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -229,24 +231,118 @@ router.post('/chat', async (req: Request, res: Response) => {
 
       let fullContent = '';
       let streamModel = 'lumen-cortex-demo';
+      const toolArtifacts: Array<{
+        type: string;
+        id: string;
+        title: string;
+        status: string;
+        data?: unknown;
+      }> = [];
 
       try {
         const openaiKey = process.env.OPENAI_API_KEY;
         if (!openaiKey) throw new Error('OPENAI_API_KEY not set');
         const openai = new OpenAI({ apiKey: openaiKey });
-        const completion = await openai.chat.completions.create({
+        const openaiTools = toOpenAITools();
+
+        // ── Phase 1: Non-streaming call with tool schemas ──────────────────
+        const initialCompletion = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
-          messages: aiMessages,
-          stream: true,
+          messages: aiMessages as any,
+          tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
+          tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
           max_tokens: 4000,
           temperature: 0.7,
         });
         streamModel = 'openai/gpt-4o-mini';
-        for await (const chunk of completion) {
-          const text = chunk.choices[0]?.delta?.content || '';
-          if (text) {
-            fullContent += text;
-            res.write(`data: ${JSON.stringify({ type: 'chunk', text })}\n\n`);
+
+        const firstChoice = initialCompletion.choices[0].message;
+
+        // ── Phase 2: Execute tool calls if any ─────────────────────────────
+        if (firstChoice.tool_calls && firstChoice.tool_calls.length > 0) {
+          const MAX_TOOL_CALLS = 3;
+          const toolCalls = firstChoice.tool_calls.slice(0, MAX_TOOL_CALLS);
+
+          // Notify client that tools are being executed
+          res.write(
+            `data: ${JSON.stringify({ type: 'status', text: `Running ${toolCalls.length} tool(s)...` })}\n\n`
+          );
+
+          // Push the assistant message with tool_calls
+          aiMessages.push(firstChoice as any);
+
+          for (const toolCall of toolCalls) {
+            const toolName = toolCall.function.name;
+            let toolArgs: Record<string, string>;
+            try {
+              toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+            } catch {
+              toolArgs = {};
+            }
+
+            const tool = getTool(toolName);
+            if (!tool) {
+              logger.warn(`[Chat] LLM requested unknown tool: ${toolName}`);
+              aiMessages.push({
+                role: 'tool' as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ error: `Tool "${toolName}" not found` }),
+              });
+              continue;
+            }
+
+            try {
+              const result = await tool.execute(toolArgs, {
+                organizationId: String(organizationId),
+                userId: userId ? String(userId) : null,
+                projectId: numericProjectId ? `proj_${numericProjectId}` : null,
+              });
+
+              // Collect artifacts for the response
+              if (result.artifact) {
+                toolArtifacts.push(result.artifact);
+              }
+
+              aiMessages.push({
+                role: 'tool' as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(result.artifact || { message: result.message.content }),
+              });
+
+              logger.info(`[Chat] Tool "${toolName}" executed successfully`);
+            } catch (toolErr: any) {
+              logger.error(`[Chat] Tool "${toolName}" failed: ${toolErr.message}`);
+              aiMessages.push({
+                role: 'tool' as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ error: toolErr.message }),
+              });
+            }
+          }
+
+          // ── Phase 3: Stream the final LLM response with tool results ───
+          const finalCompletion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: aiMessages as any,
+            stream: true,
+            max_tokens: 4000,
+            temperature: 0.4,
+          });
+
+          for await (const chunk of finalCompletion) {
+            const text = chunk.choices[0]?.delta?.content || '';
+            if (text) {
+              fullContent += text;
+              res.write(`data: ${JSON.stringify({ type: 'chunk', text })}\n\n`);
+            }
+          }
+        } else {
+          // ── No tool calls — stream the content directly ──────────────────
+          // The initial response is the final response
+          fullContent = firstChoice.content || '';
+          // Send the full text as a single chunk (was non-streaming phase 1)
+          if (fullContent) {
+            res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
           }
         }
       } catch (streamErr: any) {
@@ -259,7 +355,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       await saveChatMessage(threadId, 'user', message, streamModel);
       await saveChatMessage(threadId, 'assistant', fullContent, streamModel, 0);
 
-      res.write(`data: ${JSON.stringify({ type: 'done', thread_id: threadId })}\n\n`);
+      // Include artifacts in the done event so the client can display them
+      res.write(
+        `data: ${JSON.stringify({ type: 'done', thread_id: threadId, artifacts: toolArtifacts.length > 0 ? toolArtifacts : undefined })}\n\n`
+      );
       res.end();
       return;
     }

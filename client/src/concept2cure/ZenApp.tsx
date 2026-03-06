@@ -603,7 +603,12 @@ export const ZenApp: React.FC = () => {
       }
 
       // Edit project: ⌘E or Ctrl+E (workspace mode only)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'e' && layoutMode === 'workspace' && activeProjectId) {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.key === 'e' &&
+        layoutMode === 'workspace' &&
+        activeProjectId
+      ) {
         e.preventDefault();
         setEditProjectOpen(true);
       }
@@ -617,7 +622,14 @@ export const ZenApp: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activeToolPanel, commandPaletteOpen, settingsOpen, handleNewChat, layoutMode, activeProjectId]);
+  }, [
+    activeToolPanel,
+    commandPaletteOpen,
+    settingsOpen,
+    handleNewChat,
+    layoutMode,
+    activeProjectId,
+  ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
