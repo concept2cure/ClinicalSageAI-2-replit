@@ -6,6 +6,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import fs from 'fs';
+import path from 'path';
 
 // Mock Express app
 const mockApp = {
@@ -136,5 +138,31 @@ describe('Service Layer Integration', () => {
   it('should have CortexComplianceService exportable', async () => {
     const module = await import('../../services/cortexComplianceService');
     expect(module.CortexComplianceService).toBeDefined();
+  });
+});
+
+describe('Rescue Cut: Core Workflow Guards', () => {
+  const repoRoot = path.resolve(__dirname, '../../..');
+
+  it('protects /api/cortex/chat with requireAuth', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/cortex-unified.ts'), 'utf8');
+    expect(content).toContain("router.post('/chat', requireAuth");
+  });
+
+  it('protects /api/lumen-cortex/regulatory-analysis with requireAuth', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/lumen-cortex.ts'), 'utf8');
+    expect(content).toContain("router.post('/regulatory-analysis', requireAuth");
+  });
+
+  it('keeps /api/knowledge-base generation endpoints behind authenticateToken', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/knowledge-base.ts'), 'utf8');
+    expect(content).toContain('router.use(authenticateToken)');
+    expect(content).toContain("router.post('/generate-docx'");
+  });
+
+  it('mounts core workflow routes in server index', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/index.ts'), 'utf8');
+    expect(content).toContain("app.use('/api/cortex', cortexUnifiedRoutes)");
+    expect(content).toContain("app.use('/api/lumen-cortex', lumenCortexRoutes.default)");
   });
 });

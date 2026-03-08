@@ -17,6 +17,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import OpenAI from 'openai';
 import { createScopedLogger } from '../utils/logger';
+import { requireAuth } from '../middleware/auth.js';
 import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
@@ -175,7 +176,7 @@ function ensureChatGateway() {
  * Context-aware chat endpoint for Lumen Cortex.
  * Accepts project_id and automatically injects project context into the system prompt.
  */
-router.post('/chat', async (req: Request, res: Response) => {
+router.post('/chat', requireAuth, async (req: Request, res: Response) => {
   try {
     const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code } =
       req.body || {};
