@@ -1883,107 +1883,65 @@ const MedicalDeviceDocumentEditor = ({
     updateProgress();
   }, [sectionData, updateProgress]);
 
-  // Initialize with realistic sample data on first load
+  // Initialize fields from deviceProfile on first load (no fake sample data)
   useEffect(() => {
     // Only populate if no existing data and sections are loaded
     if (Object.keys(sectionData).length === 0 && sections.length > 0 && !existingContent) {
-      const sampleData = {
+      // Only pre-fill fields that have real data from the deviceProfile
+      const hasProfile = deviceProfile.deviceName || deviceProfile.manufacturer;
+      if (!hasProfile) return; // Don't auto-fill if no real profile data
+
+      const profileData = {
         'user-fee-cover': {
-          applicant_name: deviceProfile.manufacturer || 'BioMed Innovations LLC',
-          device_name: deviceProfile.deviceName || 'CardioSense Pro - Continuous Cardiac Monitor',
+          ...(deviceProfile.manufacturer && { applicant_name: deviceProfile.manufacturer }),
+          ...(deviceProfile.deviceName && { device_name: deviceProfile.deviceName }),
           submission_type: '510(k) Traditional',
-          device_class: deviceProfile.mdClass || 'Class II',
-          product_code: deviceProfile.productCode || 'MWI',
-          regulation_number: deviceProfile.regulationNumber || '21 CFR 870.2300',
-          fee_status: 'small_business',
+          ...(deviceProfile.mdClass && { device_class: deviceProfile.mdClass }),
+          ...(deviceProfile.productCode && { product_code: deviceProfile.productCode }),
+          ...(deviceProfile.regulationNumber && {
+            regulation_number: deviceProfile.regulationNumber,
+          }),
         },
         'cover-letter': {
-          applicant_name: deviceProfile.manufacturer || 'BioMed Innovations LLC',
-          device_name: deviceProfile.deviceName || 'CardioSense Pro - Continuous Cardiac Monitor',
-          manufacturer: deviceProfile.manufacturer || 'BioMed Innovations LLC',
-          contact_person: 'Dr. Sarah Chen, VP of Regulatory Affairs',
-          phone: '+1 (415) 555-0142',
-          email: 'regulatory@biomedinnovations.com',
-          address: '2500 Innovation Drive, San Francisco, CA 94158',
+          ...(deviceProfile.manufacturer && { applicant_name: deviceProfile.manufacturer }),
+          ...(deviceProfile.deviceName && { device_name: deviceProfile.deviceName }),
+          ...(deviceProfile.manufacturer && { manufacturer: deviceProfile.manufacturer }),
           submission_date: new Date().toISOString().split('T')[0],
-          predicate_device: deviceProfile.predicateDevice || 'K183456',
-          predicate_manufacturer: deviceProfile.predicateManufacturer || 'CardioCare Technologies',
-          intended_use:
-            deviceProfile.intendedUse ||
-            'The CardioSense Pro is intended for continuous monitoring of cardiac rhythm and heart rate in adults in healthcare facilities and home settings.',
+          ...(deviceProfile.predicateDevice && { predicate_device: deviceProfile.predicateDevice }),
+          ...(deviceProfile.predicateManufacturer && {
+            predicate_manufacturer: deviceProfile.predicateManufacturer,
+          }),
+          ...(deviceProfile.intendedUse && { intended_use: deviceProfile.intendedUse }),
         },
         'indications-for-use': {
-          intended_use:
-            deviceProfile.intendedUse ||
-            'The CardioSense Pro is intended for continuous monitoring of cardiac rhythm and heart rate in adults (18 years and older) in healthcare facilities and home settings.',
-          patient_population: 'Adults 18 years and older requiring continuous cardiac monitoring',
-          clinical_setting: 'Hospital telemetry units, cardiac care units, and home monitoring',
-          contraindications:
-            'Not for use in MRI environments. Not suitable for patients with pacemakers without physician consultation.',
-          warnings:
-            'Device should not be used as the sole means of diagnosing arrhythmias. Clinical correlation required for all alerts.',
+          ...(deviceProfile.intendedUse && { intended_use: deviceProfile.intendedUse }),
         },
         'device-description': {
-          device_overview:
-            deviceProfile.description ||
-            'The CardioSense Pro is a wireless, wearable cardiac monitoring system consisting of a chest-worn sensor patch, wireless transmitter, and cloud-connected monitoring platform. The device provides continuous ECG monitoring with real-time arrhythmia detection algorithms.',
-          physical_description:
-            'The sensor patch is a lightweight (45g) adhesive-backed device measuring 95mm x 65mm x 12mm. The wireless transmitter uses Bluetooth 5.0 for data transmission to the monitoring station.',
-          components:
-            'System includes: (1) Disposable adhesive sensor patches with integrated electrodes, (2) Rechargeable wireless transmitter, (3) Base station receiver, (4) Monitoring software application',
-          materials:
-            'Housing: Medical-grade polycarbonate; Electrodes: Silver/silver chloride; Adhesive: Hypoallergenic medical-grade acrylic',
-          technical_specs:
-            deviceProfile.technicalSpecifications ||
-            'ECG Sampling Rate: 500 Hz, Resolution: 24-bit, Dynamic Range: ±5mV, Battery Life: 72 hours continuous use, Wireless Range: 30 meters, Data Storage: 7 days continuous recording',
+          ...(deviceProfile.description && { device_overview: deviceProfile.description }),
+          ...(deviceProfile.technicalSpecifications && {
+            technical_specs: deviceProfile.technicalSpecifications,
+          }),
         },
         'substantial-equivalence': {
-          predicate_device_knum:
-            deviceProfile.predicateDevice || 'K183456 - CardioCare Wireless Monitor',
-          comparison_table:
-            'Both devices provide continuous wireless cardiac monitoring with similar technical specifications, intended use, and safety profile.',
-          technological_characteristics:
-            'The CardioSense Pro uses the same fundamental technology as the predicate: wireless ECG signal acquisition, digital signal processing, and real-time arrhythmia detection.',
-          performance_data:
-            'Clinical validation study (n=150 patients) demonstrated 99.2% agreement with 12-lead ECG for rhythm classification, comparable to predicate device performance (98.8%).',
-          differences_explanation:
-            'Minor differences include improved battery life (72h vs 48h) and enhanced wireless range (30m vs 20m), which do not raise new safety or effectiveness questions.',
-        },
-        'performance-testing': {
-          biocompatibility:
-            'ISO 10993-1 testing completed for all patient-contacting components. Results demonstrate compliance with cytotoxicity, sensitization, and irritation requirements.',
-          electrical_safety:
-            'Device tested per IEC 60601-1 and IEC 60601-2-47. All electrical safety requirements met including leakage current, dielectric strength, and protection against electric shock.',
-          emcemc:
-            'EMC testing per IEC 60601-1-2 demonstrates compliance with electromagnetic immunity and emissions requirements for medical devices.',
-          software_validation:
-            'Software validation performed per FDA Guidance on Software Validation. V&V documentation includes 2,500+ test cases with 100% pass rate.',
-          clinical_performance:
-            'Clinical study with 150 participants demonstrated sensitivity of 99.2% and specificity of 98.7% for atrial fibrillation detection compared to 12-lead ECG gold standard.',
-          shelf_life:
-            'Real-time aging study ongoing (12 months complete). Accelerated aging per ASTM F1980 supports 24-month shelf life for sensor patches.',
-        },
-        labeling: {
-          device_labels:
-            'All labeling complies with 21 CFR 801. Labels include device name, manufacturer, lot number, expiration date, and UDI barcode.',
-          instructions_for_use:
-            'Comprehensive IFU provided covering device setup, patient preparation, application procedures, monitoring guidelines, troubleshooting, and maintenance.',
-          patient_information:
-            'Patient quick-start guide included with clear instructions for home monitoring, emergency contacts, and when to seek medical attention.',
-          warnings_precautions:
-            'All contraindications, warnings, and precautions clearly stated in IFU and patient materials per FDA labeling requirements.',
+          ...(deviceProfile.predicateDevice && {
+            predicate_device_knum: deviceProfile.predicateDevice,
+          }),
         },
       };
 
-      setSectionData(sampleData);
-      // Don't mark as dirty - loading initial data is not a user edit
-      // setIsDirty(true);
+      // Remove empty sections
+      const cleanedData = Object.fromEntries(
+        Object.entries(profileData).filter(([, v]) => Object.keys(v).length > 0)
+      );
 
-      toast({
-        title: 'Sample Document Loaded',
-        description: 'Document pre-filled with realistic FDA 510(k) data. You can edit any field.',
-        duration: 4000,
-      });
+      if (Object.keys(cleanedData).length > 0) {
+        setSectionData(cleanedData);
+        toast({
+          title: 'Device Profile Applied',
+          description: 'Fields pre-filled from your device profile. Complete the remaining fields.',
+          duration: 4000,
+        });
+      }
     }
   }, [sections, deviceProfile, existingContent]);
 
@@ -2272,14 +2230,14 @@ const MedicalDeviceDocumentEditor = ({
         }
       }
 
-      // ── Fallback: client-side suggestions ─────────────────────────────
+      // ── Fallback: generic guidance (no fabricated data) ──────────────
       const deviceName = deviceProfile.deviceName || '[Device Name]';
       const fallbackSuggestions = {
-        intended_use: `The ${deviceName} is intended for continuous monitoring and recording of cardiac electrical activity in adult patients within healthcare facilities and home settings. The device provides real-time ECG data transmission and automated arrhythmia detection to support clinical decision-making.`,
-        device_overview: `The ${deviceName} is a wireless, wearable cardiac monitoring system consisting of disposable adhesive sensor patches, a rechargeable wireless transmitter, and cloud-connected monitoring software. The device utilizes medical-grade electrodes for signal acquisition and employs advanced digital signal processing algorithms for noise reduction and artifact rejection.`,
-        biocompatibility: `Biocompatibility testing was conducted in accordance with ISO 10993-1:2018 for all patient-contacting components. Testing included cytotoxicity (ISO 10993-5), sensitization (ISO 10993-10), and skin irritation (ISO 10993-10). All tests were performed by an ISO 17025 accredited laboratory and demonstrated compliance with biological safety requirements for skin-contacting medical devices with prolonged contact duration.`,
-        electrical_safety: `Electrical safety and electromagnetic compatibility testing was performed in accordance with IEC 60601-1 (Medical electrical equipment - General requirements for basic safety and essential performance) and IEC 60601-2-47 (Particular requirements for ambulatory ECG systems). All safety tests including leakage current, dielectric strength, and protection classifications were successfully completed with results meeting or exceeding the requirements.`,
-        clinical_performance: `A prospective clinical study was conducted with 150 adult subjects (ages 22-78, mean 54.2 years) comparing the ${deviceName} against standard 12-lead ECG for rhythm classification and arrhythmia detection. The study demonstrated 99.2% sensitivity and 98.7% specificity for atrial fibrillation detection, with overall accuracy of 98.9% for rhythm classification across all monitored parameters.`,
+        intended_use: `The ${deviceName} is intended for [describe clinical purpose] in [patient population] within [clinical setting]. The device provides [key functionality] to support clinical decision-making. [Add specific indications, contraindications, and patient selection criteria.]`,
+        device_overview: `The ${deviceName} is a [device type] consisting of [list major components]. The device utilizes [technology/operating principle] for [primary function]. [Add physical specifications, materials, and operating parameters.]`,
+        biocompatibility: `Biocompatibility testing was conducted in accordance with ISO 10993-1:2018 for all patient-contacting components. Testing included cytotoxicity (ISO 10993-5), sensitization (ISO 10993-10), and irritation testing. All tests were performed by an ISO 17025 accredited laboratory. [Add specific test results and conclusions.]`,
+        electrical_safety: `Electrical safety and electromagnetic compatibility testing was performed in accordance with IEC 60601-1 and applicable particular standards. [Add specific test results for leakage current, dielectric strength, EMC immunity and emissions.]`,
+        clinical_performance: `[Describe clinical study design, enrollment, endpoints, and results. Include sensitivity, specificity, and other relevant performance metrics with supporting data.]`,
       };
 
       let suggestion = Object.keys(fallbackSuggestions).find(k => fieldId.includes(k))

@@ -713,7 +713,9 @@ router.post(
       let suggestion: string;
 
       if (enhancedFn) {
-        suggestion = enhancedFn(ctx);
+        suggestion =
+          '⚠️ AI service unavailable — the following is a generic template. Review and replace all content with your actual device data before use.\n\n' +
+          enhancedFn(ctx);
       } else {
         const templates = sectionTemplates[docType] || {};
         suggestion =

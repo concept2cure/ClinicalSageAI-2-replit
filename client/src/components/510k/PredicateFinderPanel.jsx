@@ -293,7 +293,7 @@ const PredicateFinderPanel = ({
         lastUpdated: now,
       },
     };
-    
+
     // Ensure the profile has all required fields and proper structure
     const updatedProfile = ensureProfileIntegrity(baseProfile);
 
@@ -443,22 +443,18 @@ const PredicateFinderPanel = ({
       else {
         console.warn('[510k] No results returned from API and no previous results available');
 
-        // Generate reliable predicate devices to prevent blank screens
-        const reliablePredicate = generateReliablePredicateDevices(deviceProfile);
+        // Show honest empty state — do NOT generate fake K-numbers
+        setSearchResults([]);
+        setShowRecoveryUI(true);
 
-        setSearchResults(reliablePredicate);
-
-        // Store these reliable results for future use
-        try {
-          localStorage.setItem('510k_searchResults', JSON.stringify(reliablePredicate));
-          saveState('predicateDevices', reliablePredicate);
-        } catch (storageError) {
-          console.error('[510k] Failed to save reliable predicate results:', storageError);
+        if (onPredicatesFound) {
+          onPredicatesFound([], 'No predicate devices found from FDA database');
         }
 
         toast({
-          title: 'Sample Data Available',
-          description: "We've provided sample predicate devices based on your device profile.",
+          title: 'No Predicate Devices Found',
+          description:
+            'The FDA predicate database returned no results. Try broadening your device description or product code.',
           variant: 'default',
         });
       }
@@ -608,7 +604,7 @@ const PredicateFinderPanel = ({
       device: device.k_number,
       isSelected,
       newCount: updatedPredicates.length,
-      updatedPredicates
+      updatedPredicates,
     });
 
     // Update state
@@ -984,8 +980,8 @@ const PredicateFinderPanel = ({
                 </Button>
 
                 {selectedPredicates.length > 0 && (
-                  <Button 
-                    variant="default" 
+                  <Button
+                    variant="default"
                     onClick={completePredicateSelection}
                     className="bg-green-600 hover:bg-green-700 text-white"
                     data-testid="button-complete-predicate-selection"
@@ -1054,13 +1050,15 @@ const PredicateFinderPanel = ({
               </h4>
               <div className="flex flex-wrap gap-2">
                 {selectedPredicates.map(predicate => (
-                  <div 
-                    key={predicate.k_number} 
+                  <div
+                    key={predicate.k_number}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-green-300 text-green-800 rounded-full text-sm"
                     data-testid={`selected-predicate-${predicate.k_number}`}
                   >
                     <span className="font-medium">{predicate.k_number}</span>
-                    <span className="text-green-600">{predicate.device_name?.substring(0, 30)}</span>
+                    <span className="text-green-600">
+                      {predicate.device_name?.substring(0, 30)}
+                    </span>
                     <button
                       onClick={() => togglePredicateSelection(predicate)}
                       className="ml-1 text-red-500 hover:text-red-700"
@@ -1518,9 +1516,9 @@ const PredicateFinderPanel = ({
     profileEditing,
     deviceProfile,
     formData,
-    hasRenderDeviceProfileForm: !!renderDeviceProfileForm
+    hasRenderDeviceProfileForm: !!renderDeviceProfileForm,
   });
-  
+
   return (
     <div className="space-y-4">
       {/* Display device profile form when in editing mode */}

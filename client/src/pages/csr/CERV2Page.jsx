@@ -195,7 +195,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
   const { toast } = useToast();
 
-  // Organization and workspace IDs sourced from auth context
+  // Organization and workspace IDs — sourced from localStorage (beta bridge).
+  // TODO(tenant-integrity): Replace with server-backed tenant context from JWT claims.
+  // localStorage is a temporary beta bridge, not final tenant integrity.
   const organizationId = localStorage.getItem('currentOrganizationId') || '1';
   const clientWorkspaceId = localStorage.getItem('currentWorkspaceId') || '1';
 
@@ -1184,23 +1186,13 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         },
       };
 
-      // Generate the final 510(k) report including eSTAR package
-      const result = await FDA510kService.generateFinal510kReport(reportData);
-
-      if (result?.downloadUrl) {
-        setEstarGeneratedUrl(result.downloadUrl);
-        toast({
-          title: 'eSTAR Package Generated',
-          description: 'Your eSTAR package has been generated successfully.',
-          variant: 'default',
-        });
-      } else {
-        toast({
-          title: 'Generation Warning',
-          description: 'eSTAR package was generated but no download URL was returned.',
-          variant: 'default',
-        });
-      }
+      // eSTAR package generation — not yet available in beta
+      toast({
+        title: 'eSTAR Package Generation',
+        description:
+          'Full eSTAR package generation is under development. Use the document export options in Stage 6 for individual section exports.',
+        variant: 'default',
+      });
     } catch (error) {
       console.error('Error generating eSTAR package:', error);
       toast({
