@@ -87,7 +87,7 @@ const getJwtSecret = (): string => {
     // In development, use a default secret to avoid blocking the app
     if (ENV === 'development') {
       console.warn(`${envVar} not found, using default development secret`);
-      return 'dev-secret-key-for-local-development-only-2024';
+      return 'trialsage-dev-secret-key-change-in-production';
     }
     throw new Error(`Missing required environment variable: ${envVar}`);
   }
