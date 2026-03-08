@@ -13,7 +13,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -857,41 +858,43 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         {/* Editor */}
         <div className="flex-1 overflow-y-auto">
           {/* Bubble Menu for Selection Actions */}
-          {editor && <BubbleMenu
-            editor={editor}
-            tippyOptions={{ duration: 100 }}
-            className="bg-slate-800 rounded-lg shadow-lg px-2 py-1 flex items-center gap-1"
-          >
-            <button
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
+          {editor && (
+            <BubbleMenu
+              editor={editor}
+              tippyOptions={{ duration: 100 }}
+              className="bg-slate-800 rounded-lg shadow-lg px-2 py-1 flex items-center gap-1"
             >
-              <Bold className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
-            >
-              <Italic className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleHighlight().run()}
-              className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
-            >
-              <span className="w-4 h-4 bg-yellow-400 rounded text-xs flex items-center justify-center font-bold text-black">
-                H
-              </span>
-            </button>
-            <div className="w-px h-4 bg-slate-600 mx-1" />
-            <button
-              onClick={handleLinkToSource}
-              className="p-1.5 rounded hover:bg-slate-700 text-white flex items-center gap-1"
-              title="Link to Source"
-            >
-              <Link className="w-4 h-4" />
-              <span className="text-xs">Link</span>
-            </button>
-          </BubbleMenu>}
+              <button
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
+              >
+                <Bold className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
+              >
+                <Italic className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleHighlight().run()}
+                className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
+              >
+                <span className="w-4 h-4 bg-yellow-400 rounded text-xs flex items-center justify-center font-bold text-black">
+                  H
+                </span>
+              </button>
+              <div className="w-px h-4 bg-slate-600 mx-1" />
+              <button
+                onClick={handleLinkToSource}
+                className="p-1.5 rounded hover:bg-slate-700 text-white flex items-center gap-1"
+                title="Link to Source"
+              >
+                <Link className="w-4 h-4" />
+                <span className="text-xs">Link</span>
+              </button>
+            </BubbleMenu>
+          )}
 
           {/* Editor Content */}
           <div className="p-8 max-w-4xl mx-auto">
