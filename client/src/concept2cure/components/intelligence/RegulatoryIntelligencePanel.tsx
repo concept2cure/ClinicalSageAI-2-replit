@@ -1,11 +1,12 @@
 /**
  * RegulatoryIntelligencePanel — Unified intelligence panel for document workspace.
  *
- * 4 tabs wired to live APIs:
+ * 5 tabs wired to live APIs:
  *   Insights    → Lumen Cortex regulatory-analysis + CSR search
  *   Precedents  → Precedent Engine search + compare
  *   Risk        → Foresight AI risk-analysis/clinical + Foresight score
  *   Strategy    → Precedent Engine strategy + recommendations
+ *   Evidence    → CSR evidence search + evidence gap analysis
  *
  * Designed to sit beside the document editor as a side panel.
  */
@@ -24,6 +25,7 @@ import {
   BookOpen,
   ArrowRight,
   X,
+  FileCheck,
 } from 'lucide-react';
 import {
   useRegulatoryAnalysis,
@@ -55,13 +57,14 @@ export interface RegulatoryIntelligencePanelProps {
   onClose?: () => void;
 }
 
-type Tab = 'insights' | 'precedents' | 'risk' | 'strategy';
+type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'insights', label: 'Insights', icon: Brain },
   { id: 'precedents', label: 'Precedents', icon: Search },
   { id: 'risk', label: 'Risk', icon: ShieldAlert },
   { id: 'strategy', label: 'Strategy', icon: Target },
+  { id: 'evidence', label: 'Evidence', icon: FileCheck },
 ];
 
 // ── Helper: Score Bar ────────────────────────────────────────────────────────
@@ -150,6 +153,12 @@ export function RegulatoryIntelligencePanel({
           deviceClass: deviceClass || '',
         }
       : null
+  );
+
+  // ── Evidence state ─────────────────────────────────────────────────────
+  const [evidenceQuery, setEvidenceQuery] = useState('');
+  const evidenceSearch = useCSRSearch(
+    evidenceQuery.length >= 3 ? { query_text: evidenceQuery, limit: 10 } : null
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────
@@ -761,6 +770,154 @@ export function RegulatoryIntelligencePanel({
               <p className="text-[11px] text-zinc-400 italic text-center py-4">
                 Set submission type and indication to generate strategy recommendations.
               </p>
+            )}
+          </div>
+        )}
+
+        {/* ── EVIDENCE TAB ─────────────────────────────────────────── */}
+        {activeTab === 'evidence' && (
+          <div className="space-y-3">
+            {/* Evidence search */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-zinc-400" />
+              <input
+                type="text"
+                value={evidenceQuery}
+                onChange={e => setEvidenceQuery(e.target.value)}
+                placeholder="Search clinical evidence (CSRs, studies)..."
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white"
+              />
+            </div>
+
+            {/* CSR search results from auto-query (indication-based) */}
+            {csrSearch.data && csrSearch.data.length > 0 && !evidenceQuery && (
+              <div>
+                <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+                  Relevant CSR Evidence ({csrSearch.data.length})
+                </span>
+                <div className="mt-1.5 space-y-1.5">
+                  {csrSearch.data.map((csr, i) => (
+                    <div
+                      key={csr.id || i}
+                      className="p-2.5 border border-zinc-100 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-[11px] font-semibold text-zinc-800 leading-tight">
+                          {csr.title}
+                        </span>
+                        {csr.relevance_score != null && (
+                          <span className="text-[10px] text-blue-600 font-medium shrink-0">
+                            {Math.round(csr.relevance_score * 100)}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-500">
+                        {csr.phase && <span>Phase {csr.phase}</span>}
+                        {csr.indication && <span>· {csr.indication}</span>}
+                        {csr.outcome && (
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${
+                              csr.outcome.toLowerCase().includes('positive') ||
+                              csr.outcome.toLowerCase().includes('success')
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {csr.outcome}
+                          </span>
+                        )}
+                      </div>
+                      {csr.sponsor && (
+                        <div className="text-[10px] text-zinc-400 mt-1">{csr.sponsor}</div>
+                      )}
+                      {csr.summary && (
+                        <p className="text-[10px] text-zinc-500 mt-1 line-clamp-2">{csr.summary}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Manual search results */}
+            {evidenceQuery.length >= 3 && (
+              <div>
+                {evidenceSearch.isLoading && (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-4 h-4 animate-spin text-zinc-400 mr-2" />
+                    <span className="text-[11px] text-zinc-400">Searching evidence...</span>
+                  </div>
+                )}
+                {evidenceSearch.data && evidenceSearch.data.length > 0 && (
+                  <>
+                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+                      Search Results ({evidenceSearch.data.length})
+                    </span>
+                    <div className="mt-1.5 space-y-1.5">
+                      {evidenceSearch.data.map((csr, i) => (
+                        <div
+                          key={csr.id || i}
+                          className="p-2.5 border border-zinc-100 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-[11px] font-semibold text-zinc-800 leading-tight">
+                              {csr.title}
+                            </span>
+                            {csr.relevance_score != null && (
+                              <span className="text-[10px] text-blue-600 font-medium shrink-0">
+                                {Math.round(csr.relevance_score * 100)}%
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-500">
+                            {csr.phase && <span>Phase {csr.phase}</span>}
+                            {csr.indication && <span>· {csr.indication}</span>}
+                            {csr.outcome && (
+                              <span
+                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${
+                                  csr.outcome.toLowerCase().includes('positive') ||
+                                  csr.outcome.toLowerCase().includes('success')
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}
+                              >
+                                {csr.outcome}
+                              </span>
+                            )}
+                          </div>
+                          {csr.sample_size && (
+                            <div className="text-[10px] text-zinc-400 mt-1">
+                              N={csr.sample_size} {csr.sponsor ? `· ${csr.sponsor}` : ''}
+                            </div>
+                          )}
+                          {csr.summary && (
+                            <p className="text-[10px] text-zinc-500 mt-1 line-clamp-2">
+                              {csr.summary}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {evidenceSearch.data &&
+                  evidenceSearch.data.length === 0 &&
+                  !evidenceSearch.isLoading && (
+                    <p className="text-[11px] text-zinc-400 italic text-center py-4">
+                      No evidence found for "{evidenceQuery}"
+                    </p>
+                  )}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!evidenceQuery && (!csrSearch.data || csrSearch.data.length === 0) && (
+              <div className="text-center py-6">
+                <BookOpen className="w-8 h-8 mx-auto text-zinc-300 mb-2" />
+                <p className="text-[11px] text-zinc-400">
+                  Search 779+ clinical study reports or set an indication to auto-discover evidence.
+                </p>
+              </div>
             )}
           </div>
         )}

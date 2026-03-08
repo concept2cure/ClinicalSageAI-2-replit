@@ -8,8 +8,9 @@
  * - DOCX Export → POST /api/concept2cure/documents/generate (via chat tool) + download
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import UnifiedDocumentEditor from './UnifiedDocumentEditor';
+import { cn } from '@/lib/utils';
 import {
   FileText,
   Plus,
@@ -83,7 +84,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
 
   // ── Claim checker (Precedent Engine) ─────────────────────────────────────
   const [claimResult, setClaimResult] = useState<ClaimCheckResult | null>(null);
+  const [claimStatus, setClaimStatus] = useState<
+    'idle' | 'checking' | 'supported' | 'needs-evidence'
+  >('idle');
   const claimCheckMutation = useClaimCheck();
+  const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Intelligence panel toggle ──────────────────────────────────────────
   const [showIntelPanel, setShowIntelPanel] = useState(false);
@@ -98,11 +103,39 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
     if (!text || text.length < 20) return;
     // Use first 500 chars as the claim to check
     const claim = text.slice(0, 500);
+    setClaimStatus('checking');
     claimCheckMutation.mutate(
       { claim, submissionType: submissionType || '510(k)' },
-      { onSuccess: data => setClaimResult(data) }
+      {
+        onSuccess: data => {
+          setClaimResult(data);
+          setClaimStatus(data.supported ? 'supported' : 'needs-evidence');
+        },
+        onError: () => setClaimStatus('idle'),
+      }
     );
   }, [activeArtifact, submissionType, claimCheckMutation]);
+
+  // ── Debounced live claim monitoring ──────────────────────────────────────
+  const lastContentRef = useRef<string>('');
+  useEffect(() => {
+    if (!activeArtifact?.content) return;
+    const text = activeArtifact.content
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    // Only trigger if content substantially changed (>30 chars difference)
+    if (Math.abs(text.length - lastContentRef.current.length) < 30) return;
+    lastContentRef.current = text;
+    if (text.length < 50) return;
+    if (claimTimerRef.current) clearTimeout(claimTimerRef.current);
+    claimTimerRef.current = setTimeout(() => {
+      handleClaimCheck();
+    }, 3000);
+    return () => {
+      if (claimTimerRef.current) clearTimeout(claimTimerRef.current);
+    };
+  }, [activeArtifact?.content, handleClaimCheck]);
 
   // ── Load artifacts ───────────────────────────────────────────────────────
   const loadArtifacts = useCallback(async () => {
@@ -435,18 +468,37 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
             Export DOCX
           </button>
 
-          {/* Claim Check (Precedent Engine) */}
+          {/* Claim Check (Precedent Engine) — live monitoring indicator */}
           <button
             onClick={handleClaimCheck}
             disabled={claimCheckMutation.isPending || !activeArtifact?.content}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100 disabled:opacity-50"
+            className={cn(
+              'flex items-center gap-1 px-2 py-1 text-xs rounded-md disabled:opacity-50',
+              claimStatus === 'supported'
+                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                : claimStatus === 'needs-evidence'
+                  ? 'bg-red-50 text-red-700 hover:bg-red-100'
+                  : claimStatus === 'checking'
+                    ? 'bg-amber-50 text-amber-600'
+                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+            )}
           >
-            {claimCheckMutation.isPending ? (
+            {claimStatus === 'checking' ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : claimStatus === 'supported' ? (
+              <CheckCircle className="w-3.5 h-3.5" />
+            ) : claimStatus === 'needs-evidence' ? (
+              <AlertTriangle className="w-3.5 h-3.5" />
             ) : (
               <ShieldCheck className="w-3.5 h-3.5" />
             )}
-            Check Claims
+            {claimStatus === 'supported'
+              ? 'Claims OK'
+              : claimStatus === 'needs-evidence'
+                ? 'Needs Evidence'
+                : claimStatus === 'checking'
+                  ? 'Checking...'
+                  : 'Check Claims'}
           </button>
 
           {/* Regulatory Intelligence Panel Toggle */}

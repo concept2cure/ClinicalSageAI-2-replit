@@ -456,6 +456,18 @@ export const ZenApp: React.FC = () => {
   );
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
 
+  // Regulatory workspace panels
+  const [regChatOpen, setRegChatOpen] = useState(true);
+  const [regArtifactsOpen, setRegArtifactsOpen] = useState(false);
+  const [regSimOpen, setRegSimOpen] = useState(false);
+  const [regChatMessage, setRegChatMessage] = useState<string | null>(null);
+  // Simulation parameters (for Foresight scenario analysis)
+  const [simParams, setSimParams] = useState({
+    sampleSize: 100,
+    phase: 'III',
+    endpoint: 'primary',
+  });
+
   // Active selection
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
@@ -1544,43 +1556,40 @@ export const ZenApp: React.FC = () => {
           {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
           {layoutMode === 'regulatory-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
+              {/* ── Full-width Regulatory Status Header ──────────────── */}
               <WorkspaceHeader
                 title="Regulatory Intelligence Workspace"
                 subtitle="Document authoring with live precedent, risk, and strategy intelligence"
                 onBack={() => setLayoutMode('assistant')}
               />
+              <div className="shrink-0 border-b border-zinc-100 bg-zinc-50/30">
+                <Suspense fallback={null}>
+                  <RegulatoryStatusCard
+                    submissionType={activeProject?.type}
+                    indication={activeProject?.description}
+                    deviceName={activeProject?.name}
+                    onOpenIntelligence={() => setLayoutMode('precedent-intelligence')}
+                  />
+                </Suspense>
+              </div>
+
+              {/* ── 3-column body: Editor | Intelligence | AI Chat ──── */}
               <div className="flex-1 flex min-h-0">
-                {/* Left: Status Card + Editor */}
-                <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
-                  {/* Status Card */}
-                  <div className="p-3 border-b border-zinc-100 bg-zinc-50/30 shrink-0">
-                    <Suspense fallback={null}>
-                      <RegulatoryStatusCard
-                        submissionType={activeProject?.type}
-                        indication={activeProject?.description}
-                        deviceName={activeProject?.name}
-                        onOpenIntelligence={() => setLayoutMode('precedent-intelligence')}
-                      />
-                    </Suspense>
-                  </div>
-                  {/* Editor */}
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <Suspense
-                      fallback={
-                        <div className="flex-1 flex items-center justify-center">
-                          <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                        </div>
-                      }
-                    >
-                      <EditorPanel
-                        projectId={activeProjectId}
-                        submissionType={activeProject?.type}
-                      />
-                    </Suspense>
-                  </div>
+                {/* Column 1: Document Editor */}
+                <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <EditorPanel projectId={activeProjectId} submissionType={activeProject?.type} />
+                  </Suspense>
                 </div>
-                {/* Right: Intelligence Panel */}
-                <div className="hidden lg:block w-80 shrink-0 border-l border-zinc-200 overflow-y-auto">
+
+                {/* Column 2: Intelligence Panel (5 tabs) */}
+                <div className="hidden lg:flex w-80 shrink-0 border-l border-zinc-200 flex-col min-h-0 overflow-y-auto">
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center h-full">
@@ -1596,7 +1605,238 @@ export const ZenApp: React.FC = () => {
                     />
                   </Suspense>
                 </div>
+
+                {/* Column 3: AI Analyst Chat */}
+                {regChatOpen && (
+                  <div className="hidden xl:flex w-80 shrink-0 border-l border-zinc-200 flex-col min-h-0">
+                    <div className="flex items-center justify-between h-10 px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+                      <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                        AI Analyst
+                      </span>
+                      <button
+                        onClick={() => setRegChatOpen(false)}
+                        className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-hidden">
+                      <ZenChat
+                        projectId={activeProjectId}
+                        projectName={activeProject?.name}
+                        submissionType={activeProject?.type}
+                        threadId={activeThreadId}
+                        greeting={`AI Analyst ready. Working on ${activeProject?.name || 'your project'} (${activeProject?.type || 'submission'}).`}
+                        suggestedActions={[
+                          'Summarize evidence for this indication',
+                          'Draft executive summary',
+                          'Identify regulatory gaps',
+                          'Compare with predicate devices',
+                        ]}
+                        initialMessage={regChatMessage}
+                        onNavigate={(path: string) => {
+                          try {
+                            const params = new URLSearchParams(
+                              new URL(path, window.location.origin).search
+                            );
+                            const p = params.get('panel') as ToolPanel | null;
+                            if (p && p in TOOL_PANELS) {
+                              setActiveToolPanel(p);
+                              return;
+                            }
+                          } catch (_) {
+                            /* fallback */
+                          }
+                        }}
+                        onThreadChange={tid => {
+                          handleThreadChange(tid);
+                          if (regChatMessage) setRegChatMessage(null);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* ── Bottom panels toggle bar ────────────────────────── */}
+              <div className="shrink-0 flex items-center gap-1 px-3 py-1.5 border-t border-zinc-200 bg-zinc-50/60">
+                {!regChatOpen && (
+                  <button
+                    onClick={() => setRegChatOpen(true)}
+                    className="flex items-center gap-1 px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-100 rounded-md"
+                  >
+                    <MessageSquare className="w-3 h-3" /> AI Chat
+                  </button>
+                )}
+                <button
+                  onClick={() => setRegArtifactsOpen(!regArtifactsOpen)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 text-[11px] rounded-md',
+                    regArtifactsOpen
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-zinc-600 hover:bg-zinc-100'
+                  )}
+                >
+                  <Layers className="w-3 h-3" /> Artifacts
+                </button>
+                <button
+                  onClick={() => setRegSimOpen(!regSimOpen)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 text-[11px] rounded-md',
+                    regSimOpen ? 'bg-violet-100 text-violet-700' : 'text-zinc-600 hover:bg-zinc-100'
+                  )}
+                >
+                  <BarChart2 className="w-3 h-3" /> Simulation
+                </button>
+              </div>
+
+              {/* ── Artifacts / Reports Row ─────────────────────────── */}
+              {regArtifactsOpen && (
+                <div className="shrink-0 border-t border-zinc-200 bg-white">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 bg-zinc-50/50">
+                    <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-blue-500" />
+                      Reports &amp; Artifacts
+                    </span>
+                    <button
+                      onClick={() => setRegArtifactsOpen(false)}
+                      className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="p-3 max-h-48 overflow-y-auto">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {[
+                        {
+                          label: 'Regulatory Strategy Report',
+                          icon: Target,
+                          color: 'text-violet-600 bg-violet-50',
+                          prompt: `Generate a comprehensive Regulatory Strategy Report for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include recommended pathway, key risks, timeline, and testing requirements.`,
+                        },
+                        {
+                          label: 'Risk Assessment Summary',
+                          icon: ShieldCheck,
+                          color: 'text-amber-600 bg-amber-50',
+                          prompt: `Generate a Risk Assessment Summary for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include risk categories, severity ratings, mitigation strategies, and go/no-go recommendation.`,
+                        },
+                        {
+                          label: 'Precedent Analysis Package',
+                          icon: BookOpen,
+                          color: 'text-blue-600 bg-blue-50',
+                          prompt: `Generate a Precedent Analysis Package for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include related clearances, comparison table, and regulatory pathway analysis.`,
+                        },
+                        {
+                          label: 'Clinical Evidence Binder',
+                          icon: ClipboardCheck,
+                          color: 'text-emerald-600 bg-emerald-50',
+                          prompt: `Generate a Clinical Evidence Binder summary for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include evidence sources, study summaries, gap analysis, and clinical data requirements.`,
+                        },
+                      ].map((item, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setRegChatMessage(item.prompt);
+                            setRegChatOpen(true);
+                            setRegArtifactsOpen(false);
+                          }}
+                          className="flex items-center gap-2 p-2.5 rounded-lg border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50 transition-colors text-left"
+                        >
+                          <item.icon className={`w-4 h-4 shrink-0 ${item.color.split(' ')[0]}`} />
+                          <div>
+                            <span className="text-[11px] font-medium text-zinc-700 block leading-tight">
+                              {item.label}
+                            </span>
+                            <span className="text-[10px] text-zinc-400">Generate</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Simulation / Scenario Row ───────────────────────── */}
+              {regSimOpen && (
+                <div className="shrink-0 border-t border-zinc-200 bg-white">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 bg-zinc-50/50">
+                    <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+                      <BarChart2 className="w-3.5 h-3.5 text-violet-500" />
+                      Scenario Simulation
+                    </span>
+                    <button
+                      onClick={() => setRegSimOpen(false)}
+                      className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="p-3 max-h-48 overflow-y-auto">
+                    <div className="flex flex-wrap gap-3 items-end">
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block mb-1">
+                          Sample Size
+                        </label>
+                        <input
+                          type="number"
+                          value={simParams.sampleSize}
+                          onChange={e =>
+                            setSimParams(p => ({ ...p, sampleSize: Number(e.target.value) || 100 }))
+                          }
+                          className="w-24 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block mb-1">
+                          Phase
+                        </label>
+                        <select
+                          value={simParams.phase}
+                          onChange={e => setSimParams(p => ({ ...p, phase: e.target.value }))}
+                          className="w-20 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500/30 bg-white"
+                        >
+                          <option value="I">I</option>
+                          <option value="II">II</option>
+                          <option value="III">III</option>
+                          <option value="IV">IV</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block mb-1">
+                          Endpoint
+                        </label>
+                        <select
+                          value={simParams.endpoint}
+                          onChange={e => setSimParams(p => ({ ...p, endpoint: e.target.value }))}
+                          className="w-28 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500/30 bg-white"
+                        >
+                          <option value="primary">Primary</option>
+                          <option value="secondary">Secondary</option>
+                          <option value="composite">Composite</option>
+                          <option value="surrogate">Surrogate</option>
+                        </select>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setRegChatMessage(
+                            `Run a Foresight simulation for ${activeProject?.name || 'this project'} with Phase ${simParams.phase}, sample size ${simParams.sampleSize}, ${simParams.endpoint} endpoint. Predict success probability and identify key risk factors.`
+                          );
+                          setRegChatOpen(true);
+                          setRegSimOpen(false);
+                        }}
+                        className="px-3 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700 font-medium"
+                      >
+                        Run Simulation
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-zinc-400 mt-2">
+                      Vary parameters to predict success probability via Foresight AI. Results
+                      appear in the Risk tab.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
