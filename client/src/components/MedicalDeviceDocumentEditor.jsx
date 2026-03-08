@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
@@ -113,6 +114,8 @@ const MedicalDeviceDocumentEditor = ({
   loadingSectionsExternal = null, // External loading state map { [sectionId]: boolean }
 }) => {
   const { toast } = useToast();
+  const { currentOrganization } = useTenantContext();
+  const orgId = String(currentOrganization?.id || '1');
   const editorRef = useRef(null);
   const contentRef = useRef(null);
 
@@ -2097,7 +2100,7 @@ const MedicalDeviceDocumentEditor = ({
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-organization-id': localStorage.getItem('organizationId') || '1',
+              'x-organization-id': orgId,
             },
             body: JSON.stringify(payload),
           });
@@ -2861,7 +2864,7 @@ ${sections}
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-Id': localStorage.getItem('organizationId') || 'default',
+          'X-Tenant-Id': orgId,
         },
         body: JSON.stringify({
           meta: {

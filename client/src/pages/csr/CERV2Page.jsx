@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Safely handle LumenAiAssistant context access with fallbacks
 import { useLumenAiAssistant } from '@/contexts/LumenAiAssistantContext';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { useToast } from '@/components/ui/toaster';
 import { queryClient } from '@/lib/queryClient';
 import SharePointFileManager from '@/components/sharepoint/SharePointFileManager';
@@ -195,11 +196,11 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
   const { toast } = useToast();
 
-  // Organization and workspace IDs — sourced from localStorage (beta bridge).
-  // TODO(tenant-integrity): Replace with server-backed tenant context from JWT claims.
-  // localStorage is a temporary beta bridge, not final tenant integrity.
-  const organizationId = localStorage.getItem('currentOrganizationId') || '1';
-  const clientWorkspaceId = localStorage.getItem('currentWorkspaceId') || '1';
+  // Organization and workspace IDs — sourced from DB-backed TenantContext.
+  // TenantProvider loads orgs from /api/tenants on mount and auto-selects.
+  const { currentOrganization, currentClientWorkspace } = useTenantContext();
+  const organizationId = String(currentOrganization?.id || '1');
+  const clientWorkspaceId = String(currentClientWorkspace?.id || '1');
 
   // Multi-Project Management State
   const [allProjects, setAllProjects] = useState([]);
@@ -407,6 +408,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         workflowStep,
         documentType,
         cerv2DocType: selectedDocType,
+        reviewSignOff: { status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' },
       },
     };
 
@@ -490,6 +492,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       setComplianceScore(project.state.complianceScore || null);
       setDocumentType(project.state.documentType || '510k');
       setSelectedDocType(project.state.cerv2DocType || 'cerv2_510k');
+      // Restore review/sign-off from project state
+      if (project.state.reviewSignOff) {
+        setReviewSignOff(project.state.reviewSignOff);
+      } else {
+        setReviewSignOff({ status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' });
+      }
     }
 
     toast({
@@ -519,6 +527,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             workflowStep,
             documentType,
             cerv2DocType: selectedDocType,
+            reviewSignOff,
           },
         };
       }
@@ -528,6 +537,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     setAllProjects(updatedProjects);
     saveAllProjects(updatedProjects);
   };
+
+  // Auto-save project state when review/sign-off changes
+  useEffect(() => {
+    if (currentProjectId && reviewSignOff) {
+      saveCurrentProjectState();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewSignOff]);
 
   const deleteProject = projectId => {
     // Use functional update to avoid stale state issues
@@ -587,16 +604,12 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [complianceScore, setComplianceScore] = useState(null);
   const [submissionReady, setSubmissionReady] = useState(false);
 
-  // Review & sign-off state
-  const [reviewSignOff, setReviewSignOff] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cerv2_review_signoff');
-      return saved
-        ? JSON.parse(saved)
-        : { status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' };
-    } catch {
-      return { status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' };
-    }
+  // Review & sign-off state — persisted in project state (saved via saveCurrentProjectState)
+  const [reviewSignOff, setReviewSignOff] = useState({
+    status: 'draft',
+    reviewedBy: null,
+    reviewedAt: null,
+    notes: '',
   });
 
   // eSTAR specific state variables are defined above
@@ -4735,6 +4748,26 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
             </CardContent>
           </Card>
 
+          {/* Beta Output Capability Summary */}
+          <Alert className="border-blue-200 bg-blue-50">
+            <AlertTitle className="text-sm font-semibold text-blue-900">
+              Output Capabilities — Beta
+            </AlertTitle>
+            <AlertDescription className="text-xs text-blue-800 mt-1 space-y-1">
+              <p>
+                ✅ <strong>Available:</strong> Section-level PDF/DOCX export via document editor.
+                AI-assisted section drafting.
+              </p>
+              <p>
+                🔧 <strong>Under development:</strong> Full eSTAR package generation and automated
+                RTA checklist validation.
+              </p>
+              <p>
+                ⏳ <strong>Not yet implemented:</strong> Direct FDA eSubmitter portal integration.
+              </p>
+            </AlertDescription>
+          </Alert>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -4778,7 +4811,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           notes: '',
                         };
                         setReviewSignOff(updated);
-                        localStorage.setItem('cerv2_review_signoff', JSON.stringify(updated));
                       }}
                     >
                       Revoke Approval
@@ -4815,7 +4847,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       onClick={() => {
                         const updated = { ...reviewSignOff, status: 'in-review' };
                         setReviewSignOff(updated);
-                        localStorage.setItem('cerv2_review_signoff', JSON.stringify(updated));
                         toast({
                           title: 'Marked for Review',
                           description: 'Submission marked as in-review.',
@@ -4842,7 +4873,6 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                           reviewedAt: new Date().toISOString(),
                         };
                         setReviewSignOff(updated);
-                        localStorage.setItem('cerv2_review_signoff', JSON.stringify(updated));
                         toast({
                           title: 'Approved',
                           description: 'Submission approved for FDA portal.',

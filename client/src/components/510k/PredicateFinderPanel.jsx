@@ -154,6 +154,8 @@ const PredicateFinderPanel = ({
   const [recoveryAttempted, setRecoveryAttempted] = useState(false);
   const [showRecoveryUI, setShowRecoveryUI] = useState(false);
   const [errorState, setErrorState] = useState(null);
+  // Shadow Service health status: 'checking' | 'available' | 'unavailable'
+  const [shadowServiceStatus, setShadowServiceStatus] = useState('checking');
 
   const [formData, setFormData] = useState({
     deviceName: deviceProfile?.deviceName || '',
@@ -167,6 +169,25 @@ const PredicateFinderPanel = ({
   });
 
   const { toast } = useToast();
+
+  // Check Shadow Service health on mount
+  useEffect(() => {
+    let cancelled = false;
+    const checkHealth = async () => {
+      try {
+        const res = await fetch('/api/predicate-intelligence/health');
+        if (!cancelled) {
+          setShadowServiceStatus(res.ok ? 'available' : 'unavailable');
+        }
+      } catch {
+        if (!cancelled) setShadowServiceStatus('unavailable');
+      }
+    };
+    checkHealth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Initialize form data from device profile when component mounts or profile changes
   useEffect(() => {
@@ -966,6 +987,12 @@ const PredicateFinderPanel = ({
               </div>
 
               <div className="flex items-center space-x-2">
+                {shadowServiceStatus === 'unavailable' && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Predicate service offline — cached results available
+                  </Badge>
+                )}
                 <Button
                   onClick={searchPredicateDevices}
                   disabled={isSearching}
