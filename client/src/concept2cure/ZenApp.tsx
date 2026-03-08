@@ -126,6 +126,34 @@ const DossierNavigatorStandalone = lazy(() =>
   }))
 );
 
+// Precedent Intelligence Dashboard (live Precedent Engine)
+const PrecedentIntelligenceDashboard = lazy(() =>
+  import('./components/precedent/PrecedentIntelligenceDashboard').then(m => ({
+    default: m.PrecedentIntelligenceDashboard,
+  }))
+);
+
+// Regulatory Intelligence Panel (Lumen + Foresight + CSR + Precedents)
+const RegulatoryIntelligencePanel = lazy(() =>
+  import('./components/intelligence/RegulatoryIntelligencePanel').then(m => ({
+    default: m.RegulatoryIntelligencePanel,
+  }))
+);
+
+// Regulatory Status Card (dashboard widget)
+const RegulatoryStatusCard = lazy(() =>
+  import('./components/intelligence/RegulatoryStatusCard').then(m => ({
+    default: m.RegulatoryStatusCard,
+  }))
+);
+
+// Document App Hub (tool launcher)
+const DocumentAppHub = lazy(() =>
+  import('./components/hub/DocumentAppHub').then(m => ({
+    default: m.DocumentAppHub,
+  }))
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -159,7 +187,10 @@ type LayoutMode =
   | 'medtech-dashboard'
   | 'ectd-coauthor'
   | 'cmc'
-  | 'dossier';
+  | 'dossier'
+  | 'precedent-intelligence'
+  | 'regulatory-workspace'
+  | 'app-hub';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1184,6 +1215,15 @@ export const ZenApp: React.FC = () => {
             case 'dossier':
               setLayoutMode('dossier');
               break;
+            case 'precedent-intelligence':
+              setLayoutMode('precedent-intelligence');
+              break;
+            case 'regulatory-workspace':
+              setLayoutMode('regulatory-workspace');
+              break;
+            case 'app-hub':
+              setLayoutMode('app-hub');
+              break;
             case 'mission-control':
               setLayoutMode('mission-control');
               break;
@@ -1405,6 +1445,123 @@ export const ZenApp: React.FC = () => {
                 >
                   <DossierNavigatorStandalone />
                 </Suspense>
+              </div>
+            </div>
+          )}
+
+          {/* ── Precedent Intelligence (live Precedent Engine) ──────────────── */}
+          {layoutMode === 'precedent-intelligence' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Precedent Intelligence"
+                subtitle="Search · Compare · Risk Analysis · Strategy — live FDA precedent data"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Precedent Intelligence...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <PrecedentIntelligenceDashboard
+                    projectSubmissionType={activeProject?.type}
+                    projectDeviceName={activeProject?.name}
+                    projectIndication={activeProject?.description}
+                    onNavigateToEditor={() => setLayoutMode('editor')}
+                  />
+                </Suspense>
+              </div>
+            </div>
+          )}
+
+          {/* ── Document App Hub (tool launcher) ───────────────────────── */}
+          {layoutMode === 'app-hub' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Document Tools"
+                subtitle={`${activeProject?.name || 'Project'} · ${activeProject?.type || 'Submission'} · All roads lead to documents`}
+                onBack={() => setLayoutMode('workspace')}
+              />
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center bg-white h-full">
+                    <div className="text-center">
+                      <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                      <p className="text-zinc-500">Loading Apps...</p>
+                    </div>
+                  </div>
+                }
+              >
+                <DocumentAppHub
+                  submissionType={activeProject?.type}
+                  projectName={activeProject?.name}
+                  onNavigate={(mode: string) => setLayoutMode(mode as LayoutMode)}
+                  onStartChat={() => setLayoutMode('workspace')}
+                />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
+          {layoutMode === 'regulatory-workspace' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Regulatory Intelligence Workspace"
+                subtitle="Document authoring with live precedent, risk, and strategy intelligence"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 flex min-h-0 overflow-hidden">
+                {/* Left: Status Card + Editor */}
+                <div className="flex-1 flex flex-col min-w-0 min-h-0">
+                  {/* Status Card */}
+                  <div className="p-3 border-b border-zinc-100 bg-zinc-50/30 shrink-0">
+                    <Suspense fallback={null}>
+                      <RegulatoryStatusCard
+                        submissionType={activeProject?.type}
+                        indication={activeProject?.description}
+                        deviceName={activeProject?.name}
+                        onOpenIntelligence={() => setLayoutMode('precedent-intelligence')}
+                      />
+                    </Suspense>
+                  </div>
+                  {/* Editor */}
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <Suspense
+                      fallback={
+                        <div className="flex-1 flex items-center justify-center">
+                          <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                        </div>
+                      }
+                    >
+                      <EditorPanel
+                        projectId={activeProjectId}
+                        submissionType={activeProject?.type}
+                      />
+                    </Suspense>
+                  </div>
+                </div>
+                {/* Right: Intelligence Panel */}
+                <div className="w-80 shrink-0 border-l border-zinc-200">
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center h-full">
+                        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <RegulatoryIntelligencePanel
+                      submissionType={activeProject?.type}
+                      indication={activeProject?.description}
+                      deviceName={activeProject?.name}
+                      phase="III"
+                    />
+                  </Suspense>
+                </div>
               </div>
             </div>
           )}
@@ -1690,7 +1847,16 @@ export const ZenApp: React.FC = () => {
                       <PenLine className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
+                  {/* Document Tools launcher */}
+                  <button
+                    onClick={() => setLayoutMode('app-hub')}
+                    title="Document Tools"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-zinc-500 hover:text-blue-700 hover:bg-blue-50 transition-colors flex-shrink-0"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span className="hidden sm:inline">Tools</span>
+                  </button>
+                  <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
                     {(['files', 'outputs', 'instructions'] as const).map(tab => {
                       const cfg = {
                         files: { icon: Upload, label: 'Files', active: 'bg-blue-50 text-blue-700' },

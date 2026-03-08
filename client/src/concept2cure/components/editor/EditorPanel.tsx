@@ -19,7 +19,17 @@ import {
   ChevronDown,
   Check,
   AlertCircle,
+  ShieldCheck,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Info,
+  Brain,
+  PanelRightClose,
 } from 'lucide-react';
+import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
+import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
+import { useGenerateDocx, downloadBlob } from '../../hooks/useDocumentFactory';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -70,6 +80,29 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
   const [showArtifactList, setShowArtifactList] = useState(true);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
+
+  // ── Claim checker (Precedent Engine) ─────────────────────────────────────
+  const [claimResult, setClaimResult] = useState<ClaimCheckResult | null>(null);
+  const claimCheckMutation = useClaimCheck();
+
+  // ── Intelligence panel toggle ──────────────────────────────────────────
+  const [showIntelPanel, setShowIntelPanel] = useState(false);
+
+  const handleClaimCheck = useCallback(() => {
+    if (!activeArtifact?.content) return;
+    // Strip HTML and extract first substantive sentence as the claim
+    const text = activeArtifact.content
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!text || text.length < 20) return;
+    // Use first 500 chars as the claim to check
+    const claim = text.slice(0, 500);
+    claimCheckMutation.mutate(
+      { claim, submissionType: submissionType || '510(k)' },
+      { onSuccess: data => setClaimResult(data) }
+    );
+  }, [activeArtifact, submissionType, claimCheckMutation]);
 
   // ── Load artifacts ───────────────────────────────────────────────────────
   const loadArtifacts = useCallback(async () => {
@@ -208,17 +241,36 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
     setAiResult(null);
   }, [aiResult, activeArtifact]);
 
-  // ── DOCX Export ──────────────────────────────────────────────────────────
+  // ── DOCX Export (real generation via knowledge-base → shadow service) ───
+  const generateDocxMutation = useGenerateDocx();
+  const [docxExporting, setDocxExporting] = useState(false);
+
   const handleExportDocx = useCallback(async () => {
     if (!activeArtifact) return;
+    setDocxExporting(true);
     try {
-      // Use the download endpoint for generated docs
+      const blob = await generateDocxMutation.mutateAsync({
+        title: activeArtifact.title,
+        content: activeArtifact.content,
+        submissionType,
+        sections: [
+          {
+            title: activeArtifact.title,
+            content: activeArtifact.content,
+            sectionCode: activeArtifact.type,
+          },
+        ],
+      });
+      const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+      downloadBlob(blob, filename);
+    } catch {
+      // Fallback: try download endpoint for pre-generated docs
       const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
       window.open(`/api/concept2cure/documents/download/${encodeURIComponent(filename)}`, '_blank');
-    } catch {
-      // silent
+    } finally {
+      setDocxExporting(false);
     }
-  }, [activeArtifact]);
+  }, [activeArtifact, submissionType, generateDocxMutation]);
 
   // ── No project selected ─────────────────────────────────────────────────
   if (!projectId) {
@@ -372,10 +424,46 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
           {/* Export DOCX */}
           <button
             onClick={handleExportDocx}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-zinc-100 text-zinc-600 rounded-md hover:bg-zinc-200"
+            disabled={docxExporting}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100 disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5" />
-            DOCX
+            {docxExporting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            Export DOCX
+          </button>
+
+          {/* Claim Check (Precedent Engine) */}
+          <button
+            onClick={handleClaimCheck}
+            disabled={claimCheckMutation.isPending || !activeArtifact?.content}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100 disabled:opacity-50"
+          >
+            {claimCheckMutation.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <ShieldCheck className="w-3.5 h-3.5" />
+            )}
+            Check Claims
+          </button>
+
+          {/* Regulatory Intelligence Panel Toggle */}
+          <button
+            onClick={() => setShowIntelPanel(!showIntelPanel)}
+            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
+              showIntelPanel
+                ? 'bg-indigo-100 text-indigo-700'
+                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+            }`}
+          >
+            {showIntelPanel ? (
+              <PanelRightClose className="w-3.5 h-3.5" />
+            ) : (
+              <Brain className="w-3.5 h-3.5" />
+            )}
+            Intelligence
           </button>
         </div>
       </div>
@@ -408,19 +496,102 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
         </div>
       )}
 
-      {/* Editor */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <UnifiedDocumentEditor
-          key={activeArtifact?.id}
-          documentId={activeArtifact?.id}
-          initialContent={activeArtifact?.content || ''}
-          documentTitle={activeArtifact?.title}
-          documentType={activeArtifact?.type}
-          submissionType={submissionType}
-          showCompliance
-          showTraceability
-          onSave={handleSave}
-        />
+      {/* Claim check results banner (Precedent Engine) */}
+      {claimResult && (
+        <div
+          className={`border-b p-3 ${claimResult.supported ? 'border-emerald-200 bg-emerald-50/80' : 'border-red-200 bg-red-50/60'}`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span
+              className={`text-xs font-semibold flex items-center gap-1 ${claimResult.supported ? 'text-emerald-800' : 'text-red-800'}`}
+            >
+              {claimResult.supported ? (
+                <CheckCircle className="w-3.5 h-3.5" />
+              ) : (
+                <AlertTriangle className="w-3.5 h-3.5" />
+              )}
+              Claim Check — {claimResult.supported ? 'Supported by Precedents' : 'Needs Evidence'}
+            </span>
+            <button
+              onClick={() => setClaimResult(null)}
+              className="px-2 py-0.5 text-[11px] bg-zinc-200 text-zinc-600 rounded hover:bg-zinc-300"
+            >
+              Dismiss
+            </button>
+          </div>
+          {claimResult.recommendation && (
+            <p className="text-xs text-zinc-700 mb-2 flex items-start gap-1">
+              <Info className="w-3 h-3 flex-shrink-0 mt-0.5 text-zinc-400" />
+              {claimResult.recommendation}
+            </p>
+          )}
+          {claimResult.warnings.length > 0 && (
+            <div className="space-y-1 mb-2">
+              {claimResult.warnings.map((w, i) => (
+                <div key={i} className="flex items-start gap-1.5 text-[11px] text-red-700">
+                  <XCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                  {w.message}
+                </div>
+              ))}
+            </div>
+          )}
+          {claimResult.suggestedCitations.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] text-zinc-500 font-medium">Suggested Citations:</span>
+              {claimResult.suggestedCitations.map((c, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-[11px] text-emerald-700">
+                  <CheckCircle className="w-3 h-3 flex-shrink-0" />
+                  {c.clearanceNumber} — {c.deviceName}
+                </div>
+              ))}
+            </div>
+          )}
+          {claimResult.precedents.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-zinc-200/50">
+              <span className="text-[10px] text-zinc-500 font-medium">
+                Related Precedents ({claimResult.precedents.length}):
+              </span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {claimResult.precedents.slice(0, 5).map((p, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-white border border-zinc-200 text-zinc-600"
+                  >
+                    {p.clearanceNumber || p.deviceName || 'Precedent'}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Editor + Intelligence Panel */}
+      <div className="flex-1 min-h-0 overflow-hidden flex">
+        <div className={`${showIntelPanel ? 'flex-1' : 'w-full'} min-h-0 overflow-hidden`}>
+          <UnifiedDocumentEditor
+            key={activeArtifact?.id}
+            documentId={activeArtifact?.id}
+            initialContent={activeArtifact?.content || ''}
+            documentTitle={activeArtifact?.title}
+            documentType={activeArtifact?.type}
+            submissionType={submissionType}
+            showCompliance
+            showTraceability
+            onSave={handleSave}
+          />
+        </div>
+        {showIntelPanel && (
+          <div className="w-80 min-w-[280px] max-w-[360px] shrink-0">
+            <RegulatoryIntelligencePanel
+              submissionType={submissionType}
+              indication={activeArtifact?.title}
+              deviceName={activeArtifact?.title}
+              documentContent={activeArtifact?.content}
+              onClose={() => setShowIntelPanel(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

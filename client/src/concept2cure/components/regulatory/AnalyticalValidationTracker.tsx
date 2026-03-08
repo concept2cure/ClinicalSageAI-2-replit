@@ -419,15 +419,17 @@ export default function AnalyticalValidationTracker() {
       setParamStatuses(stats);
 
       // Load parameter history for the selected validation
-      try {
-        const histResp = await fetch(`/api/ivdr/validations/${selected.id}/history`);
-        if (histResp.ok) {
-          const histData = await histResp.json();
-          setParamHistory(histData.history || []);
+      (async () => {
+        try {
+          const histResp = await fetch(`/api/ivdr/validations/${selected.id}/history`);
+          if (histResp.ok) {
+            const histData = await histResp.json();
+            setParamHistory(histData.history || []);
+          }
+        } catch {
+          setParamHistory([]);
         }
-      } catch {
-        setParamHistory([]);
-      }
+      })();
     }
   }, [selected]);
 

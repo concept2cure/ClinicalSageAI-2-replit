@@ -21,6 +21,9 @@ import {
   Layers,
   Stethoscope,
   FlaskConical,
+  Search,
+  ShieldAlert,
+  Brain,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -275,6 +278,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
       <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
+      {/* ── Document Tools shortcut ──────────────────────────────────── */}
+      <div className="px-3 py-1.5 flex-shrink-0">
+        <button
+          onClick={() => onNavigate?.('app-hub')}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-blue-50 hover:text-blue-700 text-sm transition-colors"
+        >
+          <Sparkles className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+          Document Tools
+        </button>
+      </div>
+
       {/* ── Workspaces / submission modules ───────────────────────────────── */}
       <div className="flex-shrink-0 px-1 pt-2 pb-1">
         <WorkspaceGroup label="Medical Device &amp; Diagnostics" defaultOpen>
@@ -288,6 +302,18 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             icon={<Stethoscope className="w-3.5 h-3.5" />}
             label="IVD / CDx Workflow"
             onClick={() => onNavigate?.('medtech-dashboard')}
+          />
+          <WorkspaceItem
+            icon={<Search className="w-3.5 h-3.5" />}
+            label="Precedent Intelligence"
+            badge="LIVE"
+            onClick={() => onNavigate?.('precedent-intelligence')}
+          />
+          <WorkspaceItem
+            icon={<Brain className="w-3.5 h-3.5" />}
+            label="Regulatory Workspace"
+            badge="NEW"
+            onClick={() => onNavigate?.('regulatory-workspace')}
           />
         </WorkspaceGroup>
         <WorkspaceGroup label="Pharma / Biotech" defaultOpen>
@@ -311,6 +337,40 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             icon={<Layers className="w-3.5 h-3.5" />}
             label="Dossier Navigator"
             onClick={() => onNavigate?.('dossier')}
+          />
+          <WorkspaceItem
+            icon={<ShieldAlert className="w-3.5 h-3.5" />}
+            label="Risk & Strategy"
+            onClick={() => onNavigate?.('precedent-intelligence')}
+          />
+          <WorkspaceItem
+            icon={<Brain className="w-3.5 h-3.5" />}
+            label="Regulatory Workspace"
+            badge="NEW"
+            onClick={() => onNavigate?.('regulatory-workspace')}
+          />
+        </WorkspaceGroup>
+        <WorkspaceGroup label="CRO / Contract Research" defaultOpen={false}>
+          <WorkspaceItem
+            icon={<FileText className="w-3.5 h-3.5" />}
+            label="eCTD Co-Author"
+            onClick={() => onNavigate?.('ectd-coauthor')}
+          />
+          <WorkspaceItem
+            icon={<Layers className="w-3.5 h-3.5" />}
+            label="Dossier Navigator"
+            onClick={() => onNavigate?.('dossier')}
+          />
+          <WorkspaceItem
+            icon={<Search className="w-3.5 h-3.5" />}
+            label="Precedent Intelligence"
+            onClick={() => onNavigate?.('precedent-intelligence')}
+          />
+          <WorkspaceItem
+            icon={<Brain className="w-3.5 h-3.5" />}
+            label="Regulatory Workspace"
+            badge="NEW"
+            onClick={() => onNavigate?.('regulatory-workspace')}
           />
         </WorkspaceGroup>
       </div>
@@ -387,11 +447,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-zinc-900 truncate leading-tight">{displayName}</p>
+              <p className="text-sm font-medium text-zinc-900 truncate leading-tight">
+                {displayName}
+              </p>
               {userEmail ? (
                 <p className="text-[11px] text-zinc-400 truncate leading-tight">{userEmail}</p>
               ) : (
-                <p className="text-[11px] text-zinc-400 leading-tight">Settings &amp; preferences</p>
+                <p className="text-[11px] text-zinc-400 leading-tight">
+                  Settings &amp; preferences
+                </p>
               )}
             </div>
           )}
