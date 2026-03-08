@@ -82,7 +82,6 @@ export function RegulatoryStatusCard({
           biomarkers: [],
           endpoints: [],
           sampleSize: 100,
-          organizationId: 'org_default',
         }),
       }).then(r => (r.ok ? r.json() : null)),
     ]).then(([precRes, foresightRes]) => {
@@ -126,10 +125,12 @@ export function RegulatoryStatusCard({
   return (
     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/60 to-violet-50/60">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-indigo-600" />
-          <span className="text-sm font-semibold text-zinc-800">Regulatory Status</span>
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/60 to-violet-50/60">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-zinc-800 truncate">
+            Regulatory Status
+          </span>
         </div>
         {onOpenIntelligence && (
           <button
@@ -147,7 +148,7 @@ export function RegulatoryStatusCard({
           <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
         </div>
       ) : data ? (
-        <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-zinc-100">
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-0 divide-x divide-y divide-zinc-100">
           {/* Submission Readiness */}
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
