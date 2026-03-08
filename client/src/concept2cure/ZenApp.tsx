@@ -45,6 +45,8 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
+import { useForesightPrediction, type ForesightPrediction } from './hooks/useWorkspaceIntelligence';
+import { useGenerateDocx, downloadBlob } from './hooks/useDocumentFactory';
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
@@ -82,6 +84,14 @@ import {
   Download,
 } from 'lucide-react';
 
+// Utility: instantly redirect dead layout modes to regulatory-workspace
+const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect }) => {
+  React.useEffect(() => {
+    onRedirect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+};
+
 // Lazy load the Convergent Canvas for the Sherpa System
 const ConvergentCanvas = lazy(() =>
   import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
@@ -115,10 +125,7 @@ const MedicalDeviceDashboardStandalone = lazy(() =>
 const ECTDCoAuthorStandalone = lazy(() =>
   import('./components/coauthor/eCTDCoAuthor').then(m => ({ default: m.ECTDCoAuthorStandalone }))
 );
-// CMC Wizard (Module 3 — Chemistry, Manufacturing & Controls)
-const CMCWizardStandalone = lazy(() =>
-  import('./components/cmc/CMCWizard').then(m => ({ default: m.CMCWizardStandalone }))
-);
+
 // Submission Dossier Navigator (eCTD module-by-module tracker)
 const DossierNavigatorStandalone = lazy(() =>
   import('./components/submission/DossierNavigator').then(m => ({
@@ -153,6 +160,33 @@ const DocumentAppHub = lazy(() =>
     default: m.DocumentAppHub,
   }))
 );
+
+// ─── Regulatory module lazy-loads for tool panels ─────────────────────────────
+const CAPAManagementPanel = lazy(() =>
+  import('./components/regulatory/CAPAManagement').then(m => ({ default: m.default }))
+);
+const PostMarketSurveillancePanel = lazy(() =>
+  import('./components/regulatory/PostMarketSurveillance').then(m => ({ default: m.default }))
+);
+const InspectionReadinessPanel = lazy(() =>
+  import('./components/regulatory/InspectionReadiness').then(m => ({ default: m.default }))
+);
+const ECTDNavigatorPanel = lazy(() =>
+  import('./components/regulatory/ECTDNavigator').then(m => ({ default: m.default }))
+);
+const RegulatoryIntelligenceFullPanel = lazy(() =>
+  import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
+);
+
+// Map panel keys to lazy components
+const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
+  capa: CAPAManagementPanel,
+  pms: PostMarketSurveillancePanel,
+  inspection: InspectionReadinessPanel,
+  ectd: ECTDNavigatorPanel,
+  intelligence: RegulatoryIntelligenceFullPanel,
+  'doc-editor': EditorPanel,
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -335,19 +369,30 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto zen-scroll">
-        {/* Placeholder - in production, lazy-load the actual component */}
-        <div className="flex items-center justify-center h-full text-center p-8">
-          <div>
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
-              <Icon className="w-8 h-8 text-zinc-500" />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
-            <p className="text-sm text-zinc-500 max-w-sm">
-              This module is ready. The {config.component} component will render here with full
-              functionality.
-            </p>
-          </div>
-        </div>
+          }
+        >
+          {PANEL_COMPONENTS[panel] ? (
+            (() => {
+              const PanelComponent = PANEL_COMPONENTS[panel];
+              return <PanelComponent />;
+            })()
+          ) : (
+            <div className="flex items-center justify-center h-full text-center p-8">
+              <div>
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
+                  <Icon className="w-8 h-8 text-zinc-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
+                <p className="text-sm text-zinc-500 max-w-sm">{config.title} module loading...</p>
+              </div>
+            </div>
+          )}
+        </Suspense>
       </div>
     </div>
   );
@@ -467,6 +512,12 @@ export const ZenApp: React.FC = () => {
     phase: 'III',
     endpoint: 'primary',
   });
+  // Simulation result from direct Foresight API call
+  const [simResult, setSimResult] = useState<ForesightPrediction | null>(null);
+  const foresightSim = useForesightPrediction();
+  // DOCX generation for artifacts
+  const generateDocx = useGenerateDocx();
+  const [generatingArtifact, setGeneratingArtifact] = useState<string | null>(null);
 
   // Active selection
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
@@ -602,7 +653,7 @@ export const ZenApp: React.FC = () => {
       const urlProjectId = params.get('projectId');
       if (urlProjectId) {
         setActiveProjectId(urlProjectId);
-        setLayoutMode('workspace');
+        setLayoutMode('regulatory-workspace');
       }
     } catch (_) {
       /* ignore */
@@ -614,7 +665,10 @@ export const ZenApp: React.FC = () => {
   useEffect(() => {
     try {
       const url = new URL(window.location.href);
-      if (layoutMode === 'workspace' && activeProjectId) {
+      if (
+        (layoutMode === 'workspace' || layoutMode === 'regulatory-workspace') &&
+        activeProjectId
+      ) {
         url.searchParams.set('projectId', activeProjectId);
       } else {
         url.searchParams.delete('projectId');
@@ -629,7 +683,7 @@ export const ZenApp: React.FC = () => {
     // Clear active conversation/thread and enter workspace/assistant
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
-    setLayoutMode(activeProjectId ? 'workspace' : 'assistant');
+    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'assistant');
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
@@ -1034,8 +1088,8 @@ export const ZenApp: React.FC = () => {
     () => [
       {
         id: 'action-compile-section',
-        name: `Advance ${primaryObjective.toLowerCase()}`,
-        description: `Progress ${primaryObjective.toLowerCase()} with evidence alignment.`,
+        name: `Advance ${(primaryObjective || 'submission').toLowerCase()}`,
+        description: `Progress ${(primaryObjective || 'submission').toLowerCase()} with evidence alignment.`,
         stepType: 'TASK' as const,
         status: 'READY' as const,
         workflowName: 'Priority Objectives',
@@ -1214,32 +1268,18 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('analytics');
               break;
             // ── Regulatory module routes ──────────────────────────────
+            // All module routes consolidate to the unified workspace
             case 'ind-workspace':
-              setLayoutMode('ind-workspace');
-              break;
             case 'medtech-dashboard':
-              setLayoutMode('medtech-dashboard');
-              break;
             case 'ectd-coauthor':
-              setLayoutMode('ectd-coauthor');
-              break;
-            case 'cmc':
-              setLayoutMode('cmc');
-              break;
             case 'dossier':
-              setLayoutMode('dossier');
-              break;
             case 'submission-workspace':
-              setLayoutMode('submission-workspace');
-              break;
             case 'precedent-intelligence':
-              setLayoutMode('precedent-intelligence');
+            case 'app-hub':
+              setLayoutMode('regulatory-workspace');
               break;
             case 'regulatory-workspace':
               setLayoutMode('regulatory-workspace');
-              break;
-            case 'app-hub':
-              setLayoutMode('app-hub');
               break;
             case 'mission-control':
               setLayoutMode('mission-control');
@@ -1332,8 +1372,8 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* IND Filing Workspace */}
-          {layoutMode === 'ind-workspace' && (
+          {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
+          {false && layoutMode === 'ind-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title={submissionWorkspaceLabel}
@@ -1371,7 +1411,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Medical Device & Diagnostics Dashboard ──────────────────────── */}
-          {layoutMode === 'medtech-dashboard' && (
+          {false && layoutMode === 'medtech-dashboard' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title="Medical Device & Diagnostics"
@@ -1396,7 +1436,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
-          {layoutMode === 'ectd-coauthor' && (
+          {false && layoutMode === 'ectd-coauthor' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title="eCTD Co-Author"
@@ -1420,33 +1460,8 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── CMC Wizard (Chemistry, Manufacturing & Controls — Module 3) ── */}
-          {layoutMode === 'cmc' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              <WorkspaceHeader
-                title="CMC Module 3"
-                subtitle="Chemistry, Manufacturing & Controls · ICH Q3A / Q1A / Q6B"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-green-500 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading CMC Wizard...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <CMCWizardStandalone />
-                </Suspense>
-              </div>
-            </div>
-          )}
-
           {/* ── Submission Dossier Navigator (eCTD module tracker) ───────────── */}
-          {layoutMode === 'dossier' && (
+          {false && layoutMode === 'dossier' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title="Dossier Navigator"
@@ -1471,7 +1486,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Submission Workspace (eCTD dossier + filing) ────────────── */}
-          {layoutMode === 'submission-workspace' && (
+          {false && layoutMode === 'submission-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title="Submission Workspace"
@@ -1496,7 +1511,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Precedent Intelligence (live Precedent Engine) ──────────────── */}
-          {layoutMode === 'precedent-intelligence' && (
+          {false && layoutMode === 'precedent-intelligence' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title="Precedent Intelligence"
@@ -1526,7 +1541,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Document App Hub (tool launcher) ───────────────────────── */}
-          {layoutMode === 'app-hub' && (
+          {false && layoutMode === 'app-hub' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <WorkspaceHeader
                 title="Document Tools"
@@ -1553,15 +1568,70 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* Redirect dead module routes to unified workspace */}
+          {[
+            'ind-workspace',
+            'medtech-dashboard',
+            'ectd-coauthor',
+            'dossier',
+            'submission-workspace',
+            'precedent-intelligence',
+            'app-hub',
+            'workspace',
+            'cmc',
+          ].includes(layoutMode) && (
+            <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
+          )}
+
           {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
           {layoutMode === 'regulatory-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               {/* ── Full-width Regulatory Status Header ──────────────── */}
-              <WorkspaceHeader
-                title="Regulatory Intelligence Workspace"
-                subtitle="Document authoring with live precedent, risk, and strategy intelligence"
-                onBack={() => setLayoutMode('assistant')}
-              />
+              {(() => {
+                const type = activeProject?.type;
+                const workspaceConfig: Record<string, { title: string; subtitle: string }> = {
+                  IND: {
+                    title: 'IND Strategy Workspace',
+                    subtitle:
+                      'Investigational New Drug application — preclinical, CMC, clinical protocol',
+                  },
+                  '510K': {
+                    title: '510(k) Submission Workspace',
+                    subtitle:
+                      'Premarket notification — predicate comparison, substantial equivalence, performance testing',
+                  },
+                  NDA: {
+                    title: 'NDA Workspace',
+                    subtitle: 'New Drug Application — Phase III data, integrated summary, labeling',
+                  },
+                  BLA: {
+                    title: 'BLA Workspace',
+                    subtitle:
+                      'Biologics License Application — manufacturing, potency, clinical efficacy',
+                  },
+                  PMA: {
+                    title: 'PMA Workspace',
+                    subtitle:
+                      'Premarket Approval — Class III device, clinical evidence, risk-benefit',
+                  },
+                  DE_NOVO: {
+                    title: 'De Novo Workspace',
+                    subtitle: 'Novel device classification — risk assessment, special controls',
+                  },
+                };
+                const cfg = workspaceConfig[type || ''] || {
+                  title: 'Regulatory Intelligence Workspace',
+                  subtitle:
+                    'Document authoring with live precedent, risk, and strategy intelligence',
+                };
+                return (
+                  <WorkspaceHeader
+                    title={cfg.title}
+                    subtitle={cfg.subtitle}
+                    onBack={() => setLayoutMode('assistant')}
+                  />
+                );
+              })()}
               <div className="shrink-0 border-b border-zinc-100 bg-zinc-50/30">
                 <Suspense fallback={null}>
                   <RegulatoryStatusCard
@@ -1628,12 +1698,43 @@ export const ZenApp: React.FC = () => {
                         submissionType={activeProject?.type}
                         threadId={activeThreadId}
                         greeting={`AI Analyst ready. Working on ${activeProject?.name || 'your project'} (${activeProject?.type || 'submission'}).`}
-                        suggestedActions={[
-                          'Summarize evidence for this indication',
-                          'Draft executive summary',
-                          'Identify regulatory gaps',
-                          'Compare with predicate devices',
-                        ]}
+                        suggestedActions={(() => {
+                          const type = activeProject?.type;
+                          if (type === 'IND')
+                            return [
+                              'Review preclinical data package completeness',
+                              'Draft Investigator Brochure summary',
+                              'Identify CMC gaps for Phase I',
+                              'Generate clinical protocol synopsis',
+                            ];
+                          if (type === '510K')
+                            return [
+                              'Compare with predicate device',
+                              'Assess substantial equivalence',
+                              'Review performance testing requirements',
+                              'Draft SE determination rationale',
+                            ];
+                          if (type === 'NDA' || type === 'BLA')
+                            return [
+                              'Summarize Phase III efficacy data',
+                              'Draft integrated safety summary',
+                              'Review labeling requirements',
+                              'Identify post-marketing commitments',
+                            ];
+                          if (type === 'PMA')
+                            return [
+                              'Review clinical evidence for PMA',
+                              'Assess risk-benefit profile',
+                              'Draft manufacturing summary',
+                              'Identify panel meeting requirements',
+                            ];
+                          return [
+                            'Summarize evidence for this indication',
+                            'Draft executive summary',
+                            'Identify regulatory gaps',
+                            'Compare with predicate devices',
+                          ];
+                        })()}
                         initialMessage={regChatMessage}
                         onNavigate={(path: string) => {
                           try {
@@ -1713,46 +1814,86 @@ export const ZenApp: React.FC = () => {
                           label: 'Regulatory Strategy Report',
                           icon: Target,
                           color: 'text-violet-600 bg-violet-50',
-                          prompt: `Generate a comprehensive Regulatory Strategy Report for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include recommended pathway, key risks, timeline, and testing requirements.`,
+                          filename: 'Regulatory_Strategy_Report.docx',
+                          content: `<h1>Regulatory Strategy Report</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Recommended pathway, key risks, timeline, and testing requirements for regulatory submission.</p>`,
                         },
                         {
                           label: 'Risk Assessment Summary',
                           icon: ShieldCheck,
                           color: 'text-amber-600 bg-amber-50',
-                          prompt: `Generate a Risk Assessment Summary for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include risk categories, severity ratings, mitigation strategies, and go/no-go recommendation.`,
+                          filename: 'Risk_Assessment_Summary.docx',
+                          content: `<h1>Risk Assessment Summary</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Risk categories, severity ratings, mitigation strategies, and go/no-go recommendation.</p>`,
                         },
                         {
                           label: 'Precedent Analysis Package',
                           icon: BookOpen,
                           color: 'text-blue-600 bg-blue-50',
-                          prompt: `Generate a Precedent Analysis Package for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include related clearances, comparison table, and regulatory pathway analysis.`,
+                          filename: 'Precedent_Analysis_Package.docx',
+                          content: `<h1>Precedent Analysis Package</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Related clearances, comparison table, and regulatory pathway analysis.</p>`,
                         },
                         {
                           label: 'Clinical Evidence Binder',
                           icon: ClipboardCheck,
                           color: 'text-emerald-600 bg-emerald-50',
-                          prompt: `Generate a Clinical Evidence Binder summary for ${activeProject?.name || 'this project'} (${activeProject?.type || 'submission'}). Include evidence sources, study summaries, gap analysis, and clinical data requirements.`,
+                          filename: 'Clinical_Evidence_Binder.docx',
+                          content: `<h1>Clinical Evidence Binder</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Evidence sources, study summaries, gap analysis, and clinical data requirements.</p>`,
                         },
                       ].map((item, i) => (
                         <button
                           key={i}
-                          onClick={() => {
-                            setRegChatMessage(item.prompt);
-                            setRegChatOpen(true);
-                            setRegArtifactsOpen(false);
+                          disabled={generatingArtifact === item.label}
+                          onClick={async () => {
+                            setGeneratingArtifact(item.label);
+                            try {
+                              const blob = await generateDocx.mutateAsync({
+                                title: item.label,
+                                content: item.content,
+                                submissionType: activeProject?.type,
+                                metadata: {
+                                  project: activeProject?.name || '',
+                                  generatedAt: new Date().toISOString(),
+                                },
+                              });
+                              downloadBlob(blob, item.filename);
+                            } catch {
+                              // Error state handled via generateDocx.isError
+                            } finally {
+                              setGeneratingArtifact(null);
+                            }
                           }}
-                          className="flex items-center gap-2 p-2.5 rounded-lg border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50 transition-colors text-left"
+                          className="flex items-center gap-2 p-2.5 rounded-lg border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50 transition-colors text-left disabled:opacity-50"
                         >
-                          <item.icon className={`w-4 h-4 shrink-0 ${item.color.split(' ')[0]}`} />
+                          {generatingArtifact === item.label ? (
+                            <Loader2 className="w-4 h-4 shrink-0 animate-spin text-zinc-400" />
+                          ) : (
+                            <item.icon
+                              className={`w-4 h-4 shrink-0 ${(item.color ?? '').split(' ')[0]}`}
+                            />
+                          )}
                           <div>
                             <span className="text-[11px] font-medium text-zinc-700 block leading-tight">
                               {item.label}
                             </span>
-                            <span className="text-[10px] text-zinc-400">Generate</span>
+                            <span className="text-[10px] text-zinc-400 flex items-center gap-0.5">
+                              {generatingArtifact === item.label ? (
+                                'Generating...'
+                              ) : (
+                                <>
+                                  <Download className="w-2.5 h-2.5" /> Download DOCX
+                                </>
+                              )}
+                            </span>
                           </div>
                         </button>
                       ))}
                     </div>
+                    {generateDocx.isError && (
+                      <div className="mt-2 p-2 rounded bg-red-50 border border-red-200 text-[10px] text-red-700">
+                        <AlertTriangle className="w-3 h-3 inline mr-1" />
+                        Generation failed:{' '}
+                        {(generateDocx.error as Error)?.message || 'Service unavailable'}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1819,21 +1960,122 @@ export const ZenApp: React.FC = () => {
                       </div>
                       <button
                         onClick={() => {
-                          setRegChatMessage(
-                            `Run a Foresight simulation for ${activeProject?.name || 'this project'} with Phase ${simParams.phase}, sample size ${simParams.sampleSize}, ${simParams.endpoint} endpoint. Predict success probability and identify key risk factors.`
+                          setSimResult(null);
+                          foresightSim.mutate(
+                            {
+                              phase: simParams.phase,
+                              indication: activeProject?.description || 'general',
+                              sampleSize: simParams.sampleSize,
+                              endpoints: [simParams.endpoint],
+                            },
+                            { onSuccess: data => setSimResult(data) }
                           );
-                          setRegChatOpen(true);
-                          setRegSimOpen(false);
                         }}
-                        className="px-3 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700 font-medium"
+                        disabled={foresightSim.isPending}
+                        className="px-3 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700 font-medium disabled:opacity-50 flex items-center gap-1"
                       >
-                        Run Simulation
+                        {foresightSim.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                        {foresightSim.isPending ? 'Running...' : 'Run Simulation'}
                       </button>
                     </div>
-                    <p className="text-[10px] text-zinc-400 mt-2">
-                      Vary parameters to predict success probability via Foresight AI. Results
-                      appear in the Risk tab.
-                    </p>
+
+                    {/* Simulation Results */}
+                    {foresightSim.isPending && (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-violet-600">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Running Foresight prediction model...
+                      </div>
+                    )}
+                    {foresightSim.isError && (
+                      <div className="mt-3 p-2 rounded bg-red-50 border border-red-200 text-xs text-red-700">
+                        <AlertTriangle className="w-3 h-3 inline mr-1" />
+                        Simulation failed:{' '}
+                        {(foresightSim.error as Error)?.message || 'Unknown error'}
+                      </div>
+                    )}
+                    {simResult && (
+                      <div className="mt-3 space-y-2">
+                        {/* Success Score */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <div className="flex justify-between text-[11px] mb-1">
+                              <span className="text-zinc-600 font-medium">Success Probability</span>
+                              <span className="font-bold text-zinc-900">
+                                {Math.round((simResult.successScore ?? 0) * 100)}%
+                              </span>
+                            </div>
+                            <div className="h-2.5 bg-zinc-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-700 ${
+                                  (simResult.successScore ?? 0) >= 0.7
+                                    ? 'bg-emerald-500'
+                                    : (simResult.successScore ?? 0) >= 0.4
+                                      ? 'bg-amber-500'
+                                      : 'bg-red-500'
+                                }`}
+                                style={{
+                                  width: `${Math.round((simResult.successScore ?? 0) * 100)}%`,
+                                }}
+                              />
+                            </div>
+                            {simResult.confidenceInterval && (
+                              <div className="text-[10px] text-zinc-400 mt-0.5">
+                                CI: {Math.round(simResult.confidenceInterval.low * 100)}% –{' '}
+                                {Math.round(simResult.confidenceInterval.high * 100)}%
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {/* Risk Factors */}
+                        {simResult.riskFactors?.length > 0 && (
+                          <div>
+                            <span className="text-[10px] font-semibold text-zinc-600 block mb-1">
+                              Risk Factors
+                            </span>
+                            <div className="space-y-1">
+                              {simResult.riskFactors.slice(0, 4).map((rf, i) => (
+                                <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                      rf.severity === 'high'
+                                        ? 'bg-red-500'
+                                        : rf.severity === 'medium'
+                                          ? 'bg-amber-500'
+                                          : 'bg-emerald-500'
+                                    }`}
+                                  />
+                                  <span className="text-zinc-700 truncate">{rf.factor}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {/* Recommendations */}
+                        {simResult.recommendations?.length > 0 && (
+                          <div>
+                            <span className="text-[10px] font-semibold text-zinc-600 block mb-1">
+                              Recommendations
+                            </span>
+                            <ul className="space-y-0.5">
+                              {simResult.recommendations.slice(0, 3).map((rec, i) => (
+                                <li
+                                  key={i}
+                                  className="text-[10px] text-zinc-600 flex items-start gap-1"
+                                >
+                                  <Sparkles className="w-3 h-3 text-violet-400 shrink-0 mt-0.5" />
+                                  <span>{rec}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {!simResult && !foresightSim.isPending && !foresightSim.isError && (
+                      <p className="text-[10px] text-zinc-400 mt-2">
+                        Vary parameters to predict success probability via Foresight AI.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -1888,112 +2130,98 @@ export const ZenApp: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Project cards */}
+                {/* Project list */}
                 {projects.filter(p => !p.archived).length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-                    {projects
-                      .filter(p => !p.archived)
-                      .map(project => {
-                        const typeColors: Record<
-                          string,
-                          { bg: string; text: string; dot: string }
-                        > = {
-                          '510K': { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
-                          IND: {
-                            bg: 'bg-violet-50',
-                            text: 'text-violet-700',
-                            dot: 'bg-violet-500',
-                          },
-                          NDA: {
-                            bg: 'bg-emerald-50',
-                            text: 'text-emerald-700',
-                            dot: 'bg-emerald-500',
-                          },
-                          BLA: { bg: 'bg-teal-50', text: 'text-teal-700', dot: 'bg-teal-500' },
-                          PMA: {
-                            bg: 'bg-orange-50',
-                            text: 'text-orange-700',
-                            dot: 'bg-orange-500',
-                          },
-                          CER: { bg: 'bg-pink-50', text: 'text-pink-700', dot: 'bg-pink-500' },
-                          MAA: {
-                            bg: 'bg-indigo-50',
-                            text: 'text-indigo-700',
-                            dot: 'bg-indigo-500',
-                          },
-                        };
-                        const tc = typeColors[project.type] ?? {
-                          bg: 'bg-zinc-50',
-                          text: 'text-zinc-600',
-                          dot: 'bg-zinc-400',
-                        };
-                        return (
-                          <button
-                            key={project.id}
-                            onClick={() => {
-                              setActiveProjectId(project.id);
-                              setLayoutMode('workspace');
-                            }}
-                            className="group text-left rounded-2xl border border-zinc-200 bg-white p-5 hover:border-blue-200 hover:shadow-md transition-all duration-150"
-                          >
-                            <div className="flex items-start justify-between mb-3">
-                              <span
-                                className={cn(
-                                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
-                                  tc.bg,
-                                  tc.text
-                                )}
+                  <div className="border border-zinc-200 rounded-lg overflow-hidden mb-10 bg-white">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-100 bg-zinc-50/60">
+                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
+                            Type
+                          </th>
+                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
+                            Project
+                          </th>
+                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">
+                            Chats
+                          </th>
+                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">
+                            Updated
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {projects
+                          .filter(p => !p.archived)
+                          .map(project => {
+                            const dotColor: Record<string, string> = {
+                              '510K': 'bg-blue-500',
+                              IND: 'bg-violet-500',
+                              NDA: 'bg-emerald-500',
+                              BLA: 'bg-teal-500',
+                              PMA: 'bg-orange-500',
+                              CER: 'bg-pink-500',
+                              MAA: 'bg-indigo-500',
+                            };
+                            return (
+                              <tr
+                                key={project.id}
+                                onClick={() => {
+                                  setActiveProjectId(project.id);
+                                  setLayoutMode('regulatory-workspace');
+                                }}
+                                className="cursor-pointer hover:bg-zinc-50 transition-colors"
                               >
-                                <span className={cn('w-1.5 h-1.5 rounded-full', tc.dot)} />
-                                {project.type}
-                              </span>
-                              {project.starred && (
-                                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                              )}
-                            </div>
-                            <h3 className="text-sm font-semibold text-zinc-900 mb-1 line-clamp-2 group-hover:text-blue-700 transition-colors">
-                              {project.name}
-                            </h3>
-                            {project.description && (
-                              <p className="text-xs text-zinc-500 line-clamp-2 mb-3">
-                                {project.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-3 text-xs text-zinc-400 mt-auto pt-2 border-t border-zinc-100">
-                              <span className="flex items-center gap-1">
-                                <MessageSquare className="w-3 h-3" />
-                                {project.conversationCount} chats
-                              </span>
-                              <span className="ml-auto">
-                                {project.lastUpdated
-                                  ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
-                                      month: 'short',
-                                      day: 'numeric',
-                                    })
-                                  : '—'}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
+                                <td className="px-4 py-2.5 whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600">
+                                    <span
+                                      className={cn(
+                                        'w-1.5 h-1.5 rounded-full',
+                                        dotColor[project.type] ?? 'bg-zinc-400'
+                                      )}
+                                    />
+                                    {project.type}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <span className="font-medium text-zinc-900">{project.name}</span>
+                                  {project.starred && (
+                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
+                                  )}
+                                  {project.description && (
+                                    <span className="block text-xs text-zinc-400 truncate max-w-md">
+                                      {project.description}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2.5 text-zinc-400 hidden sm:table-cell">
+                                  {project.conversationCount}
+                                </td>
+                                <td className="px-4 py-2.5 text-zinc-400 text-right hidden sm:table-cell">
+                                  {project.lastUpdated
+                                    ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                      })
+                                    : '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
                   /* Empty state */
-                  <div className="rounded-2xl border-2 border-dashed border-zinc-200 bg-white p-12 text-center mb-10">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-zinc-100 flex items-center justify-center">
-                      <FolderOpen className="w-6 h-6 text-zinc-400" />
-                    </div>
-                    <h3 className="text-base font-semibold text-zinc-900 mb-1">No projects yet</h3>
-                    <p className="text-sm text-zinc-500 mb-6 max-w-xs mx-auto">
-                      Create a project to organize your regulatory work — submissions, documents,
-                      and AI sessions all in one place.
-                    </p>
+                  <div className="border border-dashed border-zinc-300 bg-white px-6 py-8 text-center mb-10 rounded-lg">
+                    <FolderOpen className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
+                    <p className="text-sm text-zinc-600 mb-3">No projects yet</p>
                     <button
                       onClick={() => setNewProjectOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
                     >
-                      <Plus className="w-4 h-4" />
-                      Create your first project
+                      <Plus className="w-3.5 h-3.5" />
+                      Create first project
                     </button>
                   </div>
                 )}
@@ -2004,24 +2232,20 @@ export const ZenApp: React.FC = () => {
                     <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
                       Recent Artifacts
                     </h2>
-                    <div className="space-y-2">
+                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
                       {workspaceSummary!.recent.artifacts!.slice(0, 4).map((a: any) => (
                         <div
                           key={a.id}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-100 bg-white hover:border-zinc-200 transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 transition-colors"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
-                            <FileText className="w-4 h-4 text-violet-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-900 truncate">
-                              {a.title || a.type}
-                            </p>
-                            <p className="text-xs text-zinc-400">
-                              {a.type} · {a.status} ·{' '}
-                              {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
-                            </p>
-                          </div>
+                          <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+                          <span className="text-sm font-medium text-zinc-900 truncate flex-1">
+                            {a.title || a.type}
+                          </span>
+                          <span className="text-xs text-zinc-400 flex-shrink-0">
+                            {a.type} · {a.status} ·{' '}
+                            {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -2034,15 +2258,15 @@ export const ZenApp: React.FC = () => {
                     <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
                       Recent Conversations
                     </h2>
-                    <div className="space-y-1.5">
+                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
                       {workspaceSummary!.recent.threads!.slice(0, 5).map((t: any) => (
                         <button
                           key={t.id}
                           onClick={() => {
                             setActiveThreadId(t.id);
-                            setLayoutMode('workspace');
+                            setLayoutMode('regulatory-workspace');
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left hover:bg-zinc-100 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-zinc-50 transition-colors"
                         >
                           <MessageSquare className="w-4 h-4 text-zinc-400 flex-shrink-0" />
                           <span className="text-sm text-zinc-700 truncate">{t.title}</span>
@@ -2123,15 +2347,7 @@ export const ZenApp: React.FC = () => {
                       <PenLine className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {/* Document Tools launcher */}
-                  <button
-                    onClick={() => setLayoutMode('app-hub')}
-                    title="Document Tools"
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-zinc-500 hover:text-blue-700 hover:bg-blue-50 transition-colors flex-shrink-0"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    <span className="hidden sm:inline">Tools</span>
-                  </button>
+
                   <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
                     {(['files', 'outputs', 'instructions'] as const).map(tab => {
                       const cfg = {

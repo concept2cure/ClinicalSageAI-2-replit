@@ -56,17 +56,7 @@ const APPS: AppCard[] = [
     navigateTo: 'ectd-coauthor',
     category: 'author',
   },
-  {
-    id: 'cmc',
-    title: 'CMC Module 3',
-    description:
-      'Chemistry, Manufacturing & Controls. Data entry or file upload → Module 3 documents.',
-    icon: <Beaker className="w-5 h-5" />,
-    badge: 'M3',
-    badgeColor: 'bg-green-50 text-green-700',
-    navigateTo: 'cmc',
-    category: 'author',
-  },
+
   {
     id: 'ind-workspace',
     title: 'IND Workspace',

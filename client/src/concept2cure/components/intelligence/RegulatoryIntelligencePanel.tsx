@@ -11,7 +11,7 @@
  * Designed to sit beside the document editor as a side panel.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Brain,
   Search,
@@ -206,6 +206,19 @@ export function RegulatoryIntelligencePanel({
       { onSuccess: data => setRiskResult(data) }
     );
   }, [phase, indication, clinicalRisk]);
+
+  // ── Auto-populate on mount when context is available ────────────────────
+  const hasAutoRun = useRef(false);
+  useEffect(() => {
+    if (hasAutoRun.current) return;
+    if (!submissionType && !indication && !deviceName) return;
+    hasAutoRun.current = true;
+    // Auto-run regulatory analysis (Insights tab)
+    handleRunAnalysis();
+    // Auto-run Foresight prediction (Risk tab)
+    handleRunPrediction();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submissionType, indication, deviceName]);
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-zinc-200">
@@ -777,6 +790,104 @@ export function RegulatoryIntelligencePanel({
         {/* ── EVIDENCE TAB ─────────────────────────────────────────── */}
         {activeTab === 'evidence' && (
           <div className="space-y-3">
+            {/* Evidence Gap Analysis Summary */}
+            {(() => {
+              const required =
+                submissionType === '510K'
+                  ? [
+                      'Biocompatibility',
+                      'Performance Testing',
+                      'Predicate Comparison',
+                      'Software Validation',
+                      'Sterilization',
+                      'Shelf Life',
+                    ]
+                  : submissionType === 'IND'
+                    ? [
+                        'Preclinical Studies',
+                        'CMC Data',
+                        'Pharmacology',
+                        'Toxicology',
+                        'Clinical Protocol',
+                        'Investigator Brochure',
+                      ]
+                    : submissionType === 'NDA' || submissionType === 'BLA'
+                      ? [
+                          'Phase I Data',
+                          'Phase II Data',
+                          'Phase III Data',
+                          'Safety Database',
+                          'Efficacy Analysis',
+                          'CMC Documentation',
+                        ]
+                      : [
+                          'Clinical Data',
+                          'Safety Profile',
+                          'Efficacy Endpoints',
+                          'Manufacturing',
+                          'Labeling',
+                        ];
+              const available = csrSearch.data?.length || 0;
+              const coverageRatio = Math.min(1, available / Math.max(1, required.length));
+              const coverageColor =
+                coverageRatio >= 0.7
+                  ? 'bg-emerald-500'
+                  : coverageRatio >= 0.4
+                    ? 'bg-amber-500'
+                    : 'bg-red-500';
+              const coverageLabel =
+                coverageRatio >= 0.7 ? 'Good' : coverageRatio >= 0.4 ? 'Partial' : 'Gaps Found';
+              return (
+                <div className="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-zinc-800 flex items-center gap-1">
+                      <FileCheck className="w-3.5 h-3.5 text-blue-600" />
+                      Evidence Coverage ({submissionType || 'General'})
+                    </span>
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                        coverageRatio >= 0.7
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : coverageRatio >= 0.4
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {coverageLabel}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-zinc-200 rounded-full overflow-hidden mb-2">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${coverageColor}`}
+                      style={{ width: `${Math.round(coverageRatio * 100)}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {required.map((req, i) => {
+                      const matched = csrSearch.data?.some(
+                        c =>
+                          c.title?.toLowerCase().includes(req.toLowerCase().split(' ')[0]) ||
+                          c.summary?.toLowerCase().includes(req.toLowerCase().split(' ')[0])
+                      );
+                      return (
+                        <div key={i} className="flex items-center gap-1 text-[10px]">
+                          {matched ? (
+                            <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+                          ) : (
+                            <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                          )}
+                          <span
+                            className={matched ? 'text-zinc-600' : 'text-amber-700 font-medium'}
+                          >
+                            {req}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
             {/* Evidence search */}
             <div className="relative">
               <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-zinc-400" />

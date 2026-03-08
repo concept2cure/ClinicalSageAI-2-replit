@@ -264,7 +264,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
   const handleAcceptAI = useCallback(() => {
     if (!aiResult || !activeArtifact) return;
     // Wrap plain text result in HTML paragraphs if not already HTML
-    const htmlContent = aiResult.startsWith('<')
+    const htmlContent = aiResult?.startsWith('<')
       ? aiResult
       : aiResult
           .split('\n\n')

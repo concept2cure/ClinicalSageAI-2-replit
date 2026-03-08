@@ -13,8 +13,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import { BubbleMenu } from '@tiptap/extension-bubble-menu';
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -858,7 +857,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         {/* Editor */}
         <div className="flex-1 overflow-y-auto">
           {/* Bubble Menu for Selection Actions */}
-          <BubbleMenu
+          {editor && <BubbleMenu
             editor={editor}
             tippyOptions={{ duration: 100 }}
             className="bg-slate-800 rounded-lg shadow-lg px-2 py-1 flex items-center gap-1"
@@ -892,7 +891,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               <Link className="w-4 h-4" />
               <span className="text-xs">Link</span>
             </button>
-          </BubbleMenu>
+          </BubbleMenu>}
 
           {/* Editor Content */}
           <div className="p-8 max-w-4xl mx-auto">

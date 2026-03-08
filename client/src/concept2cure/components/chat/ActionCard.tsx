@@ -21,7 +21,7 @@ import { ArrowRight, Upload, FolderPlus, ShieldCheck, MessageSquare, Zap } from 
 export interface ActionCardDef {
   id: string;
   label: string;
-  intent: string;
+  intent?: string;
   description?: string;
   primary?: { label: string; action: string; params?: Record<string, string> };
   secondary?: Array<{ label: string; action: string }>;
@@ -39,7 +39,8 @@ export interface ActionCardProps extends ActionCardDef {
 
 // ─── Intent → icon map ───────────────────────────────────────────────────────
 
-function intentIcon(intent: string): React.ElementType {
+function intentIcon(intent?: string): React.ElementType {
+  if (!intent) return MessageSquare;
   if (intent.startsWith('vault')) return Upload;
   if (intent.startsWith('project')) return FolderPlus;
   if (intent.startsWith('validation')) return ShieldCheck;
@@ -91,9 +92,12 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const Icon = intentIcon(intent);
 
   const handlePrimary = () => {
-    const action = primary?.action || intent;
+    const action = primary?.action || intent || '';
 
-    if (action === 'vault.open_upload' || action === 'vault.upload' || action.startsWith('vault')) {
+    if (
+      action &&
+      (action === 'vault.open_upload' || action === 'vault.upload' || action.startsWith('vault'))
+    ) {
       onNavigate?.('/concept2cure?panel=vault');
       return;
     }

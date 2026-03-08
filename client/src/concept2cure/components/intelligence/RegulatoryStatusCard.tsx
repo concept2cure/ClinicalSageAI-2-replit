@@ -61,6 +61,8 @@ export function RegulatoryStatusCard({
     if (!submissionType) return;
     setLoading(true);
 
+    let cancelled = false;
+
     // Fetch both precedent count and prediction in parallel
     Promise.allSettled([
       fetch('/api/precedent-engine/search', {
@@ -85,6 +87,7 @@ export function RegulatoryStatusCard({
         }),
       }).then(r => (r.ok ? r.json() : null)),
     ]).then(([precRes, foresightRes]) => {
+      if (cancelled) return;
       const precedentsFound =
         precRes.status === 'fulfilled' && precRes.value
           ? (precRes.value.count ?? precRes.value.data?.length ?? 0)
@@ -118,6 +121,8 @@ export function RegulatoryStatusCard({
       });
       setLoading(false);
     });
+
+    return () => { cancelled = true; };
   }, [submissionType, indication, phase]);
 
   if (!submissionType) return null;

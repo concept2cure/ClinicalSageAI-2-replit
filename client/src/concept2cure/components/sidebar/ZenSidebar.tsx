@@ -281,101 +281,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
-        {/* ── Document Tools shortcut ──────────────────────────────────── */}
+        {/* ── Workspace shortcut ──────────────────────────────────── */}
         <div className="px-3 py-1.5 flex-shrink-0">
           <button
-            onClick={() => onNavigate?.('app-hub')}
+            onClick={() => onNavigate?.('regulatory-workspace')}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-blue-50 hover:text-blue-700 text-sm transition-colors"
           >
-            <Sparkles className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            Document Tools
+            <Brain className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            Workspace
           </button>
-        </div>
-
-        {/* ── Workspaces / submission modules ───────────────────────────────── */}
-        <div className="flex-shrink-0 px-1 pt-2 pb-1">
-          <WorkspaceGroup label="Medical Device &amp; Diagnostics" defaultOpen>
-            <WorkspaceItem
-              icon={<Activity className="w-3.5 h-3.5" />}
-              label="510(k) / De Novo / PMA"
-              badge="eSTAR"
-              onClick={() => onNavigate?.('medtech-dashboard')}
-            />
-            <WorkspaceItem
-              icon={<Stethoscope className="w-3.5 h-3.5" />}
-              label="IVD / CDx Workflow"
-              onClick={() => onNavigate?.('medtech-dashboard')}
-            />
-            <WorkspaceItem
-              icon={<Search className="w-3.5 h-3.5" />}
-              label="Precedent Intelligence"
-              badge="LIVE"
-              onClick={() => onNavigate?.('precedent-intelligence')}
-            />
-            <WorkspaceItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="Regulatory Workspace"
-              badge="NEW"
-              onClick={() => onNavigate?.('regulatory-workspace')}
-            />
-          </WorkspaceGroup>
-          <WorkspaceGroup label="Pharma / Biotech" defaultOpen>
-            <WorkspaceItem
-              icon={<FlaskConical className="w-3.5 h-3.5" />}
-              label="IND Workspace"
-              onClick={() => onNavigate?.('ind-workspace')}
-            />
-            <WorkspaceItem
-              icon={<FileText className="w-3.5 h-3.5" />}
-              label="eCTD Co-Author"
-              onClick={() => onNavigate?.('ectd-coauthor')}
-            />
-            <WorkspaceItem
-              icon={<Beaker className="w-3.5 h-3.5" />}
-              label="CMC Module"
-              badge="M3"
-              onClick={() => onNavigate?.('cmc')}
-            />
-            <WorkspaceItem
-              icon={<Layers className="w-3.5 h-3.5" />}
-              label="Dossier Navigator"
-              onClick={() => onNavigate?.('dossier')}
-            />
-            <WorkspaceItem
-              icon={<ShieldAlert className="w-3.5 h-3.5" />}
-              label="Risk & Strategy"
-              onClick={() => onNavigate?.('precedent-intelligence')}
-            />
-            <WorkspaceItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="Regulatory Workspace"
-              badge="NEW"
-              onClick={() => onNavigate?.('regulatory-workspace')}
-            />
-          </WorkspaceGroup>
-          <WorkspaceGroup label="CRO / Contract Research" defaultOpen={false}>
-            <WorkspaceItem
-              icon={<FileText className="w-3.5 h-3.5" />}
-              label="eCTD Co-Author"
-              onClick={() => onNavigate?.('ectd-coauthor')}
-            />
-            <WorkspaceItem
-              icon={<Layers className="w-3.5 h-3.5" />}
-              label="Dossier Navigator"
-              onClick={() => onNavigate?.('dossier')}
-            />
-            <WorkspaceItem
-              icon={<Search className="w-3.5 h-3.5" />}
-              label="Precedent Intelligence"
-              onClick={() => onNavigate?.('precedent-intelligence')}
-            />
-            <WorkspaceItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="Regulatory Workspace"
-              badge="NEW"
-              onClick={() => onNavigate?.('regulatory-workspace')}
-            />
-          </WorkspaceGroup>
         </div>
 
         <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
