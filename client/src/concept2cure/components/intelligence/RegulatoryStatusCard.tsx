@@ -50,7 +50,7 @@ interface StatusData {
 export function RegulatoryStatusCard({
   submissionType,
   indication,
-  deviceName,
+  deviceName: _deviceName,
   phase,
   onOpenIntelligence,
 }: RegulatoryStatusCardProps) {

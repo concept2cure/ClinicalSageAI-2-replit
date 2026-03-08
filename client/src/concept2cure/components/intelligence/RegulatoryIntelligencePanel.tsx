@@ -17,12 +17,9 @@ import {
   ShieldAlert,
   Target,
   Loader2,
-  ChevronRight,
   AlertTriangle,
   CheckCircle,
-  FileText,
   TrendingUp,
-  BarChart3,
   Lightbulb,
   BookOpen,
   ArrowRight,
@@ -34,7 +31,6 @@ import {
   useForesightPrediction,
   useClinicalRiskAnalysis,
   type RegulatoryAnalysisResult,
-  type CSRSearchResult,
   type ForesightPrediction,
   type ClinicalRiskResult,
 } from '../../hooks/useWorkspaceIntelligence';
@@ -44,7 +40,6 @@ import {
   usePrecedentStrategy,
   type PrecedentRecord,
   type CompareResult,
-  type StrategyResult,
 } from '../../hooks/usePrecedentEngine';
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -113,7 +108,7 @@ export function RegulatoryIntelligencePanel({
   deviceClass,
   therapeuticArea,
   phase,
-  documentContent,
+  documentContent: _documentContent,
   onClose,
 }: RegulatoryIntelligencePanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>('insights');

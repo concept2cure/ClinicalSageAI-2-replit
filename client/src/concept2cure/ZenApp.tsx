@@ -1215,6 +1215,9 @@ export const ZenApp: React.FC = () => {
             case 'dossier':
               setLayoutMode('dossier');
               break;
+            case 'submission-workspace':
+              setLayoutMode('submission-workspace');
+              break;
             case 'precedent-intelligence':
               setLayoutMode('precedent-intelligence');
               break;
@@ -1439,6 +1442,31 @@ export const ZenApp: React.FC = () => {
                       <div className="text-center">
                         <Loader2 className="w-10 h-10 animate-spin text-amber-500 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading Dossier Navigator...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <DossierNavigatorStandalone />
+                </Suspense>
+              </div>
+            </div>
+          )}
+
+          {/* ── Submission Workspace (eCTD dossier + filing) ────────────── */}
+          {layoutMode === 'submission-workspace' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Submission Workspace"
+                subtitle="eCTD assembly · Module 1–5 tracking · Filing dashboard"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-amber-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Submission Workspace...</p>
                       </div>
                     </div>
                   }

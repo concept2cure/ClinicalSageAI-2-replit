@@ -38,10 +38,8 @@ import {
   Clock,
   FileText,
   Sparkles,
-  TrendingUp,
   ShieldCheck,
   Zap,
-  Info,
 } from 'lucide-react';
 import {
   usePrecedentSearch,
@@ -52,8 +50,6 @@ import {
   type CompareParams,
   type CompareResult,
   type PrecedentRecord,
-  type RiskResult,
-  type StrategyResult,
 } from '../../hooks/usePrecedentEngine';
 
 // ═══════════════════════════════════════════════════════════════════════════════
