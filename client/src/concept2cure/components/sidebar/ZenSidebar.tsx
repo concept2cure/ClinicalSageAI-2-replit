@@ -24,6 +24,8 @@ import {
   Search,
   ShieldAlert,
   Brain,
+  Archive,
+  PenLine,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -281,14 +283,52 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
-        {/* ── Workspace shortcut ──────────────────────────────────── */}
-        <div className="px-3 py-1.5 flex-shrink-0">
+        {/* ── Beta product nav ──────────────────────────────────── */}
+        <div className="px-3 py-1.5 flex-shrink-0 space-y-0.5">
           <button
-            onClick={() => onNavigate?.('regulatory-workspace')}
+            onClick={() => onNavigate?.('ai-copilot')}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-blue-50 hover:text-blue-700 text-sm transition-colors"
           >
             <Brain className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            Workspace
+            AI Copilot
+          </button>
+          <button
+            onClick={() => onNavigate?.('510k-workspace')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+          >
+            <ShieldAlert className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            510(k) Workspace
+          </button>
+          <button
+            onClick={() => onNavigate?.('cer-generator')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+          >
+            <FileText className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            CER Generator
+          </button>
+          <button
+            onClick={() => onNavigate?.('document-vault')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+          >
+            <Archive className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            Document Vault
+          </button>
+          <button
+            onClick={() => onNavigate?.('evidence-search')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+          >
+            <Search className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            Evidence Search
+          </button>
+          <button
+            onClick={() => onNavigate?.('ectd-coauthor')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+          >
+            <PenLine className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            eCTD Co-Author
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
+              Early Access
+            </span>
           </button>
         </div>
 

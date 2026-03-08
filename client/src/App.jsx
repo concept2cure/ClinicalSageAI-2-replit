@@ -121,7 +121,8 @@ const AuditTrailDashboard = lazy(() => import('./pages/admin/AuditTrailDashboard
 // Stability-related pages - REMOVED: Stability only exists within CMC Blueprint
 
 // CER-related pages
-const CERPage = lazy(() => import('./pages/csr/CerPage'));
+// Old CerPage hidden — superseded by CERV2Page (Wave 2)
+// const CERPage = lazy(() => import('./pages/csr/CerPage'));
 // Import the original CERV2Page directly, not the wrapper
 const CERV2Page = lazy(() => import('./pages/csr/CERV2Page'));
 // Phase 7.3 – CERV2 Editor AI Integration
@@ -159,7 +160,8 @@ const VaultPage = lazy(() => import('./pages/vault/VaultPage'));
 const DataRoomPage = lazy(() => import('./pages/vault/DataRoomPage'));
 // VaultTestPage removed - was demo content
 // VaultDocumentViewer removed - functionality included in VaultPage
-const PredictiveVaultPage = lazy(() => import('./pages/vault/PredictiveVaultPage'));
+// PredictiveVaultPage hidden — demo content, not part of beta (Wave 2)
+// const PredictiveVaultPage = lazy(() => import('./pages/vault/PredictiveVaultPage'));
 
 // CoAuthor and Canvas-related pages
 const CoAuthor = lazy(() => import('./pages/coauthor/CoAuthor'));
@@ -189,7 +191,8 @@ const PredicateIntelligence = lazy(() => import('./pages/csr/PredicateIntelligen
 
 // Regulatory-related pages (excluding Regulatory Submissions Hub)
 const RegulatoryRiskDashboard = lazy(() => import('./pages/admin/RegulatoryRiskDashboard'));
-const EnhancedRegulatoryDashboard = lazy(() => import('./pages/admin/EnhancedRegulatoryDashboard'));
+// EnhancedRegulatoryDashboard hidden — contains mock AI, phantom import (Wave 2)
+// const EnhancedRegulatoryDashboard = lazy(() => import('./pages/admin/EnhancedRegulatoryDashboard'));
 const RegulatoryDashboard = lazy(() => import('./pages/admin/RegulatoryDashboard'));
 const RegulatoryAITesting = lazy(() => import('./pages/admin/RegulatoryAITesting'));
 // RegulatoryAITestPage removed - was test content
@@ -500,13 +503,14 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            <Route path="/client-portal/predictive-vault">
+            {/* PredictiveVaultPage route hidden — demo content (Wave 2) */}
+            {/* <Route path="/client-portal/predictive-vault">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <PredictiveVaultPage />
                 </Suspense>
               )}
-            </Route>
+            </Route> */}
             <Route path="/client-portal/regulatory-intel">
               {() => <Redirect to="/unified-suite" />}
             </Route>
@@ -681,13 +685,14 @@ function MainApp() {
             {/* Client Portal IND Wizard Route - Main active route */}
             {/* IND Wizard route DELETED per user request */}
             {/* Other Module Pages */}
-            <Route path="/cer-generator">
+            {/* Old CERPage route hidden — superseded by CERV2Page (Wave 2) */}
+            {/* <Route path="/cer-generator">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <CERPage />
                 </Suspense>
               )}
-            </Route>
+            </Route> */}
             <Route path="/cmc-wizard">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -739,13 +744,14 @@ function MainApp() {
               )}
             </Route>{' '}
             {/* Integrated VAULT Browser with Document Viewer */}
-            <Route path="/predictive-vault">
+            {/* PredictiveVaultPage route hidden — demo content (Wave 2) */}
+            {/* <Route path="/predictive-vault">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <PredictiveVaultPage />
                 </Suspense>
               )}
-            </Route>{' '}
+            </Route> */}{' '}
             {/* Predictive Analytics Vault Demo */}
             {/* context-demo route removed - was demo content */}
             <Route path="/enhanced-editor">
@@ -1742,13 +1748,14 @@ function MainApp() {
             </Route>{' '}
             {/* CMC Module page route */}
             {/* IND Wizard route DELETED per user request */} {/* IND Wizard page route */}
-            <Route path="/cer">
+            {/* Old CER route hidden — superseded by CERV2Page (Wave 2) */}
+            {/* <Route path="/cer">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <CERPage />
                 </Suspense>
               )}
-            </Route>{' '}
+            </Route> */}{' '}
             {/* CER Generator page route */}
             <Route path="/cerV2">
               {() => (
@@ -1900,13 +1907,14 @@ function MainApp() {
             <Route path="/regulatory-intelligence-hub">
               {() => <Redirect to="/unified-suite" />}
             </Route>
-            <Route path="/regulatory-dashboard">
+            {/* Regulatory dashboard route hidden \u2014 non-beta, fake AI removed (Wave 2) */}
+            {/* <Route path="/regulatory-dashboard">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <RegulatoryDashboard />
                 </Suspense>
               )}
-            </Route>
+            </Route> */}
             <Route path="/regulatory-ai-test">
               {() => (
                 <Suspense fallback={<LoadingPage />}>

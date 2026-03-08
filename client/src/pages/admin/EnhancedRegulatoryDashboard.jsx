@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { getAdvisorReadiness } from '../../lib/advisorService';
 import AdvisorRiskHeatmapV2 from '../../components/advisor/AdvisorRiskHeatmapV2';
 import TimelineSimulator from '../../components/advisor/TimelineSimulator';
-import AskLumenCopilot from '../../components/advisor/AskLumenCopilot';
+// AskLumenCopilot removed — mock AI, not part of beta (Wave 2)
 import { AlertTriangle, Clock, DollarSign, BarChart2 } from 'lucide-react';
 
 export default function EnhancedRegulatoryDashboard() {
@@ -405,16 +405,7 @@ export default function EnhancedRegulatoryDashboard() {
           >
             Timeline Simulator
           </button>
-          <button
-            onClick={() => setActiveTab('copilot')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'copilot'
-                ? 'border-slate-900 text-slate-900'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            Ask Lumen AI
-          </button>
+          {/* Ask Lumen AI tab removed — mock AI, not part of beta (Wave 2) */}
         </nav>
       </div>
 
@@ -466,9 +457,7 @@ export default function EnhancedRegulatoryDashboard() {
           />
         )}
 
-        {activeTab === 'copilot' && (
-          <AskLumenCopilot readinessData={readinessData} playbook={selectedPlaybook} />
-        )}
+        {/* AskLumenCopilot tab content removed — mock AI (Wave 2) */}
       </div>
 
       {/* Estimated Submission Path */}

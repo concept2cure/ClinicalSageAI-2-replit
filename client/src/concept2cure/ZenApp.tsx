@@ -154,10 +154,12 @@ const RegulatoryStatusCard = lazy(() =>
   }))
 );
 
-// Document App Hub (tool launcher)
-const DocumentAppHub = lazy(() =>
-  import('./components/hub/DocumentAppHub').then(m => ({
-    default: m.DocumentAppHub,
+// DocumentAppHub removed — absorbed into ProjectLauncher (Wave 2)
+
+// Project Launcher (project-level bridge — track-aware CTAs)
+const ProjectLauncher = lazy(() =>
+  import('./components/launcher/ProjectLauncher').then(m => ({
+    default: m.ProjectLauncher,
   }))
 );
 
@@ -224,7 +226,7 @@ type LayoutMode =
   | 'dossier'
   | 'precedent-intelligence'
   | 'regulatory-workspace'
-  | 'app-hub';
+  | 'project-launcher';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -653,7 +655,7 @@ export const ZenApp: React.FC = () => {
       const urlProjectId = params.get('projectId');
       if (urlProjectId) {
         setActiveProjectId(urlProjectId);
-        setLayoutMode('regulatory-workspace');
+        setLayoutMode('project-launcher');
       }
     } catch (_) {
       /* ignore */
@@ -666,7 +668,9 @@ export const ZenApp: React.FC = () => {
     try {
       const url = new URL(window.location.href);
       if (
-        (layoutMode === 'workspace' || layoutMode === 'regulatory-workspace') &&
+        (layoutMode === 'workspace' ||
+          layoutMode === 'regulatory-workspace' ||
+          layoutMode === 'project-launcher') &&
         activeProjectId
       ) {
         url.searchParams.set('projectId', activeProjectId);
@@ -683,7 +687,7 @@ export const ZenApp: React.FC = () => {
     // Clear active conversation/thread and enter workspace/assistant
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
-    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'assistant');
+    setLayoutMode(activeProjectId ? 'project-launcher' : 'assistant');
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
@@ -1267,16 +1271,24 @@ export const ZenApp: React.FC = () => {
             case 'analytics':
               setLayoutMode('analytics');
               break;
-            // ── Regulatory module routes ──────────────────────────────
-            // All module routes consolidate to the unified workspace
-            case 'ind-workspace':
-            case 'medtech-dashboard':
-            case 'ectd-coauthor':
-            case 'dossier':
-            case 'submission-workspace':
-            case 'precedent-intelligence':
-            case 'app-hub':
+            // ── Beta product routes ──────────────────────────────────
+            case 'ai-copilot':
               setLayoutMode('regulatory-workspace');
+              break;
+            case '510k-workspace':
+              window.location.href = '/cerv2';
+              break;
+            case 'cer-generator':
+              window.location.href = '/cerv2?mode=cer';
+              break;
+            case 'document-vault':
+              window.location.href = '/vault';
+              break;
+            case 'evidence-search':
+              setCommandPaletteOpen(true);
+              break;
+            case 'ectd-coauthor':
+              window.location.href = '/coauthor';
               break;
             case 'regulatory-workspace':
               setLayoutMode('regulatory-workspace');
@@ -1540,47 +1552,46 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Document App Hub (tool launcher) ───────────────────────── */}
-          {false && layoutMode === 'app-hub' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-              <WorkspaceHeader
-                title="Document Tools"
-                subtitle={`${activeProject?.name || 'Project'} · ${activeProject?.type || 'Submission'} · All roads lead to documents`}
-                onBack={() => setLayoutMode('workspace')}
-              />
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white h-full">
-                    <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
-                      <p className="text-zinc-500">Loading Apps...</p>
-                    </div>
-                  </div>
-                }
-              >
-                <DocumentAppHub
-                  submissionType={activeProject?.type}
-                  projectName={activeProject?.name}
-                  onNavigate={(mode: string) => setLayoutMode(mode as LayoutMode)}
-                  onStartChat={() => setLayoutMode('workspace')}
-                />
-              </Suspense>
-            </div>
-          )}
-
           {/* Redirect dead module routes to unified workspace */}
           {[
             'ind-workspace',
             'medtech-dashboard',
-            'ectd-coauthor',
             'dossier',
             'submission-workspace',
             'precedent-intelligence',
-            'app-hub',
             'workspace',
             'cmc',
           ].includes(layoutMode) && (
             <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
+          )}
+
+          {/* ── Project Launcher (track-aware bridge) ──────────────────────── */}
+          {layoutMode === 'project-launcher' && activeProject && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                </div>
+              }
+            >
+              <ProjectLauncher
+                project={{
+                  id: activeProject.id,
+                  name: activeProject.name,
+                  type: activeProject.type,
+                  description: activeProject.description,
+                  lastUpdated: activeProject.lastUpdated,
+                  conversationCount: activeProject.conversationCount,
+                }}
+                onOpenWorkspace={() => setLayoutMode('regulatory-workspace')}
+                onBack={() => setLayoutMode('projects')}
+                onStartChat={() => {
+                  setActiveConversationId(undefined);
+                  setActiveThreadId(undefined);
+                  setLayoutMode('regulatory-workspace');
+                }}
+              />
+            </Suspense>
           )}
 
           {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
@@ -2168,7 +2179,7 @@ export const ZenApp: React.FC = () => {
                                 key={project.id}
                                 onClick={() => {
                                   setActiveProjectId(project.id);
-                                  setLayoutMode('regulatory-workspace');
+                                  setLayoutMode('project-launcher');
                                 }}
                                 className="cursor-pointer hover:bg-zinc-50 transition-colors"
                               >

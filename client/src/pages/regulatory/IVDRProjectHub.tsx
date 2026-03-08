@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Shield,
+  ChevronLeft,
   FlaskConical,
   BarChart3,
   GitBranch,
@@ -288,6 +289,16 @@ export default function IVDRProjectHub() {
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
+          {/* Return to Hub */}
+          <button
+            onClick={() => {
+              window.location.href = '/concept2cure';
+            }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mr-2 border-r pr-3"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Hub
+          </button>
           <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
             <Microscope className="h-5 w-5 text-white" />
           </div>

@@ -117,6 +117,7 @@ import {
   CalendarDays,
   User,
   ChevronRight,
+  ChevronLeft,
   ExternalLink,
   Edit3,
   Heart,
@@ -178,6 +179,17 @@ const safeAssistantHook = () => {
 };
 
 export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
+  // Read ?mode= query param so launcher can set initial mode via URL
+  const urlMode = (() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      return p.get('mode') || '';
+    } catch (_) {
+      return '';
+    }
+  })();
+  const effectiveInitialDocType = initialDocumentType || urlMode || '';
+
   // Use the safe assistant hook instead of direct context access
   const assistantContext = safeAssistantHook();
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
@@ -310,9 +322,14 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     documentName: '',
     type: 'other',
   });
-  const [documentType, setDocumentType] = useState('510k'); // Force 510k mode for now
+  const [documentType, setDocumentType] = useState(() => {
+    // Reuse URL mode or prop for initial document type
+    const m = effectiveInitialDocType.toLowerCase();
+    if (['cer', 'pma', 'de_novo', 'hde'].includes(m)) return m;
+    return '510k';
+  });
   const [selectedDocType, setSelectedDocType] = useState(() => {
-    const initial = String(initialDocumentType || '');
+    const initial = String(effectiveInitialDocType || '');
     return initial.startsWith('cerv2_') ? initial : 'cerv2_510k';
   });
   const [deviceName, setDeviceName] = useState('');
@@ -6047,6 +6064,16 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              {/* Return to Hub */}
+              <button
+                onClick={() => {
+                  window.location.href = '/concept2cure';
+                }}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors mr-2 border-r border-gray-200 pr-4"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Hub
+              </button>
               <h1 className="text-2xl font-bold text-gray-900">FDA 510(k) Submission Pipeline</h1>
 
               {/* Multi-Project Selector */}

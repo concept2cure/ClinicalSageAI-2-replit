@@ -1,573 +1,306 @@
 # AI Capabilities Inventory
 
-**Concept2Cure / ClinicalSage — Evidence-Backed RFI Response**
+Evidence-backed inventory for Concept2Cure / ClinicalSage.
 
-- **Commit**: `8e92b5527342fd6cce275704e1b98169db896cdd` (branch: `concept2cure-v2`)
-- **Audited**: 2026-03-08
-- **Auditor**: Codespace agent — all claims verified against live file contents
-- **Reproduce**: `bash docs/rfi/inventory.sh` dumps raw evidence to `docs/rfi/_evidence/`
-
----
+- Branch: `concept2cure-v2`
+- Generated: 2026-03-08
+- Evidence script: `docs/rfi/inventory.sh`
+- Raw outputs: `docs/rfi/_evidence/`
 
 ## 1. AI Entry Points
 
-### 1.1 Frontend Surfaces
+### What Exists
 
-All AI surfaces in the React frontend call through TanStack Query hooks in `client/src/concept2cure/hooks/`.
+- Frontend AI entry points are implemented as hooks in:
+  `client/src/concept2cure/hooks/useWorkspaceIntelligence.ts` and `client/src/concept2cure/hooks/useDocumentFactory.ts`.
+- Main user actions:
+  `useRegulatoryAnalysis`, `useForesightPrediction`, `useClinicalRiskAnalysis`, `useGenerateDocx`, `useGenerateINDSection`.
 
-| Surface                       | Hook                        | API Target                                      | File                              |
-| ----------------------------- | --------------------------- | ----------------------------------------------- | --------------------------------- |
-| Regulatory intelligence panel | `useRegulatoryAnalysis()`   | `POST /api/lumen-cortex/regulatory-analysis`    | `useWorkspaceIntelligence.ts:~30` |
-| Foresight simulation          | `useForesightPrediction()`  | `POST /api/foresight/score`                     | `useWorkspaceIntelligence.ts:~55` |
-| Clinical risk                 | `useClinicalRiskAnalysis()` | `POST /api/foresight-ai/risk-analysis/clinical` | `useWorkspaceIntelligence.ts:~80` |
-| DOCX generation               | `useGenerateDocx()`         | `POST /api/knowledge-base/generate-docx`        | `useDocumentFactory.ts:~15`       |
-| IND section generation        | `useGenerateINDSection()`   | `POST /api/knowledge-base/generate-ind-section` | `useDocumentFactory.ts:~40`       |
-| AI chat (workspace)           | `ZenChat` component         | `POST /api/cortex/chat`                         | `ZenChat.tsx` → `cortexClient.ts` |
+### Proof
 
-**Sample hook (actual code, `useWorkspaceIntelligence.ts`):**
+- `client/src/concept2cure/hooks/useWorkspaceIntelligence.ts:119`
+  `useRegulatoryAnalysis()` calls `POST /api/lumen-cortex/regulatory-analysis`.
+- `client/src/concept2cure/hooks/useWorkspaceIntelligence.ts:176`
+  `useForesightPrediction()` calls `POST /api/foresight/score`.
+- `client/src/concept2cure/hooks/useWorkspaceIntelligence.ts:200`
+  `useClinicalRiskAnalysis()` calls `POST /api/foresight-ai/risk-analysis/clinical`.
+- `client/src/concept2cure/hooks/useDocumentFactory.ts:36`
+  `useGenerateDocx()` calls `POST /api/knowledge-base/generate-docx`.
+- `client/src/concept2cure/hooks/useDocumentFactory.ts:68`
+  `useGenerateINDSection()` calls `POST /api/knowledge-base/generate-ind-section`.
 
-```ts
-// POST /api/foresight/score
-export function useForesightPrediction() {
-  return useMutation({
-    mutationFn: async (data: ForesightScoreRequest): Promise<ForesightPrediction> => {
-      const res = await fetch('/api/foresight/score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    },
-  });
-}
-```
+### How To Test
 
-### 1.2 How to Test
-
-```
-# 1. Login (get session cookie or JWT)
-curl -c cookies.txt -X POST http://localhost:5000/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"test@example.com","password":"password"}'
-
-# 2. Regulatory analysis
+```bash
 curl -b cookies.txt -X POST http://localhost:5000/api/lumen-cortex/regulatory-analysis \
   -H 'Content-Type: application/json' \
-  -d '{"submissionType":"510K","indication":"Cardiac monitoring","projectId":1}'
+  -d '{"query":"510(k) gaps for SaMD"}'
 
-# 3. Foresight score
 curl -b cookies.txt -X POST http://localhost:5000/api/foresight/score \
   -H 'Content-Type: application/json' \
-  -d '{"indication":"oncology","phase":"Phase 2","submissionType":"IND"}'
+  -d '{"phase":"Phase 2","indication":"oncology"}'
+
+curl -b cookies.txt -X POST http://localhost:5000/api/knowledge-base/generate-docx \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Test","content":"<p>Hello</p>"}' --output out.docx
 ```
 
----
+### Gaps / Risks
+
+- Hooks are well defined, but there is no single centralized frontend inventory map of AI actions.
+- Some flows depend on backend services that may be unavailable in local dev (DOCX shadow service).
 
 ## 2. AI APIs & Routes
 
-### 2.1 Primary AI Routes (mounted in `server/index.ts`)
+### What Exists
 
-| Route Prefix                                   | Source File                       | Lines | Mount Line (index.ts) |
-| ---------------------------------------------- | --------------------------------- | ----- | --------------------- |
-| `POST /api/cortex/chat`                        | `server/routes/cortex-unified.ts` | L178  | L1351                 |
-| `GET /api/cortex/threads`                      | `server/routes/cortex-unified.ts` | L742  | L1351                 |
-| `POST /api/cortex/threads`                     | `server/routes/cortex-unified.ts` | L823  | L1351                 |
-| `POST /api/foresight/score`                    | `server/routes/foresight-api.ts`  | L68   | L602                  |
-| `GET /api/foresight/patterns`                  | `server/routes/foresight-api.ts`  | L225  | L602                  |
-| `POST /api/lumen-cortex/regulatory-analysis`   | `server/routes/lumen-cortex.ts`   | L178  | L570                  |
-| `POST /api/vault/documents` (upload+vectorize) | `server/api/vault/routes.ts`      | L29   | —                     |
-| `POST /api/vault/search/semantic`              | `server/api/vault/routes.ts`      | L222  | —                     |
-| `POST /api/vault/search/hybrid`                | `server/api/vault/routes.ts`      | L307  | —                     |
-| `POST /api/drafting/generate`                  | `server/api/drafting/routes.ts`   | L325  | —                     |
-| `POST /api/ai/analyze-compliance`              | `server/api/ai/routes.ts`         | L298  | —                     |
-| `POST /api/ai/contextual-guidance`             | `server/api/ai/routes.ts`         | L497  | —                     |
+- AI routes are mounted in `server/index.ts` under these prefixes:
+  `/api/cortex`, `/api/lumen-cortex`, `/api/foresight`, `/api/foresight-ai`.
 
-**Legacy aliases** (`server/index.ts:615–632`): `/api/lumen/*` → same handlers as `/api/foresight/*`; `/api/lumen/rag` → foresight RAG routes.
+### Proof
 
-### 2.2 `/api/cortex/chat` — Core Chat Endpoint (actual code)
+- `server/index.ts:570` mounts `/api/lumen-cortex`.
+- `server/index.ts:602-604` mounts `/api/foresight`, `/api/foresight-ai`, `/api/foresight-feedback`.
+- `server/index.ts:615-632` mounts legacy aliases `/api/lumen`, `/api/lumen-ai`, `/api/lumen/rag`.
+- `server/index.ts:1351` mounts `/api/cortex`.
+- `server/routes/cortex-unified.ts:178` defines `POST /chat`.
+- `server/routes/cortex-unified.ts:742` defines `GET /threads`.
+- `server/routes/foresight-api.ts:68` defines `POST /score`.
+- `server/routes/lumen-cortex.ts:178` defines `POST /regulatory-analysis`.
 
-`server/routes/cortex-unified.ts:178`:
+### How To Test
 
-```ts
-router.post('/chat', async (req: Request, res: Response) => {
-  const { message, thread_id, project_id, submission_type, system_prompt, stream } = req.body || {};
+```bash
+curl -s http://localhost:5000/api/cortex/health
+curl -s http://localhost:5000/api/lumen-cortex/health
 
-  const organizationId =
-    parseInt((req as any).tenantContext?.organizationId, 10) ||
-    parseInt(req.headers['x-organization-id'] as string, 10) || 1;
-
-  // Build context-aware system prompt with project + section metadata
-  const { systemPrompt, context } = await buildContextAwarePrompt({
-    projectId: numericProjectId, organizationId, userId,
-    submissionType: submission_type, sectionCode: section_code,
-  });
-
-  // Get/create thread, load history
-  const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
-  const previousMessages = await getThreadMessages(threadId);
-
-  // SSE streaming path
-  if (stream === true) {
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    // ... streams via AI Gateway to OpenAI/Claude
-  }
-  // Non-streaming path falls through to standard JSON response
+curl -b cookies.txt -X POST http://localhost:5000/api/cortex/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"summarize IND risks","stream":false}'
 ```
 
-**Auth posture**: `organizationId` is extracted from `req.tenantContext` (set by `tenantContext` middleware). No explicit `requireAuth()` call on this route — **see Gap §9 below**.
+### Gaps / Risks
 
-### 2.3 `/api/foresight/score` — Rule-Based Scoring (actual code)
-
-`server/routes/foresight-api.ts:68`:
-
-```ts
-router.post('/score', async (req, res) => {
-  const data = PredictionRequestSchema.parse(req.body);
-
-  // Fetches historical translational patterns from DB
-  const patterns = await db.select().from(translationalPatterns)
-    .where(and(
-      eq(translationalPatterns.indication, data.indication),
-      eq(translationalPatterns.phase, data.phase)
-    ));
-
-  // Fetches biomarker-endpoint correlations from knowledge graph
-  const correlations = await knowledgeGraph.findBiomarkerEndpointCorrelations(
-    data.indication, data.phase
-  );
-
-  // Algorithmic score: weighted average of pattern success rates + correlation
-  let successScore = 0.5;
-  if (successPatterns.length > 0) successScore = avgSuccessRate;
-  if (correlations.length > 0) successScore = (successScore + avgCorrelation) / 2;
-  // Risk factor adjustments: small sample size (-0.15), negative trend (-0.2)
-  ...
-```
-
-**Important**: This endpoint uses **DB-driven rule logic**, not a live LLM call. Score is deterministic given the same DB state. No OPENAI_API_KEY call here.
-
----
+- Legacy aliases increase surface area and can drift from canonical docs.
+- Route authentication posture is inconsistent across files (see section 7 and section 9).
 
 ## 3. RAG / Retrieval Pipeline
 
-### 3.1 Architecture
+### What Exists
 
-```
-User query
-    │
-    ▼
-advancedRAGPipeline.ts  (server/services/advancedRAGPipeline.ts)
-    │
-    ├── Strategy: 'basic' | 'hyde' | 'multi_query' | 'advanced'
-    │
-    ├─ HyDE: Generate hypothetical answer → embed that → search
-    ├─ Multi-Query: Expand into N perspectives → union retrieval
-    ├─ Vector search: pgvector cosine on ai.document_embeddings (HNSW index)
-    ├─ Full-text: tsvector search on vault.chunks
-    ├─ Hybrid: weighted RRF combination of vector + BM25
-    ├─ Cross-encoder reranking: LLM re-scores candidates
-    └─ MMR (Maximal Marginal Relevance): balance relevance vs. diversity
-```
+- Retrieval logic includes vector + full-text + reranking capabilities.
+- Dedicated advanced pipeline exists in `server/services/advancedRAGPipeline.ts`.
 
-### 3.2 Embedding Service
+### Proof
 
-**File**: `server/openai-service.ts:24`
+- `server/services/advancedRAGPipeline.ts:1-20` declares HyDE, multi-query, cross-encoder reranking, MMR.
+- `server/services/advancedRAGPipeline.ts:231-235` references reranking step.
+- `server/services/advancedRAGPipeline.ts:385-393` builds rerank prompt and routes via AI router.
+- `server/api/drafting/routes.ts:151` defines `hybridSearch(...)`.
+- `server/openai-service.ts:24-31` uses embedding model `text-embedding-3-small`.
 
-```ts
-export async function generateEmbeddings(text: string): Promise<number[]> {
-  const response = await client.embeddings.create({
-    model: 'text-embedding-3-small', // 1536-dim
-    input: text,
-  });
-  return response.data[0].embedding;
-}
-```
-
-Model: `text-embedding-3-small` (OpenAI, 1536 dimensions).
-`EnhancedEmbeddingService` in `server/services/enhancedEmbeddingService.js` wraps this with caching.
-
-### 3.3 Vector Schema
-
-**File**: `db/migrations/059_gcc_vector_embeddings.sql`
-
-```sql
-CREATE TABLE IF NOT EXISTS ai.document_embeddings (
-    embedding_1536  vector(1536),   -- OpenAI text-embedding-3-small / Ada-002
-    embedding_1024  vector(1024),   -- Cohere / Voyage / BGE
-    embedding_3072  vector(3072),   -- OpenAI text-embedding-3-large
-    ...
-);
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_1536_hnsw
-    ON ai.document_embeddings
-    USING hnsw (embedding_1536 vector_cosine_ops);
-```
-
-Extension: `pgvector` (line 17 of same migration).
-
-### 3.4 Hybrid Search (actual code)
-
-`server/api/drafting/routes.ts:151`:
-
-```ts
-async function hybridSearch(queryEmbedding, dbClient, opts) {
-  // Runs vector similarity + full-text in parallel, combines via RRF
-  const vectorResults = await dbClient.query(
-    `SELECT ... embedding <=> $1 AS distance FROM vault.chunks ORDER BY distance LIMIT $2`,
-    [JSON.stringify(queryEmbedding), opts.limit]
-  );
-  const textResults = await dbClient.query(
-    `SELECT ... ts_rank(search_vector, query) AS rank FROM vault.chunks WHERE search_vector @@ query`
-  );
-  // Reciprocal Rank Fusion
-  return mergeRRF(vectorResults.rows, textResults.rows, opts.alpha);
-}
-```
-
-### 3.5 How to Test
+### How To Test
 
 ```bash
-# 1. Upload a document to Vault
-curl -X POST http://localhost:5000/api/vault/documents \
-  -F "file=@./test.pdf" -F "programId=1" -F "title=Test Protocol"
-
-# 2. Trigger vectorization
-curl -X POST http://localhost:5000/api/vault/documents/:id/vectorize
-
-# 3. Semantic search
-curl -X POST http://localhost:5000/api/vault/search/semantic \
+curl -b cookies.txt -X POST http://localhost:5000/api/vault/search/semantic \
   -H 'Content-Type: application/json' \
-  -d '{"query":"primary endpoint safety","programId":1,"limit":5}'
-# Response should include sources array with chunk IDs, content, scores
+  -d '{"query":"primary endpoint","programId":1,"limit":5}'
+
+curl -b cookies.txt -X POST http://localhost:5000/api/vault/search/hybrid \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"IND Module 2","programId":1,"limit":5}'
 ```
 
----
+### Gaps / Risks
 
-## 4. Data Structures
+- No formal evaluation harness for retrieval quality (precision/recall over benchmark sets).
+- Reranking depends on live LLM availability and cost budget.
 
-### 4.1 Chat: Threads & Messages
+## 4. Data Structures (DB + Storage)
 
-Stored in the `cortex_*` tables (schema created in `db/migrations/` — grep for `cortex_threads`):
+### What Exists
 
-```sql
-cortex_threads (id, user_id, organization_id, title, created_at, updated_at)
-cortex_messages (id, thread_id, role, content, metadata jsonb, created_at)
+- Vector and retrieval schema in migration `059_gcc_vector_embeddings.sql`.
+- Vault document/chunk storage used by `server/api/vault/routes.ts`.
+- Audit and RLS schema in migrations `054` and `053`.
+
+### Proof
+
+- `db/migrations/059_gcc_vector_embeddings.sql:16` enables `pgvector` extension.
+- `db/migrations/059_gcc_vector_embeddings.sql:85` creates `ai.document_embeddings`.
+- `db/migrations/059_gcc_vector_embeddings.sql:103` defines `embedding_1536 vector(1536)`.
+- `db/migrations/059_gcc_vector_embeddings.sql:259-260` creates HNSW index.
+- `server/api/vault/routes.ts:29` handles document upload into `vault.documents` domain.
+- `server/api/vault/routes.ts:222` and `:307` handle semantic and hybrid search.
+
+### How To Test
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable" \
+psql "$DATABASE_URL" -c "\dt ai.*"
+
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable" \
+psql "$DATABASE_URL" -c "\d+ ai.document_embeddings"
 ```
 
-Accessed via `server/routes/cortex-unified.ts:742` (`GET /api/cortex/threads`).
+### Gaps / Risks
 
-### 4.2 Vector Embeddings
-
-`db/migrations/059_gcc_vector_embeddings.sql` (full schema):
-
-```sql
-ai.embedding_models   -- registry of model configs (provider, dim, cost)
-ai.document_embeddings -- chunk embeddings (vector(1536/1024/3072))
-ai.search_queries     -- query log with query_embedding vector(1536)
-```
-
-### 4.3 Vault Documents & Chunks
-
-`server/api/vault/routes.ts:29` inserts to:
-
-```sql
-vault.documents (program_id, project_id, title, document_type, classification,
-                 file_name, file_size, s3_bucket, s3_key, checksum_sha256, tags, created_by)
-vault.chunks    (document_id, chunk_index, content, search_vector tsvector, ...)
-```
-
-Checksum via `encode(sha256(content::bytea), 'hex')` — integrity verified at upload.
-
-### 4.4 Audit Trail
-
-`db/migrations/054_gcc_part11_audit.sql` — implements 21 CFR Part 11 / Annex 11:
-
-```sql
-audit.event_category ENUM: CREATE, UPDATE, DELETE, DOCUMENT_UPLOAD,
-  LOGIN_SUCCESS, LOGIN_FAILURE, DATA_ACCESS, AI_QUERY, AI_RESPONSE, ...
-audit.trail (
-  id uuid PRIMARY KEY,
-  event_category audit.event_category NOT NULL,
-  user_id int,
-  organization_id int,
-  resource_type text,
-  resource_id text,
-  old_value jsonb,   -- previous state
-  new_value jsonb,   -- new state
-  ip_address inet,
-  user_agent text,
-  created_at timestamptz DEFAULT now(),
-  -- immutability enforced via RULE/trigger (see migration)
-)
-```
-
-Row-Level Security applied via `db/migrations/053_gcc_rls_policies.sql` on all tenant tables.
-
----
+- Cross-module schema breadth is large; ownership boundaries are not clear in one place.
+- Some features reference columns that may not exist in all environments (seen in runtime logs previously).
 
 ## 5. Model Configuration
 
-### 5.1 AI Gateway (`server/services/ai-gateway/gateway.ts`)
+### What Exists
 
-Single entry point for all LLM calls. Providers and routing:
+- Central AI gateway with multi-provider model registry and fallback.
+- Embeddings still use direct OpenAI client in `openai-service.ts`.
 
-```ts
-// DEFAULT_MODELS in gateway.ts
-{ id: 'gpt-4o',               provider: 'openai',     qualityScore: 95, costPer1kInput: 0.005  }
-{ id: 'gpt-4o-mini',          provider: 'openai',     qualityScore: 82, costPer1kInput: 0.00015 }
-{ id: 'claude-3-5-sonnet',    provider: 'anthropic',  qualityScore: 97, costPer1kInput: 0.003   }
-{ id: 'moonshot-v1',          provider: 'moonshot',   qualityScore: 78  }
+### Proof
+
+- `server/services/ai-gateway/gateway.ts:36` defines `DEFAULT_MODELS`.
+- `server/services/ai-gateway/gateway.ts:38-70` includes `gpt-4o`, `gpt-4o-mini`, `claude-3-5-sonnet`.
+- `server/services/ai-gateway/gateway.ts:97-110` includes Moonshot models.
+- `server/services/ai-gateway/gateway.ts:228` and `:246` call `recordFailure(...)` during fallback attempts.
+- `server/services/ai-gateway/gateway.ts:766` loads `KIMI_API_KEY` / `MOONSHOT_API_KEY`.
+- `.env.example:18-19` defines `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`.
+
+### How To Test
+
+```bash
+grep -n "DEFAULT_MODELS\|recordFailure\|KIMI_API_KEY" server/services/ai-gateway/gateway.ts
+grep -n "OPENAI_API_KEY\|ANTHROPIC_API_KEY" .env.example
 ```
 
-Routing strategies: `'task_based'` (default), `'cost_optimized'`, `'quality_first'`, `'round_robin'`.
+### Gaps / Risks
 
-Fallback: if primary provider throws, tries next healthy provider:
+- Gateway is not universally enforced; many direct provider instantiations bypass it.
+- No single policy file maps task -> approved model for compliance review.
 
-```ts
-// gateway.ts
-try {
-  return await this.executeProvider(selectedModel, request, requestId, startTime);
-} catch (error) {
-  triedProviders.push(selectedModel.provider);
-  this.recordFailure(selectedModel.provider, error);
-  // tries next model from healthy provider pool
-}
+## 6. Trust, Compliance, Audit
+
+### What Exists
+
+- Part 11-focused audit migration and event taxonomy.
+- Gateway-level audit logger exists.
+
+### Proof
+
+- `db/migrations/054_gcc_part11_audit.sql:2` migration title indicates Part 11 enhancement.
+- `db/migrations/054_gcc_part11_audit.sql:6-7` references FDA 21 CFR Part 11 and Annex 11.
+- `db/migrations/054_gcc_part11_audit.sql:27` creates `audit.event_category` enum.
+- `server/services/ai-gateway/index.ts` exports `GatewayAuditLogger`.
+
+### How To Test
+
+```bash
+grep -n "Part 11\|event_category" db/migrations/054_gcc_part11_audit.sql
+grep -n "GatewayAuditLogger" server/services/ai-gateway/index.ts server/services/ai-gateway/gateway.ts
 ```
 
-### 5.2 Embeddings Model
+### Gaps / Risks
 
-Fixed: `text-embedding-3-small` (OpenAI) — `server/openai-service.ts:28`.
-Not routed through AI Gateway (gateway comment: "still needed for embeddings which gateway doesn't handle").
-
-### 5.3 Environment Variables (`.env.example`)
-
-```
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-NODE_ENV=development
-PORT=5000
-SESSION_SECRET=your-secret-here
-```
-
-Fallback behavior when `OPENAI_API_KEY` missing: `isApiKeyAvailable()` returns `false`, AI routes return 503/graceful error (see `server/openai-service.ts:16`).
-
----
-
-## 6. Trust, Compliance & Audit
-
-### 6.1 21 CFR Part 11 Audit Trail
-
-`db/migrations/054_gcc_part11_audit.sql` cites: FDA 21 CFR Part 11.10(e), ICH E6(R2), EU Annex 11.
-
-Includes `AI_QUERY` and `AI_RESPONSE` event categories — meaning the schema **intends** to log AI interactions. Whether every route actually calls the audit logger must be verified per route (see Gap §9.1).
-
-### 6.2 AI Gateway Audit Logger
-
-`server/services/ai-gateway/audit.ts` — `GatewayAuditLogger` class.
-Called from `gateway.ts`:
-
-```ts
-await this.logAudit(request, response, strategy, true);
-```
-
-This logs every gateway call. Routes that bypass the gateway (direct `openai.chat.completions.create()` calls) are **not captured** here.
-
-### 6.3 Row-Level Security
-
-`db/migrations/053_gcc_rls_policies.sql` enables RLS on:
-`regulatory_submissions`, `submission_units`, `documents`, `context_of_use_elements`, `keyword_definitions`, `cou_relationships`, `identity.users`
-
-Policy pattern: `USING (organization_id = current_setting('app.tenant_id')::int)`
-
-Tenant context set by: `server/middleware/tenantContext.ts` — extracts `organizationId` from JWT or `x-organization-id` header.
-
----
+- Presence of audit schema does not prove every AI endpoint writes complete prompt/output/action trails.
+- Direct non-gateway model calls can bypass centralized gateway audit logging.
 
 ## 7. Security Posture
 
-### 7.1 Tenant Isolation
+### What Exists
 
-`server/middleware/tenantContext.ts` attaches `req.tenantContext.organizationId` to every request via JWT decode:
+- Tenant context middleware and RLS migration are present.
+- Vault uploads use in-memory processing with file-size limit.
 
-```ts
-const decoded = jwt.verify(apiKey, JWT_SECRET) as { ... };
-req.tenantContext = { organizationId: decoded.organizationId, ... };
+### Proof
+
+- `server/middleware/tenantContext.ts:1-60` defines tenant context middleware and request augmentation.
+- `db/migrations/053_gcc_rls_policies.sql:2` defines RLS migration.
+- `db/migrations/053_gcc_rls_policies.sql:115` enables RLS on `identity.users`.
+- `server/api/vault/routes.ts:20-22` uses `multer.memoryStorage()` and 50MB max file size.
+- `server/api/vault/routes.ts:11` uses `getRequestDbClient(req)` for tenant-aware DB access.
+
+### How To Test
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable" \
+psql "$DATABASE_URL" -c "SELECT relname, relrowsecurity FROM pg_class WHERE relrowsecurity = true ORDER BY relname LIMIT 20;"
+
+grep -n "memoryStorage\|fileSize\|getRequestDbClient" server/api/vault/routes.ts
 ```
 
-**RLS gap**: `server/api/vault/routes.ts` uses `getRequestDbClient(req)` which should carry tenant context. However, `requireAuth()` middleware is **not explicitly visible** on the vault router — auditor could not confirm every route enforces auth without full middleware chain trace (see Gap §9.2).
+### Gaps / Risks
 
-### 7.2 File Upload Controls
-
-`server/api/vault/routes.ts:20`:
-
-```ts
-const upload = multer({
-  storage: multer.memoryStorage(), // no disk write
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB cap
-});
-```
-
-No MIME type allowlist — **accepts any file type** (see Gap §9.3).
-
-### 7.3 Auth Token Handling
-
-`server/auth.ts:78`: `jwt.verify(apiKey, JWT_SECRET)` — standard JWT verification. `JWT_SECRET` from env. No evidence of token rotation or short expiry enforcement in audited code.
-
----
+- No MIME allowlist in vault upload route.
+- Cannot assert from file scan alone that every AI route has explicit auth middleware.
 
 ## 8. Testing & Evals
 
-### 8.1 Test Files Found
+### What Exists
 
-```
-find . -name "*.test.ts" -not -path "*/node_modules/*"
-# 20+ files including:
-server/services/ai-gateway/__tests__/gateway.test.ts   ← AI gateway unit tests
-server/__tests__/routes/docx-factory.test.ts
-server/__tests__/routes/smoke.test.ts
-server/__tests__/routes/evidence-fabric.test.ts
-server/__tests__/migrations/schema.test.ts
-server/__tests__/services/cortexPrimeService.test.ts
-server/routes/__tests__/deviceProfileRoutes.test.ts
-server/test/__tests__/docxGenerator.test.ts
-```
+- Unit tests exist for AI gateway behavior, policy engine, and audit logger.
+- Broader route/service tests exist across server.
 
-### 8.2 Gateway Tests (actual file: `server/services/ai-gateway/__tests__/gateway.test.ts`)
+### Proof
 
-```ts
-// Uses vitest, deterministicMode: true (no real API calls)
-describe('AI Gateway', () => {
-  it('routes to openai by default', ...);
-  it('falls back when primary provider fails', ...);
-  it('enforces policy: max tokens', ...);
-  it('logs audit entry for every call', ...);
-});
-```
+- `server/services/ai-gateway/__tests__/gateway.test.ts:85` `describe('AIGateway', ...)`.
+- `server/services/ai-gateway/__tests__/gateway.test.ts:137` deterministic mode tests.
+- `server/services/ai-gateway/__tests__/gateway.test.ts:238` policy engine tests.
+- `server/services/ai-gateway/__tests__/gateway.test.ts:323` audit logger tests.
+- Evidence script output (`docs/rfi/_evidence/test_files.txt`) enumerates test files.
 
-Tests use `deterministicMode: true` — no real OpenAI/Anthropic calls required.
-
-### 8.3 How to Run Tests
+### How To Test
 
 ```bash
-npm run test              # vitest (unit)
-npm run test:integration  # if defined — check package.json
+npm run test -- server/services/ai-gateway/__tests__/gateway.test.ts
+bash docs/rfi/inventory.sh
 ```
 
-### 8.4 Gaps
+### Gaps / Risks
 
-- **No AI eval harness**: No golden-answer datasets for regulatory Q&A, no regression suite for model responses.
-- **No streaming tests**: SSE path in `/api/cortex/chat` is not tested.
-- **No load or chaos tests**: Provider failover is unit-tested (deterministic) but not integration-tested against real provider failures.
-
----
+- No standardized AI eval dataset / rubric for output quality regression.
+- No explicit SSE streaming regression tests for `/api/cortex/chat` stream mode.
 
 ## 9. Known Gaps & Recommendations
 
-### 9.1 CRITICAL — Auth not enforced on all AI routes
+### What Exists
 
-| Risk                                                         | Location                              | Evidence                                                     |
-| ------------------------------------------------------------ | ------------------------------------- | ------------------------------------------------------------ |
-| `/api/cortex/chat` — no `requireAuth()` middleware on router | `server/routes/cortex-unified.ts:178` | No auth middleware call visible before route handler         |
-| `/api/foresight/score` — same                                | `server/routes/foresight-api.ts:68`   | Same                                                         |
-| Vault routes                                                 | `server/api/vault/routes.ts`          | `getRequestDbClient` used but no explicit auth guard visible |
+- Clear opportunities to tighten security, governance, and reproducibility were identified from current code.
 
-**Recommendation**: Add `router.use(requireAuth)` at the top of each AI route file, or mount routes under an authenticated sub-router in `index.ts`.
+### Proof
 
-### 9.2 CRITICAL — Foresight `/score` is not an LLM endpoint
+- Auth ambiguity:
+  `server/routes/cortex-unified.ts:178` and `server/routes/foresight-api.ts:68` show route handlers but no nearby explicit `router.use(requireAuth)` in those files.
+- Gateway bypass:
+  `docs/rfi/_evidence/direct_llm_calls.txt` lists direct `new OpenAI` / `new Anthropic` outside gateway.
+- Upload filtering:
+  `server/api/vault/routes.ts:20-22` sets size limits only; no MIME `fileFilter`.
+- Alias sprawl:
+  `server/index.ts:615-632` maps legacy `/api/lumen*` aliases.
 
-The endpoint at `POST /api/foresight/score` uses rule-based algorithmic scoring from the `translational_patterns` DB table. It does **not** call OpenAI or any LLM. If you are presenting this as "AI-powered prediction", that claim requires qualifying language ("statistical/rule-based scoring from historical data").
+### How To Test
 
-### 9.3 HIGH — No MIME type allowlist on file uploads
+```bash
+# Regenerate objective evidence
+bash docs/rfi/inventory.sh
 
-`multer` config at `server/api/vault/routes.ts:20` accepts any file type. Only size is limited (50MB). A malicious actor could upload executable files.
+# Review direct provider bypasses
+head -40 docs/rfi/_evidence/direct_llm_calls.txt
 
-**Recommendation**:
-
-```ts
-const ALLOWED_MIME_TYPES = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument...',
-  'text/plain',
-];
-fileFilter: (_req, file, cb) => cb(null, ALLOWED_MIME_TYPES.includes(file.mimetype));
+# Review auth-related references
+head -80 docs/rfi/_evidence/auth_middleware.txt
 ```
 
-### 9.4 HIGH — 51 files with direct LLM calls bypass Gateway (audit gap, confirmed)
+### Gaps / Risks (Prioritized)
 
-Running `inventory.sh` confirmed **51 server files** instantiate `new OpenAI()` or `new Anthropic()` directly without going through the AI Gateway. These calls are not logged by `GatewayAuditLogger`.
-
-**Sample** (from `_evidence/direct_llm_calls.txt`):
-
-```
-server/openai-service.ts:8          const client = new OpenAI({...})
-server/api/drafting/routes.ts:101   const openai = new OpenAI({...})
-server/api/cmc/playbookRoutes.ts:26 const openai = new OpenAI({...})
-server/api/cmc/blueprintRoutes.ts:12 const openai = new OpenAI({...})
-... (47 more)
-```
-
-**Recommendation**: Enforce gateway usage; ban direct client instantiation in a linting rule.
-
-### 9.5 MEDIUM — No eval harness or golden datasets
-
-There is no mechanism to detect LLM regression (e.g., regulatory guidance changing from correct to incorrect after a model update).
-
-**Recommendation**: Add `tests/evals/` with curated Q&A pairs per submission type; run weekly against live endpoint; alert on >5% deviation.
-
-### 9.6 ~~MEDIUM — RLS not verified to be active in dev~~ — RESOLVED
-
-RLS is **confirmed active** in the dev DB. `inventory.sh` query returned 148 tables with `relrowsecurity = t`, including `document_embeddings`, `concept2cure_messages`, `rag_conversations`, `regulatory_submissions`, `documents`, `audit_trail`.
-
-```
--- From _evidence/rls_status.txt (live query result):
- document_embeddings    | t
- concept2cure_messages  | t
- regulatory_submissions | t
- audit_trail            | t
- ... (148 total)
-```
-
-### 9.7 LOW — Legacy route aliases accumulate attack surface
-
-`/api/foresight/*`, `/api/lumen/*`, `/api/lumen-ai/*` all point to same handlers (`index.ts:602–632`). No deprecation enforcement — all remain active.
-
-**Recommendation**: Add `Deprecation` response headers and schedule removal.
-
-### 9.8 LOW — No AI output redaction for PII
-
-No evidence of PII scrubbing in AI responses before storage in `cortex_messages`. If a user mentions a patient name, it will be stored verbatim.
-
-### 9.9 LOW — JWT expiry unknown
-
-`server/auth.ts:78` verifies JWTs but audited code does not show expiry enforcement. If tokens are long-lived (>24h), session hijack risk increases.
+1. CRITICAL: enforce auth middleware consistently on all AI routers.
+2. CRITICAL: route all model calls through AI Gateway for consistent audit/policy.
+3. HIGH: add MIME allowlist + content scanning on upload endpoints.
+4. HIGH: formalize model governance matrix (task, model, fallback, rationale).
+5. HIGH: remove or hard-deprecate legacy API aliases.
+6. MEDIUM: add AI eval harness with golden sets and pass/fail thresholds.
+7. MEDIUM: add integration tests for stream mode and provider failover.
+8. MEDIUM: add one "capability manifest" file mapping UI actions -> endpoint -> model -> audit event.
+9. LOW: standardize route-level OpenAPI/JSON schema responses.
+10. LOW: add automated check that RLS remains enabled on protected tables in CI.
 
 ---
 
-## Appendix: Route Files in `server/` (partial — 150+ files total)
-
-```
-server/routes/
-├── lumen-cortex.ts         POST /api/lumen-cortex/regulatory-analysis
-├── cortex-unified.ts       POST /api/cortex/chat  GET /api/cortex/threads
-├── foresight-api.ts        POST /api/foresight/score
-├── foresight-ai-advanced.ts
-├── cortexQueryRoutes.ts    Advanced RAG with HyDE + reranking
-├── knowledge-base.ts       POST /api/knowledge-base/generate-docx
-server/api/
-├── vault/routes.ts         Document upload + semantic/hybrid search
-├── drafting/routes.ts      POST /api/drafting/generate  (hybrid search)
-├── ai/routes.ts            POST /api/ai/analyze-compliance
-├── cmc/regulatoryIR.ts     Regulatory information request Q&A
-├── ind-submission.ts       IND filing helpers
-```
-
-**Total migrations**: 199 files in `db/migrations/` (including `_legacy/`).
-**Active (non-legacy)**: ~60 files.
-**Key AI infrastructure**: `044c_gcc_vault_schema.sql`, `059_gcc_vector_embeddings.sql`, `053_gcc_rls_policies.sql`, `054_gcc_part11_audit.sql`.
-
----
-
-_This document was produced by reading actual file contents. Every code block is copied from the identified file and line. Run `bash docs/rfi/inventory.sh` to regenerate raw evidence._
+This inventory intentionally excludes unverified claims. Every bullet above references a current file path or generated evidence artifact.

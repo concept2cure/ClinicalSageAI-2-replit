@@ -111,7 +111,7 @@ import 'jspdf-autotable';
 // Import Google Docs services
 import * as googleDocsService from '../../services/googleDocsService';
 import * as googleAuthService from '../../services/googleAuthService';
-import * as copilotService from '../../services/copilotService';
+// copilotService import removed — dead import, never used (Wave 2)
 
 // eCTD Co-Author service for real backend integration
 import coauthorService from '../../services/coauthorService';
@@ -6609,8 +6609,17 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
         {/* Top Header Bar */}
         <div className="px-6 py-3">
           <div className="flex items-center justify-between">
-            {/* Left: Logo & Title */}
+            {/* Left: Hub link, Logo & Title */}
             <div className="flex items-center space-x-3">
+              <button
+                onClick={() => {
+                  window.location.href = '/concept2cure';
+                }}
+                className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mr-2 border-r border-slate-200 pr-3"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Hub
+              </button>
               <img src="https://www.trialsage.com/logo.svg" alt="TrialSage" className="h-7" />
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-semibold text-slate-800">eCTD Co-Author</h1>
