@@ -2214,27 +2214,78 @@ const MedicalDeviceDocumentEditor = ({
     }
   };
 
-  // AI Writing Helper function
+  // AI Writing Helper function — calls real CERV2 AI backend with client-side fallback
   const handleAIAssist = async (sectionId, fieldId, fieldLabel, currentValue) => {
     const key = `${sectionId}-${fieldId}`;
     setIsAiProcessing(prev => ({ ...prev, [key]: true }));
 
     try {
-      // Generate contextual AI suggestions based on field type
-      const suggestions = {
-        intended_use: `The ${deviceProfile.deviceName || '[Device Name]'} is intended for continuous monitoring and recording of cardiac electrical activity in adult patients within healthcare facilities and home settings. The device provides real-time ECG data transmission and automated arrhythmia detection to support clinical decision-making.`,
-        device_overview: `The ${deviceProfile.deviceName || '[Device Name]'} is a wireless, wearable cardiac monitoring system consisting of disposable adhesive sensor patches, a rechargeable wireless transmitter, and cloud-connected monitoring software. The device utilizes medical-grade electrodes for signal acquisition and employs advanced digital signal processing algorithms for noise reduction and artifact rejection.`,
+      // ── Try real AI API first ─────────────────────────────────────────
+      const token =
+        localStorage.getItem('trialsage_access_token') ||
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('auth_token') ||
+        localStorage.getItem('token');
+
+      if (token) {
+        try {
+          const response = await fetch('/api/cerv2/ai/suggest', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              docType: documentType || 'cerv2_510k',
+              sectionId,
+              fieldId,
+              context: {
+                deviceName: deviceProfile.deviceName || undefined,
+                predicateDevice:
+                  deviceProfile.predicateDevice || predicateDevices?.[0]?.name || undefined,
+                indication: deviceProfile.intendedUse || undefined,
+                existingContent: currentValue || undefined,
+              },
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.text) {
+              setAiSuggestions(prev => ({ ...prev, [key]: data.text }));
+              toast({
+                title: 'AI Writing Helper',
+                description:
+                  data.source === 'openai'
+                    ? 'AI-generated suggestion ready. Click "Insert" to use it.'
+                    : 'Template suggestion ready. Click "Insert" to use it.',
+                duration: 3000,
+              });
+              return;
+            }
+          }
+        } catch (fetchErr) {
+          console.warn(
+            '[AI Assist] API call failed, using client-side fallback:',
+            fetchErr.message
+          );
+        }
+      }
+
+      // ── Fallback: client-side suggestions ─────────────────────────────
+      const deviceName = deviceProfile.deviceName || '[Device Name]';
+      const fallbackSuggestions = {
+        intended_use: `The ${deviceName} is intended for continuous monitoring and recording of cardiac electrical activity in adult patients within healthcare facilities and home settings. The device provides real-time ECG data transmission and automated arrhythmia detection to support clinical decision-making.`,
+        device_overview: `The ${deviceName} is a wireless, wearable cardiac monitoring system consisting of disposable adhesive sensor patches, a rechargeable wireless transmitter, and cloud-connected monitoring software. The device utilizes medical-grade electrodes for signal acquisition and employs advanced digital signal processing algorithms for noise reduction and artifact rejection.`,
         biocompatibility: `Biocompatibility testing was conducted in accordance with ISO 10993-1:2018 for all patient-contacting components. Testing included cytotoxicity (ISO 10993-5), sensitization (ISO 10993-10), and skin irritation (ISO 10993-10). All tests were performed by an ISO 17025 accredited laboratory and demonstrated compliance with biological safety requirements for skin-contacting medical devices with prolonged contact duration.`,
         electrical_safety: `Electrical safety and electromagnetic compatibility testing was performed in accordance with IEC 60601-1 (Medical electrical equipment - General requirements for basic safety and essential performance) and IEC 60601-2-47 (Particular requirements for ambulatory ECG systems). All safety tests including leakage current, dielectric strength, and protection classifications were successfully completed with results meeting or exceeding the requirements.`,
-        clinical_performance: `A prospective clinical study was conducted with 150 adult subjects (ages 22-78, mean 54.2 years) comparing the ${deviceProfile.deviceName || '[Device Name]'} against standard 12-lead ECG for rhythm classification and arrhythmia detection. The study demonstrated 99.2% sensitivity and 98.7% specificity for atrial fibrillation detection, with overall accuracy of 98.9% for rhythm classification across all monitored parameters.`,
+        clinical_performance: `A prospective clinical study was conducted with 150 adult subjects (ages 22-78, mean 54.2 years) comparing the ${deviceName} against standard 12-lead ECG for rhythm classification and arrhythmia detection. The study demonstrated 99.2% sensitivity and 98.7% specificity for atrial fibrillation detection, with overall accuracy of 98.9% for rhythm classification across all monitored parameters.`,
       };
 
-      // Find matching suggestion or generate generic one
-      let suggestion = Object.keys(suggestions).find(key => fieldId.includes(key))
-        ? suggestions[Object.keys(suggestions).find(key => fieldId.includes(key))]
+      let suggestion = Object.keys(fallbackSuggestions).find(k => fieldId.includes(k))
+        ? fallbackSuggestions[Object.keys(fallbackSuggestions).find(k => fieldId.includes(k))]
         : `Consider providing comprehensive details about ${fieldLabel.toLowerCase()} including relevant FDA regulatory requirements, testing standards, and performance specifications. Ensure all claims are supported by objective evidence and data.`;
 
-      // If there's existing content, offer to enhance it
       if (currentValue && currentValue.trim().length > 20) {
         suggestion = `✨ Suggested enhancement:\n\n${currentValue}\n\nAdditional FDA-compliant language: Include specific regulatory citations (e.g., 21 CFR references), quantitative performance metrics where applicable, and clear statements of limitations or contraindications as required by FDA guidance documents.`;
       }

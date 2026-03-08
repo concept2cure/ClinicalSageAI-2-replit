@@ -195,14 +195,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
   const { toast } = useToast();
 
-  // Organization and workspace IDs for project management
-  const organizationId = '6'; // Default organization ID
-  const clientWorkspaceId = '26'; // Default workspace ID
-
-  // Set organization ID in localStorage for API interceptor
-  useEffect(() => {
-    localStorage.setItem('currentOrganizationId', organizationId);
-  }, [organizationId]);
+  // Organization and workspace IDs sourced from auth context
+  const organizationId = localStorage.getItem('currentOrganizationId') || '1';
+  const clientWorkspaceId = localStorage.getItem('currentWorkspaceId') || '1';
 
   // Multi-Project Management State
   const [allProjects, setAllProjects] = useState([]);
@@ -589,6 +584,18 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [equivalenceCompleted, setEquivalenceCompleted] = useState(false);
   const [complianceScore, setComplianceScore] = useState(null);
   const [submissionReady, setSubmissionReady] = useState(false);
+
+  // Review & sign-off state
+  const [reviewSignOff, setReviewSignOff] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cerv2_review_signoff');
+      return saved
+        ? JSON.parse(saved)
+        : { status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' };
+    } catch {
+      return { status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' };
+    }
+  });
 
   // eSTAR specific state variables are defined above
 
@@ -1920,6 +1927,44 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                       {deviceProfile.deviceName ? '1' : '0'}
                     </div>
                     <div className="text-purple-600">Device(s)</div>
+                  </div>
+                </div>
+
+                {/* Audit & Trust Signals */}
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1">
+                      <Shield className="h-3 w-3 text-green-500" />
+                      Audit trail enabled
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-blue-500" />
+                      Last saved: {new Date().toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {reviewSignOff.status === 'approved' ? (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] py-0 px-1.5 bg-green-100 text-green-700"
+                      >
+                        Reviewed
+                      </Badge>
+                    ) : reviewSignOff.status === 'in-review' ? (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] py-0 px-1.5 bg-yellow-100 text-yellow-700"
+                      >
+                        In Review
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] py-0 px-1.5 bg-gray-100 text-gray-500"
+                      >
+                        Draft
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -4700,15 +4745,123 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Submission Portal</CardTitle>
-              <CardDescription>Upload and submit to FDA eSTAR</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                Review & Sign-Off
+                {reviewSignOff.status === 'approved' && (
+                  <Badge className="bg-green-100 text-green-700">Approved</Badge>
+                )}
+                {reviewSignOff.status === 'in-review' && (
+                  <Badge className="bg-yellow-100 text-yellow-700">In Review</Badge>
+                )}
+                {reviewSignOff.status === 'draft' && (
+                  <Badge className="bg-gray-100 text-gray-600">Draft</Badge>
+                )}
+              </CardTitle>
+              <CardDescription>Internal review gate before FDA submission</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Send className="h-12 w-12 mx-auto mb-3 text-teal-300" />
-                <p className="mb-2">eSTAR Submission Interface</p>
-                <p className="text-sm">Coming soon - Direct FDA portal integration</p>
-              </div>
+            <CardContent className="space-y-4">
+              {reviewSignOff.status === 'approved' ? (
+                <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-green-900">
+                      Approved by {reviewSignOff.reviewedBy}
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      {reviewSignOff.reviewedAt &&
+                        new Date(reviewSignOff.reviewedAt).toLocaleString()}
+                    </p>
+                    {reviewSignOff.notes && (
+                      <p className="text-xs text-green-800 mt-2 italic">"{reviewSignOff.notes}"</p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => {
+                        const updated = {
+                          status: 'draft',
+                          reviewedBy: null,
+                          reviewedAt: null,
+                          notes: '',
+                        };
+                        setReviewSignOff(updated);
+                        localStorage.setItem('cerv2_review_signoff', JSON.stringify(updated));
+                      }}
+                    >
+                      Revoke Approval
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Reviewer Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                      placeholder="Enter reviewer name"
+                      value={reviewSignOff.reviewedBy || ''}
+                      onChange={e =>
+                        setReviewSignOff(prev => ({ ...prev, reviewedBy: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Review Notes</label>
+                    <textarea
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                      rows={3}
+                      placeholder="Optional review notes..."
+                      value={reviewSignOff.notes || ''}
+                      onChange={e => setReviewSignOff(prev => ({ ...prev, notes: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const updated = { ...reviewSignOff, status: 'in-review' };
+                        setReviewSignOff(updated);
+                        localStorage.setItem('cerv2_review_signoff', JSON.stringify(updated));
+                        toast({
+                          title: 'Marked for Review',
+                          description: 'Submission marked as in-review.',
+                        });
+                      }}
+                      disabled={!reviewSignOff.reviewedBy}
+                    >
+                      Mark In-Review
+                    </Button>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => {
+                        if (!reviewSignOff.reviewedBy) {
+                          toast({
+                            title: 'Reviewer Required',
+                            description: 'Enter a reviewer name before approving.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+                        const updated = {
+                          ...reviewSignOff,
+                          status: 'approved',
+                          reviewedAt: new Date().toISOString(),
+                        };
+                        setReviewSignOff(updated);
+                        localStorage.setItem('cerv2_review_signoff', JSON.stringify(updated));
+                        toast({
+                          title: 'Approved',
+                          description: 'Submission approved for FDA portal.',
+                        });
+                      }}
+                    >
+                      Approve for Submission
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

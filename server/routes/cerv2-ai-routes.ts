@@ -1,19 +1,25 @@
 /**
- * CERV2 AI Auto-Populate Stub Routes  (Phase 7.3 – Enhanced)
+ * CERV2 AI Auto-Populate Routes  (Phase 7.3 → Wave 3: Real OpenAI)
  *
- * POST /api/cerv2/ai/suggest            – Generate section-level AI suggestions
- * POST /api/cerv2/ai/equivalence        – SE / equivalence placeholder text
- * POST /api/cerv2/ai/benefit-risk       – Benefit-risk analysis stub
- * POST /api/cerv2/ai/analyze-section    – Deep section analysis w/ realistic mock content
+ * POST /api/cerv2/ai/suggest            – Generate section-level AI suggestions (OpenAI-backed)
+ * POST /api/cerv2/ai/equivalence        – SE / equivalence text (OpenAI-backed)
+ * POST /api/cerv2/ai/benefit-risk       – Benefit-risk analysis (OpenAI-backed)
+ * POST /api/cerv2/ai/analyze-section    – Deep section analysis (OpenAI-backed)
  * GET  /api/cerv2/ai/templates/:docType – Pre-built section templates per doc type
  * GET  /api/cerv2/ai/health             – Health check for AI service
  */
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import OpenAI from 'openai';
 import { authMiddleware } from '../auth';
 
 const router = Router();
+
+// ── OpenAI client (null when key not configured) ───────────────────────────────
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
@@ -153,8 +159,8 @@ const sectionTemplates: Record<string, Record<string, string>> = {
 };
 
 // ── POST /suggest ──────────────────────────────────────────────────────────────
-// Returns a GPT-style suggestion for a specific section/field.
-// Currently returns template text; will be wired to OpenAI in a future phase.
+// Returns a GPT-backed suggestion for a specific section/field.
+// Falls back to template text when OpenAI key is not configured.
 router.post(
   '/suggest',
   authMiddleware,
@@ -169,12 +175,64 @@ router.post(
       }
 
       const { docType, sectionId, fieldId, context } = validation.data;
-      const templates = sectionTemplates[docType] || {};
 
-      // Look for a template matching fieldId or sectionId
+      // ── Try OpenAI first ──────────────────────────────────────────────
+      if (openai) {
+        try {
+          const docLabel =
+            docType === 'cerv2_510k'
+              ? 'FDA 510(k) premarket notification'
+              : docType === 'cerv2_pma'
+                ? 'FDA PMA application'
+                : 'EU MDR Clinical Evaluation Report (CER)';
+
+          const deviceInfo = [
+            context?.deviceName && `Device: ${context.deviceName}`,
+            context?.predicateDevice && `Predicate: ${context.predicateDevice}`,
+            context?.indication && `Intended use: ${context.indication}`,
+            context?.existingContent && `Existing draft:\n${context.existingContent}`,
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          const completion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert FDA regulatory writer specializing in medical device submissions. Write professional, compliant content for a ${docLabel}. Use specific regulatory language per 21 CFR and FDA guidance. Be precise and factual. Do not use bracket placeholders like [DEVICE NAME] — use the provided device context. If context is missing, write generic but plausible professional content.`,
+              },
+              {
+                role: 'user',
+                content: `Write the "${fieldId}" content for the "${sectionId}" section of a ${docLabel}.\n\n${deviceInfo || 'No device context provided — write generic professional content.'}`,
+              },
+            ],
+            max_tokens: 1500,
+            temperature: 0.3,
+          });
+
+          const suggestion = completion.choices[0]?.message?.content || '';
+          return res.json({
+            suggestion,
+            source: 'openai',
+            model: 'gpt-4o-mini',
+            docType,
+            sectionId,
+            fieldId,
+          });
+        } catch (aiErr: any) {
+          console.error(
+            '[CERV2 AI] OpenAI suggest error, falling back to template:',
+            aiErr.message
+          );
+          // Fall through to template
+        }
+      }
+
+      // ── Fallback: template text ───────────────────────────────────────
+      const templates = sectionTemplates[docType] || {};
       let suggestion = templates[fieldId] || templates[sectionId] || '';
 
-      // Replace placeholders with context if provided
       if (context?.deviceName) {
         suggestion = suggestion.replace(/\[DEVICE NAME\]/g, context.deviceName);
       }
@@ -192,7 +250,7 @@ router.post(
       return res.json({
         suggestion,
         source: 'template',
-        note: 'Template-based suggestion. Full GPT integration available in Phase 8.',
+        note: 'OpenAI unavailable — using template fallback.',
         docType,
         sectionId,
         fieldId,
@@ -205,7 +263,7 @@ router.post(
 );
 
 // ── POST /equivalence ──────────────────────────────────────────────────────────
-// Generate placeholder substantial equivalence text for 510(k)
+// Generate substantial equivalence text for 510(k) — OpenAI-backed with template fallback
 router.post(
   '/equivalence',
   authMiddleware,
@@ -226,6 +284,46 @@ router.post(
         similarities = [],
         differences = [],
       } = validation.data;
+
+      // ── Try OpenAI first ──────────────────────────────────────────────
+      if (openai) {
+        try {
+          const contextParts = [
+            `Subject device: ${deviceName}`,
+            `Predicate device: ${predicateDevice}${predicateK ? ` (${predicateK})` : ''}`,
+            similarities.length > 0 && `Known similarities: ${similarities.join('; ')}`,
+            differences.length > 0 && `Known differences: ${differences.join('; ')}`,
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          const completion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert FDA regulatory writer specializing in 510(k) substantial equivalence (SE) discussions. Write a complete, professional SE section comparing the subject device to the predicate device. Cover: intended use comparison, technological characteristics comparison, performance data summary, and conclusion. Use specific 21 CFR 807.87 language. Write in formal regulatory prose — no bullet points, no bracket placeholders.`,
+              },
+              {
+                role: 'user',
+                content: `Write a comprehensive Substantial Equivalence discussion for:\n\n${contextParts}`,
+              },
+            ],
+            max_tokens: 2000,
+            temperature: 0.3,
+          });
+
+          const text = completion.choices[0]?.message?.content || '';
+          return res.json({ text, source: 'openai', model: 'gpt-4o-mini' });
+        } catch (aiErr: any) {
+          console.error(
+            '[CERV2 AI] OpenAI equivalence error, falling back to template:',
+            aiErr.message
+          );
+        }
+      }
+
+      // ── Fallback: template text ───────────────────────────────────────
 
       const simText =
         similarities.length > 0
@@ -259,7 +357,7 @@ router.post(
       return res.json({
         text,
         source: 'template',
-        note: 'Template-based SE text. Full GPT integration available in Phase 8.',
+        note: 'OpenAI unavailable — using template fallback.',
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Equivalence error:', err);
@@ -269,7 +367,7 @@ router.post(
 );
 
 // ── POST /benefit-risk ─────────────────────────────────────────────────────────
-// Generate placeholder benefit-risk determination text
+// Generate benefit-risk determination text — OpenAI-backed with template fallback
 router.post(
   '/benefit-risk',
   authMiddleware,
@@ -289,6 +387,46 @@ router.post(
       const framework = isCer
         ? 'EU MDR 2017/745 Annex I General Safety and Performance Requirements'
         : 'FDA guidance on benefit-risk determinations for medical devices';
+
+      // ── Try OpenAI first ──────────────────────────────────────────────
+      if (openai) {
+        try {
+          const contextParts = [
+            `Device: ${deviceName}`,
+            `Framework: ${framework}`,
+            benefits.length > 0 && `Known benefits: ${benefits.join('; ')}`,
+            risks.length > 0 && `Known risks: ${risks.join('; ')}`,
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          const completion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert regulatory writer. Write a professional benefit-risk determination for a medical device submission under ${framework}. Include: identified benefits with clinical significance, identified risks with mitigation measures, and a formal determination statement. Write in formal regulatory prose. Do not use bracket placeholders.`,
+              },
+              {
+                role: 'user',
+                content: `Write a benefit-risk determination for:\n\n${contextParts}`,
+              },
+            ],
+            max_tokens: 1500,
+            temperature: 0.3,
+          });
+
+          const text = completion.choices[0]?.message?.content || '';
+          return res.json({ text, source: 'openai', model: 'gpt-4o-mini' });
+        } catch (aiErr: any) {
+          console.error(
+            '[CERV2 AI] OpenAI benefit-risk error, falling back to template:',
+            aiErr.message
+          );
+        }
+      }
+
+      // ── Fallback: template text ───────────────────────────────────────
 
       const benefitText =
         benefits.length > 0
@@ -318,7 +456,7 @@ router.post(
       return res.json({
         text,
         source: 'template',
-        note: 'Template-based benefit-risk text. Full GPT integration available in Phase 8.',
+        note: 'OpenAI unavailable — using template fallback.',
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Benefit-risk error:', err);
@@ -519,20 +657,69 @@ router.post(
       const { docType, sectionId, content: _content, deviceContext } = validation.data;
       const ctx = deviceContext || {};
 
-      // Try enhanced mock content first, fall back to base templates
+      // ── Try OpenAI first ──────────────────────────────────────────────
+      if (openai) {
+        try {
+          const docLabel =
+            docType === 'cerv2_510k' ? '510(k)' : docType === 'cerv2_pma' ? 'PMA' : 'CER (EU MDR)';
+
+          const contextParts = [
+            `Document type: ${docLabel}`,
+            `Section: ${sectionId}`,
+            ctx.deviceName && `Device: ${ctx.deviceName}`,
+            ctx.manufacturer && `Manufacturer: ${ctx.manufacturer}`,
+            ctx.predicateDevice && `Predicate device: ${ctx.predicateDevice}`,
+            ctx.predicateK && `Predicate 510(k) number: ${ctx.predicateK}`,
+            ctx.intendedUse && `Intended use: ${ctx.intendedUse}`,
+            ctx.deviceClass && `Device class: ${ctx.deviceClass}`,
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          const completion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert regulatory writer specializing in ${docLabel} submissions. Write professional, submission-ready content for the requested section. Use formal regulatory prose with proper structure (headings, tables where appropriate). Do not use bracket placeholders — write complete text using the provided device context. If information is missing, write reasonable professional prose that the author can refine.`,
+              },
+              {
+                role: 'user',
+                content: `Write the "${sectionId}" section for this ${docLabel} submission:\n\n${contextParts}`,
+              },
+            ],
+            max_tokens: 2000,
+            temperature: 0.3,
+          });
+
+          const suggestion = completion.choices[0]?.message?.content || '';
+          return res.json({
+            suggestion,
+            source: 'openai',
+            model: 'gpt-4o-mini',
+            sectionId,
+            docType,
+          });
+        } catch (aiErr: any) {
+          console.error(
+            '[CERV2 AI] OpenAI analyze-section error, falling back to template:',
+            aiErr.message
+          );
+        }
+      }
+
+      // ── Fallback: enhanced mock / template ────────────────────────────
       const enhancedFn = enhancedMockContent[docType]?.[sectionId];
       let suggestion: string;
 
       if (enhancedFn) {
         suggestion = enhancedFn(ctx);
       } else {
-        // Fall back to section templates
         const templates = sectionTemplates[docType] || {};
         suggestion =
           templates[sectionId] ||
           `No enhanced content available for section "${sectionId}" in ${docType}.`;
 
-        // Basic placeholder replacement
         if (ctx.deviceName) suggestion = suggestion.replace(/\[DEVICE NAME\]/g, ctx.deviceName);
         if (ctx.predicateDevice) {
           suggestion = suggestion.replace(/\[PREDICATE DEVICE\]/g, ctx.predicateDevice);
@@ -549,7 +736,7 @@ router.post(
         source: enhancedFn ? 'enhanced-mock' : 'template',
         sectionId,
         docType,
-        note: 'Phase 7.3 enhanced mock analysis. Full GPT integration in Phase 8.',
+        note: 'OpenAI unavailable — using template fallback.',
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Analyze-section error:', err);
@@ -564,7 +751,8 @@ router.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     service: 'cerv2-ai',
-    phase: '7.3',
+    phase: 'wave-3',
+    aiSource: openai ? 'openai' : 'template-fallback',
     endpoints: [
       'POST /suggest',
       'POST /equivalence',
