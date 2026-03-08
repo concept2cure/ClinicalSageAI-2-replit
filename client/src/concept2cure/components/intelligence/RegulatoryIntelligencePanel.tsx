@@ -201,10 +201,12 @@ export function RegulatoryIntelligencePanel({
   return (
     <div className="flex flex-col h-full bg-white border-l border-zinc-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 shrink-0">
-        <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 text-indigo-600" />
-          <span className="text-sm font-semibold text-zinc-800">Regulatory Intelligence</span>
+      <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <Brain className="w-4 h-4 text-indigo-600 shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-zinc-800 truncate">
+            Regulatory Intelligence
+          </span>
         </div>
         {onClose && (
           <button onClick={onClose} className="p-1 rounded hover:bg-zinc-200/50 text-zinc-400">
@@ -221,14 +223,14 @@ export function RegulatoryIntelligencePanel({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 text-[11px] font-medium border-b-2 transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1 px-1 sm:px-2 py-2 text-[11px] font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-indigo-500 text-indigo-700 bg-indigo-50/50'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
-              {tab.label}
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );
         })}

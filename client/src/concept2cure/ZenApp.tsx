@@ -299,7 +299,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
     <div
       className={cn(
         'flex flex-col h-full bg-white border-l border-zinc-200 transition-all duration-200',
-        isFullscreen ? 'w-full' : 'w-[600px]'
+        isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
       )}
     >
       {/* Header */}
@@ -429,8 +429,10 @@ export const ZenApp: React.FC = () => {
   // LOCAL STATE
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // Sidebar
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Sidebar — auto-collapse on small screens
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768
+  );
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -1244,27 +1246,29 @@ export const ZenApp: React.FC = () => {
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* Sherpa Mode - Convergent Canvas */}
           {layoutMode === 'sherpa' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading Sherpa System...</p>
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center bg-stone-50">
+                    <div className="text-center">
+                      <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+                      <p className="text-zinc-500">Loading Sherpa System...</p>
+                    </div>
                   </div>
-                </div>
-              }
-            >
-              <ConvergentCanvas
-                userId={activeProjectId || 'anonymous'}
-                userName={userName}
-                userRole={userRole}
-                industry={industryMode}
-              />
-            </Suspense>
+                }
+              >
+                <ConvergentCanvas
+                  userId={activeProjectId || 'anonymous'}
+                  userName={userName}
+                  userRole={userRole}
+                  industry={industryMode}
+                />
+              </Suspense>
+            </div>
           )}
 
           {layoutMode === 'analytics' && (
-            <div className="flex-1 flex items-center justify-center p-8 bg-white">
+            <div className="flex-1 overflow-y-auto flex items-center justify-center p-8 bg-white">
               <div className="max-w-md text-center">
                 <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-50 flex items-center justify-center">
                   <BarChart2 className="w-6 h-6 text-amber-600" />
@@ -1300,18 +1304,20 @@ export const ZenApp: React.FC = () => {
 
           {/* Phase 7: Mission Control Dashboard */}
           {layoutMode === 'mission-control' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading Mission Control...</p>
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center bg-stone-50">
+                    <div className="text-center">
+                      <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                      <p className="text-zinc-500">Loading Mission Control...</p>
+                    </div>
                   </div>
-                </div>
-              }
-            >
-              <MissionControl />
-            </Suspense>
+                }
+              >
+                <MissionControl />
+              </Suspense>
+            </div>
           )}
 
           {/* IND Filing Workspace */}
@@ -1509,7 +1515,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Document App Hub (tool launcher) ───────────────────────── */}
           {layoutMode === 'app-hub' && (
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <WorkspaceHeader
                 title="Document Tools"
                 subtitle={`${activeProject?.name || 'Project'} · ${activeProject?.type || 'Submission'} · All roads lead to documents`}
@@ -1543,9 +1549,9 @@ export const ZenApp: React.FC = () => {
                 subtitle="Document authoring with live precedent, risk, and strategy intelligence"
                 onBack={() => setLayoutMode('assistant')}
               />
-              <div className="flex-1 flex min-h-0 overflow-hidden">
+              <div className="flex-1 flex min-h-0">
                 {/* Left: Status Card + Editor */}
-                <div className="flex-1 flex flex-col min-w-0 min-h-0">
+                <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
                   {/* Status Card */}
                   <div className="p-3 border-b border-zinc-100 bg-zinc-50/30 shrink-0">
                     <Suspense fallback={null}>
@@ -1574,7 +1580,7 @@ export const ZenApp: React.FC = () => {
                   </div>
                 </div>
                 {/* Right: Intelligence Panel */}
-                <div className="w-80 shrink-0 border-l border-zinc-200">
+                <div className="hidden lg:block w-80 shrink-0 border-l border-zinc-200 overflow-y-auto">
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center h-full">
@@ -1596,18 +1602,20 @@ export const ZenApp: React.FC = () => {
 
           {/* Rules Engine Manager */}
           {layoutMode === 'rules' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading Rules Engine...</p>
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center bg-stone-50">
+                    <div className="text-center">
+                      <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                      <p className="text-zinc-500">Loading Rules Engine...</p>
+                    </div>
                   </div>
-                </div>
-              }
-            >
-              <RulesManager onBack={() => setLayoutMode('mission-control')} />
-            </Suspense>
+                }
+              >
+                <RulesManager onBack={() => setLayoutMode('mission-control')} />
+              </Suspense>
+            </div>
           )}
 
           {/* ── Projects Index ─────────────────────────────────────────────── */}

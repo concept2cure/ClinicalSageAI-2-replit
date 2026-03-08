@@ -361,20 +361,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Top bar with AI tools */}
-      <div className="flex items-center justify-between h-10 px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between h-auto min-h-[2.5rem] px-2 sm:px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0 flex-wrap gap-y-1 py-1">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={() => {
               setActiveArtifact(null);
               setShowArtifactList(true);
               setAiResult(null);
             }}
-            className="text-xs text-zinc-500 hover:text-zinc-700"
+            className="text-xs text-zinc-500 hover:text-zinc-700 shrink-0"
           >
             &larr; Documents
           </button>
           <span className="text-zinc-300">/</span>
-          <span className="text-xs font-medium text-zinc-700 truncate max-w-[200px]">
+          <span className="text-xs font-medium text-zinc-700 truncate max-w-[120px] sm:max-w-[160px] md:max-w-[200px]">
             {activeArtifact?.title}
           </span>
           {saveStatus === 'saved' && (
@@ -389,7 +389,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
           {/* AI actions dropdown */}
           <div className="relative">
             <button

@@ -9,7 +9,7 @@
  *
  * Routes:
  * - /concept2cure/login - Login page
- * - /concept2cure/signup - Request access page  
+ * - /concept2cure/signup - Request access page
  * - /concept2cure/* - Protected main app (requires auth)
  *
  * @compliance
@@ -50,8 +50,20 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
         }}
         className="w-12 h-12"
       >
-        <svg viewBox="0 0 40 40" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="2" className="text-blue-600" />
+        <svg
+          viewBox="0 0 40 40"
+          className="w-full h-full"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="20"
+            cy="20"
+            r="18"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-blue-600"
+          />
           <motion.path
             d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
             stroke="currentColor"
@@ -158,6 +170,7 @@ interface PageTransitionProps {
 
 const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
   <motion.div
+    className="h-full"
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -8 }}
@@ -201,14 +214,10 @@ export const ZenRouter: React.FC = () => {
           </Route>
 
           {/* Alias: /login redirects to /concept2cure/login */}
-          <Route path="/login">
-            {() => <Redirect to="/concept2cure/login" />}
-          </Route>
+          <Route path="/login">{() => <Redirect to="/concept2cure/login" />}</Route>
 
           {/* Alias: /signup redirects to /concept2cure/signup */}
-          <Route path="/signup">
-            {() => <Redirect to="/concept2cure/signup" />}
-          </Route>
+          <Route path="/signup">{() => <Redirect to="/concept2cure/signup" />}</Route>
 
           {/* Onboarding - protected, for first-time users */}
           <Route path="/concept2cure/onboarding">

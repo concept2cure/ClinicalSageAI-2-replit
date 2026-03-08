@@ -404,9 +404,7 @@ function MainApp() {
         }
       >
         {/* Main Content */}
-        <main
-          className={isConcept2CurePage ? 'h-screen overflow-hidden' : 'min-h-screen bg-gray-100'}
-        >
+        <main className={isConcept2CurePage ? 'h-screen' : 'min-h-screen bg-gray-100'}>
           <Switch>
             {/* Concept2Cure - Claude.ai-style regulatory interface with auth */}
             <Route path="/concept2cure/login">

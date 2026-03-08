@@ -234,234 +234,240 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
   // ── Full expanded sidebar ──────────────────────────────────────────────────
   return (
-    <aside className="flex flex-col h-full w-64 bg-zinc-50 border-r border-zinc-200 flex-shrink-0">
-      {/* Brand header */}
-      <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
+    <>
+      {/* Mobile backdrop */}
+      <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onToggleCollapse} />
+      <aside className="flex flex-col h-full w-64 bg-zinc-50 border-r border-zinc-200 flex-shrink-0 fixed z-50 md:static md:z-auto">
+        {/* Brand header */}
+        <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-semibold text-zinc-900 text-sm">Lumen AI</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none">
+              Regulatory
+            </span>
           </div>
-          <span className="font-semibold text-zinc-900 text-sm">Lumen AI</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none">
-            Regulatory
-          </span>
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
         </div>
-        <button
-          onClick={onToggleCollapse}
-          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-      </div>
 
-      {/* New conversation */}
-      <div className="px-3 pb-2 flex-shrink-0">
-        <button
-          onClick={onNewChat}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-700 transition-colors"
-        >
-          <Plus className="w-4 h-4 flex-shrink-0" />
-          New conversation
-        </button>
-      </div>
+        {/* New conversation */}
+        <div className="px-3 pb-2 flex-shrink-0">
+          <button
+            onClick={onNewChat}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-700 transition-colors"
+          >
+            <Plus className="w-4 h-4 flex-shrink-0" />
+            New conversation
+          </button>
+        </div>
 
-      {/* Projects shortcut */}
-      <div className="px-3 pb-2 flex-shrink-0">
-        <button
-          onClick={onOpenProjects}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-        >
-          <FolderOpen className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-          My projects
-        </button>
-      </div>
+        {/* Projects shortcut */}
+        <div className="px-3 pb-2 flex-shrink-0">
+          <button
+            onClick={onOpenProjects}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+          >
+            <FolderOpen className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            My projects
+          </button>
+        </div>
 
-      <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
+        <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
-      {/* ── Document Tools shortcut ──────────────────────────────────── */}
-      <div className="px-3 py-1.5 flex-shrink-0">
-        <button
-          onClick={() => onNavigate?.('app-hub')}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-blue-50 hover:text-blue-700 text-sm transition-colors"
-        >
-          <Sparkles className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-          Document Tools
-        </button>
-      </div>
+        {/* ── Document Tools shortcut ──────────────────────────────────── */}
+        <div className="px-3 py-1.5 flex-shrink-0">
+          <button
+            onClick={() => onNavigate?.('app-hub')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-blue-50 hover:text-blue-700 text-sm transition-colors"
+          >
+            <Sparkles className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+            Document Tools
+          </button>
+        </div>
 
-      {/* ── Workspaces / submission modules ───────────────────────────────── */}
-      <div className="flex-shrink-0 px-1 pt-2 pb-1">
-        <WorkspaceGroup label="Medical Device &amp; Diagnostics" defaultOpen>
-          <WorkspaceItem
-            icon={<Activity className="w-3.5 h-3.5" />}
-            label="510(k) / De Novo / PMA"
-            badge="eSTAR"
-            onClick={() => onNavigate?.('medtech-dashboard')}
-          />
-          <WorkspaceItem
-            icon={<Stethoscope className="w-3.5 h-3.5" />}
-            label="IVD / CDx Workflow"
-            onClick={() => onNavigate?.('medtech-dashboard')}
-          />
-          <WorkspaceItem
-            icon={<Search className="w-3.5 h-3.5" />}
-            label="Precedent Intelligence"
-            badge="LIVE"
-            onClick={() => onNavigate?.('precedent-intelligence')}
-          />
-          <WorkspaceItem
-            icon={<Brain className="w-3.5 h-3.5" />}
-            label="Regulatory Workspace"
-            badge="NEW"
-            onClick={() => onNavigate?.('regulatory-workspace')}
-          />
-        </WorkspaceGroup>
-        <WorkspaceGroup label="Pharma / Biotech" defaultOpen>
-          <WorkspaceItem
-            icon={<FlaskConical className="w-3.5 h-3.5" />}
-            label="IND Workspace"
-            onClick={() => onNavigate?.('ind-workspace')}
-          />
-          <WorkspaceItem
-            icon={<FileText className="w-3.5 h-3.5" />}
-            label="eCTD Co-Author"
-            onClick={() => onNavigate?.('ectd-coauthor')}
-          />
-          <WorkspaceItem
-            icon={<Beaker className="w-3.5 h-3.5" />}
-            label="CMC Module"
-            badge="M3"
-            onClick={() => onNavigate?.('cmc')}
-          />
-          <WorkspaceItem
-            icon={<Layers className="w-3.5 h-3.5" />}
-            label="Dossier Navigator"
-            onClick={() => onNavigate?.('dossier')}
-          />
-          <WorkspaceItem
-            icon={<ShieldAlert className="w-3.5 h-3.5" />}
-            label="Risk & Strategy"
-            onClick={() => onNavigate?.('precedent-intelligence')}
-          />
-          <WorkspaceItem
-            icon={<Brain className="w-3.5 h-3.5" />}
-            label="Regulatory Workspace"
-            badge="NEW"
-            onClick={() => onNavigate?.('regulatory-workspace')}
-          />
-        </WorkspaceGroup>
-        <WorkspaceGroup label="CRO / Contract Research" defaultOpen={false}>
-          <WorkspaceItem
-            icon={<FileText className="w-3.5 h-3.5" />}
-            label="eCTD Co-Author"
-            onClick={() => onNavigate?.('ectd-coauthor')}
-          />
-          <WorkspaceItem
-            icon={<Layers className="w-3.5 h-3.5" />}
-            label="Dossier Navigator"
-            onClick={() => onNavigate?.('dossier')}
-          />
-          <WorkspaceItem
-            icon={<Search className="w-3.5 h-3.5" />}
-            label="Precedent Intelligence"
-            onClick={() => onNavigate?.('precedent-intelligence')}
-          />
-          <WorkspaceItem
-            icon={<Brain className="w-3.5 h-3.5" />}
-            label="Regulatory Workspace"
-            badge="NEW"
-            onClick={() => onNavigate?.('regulatory-workspace')}
-          />
-        </WorkspaceGroup>
-      </div>
+        {/* ── Workspaces / submission modules ───────────────────────────────── */}
+        <div className="flex-shrink-0 px-1 pt-2 pb-1">
+          <WorkspaceGroup label="Medical Device &amp; Diagnostics" defaultOpen>
+            <WorkspaceItem
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="510(k) / De Novo / PMA"
+              badge="eSTAR"
+              onClick={() => onNavigate?.('medtech-dashboard')}
+            />
+            <WorkspaceItem
+              icon={<Stethoscope className="w-3.5 h-3.5" />}
+              label="IVD / CDx Workflow"
+              onClick={() => onNavigate?.('medtech-dashboard')}
+            />
+            <WorkspaceItem
+              icon={<Search className="w-3.5 h-3.5" />}
+              label="Precedent Intelligence"
+              badge="LIVE"
+              onClick={() => onNavigate?.('precedent-intelligence')}
+            />
+            <WorkspaceItem
+              icon={<Brain className="w-3.5 h-3.5" />}
+              label="Regulatory Workspace"
+              badge="NEW"
+              onClick={() => onNavigate?.('regulatory-workspace')}
+            />
+          </WorkspaceGroup>
+          <WorkspaceGroup label="Pharma / Biotech" defaultOpen>
+            <WorkspaceItem
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="IND Workspace"
+              onClick={() => onNavigate?.('ind-workspace')}
+            />
+            <WorkspaceItem
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="eCTD Co-Author"
+              onClick={() => onNavigate?.('ectd-coauthor')}
+            />
+            <WorkspaceItem
+              icon={<Beaker className="w-3.5 h-3.5" />}
+              label="CMC Module"
+              badge="M3"
+              onClick={() => onNavigate?.('cmc')}
+            />
+            <WorkspaceItem
+              icon={<Layers className="w-3.5 h-3.5" />}
+              label="Dossier Navigator"
+              onClick={() => onNavigate?.('dossier')}
+            />
+            <WorkspaceItem
+              icon={<ShieldAlert className="w-3.5 h-3.5" />}
+              label="Risk & Strategy"
+              onClick={() => onNavigate?.('precedent-intelligence')}
+            />
+            <WorkspaceItem
+              icon={<Brain className="w-3.5 h-3.5" />}
+              label="Regulatory Workspace"
+              badge="NEW"
+              onClick={() => onNavigate?.('regulatory-workspace')}
+            />
+          </WorkspaceGroup>
+          <WorkspaceGroup label="CRO / Contract Research" defaultOpen={false}>
+            <WorkspaceItem
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="eCTD Co-Author"
+              onClick={() => onNavigate?.('ectd-coauthor')}
+            />
+            <WorkspaceItem
+              icon={<Layers className="w-3.5 h-3.5" />}
+              label="Dossier Navigator"
+              onClick={() => onNavigate?.('dossier')}
+            />
+            <WorkspaceItem
+              icon={<Search className="w-3.5 h-3.5" />}
+              label="Precedent Intelligence"
+              onClick={() => onNavigate?.('precedent-intelligence')}
+            />
+            <WorkspaceItem
+              icon={<Brain className="w-3.5 h-3.5" />}
+              label="Regulatory Workspace"
+              badge="NEW"
+              onClick={() => onNavigate?.('regulatory-workspace')}
+            />
+          </WorkspaceGroup>
+        </div>
 
-      <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
+        <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
-      {/* Conversation history */}
-      <div className="flex-1 overflow-y-auto min-h-0 py-1" style={{ scrollbarWidth: 'thin' }}>
-        {conversations.length === 0 && (
-          <div className="px-4 py-10 text-center">
-            <MessageSquare className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              No conversations yet.
-              <br />
-              Start one above.
-            </p>
-          </div>
-        )}
-
-        {todayConvos.length > 0 && (
-          <>
-            <SectionLabel label="Today" />
-            {todayConvos.map(c => (
-              <ConvoRow
-                key={c.id}
-                convo={c}
-                isActive={c.id === activeConversationId}
-                onSelect={() => onSelectConversation(c.id)}
-                onDelete={() => onDeleteConversation(c.id)}
-              />
-            ))}
-          </>
-        )}
-
-        {yesterdayConvos.length > 0 && (
-          <>
-            <SectionLabel label="Yesterday" />
-            {yesterdayConvos.map(c => (
-              <ConvoRow
-                key={c.id}
-                convo={c}
-                isActive={c.id === activeConversationId}
-                onSelect={() => onSelectConversation(c.id)}
-                onDelete={() => onDeleteConversation(c.id)}
-              />
-            ))}
-          </>
-        )}
-
-        {olderConvos.length > 0 && (
-          <>
-            <SectionLabel label="Previous 7 days" />
-            {olderConvos.map(c => (
-              <ConvoRow
-                key={c.id}
-                convo={c}
-                isActive={c.id === activeConversationId}
-                onSelect={() => onSelectConversation(c.id)}
-                onDelete={() => onDeleteConversation(c.id)}
-              />
-            ))}
-          </>
-        )}
-      </div>
-
-      {/* User / settings footer */}
-      <div className="flex-shrink-0 border-t border-zinc-200 p-3">
-        <button
-          onClick={onOpenSettings}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-        >
-          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-            <span className="text-xs font-bold text-violet-700 leading-none">{avatarInitial}</span>
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-zinc-900 truncate leading-tight">
-                {displayName}
+        {/* Conversation history */}
+        <div className="flex-1 overflow-y-auto min-h-0 py-1" style={{ scrollbarWidth: 'thin' }}>
+          {conversations.length === 0 && (
+            <div className="px-4 py-10 text-center">
+              <MessageSquare className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                No conversations yet.
+                <br />
+                Start one above.
               </p>
-              {userEmail ? (
-                <p className="text-[11px] text-zinc-400 truncate leading-tight">{userEmail}</p>
-              ) : (
-                <p className="text-[11px] text-zinc-400 leading-tight">
-                  Settings &amp; preferences
-                </p>
-              )}
             </div>
           )}
-        </button>
-      </div>
-    </aside>
+
+          {todayConvos.length > 0 && (
+            <>
+              <SectionLabel label="Today" />
+              {todayConvos.map(c => (
+                <ConvoRow
+                  key={c.id}
+                  convo={c}
+                  isActive={c.id === activeConversationId}
+                  onSelect={() => onSelectConversation(c.id)}
+                  onDelete={() => onDeleteConversation(c.id)}
+                />
+              ))}
+            </>
+          )}
+
+          {yesterdayConvos.length > 0 && (
+            <>
+              <SectionLabel label="Yesterday" />
+              {yesterdayConvos.map(c => (
+                <ConvoRow
+                  key={c.id}
+                  convo={c}
+                  isActive={c.id === activeConversationId}
+                  onSelect={() => onSelectConversation(c.id)}
+                  onDelete={() => onDeleteConversation(c.id)}
+                />
+              ))}
+            </>
+          )}
+
+          {olderConvos.length > 0 && (
+            <>
+              <SectionLabel label="Previous 7 days" />
+              {olderConvos.map(c => (
+                <ConvoRow
+                  key={c.id}
+                  convo={c}
+                  isActive={c.id === activeConversationId}
+                  onSelect={() => onSelectConversation(c.id)}
+                  onDelete={() => onDeleteConversation(c.id)}
+                />
+              ))}
+            </>
+          )}
+        </div>
+
+        {/* User / settings footer */}
+        <div className="flex-shrink-0 border-t border-zinc-200 p-3">
+          <button
+            onClick={onOpenSettings}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+          >
+            <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-violet-700 leading-none">
+                {avatarInitial}
+              </span>
+            </div>
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium text-zinc-900 truncate leading-tight">
+                  {displayName}
+                </p>
+                {userEmail ? (
+                  <p className="text-[11px] text-zinc-400 truncate leading-tight">{userEmail}</p>
+                ) : (
+                  <p className="text-[11px] text-zinc-400 leading-tight">
+                    Settings &amp; preferences
+                  </p>
+                )}
+              </div>
+            )}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 
