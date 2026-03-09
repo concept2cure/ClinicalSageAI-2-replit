@@ -42,7 +42,14 @@ interface OnboardingPreferences {
 
 const LogoIcon = () => (
   <svg viewBox="0 0 40 40" className="w-12 h-12" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="2" className="text-blue-600" />
+    <circle
+      cx="20"
+      cy="20"
+      r="18"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="text-blue-600"
+    />
     <path
       d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
       stroke="currentColor"
@@ -66,32 +73,62 @@ const LogoIcon = () => (
 
 const SparklesIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+    />
   </svg>
 );
 
 const FolderIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+    />
   </svg>
 );
 
 const CogIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    />
   </svg>
 );
 
 const MapIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+    />
   </svg>
 );
 
 const RocketIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 10V3L4 14h7v7l9-11h-7z"
+    />
   </svg>
 );
 
@@ -112,41 +149,41 @@ const ArrowRightIcon = () => (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SUBMISSION_TYPES = [
-  { 
-    value: '510k', 
+  {
+    value: '510k',
     label: '510(k) Premarket Notification',
     description: 'Medical device clearance pathway',
-    icon: '🏥'
+    icon: '🏥',
   },
-  { 
-    value: 'pma', 
+  {
+    value: 'pma',
     label: 'PMA Application',
     description: 'Class III device approval',
-    icon: '🔬'
+    icon: '🔬',
   },
-  { 
-    value: 'ind', 
+  {
+    value: 'ind',
     label: 'IND Application',
     description: 'Investigational New Drug',
-    icon: '💊'
+    icon: '💊',
   },
-  { 
-    value: 'nda', 
+  {
+    value: 'nda',
     label: 'NDA/BLA Submission',
     description: 'New drug or biologic approval',
-    icon: '📋'
+    icon: '📋',
   },
-  { 
-    value: 'cer', 
+  {
+    value: 'cer',
     label: 'Clinical Evaluation Report',
     description: 'EU MDR compliance',
-    icon: '📊'
+    icon: '📊',
   },
-  { 
-    value: 'ectd', 
+  {
+    value: 'ectd',
     label: 'eCTD Module',
     description: 'Electronic Common Technical Document',
-    icon: '📁'
+    icon: '📁',
   },
 ];
 
@@ -156,13 +193,15 @@ const SUBMISSION_TYPES = [
 
 const TOUR_FEATURES = [
   {
-    title: 'AI-Powered Drafting',
-    description: 'Lumen AI assists with regulatory document creation, citing relevant guidance and precedents.',
+    title: 'RI-Powered Drafting',
+    description:
+      'Lumen RI assists with regulatory document creation, citing relevant guidance and precedents.',
     icon: '🤖',
   },
   {
     title: 'Smart Templates',
-    description: 'Pre-built templates for every submission type, automatically populated with your data.',
+    description:
+      'Pre-built templates for every submission type, automatically populated with your data.',
     icon: '📝',
   },
   {
@@ -195,7 +234,7 @@ export const ZenOnboarding: React.FC = () => {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [preferences, setPreferences] = useState<OnboardingPreferences>({
     projectName: '',
     submissionType: '',
@@ -223,7 +262,7 @@ export const ZenOnboarding: React.FC = () => {
 
   const handleComplete = useCallback(async () => {
     setIsLoading(true);
-    
+
     // Save preferences and create first project
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -283,12 +322,10 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold text-zinc-900">
-          Welcome to Concept2Cure
-        </h1>
+        <h1 className="text-3xl font-semibold text-zinc-900">Welcome to Concept2Cure</h1>
         <p className="text-lg text-zinc-600 max-w-md mx-auto">
-          The AI-powered regulatory intelligence platform that transforms 
-          how you create and manage submissions.
+          The RI-powered regulatory intelligence platform that transforms how you create and manage
+          submissions.
         </p>
       </div>
 
@@ -348,32 +385,29 @@ export const ZenOnboarding: React.FC = () => {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700">
-            Project Name
-          </label>
+          <label className="block text-sm font-medium text-zinc-700">Project Name</label>
           <input
             type="text"
             value={preferences.projectName}
-            onChange={(e) => setPreferences(p => ({ ...p, projectName: e.target.value }))}
+            onChange={e => setPreferences(p => ({ ...p, projectName: e.target.value }))}
             placeholder="e.g., CardioMonitor 510(k)"
             className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700">
-            Submission Type
-          </label>
+          <label className="block text-sm font-medium text-zinc-700">Submission Type</label>
           <div className="grid grid-cols-2 gap-3">
-            {SUBMISSION_TYPES.map((type) => (
+            {SUBMISSION_TYPES.map(type => (
               <button
                 key={type.value}
                 onClick={() => setPreferences(p => ({ ...p, submissionType: type.value }))}
                 className={`
                   p-4 text-left rounded-xl border-2 transition-all
-                  ${preferences.submissionType === type.value
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-zinc-200 hover:border-zinc-300'
+                  ${
+                    preferences.submissionType === type.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-zinc-200 hover:border-zinc-300'
                   }
                 `}
               >
@@ -430,15 +464,15 @@ export const ZenOnboarding: React.FC = () => {
           },
           {
             key: 'aiSuggestions',
-            label: 'AI Suggestions',
-            description: 'Lumen AI will proactively suggest improvements',
+            label: 'RI Suggestions',
+            description: 'Lumen RI will proactively suggest improvements',
           },
           {
             key: 'compactMode',
             label: 'Compact Mode',
             description: 'Reduce spacing for more content on screen',
           },
-        ].map((pref) => (
+        ].map(pref => (
           <label
             key={pref.key}
             className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl cursor-pointer hover:bg-zinc-100 transition-colors"
@@ -448,15 +482,18 @@ export const ZenOnboarding: React.FC = () => {
               <div className="text-sm text-zinc-500">{pref.description}</div>
             </div>
             <button
-              onClick={() => setPreferences(p => ({ 
-                ...p, 
-                [pref.key]: !p[pref.key as keyof OnboardingPreferences] 
-              }))}
+              onClick={() =>
+                setPreferences(p => ({
+                  ...p,
+                  [pref.key]: !p[pref.key as keyof OnboardingPreferences],
+                }))
+              }
               className={`
                 relative w-12 h-7 rounded-full transition-colors
-                ${preferences[pref.key as keyof OnboardingPreferences] 
-                  ? 'bg-blue-600' 
-                  : 'bg-zinc-300'
+                ${
+                  preferences[pref.key as keyof OnboardingPreferences]
+                    ? 'bg-blue-600'
+                    : 'bg-zinc-300'
                 }
               `}
             >
@@ -571,8 +608,10 @@ export const ZenOnboarding: React.FC = () => {
       <div className="space-y-4">
         <h2 className="text-3xl font-semibold text-zinc-900">You're All Set!</h2>
         <p className="text-lg text-zinc-600 max-w-md mx-auto">
-          Your workspace "{preferences.projectName}" is ready. 
-          Let's start building your {SUBMISSION_TYPES.find(t => t.value === preferences.submissionType)?.label || 'submission'}.
+          Your workspace "{preferences.projectName}" is ready. Let's start building your{' '}
+          {SUBMISSION_TYPES.find(t => t.value === preferences.submissionType)?.label ||
+            'submission'}
+          .
         </p>
       </div>
 
@@ -585,8 +624,20 @@ export const ZenOnboarding: React.FC = () => {
           {isLoading ? (
             <>
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               Setting up...
             </>

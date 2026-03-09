@@ -65,13 +65,7 @@ interface CommandItem {
   keywords?: string[];
 }
 
-type CommandCategory =
-  | 'recent'
-  | 'submissions'
-  | 'tools'
-  | 'projects'
-  | 'settings'
-  | 'ai';
+type CommandCategory = 'recent' | 'submissions' | 'tools' | 'projects' | 'settings' | 'ai';
 
 interface CommandGroup {
   category: CommandCategory;
@@ -228,7 +222,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   {
     id: 'ai-analyze',
     title: 'Analyze Document',
-    subtitle: 'AI-powered document analysis',
+    subtitle: 'RI-powered document analysis',
     icon: <Brain className="w-4 h-4 text-violet-600" />,
     category: 'ai',
     action: () => onAction('ai-analyze'),
@@ -236,7 +230,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   },
   {
     id: 'ai-draft',
-    title: 'Draft with AI',
+    title: 'Draft with RI',
     subtitle: 'Generate regulatory content',
     icon: <Sparkles className="w-4 h-4 text-violet-600" />,
     category: 'ai',
@@ -285,16 +279,10 @@ const CATEGORY_LABELS: Record<CommandCategory, string> = {
   tools: 'Tools & Modules',
   projects: 'Projects',
   settings: 'Settings',
-  ai: 'AI Actions',
+  ai: 'RI Actions',
 };
 
-const CATEGORY_ORDER: CommandCategory[] = [
-  'recent',
-  'submissions',
-  'tools',
-  'ai',
-  'settings',
-];
+const CATEGORY_ORDER: CommandCategory[] = ['recent', 'submissions', 'tools', 'ai', 'settings'];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -312,10 +300,11 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
 
   // Get commands
   const commands = useMemo(
-    () => createCommands((id) => {
-      onAction(id);
-      onClose();
-    }),
+    () =>
+      createCommands(id => {
+        onAction(id);
+        onClose();
+      }),
     [onAction, onClose]
   );
 
@@ -324,14 +313,8 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
     if (!query.trim()) return commands;
 
     const lowerQuery = query.toLowerCase();
-    return commands.filter((cmd) => {
-      const searchText = [
-        cmd.title,
-        cmd.subtitle,
-        ...(cmd.keywords || []),
-      ]
-        .join(' ')
-        .toLowerCase();
+    return commands.filter(cmd => {
+      const searchText = [cmd.title, cmd.subtitle, ...(cmd.keywords || [])].join(' ').toLowerCase();
       return searchText.includes(lowerQuery);
     });
   }, [commands, query]);
@@ -340,8 +323,8 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
   const groupedCommands = useMemo(() => {
     const groups: CommandGroup[] = [];
 
-    CATEGORY_ORDER.forEach((category) => {
-      const items = filteredCommands.filter((cmd) => cmd.category === category);
+    CATEGORY_ORDER.forEach(category => {
+      const items = filteredCommands.filter(cmd => cmd.category === category);
       if (items.length > 0) {
         groups.push({
           category,
@@ -355,10 +338,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
   }, [filteredCommands]);
 
   // Flat list for keyboard navigation
-  const flatList = useMemo(
-    () => groupedCommands.flatMap((g) => g.items),
-    [groupedCommands]
-  );
+  const flatList = useMemo(() => groupedCommands.flatMap(g => g.items), [groupedCommands]);
 
   // Reset on open
   useEffect(() => {
@@ -390,11 +370,11 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex((i) => Math.min(i + 1, flatList.length - 1));
+          setSelectedIndex(i => Math.min(i + 1, flatList.length - 1));
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex((i) => Math.max(i - 1, 0));
+          setSelectedIndex(i => Math.max(i - 1, 0));
           break;
         case 'Enter':
           e.preventDefault();
@@ -418,10 +398,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Dialog */}
       <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
@@ -432,7 +409,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => {
+            onChange={e => {
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
@@ -446,19 +423,14 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         </div>
 
         {/* Results */}
-        <div
-          ref={listRef}
-          className="max-h-[60vh] overflow-y-auto py-2 zen-scroll"
-        >
+        <div ref={listRef} className="max-h-[60vh] overflow-y-auto py-2 zen-scroll">
           {flatList.length === 0 ? (
             <div className="px-4 py-12 text-center">
               <Search className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
-              <p className="text-sm text-zinc-500">
-                No commands found for "{query}"
-              </p>
+              <p className="text-sm text-zinc-500">No commands found for "{query}"</p>
             </div>
           ) : (
-            groupedCommands.map((group) => {
+            groupedCommands.map(group => {
               const groupStartIndex = cumulativeIndex;
 
               return (
@@ -488,9 +460,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
                         onMouseEnter={() => setSelectedIndex(absoluteIndex)}
                         className={cn(
                           'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
-                          isSelected
-                            ? 'bg-zinc-100'
-                            : 'hover:bg-zinc-50'
+                          isSelected ? 'bg-zinc-100' : 'hover:bg-zinc-50'
                         )}
                       >
                         {/* Icon */}
@@ -509,9 +479,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
                             {item.title}
                           </div>
                           {item.subtitle && (
-                            <div className="text-xs text-zinc-500 truncate">
-                              {item.subtitle}
-                            </div>
+                            <div className="text-xs text-zinc-500 truncate">{item.subtitle}</div>
                           )}
                         </div>
 
@@ -526,9 +494,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
                         <ChevronRight
                           className={cn(
                             'w-4 h-4 flex-shrink-0 transition-opacity',
-                            isSelected
-                              ? 'opacity-100 text-zinc-600'
-                              : 'opacity-0'
+                            isSelected ? 'opacity-100 text-zinc-600' : 'opacity-0'
                           )}
                         />
                       </button>

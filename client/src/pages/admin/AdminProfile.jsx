@@ -44,7 +44,7 @@ export default function AdminProfile() {
     name: 'Sarah Johnson, Ph.D.',
     email: 'sarah.johnson@concept2cure.ai',
     role: 'Administrator',
-    company: 'Concept2Cure.AI',
+    company: 'Concept2Cure',
     avatar: '/avatars/admin-avatar.png',
     teams: [
       { id: 1, name: 'Regulatory Affairs', role: 'Admin' },
@@ -126,10 +126,10 @@ export default function AdminProfile() {
           <div className="flex flex-col items-start">
             <div className="flex items-center">
               <div className="bg-gradient-to-r from-[#0071e3] to-[#2b8fff] rounded p-1.5 mr-2">
-                <div className="text-white font-bold text-xs tracking-wide">C2C.AI</div>
+                <div className="text-white font-bold text-xs tracking-wide">C2C</div>
               </div>
               <span className="text-lg font-semibold text-[#1d1d1f] tracking-tight">
-                CONCEPT2CURE.AI
+                CONCEPT2CURE
               </span>
             </div>
             <span className="ml-7 text-sm text-[#86868b] mt-0.5">Concept2Cure Platform</span>
@@ -860,7 +860,7 @@ export default function AdminProfile() {
                                 <div className="text-center">
                                   <div className="text-4xl font-bold text-[#06c]">128</div>
                                   <div className="text-sm text-[#86868b] mt-1">
-                                    AI Assistant Queries
+                                    RI Assistant Queries
                                   </div>
                                 </div>
                               </CardContent>

@@ -43,7 +43,7 @@ const APPS: AppCard[] = [
   {
     id: 'editor',
     title: 'Document Editor',
-    description: 'Create and edit regulatory documents with AI assistance. Export to DOCX.',
+    description: 'Create and edit regulatory documents with RI assistance. Export to DOCX.',
     icon: <PenLine className="w-5 h-5" />,
     navigateTo: 'editor',
     category: 'author',
@@ -51,7 +51,7 @@ const APPS: AppCard[] = [
   {
     id: 'ectd-coauthor',
     title: 'eCTD Co-Author',
-    description: 'Section-by-section CTD drafting with AI Sherpa. IND, NDA, BLA, 510(k).',
+    description: 'Section-by-section CTD drafting with RI Sherpa. IND, NDA, BLA, 510(k).',
     icon: <FileText className="w-5 h-5" />,
     navigateTo: 'ectd-coauthor',
     category: 'author',
@@ -154,7 +154,7 @@ export const DocumentAppHub: React.FC<DocumentAppHubProps> = ({
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-sm"
             >
               <MessageSquare className="w-4 h-4" />
-              Ask AI to Draft
+              Ask RI to Draft
             </button>
           )}
           <button
@@ -219,7 +219,7 @@ export const DocumentAppHub: React.FC<DocumentAppHubProps> = ({
             <div>
               <p className="text-sm font-medium text-zinc-800">Everything flows to documents</p>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Upload files → AI harvests data → draft sections → validate claims → export DOCX →
+                Upload files → RI harvests data → draft sections → validate claims → export DOCX →
                 assemble submission
               </p>
             </div>

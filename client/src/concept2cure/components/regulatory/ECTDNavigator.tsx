@@ -1,28 +1,22 @@
 /**
  * Concept2Cure - eCTD Navigator
- * 
+ *
  * Visual navigation and management of eCTD (electronic Common Technical Document) structure
  * supporting ICH M4 format for drug submissions and technical files for devices.
- * 
+ *
  * Features:
  * - Module 1-5 hierarchical visualization
  * - Document status tracking
  * - Submission sequence management
  * - Lifecycle management (initial, amendment, supplement)
  * - Regional variations support
- * 
+ *
  * @module components/regulatory/eCTDNavigator
  * @version 1.0.0
  */
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -35,11 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Table,
   TableBody,
@@ -78,7 +68,13 @@ import {
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-type DocumentStatus = 'draft' | 'in_review' | 'approved' | 'pending' | 'not_applicable' | 'not_started';
+type DocumentStatus =
+  | 'draft'
+  | 'in_review'
+  | 'approved'
+  | 'pending'
+  | 'not_applicable'
+  | 'not_started';
 type SubmissionType = 'initial' | 'amendment' | 'supplement' | 'variation' | 'annual_report';
 type DocumentOperation = 'new' | 'replace' | 'append' | 'delete';
 
@@ -133,7 +129,14 @@ const ECTD_STRUCTURE: eCTDSection[] = [
         title: '1.1 Forms',
         required: true,
         documents: [
-          { id: 'd1', title: 'Application Form', section: '1.1', status: 'approved', version: '1.0', lastModified: '2025-01-15' },
+          {
+            id: 'd1',
+            title: 'Application Form',
+            section: '1.1',
+            status: 'approved',
+            version: '1.0',
+            lastModified: '2025-01-15',
+          },
         ],
       },
       {
@@ -141,7 +144,15 @@ const ECTD_STRUCTURE: eCTDSection[] = [
         title: '1.2 Cover Letter',
         required: true,
         documents: [
-          { id: 'd2', title: 'Cover Letter', section: '1.2', status: 'in_review', version: '1.0', lastModified: '2025-01-18', assignee: 'John Smith' },
+          {
+            id: 'd2',
+            title: 'Cover Letter',
+            section: '1.2',
+            status: 'in_review',
+            version: '1.0',
+            lastModified: '2025-01-18',
+            assignee: 'John Smith',
+          },
         ],
       },
       {
@@ -171,9 +182,20 @@ const ECTD_STRUCTURE: eCTDSection[] = [
         title: '1.14 Labeling',
         required: true,
         children: [
-          { id: 'm1.14.1', title: '1.14.1 Prescribing Information', required: true,
+          {
+            id: 'm1.14.1',
+            title: '1.14.1 Prescribing Information',
+            required: true,
             documents: [
-              { id: 'd3', title: 'USPI', section: '1.14.1', status: 'in_review', version: '2.0', lastModified: '2025-01-20', assignee: 'Medical Writing' },
+              {
+                id: 'd3',
+                title: 'USPI',
+                section: '1.14.1',
+                status: 'in_review',
+                version: '2.0',
+                lastModified: '2025-01-20',
+                assignee: 'Medical Writing',
+              },
             ],
           },
           { id: 'm1.14.2', title: '1.14.2 Patient Labeling', required: true },
@@ -192,7 +214,14 @@ const ECTD_STRUCTURE: eCTDSection[] = [
         title: '2.2 Introduction',
         required: true,
         documents: [
-          { id: 'd4', title: 'CTD Introduction', section: '2.2', status: 'approved', version: '1.0', lastModified: '2025-01-10' },
+          {
+            id: 'd4',
+            title: 'CTD Introduction',
+            section: '2.2',
+            status: 'approved',
+            version: '1.0',
+            lastModified: '2025-01-10',
+          },
         ],
       },
       {
@@ -200,7 +229,15 @@ const ECTD_STRUCTURE: eCTDSection[] = [
         title: '2.3 Quality Overall Summary (QOS)',
         required: true,
         documents: [
-          { id: 'd5', title: 'Quality Overall Summary', section: '2.3', status: 'in_review', version: '1.2', lastModified: '2025-01-19', assignee: 'CMC Team' },
+          {
+            id: 'd5',
+            title: 'Quality Overall Summary',
+            section: '2.3',
+            status: 'in_review',
+            version: '1.2',
+            lastModified: '2025-01-19',
+            assignee: 'CMC Team',
+          },
         ],
       },
       {
@@ -208,7 +245,14 @@ const ECTD_STRUCTURE: eCTDSection[] = [
         title: '2.4 Nonclinical Overview',
         required: true,
         documents: [
-          { id: 'd6', title: 'Nonclinical Overview', section: '2.4', status: 'approved', version: '1.0', lastModified: '2025-01-08' },
+          {
+            id: 'd6',
+            title: 'Nonclinical Overview',
+            section: '2.4',
+            status: 'approved',
+            version: '1.0',
+            lastModified: '2025-01-08',
+          },
         ],
       },
       {
@@ -216,7 +260,15 @@ const ECTD_STRUCTURE: eCTDSection[] = [
         title: '2.5 Clinical Overview',
         required: true,
         documents: [
-          { id: 'd7', title: 'Clinical Overview', section: '2.5', status: 'draft', version: '0.8', lastModified: '2025-01-21', assignee: 'Medical Writing' },
+          {
+            id: 'd7',
+            title: 'Clinical Overview',
+            section: '2.5',
+            status: 'draft',
+            version: '0.8',
+            lastModified: '2025-01-21',
+            assignee: 'Medical Writing',
+          },
         ],
       },
       {
@@ -354,7 +406,11 @@ const ECTD_STRUCTURE: eCTDSection[] = [
           { id: 'm5.3.4', title: '5.3.4 Human PD Study Reports', required: false },
           { id: 'm5.3.5', title: '5.3.5 Efficacy and Safety Study Reports', required: true },
           { id: 'm5.3.6', title: '5.3.6 Reports of Post-Marketing Experience', required: false },
-          { id: 'm5.3.7', title: '5.3.7 Case Report Forms and Individual Patient Listings', required: false },
+          {
+            id: 'm5.3.7',
+            title: '5.3.7 Case Report Forms and Individual Patient Listings',
+            required: false,
+          },
         ],
       },
       {
@@ -404,25 +460,56 @@ const MOCK_SEQUENCES: SubmissionSequence[] = [
 // HELPER FUNCTIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<DocumentStatus, { label: string; color: string; icon: React.ReactNode }> = {
+const STATUS_CONFIG: Record<
+  DocumentStatus,
+  { label: string; color: string; icon: React.ReactNode }
+> = {
   draft: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: <File className="w-4 h-4" /> },
-  in_review: { label: 'In Review', color: 'bg-yellow-100 text-yellow-700', icon: <Clock className="w-4 h-4" /> },
-  approved: { label: 'Approved', color: 'bg-green-100 text-green-700', icon: <CheckCircle2 className="w-4 h-4" /> },
-  pending: { label: 'Pending', color: 'bg-blue-100 text-blue-700', icon: <Clock className="w-4 h-4" /> },
-  not_applicable: { label: 'N/A', color: 'bg-gray-50 text-gray-500', icon: <File className="w-4 h-4" /> },
-  not_started: { label: 'Not Started', color: 'bg-red-50 text-red-600', icon: <AlertCircle className="w-4 h-4" /> },
+  in_review: {
+    label: 'In Review',
+    color: 'bg-yellow-100 text-yellow-700',
+    icon: <Clock className="w-4 h-4" />,
+  },
+  approved: {
+    label: 'Approved',
+    color: 'bg-green-100 text-green-700',
+    icon: <CheckCircle2 className="w-4 h-4" />,
+  },
+  pending: {
+    label: 'Pending',
+    color: 'bg-blue-100 text-blue-700',
+    icon: <Clock className="w-4 h-4" />,
+  },
+  not_applicable: {
+    label: 'N/A',
+    color: 'bg-gray-50 text-gray-500',
+    icon: <File className="w-4 h-4" />,
+  },
+  not_started: {
+    label: 'Not Started',
+    color: 'bg-red-50 text-red-600',
+    icon: <AlertCircle className="w-4 h-4" />,
+  },
 };
 
-function countDocuments(section: eCTDSection): { total: number; approved: number; inReview: number; draft: number } {
-  let total = 0, approved = 0, inReview = 0, draft = 0;
-  
+function countDocuments(section: eCTDSection): {
+  total: number;
+  approved: number;
+  inReview: number;
+  draft: number;
+} {
+  let total = 0,
+    approved = 0,
+    inReview = 0,
+    draft = 0;
+
   if (section.documents) {
     total += section.documents.length;
     approved += section.documents.filter(d => d.status === 'approved').length;
     inReview += section.documents.filter(d => d.status === 'in_review').length;
     draft += section.documents.filter(d => d.status === 'draft').length;
   }
-  
+
   if (section.children) {
     for (const child of section.children) {
       const counts = countDocuments(child);
@@ -432,7 +519,7 @@ function countDocuments(section: eCTDSection): { total: number; approved: number
       draft += counts.draft;
     }
   }
-  
+
   return { total, approved, inReview, draft };
 }
 
@@ -443,12 +530,12 @@ function countDocuments(section: eCTDSection): { total: number; approved: number
 /**
  * Section Tree Node Component
  */
-function SectionNode({ 
-  section, 
+function SectionNode({
+  section,
   depth = 0,
-  onSelect 
-}: { 
-  section: eCTDSection; 
+  onSelect,
+}: {
+  section: eCTDSection;
   depth?: number;
   onSelect: (section: eCTDSection) => void;
 }) {
@@ -464,20 +551,28 @@ function SectionNode({
           {hasChildren ? (
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6">
-                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {isOpen ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
               </Button>
             </CollapsibleTrigger>
           ) : (
             <span className="w-6" />
           )}
-          
+
           {hasChildren || hasDocuments ? (
-            isOpen ? <FolderOpen className="h-4 w-4 text-blue-500" /> : <Folder className="h-4 w-4 text-blue-500" />
+            isOpen ? (
+              <FolderOpen className="h-4 w-4 text-blue-500" />
+            ) : (
+              <Folder className="h-4 w-4 text-blue-500" />
+            )
           ) : (
             <File className="h-4 w-4 text-gray-400" />
           )}
-          
-          <span 
+
+          <span
             className="flex-1 text-sm cursor-pointer hover:text-blue-600"
             onClick={() => onSelect(section)}
           >
@@ -505,13 +600,15 @@ function SectionNode({
           )}
 
           {section.required && (
-            <Badge variant="outline" className="text-xs">Required</Badge>
+            <Badge variant="outline" className="text-xs">
+              Required
+            </Badge>
           )}
         </div>
 
         {hasChildren && (
           <CollapsibleContent>
-            {section.children?.map((child) => (
+            {section.children?.map(child => (
               <SectionNode key={child.id} section={child} depth={depth + 1} onSelect={onSelect} />
             ))}
           </CollapsibleContent>
@@ -532,9 +629,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
           <Folder className="w-5 h-5 text-blue-500" />
           {section.title}
         </CardTitle>
-        {section.description && (
-          <CardDescription>{section.description}</CardDescription>
-        )}
+        {section.description && <CardDescription>{section.description}</CardDescription>}
       </CardHeader>
       <CardContent>
         {section.documents && section.documents.length > 0 ? (
@@ -550,7 +645,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {section.documents.map((doc) => {
+              {section.documents.map(doc => {
                 const statusConfig = STATUS_CONFIG[doc.status];
                 return (
                   <TableRow key={doc.id}>
@@ -619,12 +714,17 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
       </div>
 
       <div className="grid gap-4">
-        {sequences.map((seq) => (
-          <Card key={seq.id} className={
-            seq.status === 'submitted' ? 'border-green-200' :
-            seq.status === 'ready' ? 'border-blue-200' :
-            ''
-          }>
+        {sequences.map(seq => (
+          <Card
+            key={seq.id}
+            className={
+              seq.status === 'submitted'
+                ? 'border-green-200'
+                : seq.status === 'ready'
+                  ? 'border-blue-200'
+                  : ''
+            }
+          >
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -634,16 +734,22 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
                   <div>
                     <h4 className="font-semibold flex items-center gap-2">
                       Sequence {seq.sequenceNumber}
-                      <Badge variant="outline" className="capitalize">{seq.type}</Badge>
+                      <Badge variant="outline" className="capitalize">
+                        {seq.type}
+                      </Badge>
                     </h4>
                     <p className="text-sm text-muted-foreground">{seq.description}</p>
                   </div>
                 </div>
-                <Badge variant={
-                  seq.status === 'submitted' ? 'default' :
-                  seq.status === 'ready' ? 'secondary' :
-                  'outline'
-                }>
+                <Badge
+                  variant={
+                    seq.status === 'submitted'
+                      ? 'default'
+                      : seq.status === 'ready'
+                        ? 'secondary'
+                        : 'outline'
+                  }
+                >
                   {seq.status}
                 </Badge>
               </div>
@@ -720,7 +826,7 @@ function ModuleProgress({ sections }: { sections: eCTDSection[] }) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {moduleStats.map((module) => (
+          {moduleStats.map(module => (
             <div key={module.id}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="font-medium">{module.title}</span>
@@ -747,7 +853,10 @@ export function ECTDNavigator() {
 
   // Calculate overall stats
   const overallStats = useMemo(() => {
-    let total = 0, approved = 0, inReview = 0, draft = 0;
+    let total = 0,
+      approved = 0,
+      inReview = 0,
+      draft = 0;
     for (const section of ECTD_STRUCTURE) {
       const counts = countDocuments(section);
       total += counts.total;
@@ -859,18 +968,14 @@ export function ECTDNavigator() {
                     <Input
                       placeholder="Search sections..."
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={e => setSearchTerm(e.target.value)}
                       className="h-8"
                     />
                   </div>
                 </CardHeader>
                 <CardContent className="p-2">
-                  {ECTD_STRUCTURE.map((section) => (
-                    <SectionNode
-                      key={section.id}
-                      section={section}
-                      onSelect={setSelectedSection}
-                    />
+                  {ECTD_STRUCTURE.map(section => (
+                    <SectionNode key={section.id} section={section} onSelect={setSelectedSection} />
                   ))}
                 </CardContent>
               </Card>
@@ -910,14 +1015,16 @@ export function ECTDNavigator() {
               <div className="text-center py-8 text-muted-foreground">
                 <GitBranch className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>View complete submission history and lifecycle</p>
-                <Button variant="outline" className="mt-4">View Timeline</Button>
+                <Button variant="outline" className="mt-4">
+                  View Timeline
+                </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* AI Assistance */}
+      {/* RI Assistance */}
       <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
@@ -925,18 +1032,16 @@ export function ECTDNavigator() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI eCTD Assistant</h3>
+              <h3 className="font-semibold text-purple-900">Lumen RI eCTD Assistant</h3>
               <p className="text-sm text-purple-700">
-                Validate eCTD structure, identify missing documents, generate section templates,
-                and ensure compliance with regional requirements.
+                Validate eCTD structure, identify missing documents, generate section templates, and
+                ensure compliance with regional requirements.
               </p>
             </div>
             <Button variant="outline" className="border-purple-300 text-purple-700">
               Validate Structure
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              AI Guidance
-            </Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">RI Guidance</Button>
           </div>
         </CardContent>
       </Card>

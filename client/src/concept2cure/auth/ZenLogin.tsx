@@ -1031,7 +1031,7 @@ export const ZenLogin: React.FC = () => {
               from concept to cure.
             </h2>
             <p className="text-lg text-blue-200/80 max-w-md leading-relaxed">
-              AI-powered regulatory intelligence for IND, NDA, BLA, 510(k) and beyond —
+              RI-powered regulatory intelligence for IND, NDA, BLA, 510(k) and beyond —
               purpose-built for life-sciences teams.
             </p>
             {/* Trust badges */}

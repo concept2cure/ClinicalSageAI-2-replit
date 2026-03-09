@@ -1225,7 +1225,7 @@ export const ZenApp: React.FC = () => {
       {cortexHealth && !isConnected && (
         <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 bg-amber-50 border-b border-amber-200 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>AI running in offline mode — chat still available</span>
+          <span>RI running in offline mode — chat still available</span>
         </div>
       )}
 
@@ -1687,13 +1687,13 @@ export const ZenApp: React.FC = () => {
                   </Suspense>
                 </div>
 
-                {/* Column 3: AI Analyst Chat */}
+                {/* Column 3: RI Analyst Chat */}
                 {regChatOpen && (
                   <div className="hidden xl:flex w-80 shrink-0 border-l border-zinc-200 flex-col min-h-0">
                     <div className="flex items-center justify-between h-10 px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
                       <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
                         <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
-                        AI Analyst
+                        RI Analyst
                       </span>
                       <button
                         onClick={() => setRegChatOpen(false)}
@@ -1708,7 +1708,7 @@ export const ZenApp: React.FC = () => {
                         projectName={activeProject?.name}
                         submissionType={activeProject?.type}
                         threadId={activeThreadId}
-                        greeting={`AI Analyst ready. Working on ${activeProject?.name || 'your project'} (${activeProject?.type || 'submission'}).`}
+                        greeting={`Regulatory Intelligence Analyst ready. Working on ${activeProject?.name || 'your project'} (${activeProject?.type || 'submission'}).`}
                         suggestedActions={(() => {
                           const type = activeProject?.type;
                           if (type === 'IND')
@@ -1778,7 +1778,7 @@ export const ZenApp: React.FC = () => {
                     onClick={() => setRegChatOpen(true)}
                     className="flex items-center gap-1 px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-100 rounded-md"
                   >
-                    <MessageSquare className="w-3 h-3" /> AI Chat
+                    <MessageSquare className="w-3 h-3" /> RI Chat
                   </button>
                 )}
                 <button
@@ -2084,7 +2084,7 @@ export const ZenApp: React.FC = () => {
                     )}
                     {!simResult && !foresightSim.isPending && !foresightSim.isError && (
                       <p className="text-[10px] text-zinc-400 mt-2">
-                        Vary parameters to predict success probability via Foresight AI.
+                        Vary parameters to predict success probability via Foresight RI.
                       </p>
                     )}
                   </div>
@@ -2690,7 +2690,7 @@ export const ZenApp: React.FC = () => {
                             </div>
                             <p className="text-xs font-medium text-zinc-600 mb-1">No outputs yet</p>
                             <p className="text-[11px] text-zinc-400 max-w-[160px] leading-relaxed">
-                              Run a workflow or ask the AI to draft a document.
+                              Run a workflow or ask RI to draft a document.
                             </p>
                           </div>
                         ) : (
@@ -2756,8 +2756,8 @@ export const ZenApp: React.FC = () => {
                                 </p>
                               </div>
                               <p className="text-[11px] text-zinc-400 leading-relaxed">
-                                These instructions guide the AI for every conversation in this
-                                project.
+                                These instructions guide Regulatory Intelligence for every
+                                conversation in this project.
                               </p>
                             </div>
                             <CustomInstructions

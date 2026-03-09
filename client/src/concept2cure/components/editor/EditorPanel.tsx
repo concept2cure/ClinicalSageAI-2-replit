@@ -435,7 +435,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
               ) : (
                 <Sparkles className="w-3.5 h-3.5" />
               )}
-              AI Edit
+              RI Edit
               <ChevronDown className="w-3 h-3" />
             </button>
             {aiMenuOpen && (
@@ -525,7 +525,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
         <div className="border-b border-amber-200 bg-amber-50/80 p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-amber-800 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" /> AI Suggestion
+              <Sparkles className="w-3.5 h-3.5" /> RI Suggestion
             </span>
             <div className="flex gap-1.5">
               <button

@@ -130,7 +130,7 @@ export const ProjectLauncher: React.FC<ProjectLauncherProps> = ({
       },
       live: true,
     },
-    { label: 'Ask AI', action: onStartChat, live: true },
+    { label: 'Ask RI', action: onStartChat, live: true },
   ].filter(Boolean) as { label: string; action: () => void; live: boolean }[];
 
   return (
@@ -188,7 +188,7 @@ export const ProjectLauncher: React.FC<ProjectLauncherProps> = ({
                 <FolderOpen className="w-4 h-4 text-zinc-400" />
               )}
               {tool.label === 'Open Documents' && <FileText className="w-4 h-4 text-zinc-400" />}
-              {tool.label === 'Ask AI' && <MessageSquare className="w-4 h-4 text-zinc-400" />}
+              {tool.label === 'Ask RI' && <MessageSquare className="w-4 h-4 text-zinc-400" />}
               {tool.label}
             </button>
           ))}

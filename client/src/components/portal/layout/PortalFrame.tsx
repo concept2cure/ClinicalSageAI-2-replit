@@ -1,6 +1,6 @@
 /**
  * PortalFrame - Main layout wrapper for the Client Portal
- * 
+ *
  * Provides the foundational structure with:
  * - TopBar for branding and global actions
  * - SidebarNav for navigation
@@ -70,14 +70,9 @@ export function usePortalLayout() {
 // MAIN COMPONENT
 // =============================================================================
 
-export function PortalFrame({
-  children,
-  experience,
-  user,
-  onLogout,
-}: PortalFrameProps) {
+export function PortalFrame({ children, experience, user, onLogout }: PortalFrameProps) {
   const [location] = useLocation();
-  
+
   // Layout state
   const [layoutState, setLayoutState] = useState<LayoutState>({
     sidebarCollapsed: false,
@@ -86,7 +81,7 @@ export function PortalFrame({
     aiPanelWidth: DEFAULT_AI_PANEL_WIDTH,
     mobileMenuOpen: false,
   });
-  
+
   // Sidebar toggle
   const toggleSidebar = useCallback(() => {
     setLayoutState(prev => ({
@@ -95,7 +90,7 @@ export function PortalFrame({
       sidebarWidth: prev.sidebarCollapsed ? DEFAULT_SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH,
     }));
   }, []);
-  
+
   // AI Panel controls
   const toggleAiPanel = useCallback(() => {
     setLayoutState(prev => ({
@@ -103,14 +98,14 @@ export function PortalFrame({
       aiPanelOpen: !prev.aiPanelOpen,
     }));
   }, []);
-  
+
   const setAiPanelOpen = useCallback((open: boolean) => {
     setLayoutState(prev => ({
       ...prev,
       aiPanelOpen: open,
     }));
   }, []);
-  
+
   // Mobile menu toggle
   const toggleMobileMenu = useCallback(() => {
     setLayoutState(prev => ({
@@ -118,7 +113,7 @@ export function PortalFrame({
       mobileMenuOpen: !prev.mobileMenuOpen,
     }));
   }, []);
-  
+
   // Find current nav item for breadcrumb
   const currentNavItem = useMemo((): NavItem | undefined => {
     for (const section of experience.navigation) {
@@ -127,16 +122,25 @@ export function PortalFrame({
     }
     return undefined;
   }, [experience.navigation, location]);
-  
+
   // Context value
-  const contextValue = useMemo((): PortalLayoutContextValue => ({
-    sidebarCollapsed: layoutState.sidebarCollapsed,
-    toggleSidebar,
-    aiPanelOpen: layoutState.aiPanelOpen,
-    toggleAiPanel,
-    setAiPanelOpen,
-  }), [layoutState.sidebarCollapsed, layoutState.aiPanelOpen, toggleSidebar, toggleAiPanel, setAiPanelOpen]);
-  
+  const contextValue = useMemo(
+    (): PortalLayoutContextValue => ({
+      sidebarCollapsed: layoutState.sidebarCollapsed,
+      toggleSidebar,
+      aiPanelOpen: layoutState.aiPanelOpen,
+      toggleAiPanel,
+      setAiPanelOpen,
+    }),
+    [
+      layoutState.sidebarCollapsed,
+      layoutState.aiPanelOpen,
+      toggleSidebar,
+      toggleAiPanel,
+      setAiPanelOpen,
+    ]
+  );
+
   return (
     <PortalLayoutContext.Provider value={contextValue}>
       <div className="flex h-screen bg-background overflow-hidden">
@@ -147,13 +151,13 @@ export function PortalFrame({
             onClick={() => setLayoutState(prev => ({ ...prev, mobileMenuOpen: false }))}
           />
         )}
-        
+
         {/* Sidebar */}
         <aside
           className={cn(
             'fixed lg:relative inset-y-0 left-0 z-50 flex flex-col bg-card border-r border-border',
             'transition-all duration-300 ease-in-out',
-            layoutState.mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+            layoutState.mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           )}
           style={{ width: layoutState.sidebarWidth }}
         >
@@ -165,7 +169,7 @@ export function PortalFrame({
             onToggle={toggleSidebar}
           />
         </aside>
-        
+
         {/* Main content area */}
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           {/* Top bar */}
@@ -178,28 +182,24 @@ export function PortalFrame({
             onLogout={onLogout}
             showAiButton={experience.features.aiAssistant}
           />
-          
+
           {/* Main content with optional AI panel */}
           <div className="flex flex-1 overflow-hidden">
             {/* Primary content */}
             <main className="flex-1 overflow-auto p-6">
-              <div className="max-w-7xl mx-auto">
-                {children}
-              </div>
+              <div className="max-w-7xl mx-auto">{children}</div>
             </main>
-            
+
             {/* AI Assistant Panel */}
             {experience.features.aiAssistant && layoutState.aiPanelOpen && (
               <aside
                 className={cn(
                   'hidden lg:flex flex-col border-l border-border bg-card',
-                  'transition-all duration-300 ease-in-out',
+                  'transition-all duration-300 ease-in-out'
                 )}
                 style={{ width: layoutState.aiPanelWidth }}
               >
-                <AiAssistantPanel
-                  onClose={() => setAiPanelOpen(false)}
-                />
+                <AiAssistantPanel onClose={() => setAiPanelOpen(false)} />
               </aside>
             )}
           </div>
@@ -227,27 +227,48 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
             <span className="text-sm font-semibold text-primary">L</span>
           </div>
           <div>
-            <h3 className="font-medium text-sm">Lumen AI</h3>
-            <p className="text-xs text-muted-foreground">Regulatory Assistant</p>
+            <h3 className="font-medium text-sm">Lumen RI</h3>
+            <p className="text-xs text-muted-foreground">Regulatory Intelligence</p>
           </div>
         </div>
         <button
           onClick={onClose}
           className="p-1 hover:bg-muted rounded-md transition-colors"
-          aria-label="Close AI assistant"
+          aria-label="Close RI assistant"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
-      
+
       {/* Chat area */}
       <div className="flex-1 overflow-auto p-4">
         <div className="flex flex-col items-center justify-center h-full text-center">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-primary"
+            >
               <path d="M12 8V4H8" />
               <rect width="16" height="12" x="4" y="8" rx="2" />
               <path d="M2 14h2" />
@@ -262,7 +283,7 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
           </p>
         </div>
       </div>
-      
+
       {/* Input area */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2">
@@ -275,7 +296,17 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
             className="p-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             aria-label="Send message"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>

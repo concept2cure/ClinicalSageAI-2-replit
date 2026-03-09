@@ -1,11 +1,11 @@
 /**
  * Concept2Cure - IFU Consistency Checker
- * 
+ *
  * Specialized tool for verifying Instructions for Use (IFU) consistency
  * against 510(k) summary, labeling, and promotional materials.
- * 
+ *
  * Biotech/CRO specific: Device labeling compliance per FDA 21 CFR 801
- * 
+ *
  * @module concept2cure/components/regulatory/IFUConsistencyChecker
  * @version 1.0.0
  */
@@ -24,19 +24,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -69,7 +58,13 @@ import {
 interface ConsistencyIssue {
   id: string;
   severity: 'critical' | 'warning' | 'info';
-  category: 'indications' | 'contraindications' | 'warnings' | 'procedures' | 'specifications' | 'claims';
+  category:
+    | 'indications'
+    | 'contraindications'
+    | 'warnings'
+    | 'procedures'
+    | 'specifications'
+    | 'claims';
   title: string;
   description: string;
   sourceDocument: string;
@@ -188,35 +183,27 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
 
   return (
     <Card className={cn('border', getSeverityColor(issue.severity))}>
-      <CardHeader
-        className="cursor-pointer py-3"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+      <CardHeader className="cursor-pointer py-3" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-start gap-3">
-          <SeverityIcon className={cn(
-            'h-5 w-5 mt-0.5 flex-shrink-0',
-            issue.severity === 'critical' && 'text-red-600',
-            issue.severity === 'warning' && 'text-amber-600',
-            issue.severity === 'info' && 'text-blue-600'
-          )} />
+          <SeverityIcon
+            className={cn(
+              'h-5 w-5 mt-0.5 flex-shrink-0',
+              issue.severity === 'critical' && 'text-red-600',
+              issue.severity === 'warning' && 'text-amber-600',
+              issue.severity === 'info' && 'text-blue-600'
+            )}
+          />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <CardTitle className="text-sm font-medium">
-                {issue.title}
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">{issue.title}</CardTitle>
               <Badge variant="outline" className="text-[10px]">
                 {CATEGORY_LABELS[issue.category]}
               </Badge>
             </div>
-            <CardDescription className="text-xs mt-1">
-              {issue.description}
-            </CardDescription>
+            <CardDescription className="text-xs mt-1">{issue.description}</CardDescription>
           </div>
           <ChevronRight
-            className={cn(
-              'h-4 w-4 text-gray-400 transition-transform',
-              isExpanded && 'rotate-90'
-            )}
+            className={cn('h-4 w-4 text-gray-400 transition-transform', isExpanded && 'rotate-90')}
           />
         </div>
       </CardHeader>
@@ -252,11 +239,9 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
             <div className="p-3 bg-blue-50 rounded-lg">
               <div className="flex items-center gap-1 text-xs font-medium text-blue-700 mb-1">
                 <Sparkles className="h-3 w-3" />
-                AI Recommendation
+                RI Recommendation
               </div>
-              <p className="text-xs text-blue-600">
-                {issue.recommendation}
-              </p>
+              <p className="text-xs text-blue-600">{issue.recommendation}</p>
             </div>
 
             {/* Regulatory reference */}
@@ -269,12 +254,10 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
 
             {/* Resolution input */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-700">
-                Resolution Notes
-              </label>
+              <label className="text-xs font-medium text-gray-700">Resolution Notes</label>
               <Textarea
                 value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
+                onChange={e => setResolution(e.target.value)}
                 placeholder="Describe how you resolved this issue..."
                 className="text-xs h-20"
               />
@@ -397,19 +380,20 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
     }
   }, [onRunCheck]);
 
-  const groupedIssues = result?.issues.reduce((acc, issue) => {
-    if (!acc[issue.category]) acc[issue.category] = [];
-    acc[issue.category].push(issue);
-    return acc;
-  }, {} as Record<string, ConsistencyIssue[]>) || {};
+  const groupedIssues =
+    result?.issues.reduce(
+      (acc, issue) => {
+        if (!acc[issue.category]) acc[issue.category] = [];
+        acc[issue.category].push(issue);
+        return acc;
+      },
+      {} as Record<string, ConsistencyIssue[]>
+    ) || {};
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn('gap-2', className)}
-        >
+        <Button variant="outline" className={cn('gap-2', className)}>
           <FileCheck className="h-4 w-4" />
           IFU Consistency Check
         </Button>
@@ -422,8 +406,8 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
             IFU Consistency Checker
           </DialogTitle>
           <DialogDescription>
-            Verify Instructions for Use alignment with 510(k) summary, labeling claims,
-            and promotional materials per FDA 21 CFR 801.
+            Verify Instructions for Use alignment with 510(k) summary, labeling claims, and
+            promotional materials per FDA 21 CFR 801.
           </DialogDescription>
         </DialogHeader>
 
@@ -431,9 +415,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
           {/* Document selection info */}
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Documents to Check
-              </span>
+              <span className="text-sm font-medium text-gray-700">Documents to Check</span>
               <span className="text-xs text-gray-500">
                 {relatedArtifacts.length + (ifuArtifact ? 1 : 0)} documents selected
               </span>
@@ -459,8 +441,8 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
             <div className="text-center py-8">
               <FileCheck className="h-12 w-12 mx-auto text-gray-300 mb-4" />
               <p className="text-sm text-gray-600 mb-4">
-                Run a consistency check to identify discrepancies between your IFU
-                and other regulatory documents.
+                Run a consistency check to identify discrepancies between your IFU and other
+                regulatory documents.
               </p>
               <Button onClick={handleRunCheck} disabled={isRunning || !ifuArtifact}>
                 {isRunning ? (
@@ -493,11 +475,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
               <ScrollArea className="h-[400px]">
                 <Accordion type="multiple" className="space-y-2">
                   {Object.entries(groupedIssues).map(([category, issues]) => (
-                    <AccordionItem
-                      key={category}
-                      value={category}
-                      className="border rounded-lg"
-                    >
+                    <AccordionItem key={category} value={category} className="border rounded-lg">
                       <AccordionTrigger className="px-4 py-3 hover:no-underline">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">
@@ -513,7 +491,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
                           <IssueCard
                             key={issue.id}
                             issue={issue}
-                            onResolve={(resolution) => onResolveIssue(issue.id, resolution)}
+                            onResolve={resolution => onResolveIssue(issue.id, resolution)}
                           />
                         ))}
                       </AccordionContent>
@@ -524,9 +502,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
                 {result.totalIssues === 0 && (
                   <div className="text-center py-8">
                     <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
-                    <p className="text-lg font-medium text-green-700">
-                      All Clear!
-                    </p>
+                    <p className="text-lg font-medium text-green-700">All Clear!</p>
                     <p className="text-sm text-gray-600 mt-1">
                       No consistency issues found between documents.
                     </p>
@@ -536,16 +512,8 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
 
               {/* Actions */}
               <div className="flex items-center justify-between pt-4 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRunCheck}
-                  disabled={isRunning}
-                >
-                  <RefreshCw className={cn(
-                    'h-4 w-4 mr-2',
-                    isRunning && 'animate-spin'
-                  )} />
+                <Button variant="outline" size="sm" onClick={handleRunCheck} disabled={isRunning}>
+                  <RefreshCw className={cn('h-4 w-4 mr-2', isRunning && 'animate-spin')} />
                   Re-run Check
                 </Button>
                 <Button variant="outline" size="sm">

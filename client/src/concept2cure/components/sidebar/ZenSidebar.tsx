@@ -246,7 +246,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-semibold text-zinc-900 text-sm">Lumen AI</span>
+            <span className="font-semibold text-zinc-900 text-sm">Lumen RI</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none">
               Regulatory
             </span>
@@ -290,7 +290,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-blue-50 hover:text-blue-700 text-sm transition-colors"
           >
             <Brain className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            AI Copilot
+            RI Copilot
           </button>
           <button
             onClick={() => onNavigate?.('510k-workspace')}

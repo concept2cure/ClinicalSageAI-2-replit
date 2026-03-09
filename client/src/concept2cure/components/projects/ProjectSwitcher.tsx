@@ -519,7 +519,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               <textarea
                 value={goal}
                 onChange={e => setGoal(e.target.value)}
-                placeholder="What are you trying to achieve? Any specific requirements or context for the AI..."
+                placeholder="What are you trying to achieve? Any specific requirements or context for the RI..."
                 rows={3}
                 className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
               />

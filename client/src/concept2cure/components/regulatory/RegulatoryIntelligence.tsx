@@ -1,25 +1,19 @@
 /**
  * Concept2Cure - Regulatory Intelligence Hub
- * 
+ *
  * Centralized regulatory intelligence for:
  * - Guidance document tracking
  * - Regulatory changes and updates
  * - Competitive intelligence
  * - Approval trends analysis
  * - Global regulatory landscape
- * 
+ *
  * @module components/regulatory/RegulatoryIntelligence
  * @version 1.0.0
  */
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -69,8 +63,23 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Agency = 'FDA' | 'EMA' | 'PMDA' | 'Health Canada' | 'TGA' | 'MHRA' | 'Swissmedic' | 'NMPA';
-type DocumentType = 'guidance' | 'regulation' | 'policy' | 'draft_guidance' | 'final_guidance' | 'warning_letter' | 'approval';
-type TherapeuticArea = 'oncology' | 'cardiology' | 'neurology' | 'infectious' | 'rare_disease' | 'immunology' | 'metabolic' | 'other';
+type DocumentType =
+  | 'guidance'
+  | 'regulation'
+  | 'policy'
+  | 'draft_guidance'
+  | 'final_guidance'
+  | 'warning_letter'
+  | 'approval';
+type TherapeuticArea =
+  | 'oncology'
+  | 'cardiology'
+  | 'neurology'
+  | 'infectious'
+  | 'rare_disease'
+  | 'immunology'
+  | 'metabolic'
+  | 'other';
 type AlertPriority = 'critical' | 'high' | 'medium' | 'low';
 
 interface RegulatoryDocument {
@@ -160,7 +169,8 @@ const MOCK_DOCUMENTS: RegulatoryDocument[] = [
     publishDate: '2025-01-15',
     commentDeadline: '2025-04-15',
     url: 'https://fda.gov/guidance/ai-ml-drug-dev',
-    summary: 'FDA seeks input on the use of AI/ML throughout drug development lifecycle, including clinical trials and manufacturing.',
+    summary:
+      'FDA seeks input on the use of AI/ML throughout drug development lifecycle, including clinical trials and manufacturing.',
     relevanceScore: 95,
     isBookmarked: true,
     tags: ['AI/ML', 'Drug Development', 'Clinical Trials'],
@@ -173,7 +183,8 @@ const MOCK_DOCUMENTS: RegulatoryDocument[] = [
     publishDate: '2025-01-10',
     effectiveDate: '2025-01-10',
     url: 'https://fda.gov/guidance/dct',
-    summary: 'Final guidance on conducting decentralized clinical trials including remote data collection and telemedicine.',
+    summary:
+      'Final guidance on conducting decentralized clinical trials including remote data collection and telemedicine.',
     relevanceScore: 88,
     isBookmarked: false,
     tags: ['DCT', 'Clinical Trials', 'Remote Monitoring'],
@@ -186,7 +197,8 @@ const MOCK_DOCUMENTS: RegulatoryDocument[] = [
     publishDate: '2025-01-05',
     effectiveDate: '2025-07-01',
     url: 'https://ema.europa.eu/mdr-2025',
-    summary: 'Amendments to EU MDR 2017/745 regarding transition periods and clinical evidence requirements.',
+    summary:
+      'Amendments to EU MDR 2017/745 regarding transition periods and clinical evidence requirements.',
     relevanceScore: 82,
     isBookmarked: true,
     tags: ['MDR', 'Medical Devices', 'EU Regulation'],
@@ -302,7 +314,7 @@ function IntelligenceMetrics() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -315,7 +327,7 @@ function IntelligenceMetrics() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -328,7 +340,7 @@ function IntelligenceMetrics() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -341,7 +353,7 @@ function IntelligenceMetrics() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -385,7 +397,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
             <Input
               placeholder="Search guidance documents..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -423,7 +435,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
 
       {/* Document Cards */}
       <div className="grid gap-4">
-        {filteredDocs.map((doc) => {
+        {filteredDocs.map(doc => {
           const agencyConfig = AGENCY_CONFIG[doc.agency];
           return (
             <Card key={doc.id} className="hover:shadow-md transition-shadow">
@@ -447,7 +459,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
                     <h4 className="font-semibold text-lg mb-2">{doc.title}</h4>
                     <p className="text-sm text-muted-foreground mb-3">{doc.summary}</p>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {doc.tags.map((tag) => (
+                      {doc.tags.map(tag => (
                         <Badge key={tag} variant="outline" className="text-xs">
                           {tag}
                         </Badge>
@@ -457,9 +469,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
                       <span>Published: {doc.publishDate}</span>
                       {doc.effectiveDate && <span>Effective: {doc.effectiveDate}</span>}
                       {doc.commentDeadline && (
-                        <span className="text-orange-600">
-                          Comments due: {doc.commentDeadline}
-                        </span>
+                        <span className="text-orange-600">Comments due: {doc.commentDeadline}</span>
                       )}
                     </div>
                   </div>
@@ -472,7 +482,9 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
                     </div>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Star className={`w-4 h-4 ${doc.isBookmarked ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                        <Star
+                          className={`w-4 h-4 ${doc.isBookmarked ? 'fill-yellow-400 text-yellow-400' : ''}`}
+                        />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         <ExternalLink className="w-4 h-4" />
@@ -508,9 +520,7 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">Active Alerts</h3>
-          <p className="text-sm text-muted-foreground">
-            Regulatory changes requiring attention
-          </p>
+          <p className="text-sm text-muted-foreground">Regulatory changes requiring attention</p>
         </div>
         <Button variant="outline">
           <Filter className="w-4 h-4 mr-2" />
@@ -519,17 +529,18 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
       </div>
 
       <div className="space-y-3">
-        {alerts.map((alert) => {
+        {alerts.map(alert => {
           const config = priorityConfig[alert.priority];
           const agencyConfig = AGENCY_CONFIG[alert.agency];
           return (
-            <Card key={alert.id} className={!alert.acknowledged ? 'border-l-4 border-l-orange-500' : ''}>
+            <Card
+              key={alert.id}
+              className={!alert.acknowledged ? 'border-l-4 border-l-orange-500' : ''}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-full ${config.color}`}>
-                      {config.icon}
-                    </div>
+                    <div className={`p-2 rounded-full ${config.color}`}>{config.icon}</div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <Badge className={agencyConfig.color}>
@@ -553,7 +564,9 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
                   </div>
                   <div className="flex gap-2">
                     {!alert.acknowledged && (
-                      <Button size="sm" variant="outline">Acknowledge</Button>
+                      <Button size="sm" variant="outline">
+                        Acknowledge
+                      </Button>
                     )}
                     <Button size="sm">View Details</Button>
                   </div>
@@ -584,9 +597,7 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">Recent Approvals</h3>
-          <p className="text-sm text-muted-foreground">
-            Monitor competitor and industry approvals
-          </p>
+          <p className="text-sm text-muted-foreground">Monitor competitor and industry approvals</p>
         </div>
         <div className="flex gap-2">
           <Select defaultValue="all">
@@ -596,7 +607,9 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
             <SelectContent>
               <SelectItem value="all">All Areas</SelectItem>
               {Object.entries(THERAPEUTIC_AREAS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
+                <SelectItem key={key} value={key}>
+                  {label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -620,7 +633,7 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
           </TableRow>
         </TableHeader>
         <TableBody>
-          {approvals.map((approval) => {
+          {approvals.map(approval => {
             const agencyConfig = AGENCY_CONFIG[approval.agency];
             const typeConfig = approvalTypeConfig[approval.approvalType];
             return (
@@ -802,7 +815,7 @@ export function RegulatoryIntelligence() {
         </TabsContent>
       </Tabs>
 
-      {/* AI Assistance */}
+      {/* RI Assistance */}
       <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
@@ -810,18 +823,16 @@ export function RegulatoryIntelligence() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI Intelligence</h3>
+              <h3 className="font-semibold text-purple-900">Lumen RI Intelligence</h3>
               <p className="text-sm text-purple-700">
-                Get AI-powered analysis of regulatory trends, impact assessments for your products,
+                Get RI-powered analysis of regulatory trends, impact assessments for your products,
                 and automated summaries of new guidance documents.
               </p>
             </div>
             <Button variant="outline" className="border-purple-300 text-purple-700">
               Impact Analysis
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              Ask Lumen
-            </Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">Ask Lumen</Button>
           </div>
         </CardContent>
       </Card>

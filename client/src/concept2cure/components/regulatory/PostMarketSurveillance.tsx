@@ -1,6 +1,6 @@
 /**
  * Concept2Cure - Post-Market Surveillance & Vigilance Management
- * 
+ *
  * Comprehensive post-market surveillance supporting:
  * - Periodic Safety Update Reports (PSUR)
  * - Periodic Benefit-Risk Evaluation Reports (PBRER)
@@ -8,19 +8,13 @@
  * - Vigilance reporting (MDR, MedWatch)
  * - Signal detection and management
  * - Risk-benefit analysis
- * 
+ *
  * @module components/regulatory/PostMarketSurveillance
  * @version 1.0.0
  */
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,24 +65,18 @@ import {
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ReportType = 
-  | 'PSUR'
-  | 'PBRER'
-  | 'PMCF'
-  | 'DSUR'
-  | 'PMS_REPORT'
-  | 'TREND_REPORT';
+type ReportType = 'PSUR' | 'PBRER' | 'PMCF' | 'DSUR' | 'PMS_REPORT' | 'TREND_REPORT';
 
 type ReportStatus = 'planned' | 'in_progress' | 'under_review' | 'approved' | 'submitted';
 
 type SignalStatus = 'new' | 'under_evaluation' | 'confirmed' | 'refuted' | 'closed';
 
-type VigilanceType = 
-  | 'SAE'           // Serious Adverse Event
-  | 'SUSAR'         // Suspected Unexpected Serious Adverse Reaction
-  | 'MDR'           // Medical Device Report
-  | 'FSN'           // Field Safety Notice
-  | 'FSCA';         // Field Safety Corrective Action
+type VigilanceType =
+  | 'SAE' // Serious Adverse Event
+  | 'SUSAR' // Suspected Unexpected Serious Adverse Reaction
+  | 'MDR' // Medical Device Report
+  | 'FSN' // Field Safety Notice
+  | 'FSCA'; // Field Safety Corrective Action
 
 interface SafetySignal {
   id: string;
@@ -144,7 +132,13 @@ interface VigilanceCase {
   eventDate: string;
   reportDate: string;
   description: string;
-  seriousness: 'death' | 'life_threatening' | 'hospitalization' | 'disability' | 'other_serious' | 'non_serious';
+  seriousness:
+    | 'death'
+    | 'life_threatening'
+    | 'hospitalization'
+    | 'disability'
+    | 'other_serious'
+    | 'non_serious';
   outcome: 'recovered' | 'recovering' | 'not_recovered' | 'fatal' | 'unknown';
   reportedTo: string[];
   status: 'received' | 'assessment' | 'reported' | 'closed';
@@ -166,45 +160,63 @@ interface RiskBenefitAnalysis {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const REPORT_TYPE_LABELS: Record<ReportType, { label: string; description: string; icon: React.ReactNode }> = {
-  PSUR: { 
-    label: 'PSUR', 
+const REPORT_TYPE_LABELS: Record<
+  ReportType,
+  { label: string; description: string; icon: React.ReactNode }
+> = {
+  PSUR: {
+    label: 'PSUR',
     description: 'Periodic Safety Update Report',
-    icon: <Shield className="w-4 h-4" />
+    icon: <Shield className="w-4 h-4" />,
   },
-  PBRER: { 
-    label: 'PBRER', 
+  PBRER: {
+    label: 'PBRER',
     description: 'Periodic Benefit-Risk Evaluation Report',
-    icon: <Activity className="w-4 h-4" />
+    icon: <Activity className="w-4 h-4" />,
   },
-  PMCF: { 
-    label: 'PMCF', 
+  PMCF: {
+    label: 'PMCF',
     description: 'Post-Market Clinical Follow-up',
-    icon: <Heart className="w-4 h-4" />
+    icon: <Heart className="w-4 h-4" />,
   },
-  DSUR: { 
-    label: 'DSUR', 
+  DSUR: {
+    label: 'DSUR',
     description: 'Development Safety Update Report',
-    icon: <FileText className="w-4 h-4" />
+    icon: <FileText className="w-4 h-4" />,
   },
-  PMS_REPORT: { 
-    label: 'PMS Report', 
+  PMS_REPORT: {
+    label: 'PMS Report',
     description: 'Post-Market Surveillance Report',
-    icon: <Eye className="w-4 h-4" />
+    icon: <Eye className="w-4 h-4" />,
   },
-  TREND_REPORT: { 
-    label: 'Trend Report', 
+  TREND_REPORT: {
+    label: 'Trend Report',
     description: 'Safety Trend Analysis Report',
-    icon: <TrendingUp className="w-4 h-4" />
+    icon: <TrendingUp className="w-4 h-4" />,
   },
 };
 
-const VIGILANCE_TIMELINES: Record<VigilanceType, { label: string; deadline: string; icon: React.ReactNode }> = {
-  SAE: { label: 'Serious Adverse Event', deadline: '15 days', icon: <AlertTriangle className="w-4 h-4" /> },
+const VIGILANCE_TIMELINES: Record<
+  VigilanceType,
+  { label: string; deadline: string; icon: React.ReactNode }
+> = {
+  SAE: {
+    label: 'Serious Adverse Event',
+    deadline: '15 days',
+    icon: <AlertTriangle className="w-4 h-4" />,
+  },
   SUSAR: { label: 'SUSAR', deadline: '7-15 days', icon: <AlertCircle className="w-4 h-4" /> },
-  MDR: { label: 'Medical Device Report', deadline: '30 days', icon: <FileWarning className="w-4 h-4" /> },
+  MDR: {
+    label: 'Medical Device Report',
+    deadline: '30 days',
+    icon: <FileWarning className="w-4 h-4" />,
+  },
   FSN: { label: 'Field Safety Notice', deadline: 'Immediate', icon: <Send className="w-4 h-4" /> },
-  FSCA: { label: 'Field Safety Corrective Action', deadline: 'Immediate', icon: <RefreshCw className="w-4 h-4" /> },
+  FSCA: {
+    label: 'Field Safety Corrective Action',
+    deadline: 'Immediate',
+    icon: <RefreshCw className="w-4 h-4" />,
+  },
 };
 
 // Mock Data
@@ -287,7 +299,12 @@ const MOCK_REPORTS: PeriodicReport[] = [
     author: 'Dr. Robert Chen',
     reviewer: 'Clinical Director',
     sections: [
-      { id: 's1', name: 'Clinical Evaluation Update', status: 'approved', assignee: 'Dr. Robert Chen' },
+      {
+        id: 's1',
+        name: 'Clinical Evaluation Update',
+        status: 'approved',
+        assignee: 'Dr. Robert Chen',
+      },
       { id: 's2', name: 'Complaint Analysis', status: 'complete', assignee: 'QA Team' },
       { id: 's3', name: 'Literature Review', status: 'complete', assignee: 'Medical Affairs' },
       { id: 's4', name: 'Registry Data Analysis', status: 'complete', assignee: 'Biostatistics' },
@@ -334,15 +351,23 @@ const MOCK_VIGILANCE: VigilanceCase[] = [
 /**
  * Dashboard Metrics Component
  */
-function PMSMetrics({ signals, reports, vigilance }: { 
-  signals: SafetySignal[]; 
+function PMSMetrics({
+  signals,
+  reports,
+  vigilance,
+}: {
+  signals: SafetySignal[];
   reports: PeriodicReport[];
   vigilance: VigilanceCase[];
 }) {
   const activeSignals = signals.filter(s => !['closed', 'refuted'].includes(s.status)).length;
-  const highPrioritySignals = signals.filter(s => s.priority === 'high' && s.status === 'under_evaluation').length;
+  const highPrioritySignals = signals.filter(
+    s => s.priority === 'high' && s.status === 'under_evaluation'
+  ).length;
   const pendingReports = reports.filter(r => r.status !== 'submitted').length;
-  const overdueReports = reports.filter(r => new Date(r.dueDate) < new Date() && r.status !== 'submitted').length;
+  const overdueReports = reports.filter(
+    r => new Date(r.dueDate) < new Date() && r.status !== 'submitted'
+  ).length;
   const openVigilance = vigilance.filter(v => v.status !== 'closed').length;
   const urgentVigilance = vigilance.filter(v => {
     const deadline = new Date(v.reportingDeadline);
@@ -439,26 +464,28 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
         <Button variant="outline" onClick={() => setSelectedSignal(null)}>
           ← Back to Signals
         </Button>
-        
+
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   {selectedSignal.name}
-                  <Badge 
-                    variant={selectedSignal.priority === 'high' ? 'destructive' : 'outline'}
-                  >
+                  <Badge variant={selectedSignal.priority === 'high' ? 'destructive' : 'outline'}>
                     {selectedSignal.priority}
                   </Badge>
                 </CardTitle>
                 <CardDescription>{selectedSignal.product}</CardDescription>
               </div>
-              <Badge variant={
-                selectedSignal.status === 'confirmed' ? 'default' :
-                selectedSignal.status === 'refuted' ? 'secondary' :
-                'outline'
-              }>
+              <Badge
+                variant={
+                  selectedSignal.status === 'confirmed'
+                    ? 'default'
+                    : selectedSignal.status === 'refuted'
+                      ? 'secondary'
+                      : 'outline'
+                }
+              >
                 {selectedSignal.status.replace('_', ' ')}
               </Badge>
             </div>
@@ -480,11 +507,15 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Risk Score</p>
-                  <p className={`text-2xl font-bold ${
-                    selectedSignal.riskScore >= 70 ? 'text-red-600' :
-                    selectedSignal.riskScore >= 50 ? 'text-orange-600' :
-                    'text-green-600'
-                  }`}>
+                  <p
+                    className={`text-2xl font-bold ${
+                      selectedSignal.riskScore >= 70
+                        ? 'text-red-600'
+                        : selectedSignal.riskScore >= 50
+                          ? 'text-orange-600'
+                          : 'text-green-600'
+                    }`}
+                  >
                     {selectedSignal.riskScore}
                   </p>
                 </CardContent>
@@ -499,8 +530,10 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
             <div>
               <Label className="text-muted-foreground">Data Sources</Label>
               <div className="flex gap-2 mt-1">
-                {selectedSignal.sourceData.map((source) => (
-                  <Badge key={source} variant="outline">{source}</Badge>
+                {selectedSignal.sourceData.map(source => (
+                  <Badge key={source} variant="outline">
+                    {source}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -515,8 +548,12 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                         <span className="text-sm font-medium">{assessment.assessor}</span>
                         <span className="text-sm text-muted-foreground">{assessment.date}</span>
                       </div>
-                      <p className="text-sm mb-2"><strong>Conclusion:</strong> {assessment.conclusion}</p>
-                      <p className="text-sm"><strong>Recommendation:</strong> {assessment.recommendation}</p>
+                      <p className="text-sm mb-2">
+                        <strong>Conclusion:</strong> {assessment.conclusion}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Recommendation:</strong> {assessment.recommendation}
+                      </p>
                       {assessment.nextReviewDate && (
                         <p className="text-sm text-muted-foreground mt-2">
                           Next review: {assessment.nextReviewDate}
@@ -568,9 +605,9 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {signals.map((signal) => (
-            <TableRow 
-              key={signal.id} 
+          {signals.map(signal => (
+            <TableRow
+              key={signal.id}
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => setSelectedSignal(signal)}
             >
@@ -583,26 +620,38 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={
-                  signal.status === 'confirmed' ? 'default' :
-                  signal.status === 'refuted' ? 'secondary' :
-                  'outline'
-                }>
+                <Badge
+                  variant={
+                    signal.status === 'confirmed'
+                      ? 'default'
+                      : signal.status === 'refuted'
+                        ? 'secondary'
+                        : 'outline'
+                  }
+                >
                   {signal.status.replace('_', ' ')}
                 </Badge>
               </TableCell>
               <TableCell>
-                <span className={signal.caseCount > signal.expectedCount * 2 ? 'text-red-600 font-medium' : ''}>
+                <span
+                  className={
+                    signal.caseCount > signal.expectedCount * 2 ? 'text-red-600 font-medium' : ''
+                  }
+                >
                   {signal.caseCount}
                 </span>
                 <span className="text-muted-foreground"> / {signal.expectedCount} exp</span>
               </TableCell>
               <TableCell>
-                <span className={`font-medium ${
-                  signal.riskScore >= 70 ? 'text-red-600' :
-                  signal.riskScore >= 50 ? 'text-orange-600' :
-                  'text-green-600'
-                }`}>
+                <span
+                  className={`font-medium ${
+                    signal.riskScore >= 70
+                      ? 'text-red-600'
+                      : signal.riskScore >= 50
+                        ? 'text-orange-600'
+                        : 'text-green-600'
+                  }`}
+                >
                   {signal.riskScore}
                 </span>
               </TableCell>
@@ -612,7 +661,7 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
         </TableBody>
       </Table>
 
-      {/* AI Signal Detection */}
+      {/* RI Signal Detection */}
       <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
@@ -620,15 +669,13 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI Signal Detection</h3>
+              <h3 className="font-semibold text-purple-900">Lumen RI Signal Detection</h3>
               <p className="text-sm text-purple-700">
-                Automated signal detection using disproportionality analysis, machine learning,
-                and natural language processing of case narratives.
+                Automated signal detection using disproportionality analysis, machine learning, and
+                natural language processing of case narratives.
               </p>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              Run Analysis
-            </Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">Run Analysis</Button>
           </div>
         </CardContent>
       </Card>
@@ -656,8 +703,10 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
       </div>
 
       <div className="grid gap-4">
-        {reports.map((report) => {
-          const completedSections = report.sections.filter(s => s.status === 'complete' || s.status === 'approved').length;
+        {reports.map(report => {
+          const completedSections = report.sections.filter(
+            s => s.status === 'complete' || s.status === 'approved'
+          ).length;
           const progress = (completedSections / report.sections.length) * 100;
           const daysRemaining = Math.floor(
             (new Date(report.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -680,11 +729,15 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
                       <p className="text-sm text-muted-foreground">{report.product}</p>
                     </div>
                   </div>
-                  <Badge variant={
-                    report.status === 'submitted' ? 'default' :
-                    report.status === 'approved' ? 'secondary' :
-                    'outline'
-                  }>
+                  <Badge
+                    variant={
+                      report.status === 'submitted'
+                        ? 'default'
+                        : report.status === 'approved'
+                          ? 'secondary'
+                          : 'outline'
+                    }
+                  >
                     {report.status.replace('_', ' ')}
                   </Badge>
                 </div>
@@ -706,8 +759,10 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
                   <div>
                     <p className="text-xs text-muted-foreground">Health Authorities</p>
                     <div className="flex gap-1 flex-wrap">
-                      {report.healthAuthorities.map((ha) => (
-                        <Badge key={ha} variant="outline" className="text-xs">{ha}</Badge>
+                      {report.healthAuthorities.map(ha => (
+                        <Badge key={ha} variant="outline" className="text-xs">
+                          {ha}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -716,13 +771,17 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Section Progress</span>
-                    <span>{completedSections}/{report.sections.length} complete</span>
+                    <span>
+                      {completedSections}/{report.sections.length} complete
+                    </span>
                   </div>
                   <Progress value={progress} />
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline">View Details</Button>
+                  <Button size="sm" variant="outline">
+                    View Details
+                  </Button>
                   <Button size="sm" variant="outline">
                     <Download className="w-4 h-4 mr-1" />
                     Export
@@ -752,7 +811,9 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
           <div className="text-center text-muted-foreground py-8">
             <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Interactive reporting calendar showing upcoming deadlines</p>
-            <Button variant="outline" className="mt-4">View Full Calendar</Button>
+            <Button variant="outline" className="mt-4">
+              View Full Calendar
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -808,12 +869,12 @@ function VigilanceReporting({ cases }: { cases: VigilanceCase[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {cases.map((c) => {
+          {cases.map(c => {
             const daysToDeadline = Math.floor(
               (new Date(c.reportingDeadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
             );
             const isUrgent = daysToDeadline <= 7;
-            
+
             return (
               <TableRow key={c.id} className={isUrgent ? 'bg-red-50' : ''}>
                 <TableCell className="font-mono">{c.id}</TableCell>
@@ -822,20 +883,28 @@ function VigilanceReporting({ cases }: { cases: VigilanceCase[] }) {
                 </TableCell>
                 <TableCell>{c.product}</TableCell>
                 <TableCell>
-                  <Badge variant={
-                    c.seriousness === 'death' ? 'destructive' :
-                    c.seriousness === 'life_threatening' ? 'destructive' :
-                    'outline'
-                  }>
+                  <Badge
+                    variant={
+                      c.seriousness === 'death'
+                        ? 'destructive'
+                        : c.seriousness === 'life_threatening'
+                          ? 'destructive'
+                          : 'outline'
+                    }
+                  >
                     {c.seriousness.replace('_', ' ')}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={
-                    c.causality === 'certain' ? 'destructive' :
-                    c.causality === 'probable' ? 'default' :
-                    'outline'
-                  }>
+                  <Badge
+                    variant={
+                      c.causality === 'certain'
+                        ? 'destructive'
+                        : c.causality === 'probable'
+                          ? 'default'
+                          : 'outline'
+                    }
+                  >
                     {c.causality}
                   </Badge>
                 </TableCell>
@@ -943,7 +1012,9 @@ function RiskBenefitTab() {
                   <p className="text-sm text-muted-foreground">
                     0.5% incidence of elevated liver enzymes &gt; 3x ULN
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">Mitigation: Liver function monitoring</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Mitigation: Liver function monitoring
+                  </p>
                 </div>
                 <div className="p-3 bg-red-50 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
@@ -963,7 +1034,9 @@ function RiskBenefitTab() {
                   <p className="text-sm text-muted-foreground">
                     CYP3A4 inhibitor interactions require monitoring
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">Mitigation: Contraindication labeling</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Mitigation: Contraindication labeling
+                  </p>
                 </div>
               </div>
             </div>
@@ -975,15 +1048,15 @@ function RiskBenefitTab() {
             <div className="flex items-center gap-3">
               <Badge className="bg-green-600">Favorable</Badge>
               <p className="text-sm text-blue-700">
-                The benefit-risk balance remains favorable for the approved indication 
-                when used in accordance with the prescribing information.
+                The benefit-risk balance remains favorable for the approved indication when used in
+                accordance with the prescribing information.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* AI Assistance */}
+      {/* RI Assistance */}
       <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
@@ -991,15 +1064,13 @@ function RiskBenefitTab() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI Risk-Benefit Analysis</h3>
+              <h3 className="font-semibold text-purple-900">Lumen RI Risk-Benefit Analysis</h3>
               <p className="text-sm text-purple-700">
                 Generate structured benefit-risk analysis using the PrOACT-URL framework,
                 incorporating latest safety data and literature evidence.
               </p>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              Generate Analysis
-            </Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">Generate Analysis</Button>
           </div>
         </CardContent>
       </Card>

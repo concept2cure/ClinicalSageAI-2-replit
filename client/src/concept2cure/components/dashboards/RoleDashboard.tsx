@@ -1,12 +1,12 @@
 /**
  * Concept2Cure - Role-Based Dashboard System
- * 
+ *
  * Intelligent workflow dashboards tailored to each role across the
  * regulatory lifecycle. Supports personas from small biotech to large pharma.
- * 
+ *
  * Roles: RA Lead, RA Associate, QA Manager, Clinical Lead, CMC Lead,
  * Medical Writer, Project Manager, Biostatistician, Executive, etc.
- * 
+ *
  * @module concept2cure/components/dashboards/RoleDashboard
  * @version 1.0.0
  */
@@ -368,7 +368,10 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
-              {metric.label.includes('%') || metric.label.includes('Rate') || metric.label.includes('Compliance') || metric.label.includes('Score')
+              {metric.label.includes('%') ||
+              metric.label.includes('Rate') ||
+              metric.label.includes('Compliance') ||
+              metric.label.includes('Score')
                 ? '%'
                 : ''}
             </p>
@@ -399,10 +402,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
               <span>Target: {metric.target}</span>
               <span>{Math.round((metric.value / metric.target) * 100)}%</span>
             </div>
-            <Progress
-              value={(metric.value / metric.target) * 100}
-              className="h-1.5"
-            />
+            <Progress value={(metric.value / metric.target) * 100} className="h-1.5" />
           </div>
         )}
       </CardContent>
@@ -438,7 +438,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
     const now = new Date();
     const diff = date.getTime() - now.getTime();
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days < 0) return `${Math.abs(days)}d overdue`;
     if (days === 0) return 'Due today';
     if (days === 1) return 'Due tomorrow';
@@ -447,7 +447,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
 
   return (
     <div className="space-y-2">
-      {tasks.map((task) => (
+      {tasks.map(task => (
         <div
           key={task.id}
           onClick={() => onTaskClick?.(task.id)}
@@ -459,10 +459,11 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 truncate">
-                  {task.title}
-                </span>
-                <Badge variant="outline" className={cn('text-[10px] shrink-0', priorityColors[task.priority])}>
+                <span className="text-sm font-medium text-gray-900 truncate">{task.title}</span>
+                <Badge
+                  variant="outline"
+                  className={cn('text-[10px] shrink-0', priorityColors[task.priority])}
+                >
                   {task.priority}
                 </Badge>
               </div>
@@ -475,7 +476,9 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
                 className={cn(
                   'text-xs font-medium',
                   task.dueDate.getTime() < Date.now() && 'text-red-600',
-                  task.dueDate.getTime() > Date.now() && task.dueDate.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000 && 'text-amber-600'
+                  task.dueDate.getTime() > Date.now() &&
+                    task.dueDate.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000 &&
+                    'text-amber-600'
                 )}
               >
                 {formatDueDate(task.dueDate)}
@@ -499,7 +502,7 @@ interface AIAssistantPanelProps {
 
 const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen }) => {
   const roleConfig = ROLE_CONFIGS[role];
-  
+
   const suggestions: Record<UserRole, string[]> = {
     ra_lead: [
       'What are the key differences between our device and the predicate?',
@@ -571,7 +574,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
           Ask Lumen Cortex
         </CardTitle>
         <CardDescription className="text-xs">
-          AI-powered assistance for {roleConfig.shortTitle} workflows
+          RI-powered assistance for {roleConfig.shortTitle} workflows
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -616,10 +619,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   const roleConfig = ROLE_CONFIGS[currentRole];
   const tasks = useMemo(() => generateMockTasks(currentRole), [currentRole]);
   const metrics = useMemo(() => generateMockMetrics(currentRole), [currentRole]);
-  const activeWorkflowRunId = useMemo(
-    () => `demo-${currentRole}-workflow-run`,
-    [currentRole]
-  );
+  const activeWorkflowRunId = useMemo(() => `demo-${currentRole}-workflow-run`, [currentRole]);
   const activeWorkflowSteps = useMemo(
     () => [
       {
@@ -696,7 +696,12 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', `bg-${roleConfig.color}-100`)}>
+          <div
+            className={cn(
+              'w-10 h-10 rounded-lg flex items-center justify-center',
+              `bg-${roleConfig.color}-100`
+            )}
+          >
             <RoleIcon className={cn('h-5 w-5', `text-${roleConfig.color}-600`)} />
           </div>
           <div>
@@ -704,12 +709,12 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
             <p className="text-xs text-gray-500">{roleConfig.description}</p>
           </div>
         </div>
-        <Select value={currentRole} onValueChange={(v) => handleRoleChange(v as UserRole)}>
+        <Select value={currentRole} onValueChange={v => handleRoleChange(v as UserRole)}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(ROLE_CONFIGS).map((config) => (
+            {Object.values(ROLE_CONFIGS).map(config => (
               <SelectItem key={config.id} value={config.id}>
                 <div className="flex items-center gap-2">
                   <config.icon className="h-4 w-4" />
@@ -728,7 +733,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           <div>
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Key Metrics</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {metrics.map((metric) => (
+              {metrics.map(metric => (
                 <MetricCard key={metric.id} metric={metric} colorClass={roleConfig.color} />
               ))}
             </div>
@@ -747,20 +752,15 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                 <CardContent>
                   <TaskList tasks={tasks} onTaskClick={onNavigateToTask} />
                   {tasks.length === 0 && (
-                    <div className="text-center py-6 text-sm text-gray-500">
-                      No pending tasks
-                    </div>
+                    <div className="text-center py-6 text-sm text-gray-500">No pending tasks</div>
                   )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* AI Assistant */}
+            {/* RI Assistant */}
             <div>
-              <AIAssistantPanel
-                role={currentRole}
-                onAskLumen={onAskLumen || (() => {})}
-              />
+              <AIAssistantPanel role={currentRole} onAskLumen={onAskLumen || (() => {})} />
             </div>
           </div>
 
@@ -776,7 +776,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {activeWorkflowSteps.map((step) => (
+              {activeWorkflowSteps.map(step => (
                 <StepCard
                   key={step.id}
                   step={step}
@@ -808,7 +808,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {roleConfig.relevantSubmissions.map((type) => (
+                {roleConfig.relevantSubmissions.map(type => (
                   <Badge key={type} variant="outline" className="text-xs">
                     {type.replace('_', ' ')}
                   </Badge>

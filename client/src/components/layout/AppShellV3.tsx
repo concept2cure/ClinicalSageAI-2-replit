@@ -77,7 +77,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/portal/dashboard' },
   { id: 'programs', label: 'Programs', icon: FolderKanban, href: '/portal/programs', badge: 12 },
   { id: 'library', label: 'Evidence Library', icon: FileText, href: '/portal/library' },
-  { id: 'assistant', label: 'AI Assistant', icon: Sparkles, href: '/portal/assistant' },
+  { id: 'assistant', label: 'RI Copilot', icon: Sparkles, href: '/portal/assistant' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/portal/analytics' },
   { id: 'calendar', label: 'Calendar', icon: Calendar, href: '/portal/calendar' },
   { id: 'team', label: 'Team', icon: Users, href: '/portal/team' },
@@ -422,10 +422,10 @@ const Header: React.FC<HeaderProps> = memo(({ title, sidebarCollapsed }) => {
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        {/* AI Quick Action */}
+        {/* RI Quick Action */}
         <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-accent-500 text-white text-sm font-medium hover:from-primary-600 hover:to-accent-600 transition-all shadow-sm">
           <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">Ask AI</span>
+          <span className="hidden sm:inline">Ask RI</span>
         </button>
 
         {/* Notifications */}

@@ -169,13 +169,13 @@ const STATUS_CONFIG: Record<
     icon: <div className="w-3 h-3 rounded-full border-2 border-dashed border-slate-300" />,
   },
   ai_drafting: {
-    label: 'AI Drafting...',
+    label: 'RI Drafting...',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     icon: <Sparkles className="w-3 h-3 animate-pulse" />,
   },
   ai_draft: {
-    label: 'AI Draft',
+    label: 'RI Draft',
     color: 'text-violet-600',
     bgColor: 'bg-violet-50',
     icon: <Sparkles className="w-3 h-3" />,
@@ -230,7 +230,7 @@ const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting
         className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 mx-auto"
       >
         <Sparkles className="w-5 h-5" />
-        Start Drafting with AI
+        Start Drafting with RI
       </button>
     </div>
   </div>
@@ -487,7 +487,7 @@ const SectionEditor: React.FC<{
           className="px-3 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 flex items-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
-          {section.status === 'empty' ? 'Draft with AI' : 'Regenerate'}
+          {section.status === 'empty' ? 'Draft with RI' : 'Regenerate'}
         </button>
         <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Edit">
           <Edit3 className="w-4 h-4" />
@@ -523,7 +523,7 @@ const SectionEditor: React.FC<{
             </div>
             <h3 className="text-lg font-medium text-slate-600 mb-2">Section Not Yet Drafted</h3>
             <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">
-              Click "Draft with AI" and your Sherpa will carry the burden of the first draft, citing
+              Click "Draft with RI" and your Sherpa will carry the burden of the first draft, citing
               every claim against your source documents.
             </p>
             <button
@@ -538,7 +538,7 @@ const SectionEditor: React.FC<{
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center animate-pulse">
               <Sparkles className="w-8 h-8 text-blue-600" />
             </div>
-            <h3 className="text-lg font-medium text-blue-700 mb-2">AI is Drafting...</h3>
+            <h3 className="text-lg font-medium text-blue-700 mb-2">RI is Drafting...</h3>
             <p className="text-sm text-slate-500">
               Analyzing source documents and generating content with Smart Tags
             </p>
@@ -641,7 +641,7 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       smartTags: [],
       wordCount: 2140,
       lastEdited: '2026-03-01',
-      editedBy: 'Lumen AI',
+      editedBy: 'Lumen RI',
     },
     {
       id: 'm2-nonclin',
@@ -697,7 +697,7 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       smartTags: [],
       wordCount: 5200,
       lastEdited: '2026-03-02',
-      editedBy: 'Lumen AI',
+      editedBy: 'Lumen RI',
     },
     {
       id: 'm4-tox',

@@ -231,7 +231,7 @@ export default function FulleCTDCoAuthor() {
         window.location.href = `/editor?taskId=${result.task_id}`;
         toast({
           title: 'Document Creation Started',
-          description: 'AI is generating your regulatory document...',
+          description: 'RI is generating your regulatory document...',
         });
       }
     } catch (error) {
@@ -268,7 +268,7 @@ export default function FulleCTDCoAuthor() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Concept2Cure</h1>
-              <p className="text-sm text-gray-600">Advanced AI-Powered Regulatory Platform</p>
+              <p className="text-sm text-gray-600">Advanced Regulatory Intelligence Platform</p>
               <div className="text-xs text-red-600">
                 DEBUG: showAllDocs={showAllDocuments ? 'true' : 'false'}, showAllTemplates=
                 {showAllTemplates ? 'true' : 'false'}
@@ -579,7 +579,7 @@ export default function FulleCTDCoAuthor() {
                       <FileText className="h-6 w-6 text-blue-600" />
                       <span>eCTD Co-Author</span>
                     </CardTitle>
-                    <CardDescription>AI-Powered Document Editor</CardDescription>
+                    <CardDescription>RI-Powered Document Editor</CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button variant="outline" size="sm">
@@ -595,7 +595,7 @@ export default function FulleCTDCoAuthor() {
                       Team Collaboration
                     </Button>
                     <Button variant="outline" size="sm">
-                      AI Assistant
+                      RI Assistant
                     </Button>
                   </div>
                 </div>
@@ -613,14 +613,14 @@ export default function FulleCTDCoAuthor() {
 
                   {/* Workspace Tab */}
                   <TabsContent value="workspace" className="space-y-6">
-                    {/* AI-Powered Document Editor */}
+                    {/* RI-Powered Document Editor */}
                     <Card>
                       <CardHeader>
                         <div className="flex justify-between items-center">
                           <div>
                             <CardTitle className="flex items-center space-x-2">
                               <Edit className="h-5 w-5 text-blue-600" />
-                              <span>AI-Powered Document Editor</span>
+                              <span>RI-Powered Document Editor</span>
                             </CardTitle>
                             <CardDescription>
                               Create and edit regulatory documents with intelligent assistance
@@ -1048,9 +1048,9 @@ export default function FulleCTDCoAuthor() {
       <Dialog open={showNewDocumentDialog} onOpenChange={setShowNewDocumentDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Create New AI Document</DialogTitle>
+            <DialogTitle>Create New RI Document</DialogTitle>
             <DialogDescription>
-              Generate a regulatory document using AI with eCTD compliance
+              Generate a regulatory document using Regulatory Intelligence with eCTD compliance
             </DialogDescription>
           </DialogHeader>
 

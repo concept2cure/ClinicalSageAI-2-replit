@@ -435,7 +435,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {greeting?.text || 'Good morning — ready to work?'}
           </h1>
           <p className="text-sm text-zinc-500 max-w-lg mx-auto leading-relaxed">
-            Lumen is your AI co-author for FDA regulatory submissions, clinical trial design, and
+            Lumen is your RI co-author for FDA regulatory submissions, clinical trial design, and
             compliance strategy. Tell me what you're working on and I'll generate documents,
             identify gaps, and guide every step.
           </p>
@@ -904,7 +904,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       {health && !isConnected && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>AI running in offline mode — responses continue normally</span>
+          <span>RI running in offline mode — responses continue normally</span>
         </div>
       )}
 

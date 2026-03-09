@@ -997,7 +997,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 label: 'In Progress',
                 count: counts.drafting + counts.review,
               },
-              { id: 'ai_draftable' as ViewFilter, label: 'AI Draftable', count: aiDraftableLeaves },
+              { id: 'ai_draftable' as ViewFilter, label: 'RI Draftable', count: aiDraftableLeaves },
             ].map(f => (
               <button
                 key={f.id}
