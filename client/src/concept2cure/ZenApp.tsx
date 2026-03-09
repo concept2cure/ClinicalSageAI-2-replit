@@ -27,6 +27,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation, useRoute } from 'wouter';
 import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
@@ -406,6 +407,14 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 
 export const ZenApp: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
+  // URL-DRIVEN PROJECT IDENTITY
+  // ─────────────────────────────────────────────────────────────────────────────
+  const [, navigate] = useLocation();
+  const [, routeParams] = useRoute('/concept2cure/project/:projectId/:rest*');
+  const [, routeParamsExact] = useRoute('/concept2cure/project/:projectId');
+  const urlProjectId = routeParams?.projectId ?? routeParamsExact?.projectId ?? null;
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -521,8 +530,10 @@ export const ZenApp: React.FC = () => {
   const generateDocx = useGenerateDocx();
   const [generatingArtifact, setGeneratingArtifact] = useState<string | null>(null);
 
-  // Active selection
-  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
+  // Active selection — URL projectId takes precedence
+  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
+    urlProjectId ?? projects[0]?.id
+  );
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
@@ -648,38 +659,46 @@ export const ZenApp: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Deep-link: open workspace from ?projectId= on first load
+  // Deep-link: if URL has /project/:projectId, set active project + layout mode
   useEffect(() => {
+    if (urlProjectId && urlProjectId !== activeProjectId) {
+      setActiveProjectId(urlProjectId);
+      setLayoutMode('project-launcher');
+    }
+    // Also support legacy ?projectId= query param for backwards compat
     try {
       const params = new URLSearchParams(window.location.search);
-      const urlProjectId = params.get('projectId');
-      if (urlProjectId) {
-        setActiveProjectId(urlProjectId);
+      const qp = params.get('projectId');
+      if (qp && !urlProjectId) {
+        setActiveProjectId(qp);
         setLayoutMode('project-launcher');
+        // Upgrade to path-based URL
+        navigate(`/concept2cure/project/${qp}`);
       }
     } catch (_) {
       /* ignore */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [urlProjectId]);
 
-  // Sync URL ?projectId= whenever the active workspace changes
+  // Sync URL path when active project or layout changes
   useEffect(() => {
-    try {
-      const url = new URL(window.location.href);
-      if (
-        (layoutMode === 'workspace' ||
-          layoutMode === 'regulatory-workspace' ||
-          layoutMode === 'project-launcher') &&
-        activeProjectId
-      ) {
-        url.searchParams.set('projectId', activeProjectId);
-      } else {
-        url.searchParams.delete('projectId');
+    if (
+      (layoutMode === 'workspace' ||
+        layoutMode === 'regulatory-workspace' ||
+        layoutMode === 'project-launcher') &&
+      activeProjectId
+    ) {
+      // Only update URL if not already on the right project path
+      const expected = `/concept2cure/project/${activeProjectId}`;
+      if (!window.location.pathname.startsWith(expected)) {
+        window.history.replaceState({}, '', expected);
       }
-      window.history.replaceState({}, '', url.toString());
-    } catch (_) {
-      /* ignore */
+    } else if (layoutMode === 'projects') {
+      // Back to project hub — clear project from URL
+      if (window.location.pathname.includes('/project/')) {
+        window.history.replaceState({}, '', '/concept2cure');
+      }
     }
   }, [layoutMode, activeProjectId]);
 
@@ -1584,7 +1603,10 @@ export const ZenApp: React.FC = () => {
                   conversationCount: activeProject.conversationCount,
                 }}
                 onOpenWorkspace={() => setLayoutMode('regulatory-workspace')}
-                onBack={() => setLayoutMode('projects')}
+                onBack={() => {
+                  setLayoutMode('projects');
+                  navigate('/concept2cure');
+                }}
                 onStartChat={() => {
                   setActiveConversationId(undefined);
                   setActiveThreadId(undefined);
@@ -2180,6 +2202,7 @@ export const ZenApp: React.FC = () => {
                                 onClick={() => {
                                   setActiveProjectId(project.id);
                                   setLayoutMode('project-launcher');
+                                  navigate(`/concept2cure/project/${project.id}`);
                                 }}
                                 className="cursor-pointer hover:bg-zinc-50 transition-colors"
                               >
@@ -2890,6 +2913,7 @@ export const ZenApp: React.FC = () => {
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
+          navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);
           setActiveThreadId(undefined);

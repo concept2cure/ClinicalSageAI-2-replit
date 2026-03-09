@@ -17,8 +17,8 @@
  * - WCAG 2.1 AA: Accessible routing with focus management
  */
 
-import React, { useEffect } from 'react';
-import { Switch, Route, useLocation, Redirect } from 'wouter';
+import React, { useEffect, lazy, Suspense } from 'react';
+import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
 import { ZenApp } from '../ZenApp';
@@ -27,6 +27,28 @@ import {
   AuthProvider as PortalAuthProvider,
   useAuth as usePortalAuth,
 } from '@/portal-v2/services/authService';
+
+// Lazy-load CERV2Page only when a project 510k route is hit
+const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+
+/**
+ * Bridge that extracts :projectId from URL and renders CERV2Page with it.
+ */
+const Project510kBridge: React.FC = () => {
+  const [, params] = useRoute('/concept2cure/project/:projectId/510k');
+  const projectId = params?.projectId ?? null;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
+          <p className="text-sm text-zinc-400">Loading workspace…</p>
+        </div>
+      }
+    >
+      <CERV2Page projectId={projectId} />
+    </Suspense>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOADING SCREEN
@@ -236,6 +258,38 @@ export const ZenRouter: React.FC = () => {
               <PageTransition>
                 <ProtectedRoute>
                   <ProofCertificatePage />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Project-scoped 510(k) workspace — opens CERV2Page with projectId from URL */}
+          <Route path="/concept2cure/project/:projectId/510k">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Project510kBridge />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Project-scoped hub — ZenApp reads :projectId from route */}
+          <Route path="/concept2cure/project/:projectId/:rest*">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ZenApp />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          <Route path="/concept2cure/project/:projectId">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ZenApp />
                 </ProtectedRoute>
               </PageTransition>
             )}

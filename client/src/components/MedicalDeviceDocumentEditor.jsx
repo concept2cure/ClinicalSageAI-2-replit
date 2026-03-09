@@ -104,6 +104,7 @@ const MedicalDeviceDocumentEditor = ({
   onExport,
   existingContent = '',
   documentId = null,
+  projectId = null, // numeric project ID for scoping sections
   readOnly = false,
   onWorkflowUpdate,
   selectedSection = null, // Section selected from Document Vault
@@ -208,9 +209,13 @@ const MedicalDeviceDocumentEditor = ({
     Settings: Settings,
   };
 
-  // Fetch 510(k) sections from database
+  // Fetch 510(k) sections from database, scoped by project when available
+  const sectionsQueryUrl = projectId
+    ? `/api/cerv2-sections?document_id=${projectId}`
+    : '/api/cerv2-sections';
   const { data: sectionsResponse, isLoading: sectionsLoading } = useQuery({
-    queryKey: ['/api/cerv2-sections'],
+    queryKey: ['/api/cerv2-sections', projectId],
+    queryFn: () => fetch(sectionsQueryUrl).then(r => r.json()),
     enabled: documentType === 'cerv2_510k',
   });
 

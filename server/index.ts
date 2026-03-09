@@ -2708,15 +2708,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
 
     // For demo projects, save workflow data in memory or skip stage progress table
     if (isDemoProject) {
-      console.log(`[510k-workflow] Demo project ${projectId} - saving workflow data in memory`);
-      // Store in memory storage for demo projects
-      memStorage.updateWorkflow(
-        parseInt(projectId),
-        stage,
-        data,
-        req.body.completedSteps || [],
-        req.body.validationCheckpoints || {}
-      );
+      console.log(`[510k-workflow] Demo project ${projectId} - skipping database persistence`);
     } else {
       // For real projects, save to database
       try {
@@ -2775,14 +2767,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
           `[510k-workflow] Could not save to stage progress table for project ${projectId}:`,
           dbError
         );
-        // Fall back to memory storage
-        memStorage.updateWorkflow(
-          parseInt(projectId),
-          stage,
-          data,
-          req.body.completedSteps || [],
-          req.body.validationCheckpoints || {}
-        );
+        // DB save failed — logged above, workflow continues with in-memory state
       }
     }
 
@@ -2852,6 +2837,40 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
   } catch (error) {
     console.error('[510k-workflow] Save error:', error);
     res.status(500).json({ success: false, error: 'Failed to save workflow data' });
+  }
+});
+
+// GET stage data for a specific project+stage+section (for client persistence hydration)
+app.get('/api/510k-workflow/:projectId/stage-data', async (req, res) => {
+  const { projectId } = req.params;
+  const stage = (req.query.stage as string) || 'default';
+  const section = (req.query.section as string) || 'default';
+
+  try {
+    const rows = await db!
+      .select()
+      .from(fda510kStageProgress)
+      .where(
+        and(
+          eq(fda510kStageProgress.projectId, parseInt(projectId)),
+          eq(fda510kStageProgress.stageName, stage),
+          eq(fda510kStageProgress.sectionName, section)
+        )
+      );
+
+    if (rows.length > 0) {
+      res.status(200).json({
+        success: true,
+        collectedData: rows[0].collectedData || {},
+        status: rows[0].status,
+        progress: rows[0].progress,
+      });
+    } else {
+      res.status(200).json({ success: true, collectedData: {} });
+    }
+  } catch (error) {
+    console.error('[510k-workflow] Stage data read error:', error);
+    res.status(500).json({ success: false, error: 'Failed to read stage data' });
   }
 });
 

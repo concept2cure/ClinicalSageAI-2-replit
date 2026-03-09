@@ -399,7 +399,7 @@ class MedicalDeviceService {
       };
     } catch (error) {
       console.error('[MedicalDevice] Predicate details failed:', error);
-      return null;
+      throw error;
     }
   }
 
@@ -436,7 +436,7 @@ class MedicalDeviceService {
       });
     } catch (error) {
       console.error('[MedicalDevice] Predicate recommendation failed:', error);
-      return [];
+      throw error;
     }
   }
 
@@ -473,7 +473,7 @@ class MedicalDeviceService {
       return response.data || response.submission || null;
     } catch (error) {
       console.error('[MedicalDevice] Get submission failed:', error);
-      return null;
+      throw error;
     }
   }
 
@@ -518,7 +518,7 @@ class MedicalDeviceService {
       };
     } catch (error) {
       console.error('[MedicalDevice] List submissions failed:', error);
-      return { submissions: [], total: 0 };
+      throw error;
     }
   }
 
@@ -538,7 +538,7 @@ class MedicalDeviceService {
       return response.data?.sections || response.sections || {};
     } catch (error) {
       console.error('[MedicalDevice] Get eSTAR sections failed:', error);
-      return {};
+      throw error;
     }
   }
 
@@ -634,7 +634,7 @@ class MedicalDeviceService {
       return response.data || response.reports || [];
     } catch (error) {
       console.error('[MedicalDevice] MAUDE search failed:', error);
-      return [];
+      throw error;
     }
   }
 
@@ -650,7 +650,7 @@ class MedicalDeviceService {
       return response.data || response.analysis || null;
     } catch (error) {
       console.error('[MedicalDevice] Hazard analysis failed:', error);
-      return null;
+      throw error;
     }
   }
 
@@ -709,7 +709,7 @@ class MedicalDeviceService {
       return response.data || response.cer || null;
     } catch (error) {
       console.error('[MedicalDevice] Get CER failed:', error);
-      return null;
+      throw error;
     }
   }
 

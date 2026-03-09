@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import {
   ChevronLeft,
@@ -73,12 +74,13 @@ export const ProjectLauncher: React.FC<ProjectLauncherProps> = ({
   onBack,
   onStartChat,
 }) => {
+  const [, navigate] = useLocation();
   const trackRoute = TRACK_ROUTES[project.type];
 
   const handlePrimaryAction = () => {
     if (trackRoute) {
-      const url = trackRoute.path + (trackRoute.query || '');
-      window.location.href = url;
+      // Navigate within the SPA using project-scoped URL
+      navigate(`/concept2cure/project/${project.id}/510k`);
     } else {
       // Generic/unmapped type → fallback to internal workspace
       onOpenWorkspace();

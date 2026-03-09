@@ -239,14 +239,18 @@ const EnhancedDocumentVault = ({
     setRenameValue('');
   };
 
-  // Fetch real sections from backend
+  // Fetch real sections from backend, scoped by project when available
+  const sectionsQueryUrl = projectId
+    ? `/api/cerv2-sections?document_id=${projectId}`
+    : '/api/cerv2-sections';
   const {
     data: sectionsData,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['/api/cerv2-sections'],
+    queryKey: ['/api/cerv2-sections', projectId],
+    queryFn: () => fetch(sectionsQueryUrl).then(r => r.json()),
     enabled: true,
     staleTime: 30000, // 30 seconds
   });
@@ -587,6 +591,7 @@ const EnhancedDocumentVault = ({
               section_number: `${item.sectionData.section_number}-copy`,
               section_title: `${item.sectionData.section_title} (Copy)`,
               section_key: `${item.sectionData.section_key}-copy-${Date.now()}`,
+              ...(projectId ? { document_id: Number(projectId) } : {}),
             };
 
             await cerv2SectionService.createSection(duplicateSection);
@@ -709,6 +714,7 @@ const EnhancedDocumentVault = ({
         icon: 'FileText',
         status: 'todo',
         content: `<h2>${newSectionNumber} New Custom Section</h2><p>Enter your content here...</p>`,
+        ...(projectId ? { document_id: Number(projectId) } : {}),
       };
 
       const created = await cerv2SectionService.createSection(newSection);

@@ -179,7 +179,11 @@ const safeAssistantHook = () => {
   }
 };
 
-export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
+export default function CERV2Page({
+  initialDocumentType,
+  initialActiveTab,
+  projectId: propProjectId,
+}) {
   // Read ?mode= query param so launcher can set initial mode via URL
   const urlMode = (() => {
     try {
@@ -206,6 +210,8 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [allProjects, setAllProjects] = useState([]);
 
   const [currentProjectId, setCurrentProjectId] = useState(() => {
+    // URL prop takes priority over localStorage
+    if (propProjectId) return propProjectId;
     try {
       const saved = localStorage.getItem('currentMedicalDeviceProjectId');
       return saved || null;
@@ -883,6 +889,121 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
     }
   }, [documentType]);
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SERVER-BACKED PERSISTENCE: load device profile + predicates from stage progress
+  // ─────────────────────────────────────────────────────────────────────────────
+  const effectiveProjectId = currentProjectId || propProjectId;
+
+  // Load persisted data from stage progress on mount
+  useEffect(() => {
+    if (!effectiveProjectId || documentType !== '510k') return;
+
+    const loadFromServer = async () => {
+      try {
+        const token =
+          sessionStorage.getItem('trialsage_access_token') ||
+          localStorage.getItem('trialsage_access_token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        headers['x-organization-id'] = organizationId;
+
+        // Load device profile from stage progress
+        const dpResp = await fetch(
+          `/api/510k-workflow/${effectiveProjectId}/stage-data?stage=device_profile&section=device_intake`,
+          { headers }
+        );
+        if (dpResp.ok) {
+          const dpData = await dpResp.json();
+          if (
+            dpData.success &&
+            dpData.collectedData &&
+            Object.keys(dpData.collectedData).length > 0
+          ) {
+            const restored = dpData.collectedData;
+            if (restored.deviceName) setDeviceName(restored.deviceName);
+            if (restored.manufacturer) setManufacturer(restored.manufacturer);
+            if (restored.intendedUse) setIntendedUse(restored.intendedUse);
+            if (restored.deviceProfile) {
+              setDeviceProfile(prev => ({ ...prev, ...restored.deviceProfile }));
+            }
+            console.log(
+              '[CERV2] Restored device profile from server for project',
+              effectiveProjectId
+            );
+          }
+        }
+
+        // Load predicates from stage progress
+        const predResp = await fetch(
+          `/api/510k-workflow/${effectiveProjectId}/stage-data?stage=predicate_search&section=predicates`,
+          { headers }
+        );
+        if (predResp.ok) {
+          const predData = await predResp.json();
+          if (predData.success && predData.collectedData?.selectedPredicates?.length > 0) {
+            setComparators(predData.collectedData.selectedPredicates);
+            setPredicatesFound(true);
+            console.log('[CERV2] Restored predicates from server for project', effectiveProjectId);
+          }
+        }
+      } catch (err) {
+        console.warn('[CERV2] Could not load persisted data from server:', err);
+        toast({
+          title: 'Data Load Warning',
+          description:
+            'Could not restore your previous work from the server. Local data used as fallback.',
+          variant: 'destructive',
+          duration: 5000,
+        });
+      }
+    };
+
+    loadFromServer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveProjectId, documentType]);
+
+  // Debounced save: persist device profile to server when it changes
+  useEffect(() => {
+    if (!effectiveProjectId || documentType !== '510k') return;
+    if (!deviceName && !manufacturer) return; // Nothing to save yet
+
+    const timer = setTimeout(() => {
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      fetch(`/api/510k-workflow/${effectiveProjectId}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          organizationId,
+          stage: 'device_profile',
+          section: 'device_intake',
+          data: {
+            deviceName,
+            manufacturer,
+            intendedUse,
+            deviceProfile,
+          },
+        }),
+      }).catch(err => {
+        console.warn('[CERV2] Device profile save failed:', err);
+        toast({
+          title: 'Save Failed',
+          description: 'Device profile could not be saved to the server.',
+          variant: 'destructive',
+          duration: 4000,
+        });
+      });
+    }, 2000); // 2s debounce
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceName, manufacturer, intendedUse, effectiveProjectId]);
+
   // Update workflow progress when steps change and persist state to localStorage
   useEffect(() => {
     if (documentType === '510k') {
@@ -968,6 +1089,37 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
         description: `Found ${data.length} predicate devices for comparison.`,
         duration: 2000,
       });
+
+      // 4b. Persist predicate selections to server
+      if (effectiveProjectId) {
+        const token =
+          sessionStorage.getItem('trialsage_access_token') ||
+          localStorage.getItem('trialsage_access_token');
+        fetch(`/api/510k-workflow/${effectiveProjectId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            organizationId,
+            stage: 'predicate_search',
+            section: 'predicates',
+            data: {
+              selectedPredicates: data,
+              literatureResults: literatureData || [],
+            },
+          }),
+        }).catch(err => {
+          console.warn('[CERV2] Predicate persistence save failed:', err);
+          toast({
+            title: 'Save Failed',
+            description: 'Predicate selections could not be saved to the server.',
+            variant: 'destructive',
+            duration: 4000,
+          });
+        });
+      }
 
       // 5. Critical workflow transition fix - direct and synchronous workflow navigation
       console.log('[CERV2 Workflow] Directly transitioning to Equivalence step');
@@ -3242,6 +3394,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
 
           <MedicalDeviceDocumentEditor
             documentType={selectedDocType}
+            projectId={effectiveProjectId}
             selectedSection={selectedSection} // Pass section selected from vault
             deviceProfile={
               deviceProfile || {
@@ -4422,6 +4575,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
       return (
         <MedicalDeviceDocumentEditor
           documentType="cerv2_510k"
+          projectId={effectiveProjectId}
           selectedSection={selectedSection}
           deviceProfile={
             deviceProfile || {
