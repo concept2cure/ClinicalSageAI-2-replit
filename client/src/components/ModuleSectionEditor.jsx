@@ -31,12 +31,12 @@ import {
   ArrowRight,
   Clock,
   UserCheck,
-  Shield
+  Shield,
 } from 'lucide-react';
 
 /**
  * Module Section Editor - Enhanced with cross-document synchronization and AI impact analysis
- * 
+ *
  * This component provides a rich editing experience for regulatory document sections,
  * with AI-assisted drafting, real-time collaboration, and impact analysis capabilities.
  */
@@ -51,7 +51,7 @@ export default function ModuleSectionEditor({
   onCancel,
   onContentChange,
   contextSnippets: externalContextSnippets = [],
-  currentUser = { id: 'user-1', name: 'Current User', avatar: null }
+  currentUser = { id: 'user-1', name: 'Current User', avatar: null },
 }) {
   const [content, setContentInternal] = useState(initialContent);
   const [contextQuery, setContextQuery] = useState('');
@@ -62,7 +62,7 @@ export default function ModuleSectionEditor({
   const [error, setError] = useState(null);
   const [contextError, setContextError] = useState(null);
   const [phase, setPhase] = useState('editing');
-  
+
   // New state for enhanced features
   const [linkedDocuments, setLinkedDocuments] = useState([]);
   const [activeEditors, setActiveEditors] = useState([]);
@@ -84,13 +84,13 @@ export default function ModuleSectionEditor({
     pendingUpdates,
     conflicts: syncConflicts,
     lastSyncTime,
-    isOnline
+    isOnline,
   } = useSectionSync({
     projectId,
     leafId,
     onSectionUpdate: handleSectionUpdate,
     onConflict: handleSectionConflict,
-    enabled: true
+    enabled: true,
   });
 
   // Update content and notify parent component
@@ -107,13 +107,13 @@ export default function ModuleSectionEditor({
   function handleSectionUpdate(update) {
     setSyncPulse(true);
     setTimeout(() => setSyncPulse(false), 2000);
-    
+
     toast({
-      title: "📝 Section Updated",
+      title: '📝 Section Updated',
       description: `${update.author?.name || 'Another user'} updated a linked section`,
       duration: 4000,
       action: {
-        label: "Review",
+        label: 'Review',
         onClick: () => {
           // Scroll to the updated section
           const element = document.querySelector(`[data-section-id="${update.sectionId}"]`);
@@ -122,8 +122,8 @@ export default function ModuleSectionEditor({
             element.classList.add('highlight-update');
             setTimeout(() => element.classList.remove('highlight-update'), 3000);
           }
-        }
-      }
+        },
+      },
     });
   }
 
@@ -131,17 +131,17 @@ export default function ModuleSectionEditor({
   function handleSectionConflict(conflict) {
     setConflicts(prev => [...prev, conflict]);
     toast({
-      title: "⚠️ Merge Conflict Detected",
+      title: '⚠️ Merge Conflict Detected',
       description: `Your changes conflict with ${conflict.author?.name || 'another user'}'s edits`,
-      variant: "warning",
+      variant: 'warning',
       duration: 0,
       action: {
-        label: "Resolve",
+        label: 'Resolve',
         onClick: () => {
           // Open conflict resolution modal
           console.log('Resolving conflict:', conflict);
-        }
-      }
+        },
+      },
     });
   }
 
@@ -178,7 +178,7 @@ export default function ModuleSectionEditor({
 
   const fetchLinkedDocuments = async () => {
     try {
-      const response = await fetch(`/api/sections/${sectionId}/links`);
+      const response = await fetch(`/api/cerv2-sections/${sectionId}/links`);
       if (response.ok) {
         const data = await response.json();
         setLinkedDocuments(data.linkedDocuments || mockLinkedDocuments);
@@ -194,7 +194,7 @@ export default function ModuleSectionEditor({
 
   const fetchActiveEditors = async () => {
     try {
-      const response = await fetch(`/api/sections/${sectionId}/active-editors`);
+      const response = await fetch(`/api/cerv2-sections/${sectionId}/active-editors`);
       if (response.ok) {
         const data = await response.json();
         setActiveEditors(data.editors || mockActiveEditors);
@@ -209,16 +209,37 @@ export default function ModuleSectionEditor({
 
   // Mock data for demonstration
   const mockLinkedDocuments = [
-    { id: 1, title: 'Module 3.2 Quality Control', path: '/module-3/quality-control', status: 'synced' },
-    { id: 2, title: 'Module 5.1 Clinical Overview', path: '/module-5/clinical-overview', status: 'pending' },
+    {
+      id: 1,
+      title: 'Module 3.2 Quality Control',
+      path: '/module-3/quality-control',
+      status: 'synced',
+    },
+    {
+      id: 2,
+      title: 'Module 5.1 Clinical Overview',
+      path: '/module-5/clinical-overview',
+      status: 'pending',
+    },
     { id: 3, title: 'IND Cover Letter', path: '/ind/cover-letter', status: 'synced' },
-    { id: 4, title: 'Module 2.6 Manufacturing', path: '/module-2/manufacturing', status: 'conflict' },
-    { id: 5, title: 'Module 4.2 Toxicology', path: '/module-4/toxicology', status: 'synced' }
+    {
+      id: 4,
+      title: 'Module 2.6 Manufacturing',
+      path: '/module-2/manufacturing',
+      status: 'conflict',
+    },
+    { id: 5, title: 'Module 4.2 Toxicology', path: '/module-4/toxicology', status: 'synced' },
   ];
 
   const mockActiveEditors = [
-    { id: 1, name: 'Dr. Sarah Chen', avatar: '👩‍⚕️', section: 'Module 5 Clinical', status: 'editing' },
-    { id: 2, name: 'Mark Johnson', avatar: '👨‍💼', section: 'Module 2 Quality', status: 'viewing' }
+    {
+      id: 1,
+      name: 'Dr. Sarah Chen',
+      avatar: '👩‍⚕️',
+      section: 'Module 5 Clinical',
+      status: 'editing',
+    },
+    { id: 2, name: 'Mark Johnson', avatar: '👨‍💼', section: 'Module 2 Quality', status: 'viewing' },
   ];
 
   // Analyze impact using AI
@@ -232,8 +253,8 @@ export default function ModuleSectionEditor({
           sectionId,
           newContent: content,
           oldContent: initialContent,
-          projectId
-        })
+          projectId,
+        }),
       });
 
       if (response.ok) {
@@ -253,42 +274,43 @@ export default function ModuleSectionEditor({
   const mockImpactAnalysis = {
     severity: 'medium',
     affectedDocuments: [
-      { 
+      {
         module: 'Module 2.3 Quality',
         documents: 3,
         impact: 'high',
-        rationale: 'Changes to drug substance specifications affect multiple quality control documents'
+        rationale:
+          'Changes to drug substance specifications affect multiple quality control documents',
       },
-      { 
+      {
         module: 'Module 5 Clinical',
         documents: 2,
         impact: 'medium',
-        rationale: 'Clinical trial protocols reference these specifications'
+        rationale: 'Clinical trial protocols reference these specifications',
       },
-      { 
+      {
         module: 'IND Cover Letter',
         documents: 1,
         impact: 'low',
-        rationale: 'Summary section may need minor updates'
-      }
+        rationale: 'Summary section may need minor updates',
+      },
     ],
     suggestions: [
       {
         type: 'compliance',
         message: 'This change affects regulatory compliance in Module 3.2',
-        severity: 'warning'
+        severity: 'warning',
       },
       {
         type: 'consistency',
         message: 'This contradicts information in Section 2.1 - Review for consistency',
-        severity: 'error'
+        severity: 'error',
       },
       {
         type: 'improvement',
         message: 'Consider adding reference to ICH Q6A guideline for specifications',
-        severity: 'info'
-      }
-    ]
+        severity: 'info',
+      },
+    ],
   };
 
   // Fetch context based on query
@@ -371,7 +393,6 @@ export default function ModuleSectionEditor({
     }
   };
 
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKey = e => {
@@ -387,30 +408,42 @@ export default function ModuleSectionEditor({
 
   const getSyncStatusColor = () => {
     switch (syncStatus) {
-      case 'connected': return 'text-green-600';
-      case 'syncing': return 'text-yellow-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'connected':
+        return 'text-green-600';
+      case 'syncing':
+        return 'text-yellow-600';
+      case 'error':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
   const getSyncIcon = () => {
     switch (syncStatus) {
-      case 'connected': return <CheckCircle className="h-4 w-4" />;
-      case 'syncing': return <RefreshCw className="h-4 w-4 animate-spin" />;
-      case 'error': return <AlertCircle className="h-4 w-4" />;
-      default: return <WifiOff className="h-4 w-4" />;
+      case 'connected':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'syncing':
+        return <RefreshCw className="h-4 w-4 animate-spin" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4" />;
+      default:
+        return <WifiOff className="h-4 w-4" />;
     }
   };
 
   return (
     <div className="space-y-4">
       {/* Document Sync Status Panel */}
-      <Card className={`border-2 ${syncPulse ? 'animate-pulse border-blue-500' : 'border-gray-200'} transition-all duration-500`}>
+      <Card
+        className={`border-2 ${syncPulse ? 'animate-pulse border-blue-500' : 'border-gray-200'} transition-all duration-500`}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Activity className={`h-5 w-5 ${syncPulse ? 'text-blue-500 animate-pulse' : 'text-gray-500'}`} />
+              <Activity
+                className={`h-5 w-5 ${syncPulse ? 'text-blue-500 animate-pulse' : 'text-gray-500'}`}
+              />
               Document Sync Status
             </CardTitle>
             <div className="flex items-center gap-4">
@@ -419,7 +452,7 @@ export default function ModuleSectionEditor({
                 {getSyncIcon()}
                 <span className="text-sm font-medium capitalize">{syncStatus}</span>
               </div>
-              
+
               {/* Sync Actions */}
               <div className="flex gap-2">
                 <Button
@@ -429,14 +462,12 @@ export default function ModuleSectionEditor({
                   disabled={syncStatus === 'syncing'}
                   data-testid="button-sync-now"
                 >
-                  <RefreshCw className={`h-4 w-4 mr-1 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 mr-1 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}
+                  />
                   Sync Now
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  data-testid="button-link-section"
-                >
+                <Button size="sm" variant="outline" data-testid="button-link-section">
                   <Link className="h-4 w-4 mr-1" />
                   Link Section
                 </Button>
@@ -444,7 +475,7 @@ export default function ModuleSectionEditor({
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Linked Documents */}
@@ -459,7 +490,9 @@ export default function ModuleSectionEditor({
                     <span className="text-xs text-gray-600 truncate">{doc.title}</span>
                     {doc.status === 'synced' && <CheckCircle className="h-3 w-3 text-green-500" />}
                     {doc.status === 'pending' && <Clock className="h-3 w-3 text-yellow-500" />}
-                    {doc.status === 'conflict' && <AlertTriangle className="h-3 w-3 text-red-500" />}
+                    {doc.status === 'conflict' && (
+                      <AlertTriangle className="h-3 w-3 text-red-500" />
+                    )}
                   </div>
                 ))}
               </ScrollArea>
@@ -478,13 +511,14 @@ export default function ModuleSectionEditor({
                     <div className="flex-1">
                       <p className="font-medium">{editor.name}</p>
                       <p className="text-gray-500">
-                        {editor.status === 'editing' ? 
+                        {editor.status === 'editing' ? (
                           <span className="flex items-center gap-1">
                             <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
                             Editing {editor.section}
-                          </span> :
+                          </span>
+                        ) : (
                           <span>Viewing {editor.section}</span>
-                        }
+                        )}
                       </p>
                     </div>
                   </div>
@@ -504,13 +538,19 @@ export default function ModuleSectionEditor({
                 </div>
                 <div className="flex justify-between">
                   <span>Pending Updates:</span>
-                  <Badge variant={pendingUpdates.length > 0 ? "destructive" : "secondary"} className="text-xs">
+                  <Badge
+                    variant={pendingUpdates.length > 0 ? 'destructive' : 'secondary'}
+                    className="text-xs"
+                  >
                     {pendingUpdates.length}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span>Conflicts:</span>
-                  <Badge variant={conflicts.length > 0 ? "destructive" : "secondary"} className="text-xs">
+                  <Badge
+                    variant={conflicts.length > 0 ? 'destructive' : 'secondary'}
+                    className="text-xs"
+                  >
                     {conflicts.length}
                   </Badge>
                 </div>
@@ -522,7 +562,7 @@ export default function ModuleSectionEditor({
 
       {/* Impact Analysis Panel */}
       <Card className="border-2 border-gray-200">
-        <CardHeader 
+        <CardHeader
           className="cursor-pointer hover:bg-gray-50 transition-colors"
           onClick={() => setShowImpactPanel(!showImpactPanel)}
         >
@@ -535,7 +575,7 @@ export default function ModuleSectionEditor({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   analyzeImpact();
                 }}
@@ -554,11 +594,15 @@ export default function ModuleSectionEditor({
                   </>
                 )}
               </Button>
-              {showImpactPanel ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showImpactPanel ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </div>
           </div>
         </CardHeader>
-        
+
         {showImpactPanel && (
           <CardContent>
             {impactAnalysis ? (
@@ -567,22 +611,35 @@ export default function ModuleSectionEditor({
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-700">Document Impact Summary</h4>
                   {impactAnalysis.affectedDocuments.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                    >
                       <div className="flex items-center gap-2">
-                        <FileText className={`h-4 w-4 ${
-                          item.impact === 'high' ? 'text-red-500' :
-                          item.impact === 'medium' ? 'text-yellow-500' :
-                          'text-green-500'
-                        }`} />
+                        <FileText
+                          className={`h-4 w-4 ${
+                            item.impact === 'high'
+                              ? 'text-red-500'
+                              : item.impact === 'medium'
+                                ? 'text-yellow-500'
+                                : 'text-green-500'
+                          }`}
+                        />
                         <span className="text-sm font-medium">{item.module}</span>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="text-xs text-gray-600">Updates {item.documents} documents</span>
-                        <Badge variant={
-                          item.impact === 'high' ? 'destructive' :
-                          item.impact === 'medium' ? 'warning' :
-                          'success'
-                        }>
+                        <span className="text-xs text-gray-600">
+                          Updates {item.documents} documents
+                        </span>
+                        <Badge
+                          variant={
+                            item.impact === 'high'
+                              ? 'destructive'
+                              : item.impact === 'medium'
+                                ? 'warning'
+                                : 'success'
+                          }
+                        >
                           {item.impact} impact
                         </Badge>
                       </div>
@@ -594,16 +651,27 @@ export default function ModuleSectionEditor({
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-700">AI Recommendations</h4>
                   {impactAnalysis.suggestions.map((suggestion, idx) => (
-                    <Alert key={idx} className={
-                      suggestion.severity === 'error' ? 'border-red-500' :
-                      suggestion.severity === 'warning' ? 'border-yellow-500' :
-                      'border-blue-500'
-                    }>
+                    <Alert
+                      key={idx}
+                      className={
+                        suggestion.severity === 'error'
+                          ? 'border-red-500'
+                          : suggestion.severity === 'warning'
+                            ? 'border-yellow-500'
+                            : 'border-blue-500'
+                      }
+                    >
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription className="text-sm">
-                        {suggestion.type === 'compliance' && <Shield className="inline h-3 w-3 mr-1" />}
-                        {suggestion.type === 'consistency' && <GitBranch className="inline h-3 w-3 mr-1" />}
-                        {suggestion.type === 'improvement' && <Sparkles className="inline h-3 w-3 mr-1" />}
+                        {suggestion.type === 'compliance' && (
+                          <Shield className="inline h-3 w-3 mr-1" />
+                        )}
+                        {suggestion.type === 'consistency' && (
+                          <GitBranch className="inline h-3 w-3 mr-1" />
+                        )}
+                        {suggestion.type === 'improvement' && (
+                          <Sparkles className="inline h-3 w-3 mr-1" />
+                        )}
                         {suggestion.message}
                       </AlertDescription>
                     </Alert>
@@ -612,19 +680,11 @@ export default function ModuleSectionEditor({
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    data-testid="button-accept-updates"
-                  >
+                  <Button variant="default" size="sm" data-testid="button-accept-updates">
                     <Check className="h-4 w-4 mr-1" />
                     Accept All Synchronized Updates
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    data-testid="button-view-linked"
-                  >
+                  <Button variant="outline" size="sm" data-testid="button-view-linked">
                     <FileText className="h-4 w-4 mr-1" />
                     View Linked Documents
                   </Button>
@@ -633,7 +693,9 @@ export default function ModuleSectionEditor({
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <Brain className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">Click "Analyze Impact" to see how your changes affect other documents</p>
+                <p className="text-sm">
+                  Click "Analyze Impact" to see how your changes affect other documents
+                </p>
               </div>
             )}
           </CardContent>
@@ -661,7 +723,9 @@ export default function ModuleSectionEditor({
               </div>
             </CardHeader>
             <CardContent>
-              <label htmlFor="draft-area" className="sr-only">Section content</label>
+              <label htmlFor="draft-area" className="sr-only">
+                Section content
+              </label>
               <textarea
                 id="draft-area"
                 ref={textareaRef}
@@ -703,11 +767,7 @@ export default function ModuleSectionEditor({
                   )}
                 </Button>
 
-                <Button
-                  onClick={onCancel}
-                  variant="outline"
-                  data-testid="button-cancel"
-                >
+                <Button onClick={onCancel} variant="outline" data-testid="button-cancel">
                   <X className="h-4 w-4 mr-1" />
                   Cancel
                 </Button>
@@ -769,12 +829,15 @@ export default function ModuleSectionEditor({
                     <Separator />
                     <ContextPreview
                       snippets={contextSnippets}
-                      onSnippetClick={(id) => {
+                      onSnippetClick={id => {
                         const snippet = contextSnippets.find(s => s.chunkId === id || s.id === id);
                         if (snippet && textareaRef.current) {
                           const insertText = `\n\nReference: ${snippet.text}\n\n`;
                           const cursorPos = textareaRef.current.selectionStart;
-                          const newContent = content.substring(0, cursorPos) + insertText + content.substring(cursorPos);
+                          const newContent =
+                            content.substring(0, cursorPos) +
+                            insertText +
+                            content.substring(cursorPos);
                           setContent(newContent);
                         }
                       }}
@@ -802,7 +865,9 @@ export default function ModuleSectionEditor({
                       <div>
                         <p className="font-medium">{update.author?.name || 'System'}</p>
                         <p className="text-gray-600">Updated {update.sectionId}</p>
-                        <p className="text-gray-500">{new Date(update.timestamp).toLocaleTimeString()}</p>
+                        <p className="text-gray-500">
+                          {new Date(update.timestamp).toLocaleTimeString()}
+                        </p>
                       </div>
                     </div>
                   ))}

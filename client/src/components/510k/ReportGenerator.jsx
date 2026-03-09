@@ -111,7 +111,7 @@ const ReportGenerator = ({
 
       if (!submissionId) {
         // Create a new 510(k) submission if one doesn't exist
-        const createResponse = await fetch('/api/medical-device/510k', {
+        const createResponse = await fetch('/api/medical-devices/510k', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

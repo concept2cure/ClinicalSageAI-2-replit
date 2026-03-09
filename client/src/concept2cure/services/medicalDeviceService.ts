@@ -59,7 +59,7 @@ export interface PredicateDevice {
   intendedUse: string;
   statementUrl?: string;
   summaryUrl?: string;
-  
+
   // AI Analysis Fields
   similarityScore?: number;
   technologicalCharacteristics?: string[];
@@ -107,7 +107,7 @@ export interface PredicateComparison {
 // TYPES - 510(k) SUBMISSION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type SubmissionStatus = 
+export type SubmissionStatus =
   | 'DRAFT'
   | 'INTERNAL_REVIEW'
   | 'READY_FOR_SUBMISSION'
@@ -135,10 +135,10 @@ export interface Submission510k {
   submissionDate?: string;
   targetDate?: string;
   reviewDivision?: string;
-  
+
   // eSTAR Sections
   sections: Record<string, EstarSection>;
-  
+
   // Timeline & Audit
   history: SubmissionEvent[];
   createdAt: string;
@@ -194,7 +194,7 @@ export interface MAUDEReport {
   reportDate: string;
   eventDate?: string;
   eventType: 'malfunction' | 'injury' | 'death';
-  
+
   device: {
     brandName: string;
     genericName: string;
@@ -203,19 +203,19 @@ export interface MAUDEReport {
     catalogNumber?: string;
     productCode: string;
   };
-  
+
   event: {
     description: string;
     deviceProblem?: string[];
     patientProblem?: string[];
     outcome?: string;
   };
-  
+
   reporter: {
     type: 'manufacturer' | 'distributor' | 'user_facility' | 'other';
     occupation?: string;
   };
-  
+
   // AI Analysis
   riskSignal?: {
     severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -229,7 +229,7 @@ export interface HazardAnalysis {
   productCode: string;
   productName: string;
   analysisDate: string;
-  
+
   summary: {
     totalReports: number;
     malfunctions: number;
@@ -238,21 +238,21 @@ export interface HazardAnalysis {
     trendDirection: 'UP' | 'DOWN' | 'STABLE';
     riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   };
-  
+
   topIssues: Array<{
     issue: string;
     count: number;
     percentage: number;
     trend: 'UP' | 'DOWN' | 'STABLE';
   }>;
-  
+
   timeline: Array<{
     period: string;
     malfunctions: number;
     injuries: number;
     deaths: number;
   }>;
-  
+
   recommendations: string[];
 }
 
@@ -265,7 +265,7 @@ export interface ClinicalEvaluationReport {
   deviceId: string;
   version: string;
   status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'SUBMITTED';
-  
+
   sections: {
     scope: CERSection;
     clinicalBackground: CERSection;
@@ -276,16 +276,16 @@ export interface ClinicalEvaluationReport {
     riskBenefitAnalysis: CERSection;
     conclusions: CERSection;
   };
-  
+
   literature: {
     totalSources: number;
     includedSources: number;
     excludedSources: number;
     searchStrategy: string;
   };
-  
+
   approvals: ApprovalRecord[];
-  
+
   createdAt: string;
   updatedAt: string;
 }
@@ -315,7 +315,7 @@ export interface ApprovalRecord {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class MedicalDeviceService {
-  private baseUrl = '/api/medical-device';
+  private baseUrl = '/api/medical-devices';
 
   private async request<T>(method: ApiRequestMethod, url: string, body?: unknown): Promise<T> {
     const response = await apiRequest(method, url, body);
@@ -335,20 +335,38 @@ class MedicalDeviceService {
 
   /**
    * Search FDA 510(k) database for predicate devices
+   * Uses the openFDA-backed /api/fda510k/predicates endpoint
    */
   async searchPredicates(params: PredicateSearchParams): Promise<PredicateDevice[]> {
     try {
-      const response = await this.request<{ data?: PredicateDevice[]; predicates?: PredicateDevice[] }>(
-        'POST',
-        `${this.baseUrl}/predicates/search`,
-        {
-          query: params.deviceName || params.productCode || params.intendedUse || '',
-          productCode: params.productCode,
-          regulationNumber: params.regulationNumber,
-          limit: params.limit,
-        }
+      const query = params.deviceName || params.productCode || params.intendedUse || '';
+      const limit = params.limit || 25;
+      const response = await fetch(
+        `/api/fda510k/predicates?query=${encodeURIComponent(query)}&limit=${limit}`
       );
-      return response.data || response.predicates || [];
+      if (!response.ok) {
+        throw new Error(`Predicate search failed: ${response.status}`);
+      }
+      const payload = await response.json();
+      const results = payload.results || [];
+      // Map openFDA results to PredicateDevice shape
+      return results.map((r: any) => ({
+        id: r.k_number || r.knumber || '',
+        kNumber: r.k_number || r.knumber || '',
+        deviceName: r.device_name || r.devicename || '',
+        applicant: r.applicant || '',
+        decisionDate: r.decision_date || r.date_received || '',
+        decisionType:
+          r.decision_code === 'SESE' || r.decision_description?.includes('Substantially Equivalent')
+            ? ('SE' as const)
+            : ('NSE' as const),
+        productCode: r.product_code || r.productcode || '',
+        regulationNumber: r.regulation_number || '',
+        deviceClass: (r.device_class || 'II') as DeviceClass,
+        intendedUse: r.statement_or_summary || r.intended_use || '',
+        statementUrl: r.statement_or_summary_url || undefined,
+        summaryUrl: r.summary_url || undefined,
+      }));
     } catch (error) {
       console.error('[MedicalDevice] Predicate search failed:', error);
       throw error;
@@ -356,15 +374,29 @@ class MedicalDeviceService {
   }
 
   /**
-   * Get detailed predicate device information
+   * Get detailed predicate device information via openFDA
    */
   async getPredicateDetails(kNumber: string): Promise<PredicateDevice | null> {
     try {
-      const response = await this.request<{ data?: PredicateDevice; predicate?: PredicateDevice }>(
-        'GET',
-        `${this.baseUrl}/predicates/${kNumber}`
+      const response = await fetch(
+        `/api/fda510k/predicates?query=${encodeURIComponent(kNumber)}&limit=1`
       );
-      return response.data || response.predicate || null;
+      if (!response.ok) return null;
+      const payload = await response.json();
+      const r = payload.results?.[0];
+      if (!r) return null;
+      return {
+        id: r.k_number || kNumber,
+        kNumber: r.k_number || kNumber,
+        deviceName: r.device_name || r.devicename || '',
+        applicant: r.applicant || '',
+        decisionDate: r.decision_date || '',
+        decisionType: r.decision_code === 'SESE' ? ('SE' as const) : ('NSE' as const),
+        productCode: r.product_code || '',
+        regulationNumber: r.regulation_number || '',
+        deviceClass: (r.device_class || 'II') as DeviceClass,
+        intendedUse: r.statement_or_summary || '',
+      };
     } catch (error) {
       console.error('[MedicalDevice] Predicate details failed:', error);
       return null;
@@ -372,7 +404,7 @@ class MedicalDeviceService {
   }
 
   /**
-   * AI-powered predicate comparison analysis
+   * AI-powered predicate comparison analysis via predicate-intelligence BFF
    */
   async analyzePredicateEquivalence(
     subjectDevice: DeviceProfile,
@@ -381,7 +413,7 @@ class MedicalDeviceService {
     try {
       const response = await this.request<PredicateComparison & { data?: PredicateComparison }>(
         'POST',
-        `${this.baseUrl}/predicates/analyze`,
+        '/api/predicate-intelligence/analyze',
         { subjectDevice, predicateDevice }
       );
       return (response as any).data || response;
@@ -392,16 +424,16 @@ class MedicalDeviceService {
   }
 
   /**
-   * AI-recommended predicates based on device profile
+   * Get recommended predicates based on device profile (searches by product code)
    */
   async getRecommendedPredicates(deviceProfile: DeviceProfile): Promise<PredicateDevice[]> {
     try {
-      const response = await this.request<{ recommendations?: PredicateDevice[]; data?: PredicateDevice[] }>(
-        'POST',
-        `${this.baseUrl}/predicates/recommend`,
-        { deviceProfile }
-      );
-      return response.recommendations || response.data || [];
+      const query = deviceProfile.productCode || deviceProfile.productName || '';
+      return await this.searchPredicates({
+        productCode: query,
+        deviceName: deviceProfile.productName,
+        limit: 10,
+      });
     } catch (error) {
       console.error('[MedicalDevice] Predicate recommendation failed:', error);
       return [];
@@ -419,10 +451,10 @@ class MedicalDeviceService {
     try {
       const response = await this.request<{ data?: Submission510k; submission?: Submission510k }>(
         'POST',
-        `${this.baseUrl}/submissions`,
+        `${this.baseUrl}/510k`,
         data
       );
-      return response.data || response.submission as Submission510k;
+      return response.data || (response.submission as Submission510k);
     } catch (error) {
       console.error('[MedicalDevice] Create submission failed:', error);
       throw error;
@@ -436,7 +468,7 @@ class MedicalDeviceService {
     try {
       const response = await this.request<{ data?: Submission510k; submission?: Submission510k }>(
         'GET',
-        `${this.baseUrl}/submissions/${id}`
+        `${this.baseUrl}/510k/${id}`
       );
       return response.data || response.submission || null;
     } catch (error) {
@@ -451,11 +483,11 @@ class MedicalDeviceService {
   async updateSubmission(id: string, data: Partial<Submission510k>): Promise<Submission510k> {
     try {
       const response = await this.request<{ data?: Submission510k; submission?: Submission510k }>(
-        'PATCH',
-        `${this.baseUrl}/submissions/${id}`,
+        'PUT',
+        `${this.baseUrl}/510k/${id}`,
         data
       );
-      return response.data || response.submission as Submission510k;
+      return response.data || (response.submission as Submission510k);
     } catch (error) {
       console.error('[MedicalDevice] Update submission failed:', error);
       throw error;
@@ -476,7 +508,7 @@ class MedicalDeviceService {
     if (params?.offset) queryParams.set('offset', String(params.offset));
 
     try {
-      const response = await this.request<any>('GET', `${this.baseUrl}/submissions?${queryParams}`);
+      const response = await this.request<any>('GET', `${this.baseUrl}/510k?${queryParams}`);
       if (Array.isArray(response)) {
         return { submissions: response, total: response.length };
       }
@@ -499,10 +531,10 @@ class MedicalDeviceService {
    */
   async getEstarSections(submissionId: string): Promise<Record<string, EstarSection>> {
     try {
-      const response = await this.request<{ data?: { sections?: Record<string, EstarSection> }; sections?: Record<string, EstarSection> }>(
-        'GET',
-        `${this.baseUrl}/submissions/${submissionId}/estar`
-      );
+      const response = await this.request<{
+        data?: { sections?: Record<string, EstarSection> };
+        sections?: Record<string, EstarSection>;
+      }>('GET', `${this.baseUrl}/510k/${submissionId}/estar`);
       return response.data?.sections || response.sections || {};
     } catch (error) {
       console.error('[MedicalDevice] Get eSTAR sections failed:', error);
@@ -519,11 +551,10 @@ class MedicalDeviceService {
     data: Partial<EstarSection>
   ): Promise<EstarSection> {
     try {
-      const response = await this.request<{ data?: { section?: EstarSection }; section?: EstarSection }>(
-        'PATCH',
-        `${this.baseUrl}/submissions/${submissionId}/estar/${sectionId}`,
-        data
-      );
+      const response = await this.request<{
+        data?: { section?: EstarSection };
+        section?: EstarSection;
+      }>('PATCH', `${this.baseUrl}/510k/${submissionId}/estar/${sectionId}`, data);
       return (response.data?.section || response.section) as EstarSection;
     } catch (error) {
       console.error('[MedicalDevice] Update eSTAR section failed:', error);
@@ -542,7 +573,7 @@ class MedicalDeviceService {
     try {
       const response = await this.request<{ data?: { content?: string }; content?: string }>(
         'POST',
-        `${this.baseUrl}/submissions/${submissionId}/estar/${sectionId}/generate`,
+        `${this.baseUrl}/510k/${submissionId}/estar/${sectionId}/generate`,
         { context }
       );
       return response.data?.content || response.content || '';
@@ -563,7 +594,7 @@ class MedicalDeviceService {
     try {
       const response = await this.request<any>(
         'GET',
-        `${this.baseUrl}/submissions/${submissionId}/estar/validate`
+        `${this.baseUrl}/510k/${submissionId}/estar/validate`
       );
       return response.data || response;
     } catch (error) {
@@ -634,7 +665,7 @@ class MedicalDeviceService {
       `${this.baseUrl}/maude/subscribe?codes=${productCodes.join(',')}`
     );
 
-    eventSource.onmessage = (event) => {
+    eventSource.onmessage = event => {
       try {
         const report = JSON.parse(event.data) as MAUDEReport;
         onAlert(report);
@@ -655,12 +686,11 @@ class MedicalDeviceService {
    */
   async createCER(deviceId: string): Promise<ClinicalEvaluationReport> {
     try {
-      const response = await this.request<{ data?: ClinicalEvaluationReport; cer?: ClinicalEvaluationReport }>(
-        'POST',
-        `${this.baseUrl}/cer`,
-        { deviceId }
-      );
-      return response.data || response.cer as ClinicalEvaluationReport;
+      const response = await this.request<{
+        data?: ClinicalEvaluationReport;
+        cer?: ClinicalEvaluationReport;
+      }>('POST', `${this.baseUrl}/cer`, { deviceId });
+      return response.data || (response.cer as ClinicalEvaluationReport);
     } catch (error) {
       console.error('[MedicalDevice] Create CER failed:', error);
       throw error;
@@ -672,10 +702,10 @@ class MedicalDeviceService {
    */
   async getCER(id: string): Promise<ClinicalEvaluationReport | null> {
     try {
-      const response = await this.request<{ data?: ClinicalEvaluationReport; cer?: ClinicalEvaluationReport }>(
-        'GET',
-        `${this.baseUrl}/cer/${id}`
-      );
+      const response = await this.request<{
+        data?: ClinicalEvaluationReport;
+        cer?: ClinicalEvaluationReport;
+      }>('GET', `${this.baseUrl}/cer/${id}`);
       return response.data || response.cer || null;
     } catch (error) {
       console.error('[MedicalDevice] Get CER failed:', error);
@@ -686,17 +716,12 @@ class MedicalDeviceService {
   /**
    * Update CER section
    */
-  async updateCERSection(
-    cerId: string,
-    sectionName: string,
-    content: string
-  ): Promise<CERSection> {
+  async updateCERSection(cerId: string, sectionName: string, content: string): Promise<CERSection> {
     try {
-      const response = await this.request<{ data?: { section?: CERSection }; section?: CERSection }>(
-        'PATCH',
-        `${this.baseUrl}/cer/${cerId}/sections/${sectionName}`,
-        { content }
-      );
+      const response = await this.request<{
+        data?: { section?: CERSection };
+        section?: CERSection;
+      }>('PATCH', `${this.baseUrl}/cer/${cerId}/sections/${sectionName}`, { content });
       return (response.data?.section || response.section) as CERSection;
     } catch (error) {
       console.error('[MedicalDevice] Update CER section failed:', error);
