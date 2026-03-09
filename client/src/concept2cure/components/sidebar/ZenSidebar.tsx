@@ -246,7 +246,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-semibold text-zinc-900 text-sm">Lumen RI</span>
+            <span className="font-semibold text-zinc-900 text-sm">Concept2Cure</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none">
               Regulatory
             </span>

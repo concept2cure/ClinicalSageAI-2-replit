@@ -260,11 +260,11 @@ export default function UnifiedTopNavV3({
           </span>
         </Link>
 
-        {['Risk Heatmap', 'Timeline Simulator', 'Ask Lumen RI'].map(tabKey => (
+        {['Risk Heatmap', 'Timeline Simulator', 'Ask RI'].map(tabKey => (
           <button
             key={tabKey}
             onClick={() => {
-              if (tabKey === 'Ask Lumen RI') {
+              if (tabKey === 'Ask RI') {
                 // Open the AI assistant instead of changing tabs
                 openAssistant('regulatory_affairs', { source: 'top_nav' });
               } else if (tabKey === 'Risk Heatmap') {
@@ -283,7 +283,7 @@ export default function UnifiedTopNavV3({
                 : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
             } transition-all duration-200 ease-in-out focus:ring-2 focus:ring-indigo-300 active:scale-95`}
           >
-            {tabKey === 'Ask Lumen RI' ? (
+            {tabKey === 'Ask RI' ? (
               <span className="flex items-center">
                 <Sparkles className="w-4 h-4 mr-1" /> {tabKey}
               </span>

@@ -641,7 +641,7 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       smartTags: [],
       wordCount: 2140,
       lastEdited: '2026-03-01',
-      editedBy: 'Lumen RI',
+      editedBy: 'RI',
     },
     {
       id: 'm2-nonclin',
@@ -697,7 +697,7 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       smartTags: [],
       wordCount: 5200,
       lastEdited: '2026-03-02',
-      editedBy: 'Lumen RI',
+      editedBy: 'RI',
     },
     {
       id: 'm4-tox',

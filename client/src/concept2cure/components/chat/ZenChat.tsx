@@ -207,9 +207,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div className="flex-1 min-w-0">
             {/* Role label */}
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-sm font-semibold text-zinc-900">
-                {isUser ? 'You' : 'Lumen'}
-              </span>
+              <span className="text-sm font-semibold text-zinc-900">{isUser ? 'You' : 'RI'}</span>
               {message.isStreaming && message.content && (
                 <span className="inline-flex gap-0.5 items-center">
                   <span
@@ -435,8 +433,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {greeting?.text || 'Good morning — ready to work?'}
           </h1>
           <p className="text-sm text-zinc-500 max-w-lg mx-auto leading-relaxed">
-            Lumen is your RI co-author for FDA regulatory submissions, clinical trial design, and
-            compliance strategy. Tell me what you're working on and I'll generate documents,
+            Concept2Cure is your RI co-author for FDA regulatory submissions, clinical trial design,
+            and compliance strategy. Tell me what you're working on and I'll generate documents,
             identify gaps, and guide every step.
           </p>
         </div>
@@ -584,7 +582,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
   onStop,
   isGenerating = false,
-  placeholder = 'Message Lumen...',
+  placeholder = 'Message RI...',
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -672,7 +670,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-zinc-400 mt-2">
-          Lumen can make mistakes. Verify critical regulatory decisions with qualified experts.
+          RI can make mistakes. Verify critical regulatory decisions with qualified experts.
         </p>
       </div>
     </div>
@@ -963,7 +961,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onSend={handleSend}
         onStop={handleStop}
         isGenerating={isLoading || isStreaming}
-        placeholder="Message Lumen..."
+        placeholder="Message RI..."
       />
     </div>
   );

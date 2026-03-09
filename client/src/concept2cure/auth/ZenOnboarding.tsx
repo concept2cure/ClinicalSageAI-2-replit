@@ -195,7 +195,7 @@ const TOUR_FEATURES = [
   {
     title: 'RI-Powered Drafting',
     description:
-      'Lumen RI assists with regulatory document creation, citing relevant guidance and precedents.',
+      'RI assists with regulatory document creation, citing relevant guidance and precedents.',
     icon: '🤖',
   },
   {
@@ -465,7 +465,7 @@ export const ZenOnboarding: React.FC = () => {
           {
             key: 'aiSuggestions',
             label: 'RI Suggestions',
-            description: 'Lumen RI will proactively suggest improvements',
+            description: 'RI will proactively suggest improvements',
           },
           {
             key: 'compactMode',

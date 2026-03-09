@@ -226,7 +226,7 @@ export function TopBar({
               <path d="M15 13v2" />
               <path d="M9 13v2" />
             </svg>
-            <span>Ask Lumen</span>
+            <span>Ask RI</span>
           </button>
         )}
 

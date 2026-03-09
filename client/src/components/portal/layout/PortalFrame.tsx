@@ -227,7 +227,7 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
             <span className="text-sm font-semibold text-primary">L</span>
           </div>
           <div>
-            <h3 className="font-medium text-sm">Lumen RI</h3>
+            <h3 className="font-medium text-sm">RI Copilot</h3>
             <p className="text-xs text-muted-foreground">Regulatory Intelligence</p>
           </div>
         </div>
@@ -277,7 +277,7 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
               <path d="M9 13v2" />
             </svg>
           </div>
-          <h4 className="font-medium mb-2">Ask Lumen Anything</h4>
+          <h4 className="font-medium mb-2">Ask RI</h4>
           <p className="text-sm text-muted-foreground max-w-[240px]">
             Get instant regulatory guidance, document analysis, and submission assistance.
           </p>
@@ -313,7 +313,7 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
           </button>
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">
-          Lumen may produce inaccurate information. Always verify regulatory guidance.
+          RI may produce inaccurate information. Always verify regulatory guidance.
         </p>
       </div>
     </div>

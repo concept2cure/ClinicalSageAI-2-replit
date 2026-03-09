@@ -217,7 +217,7 @@ export function RegulatoryIntelligencePanel({
     handleRunAnalysis();
     // Auto-run Foresight prediction (Risk tab)
     handleRunPrediction();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionType, indication, deviceName]);
 
   return (
@@ -277,7 +277,7 @@ export function RegulatoryIntelligencePanel({
               Analyze Regulatory Landscape
             </button>
 
-            {/* Lumen Analysis Results */}
+            {/* RI Analysis Results */}
             {analysisResult && (
               <div className="space-y-2">
                 <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg">

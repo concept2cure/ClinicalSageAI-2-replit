@@ -823,7 +823,7 @@ export function RegulatoryIntelligence() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen RI Intelligence</h3>
+              <h3 className="font-semibold text-purple-900">Regulatory Intelligence</h3>
               <p className="text-sm text-purple-700">
                 Get RI-powered analysis of regulatory trends, impact assessments for your products,
                 and automated summaries of new guidance documents.
@@ -832,7 +832,7 @@ export function RegulatoryIntelligence() {
             <Button variant="outline" className="border-purple-300 text-purple-700">
               Impact Analysis
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">Ask Lumen</Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">Ask RI</Button>
           </div>
         </CardContent>
       </Card>

@@ -571,7 +571,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
-          Ask Lumen Cortex
+          Ask RI
         </CardTitle>
         <CardDescription className="text-xs">
           RI-powered assistance for {roleConfig.shortTitle} workflows

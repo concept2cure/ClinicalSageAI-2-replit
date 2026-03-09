@@ -101,7 +101,7 @@ const getChangeIcon = (changeType: string) => {
 const getChangeLabel = (changeType: string): string => {
   switch (changeType) {
     case 'ai':
-      return 'Lumen RI';
+      return 'RI';
     case 'user':
       return 'Manual edit';
     case 'restore':

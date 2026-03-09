@@ -1,9 +1,9 @@
 /**
  * Concept2Cure - Project Knowledge Panel
- * 
+ *
  * Main panel displaying project documents and custom instructions.
  * Claude.ai parity: Project Knowledge sidebar section.
- * 
+ *
  * @module concept2cure/components/knowledge/ProjectKnowledge
  * @version 1.0.0
  */
@@ -18,12 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -129,9 +124,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 truncate">
-              {document.name}
-            </span>
+            <span className="text-sm font-medium text-gray-900 truncate">{document.name}</span>
             {document.status === 'processing' && (
               <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
             )}
@@ -173,10 +166,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
               <Download className="h-4 w-4 mr-2" />
               Download
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={() => setShowDeleteDialog(true)}
-            >
+            <DropdownMenuItem className="text-red-600" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Remove
             </DropdownMenuItem>
@@ -190,16 +180,13 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove document?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove "{document.name}" from the project knowledge.
-              Lumen will no longer have access to this document's content.
+              This will remove "{document.name}" from the project knowledge. RI will no longer have
+              access to this document's content.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={onRemove}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <AlertDialogAction onClick={onRemove} className="bg-red-600 hover:bg-red-700">
               Remove
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -267,10 +254,7 @@ const ContextMeter: React.FC<ContextMeterProps> = ({ used, max }) => {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({
-  project,
-  className,
-}) => {
+export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, className }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const {
@@ -308,17 +292,13 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({
                 <FolderOpen className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-900">
-                  Project Knowledge
-                </div>
+                <div className="text-sm font-medium text-gray-900">Project Knowledge</div>
                 <div className="text-xs text-gray-500">
-                  {isLoading ? (
-                    'Loading...'
-                  ) : documentCount === 0 ? (
-                    'Add documents'
-                  ) : (
-                    `${documentCount} document${documentCount !== 1 ? 's' : ''} · ${formatTokenCount(contextTokens)} tokens`
-                  )}
+                  {isLoading
+                    ? 'Loading...'
+                    : documentCount === 0
+                      ? 'Add documents'
+                      : `${documentCount} document${documentCount !== 1 ? 's' : ''} · ${formatTokenCount(contextTokens)} tokens`}
                 </div>
               </div>
             </div>
@@ -333,8 +313,8 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({
               Project Knowledge
             </SheetTitle>
             <SheetDescription>
-              Upload documents and configure custom instructions for this project.
-              Lumen will use this context when assisting you.
+              Upload documents and configure custom instructions for this project. RI will use this
+              context when assisting you.
             </SheetDescription>
           </SheetHeader>
 
@@ -358,12 +338,13 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">
-                    {knowledge.documents.length} document{knowledge.documents.length !== 1 ? 's' : ''} uploaded
+                    {knowledge.documents.length} document
+                    {knowledge.documents.length !== 1 ? 's' : ''} uploaded
                   </span>
                 </div>
                 <ScrollArea className="h-[200px]">
                   <div className="space-y-1">
-                    {knowledge.documents.map((doc) => (
+                    {knowledge.documents.map(doc => (
                       <DocumentItem
                         key={doc.id}
                         document={doc}

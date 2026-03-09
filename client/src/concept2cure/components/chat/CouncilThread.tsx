@@ -42,7 +42,7 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type AgentRole = 
+export type AgentRole =
   | 'USER'
   | 'DRAFTER'
   | 'STATISTICIAN'
@@ -66,7 +66,7 @@ export interface CouncilMessage {
   actions?: MessageAction[];
   citations?: Citation[];
   isThinking?: boolean;
-  confidence?: number;      // 0-100
+  confidence?: number; // 0-100
   attachments?: Attachment[];
 }
 
@@ -97,14 +97,17 @@ interface CouncilThreadProps {
 // AGENT PERSONAS - THE SHERPA TEAM
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const AGENTS: Record<AgentRole, {
-  name: string;
-  title: string;
-  color: string;
-  bgColor: string;
-  bubbleColor: string;
-  icon: React.ReactNode;
-}> = {
+const AGENTS: Record<
+  AgentRole,
+  {
+    name: string;
+    title: string;
+    color: string;
+    bgColor: string;
+    bubbleColor: string;
+    icon: React.ReactNode;
+  }
+> = {
   USER: {
     name: 'You',
     title: 'Team Lead',
@@ -114,7 +117,7 @@ const AGENTS: Record<AgentRole, {
     icon: <User className="w-4 h-4" />,
   },
   DRAFTER: {
-    name: 'Lumen Author',
+    name: 'RI Author',
     title: 'The Heavy Lifter',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
@@ -169,9 +172,18 @@ const AGENTS: Record<AgentRole, {
 
 const ThinkingIndicator: React.FC = () => (
   <div className="flex items-center gap-1">
-    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+    <div
+      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+      style={{ animationDelay: '0ms' }}
+    />
+    <div
+      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+      style={{ animationDelay: '150ms' }}
+    />
+    <div
+      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+      style={{ animationDelay: '300ms' }}
+    />
   </div>
 );
 
@@ -193,7 +205,7 @@ const AttachmentBadge: React.FC<{ attachment: Attachment }> = ({ attachment }) =
     chart: <Sparkles className="w-3 h-3" />,
     image: <FileText className="w-3 h-3" />,
   };
-  
+
   return (
     <button
       onClick={attachment.onClick}
@@ -214,56 +226,55 @@ const MessageBubble: React.FC<{
 }> = ({ message, onFeedback, onCopy, onRetry }) => {
   const persona = AGENTS[message.role] || AGENTS.SYNTHESIZER;
   const isUser = message.role === 'USER';
-  
+
   return (
-    <div className={cn(
-      'flex gap-3 animate-in slide-in-from-bottom-2 duration-500',
-      isUser && 'flex-row-reverse'
-    )}>
+    <div
+      className={cn(
+        'flex gap-3 animate-in slide-in-from-bottom-2 duration-500',
+        isUser && 'flex-row-reverse'
+      )}
+    >
       {/* Avatar */}
-      <div className={cn(
-        'mt-1 w-9 h-9 rounded-full flex items-center justify-center shadow-sm shrink-0',
-        'border-2 border-white ring-1 ring-slate-100',
-        persona.bgColor,
-        persona.color
-      )}>
+      <div
+        className={cn(
+          'mt-1 w-9 h-9 rounded-full flex items-center justify-center shadow-sm shrink-0',
+          'border-2 border-white ring-1 ring-slate-100',
+          persona.bgColor,
+          persona.color
+        )}
+      >
         {persona.icon}
       </div>
-      
+
       {/* Content */}
       <div className="flex-1 max-w-[85%]">
         {/* Agent Header */}
-        <div className={cn(
-          'flex items-baseline gap-2 mb-1',
-          isUser ? 'justify-end' : 'justify-start'
-        )}>
+        <div
+          className={cn('flex items-baseline gap-2 mb-1', isUser ? 'justify-end' : 'justify-start')}
+        >
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {persona.name}
           </span>
-          {!isUser && (
-            <span className="text-[10px] text-slate-300">
-              {persona.title}
-            </span>
-          )}
+          {!isUser && <span className="text-[10px] text-slate-300">{persona.title}</span>}
           {message.timestamp && (
-            <span className="text-[10px] text-slate-300">
-              {message.timestamp}
-            </span>
+            <span className="text-[10px] text-slate-300">{message.timestamp}</span>
           )}
         </div>
-        
+
         {/* Message Bubble */}
-        <div className={cn(
-          'text-sm p-4 rounded-2xl shadow-sm leading-relaxed',
-          isUser ? 'rounded-tr-none' : 'rounded-tl-none',
-          persona.bubbleColor
-        )}>
+        <div
+          className={cn(
+            'text-sm p-4 rounded-2xl shadow-sm leading-relaxed',
+            isUser ? 'rounded-tr-none' : 'rounded-tl-none',
+            persona.bubbleColor
+          )}
+        >
           {message.isThinking ? (
             <ThinkingIndicator />
           ) : (
             <>
               {message.content}
-              
+
               {/* Confidence Indicator */}
               {message.confidence !== undefined && (
                 <div className="mt-2 pt-2 border-t border-slate-200/50">
@@ -287,7 +298,7 @@ const MessageBubble: React.FC<{
                   </div>
                 </div>
               )}
-              
+
               {/* Citations */}
               {message.citations && message.citations.length > 0 && (
                 <div className="mt-3 pt-2 border-t border-slate-200/50">
@@ -301,7 +312,7 @@ const MessageBubble: React.FC<{
             </>
           )}
         </div>
-        
+
         {/* Attachments */}
         {message.attachments && message.attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
@@ -310,7 +321,7 @@ const MessageBubble: React.FC<{
             ))}
           </div>
         )}
-        
+
         {/* Actions */}
         {!isUser && message.actions && message.actions.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
@@ -323,7 +334,8 @@ const MessageBubble: React.FC<{
                   'flex items-center gap-1.5',
                   action.variant === 'primary' && 'bg-blue-600 text-white hover:bg-blue-700',
                   action.variant === 'danger' && 'bg-red-100 text-red-700 hover:bg-red-200',
-                  !action.variant && 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-300'
+                  !action.variant &&
+                    'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-300'
                 )}
               >
                 {action.icon}
@@ -332,7 +344,7 @@ const MessageBubble: React.FC<{
             ))}
           </div>
         )}
-        
+
         {/* Feedback Bar (for non-user messages) */}
         {!isUser && !message.isThinking && (
           <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -389,20 +401,18 @@ export const CouncilThread: React.FC<CouncilThreadProps> = ({
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-1">
-            Your Sherpa Team is Ready
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-800 mb-1">Your Sherpa Team is Ready</h3>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            Start a conversation and your team of expert agents will guide you 
-            through the regulatory mountain.
+            Start a conversation and your team of expert agents will guide you through the
+            regulatory mountain.
           </p>
         </div>
       ) : (
-        messages.map((message) => (
+        messages.map(message => (
           <div key={message.id} className="group">
             <MessageBubble
               message={message}
-              onFeedback={(positive) => onFeedback?.(message.id, positive)}
+              onFeedback={positive => onFeedback?.(message.id, positive)}
               onCopy={() => onCopy?.(message.content)}
               onRetry={() => onRetry?.(message.id)}
             />

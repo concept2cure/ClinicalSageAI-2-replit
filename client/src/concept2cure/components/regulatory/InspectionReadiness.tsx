@@ -1057,7 +1057,7 @@ export function InspectionReadiness() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen RI Inspection Prep</h3>
+              <h3 className="font-semibold text-purple-900">RI Inspection Prep</h3>
               <p className="text-sm text-purple-700">
                 Generate inspection-specific document requests, identify documentation gaps, prepare
                 Q&A guides, and simulate inspector questions based on historical patterns.

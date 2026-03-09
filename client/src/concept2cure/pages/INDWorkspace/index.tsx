@@ -1126,7 +1126,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        Draft with Lumen
+                        Draft with RI
                       </button>
                     )}
                     <button
