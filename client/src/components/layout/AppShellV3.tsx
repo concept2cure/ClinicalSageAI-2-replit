@@ -122,7 +122,6 @@ const Logo: React.FC<LogoProps> = memo(({ collapsed }) => (
             <span className="text-lg font-bold text-neutral-900 whitespace-nowrap">
               Concept2Cure
             </span>
-            <span className="text-[10px] text-neutral-500 -mt-1">TrialSage Platform</span>
           </div>
         </motion.div>
       )}
@@ -328,7 +327,7 @@ const Sidebar: React.FC<SidebarProps> = memo(
       <Logo collapsed={collapsed} />
 
       {/* Main nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
         {NAV_ITEMS.map(item => (
           <NavItemButton
             key={item.id}
@@ -476,7 +475,7 @@ const MobileMenu: React.FC<MobileMenuProps> = memo(({ open, onClose, activeItem,
           className="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 lg:hidden flex flex-col"
         >
           <Logo />
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto sidebar-scroll">
             {NAV_ITEMS.map(item => (
               <NavItemButton
                 key={item.id}

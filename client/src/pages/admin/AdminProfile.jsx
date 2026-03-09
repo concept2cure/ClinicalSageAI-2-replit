@@ -132,7 +132,7 @@ export default function AdminProfile() {
                 CONCEPT2CURE.AI
               </span>
             </div>
-            <span className="ml-7 text-sm text-[#86868b] mt-0.5">TrialSage™ Platform</span>
+            <span className="ml-7 text-sm text-[#86868b] mt-0.5">Concept2Cure Platform</span>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -802,7 +802,9 @@ export default function AdminProfile() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Usage Analytics</CardTitle>
-                    <CardDescription>Track your team's usage of TrialSage platform</CardDescription>
+                    <CardDescription>
+                      Track your team's usage of Concept2Cure platform
+                    </CardDescription>
                   </CardHeader>
 
                   <CardContent>

@@ -1012,7 +1012,7 @@ export const LoginPage: React.FC<{
               <ShieldCheck className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">TrialSage</h1>
+              <h1 className="text-2xl font-bold">Concept2Cure</h1>
               <p className="text-sm opacity-80">Regulatory Intelligence Platform</p>
             </div>
           </div>
@@ -1069,7 +1069,7 @@ export const LoginPage: React.FC<{
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <ShieldCheck className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold">TrialSage</span>
+            <span className="text-xl font-bold">Concept2Cure</span>
           </div>
 
           <Card className="border-0 shadow-xl">
@@ -1081,7 +1081,7 @@ export const LoginPage: React.FC<{
                 {state.step === 'success' && 'Welcome!'}
               </CardTitle>
               <CardDescription>
-                {state.step === 'credentials' && 'Sign in to access TrialSage'}
+                {state.step === 'credentials' && 'Sign in to access Concept2Cure'}
                 {state.step === 'mfa' && `Signed in as ${state.email}`}
                 {state.step === 'tenant_select' && 'Choose an organization to continue'}
                 {state.step === 'success' && 'Redirecting to your dashboard...'}

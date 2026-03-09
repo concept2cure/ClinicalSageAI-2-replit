@@ -38,7 +38,7 @@ export default function LumenCortex() {
                 </div>
               </div>
             </div>
-            <div className="text-sm text-slate-500">Powered by TrialSage AI</div>
+            <div className="text-sm text-slate-500">Powered by Concept2Cure AI</div>
           </div>
         </div>
       </header>

@@ -267,7 +267,7 @@ export default function FulleCTDCoAuthor() {
         <div className="max-w-full mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">TrialSage™</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Concept2Cure</h1>
               <p className="text-sm text-gray-600">Advanced AI-Powered Regulatory Platform</p>
               <div className="text-xs text-red-600">
                 DEBUG: showAllDocs={showAllDocuments ? 'true' : 'false'}, showAllTemplates=
