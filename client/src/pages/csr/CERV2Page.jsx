@@ -3787,6 +3787,47 @@ export default function CERV2Page({
         );
       }
 
+      // HDE track: HUD Designation & Classification (humanitarian use device)
+      if (documentType === 'hde') {
+        return (
+          <div className="p-6 space-y-6" data-testid="predicate-finder-content">
+            <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-purple-900 mb-1">
+                      HUD Designation & Classification
+                    </h4>
+                    <p className="text-sm text-purple-800">
+                      Verify your Humanitarian Use Device (HUD) designation and confirm device
+                      classification. An HDE requires a granted HUD designation from FDA,
+                      demonstrating that the device is intended to benefit patients with a condition
+                      affecting fewer than 8,000 individuals per year in the US.
+                    </p>
+                    <div className="mt-2 text-xs text-purple-700">
+                      <strong>Prerequisites:</strong> Device profile from Device Intake. HUD
+                      designation number, target condition, and affected population estimate.
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <PredicateFinderPanel
+              deviceProfile={deviceProfile}
+              setDeviceProfile={newProfile => {
+                if (newProfile) {
+                  setDeviceProfile(newProfile);
+                }
+              }}
+              documentId={deviceProfile?.id}
+              onPredicatesFound={handlePredicatesComplete}
+            />
+          </div>
+        );
+      }
+
       // FDA 510(k)/PMA tracks: standard Predicate & Regulation Finder
       return (
         <div className="p-6 space-y-6" data-testid="predicate-finder-content">
@@ -3832,8 +3873,34 @@ export default function CERV2Page({
     // STAGE 1: STRATEGY - Substantial Equivalence Development
     // ============================================================================
     else if (activeTab === 'se-strategy') {
-      // De Novo track: Risk & Benefit Analysis (not SE — novel device, no predicate)
+      // Track-aware strategy tab: SE (510k/PMA), Risk-Benefit (De Novo), Probable Benefit (HDE)
       const isDeNovo = documentType === 'de_novo';
+      const isHde = documentType === 'hde';
+      const strategyHeading = isHde
+        ? 'Probable Benefit Rationale'
+        : isDeNovo
+          ? 'Risk & Benefit Analysis'
+          : 'Substantial Equivalence Strategy';
+      const strategyDescription = isHde
+        ? 'Document the probable benefit of your humanitarian use device for the target patient population. Demonstrate that the probable benefit outweighs the risk of injury or illness, considering the small patient population and limited availability of alternatives.'
+        : isDeNovo
+          ? 'Document the risk-benefit profile for your novel device. Identify potential risks, define special controls to mitigate them, and demonstrate that probable benefits outweigh probable risks for the intended patient population.'
+          : 'Document your strategy for demonstrating substantial equivalence to the predicate device(s). Define technological characteristics, intended use comparison, and testing approach.';
+      const strategyPrereqs = isHde
+        ? 'HUD designation from Stage 0, target population characterization, clinical need assessment.'
+        : isDeNovo
+          ? 'Classification research from Stage 0, device risk characterization.'
+          : 'Predicate device(s) selected from Stage 0.';
+      const strategyToastTitle = isHde
+        ? 'Probable Benefit Rationale Saved'
+        : isDeNovo
+          ? 'Risk-Benefit Analysis Saved'
+          : 'SE Strategy Saved';
+      const strategyToastDesc = isHde
+        ? 'Your probable benefit rationale has been documented.'
+        : isDeNovo
+          ? 'Your risk-benefit analysis and special controls have been documented.'
+          : 'Your substantial equivalence strategy has been documented.';
       return (
         <div className="p-6 space-y-6" data-testid="se-strategy-content">
           <Card className="bg-orange-50 border-orange-200">
@@ -3841,19 +3908,10 @@ export default function CERV2Page({
               <div className="flex items-start gap-3">
                 <GitCompare className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-orange-900 mb-1">
-                    {isDeNovo ? 'Risk & Benefit Analysis' : 'Substantial Equivalence Strategy'}
-                  </h4>
-                  <p className="text-sm text-orange-800">
-                    {isDeNovo
-                      ? 'Document the risk-benefit profile for your novel device. Identify potential risks, define special controls to mitigate them, and demonstrate that probable benefits outweigh probable risks for the intended patient population.'
-                      : 'Document your strategy for demonstrating substantial equivalence to the predicate device(s). Define technological characteristics, intended use comparison, and testing approach.'}
-                  </p>
+                  <h4 className="font-semibold text-orange-900 mb-1">{strategyHeading}</h4>
+                  <p className="text-sm text-orange-800">{strategyDescription}</p>
                   <div className="mt-2 text-xs text-orange-700">
-                    <strong>Prerequisites:</strong>{' '}
-                    {isDeNovo
-                      ? 'Classification research from Stage 0, device risk characterization.'
-                      : 'Predicate device(s) selected from Stage 0.'}
+                    <strong>Prerequisites:</strong> {strategyPrereqs}
                   </div>
                 </div>
               </div>
@@ -3871,10 +3929,8 @@ export default function CERV2Page({
             onComplete={data => {
               setDeviceProfile({ ...deviceProfile, seStrategy: data });
               toast({
-                title: isDeNovo ? 'Risk-Benefit Analysis Saved' : 'SE Strategy Saved',
-                description: isDeNovo
-                  ? 'Your risk-benefit analysis and special controls have been documented.'
-                  : 'Your substantial equivalence strategy has been documented.',
+                title: strategyToastTitle,
+                description: strategyToastDesc,
               });
             }}
             predicateDevices={predicateDevices}
@@ -4938,6 +4994,7 @@ export default function CERV2Page({
         </div>
       );
     } else if (activeTab === 'performance-summaries') {
+      const isPerfHde = documentType === 'hde';
       return (
         <div className="p-6 space-y-6" data-testid="performance-summaries-content">
           <Card className="bg-cyan-50 border-cyan-200">
@@ -4946,11 +5003,12 @@ export default function CERV2Page({
                 <BarChart className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-cyan-900 mb-1">
-                    Performance Testing Summaries
+                    {isPerfHde ? 'Summary of Evidence' : 'Performance Testing Summaries'}
                   </h4>
                   <p className="text-sm text-cyan-800">
-                    Summarize all verification and validation testing performed, referencing test
-                    reports from Stage 3.
+                    {isPerfHde
+                      ? 'Summarize all evidence supporting the safety and probable benefit of your humanitarian use device, including bench testing, biocompatibility, and any clinical data.'
+                      : 'Summarize all verification and validation testing performed, referencing test reports from Stage 3.'}
                   </p>
                 </div>
               </div>
@@ -5096,16 +5154,21 @@ export default function CERV2Page({
       // CER track: Completeness check per EU MDR / MEDDEV 2.7/1
       const isRtaCer = documentType === 'cer';
       const isRtaDeNovo = documentType === 'de_novo';
+      const isRtaHde = documentType === 'hde';
       const rtaHeading = isRtaCer
         ? 'CER Completeness Check'
         : isRtaDeNovo
           ? 'Acceptance Review Checklist'
-          : 'RTA (Refuse to Accept) Pre-Check';
+          : isRtaHde
+            ? 'HDE Review Checklist'
+            : 'RTA (Refuse to Accept) Pre-Check';
       const rtaDescription = isRtaCer
         ? 'Validate your Clinical Evaluation Report against EU MDR Annex XIV and MEDDEV 2.7/1 Rev 4 requirements to ensure completeness before Notified Body review.'
         : isRtaDeNovo
           ? 'Validate your De Novo classification request against FDA acceptance criteria to ensure completeness before submission. Covers risk-benefit analysis, special controls, and all required supporting documentation.'
-          : "Validate your submission against FDA's RTA checklist to avoid submission rejection.";
+          : isRtaHde
+            ? 'Validate your HDE application against FDA acceptance criteria. Covers HUD designation, probable benefit rationale, device description, and all required supporting evidence.'
+            : "Validate your submission against FDA's RTA checklist to avoid submission rejection.";
       return (
         <div className="p-6 space-y-6" data-testid="rta-check-content">
           <Card className="bg-green-50 border-green-200">
@@ -5129,8 +5192,10 @@ export default function CERV2Page({
                   ? 'CER Completeness Check Complete'
                   : isRtaDeNovo
                     ? 'Acceptance Review Complete'
-                    : 'RTA Check Complete',
-                description: `Your ${isRtaCer ? 'CER' : isRtaDeNovo ? 'De Novo request' : 'submission'} scored ${Math.round(score * 100)}% - ${score >= 0.9 ? (isRtaCer ? 'Ready for Notified Body review!' : isRtaDeNovo ? 'Ready for FDA submission!' : 'Ready to submit!') : 'Address issues before submitting'}`,
+                    : isRtaHde
+                      ? 'HDE Review Complete'
+                      : 'RTA Check Complete',
+                description: `Your ${isRtaCer ? 'CER' : isRtaDeNovo ? 'De Novo request' : isRtaHde ? 'HDE application' : 'submission'} scored ${Math.round(score * 100)}% - ${score >= 0.9 ? (isRtaCer ? 'Ready for Notified Body review!' : isRtaDeNovo || isRtaHde ? 'Ready for FDA submission!' : 'Ready to submit!') : 'Address issues before submitting'}`,
               });
             }}
           />
@@ -5152,7 +5217,7 @@ export default function CERV2Page({
                   <h4 className="font-semibold text-purple-900 mb-1">SMART Forms System</h4>
                   <p className="text-sm text-purple-800">
                     Comprehensive FDA SMART Forms system with 30+ forms for 510(k), PMA, De Novo,
-                    and special submissions. All forms feature intelligent auto-population from
+                    HDE, and special submissions. All forms feature intelligent auto-population from
                     CERV2 workflow data, AI-powered field suggestions, and real-time synchronization
                     across all stages.
                   </p>
@@ -5184,6 +5249,22 @@ export default function CERV2Page({
       );
     } else if (activeTab === 'submission') {
       const isDeNovoSub = documentType === 'de_novo';
+      const isHdeSub = documentType === 'hde';
+      const submissionHeading = isHdeSub
+        ? 'HDE Application Submission'
+        : isDeNovoSub
+          ? 'De Novo Classification Request Submission'
+          : 'eSTAR Portal Submission';
+      const submissionDesc = isHdeSub
+        ? 'Submit your Humanitarian Device Exemption application to FDA. The application includes your HUD designation, probable benefit rationale, device description, and all supporting evidence.'
+        : isDeNovoSub
+          ? 'Submit your De Novo classification request to FDA. The request includes your risk-benefit analysis, proposed special controls, and all supporting evidence.'
+          : 'Submit your completed 510(k) package to FDA via the eSTAR portal.';
+      const submissionPrereqs = isHdeSub
+        ? 'HDE review score ≥90%, all required sections complete, HUD designation verified.'
+        : isDeNovoSub
+          ? 'Acceptance review score ≥90%, all required sections complete, special controls defined.'
+          : 'RTA score ≥90%, all required sections complete.';
       return (
         <div className="p-6 space-y-6" data-testid="submission-content">
           <Card className="bg-teal-50 border-teal-200">
@@ -5191,21 +5272,10 @@ export default function CERV2Page({
               <div className="flex items-start gap-3">
                 <Send className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-teal-900 mb-1">
-                    {isDeNovoSub
-                      ? 'De Novo Classification Request Submission'
-                      : 'eSTAR Portal Submission'}
-                  </h4>
-                  <p className="text-sm text-teal-800">
-                    {isDeNovoSub
-                      ? 'Submit your De Novo classification request to FDA. The request includes your risk-benefit analysis, proposed special controls, and all supporting evidence.'
-                      : 'Submit your completed 510(k) package to FDA via the eSTAR portal.'}
-                  </p>
+                  <h4 className="font-semibold text-teal-900 mb-1">{submissionHeading}</h4>
+                  <p className="text-sm text-teal-800">{submissionDesc}</p>
                   <div className="mt-2 text-xs text-teal-700">
-                    <strong>Prerequisites:</strong>{' '}
-                    {isDeNovoSub
-                      ? 'Acceptance review score ≥90%, all required sections complete, special controls defined.'
-                      : 'RTA score ≥90%, all required sections complete.'}
+                    <strong>Prerequisites:</strong> {submissionPrereqs}
                   </div>
                 </div>
               </div>
@@ -5224,12 +5294,18 @@ export default function CERV2Page({
               </p>
               <p>
                 🔧 <strong>Under development:</strong> Full{' '}
-                {isDeNovoSub ? 'De Novo package' : 'eSTAR package'} generation and automated
-                {isDeNovoSub ? ' acceptance review' : ' RTA checklist'} validation.
+                {isHdeSub ? 'HDE application' : isDeNovoSub ? 'De Novo package' : 'eSTAR package'}{' '}
+                generation and automated
+                {isHdeSub
+                  ? ' HDE review'
+                  : isDeNovoSub
+                    ? ' acceptance review'
+                    : ' RTA checklist'}{' '}
+                validation.
               </p>
               <p>
                 ⏳ <strong>Not yet implemented:</strong> Direct FDA{' '}
-                {isDeNovoSub ? 'submission' : 'eSubmitter'} portal integration.
+                {isHdeSub || isDeNovoSub ? 'submission' : 'eSubmitter'} portal integration.
               </p>
             </AlertDescription>
           </Alert>
