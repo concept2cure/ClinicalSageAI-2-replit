@@ -1776,7 +1776,6 @@ export const ZenApp: React.FC = () => {
             'submission-workspace',
             'precedent-intelligence',
             'workspace',
-            'cmc',
           ].includes(layoutMode) && (
             <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
           )}
