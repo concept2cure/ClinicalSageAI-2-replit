@@ -3697,14 +3697,58 @@ export default function CERV2Page({
     // STAGE 0: SETUP - Device Intake & Predicate Search
     // ============================================================================
 
-    // Predicate Finder - FDA workflow tab
+    // Predicate / Equivalent Device tab — track-aware
     else if (activeTab === 'predicates') {
       console.log('[CERV2Page] Rendering predicates tab:', {
         activeTab,
         deviceProfile,
+        documentType,
         PredicateFinderPanelExists: !!PredicateFinderPanel,
       });
 
+      // CER track: EU MDR Equivalent Device Analysis (not FDA predicate search)
+      if (documentType === 'cer') {
+        return (
+          <div className="p-6 space-y-6" data-testid="equivalent-device-content">
+            <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-purple-900 mb-1">
+                      Equivalent Device Analysis
+                    </h4>
+                    <p className="text-sm text-purple-800">
+                      Identify and analyse devices that can be considered equivalent to your device
+                      under EU MDR Annex XIV. Demonstrate equivalence through clinical, technical,
+                      and biological characteristics to leverage existing clinical data in your
+                      Clinical Evaluation Report.
+                    </p>
+                    <div className="mt-2 text-xs text-purple-700">
+                      <strong>Prerequisites:</strong> Device scope definition (device description,
+                      intended purpose, classification). Analysis covers clinical, technical, and
+                      biological equivalence per MEDDEV 2.7/1 Rev 4.
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <PredicateFinderPanel
+              deviceProfile={deviceProfile}
+              setDeviceProfile={newProfile => {
+                if (newProfile) {
+                  setDeviceProfile(newProfile);
+                }
+              }}
+              documentId={deviceProfile?.id}
+              onPredicatesFound={handlePredicatesComplete}
+            />
+          </div>
+        );
+      }
+
+      // FDA tracks: standard Predicate & Regulation Finder
       return (
         <div className="p-6 space-y-6" data-testid="predicate-finder-content">
           <Card className="bg-purple-50 border-purple-200 context-banner-enter">
@@ -5003,6 +5047,8 @@ export default function CERV2Page({
         </div>
       );
     } else if (activeTab === 'rta-check') {
+      // CER track: Completeness check per EU MDR / MEDDEV 2.7/1
+      const isRtaCer = documentType === 'cer';
       return (
         <div className="p-6 space-y-6" data-testid="rta-check-content">
           <Card className="bg-green-50 border-green-200">
@@ -5011,11 +5057,12 @@ export default function CERV2Page({
                 <ClipboardCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-green-900 mb-1">
-                    RTA (Refuse to Accept) Pre-Check
+                    {isRtaCer ? 'CER Completeness Check' : 'RTA (Refuse to Accept) Pre-Check'}
                   </h4>
                   <p className="text-sm text-green-800">
-                    Validate your submission against FDA's RTA checklist to avoid submission
-                    rejection.
+                    {isRtaCer
+                      ? 'Validate your Clinical Evaluation Report against EU MDR Annex XIV and MEDDEV 2.7/1 Rev 4 requirements to ensure completeness before Notified Body review.'
+                      : "Validate your submission against FDA's RTA checklist to avoid submission rejection."}
                   </p>
                 </div>
               </div>
@@ -5027,8 +5074,8 @@ export default function CERV2Page({
             onComplete={score => {
               setDeviceProfile({ ...deviceProfile, rtaScore: score });
               toast({
-                title: 'RTA Check Complete',
-                description: `Your submission scored ${Math.round(score * 100)}% - ${score >= 0.9 ? 'Ready to submit!' : 'Address issues before submitting'}`,
+                title: isRtaCer ? 'CER Completeness Check Complete' : 'RTA Check Complete',
+                description: `Your ${isRtaCer ? 'CER' : 'submission'} scored ${Math.round(score * 100)}% - ${score >= 0.9 ? (isRtaCer ? 'Ready for Notified Body review!' : 'Ready to submit!') : 'Address issues before submitting'}`,
               });
             }}
           />
@@ -5241,6 +5288,7 @@ export default function CERV2Page({
         </div>
       );
     } else if (activeTab === 'ai-tracking') {
+      const isTrackingCer = documentType === 'cer';
       return (
         <div className="p-6 space-y-6" data-testid="ai-tracking-content">
           <Card className="bg-amber-50 border-amber-200">
@@ -5249,10 +5297,14 @@ export default function CERV2Page({
                 <MessageSquare className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-amber-900 mb-1">
-                    Interactive Review / AI Tracking
+                    {isTrackingCer
+                      ? 'PMCF / Lifecycle Tracking'
+                      : 'Interactive Review / AI Tracking'}
                   </h4>
                   <p className="text-sm text-amber-800">
-                    Track your submission status and respond to FDA interactive review requests.
+                    {isTrackingCer
+                      ? 'Track your CER lifecycle, Post-Market Clinical Follow-up (PMCF) activities, and periodic safety update reports under EU MDR.'
+                      : 'Track your submission status and respond to FDA interactive review requests.'}
                   </p>
                 </div>
               </div>
@@ -5305,8 +5357,9 @@ export default function CERV2Page({
           <div className="p-4 bg-red-50 border border-red-200 rounded-md">
             <h3 className="text-lg font-medium text-red-700">Error Loading Equivalence Tab</h3>
             <p className="mt-2 text-red-600">
-              There was an error loading the Substantial Equivalence tab. Please try refreshing the
-              page.
+              There was an error loading the{' '}
+              {documentType === 'cer' ? 'Clinical Equivalence' : 'Substantial Equivalence'} tab.
+              Please try refreshing the page.
             </p>
             <Button
               variant="destructive"
@@ -7123,7 +7176,7 @@ export default function CERV2Page({
         gateStatus: checkStageGateConditions('estar_rta'),
         tabs: [
           {
-            id: 'preview',
+            id: 'cer-preview',
             label: (
               <div className="flex items-center">
                 <FileText className="h-4 w-4 mr-1.5 text-orange-600" />
@@ -7152,7 +7205,7 @@ export default function CERV2Page({
         gateStatus: checkStageGateConditions('submit_ai'),
         tabs: [
           {
-            id: 'export',
+            id: 'cer-export',
             label: (
               <div className="flex items-center">
                 <Download className="h-4 w-4 mr-1.5 text-orange-600" />
@@ -7163,7 +7216,7 @@ export default function CERV2Page({
             status: 'todo',
           },
           {
-            id: 'reports',
+            id: 'cer-reports',
             label: 'Reports & Audit Trail',
             icon: <FileSpreadsheet className="h-4 w-4 mr-1.5 text-orange-600" />,
             required: false,
@@ -7843,7 +7896,9 @@ export default function CERV2Page({
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
-                            <span className="text-sm">510(k) Summary</span>
+                            <span className="text-sm">
+                              {documentType === 'cer' ? 'CER Executive Summary' : '510(k) Summary'}
+                            </span>
                             <span className="ml-auto text-xs text-green-600 font-medium">v1.3</span>
                           </button>
                           <button
@@ -8113,7 +8168,9 @@ export default function CERV2Page({
                         >
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
-                        <span className="text-sm font-medium">FDA Submissions</span>
+                        <span className="text-sm font-medium">
+                          {documentType === 'cer' ? 'EU MDR Documents' : 'FDA Submissions'}
+                        </span>
                         <div className="ml-auto flex items-center">
                           <span className="mr-1.5 text-xs text-gray-700 bg-white px-1.5 py-0.5 rounded-full border border-blue-200">
                             New
@@ -8152,7 +8209,11 @@ export default function CERV2Page({
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
-                            <span className="text-sm font-medium">510(k) Submission</span>
+                            <span className="text-sm font-medium">
+                              {documentType === 'cer'
+                                ? 'Clinical Evaluation Report'
+                                : '510(k) Submission'}
+                            </span>
                             <span className="ml-auto text-xs text-blue-700 font-medium">Final</span>
                           </button>
                           <button
@@ -8182,7 +8243,11 @@ export default function CERV2Page({
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
-                            <span className="text-sm font-medium">Predicate Device</span>
+                            <span className="text-sm font-medium">
+                              {documentType === 'cer'
+                                ? 'Equivalent Device Dossier'
+                                : 'Predicate Device'}
+                            </span>
                             <span className="ml-auto text-xs text-blue-700 font-medium">Final</span>
                           </button>
                           <button
@@ -8212,7 +8277,9 @@ export default function CERV2Page({
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
-                            <span className="text-sm font-medium">eSTAR Package</span>
+                            <span className="text-sm font-medium">
+                              {documentType === 'cer' ? 'PMCF Plan' : 'eSTAR Package'}
+                            </span>
                             <span className="ml-auto text-xs text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-full">
                               NEW
                             </span>
