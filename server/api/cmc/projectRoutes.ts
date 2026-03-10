@@ -654,4 +654,32 @@ router.delete('/projects/:projectId/drug-products/:productId', async (req, res) 
   }
 });
 
+// ── Top-level convenience routes for drug substances and products ──
+// These allow the frontend to fetch all substances/products across all projects
+router.get('/drug-substances', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({ error: 'Database not available' });
+    }
+    const allSubstances = await db.select().from(drugSubstances);
+    res.json({ success: true, data: allSubstances });
+  } catch (error) {
+    console.error('Error fetching all drug substances:', error);
+    res.status(500).json({ error: 'Failed to fetch drug substances' });
+  }
+});
+
+router.get('/drug-products', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({ error: 'Database not available' });
+    }
+    const allProducts = await db.select().from(drugProducts);
+    res.json({ success: true, data: allProducts });
+  } catch (error) {
+    console.error('Error fetching all drug products:', error);
+    res.status(500).json({ error: 'Failed to fetch drug products' });
+  }
+});
+
 export default router;

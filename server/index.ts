@@ -819,7 +819,7 @@ app.use('/api/enterprise/rbac', rbacRoutes);
 // Mount CMC Module routes (Chemistry, Manufacturing & Controls)
 try {
   app.use('/api/cmc', cmcAggregatorRoutes);
-  app.use('/api/cmc/projects', cmcProjectRoutes);
+  app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma);
@@ -5608,6 +5608,15 @@ async function startServer() {
   } catch (error: any) {
     console.error('⚠️ Proof System initialization warning:', error.message);
     console.log('   Proof system will operate with in-memory audit (not compliant for production)');
+  }
+
+  // Ensure auth tables have the columns auth routes expect (idempotent)
+  try {
+    const { ensureAuthTables } = await import('./db.js');
+    await ensureAuthTables();
+    console.log('✅ Auth schema bootstrap complete');
+  } catch (error: any) {
+    console.error('⚠️ Auth schema bootstrap warning:', error.message);
   }
 
   // Start Python backend first

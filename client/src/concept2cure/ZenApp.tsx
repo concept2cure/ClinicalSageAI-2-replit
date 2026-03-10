@@ -185,6 +185,19 @@ const RegulatoryIntelligenceFullPanel = lazy(() =>
   import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
 );
 
+// ─── Biotech module standalones (in-shell rendering) ─────────────────────────
+const CMCModuleStandalone = lazy(() =>
+  import('@/modules/CMCModule').then(m => ({ default: m.default }))
+);
+const VaultPageStandalone = lazy(() =>
+  import('@/pages/vault/VaultPage').then(m => ({ default: m.default }))
+);
+const StudyArchitectModuleStandalone = lazy(() =>
+  import('@/components/studyArchitect/StudyArchitectModule').then(m => ({
+    default: m.default,
+  }))
+);
+
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   capa: CAPAManagementPanel,
@@ -1088,7 +1101,7 @@ export const ZenApp: React.FC = () => {
   const userRole = userProfile?.role || 'Regulatory Lead';
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
-    typeof rawIndustry === 'string' ? rawIndustry : undefined
+    typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
   );
   const rawDisplayName = userProfile?.preferences?.displayName;
   const userName =
@@ -1323,7 +1336,7 @@ export const ZenApp: React.FC = () => {
               window.location.href = '/cerv2?mode=cer';
               break;
             case 'document-vault':
-              window.location.href = '/vault';
+              setLayoutMode('document-vault');
               break;
             case 'evidence-search':
               setCommandPaletteOpen(true);
@@ -1338,7 +1351,7 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('cmc');
               break;
             case 'clinical-trial':
-              window.location.href = '/clinical-trial-hub';
+              setLayoutMode('clinical-trial');
               break;
             case 'regulatory-workspace':
               setLayoutMode('regulatory-workspace');
@@ -1512,8 +1525,8 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
-          {false && layoutMode === 'ind-workspace' && (
+          {/* ── IND Workspace (eCTD filing hub) ──────────── */}
+          {!embeddedModule && layoutMode === 'ind-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title={submissionWorkspaceLabel}
@@ -1576,7 +1589,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
-          {false && layoutMode === 'ectd-coauthor' && (
+          {!embeddedModule && layoutMode === 'ectd-coauthor' && (
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title="eCTD Co-Author"
@@ -1595,6 +1608,81 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <ECTDCoAuthorStandalone />
+                </Suspense>
+              </div>
+            </div>
+          )}
+
+          {/* ── CMC Platform (in-shell) ────────────────────────────────────── */}
+          {!embeddedModule && layoutMode === 'cmc' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="CMC Platform"
+                subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-teal-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading CMC Platform...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <CMCModuleStandalone />
+                </Suspense>
+              </div>
+            </div>
+          )}
+
+          {/* ── Document Vault (in-shell) ──────────────────────────────────── */}
+          {!embeddedModule && layoutMode === 'document-vault' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Document Vault"
+                subtitle="Secure document storage · Upload · Browse · Version control"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Document Vault...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <VaultPageStandalone />
+                </Suspense>
+              </div>
+            </div>
+          )}
+
+          {/* ── Clinical Trial Hub (in-shell) ──────────────────────────────── */}
+          {!embeddedModule && layoutMode === 'clinical-trial' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <WorkspaceHeader
+                title="Clinical Trial Hub"
+                subtitle="Study design · Protocol optimization · CSR intelligence · Trial management"
+                onBack={() => setLayoutMode('assistant')}
+              />
+              <div className="flex-1 overflow-auto">
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white h-full">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-purple-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Clinical Trial Hub...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <StudyArchitectModuleStandalone />
                 </Suspense>
               </div>
             </div>
