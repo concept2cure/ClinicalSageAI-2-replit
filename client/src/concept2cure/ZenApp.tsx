@@ -1281,6 +1281,7 @@ export const ZenApp: React.FC = () => {
         onDeleteConversation={handleDeleteConversation}
         onToggleStar={handleToggleConversationStar}
         onTogglePin={handleToggleConversationPin}
+        industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
             case 'home':
@@ -1304,7 +1305,7 @@ export const ZenApp: React.FC = () => {
             case 'analytics':
               setLayoutMode('analytics');
               break;
-            // ── Beta product routes ──────────────────────────────────
+            // ── Product routes ──────────────────────────────────
             case 'ai-copilot':
               setLayoutMode('regulatory-workspace');
               break;
@@ -1328,7 +1329,16 @@ export const ZenApp: React.FC = () => {
               setCommandPaletteOpen(true);
               break;
             case 'ectd-coauthor':
-              window.location.href = '/coauthor';
+              setLayoutMode('ectd-coauthor');
+              break;
+            case 'ind-workspace':
+              setLayoutMode('ind-workspace');
+              break;
+            case 'cmc':
+              setLayoutMode('cmc');
+              break;
+            case 'clinical-trial':
+              window.location.href = '/clinical-trial-hub';
               break;
             case 'regulatory-workspace':
               setLayoutMode('regulatory-workspace');

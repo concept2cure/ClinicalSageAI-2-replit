@@ -64,6 +64,8 @@ export interface ZenSidebarProps {
   onNavigate?: (id: string) => void;
   userName?: string;
   userEmail?: string;
+  /** Organization industry mode — drives which nav items are shown */
+  industryMode?: string;
 }
 
 // ─── Workspace item ───────────────────────────────────────────────────────────
@@ -174,12 +176,29 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onNavigate,
   userName,
   userEmail,
+  industryMode = 'medtech',
 }) => {
   const displayName = userName || 'My Account';
   const avatarInitial = displayName[0].toUpperCase();
 
-  // Track-aware workspace label based on current URL mode
+  const isBiotech = industryMode === 'biotech' || industryMode === 'pharma';
+
+  // Track-aware workspace label based on industry mode and current URL
   const workspaceLabel = (() => {
+    if (isBiotech) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get('mode');
+        const labels: Record<string, string> = {
+          nda: 'NDA Workspace',
+          bla: 'BLA Workspace',
+          ind: 'IND Workspace',
+        };
+        return labels[mode || ''] || 'IND Workspace';
+      } catch {
+        return 'IND Workspace';
+      }
+    }
     try {
       const params = new URLSearchParams(window.location.search);
       const mode = params.get('mode');
@@ -300,7 +319,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
-        {/* ── Beta product nav ──────────────────────────────────── */}
+        {/* ── Industry-aware product nav ──────────────────────────────── */}
         <div className="px-3 py-1.5 flex-shrink-0 space-y-0.5">
           <button
             onClick={() => onNavigate?.('ai-copilot')}
@@ -309,44 +328,94 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <Brain className="w-4 h-4 flex-shrink-0 text-zinc-400" />
             RI Copilot
           </button>
-          <button
-            onClick={() => onNavigate?.('510k-workspace')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-          >
-            <ShieldAlert className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            {workspaceLabel}
-          </button>
-          <button
-            onClick={() => onNavigate?.('cer-generator')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-          >
-            <FileText className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            CER Generator
-          </button>
-          <button
-            onClick={() => onNavigate?.('document-vault')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-          >
-            <Archive className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            Document Vault
-          </button>
-          <button
-            onClick={() => onNavigate?.('evidence-search')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-          >
-            <Search className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            Evidence Search
-          </button>
-          <button
-            onClick={() => onNavigate?.('ectd-coauthor')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-          >
-            <PenLine className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            eCTD Co-Author
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
-              Early Access
-            </span>
-          </button>
+
+          {isBiotech ? (
+            <>
+              <button
+                onClick={() => onNavigate?.('ind-workspace')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <ShieldAlert className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                {workspaceLabel}
+              </button>
+              <button
+                onClick={() => onNavigate?.('ectd-coauthor')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <PenLine className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                eCTD Co-Author
+              </button>
+              <button
+                onClick={() => onNavigate?.('cmc')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <Beaker className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                CMC Platform
+              </button>
+              <button
+                onClick={() => onNavigate?.('document-vault')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <Archive className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                Document Vault
+              </button>
+              <button
+                onClick={() => onNavigate?.('clinical-trial')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <FlaskConical className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                Clinical Trial Hub
+              </button>
+              <button
+                onClick={() => onNavigate?.('evidence-search')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <Search className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                Evidence Search
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => onNavigate?.('510k-workspace')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <ShieldAlert className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                {workspaceLabel}
+              </button>
+              <button
+                onClick={() => onNavigate?.('cer-generator')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <FileText className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                CER Generator
+              </button>
+              <button
+                onClick={() => onNavigate?.('document-vault')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <Archive className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                Document Vault
+              </button>
+              <button
+                onClick={() => onNavigate?.('evidence-search')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <Search className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                Evidence Search
+              </button>
+              <button
+                onClick={() => onNavigate?.('ectd-coauthor')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
+              >
+                <PenLine className="w-4 h-4 flex-shrink-0 text-zinc-400" />
+                eCTD Co-Author
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
+                  Early Access
+                </span>
+              </button>
+            </>
+          )}
         </div>
 
         <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
