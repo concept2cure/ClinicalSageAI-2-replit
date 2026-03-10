@@ -227,85 +227,63 @@ export default function CERV2Page({
 
   // Fetch projects from database on mount and when workspace changes
   useEffect(() => {
+    // Helper: transform a DB project row into the frontend shape
+    const transformDbProject = p => ({
+      id: String(p.id ?? ''),
+      deviceName: p.name || 'Untitled Device',
+      deviceType: p.metadata?.deviceType || p.type || 'medical-device',
+      manufacturer: p.metadata?.manufacturer || '',
+      deviceClass: p.metadata?.deviceClass || 'II',
+      intendedUse: p.metadata?.intendedUse || '',
+      status: p.status || 'draft',
+      createdAt: p.created_at || p.createdAt || new Date().toISOString(),
+      updatedAt: p.updated_at || p.updatedAt || new Date().toISOString(),
+      attachedDocuments: p.metadata?.attachedDocuments || [],
+      state: p.metadata?.state || {},
+    });
+
     const fetchProjects = async () => {
       try {
-        console.log('Fetching projects from database...');
+        console.log('Fetching device projects from database...');
 
-        // Using organizationId and clientWorkspaceId defined at component level
-        console.log('Using org ID:', organizationId, 'workspace ID:', clientWorkspaceId);
-
-        // Build query params
         const params = new URLSearchParams();
         params.append('organization_id', organizationId);
         params.append('client_workspace_id', clientWorkspaceId);
 
         const url = `/api/projects?${params.toString()}`;
-        console.log('Fetching from:', url);
-
         const response = await fetch(url);
-        console.log('Response status:', response.status);
 
         if (response.ok) {
-          const projects = await response.json();
-          console.log('Received projects from API:', projects);
+          const allRows = await response.json();
+          // Filter to medical-device projects only
+          const deviceRows = allRows.filter(p => p.type === 'medical-device');
+          const transformedProjects = deviceRows.map(transformDbProject);
 
-          // Transform database projects to match frontend format
-          const transformedProjects = projects.map(p => ({
-            id: p.id?.toString() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            deviceName: p.name || 'Untitled Device',
-            deviceType: p.type || 'medical_device',
-            manufacturer: p.metadata?.manufacturer || '',
-            deviceClass: p.metadata?.deviceClass || 'II',
-            intendedUse: p.metadata?.intendedUse || '',
-            status: p.status || 'draft',
-            createdAt: p.created_at || new Date().toISOString(),
-            updatedAt: p.updated_at || new Date().toISOString(),
-            attachedDocuments: p.metadata?.attachedDocuments || [],
-            state: p.metadata?.state || {},
-          }));
-
-          console.log('Transformed projects:', transformedProjects);
+          console.log('Loaded', transformedProjects.length, 'device projects from DB');
           setAllProjects(transformedProjects);
 
-          // Also cache in localStorage for offline access
+          // Write-through cache for offline fallback
           localStorage.setItem('medicalDeviceProjects', JSON.stringify(transformedProjects));
         } else {
           console.error('Failed to fetch projects, status:', response.status);
-          // If API fails, still try loading from localStorage
-          const saved = localStorage.getItem('medicalDeviceProjects');
-          if (saved) {
-            try {
-              const projects = JSON.parse(saved);
-              console.log('Loaded cached projects from localStorage:', projects);
-              setAllProjects(
-                projects.map(p => ({
-                  ...p,
-                  attachedDocuments: p.attachedDocuments || [],
-                }))
-              );
-            } catch (parseError) {
-              console.warn('Error parsing localStorage projects:', parseError);
-            }
-          }
+          loadProjectsFromLocalStorage();
         }
       } catch (error) {
         console.error('Error fetching projects from database:', error);
-        // Fall back to localStorage if API fails
-        try {
-          const saved = localStorage.getItem('medicalDeviceProjects');
-          if (saved) {
-            const projects = JSON.parse(saved);
-            console.log('Loaded projects from localStorage:', projects);
-            setAllProjects(
-              projects.map(p => ({
-                ...p,
-                attachedDocuments: p.attachedDocuments || [],
-              }))
-            );
-          }
-        } catch (localError) {
-          console.warn('Error loading projects from localStorage:', localError);
+        loadProjectsFromLocalStorage();
+      }
+    };
+
+    const loadProjectsFromLocalStorage = () => {
+      try {
+        const saved = localStorage.getItem('medicalDeviceProjects');
+        if (saved) {
+          const cached = JSON.parse(saved);
+          console.log('Loaded', cached.length, 'projects from localStorage cache');
+          setAllProjects(cached.map(p => ({ ...p, attachedDocuments: p.attachedDocuments || [] })));
         }
+      } catch (e) {
+        console.warn('Error loading projects from localStorage:', e);
       }
     };
 
@@ -533,52 +511,104 @@ export default function CERV2Page({
     }
   };
 
-  // Multi-Project Management Functions
+  // Write-through cache only — backend is the source of truth
   const saveAllProjects = projects => {
     try {
       localStorage.setItem('medicalDeviceProjects', JSON.stringify(projects));
     } catch (error) {
-      console.error('Error saving projects:', error);
+      console.warn('Error caching projects to localStorage:', error);
     }
   };
 
-  const createNewProject = projectData => {
-    const newProject = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      deviceName: projectData.deviceName || 'Untitled Device',
-      deviceType: documentType,
-      manufacturer: projectData.manufacturer || '',
-      deviceClass: projectData.deviceClass || 'II',
-      intendedUse: projectData.intendedUse || '',
-      status: 'draft',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      attachedDocuments: [], // Initialize empty attachedDocuments array
-      // Store complete project state
-      state: {
-        deviceProfile,
-        predicateDevices,
-        literatureResults,
-        complianceScore,
-        workflowStep,
-        documentType,
-        cerv2DocType: selectedDocType,
-        reviewSignOff: { status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' },
-      },
+  const createNewProject = async projectData => {
+    const initialState = {
+      deviceProfile,
+      predicateDevices,
+      literatureResults,
+      complianceScore,
+      workflowStep,
+      documentType,
+      cerv2DocType: selectedDocType,
+      reviewSignOff: { status: 'draft', reviewedBy: null, reviewedAt: null, notes: '' },
     };
 
-    const updated = [...allProjects, newProject];
-    setAllProjects(updated);
-    saveAllProjects(updated);
-    setCurrentProjectId(newProject.id);
-    localStorage.setItem('currentMedicalDeviceProjectId', newProject.id);
+    try {
+      const response = await fetch('/api/device-projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceName: projectData.deviceName || 'Untitled Device',
+          deviceType: documentType,
+          manufacturer: projectData.manufacturer || '',
+          deviceClass: projectData.deviceClass || 'II',
+          intendedUse: projectData.intendedUse || '',
+          state: initialState,
+          attachedDocuments: [],
+          organizationId,
+          clientWorkspaceId,
+        }),
+      });
 
-    toast({
-      title: 'New Project Created',
-      description: `Created project for ${newProject.deviceName}`,
-    });
+      if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
-    return newProject;
+      const row = await response.json();
+      const newProject = {
+        id: String(row.id),
+        deviceName: row.name || projectData.deviceName || 'Untitled Device',
+        deviceType: row.metadata?.deviceType || documentType,
+        manufacturer: row.metadata?.manufacturer || '',
+        deviceClass: row.metadata?.deviceClass || 'II',
+        intendedUse: row.metadata?.intendedUse || '',
+        status: row.status || 'draft',
+        createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+        updatedAt: row.updated_at || row.updatedAt || new Date().toISOString(),
+        attachedDocuments: row.metadata?.attachedDocuments || [],
+        state: row.metadata?.state || initialState,
+      };
+
+      const updated = [...allProjects, newProject];
+      setAllProjects(updated);
+      saveAllProjects(updated); // write-through cache
+      setCurrentProjectId(newProject.id);
+      localStorage.setItem('currentMedicalDeviceProjectId', newProject.id);
+
+      toast({
+        title: 'New Project Created',
+        description: `Created project for ${newProject.deviceName}`,
+      });
+
+      return newProject;
+    } catch (error) {
+      console.error('Failed to create project on server:', error);
+      // Fallback: create locally so the UI isn't broken
+      const fallbackProject = {
+        id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        deviceName: projectData.deviceName || 'Untitled Device',
+        deviceType: documentType,
+        manufacturer: projectData.manufacturer || '',
+        deviceClass: projectData.deviceClass || 'II',
+        intendedUse: projectData.intendedUse || '',
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        attachedDocuments: [],
+        state: initialState,
+      };
+
+      const updated = [...allProjects, fallbackProject];
+      setAllProjects(updated);
+      saveAllProjects(updated);
+      setCurrentProjectId(fallbackProject.id);
+      localStorage.setItem('currentMedicalDeviceProjectId', fallbackProject.id);
+
+      toast({
+        title: 'Project Created (Offline)',
+        description: `Created local project for ${fallbackProject.deviceName}`,
+        variant: 'warning',
+      });
+
+      return fallbackProject;
+    }
   };
 
   const switchToProject = async projectId => {
@@ -587,7 +617,7 @@ export default function CERV2Page({
 
     // Save current project state before switching
     if (currentProjectId) {
-      saveCurrentProjectState();
+      await saveCurrentProjectState();
     }
 
     // Load the selected project's state
@@ -663,50 +693,74 @@ export default function CERV2Page({
     setShowProjectSelector(false);
   };
 
-  const saveCurrentProjectState = () => {
+  const saveCurrentProjectState = async () => {
     if (!currentProjectId) return;
 
+    const currentState = {
+      deviceProfile,
+      predicateDevices,
+      literatureResults,
+      complianceScore,
+      workflowStep,
+      documentType,
+      cerv2DocType: selectedDocType,
+      reviewSignOff,
+    };
+
+    // Optimistic local update
     const updatedProjects = allProjects.map(p => {
       if (p.id === currentProjectId) {
         return {
           ...p,
           updatedAt: new Date().toISOString(),
           deviceName: deviceProfile?.deviceName || p.deviceName,
-          // Preserve attachedDocuments from existing project
           attachedDocuments: p.attachedDocuments || [],
-          state: {
-            deviceProfile,
-            predicateDevices,
-            literatureResults,
-            complianceScore,
-            workflowStep,
-            documentType,
-            cerv2DocType: selectedDocType,
-            reviewSignOff,
-          },
+          state: currentState,
         };
       }
       return p;
     });
 
     setAllProjects(updatedProjects);
-    saveAllProjects(updatedProjects);
+    saveAllProjects(updatedProjects); // write-through cache
+
+    // Persist to backend (fire-and-forget, errors logged)
+    // Skip server save for local-only fallback IDs
+    if (String(currentProjectId).startsWith('local-')) return;
+
+    try {
+      await fetch(`/api/device-projects/${currentProjectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceName: deviceProfile?.deviceName,
+          status: 'active',
+          state: currentState,
+          attachedDocuments: updatedProjects.find(p => p.id === currentProjectId)?.attachedDocuments,
+        }),
+      });
+    } catch (error) {
+      console.error('Error persisting project state to server:', error);
+    }
   };
 
   const deleteProject = projectId => {
-    // Use functional update to avoid stale state issues
     setAllProjects(prevProjects => {
       const project = prevProjects.find(p => p.id === projectId);
       if (!project) return prevProjects;
 
       const updated = prevProjects.filter(p => p.id !== projectId);
-      saveAllProjects(updated);
+      saveAllProjects(updated); // write-through cache
 
-      // If deleting current project, switch to another or clear
+      // Delete from backend (fire-and-forget)
+      if (!String(projectId).startsWith('local-')) {
+        fetch(`/api/device-projects/${projectId}`, { method: 'DELETE' }).catch(err =>
+          console.error('Error deleting project from server:', err)
+        );
+      }
+
       if (currentProjectId === projectId) {
         if (updated.length > 0) {
-          // Directly set the new project ID without calling switchToProject
-          // to avoid saveCurrentProjectState being called with stale allProjects
           setCurrentProjectId(updated[0].id);
           localStorage.setItem('currentMedicalDeviceProjectId', updated[0].id);
         } else {
@@ -8751,7 +8805,7 @@ export default function CERV2Page({
             <DialogDescription>{trackContent.newProjectDesc}</DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={e => {
+            onSubmit={async e => {
               e.preventDefault();
               const formData = new FormData(e.target);
               const projectData = {
@@ -8761,7 +8815,7 @@ export default function CERV2Page({
                 intendedUse: formData.get('intendedUse'),
               };
 
-              const newProject = createNewProject(projectData);
+              await createNewProject(projectData);
               setShowNewProjectDialog(false);
               setActiveTab('device-profile');
 

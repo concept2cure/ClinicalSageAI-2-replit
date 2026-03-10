@@ -56,7 +56,7 @@ import { authMiddleware } from './auth.js';
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { and, eq } from 'drizzle-orm';
-import { fda510kStageProgress, fda510kProjects } from '@shared/schema';
+import { fda510kStageProgress, fda510kProjects, projects } from '@shared/schema';
 
 // Debug mode configuration
 const DEBUG = process.env.DEBUG || process.env.NODE_ENV === 'development';
@@ -520,6 +520,138 @@ app.get('/api/projects', async (req, res) => {
   }
 });
 console.log('✅ /api/projects route mounted directly');
+
+// ────────────────────────────────────────────────────────────────────────────
+// Device-Project CRUD – server-backed persistence for CERV2 module
+// ────────────────────────────────────────────────────────────────────────────
+
+/** POST /api/device-projects – create a new device project */
+app.post('/api/device-projects', async (req: Request, res: Response) => {
+  try {
+    const {
+      deviceName,
+      deviceType = 'medical-device',
+      manufacturer = '',
+      deviceClass = 'II',
+      intendedUse = '',
+      state = {},
+      attachedDocuments = [],
+      organizationId: bodyOrgId,
+      clientWorkspaceId: bodyWsId,
+    } = req.body || {};
+
+    const organization_id = Number(bodyOrgId || req.headers['x-organization-id'] || 2);
+    const client_workspace_id = Number(bodyWsId || req.headers['x-client-workspace-id'] || 1);
+
+    const [row] = await db
+      .insert(projects)
+      .values({
+        organizationId: organization_id,
+        clientWorkspaceId: client_workspace_id,
+        name: deviceName || 'Untitled Device',
+        type: 'medical-device',
+        status: 'draft',
+        progress: 0,
+        metadata: {
+          manufacturer,
+          deviceClass,
+          intendedUse,
+          deviceType,
+          attachedDocuments,
+          state,
+        },
+      })
+      .returning();
+
+    console.log('✅ Created device project:', row.id);
+    res.status(201).json(row);
+  } catch (error: any) {
+    console.error('Failed to create device project:', error);
+    res.status(500).json({ error: 'Failed to create device project' });
+  }
+});
+
+/** PUT /api/device-projects/:id – update an existing device project */
+app.put('/api/device-projects/:id', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.id);
+    if (!projectId || isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const {
+      deviceName,
+      status,
+      manufacturer,
+      deviceClass,
+      intendedUse,
+      state,
+      attachedDocuments,
+      deviceType,
+      progress,
+    } = req.body || {};
+
+    // Read current row to merge metadata
+    const [existing] = await db.select().from(projects).where(eq(projects.id, projectId));
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const prevMeta: any = existing.metadata || {};
+    const mergedMeta = {
+      ...prevMeta,
+      ...(manufacturer !== undefined && { manufacturer }),
+      ...(deviceClass !== undefined && { deviceClass }),
+      ...(intendedUse !== undefined && { intendedUse }),
+      ...(deviceType !== undefined && { deviceType }),
+      ...(attachedDocuments !== undefined && { attachedDocuments }),
+      ...(state !== undefined && { state }),
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({
+        ...(deviceName !== undefined && { name: deviceName }),
+        ...(status !== undefined && { status }),
+        ...(progress !== undefined && { progress }),
+        metadata: mergedMeta,
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId))
+      .returning();
+
+    console.log('✅ Updated device project:', projectId);
+    res.json(updated);
+  } catch (error: any) {
+    console.error('Failed to update device project:', error);
+    res.status(500).json({ error: 'Failed to update device project' });
+  }
+});
+
+/** DELETE /api/device-projects/:id – remove a device project */
+app.delete('/api/device-projects/:id', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.id);
+    if (!projectId || isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const [deleted] = await db.delete(projects).where(eq(projects.id, projectId)).returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    console.log('✅ Deleted device project:', projectId);
+    res.json({ success: true, id: projectId });
+  } catch (error: any) {
+    console.error('Failed to delete device project:', error);
+    res.status(500).json({ error: 'Failed to delete device project' });
+  }
+});
+
+console.log('✅ /api/device-projects CRUD routes mounted');
 
 // Register template routes
 import templateRoutes from './api/templates/routes.ts';
