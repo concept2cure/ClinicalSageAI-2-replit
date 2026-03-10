@@ -55,7 +55,7 @@ import { authMiddleware } from './auth.js';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, desc } from 'drizzle-orm';
 import { fda510kStageProgress, fda510kProjects, projects } from '@shared/schema';
 
 // Debug mode configuration
@@ -524,6 +524,38 @@ console.log('✅ /api/projects route mounted directly');
 // ────────────────────────────────────────────────────────────────────────────
 // Device-Project CRUD – server-backed persistence for CERV2 module
 // ────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/device-projects – list device projects for the current org/workspace */
+app.get('/api/device-projects', async (req: Request, res: Response) => {
+  try {
+    const organization_id = Number(
+      req.query.organization_id || req.headers['x-organization-id'] || 2
+    );
+    const client_workspace_id = req.query.client_workspace_id
+      ? Number(req.query.client_workspace_id)
+      : undefined;
+
+    let conditions = [
+      eq(projects.organizationId, organization_id),
+      eq(projects.type, 'medical-device'),
+    ];
+    if (client_workspace_id) {
+      conditions.push(eq(projects.clientWorkspaceId, client_workspace_id));
+    }
+
+    const rows = await db
+      .select()
+      .from(projects)
+      .where(and(...conditions))
+      .orderBy(desc(projects.createdAt));
+
+    console.log(`✅ GET /api/device-projects → ${rows.length} rows`);
+    res.json(rows);
+  } catch (error: any) {
+    console.error('Failed to list device projects:', error);
+    res.status(500).json({ error: 'Failed to list device projects' });
+  }
+});
 
 /** POST /api/device-projects – create a new device project */
 app.post('/api/device-projects', async (req: Request, res: Response) => {

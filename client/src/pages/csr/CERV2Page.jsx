@@ -250,14 +250,12 @@ export default function CERV2Page({
         params.append('organization_id', organizationId);
         params.append('client_workspace_id', clientWorkspaceId);
 
-        const url = `/api/projects?${params.toString()}`;
+        const url = `/api/device-projects?${params.toString()}`;
         const response = await fetch(url);
 
         if (response.ok) {
-          const allRows = await response.json();
-          // Filter to medical-device projects only
-          const deviceRows = allRows.filter(p => p.type === 'medical-device');
-          const transformedProjects = deviceRows.map(transformDbProject);
+          const rows = await response.json();
+          const transformedProjects = rows.map(transformDbProject);
 
           console.log('Loaded', transformedProjects.length, 'device projects from DB');
           setAllProjects(transformedProjects);
@@ -736,7 +734,8 @@ export default function CERV2Page({
           deviceName: deviceProfile?.deviceName,
           status: 'active',
           state: currentState,
-          attachedDocuments: updatedProjects.find(p => p.id === currentProjectId)?.attachedDocuments,
+          attachedDocuments: updatedProjects.find(p => p.id === currentProjectId)
+            ?.attachedDocuments,
         }),
       });
     } catch (error) {
@@ -7728,6 +7727,14 @@ export default function CERV2Page({
                                       <h4 className="font-semibold text-gray-900">
                                         {project.deviceName}
                                       </h4>
+                                      {String(project.id).startsWith('local-') && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs bg-orange-50 text-orange-600 border-orange-300"
+                                        >
+                                          Offline
+                                        </Badge>
+                                      )}
                                       {project.id === currentProjectId && (
                                         <CheckCircle className="h-4 w-4 text-blue-600" />
                                       )}
