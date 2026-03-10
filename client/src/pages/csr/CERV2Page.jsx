@@ -3748,7 +3748,46 @@ export default function CERV2Page({
         );
       }
 
-      // FDA tracks: standard Predicate & Regulation Finder
+      // De Novo track: Classification Research (no predicate — novel device)
+      if (documentType === 'de_novo') {
+        return (
+          <div className="p-6 space-y-6" data-testid="predicate-finder-content">
+            <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-purple-900 mb-1">Classification Research</h4>
+                    <p className="text-sm text-purple-800">
+                      Research FDA product codes and existing device classifications to position
+                      your novel device. De Novo classification applies when no legally marketed
+                      predicate exists and the device presents low-to-moderate risk.
+                    </p>
+                    <div className="mt-2 text-xs text-purple-700">
+                      <strong>Prerequisites:</strong> Device profile from Device Intake (device
+                      name, intended use, product code). Search identifies the appropriate
+                      regulatory pathway and existing classification rules for similar technologies.
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <PredicateFinderPanel
+              deviceProfile={deviceProfile}
+              setDeviceProfile={newProfile => {
+                if (newProfile) {
+                  setDeviceProfile(newProfile);
+                }
+              }}
+              documentId={deviceProfile?.id}
+              onPredicatesFound={handlePredicatesComplete}
+            />
+          </div>
+        );
+      }
+
+      // FDA 510(k)/PMA tracks: standard Predicate & Regulation Finder
       return (
         <div className="p-6 space-y-6" data-testid="predicate-finder-content">
           <Card className="bg-purple-50 border-purple-200 context-banner-enter">
@@ -3793,6 +3832,8 @@ export default function CERV2Page({
     // STAGE 1: STRATEGY - Substantial Equivalence Development
     // ============================================================================
     else if (activeTab === 'se-strategy') {
+      // De Novo track: Risk & Benefit Analysis (not SE — novel device, no predicate)
+      const isDeNovo = documentType === 'de_novo';
       return (
         <div className="p-6 space-y-6" data-testid="se-strategy-content">
           <Card className="bg-orange-50 border-orange-200">
@@ -3801,15 +3842,18 @@ export default function CERV2Page({
                 <GitCompare className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-orange-900 mb-1">
-                    Substantial Equivalence Strategy
+                    {isDeNovo ? 'Risk & Benefit Analysis' : 'Substantial Equivalence Strategy'}
                   </h4>
                   <p className="text-sm text-orange-800">
-                    Document your strategy for demonstrating substantial equivalence to the
-                    predicate device(s). Define technological characteristics, intended use
-                    comparison, and testing approach.
+                    {isDeNovo
+                      ? 'Document the risk-benefit profile for your novel device. Identify potential risks, define special controls to mitigate them, and demonstrate that probable benefits outweigh probable risks for the intended patient population.'
+                      : 'Document your strategy for demonstrating substantial equivalence to the predicate device(s). Define technological characteristics, intended use comparison, and testing approach.'}
                   </p>
                   <div className="mt-2 text-xs text-orange-700">
-                    <strong>Prerequisites:</strong> Predicate device(s) selected from Stage 0.
+                    <strong>Prerequisites:</strong>{' '}
+                    {isDeNovo
+                      ? 'Classification research from Stage 0, device risk characterization.'
+                      : 'Predicate device(s) selected from Stage 0.'}
                   </div>
                 </div>
               </div>
@@ -3827,8 +3871,10 @@ export default function CERV2Page({
             onComplete={data => {
               setDeviceProfile({ ...deviceProfile, seStrategy: data });
               toast({
-                title: 'SE Strategy Saved',
-                description: 'Your substantial equivalence strategy has been documented.',
+                title: isDeNovo ? 'Risk-Benefit Analysis Saved' : 'SE Strategy Saved',
+                description: isDeNovo
+                  ? 'Your risk-benefit analysis and special controls have been documented.'
+                  : 'Your substantial equivalence strategy has been documented.',
               });
             }}
             predicateDevices={predicateDevices}
@@ -5049,6 +5095,17 @@ export default function CERV2Page({
     } else if (activeTab === 'rta-check') {
       // CER track: Completeness check per EU MDR / MEDDEV 2.7/1
       const isRtaCer = documentType === 'cer';
+      const isRtaDeNovo = documentType === 'de_novo';
+      const rtaHeading = isRtaCer
+        ? 'CER Completeness Check'
+        : isRtaDeNovo
+          ? 'Acceptance Review Checklist'
+          : 'RTA (Refuse to Accept) Pre-Check';
+      const rtaDescription = isRtaCer
+        ? 'Validate your Clinical Evaluation Report against EU MDR Annex XIV and MEDDEV 2.7/1 Rev 4 requirements to ensure completeness before Notified Body review.'
+        : isRtaDeNovo
+          ? 'Validate your De Novo classification request against FDA acceptance criteria to ensure completeness before submission. Covers risk-benefit analysis, special controls, and all required supporting documentation.'
+          : "Validate your submission against FDA's RTA checklist to avoid submission rejection.";
       return (
         <div className="p-6 space-y-6" data-testid="rta-check-content">
           <Card className="bg-green-50 border-green-200">
@@ -5056,14 +5113,8 @@ export default function CERV2Page({
               <div className="flex items-start gap-3">
                 <ClipboardCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">
-                    {isRtaCer ? 'CER Completeness Check' : 'RTA (Refuse to Accept) Pre-Check'}
-                  </h4>
-                  <p className="text-sm text-green-800">
-                    {isRtaCer
-                      ? 'Validate your Clinical Evaluation Report against EU MDR Annex XIV and MEDDEV 2.7/1 Rev 4 requirements to ensure completeness before Notified Body review.'
-                      : "Validate your submission against FDA's RTA checklist to avoid submission rejection."}
-                  </p>
+                  <h4 className="font-semibold text-green-900 mb-1">{rtaHeading}</h4>
+                  <p className="text-sm text-green-800">{rtaDescription}</p>
                 </div>
               </div>
             </CardContent>
@@ -5074,8 +5125,12 @@ export default function CERV2Page({
             onComplete={score => {
               setDeviceProfile({ ...deviceProfile, rtaScore: score });
               toast({
-                title: isRtaCer ? 'CER Completeness Check Complete' : 'RTA Check Complete',
-                description: `Your ${isRtaCer ? 'CER' : 'submission'} scored ${Math.round(score * 100)}% - ${score >= 0.9 ? (isRtaCer ? 'Ready for Notified Body review!' : 'Ready to submit!') : 'Address issues before submitting'}`,
+                title: isRtaCer
+                  ? 'CER Completeness Check Complete'
+                  : isRtaDeNovo
+                    ? 'Acceptance Review Complete'
+                    : 'RTA Check Complete',
+                description: `Your ${isRtaCer ? 'CER' : isRtaDeNovo ? 'De Novo request' : 'submission'} scored ${Math.round(score * 100)}% - ${score >= 0.9 ? (isRtaCer ? 'Ready for Notified Body review!' : isRtaDeNovo ? 'Ready for FDA submission!' : 'Ready to submit!') : 'Address issues before submitting'}`,
               });
             }}
           />
@@ -5096,10 +5151,10 @@ export default function CERV2Page({
                 <div>
                   <h4 className="font-semibold text-purple-900 mb-1">SMART Forms System</h4>
                   <p className="text-sm text-purple-800">
-                    Comprehensive FDA SMART Forms system with 30+ forms for 510(k), PMA, and special
-                    submissions. All forms feature intelligent auto-population from CERV2 workflow
-                    data, AI-powered field suggestions, and real-time synchronization across all
-                    stages.
+                    Comprehensive FDA SMART Forms system with 30+ forms for 510(k), PMA, De Novo,
+                    and special submissions. All forms feature intelligent auto-population from
+                    CERV2 workflow data, AI-powered field suggestions, and real-time synchronization
+                    across all stages.
                   </p>
                   <div className="mt-2 text-xs text-purple-700">
                     <strong>Features:</strong> Auto-generation • Smart validation • Batch processing
@@ -5128,6 +5183,7 @@ export default function CERV2Page({
         </div>
       );
     } else if (activeTab === 'submission') {
+      const isDeNovoSub = documentType === 'de_novo';
       return (
         <div className="p-6 space-y-6" data-testid="submission-content">
           <Card className="bg-teal-50 border-teal-200">
@@ -5135,12 +5191,21 @@ export default function CERV2Page({
               <div className="flex items-start gap-3">
                 <Send className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-teal-900 mb-1">eSTAR Portal Submission</h4>
+                  <h4 className="font-semibold text-teal-900 mb-1">
+                    {isDeNovoSub
+                      ? 'De Novo Classification Request Submission'
+                      : 'eSTAR Portal Submission'}
+                  </h4>
                   <p className="text-sm text-teal-800">
-                    Submit your completed 510(k) package to FDA via the eSTAR portal.
+                    {isDeNovoSub
+                      ? 'Submit your De Novo classification request to FDA. The request includes your risk-benefit analysis, proposed special controls, and all supporting evidence.'
+                      : 'Submit your completed 510(k) package to FDA via the eSTAR portal.'}
                   </p>
                   <div className="mt-2 text-xs text-teal-700">
-                    <strong>Prerequisites:</strong> RTA score ≥90%, all required sections complete.
+                    <strong>Prerequisites:</strong>{' '}
+                    {isDeNovoSub
+                      ? 'Acceptance review score ≥90%, all required sections complete, special controls defined.'
+                      : 'RTA score ≥90%, all required sections complete.'}
                   </div>
                 </div>
               </div>
@@ -5158,11 +5223,13 @@ export default function CERV2Page({
                 AI-assisted section drafting.
               </p>
               <p>
-                🔧 <strong>Under development:</strong> Full eSTAR package generation and automated
-                RTA checklist validation.
+                🔧 <strong>Under development:</strong> Full{' '}
+                {isDeNovoSub ? 'De Novo package' : 'eSTAR package'} generation and automated
+                {isDeNovoSub ? ' acceptance review' : ' RTA checklist'} validation.
               </p>
               <p>
-                ⏳ <strong>Not yet implemented:</strong> Direct FDA eSubmitter portal integration.
+                ⏳ <strong>Not yet implemented:</strong> Direct FDA{' '}
+                {isDeNovoSub ? 'submission' : 'eSubmitter'} portal integration.
               </p>
             </AlertDescription>
           </Alert>
