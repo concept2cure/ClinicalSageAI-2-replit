@@ -225,6 +225,17 @@ export default function CERV2Page({
   const [showProjectSelector, setShowProjectSelector] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
 
+  // Auth header helper — reads JWT from localStorage (set by authService.setToken)
+  const getAuthHeaders = () => {
+    const token =
+      localStorage.getItem('token') ||
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('auth_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  };
+
   // Fetch projects from database on mount and when workspace changes
   useEffect(() => {
     // Helper: transform a DB project row into the frontend shape
@@ -242,20 +253,76 @@ export default function CERV2Page({
       state: p.metadata?.state || {},
     });
 
+    // One-time migration: push legacy localStorage projects to DB
+    const migrateLegacyProjects = async serverIds => {
+      try {
+        const raw = localStorage.getItem('medicalDeviceProjects');
+        if (!raw) return;
+        const cached = JSON.parse(raw);
+        // Legacy projects have non-numeric, non-"local-" IDs (timestamp-based)
+        const legacyProjects = cached.filter(p => {
+          const id = String(p.id);
+          return id && !id.startsWith('local-') && isNaN(Number(id));
+        });
+        if (legacyProjects.length === 0) return;
+
+        console.log(`Migrating ${legacyProjects.length} legacy localStorage projects to DB...`);
+        for (const lp of legacyProjects) {
+          try {
+            await fetch('/api/device-projects', {
+              method: 'POST',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({
+                deviceName: lp.deviceName || 'Migrated Device',
+                deviceType: lp.deviceType || 'medical-device',
+                manufacturer: lp.manufacturer || '',
+                deviceClass: lp.deviceClass || 'II',
+                intendedUse: lp.intendedUse || '',
+                state: lp.state || {},
+                attachedDocuments: lp.attachedDocuments || [],
+                clientWorkspaceId: clientWorkspaceId,
+              }),
+            });
+          } catch (e) {
+            console.warn('Failed to migrate project:', lp.deviceName, e);
+          }
+        }
+        localStorage.setItem('medicalDeviceProjects_migrated', 'true');
+        console.log('Legacy project migration complete');
+      } catch (e) {
+        console.warn('Error during legacy project migration:', e);
+      }
+    };
+
     const fetchProjects = async () => {
       try {
         console.log('Fetching device projects from database...');
 
         const params = new URLSearchParams();
-        params.append('organization_id', organizationId);
         params.append('client_workspace_id', clientWorkspaceId);
 
         const url = `/api/device-projects?${params.toString()}`;
-        const response = await fetch(url);
+        const response = await fetch(url, { headers: getAuthHeaders() });
 
         if (response.ok) {
           const rows = await response.json();
           const transformedProjects = rows.map(transformDbProject);
+
+          // Migrate legacy projects once (before overwriting cache)
+          if (!localStorage.getItem('medicalDeviceProjects_migrated')) {
+            const serverIds = new Set(transformedProjects.map(p => p.id));
+            await migrateLegacyProjects(serverIds);
+            // Re-fetch after migration to include newly migrated projects
+            const refreshRes = await fetch(url, { headers: getAuthHeaders() });
+            if (refreshRes.ok) {
+              const refreshRows = await refreshRes.json();
+              const refreshed = refreshRows.map(transformDbProject);
+              setAllProjects(refreshed);
+              localStorage.setItem('medicalDeviceProjects', JSON.stringify(refreshed));
+              console.log('Loaded', refreshed.length, 'device projects from DB (post-migration)');
+              return;
+            }
+          }
 
           console.log('Loaded', transformedProjects.length, 'device projects from DB');
           setAllProjects(transformedProjects);
@@ -533,7 +600,7 @@ export default function CERV2Page({
     try {
       const response = await fetch('/api/device-projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           deviceName: projectData.deviceName || 'Untitled Device',
           deviceType: documentType,
@@ -542,7 +609,6 @@ export default function CERV2Page({
           intendedUse: projectData.intendedUse || '',
           state: initialState,
           attachedDocuments: [],
-          organizationId,
           clientWorkspaceId,
         }),
       });
@@ -729,7 +795,7 @@ export default function CERV2Page({
     try {
       await fetch(`/api/device-projects/${currentProjectId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           deviceName: deviceProfile?.deviceName,
           status: 'active',
@@ -753,9 +819,10 @@ export default function CERV2Page({
 
       // Delete from backend (fire-and-forget)
       if (!String(projectId).startsWith('local-')) {
-        fetch(`/api/device-projects/${projectId}`, { method: 'DELETE' }).catch(err =>
-          console.error('Error deleting project from server:', err)
-        );
+        fetch(`/api/device-projects/${projectId}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        }).catch(err => console.error('Error deleting project from server:', err));
       }
 
       if (currentProjectId === projectId) {
