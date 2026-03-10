@@ -189,6 +189,16 @@ export const featureFlags: Record<string, FeatureFlag> = {
     defaultValue: true,
     enabled: true,
   },
+
+  // Shell embedding — render modules inside the Concept2Cure shell frame
+  EMBED_MODULES_IN_SHELL: {
+    id: 'EMBED_MODULES_IN_SHELL',
+    name: 'Embed Modules in Shell',
+    description:
+      'When enabled, modules like CERV2 render inside the Concept2Cure shell (sidebar + module frame) instead of as full-page breakouts.',
+    defaultValue: true,
+    enabled: true,
+  },
 };
 
 /**

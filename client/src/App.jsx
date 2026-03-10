@@ -431,7 +431,7 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            <Route path="/concept2cure/:rest*">
+            <Route path="/concept2cure/*">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <ZenRouter />

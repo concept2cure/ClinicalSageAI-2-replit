@@ -27,8 +27,9 @@ import {
   AuthProvider as PortalAuthProvider,
   useAuth as usePortalAuth,
 } from '@/portal-v2/services/authService';
+import { isFeatureEnabled } from '@/flags/featureFlags';
 
-// Lazy-load CERV2Page only when a project 510k route is hit
+// Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 
 /**
@@ -263,16 +264,21 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Project-scoped 510(k) workspace — opens CERV2Page with projectId from URL */}
-          <Route path="/concept2cure/project/:projectId/510k">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <Project510kBridge />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
+          {/* Project-scoped 510(k) workspace
+              When EMBED_MODULES_IN_SHELL is enabled, this route falls through
+              to ZenApp (caught by project/:projectId/:rest*) which renders CERV2
+              inside the shell frame. When disabled, standalone full-page bridge. */}
+          {!isFeatureEnabled('EMBED_MODULES_IN_SHELL') && (
+            <Route path="/concept2cure/project/:projectId/510k">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <Project510kBridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
 
           {/* Project-scoped hub — ZenApp reads :projectId from route */}
           <Route path="/concept2cure/project/:projectId/:rest*">
@@ -307,7 +313,7 @@ export const ZenRouter: React.FC = () => {
           </Route>
 
           {/* Catch-all for /concept2cure/* routes */}
-          <Route path="/concept2cure/:rest*">
+          <Route path="/concept2cure/*">
             {() => (
               <PageTransition>
                 <ProtectedRoute>

@@ -183,6 +183,8 @@ export default function CERV2Page({
   initialDocumentType,
   initialActiveTab,
   projectId: propProjectId,
+  embedded = false,
+  onBackToProject,
 }) {
   // Read ?mode= query param so launcher can set initial mode via URL
   const urlMode = (() => {
@@ -544,14 +546,6 @@ export default function CERV2Page({
     saveAllProjects(updatedProjects);
   };
 
-  // Auto-save project state when review/sign-off changes
-  useEffect(() => {
-    if (currentProjectId && reviewSignOff) {
-      saveCurrentProjectState();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reviewSignOff]);
-
   const deleteProject = projectId => {
     // Use functional update to avoid stale state issues
     setAllProjects(prevProjects => {
@@ -617,6 +611,14 @@ export default function CERV2Page({
     reviewedAt: null,
     notes: '',
   });
+
+  // Auto-save project state when review/sign-off changes
+  useEffect(() => {
+    if (currentProjectId && reviewSignOff) {
+      saveCurrentProjectState();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewSignOff]);
 
   // eSTAR specific state variables are defined above
 
@@ -6388,262 +6390,284 @@ export default function CERV2Page({
 
   // Render page
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Return to Hub */}
-              <button
-                onClick={() => {
-                  window.location.href = '/concept2cure';
-                }}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors mr-2 border-r border-gray-200 pr-4"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Hub
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">FDA 510(k) Submission Pipeline</h1>
-
-              {/* Multi-Project Selector */}
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowProjectSelector(!showProjectSelector)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100"
-                  data-testid="button-project-selector"
+    <div
+      className={embedded ? 'h-full overflow-y-auto bg-gray-50' : 'min-h-screen bg-gray-50 pb-8'}
+    >
+      {!embedded && (
+        <header className="bg-white border-b">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {/* Return to Hub */}
+                <button
+                  onClick={() => {
+                    window.location.href = '/concept2cure';
+                  }}
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors mr-2 border-r border-gray-200 pr-4"
                 >
-                  <FolderOpen className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium text-blue-900">
-                    {currentProjectId
-                      ? allProjects.find(p => p.id === currentProjectId)?.deviceName ||
-                        'Select Project'
-                      : 'No Project Selected'}
-                  </span>
-                  <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700">
-                    {allProjects.length}
-                  </Badge>
-                </Button>
+                  <ChevronLeft className="w-4 h-4" />
+                  Hub
+                </button>
+                <h1 className="text-2xl font-bold text-gray-900">FDA 510(k) Submission Pipeline</h1>
 
-                {/* Project Selector Dropdown */}
-                {showProjectSelector && (
-                  <Card className="absolute top-full left-0 mt-2 w-96 shadow-lg z-50 border-2 border-blue-200">
-                    <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Files className="h-5 w-5 text-blue-600" />
-                          My Medical Device Projects
-                        </CardTitle>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowProjectSelector(false)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-3">
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {allProjects.length === 0 ? (
-                          <div className="text-center py-8 text-gray-500">
-                            <FolderPlus className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                            <p className="text-sm">No projects yet</p>
-                            <p className="text-xs mt-1">Create your first medical device project</p>
-                          </div>
-                        ) : (
-                          allProjects.map(project => (
-                            <div
-                              key={project.id}
-                              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                project.id === currentProjectId
-                                  ? 'bg-blue-50 border-blue-300 shadow-sm'
-                                  : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-gray-50'
-                              }`}
-                              onClick={() => switchToProject(project.id)}
-                              data-testid={`project-item-${project.id}`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-gray-900">
-                                      {project.deviceName}
-                                    </h4>
-                                    {project.id === currentProjectId && (
-                                      <CheckCircle className="h-4 w-4 text-blue-600" />
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-gray-600 mt-0.5">
-                                    {project.manufacturer}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <Badge variant="outline" className="text-xs">
-                                      {project.deviceType === 'cer' ? 'CER' : '510(k)'}
-                                    </Badge>
-                                    <Badge
-                                      variant="secondary"
-                                      className={`text-xs ${
-                                        project.status === 'submitted'
-                                          ? 'bg-green-100 text-green-700'
-                                          : 'bg-yellow-100 text-yellow-700'
-                                      }`}
-                                    >
-                                      {project.status}
-                                    </Badge>
-                                    <span className="text-xs text-gray-500">
-                                      Updated {new Date(project.updatedAt).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    if (confirm(`Delete project "${project.deviceName}"?`)) {
-                                      deleteProject(project.id);
-                                    }
-                                  }}
-                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  data-testid={`button-delete-project-${project.id}`}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                      <Button
-                        className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
-                        onClick={() => {
-                          setShowNewProjectDialog(true);
-                          setShowProjectSelector(false);
-                        }}
-                        data-testid="button-create-new-project"
-                      >
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Create New Project
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
-
-            {/* PROMINENT CORE FEATURES - Primary Work Areas */}
-            <div className="flex items-center space-x-2">
-              {/* Device Data Center - PRIMARY DATA ROOM */}
-              <Button
-                variant="default"
-                size="lg"
-                onClick={() => setActiveTab('device-data-center')}
-                className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
-                  activeTab === 'device-data-center'
-                    ? 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white ring-2 ring-cyan-400 ring-offset-2'
-                    : 'bg-gradient-to-r from-cyan-50 to-cyan-100 text-cyan-800 border-2 border-cyan-300 hover:from-cyan-100 hover:to-cyan-200'
-                }`}
-                data-testid="quick-access-data-center"
-              >
-                <HardDrive className="h-5 w-5" />
-                <div className="flex flex-col items-start">
-                  <span className="text-sm leading-tight">Data Center</span>
-                  <span className="text-xs opacity-90 leading-tight">File Repository</span>
-                </div>
-              </Button>
-
-              {/* Document Editor - PRIMARY WRITING TOOL */}
-              <Button
-                variant="default"
-                size="lg"
-                onClick={() => setActiveTab('document-editor')}
-                className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
-                  activeTab === 'document-editor'
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white ring-2 ring-green-400 ring-offset-2'
-                    : 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-2 border-green-300 hover:from-green-100 hover:to-green-200'
-                }`}
-                data-testid="quick-access-document-editor"
-              >
-                <Edit3 className="h-5 w-5" />
-                <div className="flex flex-col items-start">
-                  <span className="text-sm leading-tight">Document Editor</span>
-                  <span className="text-xs opacity-90 leading-tight">Write & Edit</span>
-                </div>
-              </Button>
-
-              {/* Document Vault - PRIMARY FILE MANAGER */}
-              <Button
-                variant="default"
-                size="lg"
-                onClick={() => setIsDocumentVaultOpen(true)}
-                className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
-                  isDocumentVaultOpen
-                    ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white ring-2 ring-yellow-400 ring-offset-2'
-                    : 'bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-800 border-2 border-yellow-300 hover:from-yellow-100 hover:to-amber-100'
-                }`}
-                data-testid="quick-access-document-vault"
-              >
-                <FolderOpen className="h-5 w-5" />
-                <div className="flex flex-col items-start">
-                  <span className="text-sm leading-tight">Document Vault</span>
-                  <span className="text-xs opacity-90 leading-tight">Manage Files</span>
-                </div>
-              </Button>
-
-              {/* Secondary Actions */}
-              <div className="ml-4 pl-4 border-l-2 border-gray-200 flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-green-600 text-white hover:bg-green-700 border-green-600"
-                  onClick={() => setShowNewProjectDialog(true)}
-                  data-testid="button-new-device-submission"
-                >
-                  <PlusCircle className="h-4 w-4 mr-1" />
-                  New Project
-                </Button>
-
-                {documentType === '510k' && (
+                {/* Multi-Project Selector */}
+                <div className="relative">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => openAssistant()}
-                    className="flex items-center text-gray-600"
+                    onClick={() => setShowProjectSelector(!showProjectSelector)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100"
+                    data-testid="button-project-selector"
                   >
-                    <MessageSquare className="mr-1.5 h-4 w-4" />
-                    AI Assistant
+                    <FolderOpen className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-blue-900">
+                      {currentProjectId
+                        ? allProjects.find(p => p.id === currentProjectId)?.deviceName ||
+                          'Select Project'
+                        : 'No Project Selected'}
+                    </span>
+                    <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700">
+                      {allProjects.length}
+                    </Badge>
                   </Button>
-                )}
 
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={documentType === 'cer' ? generateFullCER : handleSubmissionReady}
-                  disabled={documentType === 'cer' ? isGeneratingFullCER : !equivalenceCompleted}
-                >
-                  {documentType === 'cer' ? (
-                    <>
-                      <ZapIcon className="mr-1.5 h-4 w-4" />
-                      {isGeneratingFullCER ? 'Generating...' : 'Generate CER'}
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-1.5 h-4 w-4" />
-                      Export
-                    </>
+                  {/* Project Selector Dropdown */}
+                  {showProjectSelector && (
+                    <Card className="absolute top-full left-0 mt-2 w-96 shadow-lg z-50 border-2 border-blue-200">
+                      <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Files className="h-5 w-5 text-blue-600" />
+                            My Medical Device Projects
+                          </CardTitle>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowProjectSelector(false)}
+                            className="h-7 w-7 p-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-3">
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {allProjects.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                              <FolderPlus className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                              <p className="text-sm">No projects yet</p>
+                              <p className="text-xs mt-1">
+                                Create your first medical device project
+                              </p>
+                            </div>
+                          ) : (
+                            allProjects.map(project => (
+                              <div
+                                key={project.id}
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  project.id === currentProjectId
+                                    ? 'bg-blue-50 border-blue-300 shadow-sm'
+                                    : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-gray-50'
+                                }`}
+                                onClick={() => switchToProject(project.id)}
+                                data-testid={`project-item-${project.id}`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-semibold text-gray-900">
+                                        {project.deviceName}
+                                      </h4>
+                                      {project.id === currentProjectId && (
+                                        <CheckCircle className="h-4 w-4 text-blue-600" />
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-600 mt-0.5">
+                                      {project.manufacturer}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {project.deviceType === 'cer' ? 'CER' : '510(k)'}
+                                      </Badge>
+                                      <Badge
+                                        variant="secondary"
+                                        className={`text-xs ${
+                                          project.status === 'submitted'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-yellow-100 text-yellow-700'
+                                        }`}
+                                      >
+                                        {project.status}
+                                      </Badge>
+                                      <span className="text-xs text-gray-500">
+                                        Updated {new Date(project.updatedAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      if (confirm(`Delete project "${project.deviceName}"?`)) {
+                                        deleteProject(project.id);
+                                      }
+                                    }}
+                                    className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    data-testid={`button-delete-project-${project.id}`}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        <Button
+                          className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => {
+                            setShowNewProjectDialog(true);
+                            setShowProjectSelector(false);
+                          }}
+                          data-testid="button-create-new-project"
+                        >
+                          <PlusCircle className="h-4 w-4 mr-2" />
+                          Create New Project
+                        </Button>
+                      </CardContent>
+                    </Card>
                   )}
+                </div>
+              </div>
+
+              {/* PROMINENT CORE FEATURES - Primary Work Areas */}
+              <div className="flex items-center space-x-2">
+                {/* Device Data Center - PRIMARY DATA ROOM */}
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={() => setActiveTab('device-data-center')}
+                  className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                    activeTab === 'device-data-center'
+                      ? 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white ring-2 ring-cyan-400 ring-offset-2'
+                      : 'bg-gradient-to-r from-cyan-50 to-cyan-100 text-cyan-800 border-2 border-cyan-300 hover:from-cyan-100 hover:to-cyan-200'
+                  }`}
+                  data-testid="quick-access-data-center"
+                >
+                  <HardDrive className="h-5 w-5" />
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm leading-tight">Data Center</span>
+                    <span className="text-xs opacity-90 leading-tight">File Repository</span>
+                  </div>
                 </Button>
+
+                {/* Document Editor - PRIMARY WRITING TOOL */}
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={() => setActiveTab('document-editor')}
+                  className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                    activeTab === 'document-editor'
+                      ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white ring-2 ring-green-400 ring-offset-2'
+                      : 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-2 border-green-300 hover:from-green-100 hover:to-green-200'
+                  }`}
+                  data-testid="quick-access-document-editor"
+                >
+                  <Edit3 className="h-5 w-5" />
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm leading-tight">Document Editor</span>
+                    <span className="text-xs opacity-90 leading-tight">Write & Edit</span>
+                  </div>
+                </Button>
+
+                {/* Document Vault - PRIMARY FILE MANAGER */}
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={() => setIsDocumentVaultOpen(true)}
+                  className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                    isDocumentVaultOpen
+                      ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white ring-2 ring-yellow-400 ring-offset-2'
+                      : 'bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-800 border-2 border-yellow-300 hover:from-yellow-100 hover:to-amber-100'
+                  }`}
+                  data-testid="quick-access-document-vault"
+                >
+                  <FolderOpen className="h-5 w-5" />
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm leading-tight">Document Vault</span>
+                    <span className="text-xs opacity-90 leading-tight">Manage Files</span>
+                  </div>
+                </Button>
+
+                {/* Secondary Actions */}
+                <div className="ml-4 pl-4 border-l-2 border-gray-200 flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+                    onClick={() => setShowNewProjectDialog(true)}
+                    data-testid="button-new-device-submission"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-1" />
+                    New Project
+                  </Button>
+
+                  {documentType === '510k' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openAssistant()}
+                      className="flex items-center text-gray-600"
+                    >
+                      <MessageSquare className="mr-1.5 h-4 w-4" />
+                      AI Assistant
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={documentType === 'cer' ? generateFullCER : handleSubmissionReady}
+                    disabled={documentType === 'cer' ? isGeneratingFullCER : !equivalenceCompleted}
+                  >
+                    {documentType === 'cer' ? (
+                      <>
+                        <ZapIcon className="mr-1.5 h-4 w-4" />
+                        {isGeneratingFullCER ? 'Generating...' : 'Generate CER'}
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-1.5 h-4 w-4" />
+                        Export
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
+        </header>
+      )}
+
+      {!embedded && renderDocumentTypeBanner()}
+
+      {/* Embedded mode: compact back bar */}
+      {embedded && onBackToProject && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-200">
+          <button
+            onClick={onBackToProject}
+            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors px-2 py-1 rounded-md hover:bg-gray-100"
+            data-testid="back-to-project"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Project
+          </button>
+          <span className="text-gray-300">|</span>
+          <span className="text-sm font-medium text-gray-700">FDA 510(k) Workspace</span>
         </div>
-      </header>
+      )}
 
-      {renderDocumentTypeBanner()}
-
-      <div className="container mx-auto px-6 mt-4">
+      <div className={embedded ? 'px-4 pt-2' : 'container mx-auto px-6 mt-4'}>
         {renderNavigation()}
 
         <div className="flex">

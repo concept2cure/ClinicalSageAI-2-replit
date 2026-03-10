@@ -51,6 +51,10 @@ import { useGenerateDocx, downloadBlob } from './hooks/useDocumentFactory';
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
+import { isFeatureEnabled } from '@/flags/featureFlags';
+
+// Lazy-load CERV2Page for embedded module rendering inside the shell
+const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 import {
   X,
   ChevronLeft,
@@ -415,6 +419,15 @@ export const ZenApp: React.FC = () => {
   const urlProjectId = routeParams?.projectId ?? routeParamsExact?.projectId ?? null;
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // EMBEDDED MODULE DETECTION
+  // When EMBED_MODULES_IN_SHELL is enabled and URL has /project/:id/510k,
+  // render CERV2Page inside the shell frame instead of as a standalone page.
+  // ─────────────────────────────────────────────────────────────────────────────
+  const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k'
+  const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
+  const embeddedModule = embedModulesEnabled && urlModuleSegment === '510k' ? '510k' : null;
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -529,6 +542,7 @@ export const ZenApp: React.FC = () => {
   // DOCX generation for artifacts
   const generateDocx = useGenerateDocx();
   const [generatingArtifact, setGeneratingArtifact] = useState<string | null>(null);
+  const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
 
   // Active selection — URL projectId takes precedence
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
@@ -694,13 +708,13 @@ export const ZenApp: React.FC = () => {
       if (!window.location.pathname.startsWith(expected)) {
         window.history.replaceState({}, '', expected);
       }
-    } else if (layoutMode === 'projects') {
+    } else if (layoutMode === 'projects' && !embeddedModule) {
       // Back to project hub — clear project from URL
       if (window.location.pathname.includes('/project/')) {
         window.history.replaceState({}, '', '/concept2cure');
       }
     }
-  }, [layoutMode, activeProjectId]);
+  }, [layoutMode, activeProjectId, embeddedModule]);
 
   const handleNewChat = useCallback(() => {
     // Clear active conversation/thread and enter workspace/assistant
@@ -1295,7 +1309,14 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('regulatory-workspace');
               break;
             case '510k-workspace':
-              window.location.href = '/cerv2';
+              if (embeddedModule !== null || !isFeatureEnabled('EMBED_MODULES_IN_SHELL')) {
+                window.location.href = '/cerv2';
+              } else if (activeProjectId) {
+                navigate(`/concept2cure/project/${activeProjectId}/510k`);
+              } else {
+                // No project selected — go to projects list
+                setLayoutMode('projects');
+              }
               break;
             case 'cer-generator':
               window.location.href = '/cerv2?mode=cer';
@@ -1327,8 +1348,86 @@ export const ZenApp: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
+          {/* ── Embedded Module Host ── */}
+          {embeddedModule === '510k' && urlProjectId && (
+            <>
+              {/* Module content area */}
+              <div
+                className={cn(
+                  'flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-200',
+                  moduleAssistantOpen && 'mr-0'
+                )}
+              >
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-stone-50">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading 510(k) Module...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <EmbeddedCERV2Page
+                    embedded={true}
+                    projectId={urlProjectId}
+                    onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+                  />
+                </Suspense>
+              </div>
+
+              {/* Assistant toggle button (fixed right edge) */}
+              {!moduleAssistantOpen && (
+                <button
+                  onClick={() => setModuleAssistantOpen(true)}
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  title="Open AI Assistant"
+                  data-testid="module-assistant-toggle"
+                >
+                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <span
+                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    style={{ writingMode: 'vertical-rl' }}
+                  >
+                    Assistant
+                  </span>
+                </button>
+              )}
+
+              {/* Collapsible assistant drawer */}
+              {moduleAssistantOpen && (
+                <div
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                  data-testid="module-assistant-panel"
+                >
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
+                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                    <button
+                      onClick={() => setModuleAssistantOpen(false)}
+                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <ZenChat
+                      projectId={activeProjectId || urlProjectId}
+                      projectName={activeProject?.name}
+                      submissionType={activeProject?.type || '510K'}
+                      threadId={activeThreadId}
+                      greeting="How can I help with your 510(k) submission?"
+                      onNavigate={() => {}}
+                      onNewProject={() => {}}
+                      onThreadChange={handleThreadChange}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Sherpa Mode - Convergent Canvas */}
-          {layoutMode === 'sherpa' && (
+          {!embeddedModule && layoutMode === 'sherpa' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <Suspense
                 fallback={
@@ -1350,7 +1449,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {layoutMode === 'analytics' && (
+          {!embeddedModule && layoutMode === 'analytics' && (
             <div className="flex-1 overflow-y-auto flex items-center justify-center p-8 bg-white">
               <div className="max-w-md text-center">
                 <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-50 flex items-center justify-center">
@@ -1364,7 +1463,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {layoutMode === 'timeline' && (
+          {!embeddedModule && layoutMode === 'timeline' && (
             <div className="flex-1 p-8 bg-white overflow-y-auto">
               <div className="max-w-3xl mx-auto">
                 <WorkflowTimeline
@@ -1379,14 +1478,14 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {layoutMode === 'audit' && (
+          {!embeddedModule && layoutMode === 'audit' && (
             <div className="flex-1 overflow-y-auto bg-zinc-50">
               <ProductAuditQuestionnaire />
             </div>
           )}
 
           {/* Phase 7: Mission Control Dashboard */}
-          {layoutMode === 'mission-control' && (
+          {!embeddedModule && layoutMode === 'mission-control' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <Suspense
                 fallback={
@@ -1585,7 +1684,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Project Launcher (track-aware bridge) ──────────────────────── */}
-          {layoutMode === 'project-launcher' && activeProject && (
+          {!embeddedModule && layoutMode === 'project-launcher' && activeProject && (
             <Suspense
               fallback={
                 <div className="flex-1 flex items-center justify-center">
@@ -1617,7 +1716,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
-          {layoutMode === 'regulatory-workspace' && (
+          {!embeddedModule && layoutMode === 'regulatory-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               {/* ── Full-width Regulatory Status Header ──────────────── */}
               {(() => {
@@ -2116,7 +2215,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* Rules Engine Manager */}
-          {layoutMode === 'rules' && (
+          {!embeddedModule && layoutMode === 'rules' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <Suspense
                 fallback={
@@ -2134,7 +2233,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Projects Index ─────────────────────────────────────────────── */}
-          {layoutMode === 'projects' && (
+          {!embeddedModule && layoutMode === 'projects' && (
             <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
               <div className="max-w-4xl mx-auto px-6 py-10">
                 {/* Header */}
@@ -2322,7 +2421,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Project Workspace — entered by clicking a project card ──────── */}
-          {layoutMode === 'workspace' && (
+          {!embeddedModule && layoutMode === 'workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               {/* ── Project Header Strip (two-line) ────────────────────── */}
               <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-4 py-2">
@@ -2798,7 +2897,7 @@ export const ZenApp: React.FC = () => {
               </div>
             </div>
           )}
-          {layoutMode === 'editor' && (
+          {!embeddedModule && layoutMode === 'editor' && (
             <div className="flex-1 flex min-w-0 min-h-0">
               <Suspense
                 fallback={
@@ -2811,7 +2910,7 @@ export const ZenApp: React.FC = () => {
               </Suspense>
             </div>
           )}
-          {(layoutMode === 'assistant' || layoutMode === 'ctd') && (
+          {!embeddedModule && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
             <>
               {/* Chat - Connected to Cortex */}
               <div

@@ -55,4 +55,5 @@ staging-report.json
 postmerge-report.json
 test-results/
 playwright-report/
+test-artifacts/
 generated_documents/

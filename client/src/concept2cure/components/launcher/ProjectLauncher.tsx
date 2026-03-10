@@ -79,8 +79,30 @@ export const ProjectLauncher: React.FC<ProjectLauncherProps> = ({
 
   const handlePrimaryAction = () => {
     if (trackRoute) {
-      // Navigate within the SPA using project-scoped URL
-      navigate(`/concept2cure/project/${project.id}/510k`);
+      // Map track type → correct module segment
+      const moduleSegment = (() => {
+        switch (project.type) {
+          case '510K':
+            return '510k';
+          case 'PMA':
+            return '510k?mode=pma';
+          case 'DE_NOVO':
+            return '510k?mode=de_novo';
+          case 'CER':
+            return '510k?mode=cer';
+          case 'HDE':
+            return '510k?mode=hde';
+          // Drug/biologic tracks — not yet embedded, fall through to workspace
+          default:
+            return null;
+        }
+      })();
+      if (moduleSegment) {
+        navigate(`/concept2cure/project/${project.id}/${moduleSegment}`);
+      } else {
+        // Unsupported track → fallback to internal workspace
+        onOpenWorkspace();
+      }
     } else {
       // Generic/unmapped type → fallback to internal workspace
       onOpenWorkspace();
