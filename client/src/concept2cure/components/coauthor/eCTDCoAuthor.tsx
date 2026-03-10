@@ -213,10 +213,10 @@ const STATUS_CONFIG: Record<
 const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting }) => (
   <div className="flex-1 flex items-center justify-center p-8">
     <div className="text-center max-w-md">
-      <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl">
-        <Mountain className="w-10 h-10 text-white" />
+      <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm">
+        <Mountain className="w-8 h-8 text-white" />
       </div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-3">Your Sherpa is Ready</h2>
+      <h2 className="text-xl font-semibold text-slate-900 mb-3">Your Sherpa is Ready</h2>
       <p className="text-slate-600 mb-6 leading-relaxed">
         I'll help you draft your regulatory documents, verify every claim against your source data,
         and ensure you reach the summit of approval safely.
@@ -227,9 +227,9 @@ const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting
       </p>
       <button
         onClick={onStartDrafting}
-        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 mx-auto"
+        className="px-5 py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 shadow-sm transition-colors flex items-center gap-2 mx-auto"
       >
-        <Sparkles className="w-5 h-5" />
+        <Sparkles className="w-4 h-4" />
         Start Drafting with RI
       </button>
     </div>

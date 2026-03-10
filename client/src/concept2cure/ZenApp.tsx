@@ -1383,9 +1383,9 @@ export const ZenApp: React.FC = () => {
               >
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-stone-50">
+                    <div className="flex-1 flex items-center justify-center bg-white">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading 510(k) Module...</p>
                       </div>
                     </div>
@@ -1454,9 +1454,9 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="flex-1 flex items-center justify-center bg-white">
                     <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+                      <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                       <p className="text-zinc-500">Loading Sherpa System...</p>
                     </div>
                   </div>
@@ -1512,9 +1512,9 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="flex-1 flex items-center justify-center bg-white">
                     <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                      <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                       <p className="text-zinc-500">Loading Mission Control...</p>
                     </div>
                   </div>
@@ -1538,7 +1538,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-emerald-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading IND Workspace...</p>
                       </div>
                     </div>
@@ -1576,7 +1576,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading Medical Device Dashboard...</p>
                       </div>
                     </div>
@@ -1601,7 +1601,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading eCTD Co-Author...</p>
                       </div>
                     </div>
@@ -1626,7 +1626,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-teal-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading CMC Platform...</p>
                       </div>
                     </div>
@@ -1643,7 +1643,7 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0">
               <WorkspaceHeader
                 title="Document Vault"
-                subtitle="Secure document storage · Upload · Browse · Version control"
+                subtitle="Field-ready document control · Compliance · Audit trails"
                 onBack={() => setLayoutMode('assistant')}
               />
               <div className="flex-1 overflow-auto">
@@ -1651,7 +1651,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading Document Vault...</p>
                       </div>
                     </div>
@@ -1676,7 +1676,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-purple-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading Clinical Trial Hub...</p>
                       </div>
                     </div>
@@ -1701,7 +1701,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-amber-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading Dossier Navigator...</p>
                       </div>
                     </div>
@@ -1726,7 +1726,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-amber-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading Submission Workspace...</p>
                       </div>
                     </div>
@@ -1751,7 +1751,7 @@ export const ZenApp: React.FC = () => {
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white h-full">
                       <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                         <p className="text-zinc-500">Loading Precedent Intelligence...</p>
                       </div>
                     </div>
@@ -2316,9 +2316,9 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="flex-1 flex items-center justify-center bg-white">
                     <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                      <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                       <p className="text-zinc-500">Loading Rules Engine...</p>
                     </div>
                   </div>

@@ -26004,29 +26004,19 @@ What specific aspect would you like to explore further? I can provide detailed g
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="bg-white px-4 py-3">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">CMC Management Platform</h1>
-            <p className="text-gray-600 mt-2">
-              Chemistry, Manufacturing & Controls - Pharmaceutical Development
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setShowAiAssistant(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-4 py-2 rounded-lg flex items-center gap-2 font-medium"
-              data-testid="button-toggle-ai-assistant"
-            >
-              <div className="p-1.5 bg-white/20 rounded">
-                <Brain className="w-4 h-4" />
-              </div>
-              <span>Regulatory Advisor</span>
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            </Button>
-          </div>
+        {/* Compact action bar — title provided by shell WorkspaceHeader */}
+        <div className="mb-3 flex items-center justify-end">
+          <Button
+            onClick={() => setShowAiAssistant(true)}
+            className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-medium"
+            data-testid="button-toggle-ai-assistant"
+          >
+            <Brain className="w-4 h-4" />
+            <span>Regulatory Advisor</span>
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+          </Button>
         </div>
 
         {/* Navigation Tabs */}
