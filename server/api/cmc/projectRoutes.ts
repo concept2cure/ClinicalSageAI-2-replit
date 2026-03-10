@@ -21,11 +21,16 @@ router.post('/projects', async (req, res) => {
     }
 
     const projectData = req.body;
+    const orgId = (req as any).user?.organizationId?.toString() || projectData.organizationId;
+    if (!orgId) {
+      return res.status(400).json({ error: 'organizationId is required' });
+    }
 
     const [newProject] = await db
       .insert(cmcProjects)
       .values({
         ...projectData,
+        organizationId: orgId,
         targetSubmissionDate: projectData.targetSubmissionDate
           ? new Date(projectData.targetSubmissionDate)
           : null,
@@ -48,7 +53,8 @@ router.get('/projects', async (req, res) => {
       return res.status(500).json({ error: 'Database not available' });
     }
 
-    const { organizationId } = req.query;
+    const organizationId =
+      (req as any).user?.organizationId?.toString() || req.query.organizationId;
 
     const projects = organizationId
       ? await db

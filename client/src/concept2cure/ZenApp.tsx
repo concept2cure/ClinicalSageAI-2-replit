@@ -186,9 +186,9 @@ const RegulatoryIntelligenceFullPanel = lazy(() =>
 );
 
 // ─── Biotech module standalones (in-shell rendering) ─────────────────────────
-const CMCModuleStandalone = lazy(() =>
-  import('@/modules/CMCModule').then(m => ({ default: m.default }))
-);
+// Canonical CMC: ComprehensiveCMCPlatformClean (25k LOC, 102 API endpoints)
+// Replaces the thin CMCModule wrapper (735 LOC, 3 API calls) – regression fix
+const CMCModuleStandalone = lazy(() => import('@/components/cmc/ComprehensiveCMCPlatformClean'));
 const VaultPageStandalone = lazy(() =>
   import('@/pages/vault/VaultPage').then(m => ({ default: m.default }))
 );
