@@ -313,8 +313,20 @@ export default function CERV2Page({
     setTimeout(fetchProjects, 100);
   }, []); // Run once on mount
 
+  // ─── Track metadata ───────────────────────────────────────────────────────
+  const TRACK_META = {
+    '510k': { title: 'FDA 510(k) Submission', workspaceLabel: 'FDA 510(k) Workspace' },
+    pma: { title: 'FDA PMA Submission', workspaceLabel: 'FDA PMA Workspace' },
+    de_novo: { title: 'FDA De Novo Classification', workspaceLabel: 'FDA De Novo Workspace' },
+    hde: { title: 'FDA HDE Submission', workspaceLabel: 'FDA HDE Workspace' },
+    cer: { title: 'EU MDR Clinical Evaluation Report', workspaceLabel: 'EU MDR CER Workspace' },
+  };
+
   // State variables
-  const [title, setTitle] = useState('FDA 510(k) Submission');
+  const [title, setTitle] = useState(() => {
+    const m = (effectiveInitialDocType || '').toLowerCase();
+    return TRACK_META[m]?.title || TRACK_META['510k'].title;
+  });
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showDeviceIntakeForm, setShowDeviceIntakeForm] = useState(false);
   const [newClientMode, setNewClientMode] = useState(false);
@@ -6035,254 +6047,1096 @@ export default function CERV2Page({
       );
     }
 
-    // Default CER tab groups
-    const tabGroups = [
+    // ─── PMA Stage Definitions ──────────────────────────────────────────────
+    // FDA PMA = Premarket Approval for Class III devices
+    // Requires clinical evidence of safety & effectiveness (not just SE)
+    const pmaTabGroups = [
       {
-        label: 'Preparation:',
+        label: 'Stage 0: Device & Indication',
+        stage: 'setup',
+        gateStatus: checkStageGateConditions('setup'),
         tabs: [
           {
-            id: 'builder',
-            label: 'Builder',
-            icon: <FileText className="h-3.5 w-3.5 mr-1.5 text-blue-600" />,
+            id: 'device-intake',
+            label: (
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>Device Profile</span>
+              </div>
+            ),
+            required: true,
+            status: deviceProfile?.deviceName ? 'ready' : 'todo',
+          },
+          {
+            id: 'predicates',
+            label: (
+              <div className="flex items-center">
+                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>Predicate & Classification</span>
+              </div>
+            ),
+            required: true,
+            status: deviceProfile?.primaryPredicate ? 'ready' : 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 1: Safety & Effectiveness Strategy',
+        stage: 'strategy',
+        gateStatus: checkStageGateConditions('strategy'),
+        tabs: [
+          {
+            id: 'se-strategy',
+            label: (
+              <div className="flex items-center">
+                <GitCompare className="h-4 w-4 mr-1.5 text-orange-600" />
+                <span>Safety & Effectiveness Plan</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'pma-search',
+            label: (
+              <div className="flex items-center">
+                <Search className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>PMA Precedent Search</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 2: Clinical Evidence Plan',
+        stage: 'evidence_plan',
+        gateStatus: checkStageGateConditions('evidence_plan'),
+        tabs: [
+          {
+            id: 'standards-matrix',
+            label: (
+              <div className="flex items-center">
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-indigo-600" />
+                <span>Standards & Performance Criteria</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'test-plan',
+            label: (
+              <div className="flex items-center">
+                <Activity className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>Clinical Investigation Plan</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 3: Clinical & Non-Clinical Evidence',
+        stage: 'evidence',
+        gateStatus: checkStageGateConditions('evidence'),
+        tabs: [
+          {
+            id: 'evidence-matrix',
+            label: 'Evidence Matrix Dashboard',
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: false,
+            status: 'todo',
+          },
+          {
+            id: 'bench-testing',
+            label: 'Non-Clinical Testing',
+            icon: <TestTube className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'biocompatibility',
+            label: 'Biocompatibility',
+            icon: <Heart className="h-4 w-4 mr-1.5 text-red-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'clinical-data',
+            label: 'Clinical Study Data',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-teal-600" />,
+            required: true,
+            status: 'todo',
+          },
+          ...(isSectionVisible('software')
+            ? [
+                {
+                  id: 'software',
+                  label: 'Software Documentation',
+                  icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                  required: false,
+                  status: 'todo',
+                },
+              ]
+            : []),
+          ...(isSectionVisible('cybersecurity')
+            ? [
+                {
+                  id: 'cybersecurity',
+                  label: 'Cybersecurity',
+                  icon: <Lock className="h-4 w-4 mr-1.5 text-gray-600" />,
+                  required: false,
+                  status: 'todo',
+                },
+              ]
+            : []),
+          ...(isSectionVisible('sterility')
+            ? [
+                {
+                  id: 'sterility',
+                  label: 'Sterilization & Shelf Life',
+                  icon: <Shield className="h-4 w-4 mr-1.5 text-blue-600" />,
+                  required: false,
+                  status: 'todo',
+                },
+              ]
+            : []),
+        ],
+      },
+      {
+        label: 'Stage 4: PMA Authoring',
+        stage: 'authoring',
+        gateStatus: checkStageGateConditions('authoring'),
+        tabs: [
+          {
+            id: 'admin-forms',
+            label: 'Administrative & Cover Letter',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'device-description',
+            label: 'Device Description',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-gray-600" />,
+            required: true,
+            status: 'todo',
           },
           {
             id: 'document-editor',
-            label: 'Document Editor',
-            icon: <Edit3 className="h-3.5 w-3.5 mr-1.5 text-blue-600" />,
+            label: 'PMA Narrative Editor',
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'ready',
           },
           {
-            id: 'cep',
-            label: 'Evaluation Plan',
-            icon: <ClipboardList className="h-3.5 w-3.5 mr-1.5 text-blue-600" />,
+            id: 'pma-builder',
+            label: 'PMA Summary Builder',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-indigo-600" />,
+            required: true,
+            status: 'todo',
           },
           {
-            id: 'qmp',
-            label: (
-              <div className="flex flex-col items-center leading-tight">
-                <span>Quality Management</span>
-                <span className="text-[0.65rem] text-blue-600">ICH E6(R3)</span>
-              </div>
-            ),
-            icon: <ShieldCheck className="h-3.5 w-3.5 mr-1.5 text-blue-600" />,
+            id: 'labeling',
+            label: 'Labeling',
+            icon: <Tag className="h-4 w-4 mr-1.5 text-purple-600" />,
+            required: true,
+            status: 'todo',
           },
           {
-            id: 'documents',
-            label: (
-              <div className="flex flex-col items-center leading-tight">
-                <span>Documents</span>
-                <span className="text-[0.65rem] text-blue-600">Validated for GxP</span>
-              </div>
-            ),
-            icon: <FolderOpen className="h-3.5 w-3.5 mr-1.5 text-blue-600" />,
+            id: 'biocomp-summary',
+            label: 'Biocompatibility Summary',
+            icon: <Beaker className="h-4 w-4 mr-1.5 text-pink-600" />,
+            required: true,
+            status: 'todo',
           },
           {
-            id: 'data-retrieval',
-            label: 'Data Retrieval',
-            icon: <Database className="h-3.5 w-3.5 mr-1.5 text-blue-600" />,
-          },
-        ],
-      },
-      {
-        label: 'Evidence:',
-        tabs: [
-          {
-            id: 'literature',
-            label: 'Literature',
-            icon: <BookOpen className="h-3.5 w-3.5 mr-1.5 text-green-600" />,
-          },
-          {
-            id: 'literature-review',
-            label: 'Literature Review',
-            icon: <BookOpen className="h-3.5 w-3.5 mr-1.5 text-green-600" />,
-          },
-          {
-            id: 'internal-clinical-data',
-            label: 'Internal Clinical Data',
-            icon: <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5 text-green-600" />,
-          },
-          {
-            id: 'sota',
-            label: 'State of Art',
-            icon: <BookMarked className="h-3.5 w-3.5 mr-1.5 text-green-600" />,
+            id: 'performance-summaries',
+            label: 'Clinical & Non-Clinical Summaries',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-cyan-600" />,
+            required: true,
+            status: 'todo',
           },
         ],
       },
       {
-        label: 'Analysis:',
+        label: 'Stage 5: PMA Assembly & QC',
+        stage: 'estar_rta',
+        gateStatus: checkStageGateConditions('estar_rta'),
         tabs: [
           {
-            id: 'equivalence',
-            label: 'Equivalence',
-            icon: <GitCompare className="h-3.5 w-3.5 mr-1.5 text-purple-600" />,
-          },
-          {
-            id: 'gspr-mapping',
-            label: 'GSPR Mapping',
-            icon: <BarChart className="h-3.5 w-3.5 mr-1.5 text-purple-600" />,
-          },
-          {
-            id: 'traceability',
-            label: (
-              <div className="flex flex-col items-center leading-tight">
-                <span>Regulatory Traceability</span>
-                <span className="text-[0.65rem] text-purple-600">EU MDR and FDA</span>
-              </div>
-            ),
-            icon: <Layers className="h-3.5 w-3.5 mr-1.5 text-purple-600" />,
-          },
-          {
-            id: 'compliance',
-            label: (
-              <div className="flex flex-col items-center leading-tight">
-                <span>EU MDR Compliance</span>
-                <span className="text-[0.65rem] text-purple-600">CER Requirements</span>
-              </div>
-            ),
-            icon: <CheckSquare className="h-3.5 w-3.5 mr-1.5 text-purple-600" />,
-          },
-        ],
-      },
-      {
-        label: 'Output:',
-        tabs: [
-          {
-            id: 'preview',
-            label: 'Preview',
-            icon: <FileText className="h-3.5 w-3.5 mr-1.5 text-orange-600" />,
-          },
-          {
-            id: 'export',
-            label: 'Export',
-            icon: <Download className="h-3.5 w-3.5 mr-1.5 text-orange-600" />,
-          },
-          {
-            id: 'reports',
-            label: 'Reports',
-            icon: <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5 text-orange-600" />,
-          },
-          {
-            id: 'assistant',
+            id: 'estar-assembly',
             label: (
               <div className="flex items-center">
-                <span>AI Assistant</span>
-                <span className="ml-1.5 bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full shadow-sm">
-                  GPT-4o
-                </span>
+                <Package className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>PMA Package Assembly</span>
               </div>
             ),
-            icon: <Lightbulb className="h-3.5 w-3.5 mr-1.5 text-amber-500" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'rta-check',
+            label: (
+              <div className="flex items-center">
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <span>Filing Review Checklist</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
           },
         ],
       },
       {
-        label: 'Integrations:',
+        label: 'Stage 6: Submit & Track',
+        stage: 'submit_ai',
+        gateStatus: checkStageGateConditions('submit_ai'),
         tabs: [
           {
-            id: 'maud',
+            id: 'fda-forms',
             label: (
-              <div className="flex flex-col items-center leading-tight">
-                <span>MAUD Integration</span>
-                <span className="text-[0.65rem] text-teal-600">Adverse Events</span>
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>FDA Forms</span>
               </div>
             ),
-            icon: <Activity className="h-3.5 w-3.5 mr-1.5 text-teal-600" />,
+            required: true,
+            status: 'todo',
           },
           {
-            id: 'k-automation',
+            id: 'submission',
             label: (
-              <div className="flex flex-col items-center leading-tight">
-                <span>K-Automation</span>
-                <span className="text-[0.65rem] text-teal-600">PMCF/PSUR</span>
+              <div className="flex items-center">
+                <Send className="h-4 w-4 mr-1.5 text-teal-600" />
+                <span>Submission</span>
               </div>
             ),
-            icon: <Cpu className="h-3.5 w-3.5 mr-1.5 text-teal-600" />,
+            required: true,
+            status: 'todo',
           },
           {
-            id: '510k',
-            label: (
-              <div className="flex flex-col items-center leading-tight text-center">
-                <span>510(k) Automation</span>
-                <span className="text-[0.65rem] text-teal-600">FDA Submission</span>
-              </div>
-            ),
-            icon: <Archive className="h-3.5 w-3.5 mr-1.5 text-teal-600" />,
+            id: 'ai-tracking',
+            label: 'Interactive Review / AI Tracking',
+            icon: <MessageSquare className="h-4 w-4 mr-1.5 text-amber-600" />,
+            required: true,
+            status: 'todo',
           },
         ],
       },
     ];
 
-    // Return CER tabs only when not in 510(k) mode (should never happen now)
-    // This is commented out since we're focusing on 510(k) workflow only
-    return null; // Remove CER tabs completely
-    /*
-    return (
-      <div className="mt-2 mb-4 border-b border-neutral-100">
-        <div className="flex overflow-x-auto pb-2 px-6 space-x-6">
-          {tabGroups.map((group, groupIndex) => (
-            <div key={groupIndex} className="space-y-1 min-w-fit">
-              <div className="text-xs font-medium text-gray-600 pl-1">{group.label}</div>
-              <div className="flex space-x-1" role="tablist">
-                {group.tabs.map((tab, tabIndex) => (
-                  <Button
-                    key={tab.id}
-                    role="tab"
-                    tabIndex={activeTab === tab.id ? 0 : -1}
-                    aria-selected={activeTab === tab.id}
-                    data-testid={`tab-${tab.id}`}
-                    data-active={activeTab === tab.id}
-                    variant={activeTab === tab.id ? 'default' : 'ghost'}
-                    className={`h-9 px-2.5 py-1.5 text-xs font-medium rounded-md cerv2-tab ${
-                      activeTab === tab.id
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 cerv2-tab-active'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-                    }`}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      // Special case for 510k tab
-                      if (tab.id === '510k') {
-                        setDocumentType('510k');
-                        setActiveTab('predicates');
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      // Keyboard navigation for accessibility - WAI-ARIA tab pattern
-                      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                        e.preventDefault();
-                        const allTabs = group.tabs;
-                        const currentIndex = allTabs.findIndex(t => t.id === tab.id);
-                        let nextIndex;
-                        if (e.key === 'ArrowRight') {
-                          nextIndex = currentIndex + 1 < allTabs.length ? currentIndex + 1 : 0;
-                        } else {
-                          nextIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : allTabs.length - 1;
-                        }
-                        // Arrow keys only move focus, do not activate
-                        const nextTab = document.querySelector(`[data-testid="tab-${allTabs[nextIndex].id}"]`);
-                        nextTab?.focus();
-                      } else if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        // Enter/Space activate the focused tab
-                        setActiveTab(tab.id);
-                        if (tab.id === '510k') {
-                          setDocumentType('510k');
-                          setActiveTab('predicates');
-                        }
-                      }
-                    }}
-                  >
-                    <span className="flex items-center">
-                      {tab.icon}
-                      {tab.label}
-                    </span>
-                  </Button>
-                ))}
+    // ─── De Novo Stage Definitions ────────────────────────────────────────────
+    // FDA De Novo = risk-based classification for novel low-to-moderate risk devices
+    // No predicate exists; must demonstrate reasonable assurance of safety & effectiveness
+    const deNovoTabGroups = [
+      {
+        label: 'Stage 0: Device & Classification',
+        stage: 'setup',
+        gateStatus: checkStageGateConditions('setup'),
+        tabs: [
+          {
+            id: 'device-intake',
+            label: (
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>Device Profile</span>
               </div>
-            </div>
-          ))}
+            ),
+            required: true,
+            status: deviceProfile?.deviceName ? 'ready' : 'todo',
+          },
+          {
+            id: 'predicates',
+            label: (
+              <div className="flex items-center">
+                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>Classification Research</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 1: Risk-Based Strategy',
+        stage: 'strategy',
+        gateStatus: checkStageGateConditions('strategy'),
+        tabs: [
+          {
+            id: 'se-strategy',
+            label: (
+              <div className="flex items-center">
+                <GitCompare className="h-4 w-4 mr-1.5 text-orange-600" />
+                <span>Risk & Benefit Analysis</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 2: Evidence Plan',
+        stage: 'evidence_plan',
+        gateStatus: checkStageGateConditions('evidence_plan'),
+        tabs: [
+          {
+            id: 'standards-matrix',
+            label: (
+              <div className="flex items-center">
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-indigo-600" />
+                <span>Standards & Special Controls</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'test-plan',
+            label: (
+              <div className="flex items-center">
+                <Activity className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>Performance Testing Plan</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 3: Evidence',
+        stage: 'evidence',
+        gateStatus: checkStageGateConditions('evidence'),
+        tabs: [
+          {
+            id: 'evidence-matrix',
+            label: 'Evidence Matrix Dashboard',
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: false,
+            status: 'todo',
+          },
+          {
+            id: 'bench-testing',
+            label: 'Performance Testing',
+            icon: <TestTube className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'biocompatibility',
+            label: 'Biocompatibility',
+            icon: <Heart className="h-4 w-4 mr-1.5 text-red-600" />,
+            required: true,
+            status: 'todo',
+          },
+          ...(isSectionVisible('software')
+            ? [
+                {
+                  id: 'software',
+                  label: 'Software Documentation',
+                  icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                  required: false,
+                  status: 'todo',
+                },
+              ]
+            : []),
+          ...(isSectionVisible('sterility')
+            ? [
+                {
+                  id: 'sterility',
+                  label: 'Sterilization & Shelf Life',
+                  icon: <Shield className="h-4 w-4 mr-1.5 text-blue-600" />,
+                  required: false,
+                  status: 'todo',
+                },
+              ]
+            : []),
+          {
+            id: 'usability',
+            label: 'Usability / Human Factors',
+            icon: <Users className="h-4 w-4 mr-1.5 text-purple-600" />,
+            required: false,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 4: De Novo Authoring',
+        stage: 'authoring',
+        gateStatus: checkStageGateConditions('authoring'),
+        tabs: [
+          {
+            id: 'admin-forms',
+            label: 'Administrative Forms',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'device-description',
+            label: 'Device Description',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-gray-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'document-editor',
+            label: 'De Novo Narrative Editor',
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'ready',
+          },
+          {
+            id: 'labeling',
+            label: 'Labeling & IFU',
+            icon: <Tag className="h-4 w-4 mr-1.5 text-purple-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'biocomp-summary',
+            label: 'Biocompatibility Summary',
+            icon: <Beaker className="h-4 w-4 mr-1.5 text-pink-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'performance-summaries',
+            label: 'Performance Summaries',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-cyan-600" />,
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 5: De Novo Package & QC',
+        stage: 'estar_rta',
+        gateStatus: checkStageGateConditions('estar_rta'),
+        tabs: [
+          {
+            id: 'estar-assembly',
+            label: (
+              <div className="flex items-center">
+                <Package className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>De Novo Package Assembly</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'rta-check',
+            label: (
+              <div className="flex items-center">
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <span>Acceptance Review Checklist</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 6: Submit & Track',
+        stage: 'submit_ai',
+        gateStatus: checkStageGateConditions('submit_ai'),
+        tabs: [
+          {
+            id: 'fda-forms',
+            label: (
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>FDA Forms</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'submission',
+            label: (
+              <div className="flex items-center">
+                <Send className="h-4 w-4 mr-1.5 text-teal-600" />
+                <span>Submission</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'ai-tracking',
+            label: 'Interactive Review / AI Tracking',
+            icon: <MessageSquare className="h-4 w-4 mr-1.5 text-amber-600" />,
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+    ];
+
+    // ─── HDE Stage Definitions ────────────────────────────────────────────────
+    // FDA HDE = Humanitarian Device Exemption for devices treating ≤ 8,000 patients/year
+    // Requires probable benefit, no comparable device available
+    const hdeTabGroups = [
+      {
+        label: 'Stage 0: Device & Population',
+        stage: 'setup',
+        gateStatus: checkStageGateConditions('setup'),
+        tabs: [
+          {
+            id: 'device-intake',
+            label: (
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>Device Profile</span>
+              </div>
+            ),
+            required: true,
+            status: deviceProfile?.deviceName ? 'ready' : 'todo',
+          },
+          {
+            id: 'predicates',
+            label: (
+              <div className="flex items-center">
+                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>HUD Designation & Classification</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 1: Probable Benefit Strategy',
+        stage: 'strategy',
+        gateStatus: checkStageGateConditions('strategy'),
+        tabs: [
+          {
+            id: 'se-strategy',
+            label: (
+              <div className="flex items-center">
+                <GitCompare className="h-4 w-4 mr-1.5 text-orange-600" />
+                <span>Probable Benefit Rationale</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 2: Evidence Plan',
+        stage: 'evidence_plan',
+        gateStatus: checkStageGateConditions('evidence_plan'),
+        tabs: [
+          {
+            id: 'standards-matrix',
+            label: (
+              <div className="flex items-center">
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-indigo-600" />
+                <span>Standards & Testing Criteria</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'test-plan',
+            label: (
+              <div className="flex items-center">
+                <Activity className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>Testing Plan</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 3: Evidence',
+        stage: 'evidence',
+        gateStatus: checkStageGateConditions('evidence'),
+        tabs: [
+          {
+            id: 'evidence-matrix',
+            label: 'Evidence Matrix Dashboard',
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: false,
+            status: 'todo',
+          },
+          {
+            id: 'bench-testing',
+            label: 'Bench / Performance Testing',
+            icon: <TestTube className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'biocompatibility',
+            label: 'Biocompatibility',
+            icon: <Heart className="h-4 w-4 mr-1.5 text-red-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'clinical-data',
+            label: 'Clinical Evidence',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-teal-600" />,
+            required: false,
+            status: 'todo',
+          },
+          ...(isSectionVisible('software')
+            ? [
+                {
+                  id: 'software',
+                  label: 'Software Documentation',
+                  icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                  required: false,
+                  status: 'todo',
+                },
+              ]
+            : []),
+        ],
+      },
+      {
+        label: 'Stage 4: HDE Authoring',
+        stage: 'authoring',
+        gateStatus: checkStageGateConditions('authoring'),
+        tabs: [
+          {
+            id: 'admin-forms',
+            label: 'Administrative Forms',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'device-description',
+            label: 'Device Description',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-gray-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'document-editor',
+            label: 'HDE Narrative Editor',
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'ready',
+          },
+          {
+            id: 'labeling',
+            label: 'Labeling',
+            icon: <Tag className="h-4 w-4 mr-1.5 text-purple-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'performance-summaries',
+            label: 'Summary of Evidence',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-cyan-600" />,
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 5: HDE Package & QC',
+        stage: 'estar_rta',
+        gateStatus: checkStageGateConditions('estar_rta'),
+        tabs: [
+          {
+            id: 'estar-assembly',
+            label: (
+              <div className="flex items-center">
+                <Package className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>HDE Package Assembly</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'rta-check',
+            label: (
+              <div className="flex items-center">
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <span>HDE Review Checklist</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 6: Submit & Track',
+        stage: 'submit_ai',
+        gateStatus: checkStageGateConditions('submit_ai'),
+        tabs: [
+          {
+            id: 'fda-forms',
+            label: (
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>FDA Forms</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'submission',
+            label: (
+              <div className="flex items-center">
+                <Send className="h-4 w-4 mr-1.5 text-teal-600" />
+                <span>Submission</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'ai-tracking',
+            label: 'Interactive Review / AI Tracking',
+            icon: <MessageSquare className="h-4 w-4 mr-1.5 text-amber-600" />,
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+    ];
+
+    // ─── CER Stage Definitions ────────────────────────────────────────────────
+    // EU MDR Clinical Evaluation Report — Article 61, MEDDEV 2.7/1 Rev 4
+    // Fundamentally different from FDA: literature-driven, GSPR-based, lifecycle
+    const cerTabGroups = [
+      {
+        label: 'Stage 0: Scope & Planning',
+        stage: 'setup',
+        gateStatus: checkStageGateConditions('setup'),
+        tabs: [
+          {
+            id: 'device-intake',
+            label: (
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>Device & Scope Definition</span>
+              </div>
+            ),
+            required: true,
+            status: deviceProfile?.deviceName ? 'ready' : 'todo',
+          },
+          {
+            id: 'cep',
+            label: (
+              <div className="flex items-center">
+                <ClipboardList className="h-4 w-4 mr-1.5 text-blue-600" />
+                <span>Clinical Evaluation Plan</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 1: Equivalence & SOTA',
+        stage: 'strategy',
+        gateStatus: checkStageGateConditions('strategy'),
+        tabs: [
+          {
+            id: 'predicates',
+            label: (
+              <div className="flex items-center">
+                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <span>Equivalent Device Analysis</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'sota',
+            label: (
+              <div className="flex items-center">
+                <BookMarked className="h-4 w-4 mr-1.5 text-green-600" />
+                <span>State of the Art</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 2: Literature & Data',
+        stage: 'evidence_plan',
+        gateStatus: checkStageGateConditions('evidence_plan'),
+        tabs: [
+          {
+            id: 'literature',
+            label: 'Literature Search',
+            icon: <BookOpen className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'literature-review',
+            label: 'Literature Appraisal',
+            icon: <BookOpen className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'internal-clinical-data',
+            label: 'Internal Clinical Data',
+            icon: <FileSpreadsheet className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'data-retrieval',
+            label: 'PMS / Vigilance Data',
+            icon: <Database className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 3: Analysis & Compliance',
+        stage: 'evidence',
+        gateStatus: checkStageGateConditions('evidence'),
+        tabs: [
+          {
+            id: 'equivalence',
+            label: 'Clinical Equivalence',
+            icon: <GitCompare className="h-4 w-4 mr-1.5 text-purple-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'gspr-mapping',
+            label: 'GSPR Mapping',
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-purple-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'compliance',
+            label: 'EU MDR Compliance Check',
+            icon: <CheckSquare className="h-4 w-4 mr-1.5 text-purple-600" />,
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 4: CER Authoring',
+        stage: 'authoring',
+        gateStatus: checkStageGateConditions('authoring'),
+        tabs: [
+          {
+            id: 'builder',
+            label: 'CER Builder',
+            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'document-editor',
+            label: 'CER Narrative Editor',
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            required: true,
+            status: 'ready',
+          },
+          {
+            id: 'qmp',
+            label: 'Quality Management',
+            icon: <ShieldCheck className="h-4 w-4 mr-1.5 text-blue-600" />,
+            required: false,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 5: Review & PMCF',
+        stage: 'estar_rta',
+        gateStatus: checkStageGateConditions('estar_rta'),
+        tabs: [
+          {
+            id: 'preview',
+            label: (
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-1.5 text-orange-600" />
+                <span>CER Preview</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'rta-check',
+            label: (
+              <div className="flex items-center">
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <span>CER Completeness Check</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+        ],
+      },
+      {
+        label: 'Stage 6: Output & Lifecycle',
+        stage: 'submit_ai',
+        gateStatus: checkStageGateConditions('submit_ai'),
+        tabs: [
+          {
+            id: 'export',
+            label: (
+              <div className="flex items-center">
+                <Download className="h-4 w-4 mr-1.5 text-orange-600" />
+                <span>Export CER</span>
+              </div>
+            ),
+            required: true,
+            status: 'todo',
+          },
+          {
+            id: 'reports',
+            label: 'Reports & Audit Trail',
+            icon: <FileSpreadsheet className="h-4 w-4 mr-1.5 text-orange-600" />,
+            required: false,
+            status: 'todo',
+          },
+          {
+            id: 'ai-tracking',
+            label: 'PMCF / Lifecycle Tracking',
+            icon: <MessageSquare className="h-4 w-4 mr-1.5 text-amber-600" />,
+            required: false,
+            status: 'todo',
+          },
+        ],
+      },
+    ];
+
+    // ─── Select the right track config ────────────────────────────────────────
+    const trackTabGroups = {
+      pma: pmaTabGroups,
+      de_novo: deNovoTabGroups,
+      hde: hdeTabGroups,
+      cer: cerTabGroups,
+    };
+    const activeGroups = trackTabGroups[documentType];
+
+    if (!activeGroups) return null; // Unknown track — should not happen
+
+    // Render using the same gated stage layout as 510(k)
+    return (
+      <div className="mt-2 mb-4 border-b border-gray-200 bg-gray-50">
+        <div className="flex overflow-x-auto pb-3 px-6 space-x-8">
+          {activeGroups.map((group, groupIndex) => {
+            const gateStatus = group.gateStatus || { passed: false };
+            const isPreviousStagePassed =
+              groupIndex === 0 || activeGroups[groupIndex - 1]?.gateStatus?.passed;
+            const isStageAccessible = groupIndex === 0 || isPreviousStagePassed;
+
+            return (
+              <div key={groupIndex} className="space-y-2 min-w-fit">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-700">{group.label}</span>
+                  {gateStatus.passed ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : isStageAccessible ? (
+                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                  ) : (
+                    <Lock className="h-4 w-4 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1" role="tablist">
+                  {group.tabs.map(tab => {
+                    const isTabEnabled = isStageAccessible && tab.status !== 'blocked';
+                    const statusColors = {
+                      todo: 'bg-gray-100 text-gray-600',
+                      draft: 'bg-yellow-100 text-yellow-700',
+                      ready: 'bg-green-100 text-green-700',
+                      blocked: 'bg-red-100 text-red-700',
+                    };
+                    return (
+                      <div key={tab.id} className="relative">
+                        <Button
+                          role="tab"
+                          tabIndex={activeTab === tab.id ? 0 : -1}
+                          aria-selected={activeTab === tab.id}
+                          aria-disabled={!isTabEnabled}
+                          data-testid={`tab-${tab.id}`}
+                          data-active={activeTab === tab.id}
+                          variant={activeTab === tab.id ? 'default' : 'outline'}
+                          disabled={!isTabEnabled}
+                          className={`h-auto px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                            activeTab === tab.id
+                              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                              : isTabEnabled
+                                ? 'text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                                : 'text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                          }`}
+                          onClick={() => {
+                            if (!isTabEnabled) {
+                              toast({
+                                title: 'Stage Not Accessible',
+                                description: `Complete ${group.label.replace(/Stage \d+: /, '')} requirements first.`,
+                                variant: 'default',
+                              });
+                              return;
+                            }
+                            setActiveTab(tab.id);
+                          }}
+                        >
+                          <div className="flex flex-col items-start gap-1">
+                            <div className="flex items-center gap-1.5">
+                              {tab.icon ||
+                                (tab.label && typeof tab.label === 'object' ? null : (
+                                  <FileText className="h-3.5 w-3.5" />
+                                ))}
+                              <span className="font-medium">
+                                {typeof tab.label === 'object' ? tab.label : tab.label}
+                              </span>
+                            </div>
+                            {tab.status && (
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusColors[tab.status]}`}
+                              >
+                                {tab.status.toUpperCase()}
+                              </span>
+                            )}
+                            {tab.required && (
+                              <span className="text-[10px] text-red-500">Required</span>
+                            )}
+                          </div>
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
-    */
   };
 
   // Helper functions
@@ -6663,7 +7517,9 @@ export default function CERV2Page({
             Back to Project
           </button>
           <span className="text-gray-300">|</span>
-          <span className="text-sm font-medium text-gray-700">FDA 510(k) Workspace</span>
+          <span className="text-sm font-medium text-gray-700">
+            {TRACK_META[documentType]?.workspaceLabel || 'Device Workspace'}
+          </span>
         </div>
       )}
 
