@@ -177,6 +177,23 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 }) => {
   const displayName = userName || 'My Account';
   const avatarInitial = displayName[0].toUpperCase();
+
+  // Track-aware workspace label based on current URL mode
+  const workspaceLabel = (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get('mode');
+      const labels: Record<string, string> = {
+        pma: 'PMA Workspace',
+        de_novo: 'De Novo Workspace',
+        hde: 'HDE Workspace',
+        cer: 'CER Workspace',
+      };
+      return labels[mode || ''] || '510(k) Workspace';
+    } catch {
+      return '510(k) Workspace';
+    }
+  })();
   // Group conversations by time
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -297,7 +314,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
           >
             <ShieldAlert className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            510(k) Workspace
+            {workspaceLabel}
           </button>
           <button
             onClick={() => onNavigate?.('cer-generator')}

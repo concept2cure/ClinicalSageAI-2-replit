@@ -322,6 +322,141 @@ export default function CERV2Page({
     cer: { title: 'EU MDR Clinical Evaluation Report', workspaceLabel: 'EU MDR CER Workspace' },
   };
 
+  // ─── Track-aware content strings (avoids scattered inline conditionals) ───
+  const TRACK_CONTENT = {
+    '510k': {
+      pipelineHeading: 'FDA 510(k) Submission Pipeline',
+      welcomeHeading: 'Welcome to CERV2 - Your 510(k) Submission Builder',
+      welcomeSubtext:
+        'Follow this step-by-step workflow to build your complete FDA 510(k) submission package:',
+      workflowTitle: 'Your 510(k) Submission Workflow',
+      overviewTitle: 'FDA 510(k) Submission Workflow',
+      overviewSubtitle: 'Complete 7-stage gated process for FDA 510(k) submission',
+      docCreationLabel: 'Write 510(k) with AI assistance',
+      newToTrack: 'New to 510(k)?',
+      deviceProfileToast: 'You can now proceed with the 510(k) submission process.',
+      saveToast: 'Your 510(k) workflow data has been saved successfully.',
+      completeToast: 'All stages completed. Ready for FDA submission.',
+      completeTitle: '510(k) Workflow Complete',
+      newProjectDesc: 'Start a new 510(k) submission for your medical device.',
+      stageList: [
+        { name: 'Setup', desc: 'Device intake and predicate analysis' },
+        { name: 'Strategy', desc: 'Regulatory pathway determination' },
+        { name: 'Evidence Plan', desc: 'Testing and validation strategy' },
+        { name: 'Evidence', desc: 'Collect testing data and reports' },
+        { name: 'Author', desc: 'Write submission documents' },
+        { name: 'eSTAR & RTA', desc: 'Review and acceptance criteria' },
+        { name: 'Submit & AI', desc: 'Portal submission and tracking' },
+      ],
+    },
+    pma: {
+      pipelineHeading: 'FDA PMA Submission Pipeline',
+      welcomeHeading: 'Welcome to CERV2 - Your PMA Submission Builder',
+      welcomeSubtext:
+        'Follow this guided workflow to build your complete FDA Premarket Approval (PMA) submission package:',
+      workflowTitle: 'Your PMA Submission Workflow',
+      overviewTitle: 'FDA PMA Submission Workflow',
+      overviewSubtitle: 'Complete 7-stage gated process for FDA PMA submission',
+      docCreationLabel: 'Write PMA sections with AI assistance',
+      newToTrack: 'New to PMA?',
+      deviceProfileToast: 'You can now proceed with the PMA submission process.',
+      saveToast: 'Your PMA workflow data has been saved successfully.',
+      completeToast: 'All stages completed. Ready for FDA PMA submission.',
+      completeTitle: 'PMA Workflow Complete',
+      newProjectDesc: 'Start a new PMA submission for your medical device.',
+      stageList: [
+        { name: 'Device & Indication', desc: 'Device profile and intended use definition' },
+        {
+          name: 'Safety & Effectiveness Strategy',
+          desc: 'Clinical and nonclinical evidence strategy',
+        },
+        { name: 'Clinical Evidence Plan', desc: 'Clinical investigation and testing plan' },
+        {
+          name: 'Clinical & Non-Clinical Evidence',
+          desc: 'Collect clinical trial data and bench testing',
+        },
+        { name: 'PMA Authoring', desc: 'Write PMA submission sections' },
+        { name: 'PMA Assembly & QC', desc: 'Review and quality check' },
+        { name: 'Submit & Track', desc: 'FDA submission and tracking' },
+      ],
+    },
+    de_novo: {
+      pipelineHeading: 'FDA De Novo Classification Pipeline',
+      welcomeHeading: 'Welcome to CERV2 - Your De Novo Classification Builder',
+      welcomeSubtext:
+        'Follow this guided workflow to build your complete FDA De Novo classification request:',
+      workflowTitle: 'Your De Novo Classification Workflow',
+      overviewTitle: 'FDA De Novo Classification Workflow',
+      overviewSubtitle: 'Complete 7-stage gated process for FDA De Novo classification',
+      docCreationLabel: 'Write De Novo request with AI assistance',
+      newToTrack: 'New to De Novo?',
+      deviceProfileToast: 'You can now proceed with the De Novo classification process.',
+      saveToast: 'Your De Novo workflow data has been saved successfully.',
+      completeToast: 'All stages completed. Ready for FDA De Novo submission.',
+      completeTitle: 'De Novo Workflow Complete',
+      newProjectDesc: 'Start a new De Novo classification request for your medical device.',
+      stageList: [
+        { name: 'Device & Classification', desc: 'Device profile and classification research' },
+        { name: 'Risk-Based Strategy', desc: 'Risk analysis and special controls identification' },
+        { name: 'Evidence Plan', desc: 'Testing and validation plan' },
+        { name: 'Evidence', desc: 'Collect performance and safety data' },
+        { name: 'De Novo Authoring', desc: 'Write De Novo request sections' },
+        { name: 'De Novo Package & QC', desc: 'Review and quality check' },
+        { name: 'Submit & Track', desc: 'FDA submission and tracking' },
+      ],
+    },
+    hde: {
+      pipelineHeading: 'FDA HDE Submission Pipeline',
+      welcomeHeading: 'Welcome to CERV2 - Your HDE Submission Builder',
+      welcomeSubtext:
+        'Follow this guided workflow to build your complete FDA Humanitarian Device Exemption (HDE) submission:',
+      workflowTitle: 'Your HDE Submission Workflow',
+      overviewTitle: 'FDA HDE Submission Workflow',
+      overviewSubtitle: 'Complete 7-stage gated process for FDA HDE submission',
+      docCreationLabel: 'Write HDE sections with AI assistance',
+      newToTrack: 'New to HDE?',
+      deviceProfileToast: 'You can now proceed with the HDE submission process.',
+      saveToast: 'Your HDE workflow data has been saved successfully.',
+      completeToast: 'All stages completed. Ready for FDA HDE submission.',
+      completeTitle: 'HDE Workflow Complete',
+      newProjectDesc: 'Start a new HDE submission for your medical device.',
+      stageList: [
+        { name: 'Device & Population', desc: 'Device profile and target population' },
+        { name: 'Probable Benefit Strategy', desc: 'Probable benefit and risk analysis' },
+        { name: 'Evidence Plan', desc: 'Testing and clinical evidence plan' },
+        { name: 'Evidence', desc: 'Collect clinical and nonclinical evidence' },
+        { name: 'HDE Authoring', desc: 'Write HDE submission sections' },
+        { name: 'HDE Package & QC', desc: 'Review and quality check' },
+        { name: 'Submit & Track', desc: 'FDA submission and tracking' },
+      ],
+    },
+    cer: {
+      pipelineHeading: 'EU MDR Clinical Evaluation Pipeline',
+      welcomeHeading: 'Welcome to CERV2 - Your Clinical Evaluation Report Builder',
+      welcomeSubtext:
+        'Follow this guided workflow to build your complete EU MDR Clinical Evaluation Report:',
+      workflowTitle: 'Your Clinical Evaluation Workflow',
+      overviewTitle: 'EU MDR Clinical Evaluation Workflow',
+      overviewSubtitle: 'Complete 7-stage process for EU MDR Clinical Evaluation Report',
+      docCreationLabel: 'Write CER sections with AI assistance',
+      newToTrack: 'New to CER?',
+      deviceProfileToast: 'You can now proceed with the Clinical Evaluation process.',
+      saveToast: 'Your CER workflow data has been saved successfully.',
+      completeToast: 'All stages completed. Ready for CER finalization.',
+      completeTitle: 'CER Workflow Complete',
+      newProjectDesc: 'Start a new Clinical Evaluation Report for your medical device.',
+      stageList: [
+        { name: 'Scope & Planning', desc: 'Device scope and evaluation plan' },
+        { name: 'Equivalence & SOTA', desc: 'Equivalent device and state of the art analysis' },
+        { name: 'Literature & Data', desc: 'Literature search and data collection' },
+        { name: 'Analysis & Compliance', desc: 'Clinical data analysis and GSPR mapping' },
+        { name: 'CER Authoring', desc: 'Write CER narrative sections' },
+        { name: 'Review & PMCF', desc: 'Review and post-market clinical follow-up' },
+        { name: 'Output & Lifecycle', desc: 'Export CER and lifecycle tracking' },
+      ],
+    },
+  };
+
   // State variables
   const [title, setTitle] = useState(() => {
     const m = (effectiveInitialDocType || '').toLowerCase();
@@ -1925,71 +2060,120 @@ export default function CERV2Page({
     return true;
   };
 
+  const trackContent = TRACK_CONTENT[documentType] || TRACK_CONTENT['510k'];
+
   const renderContent = () => {
-    // Enhanced 510(k) Intake Workflow - comprehensive 7-stage gated process
+    // Device Intake — track-aware rendering
     if (activeTab === 'device-intake') {
+      // 510(k) uses the full Enhanced510kIntakeWorkflow
+      if (documentType === '510k') {
+        return (
+          <Enhanced510kIntakeWorkflow
+            existingProject={deviceProfile}
+            organizationId={organizationId}
+            projectId={k510DocumentId || deviceProfile?.id}
+            onSave={workflowData => {
+              const enhancedProfile = {
+                ...deviceProfile,
+                deviceName: workflowData.deviceName,
+                manufacturer: workflowData.applicantName,
+                intendedUse: workflowData.intendedUse,
+                indicationsForUse: workflowData.indicationsForUse,
+                productCode: workflowData.productCode,
+                regulationNumber: workflowData.regulationNumber,
+                deviceClass: workflowData.deviceClass,
+                submissionType: workflowData.submissionType,
+                dunsNumber: workflowData.dunsNumber,
+                establishmentNumber: workflowData.establishmentNumber,
+                contactName: workflowData.contactName,
+                contactEmail: workflowData.contactEmail,
+                contactPhone: workflowData.contactPhone,
+                deviceModels: workflowData.deviceModels,
+                deviceAccessories: workflowData.deviceAccessories,
+                hasSoftware: workflowData.hasSoftware,
+                isCyberDevice: workflowData.isCyberDevice,
+                isSterile: workflowData.isSterile,
+                hasClinicalData: workflowData.hasClinicalData,
+                hasPatientContacting: workflowData.hasPatientContacting,
+                contactDuration: workflowData.contactDuration,
+                contactType: workflowData.contactType,
+                primaryPredicate: workflowData.primaryPredicateKNumber,
+                predicateManufacturer: workflowData.predicateManufacturer,
+                workflowMetadata: workflowData,
+              };
+
+              setDeviceProfile(enhancedProfile);
+              localStorage.setItem('510k_deviceProfile', JSON.stringify(enhancedProfile));
+              localStorage.setItem('510k_enhanced_workflow', JSON.stringify(workflowData));
+
+              toast({
+                title: 'Progress Saved',
+                description: trackContent.saveToast,
+              });
+            }}
+            onComplete={completedData => {
+              toast({
+                title: trackContent.completeTitle,
+                description: trackContent.completeToast,
+                duration: 5000,
+              });
+              setActiveTab('submission');
+            }}
+          />
+        );
+      }
+
+      // Non-510(k) tracks: track-appropriate device intake overview
       return (
-        <Enhanced510kIntakeWorkflow
-          existingProject={deviceProfile}
-          organizationId={organizationId}
-          projectId={k510DocumentId || deviceProfile?.id}
-          onSave={workflowData => {
-            // Update device profile with enhanced workflow data
-            const enhancedProfile = {
-              ...deviceProfile,
-              // Map workflow data to device profile format
-              deviceName: workflowData.deviceName,
-              manufacturer: workflowData.applicantName,
-              intendedUse: workflowData.intendedUse,
-              indicationsForUse: workflowData.indicationsForUse,
-              productCode: workflowData.productCode,
-              regulationNumber: workflowData.regulationNumber,
-              deviceClass: workflowData.deviceClass,
-              // Additional enhanced fields
-              submissionType: workflowData.submissionType,
-              dunsNumber: workflowData.dunsNumber,
-              establishmentNumber: workflowData.establishmentNumber,
-              contactName: workflowData.contactName,
-              contactEmail: workflowData.contactEmail,
-              contactPhone: workflowData.contactPhone,
-              deviceModels: workflowData.deviceModels,
-              deviceAccessories: workflowData.deviceAccessories,
-              // Feature flags
-              hasSoftware: workflowData.hasSoftware,
-              isCyberDevice: workflowData.isCyberDevice,
-              isSterile: workflowData.isSterile,
-              hasClinicalData: workflowData.hasClinicalData,
-              hasPatientContacting: workflowData.hasPatientContacting,
-              contactDuration: workflowData.contactDuration,
-              contactType: workflowData.contactType,
-              // Predicate info
-              primaryPredicate: workflowData.primaryPredicateKNumber,
-              predicateManufacturer: workflowData.predicateManufacturer,
-              // Store full workflow data
-              workflowMetadata: workflowData,
-            };
-
-            setDeviceProfile(enhancedProfile);
-            // Save to localStorage
-            localStorage.setItem('510k_deviceProfile', JSON.stringify(enhancedProfile));
-            localStorage.setItem('510k_enhanced_workflow', JSON.stringify(workflowData));
-
-            toast({
-              title: 'Progress Saved',
-              description: 'Your 510(k) workflow data has been saved successfully.',
-            });
-          }}
-          onComplete={completedData => {
-            toast({
-              title: '510(k) Workflow Complete',
-              description: 'All stages completed. Ready for FDA submission.',
-              duration: 5000,
-            });
-
-            // Navigate to submission tab
-            setActiveTab('submission');
-          }}
-        />
+        <div className="p-6 space-y-6">
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-blue-600 p-3 rounded-lg">
+                  <Lightbulb className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {trackContent.welcomeHeading}
+                  </h3>
+                  <p className="text-sm text-gray-700 mb-4">{trackContent.welcomeSubtext}</p>
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+                    <h4 className="font-semibold text-sm text-gray-900 mb-3">
+                      {trackContent.workflowTitle}
+                    </h4>
+                    <div className="grid gap-2">
+                      {trackContent.stageList.map((stage, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
+                        >
+                          <Badge className="bg-blue-100 text-blue-700">Stage {idx}</Badge>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{stage.name}</p>
+                            <p className="text-xs text-gray-600">{stage.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      {trackContent.newToTrack}
+                    </span>
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 text-xs text-blue-600"
+                      onClick={() => setActiveTab('fda-guidance')}
+                    >
+                      Read Guidance
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       );
     }
 
@@ -5462,77 +5646,40 @@ export default function CERV2Page({
     }
     // OLD DUPLICATE CODE REMOVED - NOW HANDLED EARLIER IN FUNCTION
     else {
-      // Default to showing the 510(k) workflow overview
+      // Default: track-aware workflow overview
       return (
         <div className="p-6">
           <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileCheck className="h-6 w-6 text-blue-600" />
-                FDA 510(k) Submission Workflow
+                {trackContent.overviewTitle}
               </CardTitle>
               <CardDescription className="text-blue-700">
-                Complete 7-stage gated process for FDA 510(k) submission
+                {trackContent.overviewSubtitle}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-3">
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-                  <Badge className="bg-blue-100 text-blue-700">Stage 0</Badge>
-                  <div className="flex-1">
-                    <p className="font-medium">Setup</p>
-                    <p className="text-sm text-gray-600">Device intake and predicate analysis</p>
+                {trackContent.stageList.map((stage, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100"
+                  >
+                    <Badge className="bg-blue-100 text-blue-700">Stage {idx}</Badge>
+                    <div className="flex-1">
+                      <p className="font-medium">{stage.name}</p>
+                      <p className="text-sm text-gray-600">{stage.desc}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-                  <Badge className="bg-blue-100 text-blue-700">Stage 1</Badge>
-                  <div className="flex-1">
-                    <p className="font-medium">Strategy</p>
-                    <p className="text-sm text-gray-600">Regulatory pathway determination</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-                  <Badge className="bg-blue-100 text-blue-700">Stage 2</Badge>
-                  <div className="flex-1">
-                    <p className="font-medium">Evidence Plan</p>
-                    <p className="text-sm text-gray-600">Testing and validation strategy</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-                  <Badge className="bg-blue-100 text-blue-700">Stage 3</Badge>
-                  <div className="flex-1">
-                    <p className="font-medium">Evidence</p>
-                    <p className="text-sm text-gray-600">Collect testing data and reports</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-                  <Badge className="bg-blue-100 text-blue-700">Stage 4</Badge>
-                  <div className="flex-1">
-                    <p className="font-medium">Author</p>
-                    <p className="text-sm text-gray-600">Write submission documents</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-                  <Badge className="bg-blue-100 text-blue-700">Stage 5</Badge>
-                  <div className="flex-1">
-                    <p className="font-medium">eSTAR & RTA</p>
-                    <p className="text-sm text-gray-600">Review and acceptance criteria</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-                  <Badge className="bg-blue-100 text-blue-700">Stage 6</Badge>
-                  <div className="flex-1">
-                    <p className="font-medium">Submit & AI</p>
-                    <p className="text-sm text-gray-600">Portal submission and tracking</p>
-                  </div>
-                </div>
+                ))}
               </div>
               <div className="mt-4 pt-4 border-t border-blue-200">
                 <Button
                   onClick={() => setActiveTab('device-intake')}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Start Stage 0: Setup
+                  Start Stage 0: {trackContent.stageList[0]?.name || 'Setup'}
                 </Button>
               </div>
             </CardContent>
@@ -7187,8 +7334,7 @@ export default function CERV2Page({
 
     toast({
       title: 'Device Profile Created',
-      description:
-        'Your device profile has been created successfully. You can now proceed with the 510(k) submission process.',
+      description: `Your device profile has been created successfully. ${trackContent.deviceProfileToast}`,
       duration: 5000,
     });
   };
@@ -7262,7 +7408,7 @@ export default function CERV2Page({
                   <ChevronLeft className="w-4 h-4" />
                   Hub
                 </button>
-                <h1 className="text-2xl font-bold text-gray-900">FDA 510(k) Submission Pipeline</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{trackContent.pipelineHeading}</h1>
 
                 {/* Multi-Project Selector */}
                 <div className="relative">
@@ -8392,9 +8538,7 @@ export default function CERV2Page({
               <FilePlus className="h-5 w-5 text-blue-600" />
               Create New Medical Device Project
             </DialogTitle>
-            <DialogDescription>
-              Start a new 510(k) submission or CER report for your medical device.
-            </DialogDescription>
+            <DialogDescription>{trackContent.newProjectDesc}</DialogDescription>
           </DialogHeader>
           <form
             onSubmit={e => {
