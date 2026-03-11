@@ -557,6 +557,13 @@ export const ZenApp: React.FC = () => {
   const [generatingArtifact, setGeneratingArtifact] = useState<string | null>(null);
   const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
 
+  // Pending editor content — when a module wants to open the editor with pre-populated content
+  const [pendingEditorContent, setPendingEditorContent] = useState<{
+    title: string;
+    content: string;
+    ctdSection?: string;
+  } | null>(null);
+
   // Active selection — URL projectId takes precedence
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
     urlProjectId ?? projects[0]?.id
@@ -1612,6 +1619,21 @@ export const ZenApp: React.FC = () => {
                       console.log(
                         `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
                       );
+                      // Build populated content from the section
+                      const sectionContent =
+                        section.content && section.content.trim()
+                          ? section.content
+                          : `<h1>${section.number} ${section.title}</h1>
+<p>This section covers the regulatory requirements for <strong>${section.title}</strong> as part of the CTD submission.</p>
+<h2>Scope</h2>
+<p>[Section content to be drafted. Use the RI Edit tools above to generate regulatory-compliant language.]</p>
+<h2>References</h2>
+<p>[Cross-references and source citations will be added here.]</p>`;
+                      setPendingEditorContent({
+                        title: `${section.number} ${section.title}`,
+                        content: sectionContent,
+                        ctdSection: section.number,
+                      });
                       setLayoutMode('editor');
                     }}
                   />
@@ -1890,7 +1912,14 @@ export const ZenApp: React.FC = () => {
                       </div>
                     }
                   >
-                    <EditorPanel projectId={activeProjectId} submissionType={activeProject?.type} />
+                    <EditorPanel
+                      projectId={activeProjectId}
+                      submissionType={activeProject?.type}
+                      initialContent={pendingEditorContent?.content}
+                      initialTitle={pendingEditorContent?.title}
+                      initialCtdSection={pendingEditorContent?.ctdSection}
+                      onInitialContentConsumed={() => setPendingEditorContent(null)}
+                    />
                   </Suspense>
                 </div>
 
@@ -3010,7 +3039,14 @@ export const ZenApp: React.FC = () => {
                   </div>
                 }
               >
-                <EditorPanel projectId={activeProjectId} submissionType={activeProject?.type} />
+                <EditorPanel
+                  projectId={activeProjectId}
+                  submissionType={activeProject?.type}
+                  initialContent={pendingEditorContent?.content}
+                  initialTitle={pendingEditorContent?.title}
+                  initialCtdSection={pendingEditorContent?.ctdSection}
+                  onInitialContentConsumed={() => setPendingEditorContent(null)}
+                />
               </Suspense>
             </div>
           )}

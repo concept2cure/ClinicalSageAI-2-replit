@@ -26011,35 +26011,92 @@ What specific aspect would you like to explore further? I can provide detailed g
             onClick={async () => {
               try {
                 const token = localStorage.getItem('trialsage_access_token');
+                const headers = {
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                };
+
+                // First, try to fetch real CMC project data
+                let cmcData = null;
+                try {
+                  const dataRes = await fetch('/api/knowledge-base/cmc-project-data', { headers });
+                  if (dataRes.ok) {
+                    const dataPayload = await dataRes.json();
+                    cmcData = dataPayload.data;
+                  }
+                } catch {
+                  // Silently continue with fallback
+                }
+
+                // Build payload from real data or fallback
+                const substance = cmcData?.drugSubstances?.[0];
+                const product = cmcData?.drugProducts?.[0];
+                const project = cmcData?.project;
+
+                const payload = {
+                  drug_name: project?.drugName || 'Drug Product',
+                  substance_name: substance?.substanceName || project?.drugName || 'Drug Substance',
+                  molecular_formula: substance?.molecularFormula || '',
+                  molecular_weight: substance?.molecularWeight || '',
+                  dosage_form: product?.dosageForm || project?.dosageForm || '',
+                  strength: product?.strength || '',
+                  route_of_administration: product?.routeOfAdministration || '',
+                  manufacturing_process: substance?.manufacturingRoute || '',
+                  specifications: substance?.specifications || product?.specifications || null,
+                  stability_data: substance?.stability || product?.stabilityData || null,
+                  impurities_profile: substance?.impurities || null,
+                  composition: product?.formulation || product?.excipients || null,
+                };
+
                 const res = await fetch('/api/knowledge-base/generate-module3-docx', {
                   method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                  },
-                  body: JSON.stringify({
-                    drug_name: 'Enzymavir (EZV-401)',
-                    substance_name: 'Enzymavir',
-                    molecular_formula: 'C23H28N4O6',
-                    molecular_weight: '456.49',
-                    dosage_form: 'Film-coated tablet',
-                    strength: '200 mg',
-                    route_of_administration: 'Oral',
-                  }),
+                  headers,
+                  body: JSON.stringify(payload),
                 });
                 if (!res.ok) throw new Error('Generation failed');
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'Module3_CMC_Enzymavir.docx';
+                a.download = `Module3_CMC_${(payload.drug_name || 'Drug').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+
+                // Also save the generated document as a project artifact for in-platform access
+                try {
+                  const htmlContent = `<h1>Module 3 – Quality (CMC): ${payload.drug_name}</h1>
+<h2>3.2.S Drug Substance</h2>
+<p><strong>Substance:</strong> ${payload.substance_name || 'N/A'}</p>
+<p><strong>Molecular Formula:</strong> ${payload.molecular_formula || 'N/A'}</p>
+<p><strong>Molecular Weight:</strong> ${payload.molecular_weight || 'N/A'}</p>
+<h3>3.2.S.1 General Information</h3><p>See generated DOCX for full content.</p>
+<h3>3.2.S.2 Manufacture</h3><p>${payload.manufacturing_process || 'Details in DOCX.'}</p>
+<h2>3.2.P Drug Product</h2>
+<p><strong>Dosage Form:</strong> ${payload.dosage_form || 'N/A'}</p>
+<p><strong>Strength:</strong> ${payload.strength || 'N/A'}</p>
+<p><strong>Route:</strong> ${payload.route_of_administration || 'N/A'}</p>
+<h3>3.2.P.1 Description and Composition</h3><p>See generated DOCX for full content.</p>`;
+
+                  await fetch('/api/knowledge-base/save-docx-as-artifact', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                      projectId: '1',
+                      title: `Module 3 – Quality (CMC): ${payload.drug_name}`,
+                      htmlContent,
+                      ctdSection: '3.2',
+                      type: 'regulatory_document',
+                    }),
+                  });
+                } catch {
+                  // Non-critical — DOCX still downloaded
+                }
+
                 toast({
                   title: 'Module 3 DOCX Generated',
-                  description: 'CTD Module 3 Quality document downloaded successfully',
+                  description: 'Document downloaded and saved to project artifacts',
                 });
               } catch (err) {
                 toast({

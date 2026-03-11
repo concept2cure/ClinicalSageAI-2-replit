@@ -56,6 +56,12 @@ interface Artifact {
 interface EditorPanelProps {
   projectId?: string;
   submissionType?: string;
+  /** When provided, auto-create an artifact with this content and open it */
+  initialContent?: string;
+  initialTitle?: string;
+  initialCtdSection?: string;
+  /** Called when the pending initial content has been consumed */
+  onInitialContentConsumed?: () => void;
 }
 
 type AIAction = 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references';
@@ -69,7 +75,14 @@ const AI_ACTIONS: { id: AIAction; label: string; description: string }[] = [
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
-const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) => {
+const EditorPanel: React.FC<EditorPanelProps> = ({
+  projectId,
+  submissionType,
+  initialContent,
+  initialTitle,
+  initialCtdSection,
+  onInitialContentConsumed,
+}) => {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [loading, setLoading] = useState(false);
@@ -160,6 +173,46 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ projectId, submissionType }) 
   useEffect(() => {
     loadArtifacts();
   }, [loadArtifacts]);
+
+  // ── Auto-create artifact from initial content (eCTD handoff) ──────────────
+  const initialContentConsumedRef = useRef(false);
+  useEffect(() => {
+    if (!projectId || !initialContent || !initialTitle || initialContentConsumedRef.current) return;
+    initialContentConsumedRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            title: initialTitle,
+            content: initialContent,
+            type: 'regulatory_document',
+            category: 'document',
+            ctdSection: initialCtdSection || undefined,
+          }),
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          setActiveArtifact(created);
+          setShowArtifactList(false);
+          loadArtifacts();
+        }
+      } catch {
+        // silent — user can still manually create
+      } finally {
+        onInitialContentConsumed?.();
+      }
+    })();
+  }, [
+    projectId,
+    initialContent,
+    initialTitle,
+    initialCtdSection,
+    onInitialContentConsumed,
+    loadArtifacts,
+  ]);
 
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(

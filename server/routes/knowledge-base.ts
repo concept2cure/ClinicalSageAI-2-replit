@@ -22,6 +22,11 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
 import { Document, Packer, Paragraph, HeadingLevel, TextRun, AlignmentType } from 'docx';
+import { db } from '../db.js';
+import { eq, desc } from 'drizzle-orm';
+import { cmcProjects, drugSubstances, drugProducts } from '../../shared/cmc-schema.js';
+import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../shared/schema.js';
+import crypto from 'crypto';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
@@ -413,11 +418,12 @@ router.post('/generate-ind-section', async (req: Request, res: Response) => {
 // ═════════════════════════════════════════════════════════════════════════════
 // POST /api/knowledge-base/generate-module3-docx
 // CMC data → Module 3 (Quality) DOCX document
+// Accepts explicit payload OR cmcProjectId to fetch from DB
 // ═════════════════════════════════════════════════════════════════════════════
 
 router.post('/generate-module3-docx', async (req: Request, res: Response) => {
   try {
-    const {
+    let {
       drug_name,
       substance_name,
       molecular_formula,
@@ -431,6 +437,106 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
       impurities_profile,
       composition,
     } = req.body;
+
+    const { cmcProjectId, saveAsArtifact, projectId: artifactProjectId } = req.body;
+
+    // If cmcProjectId provided, fetch real data from DB
+    if (cmcProjectId && db) {
+      try {
+        const [cmcProject] = await db
+          .select()
+          .from(cmcProjects)
+          .where(eq(cmcProjects.id, cmcProjectId));
+        if (cmcProject) {
+          drug_name = drug_name || cmcProject.drugName;
+          dosage_form = dosage_form || cmcProject.dosageForm;
+        }
+
+        const substances = await db
+          .select()
+          .from(drugSubstances)
+          .where(eq(drugSubstances.projectId, cmcProjectId));
+        if (substances.length > 0) {
+          const s = substances[0];
+          substance_name = substance_name || s.substanceName;
+          molecular_formula = molecular_formula || s.molecularFormula;
+          molecular_weight = molecular_weight || s.molecularWeight;
+          manufacturing_process = manufacturing_process || s.manufacturingRoute;
+          specifications = specifications || s.specifications;
+          stability_data = stability_data || s.stability;
+          impurities_profile = impurities_profile || s.impurities;
+        }
+
+        const products = await db
+          .select()
+          .from(drugProducts)
+          .where(eq(drugProducts.projectId, cmcProjectId));
+        if (products.length > 0) {
+          const p = products[0];
+          dosage_form = dosage_form || p.dosageForm;
+          strength = strength || p.strength;
+          route_of_administration = route_of_administration || p.routeOfAdministration;
+          composition = composition || p.formulation || p.excipients;
+          stability_data = stability_data || p.stabilityData;
+        }
+
+        console.log(
+          `[knowledge-base] Module 3: loaded CMC data from project ${cmcProjectId} (drug: ${drug_name})`
+        );
+      } catch (dbErr: any) {
+        console.warn(`[knowledge-base] Could not load CMC project data: ${dbErr.message}`);
+      }
+    } else if (!drug_name && !substance_name && db) {
+      // No explicit data and no cmcProjectId — try to find the first CMC project for this org
+      try {
+        const user = (req as any).user;
+        const orgId = user?.organizationId?.toString();
+        if (orgId) {
+          const cmcProjectsList = await db
+            .select()
+            .from(cmcProjects)
+            .where(eq(cmcProjects.organizationId, orgId))
+            .orderBy(desc(cmcProjects.updatedAt))
+            .limit(1);
+          if (cmcProjectsList.length > 0) {
+            const cp = cmcProjectsList[0];
+            drug_name = cp.drugName;
+            dosage_form = cp.dosageForm;
+
+            const substances = await db
+              .select()
+              .from(drugSubstances)
+              .where(eq(drugSubstances.projectId, cp.id));
+            if (substances.length > 0) {
+              const s = substances[0];
+              substance_name = s.substanceName;
+              molecular_formula = s.molecularFormula;
+              molecular_weight = s.molecularWeight;
+              specifications = s.specifications;
+              stability_data = s.stability;
+              impurities_profile = s.impurities;
+            }
+
+            const products = await db
+              .select()
+              .from(drugProducts)
+              .where(eq(drugProducts.projectId, cp.id));
+            if (products.length > 0) {
+              const p = products[0];
+              dosage_form = dosage_form || p.dosageForm;
+              strength = p.strength;
+              route_of_administration = p.routeOfAdministration;
+              composition = p.formulation;
+            }
+            console.log(
+              `[knowledge-base] Module 3: auto-loaded CMC project "${cp.name}" for org ${orgId}`
+            );
+          }
+        }
+      } catch {
+        // Continue with whatever data we have
+      }
+    }
 
     const sections: DocxSection[] = [
       {
@@ -504,6 +610,57 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
     );
 
     const filename = `Module3_CMC_${(drug_name || substance_name || 'drug').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+
+    // If saveAsArtifact is requested, also persist as a project artifact
+    if (saveAsArtifact && artifactProjectId && db) {
+      try {
+        const user = (req as any).user;
+        const docTitle = `Module 3 – Quality (CMC): ${drug_name || substance_name || 'Drug'}`;
+        const htmlContent = sections
+          .map(s => `<h2>${s.title}</h2><pre>${s.content}</pre>`)
+          .join('');
+        const artifactId = `artifact_${crypto.randomUUID()}`;
+        const contentHash = crypto.createHash('sha256').update(htmlContent).digest('hex');
+
+        await db.insert(concept2cureArtifacts).values({
+          artifactId,
+          projectId: parseInt(artifactProjectId, 10),
+          organizationId: user?.organizationId || 2,
+          type: 'regulatory_document',
+          category: 'document',
+          title: docTitle,
+          content: htmlContent,
+          contentHash,
+          version: 1,
+          ctdSection: '3.2',
+          status: 'draft',
+          createdById: user?.id || null,
+        });
+
+        // Also create first version record
+        const [inserted] = await db
+          .select()
+          .from(concept2cureArtifacts)
+          .where(eq(concept2cureArtifacts.artifactId, artifactId));
+        if (inserted) {
+          await db.insert(concept2cureArtifactVersions).values({
+            artifactId: inserted.id,
+            organizationId: user?.organizationId || 2,
+            version: 1,
+            content: htmlContent,
+            contentHash,
+            createdById: user?.id || null,
+          });
+        }
+
+        console.log(
+          `[knowledge-base] Module 3 also saved as artifact ${artifactId} in project ${artifactProjectId}`
+        );
+      } catch (artErr: any) {
+        console.warn(`[knowledge-base] Could not save Module 3 as artifact: ${artErr.message}`);
+      }
+    }
+
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -513,6 +670,132 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('[knowledge-base] Module 3 DOCX generation failed:', err.message);
     res.status(500).json({ error: 'Module 3 DOCX generation failed', detail: err.message });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// GET /api/knowledge-base/cmc-project-data
+// Fetch the active CMC project's drug substance and product data
+// ═════════════════════════════════════════════════════════════════════════════
+router.get('/cmc-project-data', async (req: Request, res: Response) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+    const user = (req as any).user;
+    const orgId = user?.organizationId?.toString();
+    const cmcProjectId = req.query.cmcProjectId as string | undefined;
+
+    let project: any = null;
+    if (cmcProjectId) {
+      const [p] = await db.select().from(cmcProjects).where(eq(cmcProjects.id, cmcProjectId));
+      project = p;
+    } else if (orgId) {
+      const [p] = await db
+        .select()
+        .from(cmcProjects)
+        .where(eq(cmcProjects.organizationId, orgId))
+        .orderBy(desc(cmcProjects.updatedAt))
+        .limit(1);
+      project = p;
+    }
+
+    if (!project) {
+      return res.json({ success: true, data: null, message: 'No CMC project found' });
+    }
+
+    const substances = await db
+      .select()
+      .from(drugSubstances)
+      .where(eq(drugSubstances.projectId, project.id));
+    const products = await db
+      .select()
+      .from(drugProducts)
+      .where(eq(drugProducts.projectId, project.id));
+
+    res.json({
+      success: true,
+      data: {
+        project: {
+          id: project.id,
+          name: project.name,
+          drugName: project.drugName,
+          drugType: project.drugType,
+          dosageForm: project.dosageForm,
+          indication: project.indication,
+          developmentStage: project.developmentStage,
+        },
+        drugSubstances: substances,
+        drugProducts: products,
+      },
+    });
+  } catch (err: any) {
+    console.error('[knowledge-base] CMC project data fetch failed:', err.message);
+    res.status(500).json({ error: 'Failed to fetch CMC project data' });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// POST /api/knowledge-base/save-docx-as-artifact
+// Save generated DOCX content as a project artifact for in-platform access
+// ═════════════════════════════════════════════════════════════════════════════
+router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { projectId, title, htmlContent, ctdSection, type } = req.body;
+    if (!projectId || !title || !htmlContent) {
+      return res.status(400).json({ error: 'projectId, title, and htmlContent are required' });
+    }
+
+    const user = (req as any).user;
+    const artifactId = `artifact_${crypto.randomUUID()}`;
+    const contentHash = crypto.createHash('sha256').update(htmlContent).digest('hex');
+
+    await db.insert(concept2cureArtifacts).values({
+      artifactId,
+      projectId: parseInt(projectId, 10),
+      organizationId: user?.organizationId || 2,
+      type: type || 'regulatory_document',
+      category: 'document',
+      title,
+      content: htmlContent,
+      contentHash,
+      version: 1,
+      ctdSection: ctdSection || null,
+      status: 'draft',
+      createdById: user?.id || null,
+    });
+
+    // Create version record
+    const [inserted] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(eq(concept2cureArtifacts.artifactId, artifactId));
+    if (inserted) {
+      await db.insert(concept2cureArtifactVersions).values({
+        artifactId: inserted.id,
+        organizationId: user?.organizationId || 2,
+        version: 1,
+        content: htmlContent,
+        contentHash,
+        createdById: user?.id || null,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        artifactId,
+        title,
+        version: 1,
+      },
+    });
+  } catch (err: any) {
+    console.error('[knowledge-base] Save as artifact failed:', err.message);
+    res.status(500).json({ error: 'Failed to save as artifact' });
   }
 });
 

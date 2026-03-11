@@ -150,3 +150,32 @@ export function useGenerateModule3Docx() {
     },
   });
 }
+
+// ── Save generated document as a project artifact ─────────────────────────
+export interface SaveAsArtifactParams {
+  projectId: string;
+  title: string;
+  htmlContent: string;
+  ctdSection?: string;
+  type?: string;
+}
+
+export function useSaveAsArtifact() {
+  return useMutation({
+    mutationFn: async (
+      params: SaveAsArtifactParams
+    ): Promise<{ artifactId: string; title: string; version: number }> => {
+      const res = await fetch('/api/knowledge-base/save-docx-as-artifact', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Save failed' }));
+        throw new Error(err.error || 'Save failed');
+      }
+      const payload = await res.json();
+      return payload.data;
+    },
+  });
+}

@@ -28,7 +28,7 @@
  * and ensure you reach the summit safely. What would you like to create?"
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -860,9 +860,202 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
 
 export default eCTDCoAuthor;
 
+// ── Auth helper ─────────────────────────────────────────────────────────────
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    sessionStorage.getItem('trialsage_access_token') ||
+    localStorage.getItem('trialsage_access_token');
+  return token
+    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
+}
+
+// ── CTD Section draft templates (structured scaffolds per section) ───────────
+const CTD_SECTION_SCAFFOLDS: Record<string, string> = {
+  '2.5': `<h2>2.5 Clinical Overview</h2>
+<h3>2.5.1 Product Development Rationale</h3>
+<p>This section describes the rationale for developing the drug product, including the target indication, unmet medical need, and the pharmacological basis for the proposed therapy.</p>
+<h3>2.5.2 Overview of Biopharmaceutics</h3>
+<p>Summary of bioavailability, bioequivalence studies, and in vitro dissolution data demonstrating the biopharmaceutical properties of the formulation.</p>
+<h3>2.5.3 Overview of Clinical Pharmacology</h3>
+<p>Summary of pharmacokinetic and pharmacodynamic studies including dose-response relationships, special population PK, and drug-drug interaction studies.</p>
+<h3>2.5.4 Overview of Efficacy</h3>
+<p>Integrated summary of efficacy from pivotal and supportive clinical trials, including primary and secondary endpoint analyses.</p>
+<h3>2.5.5 Overview of Safety</h3>
+<p>Integrated safety analysis including adverse events, serious adverse events, deaths, laboratory findings, and vital signs across all clinical studies.</p>
+<h3>2.5.6 Benefits and Risks Conclusions</h3>
+<p>Overall benefit-risk assessment supported by clinical evidence and comparison to available therapeutic alternatives.</p>`,
+
+  '2.7': `<h2>2.7 Clinical Summary</h2>
+<h3>2.7.1 Summary of Biopharmaceutic Studies and Associated Analytical Methods</h3>
+<p>Tabulated summary of bioavailability and bioequivalence studies with analytical methods used for drug concentration measurements.</p>
+<h3>2.7.2 Summary of Clinical Pharmacology Studies</h3>
+<p>Tabulated summary of PK, PD, and drug interaction studies with key parameters and conclusions.</p>
+<h3>2.7.3 Summary of Clinical Efficacy</h3>
+<p>Detailed summary of efficacy results from individual clinical studies with integrated analysis.</p>
+<h3>2.7.4 Summary of Clinical Safety</h3>
+<p>Comprehensive safety summary including exposure data, adverse events, and safety signals.</p>`,
+
+  '3.2.S': `<h2>3.2.S Drug Substance</h2>
+<h3>3.2.S.1 General Information</h3>
+<p>Nomenclature, structure, and general properties of the drug substance including INN, chemical name, and molecular formula.</p>
+<h3>3.2.S.2 Manufacture</h3>
+<p>Description of the manufacturing process, process controls, and information on the manufacturer(s).</p>
+<h3>3.2.S.3 Characterisation</h3>
+<p>Elucidation of structure, physicochemical properties, and biological activity where applicable.</p>
+<h3>3.2.S.4 Control of Drug Substance</h3>
+<p>Specifications, analytical procedures, validation data, batch analyses, and justification of specifications.</p>
+<h3>3.2.S.5 Reference Standards</h3>
+<p>Information on primary and working reference standards used in testing.</p>
+<h3>3.2.S.6 Container Closure System</h3>
+<p>Description of the container closure system(s) and suitability for intended use.</p>
+<h3>3.2.S.7 Stability</h3>
+<p>Stability protocols, results, and proposed retest period with supporting data.</p>`,
+
+  '3.2.P': `<h2>3.2.P Drug Product</h2>
+<h3>3.2.P.1 Description and Composition</h3>
+<p>Description of the dosage form and all components including active substance, excipients, and their functions.</p>
+<h3>3.2.P.2 Pharmaceutical Development</h3>
+<p>Development history including formulation development, overages, physicochemical/biological properties, and manufacturing process development.</p>
+<h3>3.2.P.3 Manufacture</h3>
+<p>Batch formula, manufacturing process description with process controls, and validation/evaluation data.</p>
+<h3>3.2.P.4 Control of Excipients</h3>
+<p>Specifications and analytical procedures for excipients, including those of biological origin.</p>
+<h3>3.2.P.5 Control of Drug Product</h3>
+<p>Specifications, analytical procedures, validation, batch analyses, and characterisation of impurities.</p>
+<h3>3.2.P.6 Reference Standards</h3>
+<p>Information on reference standards used for drug product testing.</p>
+<h3>3.2.P.7 Container Closure System</h3>
+<p>Description including materials, specifications, and suitability for intended use.</p>
+<h3>3.2.P.8 Stability</h3>
+<p>Stability protocols, results, post-approval commitments, and proposed shelf life.</p>`,
+
+  '2.4': `<h2>2.4 Nonclinical Overview</h2>
+<h3>2.4.1 Overview of Nonclinical Testing Strategy</h3>
+<p>Discussion of the nonclinical pharmacology, pharmacokinetics, and toxicology program including GLP compliance.</p>
+<h3>2.4.2 Pharmacology</h3>
+<p>Summary of primary and secondary pharmacodynamic studies and safety pharmacology studies.</p>
+<h3>2.4.3 Pharmacokinetics</h3>
+<p>Summary of absorption, distribution, metabolism, and excretion data from nonclinical species.</p>
+<h3>2.4.4 Toxicology</h3>
+<p>Summary of single-dose, repeat-dose, genotoxicity, carcinogenicity, and reproductive toxicology studies.</p>`,
+
+  '2.3': `<h2>2.3 Quality Overall Summary</h2>
+<h3>2.3.S Drug Substance</h3>
+<p>Summary of drug substance information including general information, manufacture, characterisation, control, reference standards, container closure, and stability.</p>
+<h3>2.3.P Drug Product</h3>
+<p>Summary of drug product information including description and composition, pharmaceutical development, manufacture, control, reference standards, container closure, and stability.</p>
+<h3>2.3.A Appendices</h3>
+<p>Summary of facilities, adventitious agents safety evaluation, and other relevant information.</p>`,
+};
+
 // ─── Standalone (zero-prop entry point using DEMO_ECTD_DOCUMENT) ────────────
 export const ECTDCoAuthorStandalone: React.FC<{
   onOpenInEditor?: (section: DocumentSection) => void;
-}> = ({ onOpenInEditor }) => (
-  <eCTDCoAuthor document={DEMO_ECTD_DOCUMENT} onOpenInEditor={onOpenInEditor} />
-);
+}> = ({ onOpenInEditor }) => {
+  // Manage local copy of sections so drafting can update content
+  const [docState, setDocState] = useState<eCTDDocument>(DEMO_ECTD_DOCUMENT);
+  const [draftingSection, setDraftingSection] = useState<string | null>(null);
+
+  const handleDraftSection = useCallback(
+    async (section: DocumentSection) => {
+      setDraftingSection(section.id);
+
+      // Update the section status to 'ai_drafting'
+      setDocState(prev => ({
+        ...prev,
+        sections: updateSectionInTree(prev.sections, section.id, {
+          status: 'ai_drafting' as SectionStatus,
+        }),
+      }));
+
+      try {
+        // Try the real API first
+        const res = await fetch('/api/knowledge-base/generate-ind-section', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            sectionCode: section.number,
+            sectionTitle: section.title,
+            context: `CTD section for ${docState.submissionType} submission. Module: ${section.module}`,
+          }),
+        });
+
+        let content: string;
+        if (res.ok) {
+          const data = await res.json();
+          content = data.content || data.data?.content || '';
+        } else {
+          // Fallback to scaffold template
+          content = CTD_SECTION_SCAFFOLDS[section.number] || generateDefaultScaffold(section);
+        }
+
+        // Update the section with real content
+        setDocState(prev => ({
+          ...prev,
+          sections: updateSectionInTree(prev.sections, section.id, {
+            status: 'editing' as SectionStatus,
+            content,
+            wordCount: content
+              .replace(/<[^>]+>/g, ' ')
+              .split(/\s+/)
+              .filter(Boolean).length,
+          }),
+        }));
+      } catch {
+        // Offline fallback — use scaffold template
+        const content = CTD_SECTION_SCAFFOLDS[section.number] || generateDefaultScaffold(section);
+        setDocState(prev => ({
+          ...prev,
+          sections: updateSectionInTree(prev.sections, section.id, {
+            status: 'editing' as SectionStatus,
+            content,
+            wordCount: content
+              .replace(/<[^>]+>/g, ' ')
+              .split(/\s+/)
+              .filter(Boolean).length,
+          }),
+        }));
+      } finally {
+        setDraftingSection(null);
+      }
+    },
+    [docState.submissionType]
+  );
+
+  return (
+    <eCTDCoAuthor
+      document={docState}
+      onOpenInEditor={onOpenInEditor}
+      onDraftSection={handleDraftSection}
+    />
+  );
+};
+
+// Helper: recursively update a section in the tree
+function updateSectionInTree(
+  sections: DocumentSection[],
+  id: string,
+  updates: Partial<DocumentSection>
+): DocumentSection[] {
+  return sections.map(s => {
+    if (s.id === id) return { ...s, ...updates };
+    if (s.children?.length) {
+      return { ...s, children: updateSectionInTree(s.children, id, updates) };
+    }
+    return s;
+  });
+}
+
+// Helper: generate a default scaffold for sections without a template
+function generateDefaultScaffold(section: DocumentSection): string {
+  return `<h2>${section.number} ${section.title}</h2>
+<h3>Purpose</h3>
+<p>This section provides the required information for ${section.title} as specified in the CTD/eCTD format guidelines.</p>
+<h3>Scope</h3>
+<p>The content herein covers all regulatory requirements applicable to this section per ICH M4 guidelines.</p>
+<h3>Content</h3>
+<p>[Draft content based on available source data. Review and refine as needed.]</p>
+<h3>References</h3>
+<p>[Cross-references to supporting data, study reports, and regulatory guidance documents.]</p>`;
+}
