@@ -104,6 +104,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [showArtifactList, setShowArtifactList] = useState(true);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
+  const [lockRejection, setLockRejection] = useState<string | null>(null);
 
   // ── Claim checker (Precedent Engine) ─────────────────────────────────────
   const [claimResult, setClaimResult] = useState<ClaimCheckResult | null>(null);
@@ -248,8 +249,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
       if (!projectId || !activeArtifact) return;
+      // Block saves on locked documents client-side
+      if ((activeArtifact as any)?.status === 'locked') {
+        setLockRejection('Document is locked — edits are not permitted. Unlock to continue.');
+        setTimeout(() => setLockRejection(null), 5000);
+        return;
+      }
       setSaving(true);
       setSaveStatus('idle');
+      setLockRejection(null);
       try {
         const res = await fetch(
           `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}`,
@@ -267,6 +275,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           // Refresh list
           loadArtifacts();
           setTimeout(() => setSaveStatus('idle'), 3000);
+        } else if (res.status === 423) {
+          const err = await res.json().catch(() => ({ message: 'Document is locked' }));
+          setLockRejection(err.message || 'Document is locked — save rejected (HTTP 423)');
+          setSaveStatus('error');
+          setTimeout(() => setLockRejection(null), 6000);
         } else {
           setSaveStatus('error');
         }
@@ -937,6 +950,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
+      {/* Lock rejection banner */}
+      {lockRejection && (
+        <div className="border-b border-red-300 bg-red-50 px-3 py-2 text-xs flex items-center gap-2 text-red-800">
+          <Lock className="w-4 h-4 text-red-600 shrink-0" />
+          <span className="font-semibold">{lockRejection}</span>
+          <button
+            onClick={() => setLockRejection(null)}
+            className="ml-auto text-red-400 hover:text-red-600"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Document Intelligence Summary Bar */}
       {activeArtifact && (
         <div className="flex items-center gap-3 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/30 text-[10px] text-zinc-500 shrink-0 flex-wrap">
@@ -1012,8 +1039,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       {/* Editor + Side Panels */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
         <div
-          className={`${showIntelPanel || showProvenancePanel || showComparePanel || showAuditReport ? 'flex-1' : 'w-full'} min-h-0 overflow-hidden`}
+          className={`${showIntelPanel || showProvenancePanel || showComparePanel || showAuditReport ? 'flex-1' : 'w-full'} min-h-0 overflow-hidden relative`}
         >
+          {/* Lock overlay when document is locked */}
+          {(activeArtifact as any)?.status === 'locked' && (
+            <div className="absolute inset-0 z-10 bg-red-50/60 backdrop-blur-[1px] flex flex-col items-center justify-center pointer-events-none">
+              <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow-lg text-center pointer-events-auto">
+                <Lock className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-red-800">Document Locked</p>
+                <p className="text-xs text-red-600 mt-1">
+                  Editing is disabled. Unlock the document to make changes.
+                </p>
+              </div>
+            </div>
+          )}
           <UnifiedDocumentEditor
             key={activeArtifact?.id}
             documentId={activeArtifact?.id}
@@ -1056,6 +1095,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onClose={() => setShowComparePanel(false)}
               onOpenAudit={openAudit}
               onOpenProvenance={openProvenance}
+              onRollbackComplete={loadArtifacts}
             />
           </div>
         )}

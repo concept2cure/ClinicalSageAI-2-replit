@@ -24,6 +24,9 @@ import {
   FileInput,
   Sparkles,
   Server,
+  ShieldCheck,
+  XCircle,
+  MessageSquare,
 } from 'lucide-react';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
@@ -202,6 +205,65 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   const [mode, setMode] = useState<'summary' | 'detailed'>('summary');
   const [reportPurpose, setReportPurpose] = useState<'qa' | 'inspection'>('qa');
 
+  // Live integrity verification
+  const [liveIntegrity, setLiveIntegrity] = useState<{
+    verified: boolean;
+    chainIntact: boolean;
+    currentHashVerified: boolean;
+    failureReason: string | null;
+  } | null>(null);
+  const [verifyingIntegrity, setVerifyingIntegrity] = useState(false);
+
+  const handleVerifyIntegrity = useCallback(async () => {
+    setVerifyingIntegrity(true);
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verify-integrity`,
+        { headers: getAuthHeaders() }
+      );
+      if (res.ok) {
+        const payload = await res.json();
+        setLiveIntegrity(payload.data ?? payload);
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setVerifyingIntegrity(false);
+    }
+  }, [projectId, artifactId]);
+
+  // Review comments
+  const [reviewComments, setReviewComments] = useState<
+    Array<{
+      commentId: string;
+      version: number;
+      status: string;
+      comment: string;
+      userName: string;
+      createdAt: string;
+    }>
+  >([]);
+  const [commentsTotal, setCommentsTotal] = useState(0);
+  const [commentsOpen, setCommentsOpen] = useState(0);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`,
+        { headers: getAuthHeaders() }
+      );
+      if (res.ok) {
+        const payload = await res.json();
+        const d = payload.data ?? payload;
+        setReviewComments(d.comments || []);
+        setCommentsTotal(d.totalComments || 0);
+        setCommentsOpen(d.openComments || 0);
+      }
+    } catch {
+      /* silent */
+    }
+  }, [projectId, artifactId]);
+
   const fetchReport = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -226,7 +288,8 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
 
   useEffect(() => {
     fetchReport();
-  }, [fetchReport]);
+    fetchComments();
+  }, [fetchReport, fetchComments]);
 
   const handlePrint = () => window.print();
 
@@ -399,10 +462,55 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
                   <CheckCircle className="w-3 h-3" /> Verified
                 </span>
               ) : (
-                <span className="text-red-600">Chain broken</span>
+                <span className="text-red-600 flex items-center gap-1">
+                  <XCircle className="w-3 h-3" /> Chain broken
+                </span>
               )
             }
           />
+
+          {/* Live verify button */}
+          <div className="mt-2 mb-2">
+            <button
+              onClick={handleVerifyIntegrity}
+              disabled={verifyingIntegrity}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 font-medium print:hidden"
+            >
+              {verifyingIntegrity ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <ShieldCheck className="w-3 h-3" />
+              )}
+              Verify Integrity Now
+            </button>
+            {liveIntegrity && (
+              <div
+                className={`mt-1.5 p-2 rounded text-[10px] print:block ${liveIntegrity.verified ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
+              >
+                <div className="flex items-center gap-1.5 font-semibold">
+                  {liveIntegrity.verified ? (
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <XCircle className="w-3.5 h-3.5 text-red-600" />
+                  )}
+                  <span className={liveIntegrity.verified ? 'text-emerald-800' : 'text-red-800'}>
+                    {liveIntegrity.verified
+                      ? 'Live Verification: PASSED'
+                      : 'Live Verification: FAILED'}
+                  </span>
+                </div>
+                <div className="mt-1 space-y-0.5 text-zinc-600">
+                  <div>Chain intact: {liveIntegrity.chainIntact ? '✓ Yes' : '✗ No'}</div>
+                  <div>
+                    Current hash verified: {liveIntegrity.currentHashVerified ? '✓ Yes' : '✗ No'}
+                  </div>
+                  {liveIntegrity.failureReason && (
+                    <div className="text-red-600">Reason: {liveIntegrity.failureReason}</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="mt-2">
             <div className="text-[10px] font-semibold text-zinc-500 uppercase mb-1">Hash Chain</div>
             <table className="w-full text-[10px]">
@@ -570,6 +678,47 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
           <Row label="Lock Status" value={report.placementContext.lockStatus} />
           {report.placementContext.lockedAt && (
             <Row label="Locked At" value={formatDate(report.placementContext.lockedAt)} />
+          )}
+        </ReportSection>
+
+        {/* 9. Review Comments */}
+        <ReportSection icon={<MessageSquare className="w-4 h-4" />} title="Review Comments">
+          <Row label="Total" value={commentsTotal.toString()} />
+          <Row label="Open" value={commentsOpen.toString()} />
+          <Row label="Resolved" value={(commentsTotal - commentsOpen).toString()} />
+          {reviewComments.length > 0 ? (
+            <table className="w-full text-[10px] mt-2">
+              <thead>
+                <tr className="text-zinc-400">
+                  <th className="text-left py-0.5">Reviewer</th>
+                  <th className="text-left py-0.5">Comment</th>
+                  <th className="text-left py-0.5">Ver</th>
+                  <th className="text-left py-0.5">Status</th>
+                  <th className="text-left py-0.5">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reviewComments.map(c => (
+                  <tr key={c.commentId} className="border-t border-zinc-50">
+                    <td className="py-0.5 font-medium">{c.userName}</td>
+                    <td className="py-0.5 text-zinc-600 max-w-[150px] truncate">{c.comment}</td>
+                    <td className="py-0.5">v{c.version}</td>
+                    <td className="py-0.5">
+                      {c.status === 'resolved' ? (
+                        <span className="text-emerald-600 flex items-center gap-0.5">
+                          <CheckCircle className="w-3 h-3" /> Resolved
+                        </span>
+                      ) : (
+                        <span className="text-amber-600">Open</span>
+                      )}
+                    </td>
+                    <td className="py-0.5 text-zinc-400">{formatDate(c.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-[11px] text-zinc-400 italic mt-1">No review comments</p>
           )}
         </ReportSection>
 

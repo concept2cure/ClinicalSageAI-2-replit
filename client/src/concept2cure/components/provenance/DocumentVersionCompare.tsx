@@ -18,6 +18,8 @@ import {
   AlertTriangle,
   ArrowLeftRight,
   Layers,
+  RotateCcw,
+  CheckCircle,
 } from 'lucide-react';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
@@ -52,6 +54,7 @@ interface DocumentVersionCompareProps {
   onClose: () => void;
   onOpenAudit?: () => void;
   onOpenProvenance?: () => void;
+  onRollbackComplete?: () => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -207,6 +210,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   onClose,
   onOpenAudit,
   onOpenProvenance,
+  onRollbackComplete,
 }) => {
   const [versions, setVersions] = useState<VersionData[]>([]);
   const [title, setTitle] = useState('');
@@ -216,6 +220,11 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   const [versionA, setVersionA] = useState<number | null>(null);
   const [versionB, setVersionB] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'side-by-side' | 'unified'>('side-by-side');
+  const [rollingBack, setRollingBack] = useState(false);
+  const [rollbackResult, setRollbackResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   // Fetch versions
   const fetchVersions = useCallback(async () => {
@@ -254,6 +263,45 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   useEffect(() => {
     fetchVersions();
   }, [fetchVersions]);
+
+  // Rollback handler
+  const handleRollback = useCallback(
+    async (targetVersion: number) => {
+      setRollingBack(true);
+      setRollbackResult(null);
+      try {
+        const res = await fetch(
+          `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/rollback`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ targetVersion }),
+          }
+        );
+        const payload = await res.json();
+        const d = payload.data ?? payload;
+        if (res.ok) {
+          setRollbackResult({
+            success: true,
+            message: `Rolled back to v${targetVersion} → created v${d.newVersion}`,
+          });
+          await fetchVersions();
+          onRollbackComplete?.();
+        } else {
+          setRollbackResult({
+            success: false,
+            message: d.message || payload.message || 'Rollback failed',
+          });
+        }
+      } catch {
+        setRollbackResult({ success: false, message: 'Network error during rollback' });
+      } finally {
+        setRollingBack(false);
+        setTimeout(() => setRollbackResult(null), 5000);
+      }
+    },
+    [projectId, artifactId, fetchVersions, onRollbackComplete]
+  );
 
   const selectedA = versions.find(v => v.version === versionA);
   const selectedB = versions.find(v => v.version === versionB);
@@ -382,6 +430,21 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
           <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-zinc-100">
             <DiffStats textA={textA} textB={textB} />
             <div className="flex items-center gap-1">
+              {/* Rollback button */}
+              {versionA && versionA !== currentVersion && (
+                <button
+                  onClick={() => handleRollback(versionA)}
+                  disabled={rollingBack}
+                  className="px-2 py-0.5 text-[10px] rounded bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50 flex items-center gap-0.5 font-medium"
+                >
+                  {rollingBack ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-3 h-3" />
+                  )}
+                  Rollback to v{versionA}
+                </button>
+              )}
               <button
                 onClick={() => setViewMode('side-by-side')}
                 className={`px-2 py-0.5 text-[10px] rounded ${
@@ -406,6 +469,20 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Rollback result banner */}
+      {rollbackResult && (
+        <div
+          className={`px-3 py-1.5 text-[11px] flex items-center gap-1.5 border-b ${rollbackResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
+        >
+          {rollbackResult.success ? (
+            <CheckCircle className="w-3.5 h-3.5" />
+          ) : (
+            <AlertTriangle className="w-3.5 h-3.5" />
+          )}
+          {rollbackResult.message}
         </div>
       )}
 

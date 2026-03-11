@@ -37,6 +37,10 @@ import {
   Download,
   FolderTree,
   Activity,
+  MessageSquare,
+  Send,
+  ShieldCheck,
+  XCircle,
 } from 'lucide-react';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
@@ -297,6 +301,113 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   useEffect(() => {
     fetchProvenance();
   }, [fetchProvenance]);
+
+  // ── Review Comments state ──────────────────────────────────────────────
+  const [comments, setComments] = useState<
+    Array<{
+      commentId: string;
+      version: number;
+      status: string;
+      comment: string;
+      userName: string;
+      createdAt: string;
+      resolvedAt: string | null;
+    }>
+  >([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [addingComment, setAddingComment] = useState(false);
+  const [commentsTotalOpen, setCommentsTotalOpen] = useState(0);
+
+  const fetchComments = useCallback(async () => {
+    setCommentsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`,
+        { headers: getAuthHeaders() }
+      );
+      if (res.ok) {
+        const payload = await res.json();
+        const d = payload.data ?? payload;
+        setComments(d.comments || []);
+        setCommentsTotalOpen(d.openComments || 0);
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [projectId, artifactId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  const handleAddComment = useCallback(async () => {
+    if (!newComment.trim()) return;
+    setAddingComment(true);
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ comment: newComment.trim() }),
+        }
+      );
+      if (res.ok) {
+        setNewComment('');
+        fetchComments();
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setAddingComment(false);
+    }
+  }, [projectId, artifactId, newComment, fetchComments]);
+
+  const handleResolveComment = useCallback(
+    async (commentId: string) => {
+      try {
+        const res = await fetch(
+          `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments/${commentId}/resolve`,
+          { method: 'PUT', headers: getAuthHeaders() }
+        );
+        if (res.ok) fetchComments();
+      } catch {
+        /* silent */
+      }
+    },
+    [projectId, artifactId, fetchComments]
+  );
+
+  // ── Integrity verification ─────────────────────────────────────────────
+  const [integrityResult, setIntegrityResult] = useState<{
+    verified: boolean;
+    chainIntact: boolean;
+    currentHashVerified: boolean;
+    failureReason: string | null;
+  } | null>(null);
+  const [verifyingIntegrity, setVerifyingIntegrity] = useState(false);
+
+  const handleVerifyIntegrity = useCallback(async () => {
+    setVerifyingIntegrity(true);
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verify-integrity`,
+        { headers: getAuthHeaders() }
+      );
+      if (res.ok) {
+        const payload = await res.json();
+        const d = payload.data ?? payload;
+        setIntegrityResult(d);
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setVerifyingIntegrity(false);
+    }
+  }, [projectId, artifactId]);
 
   // ── Loading / Error states ──
   if (loading) {
@@ -594,6 +705,49 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                 )
               }
             />
+            {/* Live integrity verification */}
+            <div className="mt-2">
+              <button
+                onClick={handleVerifyIntegrity}
+                disabled={verifyingIntegrity}
+                className="flex items-center gap-1 px-2 py-1 text-[10px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 font-medium"
+              >
+                {verifyingIntegrity ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <ShieldCheck className="w-3 h-3" />
+                )}
+                Verify Integrity Now
+              </button>
+              {integrityResult && (
+                <div
+                  className={`mt-1.5 p-2 rounded text-[10px] ${integrityResult.verified ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
+                >
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    {integrityResult.verified ? (
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <XCircle className="w-3.5 h-3.5 text-red-600" />
+                    )}
+                    <span
+                      className={integrityResult.verified ? 'text-emerald-800' : 'text-red-800'}
+                    >
+                      {integrityResult.verified ? 'Integrity Verified' : 'Integrity Check Failed'}
+                    </span>
+                  </div>
+                  <div className="mt-1 space-y-0.5 text-zinc-600">
+                    <div>Chain intact: {integrityResult.chainIntact ? '✓ Yes' : '✗ No'}</div>
+                    <div>
+                      Current hash verified:{' '}
+                      {integrityResult.currentHashVerified ? '✓ Yes' : '✗ No'}
+                    </div>
+                    {integrityResult.failureReason && (
+                      <div className="text-red-600">Reason: {integrityResult.failureReason}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Version Chain */}
@@ -701,6 +855,76 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                   <Layers className="w-3 h-3 text-zinc-400" />
                   {pe.description || actionLabel(pe.action)}
                   <span className="ml-auto text-zinc-400">{formatRelative(pe.timestamp)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        {/* Section 7: Review Comments */}
+        <Section
+          icon={<MessageSquare className="w-3.5 h-3.5" />}
+          title="Review Comments"
+          badge={commentsTotalOpen > 0 ? `${commentsTotalOpen} open` : comments.length || undefined}
+        >
+          {/* Add comment input */}
+          <div className="flex gap-1.5 mb-2">
+            <input
+              type="text"
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddComment()}
+              placeholder="Add a review comment..."
+              className="flex-1 px-2 py-1 text-[11px] border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-300"
+            />
+            <button
+              onClick={handleAddComment}
+              disabled={addingComment || !newComment.trim()}
+              className="px-2 py-1 text-[10px] rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 flex items-center gap-0.5"
+            >
+              {addingComment ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Send className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+
+          {commentsLoading ? (
+            <div className="flex items-center gap-1 text-[10px] text-zinc-400">
+              <Loader2 className="w-3 h-3 animate-spin" /> Loading comments…
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="text-[11px] text-zinc-400 italic">No review comments yet</p>
+          ) : (
+            <div className="space-y-1.5">
+              {comments.map(c => (
+                <div
+                  key={c.commentId}
+                  className={`p-2 rounded text-[10px] ${c.status === 'resolved' ? 'bg-zinc-50' : 'bg-amber-50 border border-amber-100'}`}
+                >
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-zinc-700">{c.userName}</span>
+                      <span className="text-zinc-400 ml-1">v{c.version}</span>
+                      <p className="text-zinc-600 mt-0.5">{c.comment}</p>
+                      <div className="text-zinc-400 mt-0.5">{formatRelative(c.createdAt)}</div>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-1">
+                      {c.status === 'resolved' ? (
+                        <span className="text-emerald-600 flex items-center gap-0.5">
+                          <CheckCircle className="w-3 h-3" /> Resolved
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleResolveComment(c.commentId)}
+                          className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[9px] font-medium"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
