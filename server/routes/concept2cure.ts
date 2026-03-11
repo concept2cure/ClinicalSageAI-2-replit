@@ -1881,6 +1881,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
     }
 
     // Insert artifact into database
+    const ctdSection = (data.metadata as Record<string, unknown>)?.ctdSection as string | undefined;
     const [newDbArtifact] = await db
       .insert(concept2cureArtifacts)
       .values({
@@ -1896,6 +1897,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
         version: 1,
         metadata: data.metadata || {},
         createdById: userId,
+        ...(ctdSection ? { ctdSection } : {}),
       })
       .returning();
 

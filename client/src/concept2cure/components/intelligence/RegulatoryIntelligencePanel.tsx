@@ -55,6 +55,8 @@ export interface RegulatoryIntelligencePanelProps {
   /** Current document content (for context-aware analysis) */
   documentContent?: string;
   onClose?: () => void;
+  /** Callback to create a governed document from intelligence output */
+  onCreateDocument?: (content: string, title: string, ctdSection?: string) => void;
 }
 
 type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence';
@@ -113,6 +115,7 @@ export function RegulatoryIntelligencePanel({
   phase,
   documentContent: _documentContent,
   onClose,
+  onCreateDocument,
 }: RegulatoryIntelligencePanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>('insights');
 
@@ -779,6 +782,42 @@ export function RegulatoryIntelligencePanel({
               </div>
             )}
 
+            {/* Save as Strategy Memo */}
+            {precedentStrategy.data && onCreateDocument && (
+              <button
+                onClick={() => {
+                  const d = precedentStrategy.data;
+                  const sections = [
+                    `<h1>Regulatory Strategy Memo — ${submissionType || 'Submission'}</h1>`,
+                    `<p><strong>Indication:</strong> ${indication || 'General'}</p>`,
+                    d.recommendedStrategy
+                      ? `<h2>Recommended Strategy</h2><p>${d.recommendedStrategy.pathway || d.recommendedStrategy.name || ''}</p><p>${d.recommendedStrategy.rationale || ''}</p>`
+                      : '',
+                    d.testingRequirements?.length
+                      ? `<h2>Required Testing</h2><ul>${d.testingRequirements.map(t => `<li>${typeof t === 'string' ? t : t.requirement || t.name}</li>`).join('')}</ul>`
+                      : '',
+                    d.keyRisks?.length
+                      ? `<h2>Key Risks</h2><ul>${d.keyRisks.map(r => `<li>${typeof r === 'string' ? r : r.description || r.risk}</li>`).join('')}</ul>`
+                      : '',
+                    d.supportingPrecedents?.length
+                      ? `<h2>Supporting Precedents</h2><ul>${d.supportingPrecedents.map(p => `<li>${typeof p === 'string' ? p : p.clearanceNumber || p.deviceName || ''}</li>`).join('')}</ul>`
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join('\n');
+                  onCreateDocument(
+                    sections,
+                    `Strategy Memo — ${submissionType || 'Regulatory'}`,
+                    '2.5'
+                  );
+                }}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
+                Save as Strategy Memo
+              </button>
+            )}
+
             {!precedentStrategy.data && !precedentStrategy.isLoading && (
               <p className="text-[11px] text-zinc-400 italic text-center py-4">
                 Set submission type and indication to generate strategy recommendations.
@@ -1019,6 +1058,36 @@ export function RegulatoryIntelligencePanel({
                     </p>
                   )}
               </div>
+            )}
+
+            {/* Save as Evidence Binder */}
+            {csrSearch.data && csrSearch.data.length > 0 && onCreateDocument && (
+              <button
+                onClick={() => {
+                  const reports = csrSearch.data || [];
+                  const html = [
+                    `<h1>Evidence Binder — ${indication || submissionType || 'Clinical'}</h1>`,
+                    `<p><strong>Historical Reports Matched:</strong> ${reports.length}</p>`,
+                    `<p><strong>Regions:</strong> USA, EU, Canada (FDA / EMA / Health Canada open sources)</p>`,
+                    '<h2>Matched Clinical Study Reports</h2>',
+                    '<table><tr><th>Study</th><th>Phase</th><th>Indication</th><th>Outcome</th><th>Relevance</th></tr>',
+                    ...reports.map(
+                      c =>
+                        `<tr><td>${c.title || ''}</td><td>${c.phase || ''}</td><td>${c.indication || ''}</td><td>${c.outcome || ''}</td><td>${c.relevance_score != null ? Math.round(c.relevance_score * 100) + '%' : ''}</td></tr>`
+                    ),
+                    '</table>',
+                  ].join('\n');
+                  onCreateDocument(
+                    html,
+                    `Evidence Binder — ${indication || submissionType || 'Clinical'}`,
+                    '5.3'
+                  );
+                }}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
+                Save as Evidence Binder
+              </button>
             )}
 
             {/* Empty state */}

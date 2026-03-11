@@ -82,6 +82,7 @@ import {
   PenLine,
   Layers,
   Download,
+  Brain,
 } from 'lucide-react';
 
 // Utility: instantly redirect dead layout modes to regulatory-workspace
@@ -108,6 +109,11 @@ const RulesManager = lazy(() =>
 // Lazy load IND Workspace (eCTD filing hub)
 const INDWorkspace = lazy(() =>
   import('./pages/INDWorkspace').then(m => ({ default: m.INDWorkspace }))
+);
+
+// IND Workspace Right Rail (section-specific CTD context)
+const INDRightRail = lazy(() =>
+  import('./components/workspace/INDRightRail').then(m => ({ default: m.INDRightRail }))
 );
 
 // ─── Regulatory module standalones ────────────────────────────────────────────
@@ -151,6 +157,13 @@ const RegulatoryIntelligencePanel = lazy(() =>
 const RegulatoryStatusCard = lazy(() =>
   import('./components/intelligence/RegulatoryStatusCard').then(m => ({
     default: m.RegulatoryStatusCard,
+  }))
+);
+
+// RI Copilot Intelligence Home (evidence-first landing surface)
+const RICopilotHome = lazy(() =>
+  import('./components/intelligence/RICopilotHome').then(m => ({
+    default: m.RICopilotHome,
   }))
 );
 
@@ -239,6 +252,8 @@ type LayoutMode =
   | 'dossier'
   | 'precedent-intelligence'
   | 'regulatory-workspace'
+  | 'document-vault'
+  | 'clinical-trial'
   | 'project-launcher';
 
 const INDUSTRY_MODES: IndustryMode[] = [
@@ -561,6 +576,9 @@ export const ZenApp: React.FC = () => {
     content: string;
     ctdSection?: string;
   } | null>(null);
+
+  // RI Copilot view: 'intelligence' = evidence-first home, 'editor' = document editing
+  const [riViewMode, setRiViewMode] = useState<'intelligence' | 'editor'>('intelligence');
 
   // Active selection — URL projectId takes precedence
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
@@ -1159,6 +1177,21 @@ export const ZenApp: React.FC = () => {
         projects={projects}
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
+        activeNavId={
+          layoutMode === 'regulatory-workspace'
+            ? 'ai-copilot'
+            : layoutMode === 'ind-workspace'
+              ? 'ind-workspace'
+              : layoutMode === 'ectd-coauthor'
+                ? 'ectd-coauthor'
+                : layoutMode === 'cmc'
+                  ? 'cmc'
+                  : layoutMode === 'document-vault'
+                    ? 'document-vault'
+                    : layoutMode === 'clinical-trial'
+                      ? 'clinical-trial'
+                      : undefined
+        }
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
@@ -1196,6 +1229,7 @@ export const ZenApp: React.FC = () => {
               break;
             // ── Product routes ──────────────────────────────────
             case 'ai-copilot':
+              setRiViewMode('intelligence');
               setLayoutMode('regulatory-workspace');
               break;
             case '510k-workspace':
@@ -1401,41 +1435,89 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── IND Workspace (eCTD filing hub) ──────────── */}
+          {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
           {!embeddedModule && layoutMode === 'ind-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
-              <WorkspaceHeader
-                title={submissionWorkspaceLabel}
-                subtitle="IND · NDA · BLA · 21 CFR 312 · CTD-formatted sections"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading IND Workspace...</p>
-                      </div>
-                    </div>
-                  }
+              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('assistant')}
+                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                 >
-                  <INDWorkspace
-                    projectId={activeProjectId}
-                    projectName={activeProject?.name || 'Untitled Project'}
-                    submissionType={activeProject?.type || 'IND'}
-                    onOpenSection={sectionCode => {
-                      console.log(`[IND] Opening section ${sectionCode} in editor`);
-                      setLayoutMode('editor');
-                    }}
-                    onDraftWithAI={(sectionCode, sectionTitle) => {
-                      setPendingDraftSection({ code: sectionCode, title: sectionTitle });
-                      setLayoutMode('assistant');
-                    }}
-                    onNavigateToCoAuthor={() => setLayoutMode('editor')}
-                  />
-                </Suspense>
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Chat</span>
+                </button>
+                <div className="w-px h-4 bg-zinc-200" />
+                <ShieldCheck className="w-4 h-4 text-violet-500" />
+                <span className="text-sm font-medium text-zinc-900">
+                  {submissionWorkspaceLabel} — Dossier Construction
+                </span>
+                <span className="text-xs text-zinc-400 ml-1 hidden sm:inline">
+                  CTD sections · Status tracking · eCTD compile
+                </span>
               </div>
+              {/* No-project guard */}
+              {!activeProjectId ? (
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                  <div className="max-w-md text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-50 flex items-center justify-center">
+                      <ShieldCheck className="w-8 h-8 text-violet-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">IND Workspace</h2>
+                    <p className="text-sm text-zinc-500 mb-6">
+                      Select a project to open its dossier and begin drafting CTD sections.
+                    </p>
+                    <button
+                      onClick={() => setProjectSwitcherOpen(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-sm"
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      Select Project
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex min-h-0">
+                  {/* Main area: IND section tree */}
+                  <div className="flex-1 overflow-auto">
+                    <Suspense
+                      fallback={
+                        <div className="flex-1 flex items-center justify-center bg-white h-full">
+                          <div className="text-center">
+                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                            <p className="text-zinc-500">Loading IND Workspace...</p>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <INDWorkspace
+                        projectId={activeProjectId}
+                        projectName={activeProject?.name || 'Untitled Project'}
+                        submissionType={activeProject?.type || 'IND'}
+                        onOpenSection={sectionCode => {
+                          setPendingEditorContent({
+                            content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'IND Application'}.</p>`,
+                            title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
+                            ctdSection: sectionCode,
+                          });
+                          setRiViewMode('editor');
+                          setLayoutMode('regulatory-workspace');
+                        }}
+                        onDraftWithAI={(sectionCode, sectionTitle) => {
+                          setPendingDraftSection({ code: sectionCode, title: sectionTitle });
+                          setLayoutMode('assistant');
+                        }}
+                        onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
+                      />
+                    </Suspense>
+                  </div>
+                  {/* Right rail: Section context tabs */}
+                  <INDRightRail
+                    projectName={activeProject?.name}
+                    submissionType={activeProject?.type}
+                    indication={activeProject?.description}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -1503,7 +1585,8 @@ export const ZenApp: React.FC = () => {
                         content: sectionContent,
                         ctdSection: section.number,
                       });
-                      setLayoutMode('editor');
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
                     }}
                   />
                 </Suspense>
@@ -1519,6 +1602,73 @@ export const ZenApp: React.FC = () => {
                 subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
                 onBack={() => setLayoutMode('assistant')}
               />
+              {/* Module 3 traceability bar */}
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
+                <span className="text-xs text-zinc-500 mr-2">Module 3 Actions:</span>
+                <button
+                  onClick={() => {
+                    setPendingEditorContent({
+                      content: `<h1>Module 3.2.S — Drug Substance</h1>
+<p>CTD Section 3.2.S for ${activeProject?.name || 'Drug Product'}.</p>
+<h2>3.2.S.1 General Information</h2><p></p>
+<h2>3.2.S.2 Manufacture</h2><p></p>
+<h2>3.2.S.3 Characterisation</h2><p></p>
+<h2>3.2.S.4 Control of Drug Substance</h2><p></p>
+<h2>3.2.S.5 Reference Standards</h2><p></p>
+<h2>3.2.S.6 Container Closure System</h2><p></p>
+<h2>3.2.S.7 Stability</h2><p></p>`,
+                      title: `Module 3.2.S — ${activeProject?.name || 'Drug Substance'}`,
+                      ctdSection: '3.2.S',
+                    });
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
+                  }}
+                  className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                >
+                  Draft 3.2.S (Drug Substance)
+                </button>
+                <button
+                  onClick={() => {
+                    setPendingEditorContent({
+                      content: `<h1>Module 3.2.P — Drug Product</h1>
+<p>CTD Section 3.2.P for ${activeProject?.name || 'Drug Product'}.</p>
+<h2>3.2.P.1 Description and Composition</h2><p></p>
+<h2>3.2.P.2 Pharmaceutical Development</h2><p></p>
+<h2>3.2.P.3 Manufacture</h2><p></p>
+<h2>3.2.P.4 Control of Excipients</h2><p></p>
+<h2>3.2.P.5 Control of Drug Product</h2><p></p>
+<h2>3.2.P.6 Reference Standards</h2><p></p>
+<h2>3.2.P.7 Container Closure System</h2><p></p>
+<h2>3.2.P.8 Stability</h2><p></p>`,
+                      title: `Module 3.2.P — ${activeProject?.name || 'Drug Product'}`,
+                      ctdSection: '3.2.P',
+                    });
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
+                  }}
+                  className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                >
+                  Draft 3.2.P (Drug Product)
+                </button>
+                <button
+                  onClick={() => {
+                    setPendingEditorContent({
+                      content: `<h1>Module 3.2.A — Appendices</h1>
+<p>CTD Appendices for ${activeProject?.name || 'Drug Product'}.</p>
+<h2>3.2.A.1 Facilities and Equipment</h2><p></p>
+<h2>3.2.A.2 Adventitious Agents Safety Evaluation</h2><p></p>
+<h2>3.2.A.3 Novel Excipients</h2><p></p>`,
+                      title: `Module 3.2.A — ${activeProject?.name || 'Appendices'}`,
+                      ctdSection: '3.2.A',
+                    });
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
+                  }}
+                  className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                >
+                  Draft 3.2.A (Appendices)
+                </button>
+              </div>
               <div className="flex-1 overflow-auto">
                 <Suspense
                   fallback={
@@ -1659,7 +1809,10 @@ export const ZenApp: React.FC = () => {
                     projectSubmissionType={activeProject?.type}
                     projectDeviceName={activeProject?.name}
                     projectIndication={activeProject?.description}
-                    onNavigateToEditor={() => setLayoutMode('editor')}
+                    onNavigateToEditor={() => {
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
+                    }}
                   />
                 </Suspense>
               </div>
@@ -1668,7 +1821,6 @@ export const ZenApp: React.FC = () => {
 
           {/* Redirect dead module routes to unified workspace */}
           {[
-            'ind-workspace',
             'medtech-dashboard',
             'dossier',
             'submission-workspace',
@@ -1697,7 +1849,10 @@ export const ZenApp: React.FC = () => {
                   conversationCount: activeProject.conversationCount,
                 }}
                 onOpenWorkspace={() => setLayoutMode('regulatory-workspace')}
-                onOpenDocuments={() => setLayoutMode('editor')}
+                onOpenDocuments={() => {
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
+                }}
                 onBack={() => {
                   setLayoutMode('projects');
                   navigate('/concept2cure');
@@ -1714,87 +1869,132 @@ export const ZenApp: React.FC = () => {
           {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
           {!embeddedModule && layoutMode === 'regulatory-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
-              {/* ── Full-width Regulatory Status Header ──────────────── */}
-              {(() => {
-                const type = activeProject?.type;
-                const workspaceConfig: Record<string, { title: string; subtitle: string }> = {
-                  IND: {
-                    title: 'IND Strategy Workspace',
-                    subtitle:
-                      'Investigational New Drug application — preclinical, CMC, clinical protocol',
-                  },
-                  '510K': {
-                    title: '510(k) Submission Workspace',
-                    subtitle:
-                      'Premarket notification — predicate comparison, substantial equivalence, performance testing',
-                  },
-                  NDA: {
-                    title: 'NDA Workspace',
-                    subtitle: 'New Drug Application — Phase III data, integrated summary, labeling',
-                  },
-                  BLA: {
-                    title: 'BLA Workspace',
-                    subtitle:
-                      'Biologics License Application — manufacturing, potency, clinical efficacy',
-                  },
-                  PMA: {
-                    title: 'PMA Workspace',
-                    subtitle:
-                      'Premarket Approval — Class III device, clinical evidence, risk-benefit',
-                  },
-                  DE_NOVO: {
-                    title: 'De Novo Workspace',
-                    subtitle: 'Novel device classification — risk assessment, special controls',
-                  },
-                };
-                const cfg = workspaceConfig[type || ''] || {
-                  title: 'Regulatory Intelligence Workspace',
-                  subtitle:
-                    'Document authoring with live precedent, risk, and strategy intelligence',
-                };
-                return (
-                  <WorkspaceHeader
-                    title={cfg.title}
-                    subtitle={cfg.subtitle}
-                    onBack={() => setLayoutMode('assistant')}
-                  />
-                );
-              })()}
-              <div className="shrink-0 border-b border-zinc-100 bg-zinc-50/30">
-                <Suspense fallback={null}>
-                  <RegulatoryStatusCard
-                    submissionType={activeProject?.type}
-                    indication={activeProject?.description}
-                    deviceName={activeProject?.name}
-                    onOpenIntelligence={() => setLayoutMode('precedent-intelligence')}
-                  />
-                </Suspense>
+              {/* ── RI Copilot Header ──────────────────────────────────── */}
+              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('assistant')}
+                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Chat</span>
+                </button>
+                <div className="w-px h-4 bg-zinc-200" />
+                <Brain className="w-4 h-4 text-blue-500" />
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-zinc-900">RI Copilot</span>
+                  <span className="text-xs text-zinc-400 ml-2 hidden md:inline">
+                    Historical evidence, precedent intelligence, and regulatory reasoning
+                  </span>
+                </div>
+                {activeProject && (
+                  <span className="hidden sm:inline text-[10px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 font-medium ml-1">
+                    {activeProject.name}
+                    {activeProject.type && ` · ${activeProject.type}`}
+                  </span>
+                )}
+                {/* Header CTAs */}
+                <div className="ml-auto flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      const content = `<h1>Evidence-Based Regulatory Analysis</h1>
+<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'N/A'})</h2>
+<p>Generated from RI Copilot intelligence canvas.</p>
+<h2>Evidence Summary</h2><p>[Evidence data populated from CSR repository and precedent engine.]</p>
+<h2>Recommendations</h2><p>[Strategic recommendations based on historical precedents.]</p>`;
+                      setPendingEditorContent({
+                        content,
+                        title: `Evidence Analysis — ${activeProject?.name || activeProject?.type}`,
+                        ctdSection: undefined,
+                      });
+                      setRiViewMode('editor');
+                    }}
+                    className="hidden md:flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    <FileText className="w-3 h-3" />
+                    Generate Document
+                  </button>
+                  <button
+                    onClick={() => setRiViewMode('intelligence')}
+                    className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md font-medium bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Evidence
+                  </button>
+                  {/* View toggle */}
+                  <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
+                    <button
+                      onClick={() => setRiViewMode('intelligence')}
+                      className={cn(
+                        'px-2.5 py-1 text-[11px] font-medium transition-colors',
+                        riViewMode === 'intelligence'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-zinc-500 hover:bg-zinc-50'
+                      )}
+                    >
+                      Intelligence
+                    </button>
+                    <button
+                      onClick={() => setRiViewMode('editor')}
+                      className={cn(
+                        'px-2.5 py-1 text-[11px] font-medium transition-colors',
+                        riViewMode === 'editor'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-zinc-500 hover:bg-zinc-50'
+                      )}
+                    >
+                      Editor
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* ── 3-column body: Editor | Intelligence | AI Chat ──── */}
-              <div className="flex-1 flex min-h-0">
-                {/* Column 1: Document Editor */}
-                <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
-                    }
-                  >
-                    <EditorPanel
-                      projectId={activeProjectId}
-                      submissionType={activeProject?.type}
-                      initialContent={pendingEditorContent?.content}
-                      initialTitle={pendingEditorContent?.title}
-                      initialCtdSection={pendingEditorContent?.ctdSection}
-                      onInitialContentConsumed={() => setPendingEditorContent(null)}
-                    />
-                  </Suspense>
-                </div>
+              {/* ── Body: Intelligence mode = full 3-pane RICopilotHome ──── */}
+              {/* ── Body: Editor mode = Editor + Intelligence Panel + Chat ── */}
+              {riViewMode === 'intelligence' ? (
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <RICopilotHome
+                    projectId={activeProjectId}
+                    projectName={activeProject?.name}
+                    submissionType={activeProject?.type}
+                    indication={activeProject?.description}
+                    onAnalyzeEvidence={() => setRiViewMode('editor')}
+                    onDraftFromPrecedent={(content, title, ctdSection) => {
+                      setPendingEditorContent({ content, title, ctdSection });
+                      setRiViewMode('editor');
+                    }}
+                    onOpenEditor={() => setRiViewMode('editor')}
+                    onSelectProject={() => setProjectSwitcherOpen(true)}
+                  />
+                </Suspense>
+              ) : (
+                <div className="flex-1 flex min-h-0">
+                  {/* Column 1: Editor */}
+                  <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+                    <Suspense
+                      fallback={
+                        <div className="flex-1 flex items-center justify-center">
+                          <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                        </div>
+                      }
+                    >
+                      <EditorPanel
+                        projectId={activeProjectId}
+                        submissionType={activeProject?.type}
+                        initialContent={pendingEditorContent?.content}
+                        initialTitle={pendingEditorContent?.title}
+                        initialCtdSection={pendingEditorContent?.ctdSection}
+                        onInitialContentConsumed={() => setPendingEditorContent(null)}
+                      />
+                    </Suspense>
+                  </div>
 
-                {/* Column 2: Intelligence Panel (5 tabs) */}
-                <div className="hidden lg:flex w-80 shrink-0 border-l border-zinc-200 flex-col min-h-0 overflow-y-auto">
+                  {/* Column 2: Intelligence Panel */}
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center h-full">
@@ -1807,93 +2007,98 @@ export const ZenApp: React.FC = () => {
                       indication={activeProject?.description}
                       deviceName={activeProject?.name}
                       phase="III"
+                      onCreateDocument={(content, title, ctdSection) => {
+                        setPendingEditorContent({ content, title, ctdSection });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
                     />
                   </Suspense>
-                </div>
 
-                {/* Column 3: RI Analyst Chat */}
-                {regChatOpen && (
-                  <div className="hidden xl:flex w-80 shrink-0 border-l border-zinc-200 flex-col min-h-0">
-                    <div className="flex items-center justify-between h-10 px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
-                      <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
-                        <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
-                        RI Analyst
-                      </span>
-                      <button
-                        onClick={() => setRegChatOpen(false)}
-                        className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="flex-1 min-h-0 overflow-hidden">
-                      <ZenChat
-                        projectId={activeProjectId}
-                        projectName={activeProject?.name}
-                        submissionType={activeProject?.type}
-                        threadId={activeThreadId}
-                        greeting={`Regulatory Intelligence Analyst ready. Working on ${activeProject?.name || 'your project'} (${activeProject?.type || 'submission'}).`}
-                        suggestedActions={(() => {
-                          const type = activeProject?.type;
-                          if (type === 'IND')
+                  {/* Column 3: RI Analyst Chat */}
+                  {regChatOpen && (
+                    <div className="hidden xl:flex w-80 shrink-0 border-l border-zinc-200 flex-col min-h-0">
+                      <div className="flex items-center justify-between h-10 px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+                        <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+                          <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                          RI Analyst
+                        </span>
+                        <button
+                          onClick={() => setRegChatOpen(false)}
+                          className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex-1 min-h-0 overflow-hidden">
+                        <ZenChat
+                          projectId={activeProjectId}
+                          projectName={activeProject?.name}
+                          submissionType={activeProject?.type}
+                          threadId={activeThreadId}
+                          greeting={`Regulatory Intelligence Analyst ready. Working on ${activeProject?.name || 'your project'} (${activeProject?.type || 'submission'}).`}
+                          suggestedActions={(() => {
+                            const type = activeProject?.type;
+                            if (type === 'IND')
+                              return [
+                                'Review preclinical data package completeness',
+                                'Draft Investigator Brochure summary',
+                                'Identify CMC gaps for Phase I',
+                                'Generate clinical protocol synopsis',
+                              ];
+                            if (type === '510K')
+                              return [
+                                'Compare with predicate device',
+                                'Assess substantial equivalence',
+                                'Review performance testing requirements',
+                                'Draft SE determination rationale',
+                              ];
+                            if (type === 'NDA' || type === 'BLA')
+                              return [
+                                'Summarize Phase III efficacy data',
+                                'Draft integrated safety summary',
+                                'Review labeling requirements',
+                                'Identify post-marketing commitments',
+                              ];
+                            if (type === 'PMA')
+                              return [
+                                'Review clinical evidence for PMA',
+                                'Assess risk-benefit profile',
+                                'Draft manufacturing summary',
+                                'Identify panel meeting requirements',
+                              ];
                             return [
-                              'Review preclinical data package completeness',
-                              'Draft Investigator Brochure summary',
-                              'Identify CMC gaps for Phase I',
-                              'Generate clinical protocol synopsis',
+                              'Summarize evidence for this indication',
+                              'Draft executive summary',
+                              'Identify regulatory gaps',
+                              'Compare with predicate devices',
                             ];
-                          if (type === '510K')
-                            return [
-                              'Compare with predicate device',
-                              'Assess substantial equivalence',
-                              'Review performance testing requirements',
-                              'Draft SE determination rationale',
-                            ];
-                          if (type === 'NDA' || type === 'BLA')
-                            return [
-                              'Summarize Phase III efficacy data',
-                              'Draft integrated safety summary',
-                              'Review labeling requirements',
-                              'Identify post-marketing commitments',
-                            ];
-                          if (type === 'PMA')
-                            return [
-                              'Review clinical evidence for PMA',
-                              'Assess risk-benefit profile',
-                              'Draft manufacturing summary',
-                              'Identify panel meeting requirements',
-                            ];
-                          return [
-                            'Summarize evidence for this indication',
-                            'Draft executive summary',
-                            'Identify regulatory gaps',
-                            'Compare with predicate devices',
-                          ];
-                        })()}
-                        initialMessage={regChatMessage}
-                        onNavigate={(path: string) => {
-                          try {
-                            const params = new URLSearchParams(
-                              new URL(path, window.location.origin).search
-                            );
-                            const p = params.get('panel') as ToolPanel | null;
-                            if (p && p in TOOL_PANELS) {
-                              setActiveToolPanel(p);
-                              return;
+                          })()}
+                          initialMessage={regChatMessage}
+                          onNavigate={(path: string) => {
+                            try {
+                              const params = new URLSearchParams(
+                                new URL(path, window.location.origin).search
+                              );
+                              const p = params.get('panel') as ToolPanel | null;
+                              if (p && p in TOOL_PANELS) {
+                                setActiveToolPanel(p);
+                                return;
+                              }
+                            } catch (_) {
+                              /* fallback */
                             }
-                          } catch (_) {
-                            /* fallback */
-                          }
-                        }}
-                        onThreadChange={tid => {
-                          handleThreadChange(tid);
-                          if (regChatMessage) setRegChatMessage(null);
-                        }}
-                      />
+                          }}
+                          onThreadChange={tid => {
+                            handleThreadChange(tid);
+                            if (regChatMessage) setRegChatMessage(null);
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* ── Bottom panels toggle bar ────────────────────────── */}
               <div className="shrink-0 flex items-center gap-1 px-3 py-1.5 border-t border-zinc-200 bg-zinc-50/60">

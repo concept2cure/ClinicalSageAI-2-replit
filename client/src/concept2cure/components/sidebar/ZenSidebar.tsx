@@ -26,6 +26,17 @@ import {
   Brain,
   Archive,
   PenLine,
+  GitCompare,
+  MessageCircle,
+  BadgeCheck,
+  ClipboardList,
+  BookOpen,
+  Database,
+  History,
+  Microscope,
+  FileLock2,
+  Package,
+  ScrollText,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -64,6 +75,8 @@ export interface ZenSidebarProps {
   onNavigate?: (id: string) => void;
   userName?: string;
   userEmail?: string;
+  /** Which product nav item is currently active */
+  activeNavId?: string;
   /** Organization industry mode — drives which nav items are shown */
   industryMode?: string;
 }
@@ -111,6 +124,55 @@ const WorkspaceGroup: React.FC<{
       </button>
       {open && <div className="pb-1">{children}</div>}
     </div>
+  );
+};
+
+// ─── Nav item with active/accent support ──────────────────────────────────────
+
+const NavItem: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  accentColor?: 'blue' | 'violet' | 'emerald';
+  badge?: string;
+  onClick: () => void;
+}> = ({ icon, label, active, accentColor, badge, onClick }) => {
+  const accentMap = {
+    blue: { bg: 'bg-blue-50', text: 'text-blue-700', iconColor: 'text-blue-500' },
+    violet: { bg: 'bg-violet-50', text: 'text-violet-700', iconColor: 'text-violet-500' },
+    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
+  };
+  const accent = accentColor && accentMap[accentColor];
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'w-full flex items-center gap-2.5 pl-7 pr-3 py-1.5 text-sm transition-colors rounded-lg',
+        active
+          ? accent
+            ? `${accent.bg} ${accent.text} font-medium`
+            : 'bg-zinc-200/80 text-zinc-900 font-medium'
+          : accent
+            ? `text-zinc-600 hover:${accent.bg} hover:${accent.text}`
+            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+      )}
+    >
+      <span
+        className={cn(
+          'flex-shrink-0',
+          active ? (accent ? accent.iconColor : 'text-zinc-700') : 'text-zinc-400'
+        )}
+      >
+        {icon}
+      </span>
+      <span className="flex-1 text-left truncate">{label}</span>
+      {badge && (
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
+          {badge}
+        </span>
+      )}
+    </button>
   );
 };
 
@@ -176,6 +238,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onNavigate,
   userName,
   userEmail,
+  activeNavId,
   industryMode = 'medtech',
 }) => {
   const displayName = userName || 'My Account';
@@ -319,164 +382,209 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
 
-        {/* ── Industry-aware product nav ──────────────────────────────── */}
-        <div className="px-3 py-1.5 flex-shrink-0 space-y-0.5">
-          <button
-            onClick={() => onNavigate?.('ai-copilot')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-blue-50 hover:text-blue-700 text-sm transition-colors"
-          >
-            <Brain className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-            RI Copilot
-          </button>
-
-          {isBiotech ? (
-            <>
-              <button
-                onClick={() => onNavigate?.('ind-workspace')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <ShieldAlert className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                {workspaceLabel}
-              </button>
-              <button
-                onClick={() => onNavigate?.('ectd-coauthor')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <PenLine className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                eCTD Co-Author
-              </button>
-              <button
-                onClick={() => onNavigate?.('cmc')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <Beaker className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                CMC Platform
-              </button>
-              <button
-                onClick={() => onNavigate?.('document-vault')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <Archive className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                Document Vault
-              </button>
-              <button
-                onClick={() => onNavigate?.('clinical-trial')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <FlaskConical className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                Clinical Trial Hub
-              </button>
-              <button
-                onClick={() => onNavigate?.('evidence-search')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <Search className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                Evidence Search
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => onNavigate?.('510k-workspace')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <ShieldAlert className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                {workspaceLabel}
-              </button>
-              <button
-                onClick={() => onNavigate?.('cer-generator')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <FileText className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                CER Generator
-              </button>
-              <button
-                onClick={() => onNavigate?.('document-vault')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <Archive className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                Document Vault
-              </button>
-              <button
-                onClick={() => onNavigate?.('evidence-search')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <Search className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                Evidence Search
-              </button>
-              <button
-                onClick={() => onNavigate?.('ectd-coauthor')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors"
-              >
-                <PenLine className="w-4 h-4 flex-shrink-0 text-zinc-400" />
-                eCTD Co-Author
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
-                  Early Access
-                </span>
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="mx-3 border-t border-zinc-200 flex-shrink-0" />
-
-        {/* Conversation history */}
-        <div className="flex-1 overflow-y-auto min-h-0 py-1" style={{ scrollbarWidth: 'thin' }}>
-          {conversations.length === 0 && (
-            <div className="px-4 py-10 text-center">
-              <MessageSquare className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                No conversations yet.
-                <br />
-                Start one above.
-              </p>
-            </div>
-          )}
-
-          {todayConvos.length > 0 && (
-            <>
-              <SectionLabel label="Today" />
-              {todayConvos.map(c => (
-                <ConvoRow
-                  key={c.id}
-                  convo={c}
-                  isActive={c.id === activeConversationId}
-                  onSelect={() => onSelectConversation(c.id)}
-                  onDelete={() => onDeleteConversation(c.id)}
+        {/* ── Grouped product navigation ──────────────────────────────── */}
+        <div
+          className="flex-1 overflow-y-auto min-h-0 zen-scroll"
+          style={{ scrollbarWidth: 'thin' }}
+        >
+          {/* ── Workspaces ──────────────────────────────────────── */}
+          <WorkspaceGroup label="Workspaces">
+            <NavItem
+              icon={<Brain className="w-4 h-4" />}
+              label="RI Copilot"
+              active={activeNavId === 'ai-copilot'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('ai-copilot')}
+            />
+            {isBiotech ? (
+              <>
+                <NavItem
+                  icon={<ShieldAlert className="w-4 h-4" />}
+                  label={workspaceLabel}
+                  active={activeNavId === 'ind-workspace'}
+                  onClick={() => onNavigate?.('ind-workspace')}
                 />
-              ))}
-            </>
-          )}
-
-          {yesterdayConvos.length > 0 && (
-            <>
-              <SectionLabel label="Yesterday" />
-              {yesterdayConvos.map(c => (
-                <ConvoRow
-                  key={c.id}
-                  convo={c}
-                  isActive={c.id === activeConversationId}
-                  onSelect={() => onSelectConversation(c.id)}
-                  onDelete={() => onDeleteConversation(c.id)}
+                <NavItem
+                  icon={<PenLine className="w-4 h-4" />}
+                  label="eCTD Co-Author"
+                  active={activeNavId === 'ectd-coauthor'}
+                  onClick={() => onNavigate?.('ectd-coauthor')}
                 />
-              ))}
-            </>
-          )}
-
-          {olderConvos.length > 0 && (
-            <>
-              <SectionLabel label="Previous 7 days" />
-              {olderConvos.map(c => (
-                <ConvoRow
-                  key={c.id}
-                  convo={c}
-                  isActive={c.id === activeConversationId}
-                  onSelect={() => onSelectConversation(c.id)}
-                  onDelete={() => onDeleteConversation(c.id)}
+                <NavItem
+                  icon={<Beaker className="w-4 h-4" />}
+                  label="CMC Platform"
+                  active={activeNavId === 'cmc'}
+                  onClick={() => onNavigate?.('cmc')}
                 />
-              ))}
-            </>
-          )}
+                <NavItem
+                  icon={<FlaskConical className="w-4 h-4" />}
+                  label="Clinical Trial Hub"
+                  active={activeNavId === 'clinical-trial'}
+                  onClick={() => onNavigate?.('clinical-trial')}
+                />
+              </>
+            ) : (
+              <>
+                <NavItem
+                  icon={<ShieldAlert className="w-4 h-4" />}
+                  label={workspaceLabel}
+                  onClick={() => onNavigate?.('510k-workspace')}
+                />
+                <NavItem
+                  icon={<FileText className="w-4 h-4" />}
+                  label="CER Generator"
+                  onClick={() => onNavigate?.('cer-generator')}
+                />
+                <NavItem
+                  icon={<PenLine className="w-4 h-4" />}
+                  label="eCTD Co-Author"
+                  active={activeNavId === 'ectd-coauthor'}
+                  badge="Early Access"
+                  onClick={() => onNavigate?.('ectd-coauthor')}
+                />
+              </>
+            )}
+          </WorkspaceGroup>
+
+          {/* ── Evidence ────────────────────────────────────────── */}
+          <WorkspaceGroup label="Evidence">
+            <NavItem
+              icon={<Search className="w-4 h-4" />}
+              label="Evidence Search"
+              onClick={() => onNavigate?.('evidence-search')}
+            />
+            <NavItem
+              icon={<Database className="w-4 h-4" />}
+              label="CSR Repository"
+              active={activeNavId === 'csr-repository'}
+              onClick={() => onNavigate?.('evidence-search')}
+            />
+            <NavItem
+              icon={<History className="w-4 h-4" />}
+              label="Historical Outcomes"
+              active={activeNavId === 'historical-outcomes'}
+              onClick={() => onNavigate?.('evidence-search')}
+            />
+            <NavItem
+              icon={<Microscope className="w-4 h-4" />}
+              label="Precedent Intelligence"
+              active={activeNavId === 'precedent-intelligence'}
+              onClick={() => onNavigate?.('ai-copilot')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── Documents ───────────────────────────────────────── */}
+          <WorkspaceGroup label="Documents">
+            <NavItem
+              icon={<Archive className="w-4 h-4" />}
+              label="Document Vault"
+              active={activeNavId === 'document-vault'}
+              onClick={() => onNavigate?.('document-vault')}
+            />
+            <NavItem
+              icon={<Package className="w-4 h-4" />}
+              label="Active Dossier"
+              active={activeNavId === 'active-dossier'}
+              onClick={() => onNavigate?.('ind-workspace')}
+            />
+            <NavItem
+              icon={<ScrollText className="w-4 h-4" />}
+              label="Drafts"
+              active={activeNavId === 'drafts'}
+              onClick={() => onNavigate?.('document-vault')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── Governance ──────────────────────────────────────── */}
+          <WorkspaceGroup label="Governance" defaultOpen={false}>
+            <NavItem
+              icon={<FileLock2 className="w-4 h-4" />}
+              label="Provenance"
+              active={activeNavId === 'provenance'}
+              onClick={() => onNavigate?.('ai-copilot')}
+            />
+            <NavItem
+              icon={<GitCompare className="w-4 h-4" />}
+              label="Version Compare"
+              active={activeNavId === 'version-compare'}
+              onClick={() => onNavigate?.('ai-copilot')}
+            />
+            <NavItem
+              icon={<MessageCircle className="w-4 h-4" />}
+              label="Review Comments"
+              active={activeNavId === 'review-comments'}
+              onClick={() => onNavigate?.('ai-copilot')}
+            />
+            <NavItem
+              icon={<BadgeCheck className="w-4 h-4" />}
+              label="Signatures"
+              active={activeNavId === 'signatures'}
+              onClick={() => onNavigate?.('ai-copilot')}
+            />
+            <NavItem
+              icon={<ClipboardList className="w-4 h-4" />}
+              label="Audit Reports"
+              active={activeNavId === 'audit-reports'}
+              onClick={() => onNavigate?.('ai-copilot')}
+            />
+          </WorkspaceGroup>
+
+          <div className="mx-3 my-1 border-t border-zinc-200" />
+
+          {/* ── Conversations ──────────────────────────────────── */}
+          <WorkspaceGroup label="Conversations" defaultOpen={conversations.length > 0}>
+            {conversations.length === 0 && (
+              <div className="px-4 py-4 text-center">
+                <MessageSquare className="w-6 h-6 text-zinc-300 mx-auto mb-1.5" />
+                <p className="text-xs text-zinc-400 leading-relaxed">No conversations yet.</p>
+              </div>
+            )}
+
+            {todayConvos.length > 0 && (
+              <>
+                <SectionLabel label="Today" />
+                {todayConvos.map(c => (
+                  <ConvoRow
+                    key={c.id}
+                    convo={c}
+                    isActive={c.id === activeConversationId}
+                    onSelect={() => onSelectConversation(c.id)}
+                    onDelete={() => onDeleteConversation(c.id)}
+                  />
+                ))}
+              </>
+            )}
+
+            {yesterdayConvos.length > 0 && (
+              <>
+                <SectionLabel label="Yesterday" />
+                {yesterdayConvos.map(c => (
+                  <ConvoRow
+                    key={c.id}
+                    convo={c}
+                    isActive={c.id === activeConversationId}
+                    onSelect={() => onSelectConversation(c.id)}
+                    onDelete={() => onDeleteConversation(c.id)}
+                  />
+                ))}
+              </>
+            )}
+
+            {olderConvos.length > 0 && (
+              <>
+                <SectionLabel label="Previous 7 days" />
+                {olderConvos.map(c => (
+                  <ConvoRow
+                    key={c.id}
+                    convo={c}
+                    isActive={c.id === activeConversationId}
+                    onSelect={() => onSelectConversation(c.id)}
+                    onDelete={() => onDeleteConversation(c.id)}
+                  />
+                ))}
+              </>
+            )}
+          </WorkspaceGroup>
         </div>
 
         {/* User / settings footer */}
