@@ -17,18 +17,18 @@ echo "  ✅ PostgreSQL running"
 
 # 2. Verify DB connection
 echo "[2/3] Checking database..."
-if ! PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c '\q' clinicalsage 2>/dev/null; then
+if ! PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c '\q' trialsage 2>/dev/null; then
   echo "  ⚠️  DB not responding — waiting 5s..."
   sleep 5
 fi
-echo "  ✅ Database: clinicalsage"
+echo "  ✅ Database: trialsage"
 
 # 3. Start app server
 echo "[3/3] Starting app server on port 5000..."
 pkill -f "tsx server/index.ts" 2>/dev/null || true
 sleep 1
 
-export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable"
+export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/trialsage?sslmode=disable"
 export SKIP_DB_STARTUP_TEST=true
 export NODE_ENV=development
 export PORT=5000

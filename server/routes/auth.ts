@@ -395,13 +395,13 @@ router.post('/signup', async (req: Request, res: Response) => {
         .returning();
 
       const passwordHash = await bcrypt.hash(password, 12);
+      const fullName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
       const [user] = await tx
         .insert(users)
         .values({
           email,
           passwordHash,
-          firstName: firstName || null,
-          lastName: lastName || null,
+          name: fullName,
           defaultOrganizationId: org.id,
         })
         .returning();
@@ -440,11 +440,10 @@ router.post('/signup', async (req: Request, res: Response) => {
       user: {
         id: result.user.id,
         email: result.user.email,
-        firstName: result.user.firstName,
-        lastName: result.user.lastName,
+        name: result.user.name,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[auth] Signup error:', error);
     return res.status(500).json({
       success: false,
