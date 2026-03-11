@@ -27,10 +27,15 @@ import {
   Info,
   Brain,
   PanelRightClose,
+  GitCompare,
+  ClipboardList,
 } from 'lucide-react';
 import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
 import { useGenerateDocx, downloadBlob } from '../../hooks/useDocumentFactory';
+import DocumentProvenancePanel from '../provenance/DocumentProvenancePanel';
+import DocumentVersionCompare from '../provenance/DocumentVersionCompare';
+import DocumentAuditReport from '../provenance/DocumentAuditReport';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -105,6 +110,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Intelligence panel toggle ──────────────────────────────────────────
   const [showIntelPanel, setShowIntelPanel] = useState(false);
+  // ── Provenance panel toggle ────────────────────────────────────────────
+  const [showProvenancePanel, setShowProvenancePanel] = useState(false);
+  // ── Version Compare panel toggle ────────────────────────────────────────
+  const [showComparePanel, setShowComparePanel] = useState(false);
+  // ── Audit Report panel toggle ──────────────────────────────────────────
+  const [showAuditReport, setShowAuditReport] = useState(false);
 
   const handleClaimCheck = useCallback(() => {
     if (!activeArtifact?.content) return;
@@ -570,6 +581,45 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             )}
             Intelligence
           </button>
+
+          {/* Document Provenance Panel Toggle */}
+          <button
+            onClick={() => setShowProvenancePanel(!showProvenancePanel)}
+            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
+              showProvenancePanel
+                ? 'bg-violet-100 text-violet-700'
+                : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Provenance
+          </button>
+
+          {/* Version Compare Toggle */}
+          <button
+            onClick={() => setShowComparePanel(!showComparePanel)}
+            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
+              showComparePanel
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+            }`}
+          >
+            <GitCompare className="w-3.5 h-3.5" />
+            Compare
+          </button>
+
+          {/* Audit Report Toggle */}
+          <button
+            onClick={() => setShowAuditReport(!showAuditReport)}
+            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
+              showAuditReport
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+            }`}
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            Audit
+          </button>
         </div>
       </div>
 
@@ -671,9 +721,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
-      {/* Editor + Intelligence Panel */}
+      {/* Editor + Side Panels */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
-        <div className={`${showIntelPanel ? 'flex-1' : 'w-full'} min-h-0 overflow-hidden`}>
+        <div
+          className={`${showIntelPanel || showProvenancePanel || showComparePanel || showAuditReport ? 'flex-1' : 'w-full'} min-h-0 overflow-hidden`}
+        >
           <UnifiedDocumentEditor
             key={activeArtifact?.id}
             documentId={activeArtifact?.id}
@@ -694,6 +746,33 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               deviceName={activeArtifact?.title}
               documentContent={activeArtifact?.content}
               onClose={() => setShowIntelPanel(false)}
+            />
+          </div>
+        )}
+        {showProvenancePanel && projectId && activeArtifact && (
+          <div className="w-80 min-w-[280px] max-w-[360px] shrink-0 h-full">
+            <DocumentProvenancePanel
+              projectId={projectId}
+              artifactId={activeArtifact.id}
+              onClose={() => setShowProvenancePanel(false)}
+            />
+          </div>
+        )}
+        {showComparePanel && projectId && activeArtifact && (
+          <div className="w-[480px] min-w-[400px] max-w-[560px] shrink-0 h-full">
+            <DocumentVersionCompare
+              projectId={projectId}
+              artifactId={activeArtifact.id}
+              onClose={() => setShowComparePanel(false)}
+            />
+          </div>
+        )}
+        {showAuditReport && projectId && activeArtifact && (
+          <div className="w-96 min-w-[340px] max-w-[480px] shrink-0 h-full">
+            <DocumentAuditReport
+              projectId={projectId}
+              artifactId={activeArtifact.id}
+              onClose={() => setShowAuditReport(false)}
             />
           </div>
         )}

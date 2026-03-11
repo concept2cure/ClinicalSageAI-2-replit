@@ -4782,6 +4782,54 @@ export const concept2cureSignatures = pgTable(
   })
 );
 
+/**
+ * Concept2Cure Provenance Events Table
+ *
+ * Tracks the full lineage of every artifact: what source inputs fed it,
+ * how it was generated, what transformations were applied, and where it
+ * was placed in the dossier. Append-only for regulatory integrity.
+ */
+export const concept2cureProvenanceEvents = pgTable(
+  'concept2cure_provenance_events',
+  {
+    id: serial('id').primaryKey(),
+    eventId: text('event_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    artifactVersionId: integer('artifact_version_id').references(
+      () => concept2cureArtifactVersions.id
+    ),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // Event classification
+    eventType: text('event_type').notNull(), // source_input, generation, transformation, edit, approval, export, placement
+    eventAction: text('event_action').notNull(), // ai_generate, human_edit, template_apply, docx_export, cmc_data_load, file_upload, etc.
+    // Actor
+    actorId: integer('actor_id').references(() => users.id),
+    actorName: text('actor_name'),
+    actorEmail: text('actor_email'),
+    // Structured details — flexible JSON for type-specific data
+    details: json('details').$type<Record<string, unknown>>().default({}),
+    // Source tracking
+    sourceArtifactId: integer('source_artifact_id').references(() => concept2cureArtifacts.id),
+    sourceDescription: text('source_description'), // Human-readable: "CMC Project: Nexavar-2", "Template: Module 3 scaffold"
+    // Backend provenance
+    backendRoute: text('backend_route'), // e.g. POST /api/knowledge-base/generate-module3-docx
+    backendService: text('backend_service'), // e.g. "knowledge-base", "shadow-service", "concept2cure"
+    // Network context
+    ipAddress: varchar('ip_address', { length: 45 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_prov_artifact_idx').on(table.artifactId),
+    eventTypeIdx: index('c2c_prov_event_type_idx').on(table.eventType),
+    orgIdx: index('c2c_prov_org_idx').on(table.organizationId),
+    createdAtIdx: index('c2c_prov_created_at_idx').on(table.createdAt),
+  })
+);
+
 // Insert Schemas
 export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
   concept2cureConversations,
@@ -4833,6 +4881,19 @@ export type InsertConcept2cureArtifactVersion = z.infer<
 
 export type Concept2cureSignature = InferSelectModel<typeof concept2cureSignatures>;
 export type InsertConcept2cureSignature = z.infer<typeof insertConcept2cureSignatureSchema>;
+
+export const insertConcept2cureProvenanceEventSchema = createInsertSchemaOmit(
+  concept2cureProvenanceEvents,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
+
+export type Concept2cureProvenanceEvent = InferSelectModel<typeof concept2cureProvenanceEvents>;
+export type InsertConcept2cureProvenanceEvent = z.infer<
+  typeof insertConcept2cureProvenanceEventSchema
+>;
 
 /**
  * Project Modules Table

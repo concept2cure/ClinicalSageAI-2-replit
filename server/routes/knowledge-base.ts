@@ -25,7 +25,11 @@ import { Document, Packer, Paragraph, HeadingLevel, TextRun, AlignmentType } fro
 import { db } from '../db.js';
 import { eq, desc } from 'drizzle-orm';
 import { cmcProjects, drugSubstances, drugProducts } from '../../shared/cmc-schema.js';
-import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../shared/schema.js';
+import {
+  concept2cureArtifacts,
+  concept2cureArtifactVersions,
+  concept2cureProvenanceEvents,
+} from '../../shared/schema.js';
 import crypto from 'crypto';
 
 const router = Router();
@@ -53,6 +57,47 @@ function requireToken(res: Response): boolean {
     return false;
   }
   return true;
+}
+
+/**
+ * Emit provenance event for knowledge-base generated documents.
+ */
+async function emitKBProvenanceEvent(params: {
+  artifactDbId: number;
+  organizationId: number;
+  eventType: string;
+  eventAction: string;
+  actorId?: number;
+  actorName?: string;
+  details?: Record<string, unknown>;
+  sourceDescription?: string;
+  backendRoute?: string;
+  ipAddress?: string;
+}) {
+  try {
+    if (!db) return null;
+    const eventId = `prov_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+    await db.insert(concept2cureProvenanceEvents).values({
+      eventId,
+      artifactId: params.artifactDbId,
+      organizationId: params.organizationId,
+      eventType: params.eventType,
+      eventAction: params.eventAction,
+      actorId: params.actorId || null,
+      actorName: params.actorName || null,
+      actorEmail: null,
+      details: params.details || {},
+      sourceArtifactId: null,
+      sourceDescription: params.sourceDescription || null,
+      backendRoute: params.backendRoute || null,
+      backendService: 'knowledge-base',
+      ipAddress: params.ipAddress || null,
+    });
+    return eventId;
+  } catch (err: any) {
+    console.warn('[knowledge-base] Provenance emit failed:', err.message);
+    return null;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -656,6 +701,61 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
               contentHash,
               createdById: user?.id || null,
             });
+
+            // Emit provenance events for Module 3 generation
+            // 1. Generation event
+            await emitKBProvenanceEvent({
+              artifactDbId: inserted.id,
+              organizationId: orgId,
+              eventType: 'generation',
+              eventAction: 'ai_generate',
+              actorId: user?.id,
+              actorName: user?.name || user?.email,
+              details: {
+                generationMethod: 'template_with_structured_data',
+                template: 'CTD Module 3 – Quality (CMC)',
+                ctdSection: '3.2',
+                drugName: drug_name,
+                substanceName: substance_name,
+                cmcProjectId: cmcProjectId || null,
+                contentHash,
+                contentLength: htmlContent.length,
+              },
+              sourceDescription: cmcProjectId
+                ? `Generated Module 3 from CMC project ${cmcProjectId}`
+                : 'Generated Module 3 from manual input data',
+              backendRoute: 'POST /api/knowledge-base/generate-module3-docx',
+            });
+
+            // 2. Source input events — track what fed the document
+            if (cmcProjectId) {
+              await emitKBProvenanceEvent({
+                artifactDbId: inserted.id,
+                organizationId: orgId,
+                eventType: 'source_input',
+                eventAction: 'cmc_data_load',
+                actorId: user?.id,
+                details: {
+                  cmcProjectId,
+                  dataFields: {
+                    drugName: !!drug_name,
+                    substanceName: !!substance_name,
+                    molecularFormula: !!molecular_formula,
+                    molecularWeight: !!molecular_weight,
+                    dosageForm: !!dosage_form,
+                    strength: !!strength,
+                    routeOfAdministration: !!route_of_administration,
+                    manufacturingProcess: !!manufacturing_process,
+                    specifications: !!specifications,
+                    stabilityData: !!stability_data,
+                    impuritiesProfile: !!impurities_profile,
+                    composition: !!composition,
+                  },
+                },
+                sourceDescription: `CMC structured data from project ${cmcProjectId}`,
+                backendRoute: 'POST /api/knowledge-base/generate-module3-docx',
+              });
+            }
           }
 
           console.log(
@@ -796,6 +896,27 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
         content: htmlContent,
         contentHash,
         createdById: user?.id || null,
+      });
+
+      // Emit provenance: artifact creation via DOCX save
+      await emitKBProvenanceEvent({
+        artifactDbId: inserted.id,
+        organizationId: orgId,
+        eventType: 'generation',
+        eventAction: 'docx_save_as_artifact',
+        actorId: user?.id,
+        actorName: user?.name || user?.email,
+        details: {
+          title,
+          type: type || 'regulatory_document',
+          ctdSection: ctdSection || null,
+          contentHash,
+          contentLength: htmlContent.length,
+        },
+        sourceDescription: ctdSection
+          ? `Saved DOCX as artifact for CTD section ${ctdSection}`
+          : 'Saved DOCX as project artifact',
+        backendRoute: 'POST /api/knowledge-base/save-docx-as-artifact',
       });
     }
 

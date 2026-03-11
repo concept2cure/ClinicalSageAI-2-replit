@@ -48,6 +48,7 @@ import {
   concept2cureArtifacts,
   concept2cureArtifactVersions,
   concept2cureSignatures,
+  concept2cureProvenanceEvents,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 
@@ -293,6 +294,52 @@ function calculateContentHash(content: string): string {
  */
 function calculateSignatureHash(payload: Record<string, unknown>): string {
   return crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+}
+
+/**
+ * Emit a provenance event for an artifact.
+ * Append-only — events are never modified or deleted.
+ */
+async function emitProvenanceEvent(params: {
+  artifactDbId: number;
+  artifactVersionId?: number;
+  organizationId: number;
+  eventType: string;
+  eventAction: string;
+  actorId?: number;
+  actorName?: string;
+  actorEmail?: string;
+  details?: Record<string, unknown>;
+  sourceArtifactId?: number;
+  sourceDescription?: string;
+  backendRoute?: string;
+  backendService?: string;
+  ipAddress?: string;
+}) {
+  try {
+    const eventId = `prov_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+    await db.insert(concept2cureProvenanceEvents).values({
+      eventId,
+      artifactId: params.artifactDbId,
+      artifactVersionId: params.artifactVersionId || null,
+      organizationId: params.organizationId,
+      eventType: params.eventType,
+      eventAction: params.eventAction,
+      actorId: params.actorId || null,
+      actorName: params.actorName || null,
+      actorEmail: params.actorEmail || null,
+      details: params.details || {},
+      sourceArtifactId: params.sourceArtifactId || null,
+      sourceDescription: params.sourceDescription || null,
+      backendRoute: params.backendRoute || null,
+      backendService: params.backendService || null,
+      ipAddress: params.ipAddress || null,
+    });
+    return eventId;
+  } catch (err: any) {
+    logger.warn('Failed to emit provenance event', { error: err.message, ...params });
+    return null;
+  }
 }
 
 function logConcept2cureError(operation: string, error: Error, meta: Record<string, unknown> = {}) {
@@ -789,13 +836,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     const [project] = await db
       .select()
       .from(projects)
-      .where(
-        and(
-          eq(projects.id, numericId),
-          eq(projects.organizationId, organizationId),
-          eq(projects.type, 'concept2cure')
-        )
-      )
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .limit(1);
 
     if (!project) {
@@ -1103,13 +1144,7 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
     const [project] = await db
       .select()
       .from(projects)
-      .where(
-        and(
-          eq(projects.id, numericId),
-          eq(projects.organizationId, organizationId),
-          eq(projects.type, 'concept2cure')
-        )
-      )
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .limit(1);
 
     if (!project) {
@@ -1144,13 +1179,7 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
     const [project] = await db
       .select()
       .from(projects)
-      .where(
-        and(
-          eq(projects.id, numericId),
-          eq(projects.organizationId, organizationId),
-          eq(projects.type, 'concept2cure')
-        )
-      )
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .limit(1);
 
     if (!project) {
@@ -1232,13 +1261,7 @@ router.post(
       const [project] = await db
         .select()
         .from(projects)
-        .where(
-          and(
-            eq(projects.id, numericId),
-            eq(projects.organizationId, organizationId),
-            eq(projects.type, 'concept2cure')
-          )
-        )
+        .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
         .limit(1);
 
       if (!project) {
@@ -1313,13 +1336,7 @@ router.delete('/documents/:documentId', async (req: Request, res: Response) => {
     const dbProjects = await db
       .select()
       .from(projects)
-      .where(
-        and(
-          eq(projects.organizationId, organizationId),
-          eq(projects.type, 'concept2cure'),
-          isNull(projects.actualEndDate)
-        )
-      );
+      .where(and(eq(projects.organizationId, organizationId), isNull(projects.actualEndDate)));
 
     const target = dbProjects.find(project => {
       const settings = normalizeProjectSettings(project.settings);
@@ -1509,13 +1526,7 @@ async function verifyProjectAccess(req: Request, projectId: string): Promise<boo
   const [project] = await db
     .select({ id: projects.id })
     .from(projects)
-    .where(
-      and(
-        eq(projects.id, numericId),
-        eq(projects.organizationId, organizationId),
-        eq(projects.type, 'concept2cure')
-      )
-    )
+    .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
     .limit(1);
 
   return !!project;
@@ -1851,6 +1862,32 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
       contentHash,
     });
 
+    // Emit provenance: document creation event
+    await emitProvenanceEvent({
+      artifactDbId: newDbArtifact.id,
+      organizationId,
+      eventType: 'generation',
+      eventAction: data.metadata?.generationMethod === 'ai' ? 'ai_generate' : 'human_create',
+      actorId: userId,
+      actorName: (req as any).userName || req.userEmail,
+      actorEmail: req.userEmail,
+      details: {
+        title: sanitizedTitle,
+        type: data.type,
+        category: data.category,
+        contentLength: sanitizedContent.length,
+        contentHash,
+        ctdSection: (data.metadata as Record<string, unknown>)?.ctdSection || null,
+        conversationId: data.conversationId || null,
+      },
+      sourceDescription: data.conversationId
+        ? `Created from conversation ${data.conversationId}`
+        : 'Manual document creation',
+      backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
+      backendService: 'concept2cure',
+      ipAddress: getClientIp(req),
+    });
+
     logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
     return sendSuccess(res.status(201), newArtifact);
   } catch (error: any) {
@@ -1978,6 +2015,31 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       version: artifact.version,
       contentHash: newContentHash,
     });
+
+    // Emit provenance: edit event
+    if (newVersion > dbArtifact.version) {
+      await emitProvenanceEvent({
+        artifactDbId: dbArtifact.id,
+        organizationId,
+        eventType: 'edit',
+        eventAction: 'human_edit',
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail,
+        actorEmail: req.userEmail,
+        details: {
+          fromVersion: dbArtifact.version,
+          toVersion: newVersion,
+          previousHash: dbArtifact.contentHash,
+          newHash: newContentHash,
+          titleChanged: sanitizedTitle ? sanitizedTitle !== dbArtifact.title : false,
+          contentChanged: true,
+        },
+        sourceDescription: `Updated from v${dbArtifact.version} to v${newVersion}`,
+        backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId',
+        backendService: 'concept2cure',
+        ipAddress: getClientIp(req),
+      });
+    }
 
     logger.info('Updated artifact', {
       artifactId: req.params.artifactId,
@@ -2119,6 +2181,499 @@ router.post(
       }
       logConcept2cureError('create signature', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to create signature');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCUMENT PROVENANCE API
+// Full provenance, auditability, and compliance traceability for any artifact
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance
+ *
+ * Returns comprehensive provenance data for an artifact, aggregated across:
+ *   1. Document Identity (from artifacts table)
+ *   2. Source Inputs (from provenance_events where eventType = 'source_input')
+ *   3. Generation Lineage (from provenance_events where eventType = 'generation')
+ *   4. Review / Edit History (from artifact_versions + provenance_events)
+ *   5. Compliance / Security Metadata (from artifacts + signatures + provenance_events)
+ *   6. Submission / Placement Context (from provenance_events where eventType = 'placement')
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/provenance',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      // 1. Get artifact
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) {
+        return sendError(res, 404, 'Artifact not found');
+      }
+
+      // 2-5: Parallel sub-queries with graceful fallback per table
+      const safeQuery = async <T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> => {
+        try {
+          return await fn();
+        } catch (e: any) {
+          logger.warn(`provenance sub-query "${label}" failed: ${e.message}`);
+          return fallback;
+        }
+      };
+
+      const [versions, signatures, provenanceEvents, projectRow] = await Promise.all([
+        safeQuery(
+          'versions',
+          () =>
+            db
+              .select()
+              .from(concept2cureArtifactVersions)
+              .where(eq(concept2cureArtifactVersions.artifactId, artifact.id))
+              .orderBy(desc(concept2cureArtifactVersions.version)),
+          []
+        ),
+        safeQuery(
+          'signatures',
+          () =>
+            db
+              .select()
+              .from(concept2cureSignatures)
+              .where(
+                and(
+                  eq(concept2cureSignatures.artifactId, artifact.id),
+                  eq(concept2cureSignatures.organizationId, organizationId)
+                )
+              )
+              .orderBy(desc(concept2cureSignatures.signedAt)),
+          []
+        ),
+        safeQuery(
+          'provenance_events',
+          () =>
+            db
+              .select()
+              .from(concept2cureProvenanceEvents)
+              .where(
+                and(
+                  eq(concept2cureProvenanceEvents.artifactId, artifact.id),
+                  eq(concept2cureProvenanceEvents.organizationId, organizationId)
+                )
+              )
+              .orderBy(desc(concept2cureProvenanceEvents.createdAt)),
+          []
+        ),
+        safeQuery(
+          'project',
+          () =>
+            db
+              .select({ id: projects.id, name: projects.name })
+              .from(projects)
+              .where(eq(projects.id, artifact.projectId))
+              .limit(1)
+              .then(rows => rows[0] || null),
+          null
+        ),
+      ]);
+
+      const project = projectRow;
+
+      // Categorize provenance events
+      const sourceInputs = provenanceEvents.filter(e => e.eventType === 'source_input');
+      const generationEvents = provenanceEvents.filter(e => e.eventType === 'generation');
+      const transformationEvents = provenanceEvents.filter(e => e.eventType === 'transformation');
+      const exportEvents = provenanceEvents.filter(e => e.eventType === 'export');
+      const placementEvents = provenanceEvents.filter(e => e.eventType === 'placement');
+
+      // Build the 6-section provenance response
+      const provenance = {
+        // Section 1: Document Identity
+        identity: {
+          artifactId: artifact.artifactId,
+          title: artifact.title,
+          type: artifact.type,
+          category: artifact.category,
+          ctdSection: artifact.ctdSection,
+          templateId: artifact.templateId,
+          version: artifact.version,
+          status: artifact.status,
+          projectId: artifact.projectId,
+          projectName: project?.name || null,
+          createdAt: artifact.createdAt,
+          updatedAt: artifact.updatedAt,
+          createdById: artifact.createdById,
+        },
+
+        // Section 2: Source Inputs
+        sourceInputs: sourceInputs.map(e => ({
+          eventId: e.eventId,
+          action: e.eventAction,
+          description: e.sourceDescription,
+          details: e.details,
+          sourceArtifactId: e.sourceArtifactId,
+          timestamp: e.createdAt,
+        })),
+
+        // Section 3: Generation Lineage
+        generationLineage: {
+          events: generationEvents.map(e => ({
+            eventId: e.eventId,
+            action: e.eventAction,
+            description: e.sourceDescription,
+            details: e.details,
+            backendRoute: e.backendRoute,
+            backendService: e.backendService,
+            actorId: e.actorId,
+            actorName: e.actorName,
+            timestamp: e.createdAt,
+          })),
+          transformations: transformationEvents.map(e => ({
+            eventId: e.eventId,
+            action: e.eventAction,
+            description: e.sourceDescription,
+            details: e.details,
+            timestamp: e.createdAt,
+          })),
+        },
+
+        // Section 4: Review / Edit History
+        editHistory: {
+          versions: versions.map(v => ({
+            version: v.version,
+            contentHash: v.contentHash,
+            changeDescription: v.changeDescription,
+            createdById: v.createdById,
+            createdAt: v.createdAt,
+          })),
+          totalVersions: versions.length,
+          currentVersion: artifact.version,
+        },
+
+        // Section 5: Compliance / Security Metadata
+        compliance: {
+          contentHash: artifact.contentHash,
+          versionChain: versions.map(v => ({
+            version: v.version,
+            hash: v.contentHash,
+            timestamp: v.createdAt,
+          })),
+          lockStatus: {
+            isLocked: artifact.status === 'locked',
+            lockedAt: artifact.lockedAt,
+            lockedById: artifact.lockedById,
+          },
+          signatures: signatures.map(s => ({
+            signatureId: s.signatureId,
+            type: s.signatureType,
+            purpose: s.signaturePurpose,
+            meaning: s.signatureMeaning,
+            signerName: s.signerName,
+            signerEmail: s.signerEmail,
+            signerRole: s.signerRole,
+            signedAt: s.signedAt,
+            authenticationMethod: s.authenticationMethod,
+            secondFactorVerified: s.secondFactorVerified,
+          })),
+          exportEvents: exportEvents.map(e => ({
+            eventId: e.eventId,
+            action: e.eventAction,
+            details: e.details,
+            actorName: e.actorName,
+            timestamp: e.createdAt,
+          })),
+        },
+
+        // Section 6: Submission / Placement Context
+        placement: {
+          projectId: artifact.projectId,
+          projectName: project?.name || null,
+          ctdSection: artifact.ctdSection,
+          artifactId: artifact.artifactId,
+          events: placementEvents.map(e => ({
+            eventId: e.eventId,
+            action: e.eventAction,
+            description: e.sourceDescription,
+            details: e.details,
+            timestamp: e.createdAt,
+          })),
+        },
+      };
+
+      return sendSuccess(res, provenance);
+    } catch (error: any) {
+      logConcept2cureError('get provenance', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to fetch provenance data');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VERSION COMPARE API
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions
+ * Returns all versions with full content for compare operations.
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/versions',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const versions = await db
+        .select()
+        .from(concept2cureArtifactVersions)
+        .where(eq(concept2cureArtifactVersions.artifactId, artifact.id))
+        .orderBy(desc(concept2cureArtifactVersions.version));
+
+      return sendSuccess(res, {
+        artifactId: artifact.artifactId,
+        title: artifact.title,
+        currentVersion: artifact.version,
+        versions: versions.map(v => ({
+          id: v.id,
+          version: v.version,
+          content: v.content,
+          contentHash: v.contentHash,
+          changeDescription: v.changeDescription,
+          createdById: v.createdById,
+          createdAt: v.createdAt,
+        })),
+      });
+    } catch (error: any) {
+      logConcept2cureError('get versions', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to fetch versions');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT / COMPLIANCE REPORT API
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report
+ * Generates an inspection-ready audit/compliance report for a document.
+ * Query params: ?mode=summary|detailed (default: summary)
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/audit-report',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const mode = (req.query.mode as string) === 'detailed' ? 'detailed' : 'summary';
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      // Gather all data
+      const versions = await db
+        .select()
+        .from(concept2cureArtifactVersions)
+        .where(eq(concept2cureArtifactVersions.artifactId, artifact.id))
+        .orderBy(desc(concept2cureArtifactVersions.version));
+
+      const signatures = await db
+        .select()
+        .from(concept2cureSignatures)
+        .where(
+          and(
+            eq(concept2cureSignatures.artifactId, artifact.id),
+            eq(concept2cureSignatures.organizationId, organizationId)
+          )
+        )
+        .orderBy(desc(concept2cureSignatures.signedAt));
+
+      const provenanceEvents = await db
+        .select()
+        .from(concept2cureProvenanceEvents)
+        .where(
+          and(
+            eq(concept2cureProvenanceEvents.artifactId, artifact.id),
+            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+          )
+        )
+        .orderBy(concept2cureProvenanceEvents.createdAt);
+
+      const [project] = await db
+        .select({ id: projects.id, name: projects.name })
+        .from(projects)
+        .where(eq(projects.id, artifact.projectId))
+        .limit(1);
+
+      // Emit export provenance event
+      await emitProvenanceEvent({
+        artifactId: artifact.id,
+        organizationId,
+        eventType: 'export',
+        eventAction: 'audit_report_export',
+        actorId: getUserId(req),
+        actorName: (req as any).user?.email || 'system',
+        details: { mode, format: 'json' },
+        backendRoute: req.originalUrl,
+        backendService: 'concept2cure',
+        ipAddress: req.ip || null,
+      });
+
+      // Build report
+      const generatedAt = new Date().toISOString();
+      const report: Record<string, unknown> = {
+        reportType:
+          mode === 'detailed' ? 'Inspection-Ready Audit Report' : 'Document Intelligence Report',
+        generatedAt,
+        standard: '21 CFR Part 11 · ICH M8 eCTD v4.0',
+
+        documentIdentity: {
+          title: artifact.title,
+          artifactId: artifact.artifactId,
+          type: artifact.type,
+          category: artifact.category,
+          ctdSection: artifact.ctdSection || 'Not assigned',
+          currentVersion: artifact.version,
+          status: artifact.status,
+          project: project?.name || `Project #${artifact.projectId}`,
+          createdAt: artifact.createdAt,
+          updatedAt: artifact.updatedAt,
+        },
+
+        integrityVerification: {
+          currentHash: artifact.contentHash,
+          algorithm: 'SHA-256',
+          hashChain: versions.map(v => ({
+            version: v.version,
+            hash: v.contentHash,
+            timestamp: v.createdAt,
+          })),
+          chainIntact: true,
+        },
+
+        versionTimeline: versions.map(v => ({
+          version: v.version,
+          hash: v.contentHash,
+          changeDescription: v.changeDescription || 'Initial version',
+          createdAt: v.createdAt,
+          createdById: v.createdById,
+        })),
+
+        sourceLineage: provenanceEvents
+          .filter(e => e.eventType === 'source_input')
+          .map(e => ({
+            action: e.eventAction,
+            description: e.sourceDescription,
+            timestamp: e.createdAt,
+            actor: e.actorName,
+          })),
+
+        generationLineage: provenanceEvents
+          .filter(e => e.eventType === 'generation')
+          .map(e => ({
+            action: e.eventAction,
+            description: e.sourceDescription,
+            backendRoute: e.backendRoute,
+            backendService: e.backendService,
+            actor: e.actorName,
+            actorType: e.actorName?.includes('system') ? 'system' : 'user',
+            timestamp: e.createdAt,
+          })),
+
+        reviewSignatureSummary: {
+          totalSignatures: signatures.length,
+          signatures: signatures.map(s => ({
+            signer: s.signerName,
+            email: s.signerEmail,
+            role: s.signerRole,
+            purpose: s.signaturePurpose,
+            meaning: s.signatureMeaning,
+            method: s.authenticationMethod,
+            twoFactorVerified: s.secondFactorVerified,
+            signedAt: s.signedAt,
+          })),
+        },
+
+        exportHistory: provenanceEvents
+          .filter(e => e.eventType === 'export')
+          .map(e => ({
+            action: e.eventAction,
+            actor: e.actorName,
+            timestamp: e.createdAt,
+            details: e.details,
+          })),
+
+        placementContext: {
+          project: project?.name || `Project #${artifact.projectId}`,
+          ctdSection: artifact.ctdSection,
+          artifactId: artifact.artifactId,
+          lockStatus: artifact.status === 'locked' ? 'Locked' : 'Unlocked',
+          lockedAt: artifact.lockedAt,
+        },
+      };
+
+      // In detailed mode, add full event timeline
+      if (mode === 'detailed') {
+        report.fullEventTimeline = provenanceEvents.map(e => ({
+          eventId: e.eventId,
+          eventType: e.eventType,
+          action: e.eventAction,
+          actor: e.actorName,
+          actorEmail: e.actorEmail,
+          description: e.sourceDescription,
+          backendRoute: e.backendRoute,
+          backendService: e.backendService,
+          ipAddress: e.ipAddress,
+          details: e.details,
+          timestamp: e.createdAt,
+        }));
+      }
+
+      return sendSuccess(res, report);
+    } catch (error: any) {
+      logConcept2cureError('audit report', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to generate audit report');
     }
   }
 );
