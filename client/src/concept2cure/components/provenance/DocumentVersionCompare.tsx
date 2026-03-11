@@ -50,6 +50,8 @@ interface DocumentVersionCompareProps {
   projectId: string;
   artifactId: string;
   onClose: () => void;
+  onOpenAudit?: () => void;
+  onOpenProvenance?: () => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -203,6 +205,8 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   projectId,
   artifactId,
   onClose,
+  onOpenAudit,
+  onOpenProvenance,
 }) => {
   const [versions, setVersions] = useState<VersionData[]>([]);
   const [title, setTitle] = useState('');
@@ -423,6 +427,28 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
           </div>
         )}
       </div>
+
+      {/* Cross-panel actions */}
+      {(onOpenAudit || onOpenProvenance) && (
+        <div className="px-3 py-1.5 border-t border-zinc-100 bg-zinc-50/50 flex gap-2 shrink-0">
+          {onOpenProvenance && (
+            <button
+              onClick={onOpenProvenance}
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-[10px] rounded bg-violet-50 text-violet-700 hover:bg-violet-100 font-medium"
+            >
+              Provenance
+            </button>
+          )}
+          {onOpenAudit && (
+            <button
+              onClick={onOpenAudit}
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-[10px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium"
+            >
+              Audit Report
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="px-3 py-1.5 border-t border-zinc-100 bg-zinc-50/30 shrink-0">

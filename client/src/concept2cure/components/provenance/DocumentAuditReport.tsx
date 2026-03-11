@@ -124,6 +124,10 @@ interface DocumentAuditReportProps {
   projectId: string;
   artifactId: string;
   onClose: () => void;
+  onOpenProvenance?: () => void;
+  onOpenCompare?: () => void;
+  onExportAsArtifact?: () => void;
+  exportingAudit?: boolean;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -187,11 +191,16 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   projectId,
   artifactId,
   onClose,
+  onOpenProvenance,
+  onOpenCompare,
+  onExportAsArtifact,
+  exportingAudit,
 }) => {
   const [report, setReport] = useState<AuditReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'summary' | 'detailed'>('summary');
+  const [reportPurpose, setReportPurpose] = useState<'qa' | 'inspection'>('qa');
 
   const fetchReport = useCallback(async () => {
     setLoading(true);
@@ -268,15 +277,43 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-emerald-50/50 to-blue-50/50 shrink-0 print:hidden">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600" />
-          <span className="text-xs font-bold text-zinc-800">Audit Report</span>
+          <span className="text-xs font-bold text-zinc-800">
+            {reportPurpose === 'inspection' ? 'Inspection Report' : 'QA Report'}
+          </span>
         </div>
         <div className="flex items-center gap-1">
+          {/* QA vs Inspection toggle */}
+          <button
+            onClick={() => setReportPurpose(reportPurpose === 'qa' ? 'inspection' : 'qa')}
+            className={`px-2 py-0.5 text-[10px] rounded ${
+              reportPurpose === 'inspection'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-blue-100 text-blue-700'
+            }`}
+          >
+            {reportPurpose === 'inspection' ? '🔍 Inspection' : '✓ Internal QA'}
+          </button>
           <button
             onClick={() => setMode(mode === 'summary' ? 'detailed' : 'summary')}
             className="px-2 py-0.5 text-[10px] rounded bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
           >
             {mode === 'summary' ? 'Show Detailed' : 'Show Summary'}
           </button>
+          {onExportAsArtifact && (
+            <button
+              onClick={onExportAsArtifact}
+              disabled={exportingAudit}
+              className="px-2 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50"
+              title="Save as inspection-ready artifact"
+            >
+              {exportingAudit ? (
+                <Loader2 className="w-3 h-3 animate-spin inline" />
+              ) : (
+                <FileInput className="w-3 h-3 inline" />
+              )}{' '}
+              Export
+            </button>
+          )}
           <button
             onClick={handlePrint}
             className="p-1 text-zinc-400 hover:text-zinc-600"
@@ -309,11 +346,25 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
 
         {/* Report type badge (screen only) */}
         <div className="mb-3 print:hidden">
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
-            {report.reportType}
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+              reportPurpose === 'inspection'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-emerald-100 text-emerald-700'
+            }`}
+          >
+            {reportPurpose === 'inspection' ? 'Inspection-Ready Report' : report.reportType}
           </span>
           <span className="text-[10px] text-zinc-400 ml-2">{report.standard}</span>
         </div>
+
+        {/* Inspection mode banner */}
+        {reportPurpose === 'inspection' && (
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-[10px] text-red-700 print:hidden">
+            <strong>Inspection Mode:</strong> This view shows all data an inspector would require.
+            Hash chain integrity, full event timeline, and signature verification are prioritized.
+          </div>
+        )}
 
         {/* 1. Document Identity */}
         <ReportSection icon={<FileText className="w-4 h-4" />} title="Document Identity">
@@ -552,6 +603,28 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
               </tbody>
             </table>
           </ReportSection>
+        )}
+
+        {/* Cross-panel actions */}
+        {(onOpenProvenance || onOpenCompare) && (
+          <div className="mt-4 flex gap-2 print:hidden">
+            {onOpenProvenance && (
+              <button
+                onClick={onOpenProvenance}
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-violet-50 text-violet-700 hover:bg-violet-100 font-medium"
+              >
+                Open Provenance
+              </button>
+            )}
+            {onOpenCompare && (
+              <button
+                onClick={onOpenCompare}
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
+              >
+                Compare Versions
+              </button>
+            )}
+          </div>
         )}
 
         {/* Report footer */}

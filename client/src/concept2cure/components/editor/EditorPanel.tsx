@@ -29,6 +29,11 @@ import {
   PanelRightClose,
   GitCompare,
   ClipboardList,
+  Lock,
+  Unlock,
+  MapPin,
+  Hash,
+  PenTool,
 } from 'lucide-react';
 import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
@@ -116,6 +121,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [showComparePanel, setShowComparePanel] = useState(false);
   // ── Audit Report panel toggle ──────────────────────────────────────────
   const [showAuditReport, setShowAuditReport] = useState(false);
+
+  // ── Sign/Approve state ────────────────────────────────────────────────
+  const [signing, setSigning] = useState(false);
+  const [signResult, setSignResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // ── Status change state ───────────────────────────────────────────────
+  const [changingStatus, setChangingStatus] = useState(false);
+
+  // ── CTD Section assignment state ──────────────────────────────────────
+  const [showCtdInput, setShowCtdInput] = useState(false);
+  const [ctdSectionInput, setCtdSectionInput] = useState('');
+
+  // ── Audit export state ────────────────────────────────────────────────
+  const [exportingAudit, setExportingAudit] = useState(false);
 
   const handleClaimCheck = useCallback(() => {
     if (!activeArtifact?.content) return;
@@ -369,6 +388,142 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [activeArtifact, submissionType, generateDocxMutation]);
 
+  // ── Sign & Approve ───────────────────────────────────────────────────
+  const handleSignApprove = useCallback(async () => {
+    if (!projectId || !activeArtifact) return;
+    setSigning(true);
+    setSignResult(null);
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            signaturePurpose: 'Document review and approval',
+            signatureMeaning: 'I have reviewed this document and approve its content',
+            authenticationMethod: 'password',
+            secondFactorVerified: false,
+            version: activeArtifact.version,
+          }),
+        }
+      );
+      if (res.ok) {
+        setSignResult({ success: true, message: 'Signature recorded successfully' });
+        // Also update status to approved
+        await fetch(
+          `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/status`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ status: 'approved' }),
+          }
+        );
+        loadArtifacts();
+      } else {
+        const err = await res.json();
+        setSignResult({ success: false, message: err.message || 'Signature failed' });
+      }
+    } catch {
+      setSignResult({ success: false, message: 'Network error' });
+    } finally {
+      setSigning(false);
+      setTimeout(() => setSignResult(null), 4000);
+    }
+  }, [projectId, activeArtifact, loadArtifacts]);
+
+  // ── Status change ────────────────────────────────────────────────────
+  const handleStatusChange = useCallback(
+    async (newStatus: string) => {
+      if (!projectId || !activeArtifact) return;
+      setChangingStatus(true);
+      try {
+        const res = await fetch(
+          `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/status`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ status: newStatus }),
+          }
+        );
+        if (res.ok) {
+          const payload = await res.json();
+          const updated = payload.data;
+          setActiveArtifact(prev => (prev ? { ...prev, ...updated } : prev));
+          loadArtifacts();
+        }
+      } catch {
+        // silent
+      } finally {
+        setChangingStatus(false);
+      }
+    },
+    [projectId, activeArtifact, loadArtifacts]
+  );
+
+  // ── CTD Section assignment ───────────────────────────────────────────
+  const handleCtdSection = useCallback(async () => {
+    if (!projectId || !activeArtifact || !ctdSectionInput.trim()) return;
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/ctd-section`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ ctdSection: ctdSectionInput.trim() }),
+        }
+      );
+      if (res.ok) {
+        loadArtifacts();
+        setShowCtdInput(false);
+        setCtdSectionInput('');
+      }
+    } catch {
+      // silent
+    }
+  }, [projectId, activeArtifact, ctdSectionInput, loadArtifacts]);
+
+  // ── Audit Report Export ──────────────────────────────────────────────
+  const handleExportAudit = useCallback(async () => {
+    if (!projectId || !activeArtifact) return;
+    setExportingAudit(true);
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/audit-report/export`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        }
+      );
+      if (res.ok) {
+        loadArtifacts();
+      }
+    } catch {
+      // silent
+    } finally {
+      setExportingAudit(false);
+    }
+  }, [projectId, activeArtifact, loadArtifacts]);
+
+  // ── Cross-panel navigation callbacks ─────────────────────────────────
+  const openCompare = useCallback(() => {
+    setShowComparePanel(true);
+    setShowProvenancePanel(false);
+    setShowAuditReport(false);
+  }, []);
+
+  const openProvenance = useCallback(() => {
+    setShowProvenancePanel(true);
+    setShowComparePanel(false);
+    setShowAuditReport(false);
+  }, []);
+
+  const openAudit = useCallback(() => {
+    setShowAuditReport(true);
+    setShowComparePanel(false);
+    setShowProvenancePanel(false);
+  }, []);
+
   // ── No project selected ─────────────────────────────────────────────────
   if (!projectId) {
     return (
@@ -620,6 +775,53 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <ClipboardList className="w-3.5 h-3.5" />
             Audit
           </button>
+
+          {/* Sign & Approve */}
+          <button
+            onClick={handleSignApprove}
+            disabled={signing || !activeArtifact}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 disabled:opacity-50"
+          >
+            {signing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <PenTool className="w-3.5 h-3.5" />
+            )}
+            Sign
+          </button>
+
+          {/* Status / Lock Toggle */}
+          <button
+            onClick={() => {
+              const current = (activeArtifact as any)?.status || 'draft';
+              const next =
+                current === 'locked'
+                  ? 'draft'
+                  : current === 'approved'
+                    ? 'locked'
+                    : current === 'review'
+                      ? 'approved'
+                      : 'review';
+              handleStatusChange(next);
+            }}
+            disabled={changingStatus || !activeArtifact}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-zinc-50 text-zinc-600 rounded-md hover:bg-zinc-100 disabled:opacity-50"
+          >
+            {changingStatus ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (activeArtifact as any)?.status === 'locked' ? (
+              <Unlock className="w-3.5 h-3.5" />
+            ) : (
+              <Lock className="w-3.5 h-3.5" />
+            )}
+            {(activeArtifact as any)?.status === 'locked'
+              ? 'Unlock'
+              : (activeArtifact as any)?.status === 'approved'
+                ? 'Lock'
+                : (activeArtifact as any)?.status === 'review'
+                  ? 'Approve'
+                  : 'Review'}
+          </button>
         </div>
       </div>
 
@@ -721,6 +923,92 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
+      {/* Sign result banner */}
+      {signResult && (
+        <div
+          className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${signResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
+        >
+          {signResult.success ? (
+            <CheckCircle className="w-3.5 h-3.5" />
+          ) : (
+            <AlertCircle className="w-3.5 h-3.5" />
+          )}
+          {signResult.message}
+        </div>
+      )}
+
+      {/* Document Intelligence Summary Bar */}
+      {activeArtifact && (
+        <div className="flex items-center gap-3 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/30 text-[10px] text-zinc-500 shrink-0 flex-wrap">
+          <span className="flex items-center gap-1 font-medium text-zinc-600">
+            <FileText className="w-3 h-3" />
+            {activeArtifact.type?.replace(/_/g, ' ') || 'document'}
+          </span>
+          <span className="flex items-center gap-1">
+            <Hash className="w-3 h-3" />v{activeArtifact.version}
+          </span>
+          <span
+            className={`px-1.5 py-0.5 rounded font-medium ${
+              (activeArtifact as any).status === 'approved'
+                ? 'bg-emerald-100 text-emerald-700'
+                : (activeArtifact as any).status === 'locked'
+                  ? 'bg-red-100 text-red-700'
+                  : (activeArtifact as any).status === 'review'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-amber-100 text-amber-700'
+            }`}
+          >
+            {(activeArtifact as any).status || 'draft'}
+          </span>
+          {/* CTD Section */}
+          {showCtdInput ? (
+            <span className="flex items-center gap-1">
+              <input
+                type="text"
+                value={ctdSectionInput}
+                onChange={e => setCtdSectionInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleCtdSection()}
+                placeholder="e.g. 3.2.S"
+                className="w-20 px-1 py-0.5 text-[10px] border border-zinc-200 rounded"
+              />
+              <button
+                onClick={handleCtdSection}
+                className="text-emerald-600 hover:text-emerald-800"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => setShowCtdInput(false)}
+                className="text-zinc-400 hover:text-zinc-600"
+              >
+                <XCircle className="w-3 h-3" />
+              </button>
+            </span>
+          ) : (
+            <button
+              onClick={() => setShowCtdInput(true)}
+              className="flex items-center gap-1 hover:text-zinc-700"
+            >
+              <MapPin className="w-3 h-3" />
+              {(activeArtifact as any).ctdSection || 'Set CTD Section'}
+            </button>
+          )}
+          {/* Export audit as artifact */}
+          <button
+            onClick={handleExportAudit}
+            disabled={exportingAudit}
+            className="flex items-center gap-1 ml-auto text-indigo-500 hover:text-indigo-700 disabled:opacity-50"
+          >
+            {exportingAudit ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <ClipboardList className="w-3 h-3" />
+            )}
+            Export Audit
+          </button>
+        </div>
+      )}
+
       {/* Editor + Side Panels */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
         <div
@@ -755,6 +1043,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               projectId={projectId}
               artifactId={activeArtifact.id}
               onClose={() => setShowProvenancePanel(false)}
+              onOpenCompare={openCompare}
+              onOpenAudit={openAudit}
             />
           </div>
         )}
@@ -764,6 +1054,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               projectId={projectId}
               artifactId={activeArtifact.id}
               onClose={() => setShowComparePanel(false)}
+              onOpenAudit={openAudit}
+              onOpenProvenance={openProvenance}
             />
           </div>
         )}
@@ -773,6 +1065,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               projectId={projectId}
               artifactId={activeArtifact.id}
               onClose={() => setShowAuditReport(false)}
+              onOpenProvenance={openProvenance}
+              onOpenCompare={openCompare}
+              onExportAsArtifact={handleExportAudit}
+              exportingAudit={exportingAudit}
             />
           </div>
         )}

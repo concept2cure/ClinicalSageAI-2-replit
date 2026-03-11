@@ -154,6 +154,8 @@ interface DocumentProvenancePanelProps {
   projectId: string;
   artifactId: string;
   onClose: () => void;
+  onOpenCompare?: () => void;
+  onOpenAudit?: () => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -263,6 +265,8 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   projectId,
   artifactId,
   onClose,
+  onOpenCompare,
+  onOpenAudit,
 }) => {
   const [data, setData] = useState<ProvenanceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -703,6 +707,30 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           )}
         </Section>
       </div>
+
+      {/* Cross-panel actions */}
+      {(onOpenCompare || onOpenAudit) && (
+        <div className="px-3 py-2 border-t border-zinc-100 bg-zinc-50/50 flex gap-2 shrink-0">
+          {onOpenCompare && (
+            <button
+              onClick={onOpenCompare}
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
+            >
+              <GitBranch className="w-3 h-3" />
+              Compare Versions
+            </button>
+          )}
+          {onOpenAudit && (
+            <button
+              onClick={onOpenAudit}
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium"
+            >
+              <Shield className="w-3 h-3" />
+              Audit Report
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="px-3 py-2 border-t border-zinc-100 bg-zinc-50/30 shrink-0">

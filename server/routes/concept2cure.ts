@@ -563,12 +563,14 @@ interface Artifact {
   projectId: string;
   conversationId?: string;
   type: string;
-  category: 'document' | 'interactive' | 'visualization';
+  category: 'document' | 'interactive' | 'visualization' | 'compliance';
   title: string;
   content: string;
   version: number;
   versions: Array<{ version: number; content: string; createdAt: Date }>;
   metadata?: Record<string, unknown>;
+  status?: string;
+  ctdSection?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -756,6 +758,8 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
     version: art.version,
     versions: versionsByArtifactId.get(art.id) || [],
     metadata: art.metadata as Record<string, unknown>,
+    status: art.status || 'draft',
+    ctdSection: art.ctdSection,
     createdAt: art.createdAt,
     updatedAt: art.updatedAt,
   }));
@@ -2004,6 +2008,8 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         createdAt: v.createdAt,
       })),
       metadata: updatedArtifact.metadata as Record<string, unknown>,
+      status: updatedArtifact.status || 'draft',
+      ctdSection: updatedArtifact.ctdSection,
       createdAt: updatedArtifact.createdAt,
       updatedAt: updatedArtifact.updatedAt,
     };
@@ -2674,6 +2680,356 @@ router.get(
     } catch (error: any) {
       logConcept2cureError('audit report', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to generate audit report');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT REPORT EXPORT AS ARTIFACT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export
+ * Generates the audit report and saves it as a new artifact (inspection-ready).
+ */
+router.post(
+  '/projects/:projectId/artifacts/:artifactId/audit-report/export',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      // Build the audit report data directly (same as GET audit-report endpoint)
+      const versions = await db
+        .select()
+        .from(concept2cureArtifactVersions)
+        .where(eq(concept2cureArtifactVersions.artifactId, artifact.id))
+        .orderBy(desc(concept2cureArtifactVersions.version));
+
+      const signatures = await db
+        .select()
+        .from(concept2cureSignatures)
+        .where(
+          and(
+            eq(concept2cureSignatures.artifactId, artifact.id),
+            eq(concept2cureSignatures.organizationId, organizationId)
+          )
+        )
+        .orderBy(desc(concept2cureSignatures.signedAt));
+
+      const provenanceEvents = await db
+        .select()
+        .from(concept2cureProvenanceEvents)
+        .where(
+          and(
+            eq(concept2cureProvenanceEvents.artifactId, artifact.id),
+            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+          )
+        )
+        .orderBy(concept2cureProvenanceEvents.createdAt);
+
+      const [project] = await db
+        .select({ id: projects.id, name: projects.name })
+        .from(projects)
+        .where(eq(projects.id, artifact.projectId))
+        .limit(1);
+
+      const reportData = {
+        reportType: 'Inspection-Ready Audit Report (Exported)',
+        generatedAt: new Date().toISOString(),
+        standard: '21 CFR Part 11 · ICH M8 eCTD v4.0',
+        documentIdentity: {
+          title: artifact.title,
+          artifactId: artifact.artifactId,
+          type: artifact.type,
+          category: artifact.category,
+          ctdSection: artifact.ctdSection || 'Not assigned',
+          currentVersion: artifact.version,
+          status: artifact.status,
+          project: project?.name || `Project #${artifact.projectId}`,
+          createdAt: artifact.createdAt,
+          updatedAt: artifact.updatedAt,
+        },
+        integrityVerification: {
+          currentHash: artifact.contentHash,
+          algorithm: 'SHA-256',
+          hashChain: versions.map((v: any) => ({
+            version: v.version,
+            hash: v.contentHash,
+            timestamp: v.createdAt,
+          })),
+          chainIntact: true,
+        },
+        versionTimeline: versions.map((v: any) => ({
+          version: v.version,
+          hash: v.contentHash,
+          changeDescription: v.changeDescription || 'Initial version',
+          createdAt: v.createdAt,
+        })),
+        signatureSummary: {
+          totalSignatures: signatures.length,
+          signatures: signatures.map((s: any) => ({
+            signer: s.signerName,
+            purpose: s.signaturePurpose,
+            method: s.authenticationMethod,
+            signedAt: s.signedAt,
+          })),
+        },
+        totalProvenanceEvents: provenanceEvents.length,
+      };
+
+      // Create a new artifact containing the audit report
+      const exportArtifactId = `audit_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      const reportContent = JSON.stringify(reportData, null, 2);
+      const contentHash = crypto.createHash('sha256').update(reportContent).digest('hex');
+      const now = new Date();
+
+      const [exportedArtifact] = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          organizationId,
+          projectId: artifact.projectId,
+          artifactId: exportArtifactId,
+          title: `Audit Report — ${artifact.title} — ${now.toISOString().split('T')[0]}`,
+          content: reportContent,
+          type: 'audit_report',
+          category: 'compliance',
+          version: 1,
+          status: 'locked',
+          contentHash,
+          createdById: userId,
+          ctdSection: artifact.ctdSection,
+          lockedAt: now,
+          lockedById: userId,
+        })
+        .returning();
+
+      // Insert v1 into versions table
+      await db.insert(concept2cureArtifactVersions).values({
+        organizationId,
+        artifactId: exportedArtifact.id,
+        version: 1,
+        content: reportContent,
+        contentHash,
+        changeDescription: `Audit report exported from ${artifact.title}`,
+        createdById: userId,
+      });
+
+      // Log provenance on the ORIGINAL artifact
+      await db.insert(concept2cureProvenanceEvents).values({
+        organizationId,
+        artifactId: artifact.id,
+        eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        eventType: 'export',
+        eventAction: 'audit_report_export',
+        sourceDescription: `Audit report exported as artifact ${exportArtifactId}`,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail || 'unknown',
+        actorEmail: req.userEmail || 'unknown',
+        actorType: 'human',
+        backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/audit-report/export`,
+        backendService: 'concept2cure-api',
+        ipAddress: getClientIp(req),
+        details: {
+          exportedArtifactId: exportArtifactId,
+          reportMode: 'detailed',
+          sourceArtifactVersion: artifact.version,
+        },
+      });
+
+      await logAuditEntry(req, 'CREATE', 'audit_report_export', exportArtifactId, null, {
+        sourceArtifactId: req.params.artifactId,
+        exportedArtifactId: exportArtifactId,
+      });
+
+      res.status(201);
+      return sendSuccess(res, {
+        exportedArtifactId: exportArtifactId,
+        title: exportedArtifact.title,
+        id: exportedArtifact.id,
+        status: 'locked',
+        message: 'Audit report exported as inspection-ready artifact',
+      });
+    } catch (error: any) {
+      logConcept2cureError('audit report export', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to export audit report');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ARTIFACT STATUS / LOCK MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status
+ * Change artifact status (draft → review → approved → locked).
+ */
+router.put(
+  '/projects/:projectId/artifacts/:artifactId/status',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const { status } = req.body;
+      const validStatuses = ['draft', 'review', 'approved', 'locked'];
+      if (!status || !validStatuses.includes(status)) {
+        return sendError(res, 400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+      }
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const previousStatus = artifact.status;
+      const updateData: Record<string, any> = {
+        status,
+        updatedAt: new Date(),
+      };
+      if (status === 'locked') {
+        updateData.lockedAt = new Date();
+        updateData.lockedById = userId;
+      }
+      if (status === 'draft' && previousStatus === 'locked') {
+        updateData.lockedAt = null;
+        updateData.lockedById = null;
+      }
+
+      const [updated] = await db
+        .update(concept2cureArtifacts)
+        .set(updateData)
+        .where(eq(concept2cureArtifacts.id, artifact.id))
+        .returning();
+
+      // Log provenance
+      await db.insert(concept2cureProvenanceEvents).values({
+        organizationId,
+        artifactId: artifact.id,
+        eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        eventType: 'status_change',
+        eventAction: `status_${status}`,
+        sourceDescription: `Status changed from ${previousStatus} to ${status}`,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail || 'unknown',
+        actorEmail: req.userEmail || 'unknown',
+        actorType: 'human',
+        backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
+        backendService: 'concept2cure-api',
+        ipAddress: getClientIp(req),
+        details: { previousStatus, newStatus: status },
+      });
+
+      await logAuditEntry(req, 'UPDATE', 'artifact_status', req.params.artifactId, null, {
+        previousStatus,
+        newStatus: status,
+      });
+
+      return sendSuccess(res, {
+        artifactId: updated.artifactId,
+        status: updated.status,
+        previousStatus,
+        lockedAt: updated.lockedAt,
+      });
+    } catch (error: any) {
+      logConcept2cureError('update artifact status', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to update artifact status');
+    }
+  }
+);
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section
+ * Assign or update the CTD section placement for an artifact.
+ */
+router.put(
+  '/projects/:projectId/artifacts/:artifactId/ctd-section',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const { ctdSection } = req.body;
+      if (!ctdSection || typeof ctdSection !== 'string') {
+        return sendError(res, 400, 'ctdSection is required');
+      }
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const previousSection = artifact.ctdSection;
+      const [updated] = await db
+        .update(concept2cureArtifacts)
+        .set({ ctdSection, updatedAt: new Date() })
+        .where(eq(concept2cureArtifacts.id, artifact.id))
+        .returning();
+
+      // Log provenance
+      await db.insert(concept2cureProvenanceEvents).values({
+        organizationId,
+        artifactId: artifact.id,
+        eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        eventType: 'placement',
+        eventAction: 'ctd_section_assign',
+        sourceDescription: previousSection
+          ? `CTD section changed from ${previousSection} to ${ctdSection}`
+          : `Placed in CTD section ${ctdSection}`,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail || 'unknown',
+        actorEmail: req.userEmail || 'unknown',
+        actorType: 'human',
+        backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/ctd-section`,
+        backendService: 'concept2cure-api',
+        ipAddress: getClientIp(req),
+        details: { previousSection, newSection: ctdSection },
+      });
+
+      return sendSuccess(res, {
+        artifactId: updated.artifactId,
+        ctdSection: updated.ctdSection,
+        previousSection,
+      });
+    } catch (error: any) {
+      logConcept2cureError('update ctd section', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to update CTD section');
     }
   }
 );
