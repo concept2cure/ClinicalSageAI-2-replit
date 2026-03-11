@@ -17,7 +17,7 @@
  * Evidence is never hidden.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useCSRSearch } from '../../hooks/useWorkspaceIntelligence';
 import {
@@ -42,7 +42,6 @@ import {
   Clock,
   ChevronRight,
   FileCheck,
-  GitBranch,
   Eye,
   Download,
   PenLine,
@@ -52,7 +51,6 @@ import {
   Scale,
   Lightbulb,
   Fingerprint,
-  ListChecks,
   ExternalLink,
 } from 'lucide-react';
 
@@ -68,37 +66,49 @@ interface RICopilotHomeProps {
 }
 
 // ── Document type definitions for RI -> Document actions ─────────────────────
+// CTD section mapping: every document type suggests a dossier placement
 const RI_DOCUMENT_TYPES = [
-  { key: 'evidence-memo', label: 'Create Evidence Memo', icon: FileText, color: 'blue' },
+  {
+    key: 'evidence-memo',
+    label: 'Create Evidence Memo',
+    icon: FileText,
+    color: 'blue',
+    ctdSection: '5.3',
+  },
   {
     key: 'protocol-rationale',
     label: 'Draft Protocol Rationale',
     icon: FlaskConical,
     color: 'violet',
+    ctdSection: '5.3.5',
   },
   {
-    key: 'endpoint-justification',
-    label: 'Generate Endpoint Justification',
+    key: 'regulatory-strategy',
+    label: 'Draft Regulatory Strategy Note',
     icon: Target,
     color: 'emerald',
+    ctdSection: '2.5',
   },
   {
-    key: 'comparator-strategy',
-    label: 'Generate Comparator Strategy Note',
+    key: 'comparator-summary',
+    label: 'Draft Comparator / Precedent Summary',
     icon: Scale,
     color: 'cyan',
+    ctdSection: '2.7',
   },
   {
-    key: 'safety-brief',
-    label: 'Generate Safety Evidence Brief',
+    key: 'risk-benefit',
+    label: 'Draft Risk-Benefit Note',
     icon: ShieldCheck,
     color: 'amber',
+    ctdSection: '2.5.6',
   },
   {
     key: 'regional-differences',
     label: 'Generate Regional Regulatory Differences Brief',
     icon: Globe,
     color: 'pink',
+    ctdSection: '1.2',
   },
 ] as const;
 
@@ -128,6 +138,13 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 }) => {
   const [investigationInput, setInvestigationInput] = useState('');
   const [expandedCSRId, setExpandedCSRId] = useState<string | null>(null);
+  // Evidence filters
+  const [filterPhase, setFilterPhase] = useState<string>('');
+  const [filterOutcome, setFilterOutcome] = useState<string>('');
+  // Project artifact data for governance rail
+  const [artifactCount, setArtifactCount] = useState(0);
+  const [artifactDrafts, setArtifactDrafts] = useState(0);
+  const [artifactApproved, setArtifactApproved] = useState(0);
 
   // ── Live data from real APIs ───────────────────────────────────────────────
   const { data: csrResults = [], isLoading: csrLoading } = useCSRSearch(
@@ -142,6 +159,41 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
   const { data: strategyData, isLoading: strategyLoading } = usePrecedentStrategy(
     submissionType ? { submissionType, indication, deviceName: projectName } : null
   );
+
+  // ── Load project artifacts for governance rail ─────────────────────────────
+  const loadArtifactStats = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, { headers });
+      if (res.ok) {
+        const payload = await res.json();
+        const arts = payload.data ?? payload ?? [];
+        setArtifactCount(arts.length);
+        setArtifactDrafts(arts.filter((a: any) => a.status === 'draft').length);
+        setArtifactApproved(
+          arts.filter((a: any) => a.status === 'approved' || a.status === 'locked').length
+        );
+      }
+    } catch {
+      /* silent */
+    }
+  }, [projectId]);
+  useEffect(() => {
+    loadArtifactStats();
+  }, [loadArtifactStats]);
+
+  // ── Filtered CSR results ───────────────────────────────────────────────────
+  const filteredCSR = useMemo(() => {
+    let results = csrResults;
+    if (filterPhase) results = results.filter((c: any) => c.phase === filterPhase);
+    if (filterOutcome) results = results.filter((c: any) => c.outcome === filterOutcome);
+    return results;
+  }, [csrResults, filterPhase, filterOutcome]);
 
   // ── Computed evidence stats ────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -254,6 +306,47 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
         {/* Scrollable rail content */}
         <div className="flex-1 overflow-y-auto zen-scroll">
+          {/* Evidence Filters */}
+          <div className="p-3 border-b border-zinc-100">
+            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+              Evidence Filters
+            </span>
+            <div className="space-y-1.5">
+              <select
+                value={filterPhase}
+                onChange={e => setFilterPhase(e.target.value)}
+                className="w-full text-[11px] px-2 py-1.5 rounded-md border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              >
+                <option value="">All Phases</option>
+                {stats.phases.map(p => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filterOutcome}
+                onChange={e => setFilterOutcome(e.target.value)}
+                className="w-full text-[11px] px-2 py-1.5 rounded-md border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              >
+                <option value="">All Outcomes</option>
+                <option value="positive">Positive</option>
+                <option value="negative">Negative</option>
+              </select>
+              {(filterPhase || filterOutcome) && (
+                <button
+                  onClick={() => {
+                    setFilterPhase('');
+                    setFilterOutcome('');
+                  }}
+                  className="text-[10px] text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Quick prompts */}
           <div className="p-3 border-b border-zinc-100">
             <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
@@ -289,7 +382,11 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     key={doc.key}
                     onClick={() => {
                       const content = generateDocContent(doc.label);
-                      onDraftFromPrecedent(content, `${doc.label} — ${projectName}`, undefined);
+                      onDraftFromPrecedent(
+                        content,
+                        `${doc.label} — ${projectName}`,
+                        doc.ctdSection
+                      );
                     }}
                     className="w-full text-left px-2.5 py-1.5 text-[11px] text-zinc-600 hover:bg-white hover:text-blue-700 rounded-md transition-colors flex items-center gap-2"
                   >
@@ -299,6 +396,9 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                         .replace('Generate ', '')
                         .replace('Create ', '')
                         .replace('Draft ', '')}
+                    </span>
+                    <span className="text-[8px] text-zinc-300 ml-auto shrink-0">
+                      {doc.ctdSection}
                     </span>
                   </button>
                 );
@@ -357,7 +457,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/50 p-3">
                 <div className="flex items-start gap-2">
                   <Lightbulb className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <span className="text-xs font-semibold text-blue-800 block mb-0.5">
                       Strategic Recommendation
                     </span>
@@ -367,6 +467,30 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                         Confidence: {Math.round(strategyData.confidence * 100)}% · Based on{' '}
                         {precedents.length} precedents
                       </span>
+                    )}
+
+                    {/* Source Basis */}
+                    <div className="mt-2 pt-2 border-t border-blue-200/60">
+                      <span className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider block mb-1">
+                        Source Basis
+                      </span>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-blue-600">
+                        {csrResults.length > 0 && <span>{csrResults.length} CSR studies</span>}
+                        {precedents.length > 0 && (
+                          <span>{precedents.length} regulatory precedents</span>
+                        )}
+                        {riskData && <span>Risk score: {riskData.riskScore}/100</span>}
+                      </div>
+                    </div>
+
+                    {/* Why This Recommendation */}
+                    {strategyData.rationale && (
+                      <div className="mt-2 pt-2 border-t border-blue-200/60">
+                        <span className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider block mb-1">
+                          Why This Recommendation
+                        </span>
+                        <p className="text-[11px] text-blue-600">{strategyData.rationale}</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -442,10 +566,13 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 Matched Clinical Study Reports
                 {csrLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 ml-1" />}
               </h2>
-              <span className="text-[10px] text-zinc-400">{csrResults.length} studies</span>
+              <span className="text-[10px] text-zinc-400">
+                {filteredCSR.length}
+                {filterPhase || filterOutcome ? ` of ${csrResults.length}` : ''} studies
+              </span>
             </div>
 
-            {csrResults.length === 0 && !csrLoading ? (
+            {filteredCSR.length === 0 && !csrLoading ? (
               <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-6 text-center">
                 <Database className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
                 <p className="text-xs text-zinc-500">No CSR data matched for this indication.</p>
@@ -455,7 +582,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               </div>
             ) : (
               <div className="space-y-2">
-                {csrResults.slice(0, 10).map((csr: any, i: number) => (
+                {filteredCSR.slice(0, 10).map((csr: any, i: number) => (
                   <CSRStudyCard
                     key={csr.id || i}
                     csr={csr}
@@ -485,17 +612,17 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       onDraftFromPrecedent(
                         content,
                         `Evidence Memo — ${csr.title || `Study ${i + 1}`}`,
-                        undefined
+                        '5.3'
                       );
                     }}
                   />
                 ))}
-                {csrResults.length > 10 && (
+                {filteredCSR.length > 10 && (
                   <button
                     onClick={onAnalyzeEvidence}
                     className="w-full text-center py-2.5 text-xs text-blue-600 hover:text-blue-800 font-medium rounded-lg border border-zinc-100 bg-white hover:bg-blue-50 transition-colors"
                   >
-                    View all {csrResults.length} studies →
+                    View all {filteredCSR.length} studies →
                   </button>
                 )}
               </div>
@@ -564,7 +691,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                   <button
                     onClick={() => {
                       const content = generateDocContent('Risk Assessment Summary');
-                      onDraftFromPrecedent(content, `Risk Summary — ${projectName}`, undefined);
+                      onDraftFromPrecedent(content, `Risk Summary — ${projectName}`, '2.5.6');
                     }}
                     className="mt-3 text-[11px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
                   >
@@ -645,7 +772,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       onDraftFromPrecedent(
                         content,
                         `Precedent — ${prec.deviceName || prec.indication || 'Analysis'}`,
-                        undefined
+                        '2.7'
                       );
                     }}
                   />
@@ -672,14 +799,21 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     key={doc.key}
                     onClick={() => {
                       const content = generateDocContent(doc.label);
-                      onDraftFromPrecedent(content, `${doc.label} — ${projectName}`, undefined);
+                      onDraftFromPrecedent(
+                        content,
+                        `${doc.label} — ${projectName}`,
+                        doc.ctdSection
+                      );
                     }}
                     className="group flex items-center gap-2.5 p-3 rounded-lg border border-zinc-100 bg-zinc-50/50 hover:bg-blue-50 hover:border-blue-200 transition-all text-left"
                   >
                     <Icon className="w-4 h-4 text-zinc-400 group-hover:text-blue-600 transition-colors shrink-0" />
-                    <span className="text-xs font-medium text-zinc-700 group-hover:text-blue-800 transition-colors flex-1">
-                      {doc.label}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium text-zinc-700 group-hover:text-blue-800 transition-colors block">
+                        {doc.label}
+                      </span>
+                      <span className="text-[9px] text-zinc-400">CTD {doc.ctdSection}</span>
+                    </div>
                     <ArrowRight className="w-3 h-3 text-zinc-300 group-hover:text-blue-500 transition-colors" />
                   </button>
                 );
@@ -764,27 +898,40 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
             </div>
           </div>
 
-          {/* Output Governance */}
+          {/* Output Governance — live artifact stats */}
           <div className="p-3 border-b border-zinc-100">
             <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Output Governance
             </span>
             <div className="space-y-1.5 text-[11px]">
-              <div className="flex items-center gap-1.5 text-zinc-600">
-                <Fingerprint className="w-3 h-3 text-emerald-500" />
-                <span>21 CFR Part 11 audit trail</span>
+              <div className="flex items-center justify-between text-zinc-600">
+                <div className="flex items-center gap-1.5">
+                  <FileText className="w-3 h-3 text-blue-500" />
+                  <span>Governed Artifacts</span>
+                </div>
+                <span className="font-mono font-semibold text-zinc-800">{artifactCount}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-zinc-600">
-                <GitBranch className="w-3 h-3 text-blue-500" />
-                <span>Version control on all outputs</span>
+              <div className="flex items-center justify-between text-zinc-600">
+                <div className="flex items-center gap-1.5">
+                  <PenLine className="w-3 h-3 text-amber-500" />
+                  <span>Drafts</span>
+                </div>
+                <span className="font-mono font-semibold text-amber-600">{artifactDrafts}</span>
+              </div>
+              <div className="flex items-center justify-between text-zinc-600">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3 h-3 text-emerald-500" />
+                  <span>Approved</span>
+                </div>
+                <span className="font-mono font-semibold text-emerald-600">{artifactApproved}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-zinc-600 pt-1 border-t border-zinc-100">
+                <Fingerprint className="w-3 h-3 text-emerald-500" />
+                <span>Part 11 audit trail active</span>
               </div>
               <div className="flex items-center gap-1.5 text-zinc-600">
                 <Eye className="w-3 h-3 text-violet-500" />
                 <span>Provenance tracking enabled</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-zinc-600">
-                <ListChecks className="w-3 h-3 text-amber-500" />
-                <span>Signature workflow ready</span>
               </div>
             </div>
           </div>
@@ -805,7 +952,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 label="New Governed Document"
                 onClick={() => {
                   const content = generateDocContent('Evidence-Backed Analysis');
-                  onDraftFromPrecedent(content, `RI Analysis — ${projectName}`, undefined);
+                  onDraftFromPrecedent(content, `RI Analysis — ${projectName}`, '2.5');
                 }}
               />
               <ActionButton
@@ -813,7 +960,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 label="Export Evidence Pack"
                 onClick={() => {
                   const content = generateDocContent('Complete Evidence Package');
-                  onDraftFromPrecedent(content, `Evidence Package — ${projectName}`, undefined);
+                  onDraftFromPrecedent(content, `Evidence Package — ${projectName}`, '5.3');
                 }}
               />
             </div>
