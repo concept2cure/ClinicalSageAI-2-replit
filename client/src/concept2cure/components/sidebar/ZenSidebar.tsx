@@ -37,7 +37,6 @@ import {
   FileLock2,
   Package,
   ScrollText,
-  Cpu,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -474,16 +473,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             />
           </WorkspaceGroup>
 
-          {/* ── Intelligence ──────────────────────────────────── */}
-          <WorkspaceGroup label="Intelligence">
-            <NavItem
-              icon={<Cpu className="w-4 h-4" />}
-              label="Lumen Cortex"
-              active={activeNavId === 'lumen-cortex'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('lumen-cortex')}
-            />
-          </WorkspaceGroup>
+          {/* Lumen Cortex: HIDDEN — duplicates RI Copilot, no governed artifacts, shell breakout.
+              See docs/proof/LUMEN_CORTEX_POSITIONING_DECISION.md for rationale. */}
 
           {/* ── Documents ───────────────────────────────────────── */}
           <WorkspaceGroup label="Documents">

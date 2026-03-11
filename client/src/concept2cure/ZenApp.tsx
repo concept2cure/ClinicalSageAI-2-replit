@@ -1263,9 +1263,6 @@ export const ZenApp: React.FC = () => {
             case 'clinical-trial':
               setLayoutMode('clinical-trial');
               break;
-            case 'lumen-cortex':
-              window.location.href = '/client-portal/lumen-cortex';
-              break;
             case 'regulatory-workspace':
               setLayoutMode('regulatory-workspace');
               break;
@@ -1564,43 +1561,64 @@ export const ZenApp: React.FC = () => {
                 subtitle="IND · NDA · BLA · 510(k) · CTD section-by-section drafting"
                 onBack={() => setLayoutMode('assistant')}
               />
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading eCTD Co-Author...</p>
-                      </div>
+              {!activeProjectId ? (
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                  <div className="max-w-md text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
+                      <FolderOpen className="w-8 h-8 text-blue-600" />
                     </div>
-                  }
-                >
-                  <ECTDCoAuthorStandalone
-                    onOpenInEditor={section => {
-                      console.log(
-                        `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
-                      );
-                      // Build populated content from the section
-                      const sectionContent =
-                        section.content && section.content.trim()
-                          ? section.content
-                          : `<h1>${section.number} ${section.title}</h1>
+                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">eCTD Co-Author</h2>
+                    <p className="text-sm text-zinc-500 mb-6">
+                      Select a project to begin authoring CTD sections.
+                    </p>
+                    <button
+                      onClick={() => setProjectSwitcherOpen(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      Select Project
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-auto">
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center bg-white h-full">
+                        <div className="text-center">
+                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                          <p className="text-zinc-500">Loading eCTD Co-Author...</p>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <ECTDCoAuthorStandalone
+                      onOpenInEditor={section => {
+                        console.log(
+                          `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
+                        );
+                        // Build populated content from the section
+                        const sectionContent =
+                          section.content && section.content.trim()
+                            ? section.content
+                            : `<h1>${section.number} ${section.title}</h1>
 <p>This section covers the regulatory requirements for <strong>${section.title}</strong> as part of the CTD submission.</p>
 <h2>Scope</h2>
 <p>[Section content to be drafted. Use the RI Edit tools above to generate regulatory-compliant language.]</p>
 <h2>References</h2>
 <p>[Cross-references and source citations will be added here.]</p>`;
-                      setPendingEditorContent({
-                        title: `${section.number} ${section.title}`,
-                        content: sectionContent,
-                        ctdSection: section.number,
-                      });
-                      setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
-                    }}
-                  />
-                </Suspense>
-              </div>
+                        setPendingEditorContent({
+                          title: `${section.number} ${section.title}`,
+                          content: sectionContent,
+                          ctdSection: section.number,
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                    />
+                  </Suspense>
+                </div>
+              )}
             </div>
           )}
 
@@ -1612,13 +1630,34 @@ export const ZenApp: React.FC = () => {
                 subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
                 onBack={() => setLayoutMode('assistant')}
               />
-              {/* Module 3 traceability bar */}
-              <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
-                <span className="text-xs text-zinc-500 mr-2">Module 3 Actions:</span>
-                <button
-                  onClick={() => {
-                    setPendingEditorContent({
-                      content: `<h1>Module 3.2.S — Drug Substance</h1>
+              {!activeProjectId ? (
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                  <div className="max-w-md text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-50 flex items-center justify-center">
+                      <FolderOpen className="w-8 h-8 text-teal-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">CMC Platform</h2>
+                    <p className="text-sm text-zinc-500 mb-6">
+                      Select a project to access Chemistry, Manufacturing & Controls modules.
+                    </p>
+                    <button
+                      onClick={() => setProjectSwitcherOpen(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition-colors shadow-sm"
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      Select Project
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Module 3 traceability bar */}
+                  <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
+                    <span className="text-xs text-zinc-500 mr-2">Module 3 Actions:</span>
+                    <button
+                      onClick={() => {
+                        setPendingEditorContent({
+                          content: `<h1>Module 3.2.S — Drug Substance</h1>
 <p>CTD Section 3.2.S for ${activeProject?.name || 'Drug Product'}.</p>
 <h2>3.2.S.1 General Information</h2><p></p>
 <h2>3.2.S.2 Manufacture</h2><p></p>
@@ -1627,20 +1666,20 @@ export const ZenApp: React.FC = () => {
 <h2>3.2.S.5 Reference Standards</h2><p></p>
 <h2>3.2.S.6 Container Closure System</h2><p></p>
 <h2>3.2.S.7 Stability</h2><p></p>`,
-                      title: `Module 3.2.S — ${activeProject?.name || 'Drug Substance'}`,
-                      ctdSection: '3.2.S',
-                    });
-                    setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
-                  }}
-                  className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                >
-                  Draft 3.2.S (Drug Substance)
-                </button>
-                <button
-                  onClick={() => {
-                    setPendingEditorContent({
-                      content: `<h1>Module 3.2.P — Drug Product</h1>
+                          title: `Module 3.2.S — ${activeProject?.name || 'Drug Substance'}`,
+                          ctdSection: '3.2.S',
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                    >
+                      Draft 3.2.S (Drug Substance)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPendingEditorContent({
+                          content: `<h1>Module 3.2.P — Drug Product</h1>
 <p>CTD Section 3.2.P for ${activeProject?.name || 'Drug Product'}.</p>
 <h2>3.2.P.1 Description and Composition</h2><p></p>
 <h2>3.2.P.2 Pharmaceutical Development</h2><p></p>
@@ -1650,49 +1689,51 @@ export const ZenApp: React.FC = () => {
 <h2>3.2.P.6 Reference Standards</h2><p></p>
 <h2>3.2.P.7 Container Closure System</h2><p></p>
 <h2>3.2.P.8 Stability</h2><p></p>`,
-                      title: `Module 3.2.P — ${activeProject?.name || 'Drug Product'}`,
-                      ctdSection: '3.2.P',
-                    });
-                    setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
-                  }}
-                  className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                >
-                  Draft 3.2.P (Drug Product)
-                </button>
-                <button
-                  onClick={() => {
-                    setPendingEditorContent({
-                      content: `<h1>Module 3.2.A — Appendices</h1>
+                          title: `Module 3.2.P — ${activeProject?.name || 'Drug Product'}`,
+                          ctdSection: '3.2.P',
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                    >
+                      Draft 3.2.P (Drug Product)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPendingEditorContent({
+                          content: `<h1>Module 3.2.A — Appendices</h1>
 <p>CTD Appendices for ${activeProject?.name || 'Drug Product'}.</p>
 <h2>3.2.A.1 Facilities and Equipment</h2><p></p>
 <h2>3.2.A.2 Adventitious Agents Safety Evaluation</h2><p></p>
 <h2>3.2.A.3 Novel Excipients</h2><p></p>`,
-                      title: `Module 3.2.A — ${activeProject?.name || 'Appendices'}`,
-                      ctdSection: '3.2.A',
-                    });
-                    setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
-                  }}
-                  className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                >
-                  Draft 3.2.A (Appendices)
-                </button>
-              </div>
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading CMC Platform...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <CMCModuleStandalone />
-                </Suspense>
-              </div>
+                          title: `Module 3.2.A — ${activeProject?.name || 'Appendices'}`,
+                          ctdSection: '3.2.A',
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                    >
+                      Draft 3.2.A (Appendices)
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    <Suspense
+                      fallback={
+                        <div className="flex-1 flex items-center justify-center bg-white h-full">
+                          <div className="text-center">
+                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                            <p className="text-zinc-500">Loading CMC Platform...</p>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <CMCModuleStandalone />
+                    </Suspense>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

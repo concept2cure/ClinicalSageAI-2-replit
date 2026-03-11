@@ -579,6 +579,7 @@ const createArtifactSchema = z.object({
   category: z.enum(['document', 'interactive', 'visualization']),
   title: z.string().min(1, 'Title required').max(200),
   content: z.string().max(1000000, 'Content too large'), // 1MB max
+  ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
 });
 
@@ -1881,7 +1882,9 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
     }
 
     // Insert artifact into database
-    const ctdSection = (data.metadata as Record<string, unknown>)?.ctdSection as string | undefined;
+    const ctdSection =
+      data.ctdSection ||
+      ((data.metadata as Record<string, unknown>)?.ctdSection as string | undefined);
     const [newDbArtifact] = await db
       .insert(concept2cureArtifacts)
       .values({
@@ -1950,7 +1953,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
         category: data.category,
         contentLength: sanitizedContent.length,
         contentHash,
-        ctdSection: (data.metadata as Record<string, unknown>)?.ctdSection || null,
+        ctdSection: ctdSection || null,
         conversationId: data.conversationId || null,
       },
       sourceDescription: data.conversationId
