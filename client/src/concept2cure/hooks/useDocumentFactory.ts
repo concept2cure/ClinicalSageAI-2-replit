@@ -117,3 +117,36 @@ export function downloadBlob(blob: Blob, filename: string) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+// ── Generate Module 3 (CMC) DOCX from structured data ─────────────────────
+export interface GenerateModule3Params {
+  drug_name?: string;
+  substance_name?: string;
+  molecular_formula?: string;
+  molecular_weight?: string;
+  dosage_form?: string;
+  strength?: string;
+  route_of_administration?: string;
+  manufacturing_process?: string;
+  specifications?: unknown;
+  stability_data?: unknown;
+  impurities_profile?: unknown;
+  composition?: unknown;
+}
+
+export function useGenerateModule3Docx() {
+  return useMutation({
+    mutationFn: async (params: GenerateModule3Params): Promise<Blob> => {
+      const res = await fetch('/api/knowledge-base/generate-module3-docx', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Module 3 generation failed' }));
+        throw new Error(err.error || 'Module 3 generation failed');
+      }
+      return res.blob();
+    },
+  });
+}

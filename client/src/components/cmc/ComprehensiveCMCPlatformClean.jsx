@@ -148,6 +148,7 @@ import {
   Building,
   Camera,
   Calculator,
+  FileDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DocumentAuthoringComponent from './DocumentAuthoringFixed';
@@ -20324,11 +20325,11 @@ const ComprehensiveCMCPlatform = () => {
     // Initialize secure session with server authentication
     const initializeSecureSession = async () => {
       try {
-        const response = await fetch('/api/doc-authoring/session/init', {
+        const response = await fetch('/api/document-authoring/session/init', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
           body: JSON.stringify({
             timestamp: new Date().toISOString(),
@@ -20385,9 +20386,9 @@ const ComprehensiveCMCPlatform = () => {
     // Load user permissions based on role
     const loadUserPermissions = async () => {
       try {
-        const response = await fetch('/api/doc-authoring/permissions', {
+        const response = await fetch('/api/document-authoring/permissions', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
         });
 
@@ -20411,18 +20412,16 @@ const ComprehensiveCMCPlatform = () => {
         details,
         oldValue,
         newValue,
-        ipAddress: await fetch('https://api.ipify.org?format=json')
-          .then(r => r.json())
-          .then(d => d.ip),
+        ipAddress: 'server-resolved',
         userAgent: navigator.userAgent,
       };
 
       try {
-        await fetch('/api/doc-authoring/audit', {
+        await fetch('/api/document-authoring/audit', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
           body: JSON.stringify(entry),
         });
@@ -20445,11 +20444,11 @@ const ComprehensiveCMCPlatform = () => {
       }
 
       try {
-        const response = await fetch('/api/doc-authoring/sign', {
+        const response = await fetch('/api/document-authoring/sign', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
           body: JSON.stringify({
             documentId: currentDocument?.id,
@@ -20524,10 +20523,10 @@ const ComprehensiveCMCPlatform = () => {
     // Real-time collaboration with section locking
     const acquireSectionLock = async sectionId => {
       try {
-        const response = await fetch(`/api/doc-authoring/lock/${sectionId}`, {
+        const response = await fetch(`/api/document-authoring/documents/${sectionId}/locks`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
         });
 
@@ -20543,10 +20542,10 @@ const ComprehensiveCMCPlatform = () => {
     // Release section lock
     const releaseSectionLock = async sectionId => {
       try {
-        await fetch(`/api/doc-authoring/lock/${sectionId}`, {
+        await fetch(`/api/document-authoring/documents/${sectionId}/locks`, {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
         });
 
@@ -26007,7 +26006,55 @@ What specific aspect would you like to explore further? I can provide detailed g
     <div className="bg-white px-4 py-3">
       <div className="max-w-7xl mx-auto">
         {/* Compact action bar — title provided by shell WorkspaceHeader */}
-        <div className="mb-3 flex items-center justify-end">
+        <div className="mb-3 flex items-center justify-end gap-2">
+          <Button
+            onClick={async () => {
+              try {
+                const token = localStorage.getItem('trialsage_access_token');
+                const res = await fetch('/api/knowledge-base/generate-module3-docx', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                  },
+                  body: JSON.stringify({
+                    drug_name: 'Enzymavir (EZV-401)',
+                    substance_name: 'Enzymavir',
+                    molecular_formula: 'C23H28N4O6',
+                    molecular_weight: '456.49',
+                    dosage_form: 'Film-coated tablet',
+                    strength: '200 mg',
+                    route_of_administration: 'Oral',
+                  }),
+                });
+                if (!res.ok) throw new Error('Generation failed');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Module3_CMC_Enzymavir.docx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                toast({
+                  title: 'Module 3 DOCX Generated',
+                  description: 'CTD Module 3 Quality document downloaded successfully',
+                });
+              } catch (err) {
+                toast({
+                  title: 'Generation Failed',
+                  description: err.message,
+                  variant: 'destructive',
+                });
+              }
+            }}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-medium"
+            data-testid="button-generate-module3"
+          >
+            <FileDown className="w-4 h-4" />
+            <span>Export Module 3 DOCX</span>
+          </Button>
           <Button
             onClick={() => setShowAiAssistant(true)}
             className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-medium"

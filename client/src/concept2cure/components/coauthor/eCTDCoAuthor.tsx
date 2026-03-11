@@ -130,6 +130,7 @@ interface eCTDCoAuthorProps {
   onDraftSection?: (section: DocumentSection) => void;
   onVerifyClaim?: (tag: SmartTag) => void;
   onResolveAlert?: (alert: RedlineAlert) => void;
+  onOpenInEditor?: (section: DocumentSection) => void;
   className?: string;
 }
 
@@ -443,7 +444,8 @@ const SectionEditor: React.FC<{
   onDraft?: () => void;
   onVerifyClaim?: (tag: SmartTag) => void;
   onResolveAlert?: (alert: RedlineAlert) => void;
-}> = ({ section, onDraft, onVerifyClaim, onResolveAlert }) => {
+  onOpenInEditor?: () => void;
+}> = ({ section, onDraft, onVerifyClaim, onResolveAlert, onOpenInEditor }) => {
   const statusConfig = STATUS_CONFIG[section.status];
   const moduleConfig = MODULE_CONFIG[section.module];
 
@@ -498,6 +500,19 @@ const SectionEditor: React.FC<{
         <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Save">
           <Save className="w-4 h-4" />
         </button>
+
+        {/* Open in full Document Editor */}
+        {onOpenInEditor && (
+          <button
+            onClick={onOpenInEditor}
+            className="px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 ml-1"
+            title="Open in Document Editor for rich editing, DOCX export, and compliance checking"
+          >
+            <FileText className="w-4 h-4" />
+            Open in Editor
+          </button>
+        )}
+
         <div className="flex-1" />
         <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Find sources">
           <Search className="w-4 h-4" />
@@ -532,6 +547,15 @@ const SectionEditor: React.FC<{
             >
               Start Drafting
             </button>
+            {onOpenInEditor && (
+              <button
+                onClick={onOpenInEditor}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium mt-2 flex items-center gap-2 mx-auto"
+              >
+                <FileText className="w-4 h-4" />
+                Open in Document Editor
+              </button>
+            )}
           </div>
         ) : section.status === 'ai_drafting' ? (
           <div className="text-center py-12">
@@ -731,6 +755,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
   onDraftSection,
   onVerifyClaim,
   onResolveAlert,
+  onOpenInEditor,
   className,
 }) => {
   const [activeSection, setActiveSection] = useState<DocumentSection | undefined>(selectedSection);
@@ -817,6 +842,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
             onDraft={() => onDraftSection?.(activeSection)}
             onVerifyClaim={onVerifyClaim}
             onResolveAlert={onResolveAlert}
+            onOpenInEditor={onOpenInEditor ? () => onOpenInEditor(activeSection) : undefined}
           />
         ) : (
           <ZeroState
@@ -835,6 +861,8 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
 export default eCTDCoAuthor;
 
 // ─── Standalone (zero-prop entry point using DEMO_ECTD_DOCUMENT) ────────────
-export const ECTDCoAuthorStandalone: React.FC = () => (
-  <eCTDCoAuthor document={DEMO_ECTD_DOCUMENT} />
+export const ECTDCoAuthorStandalone: React.FC<{
+  onOpenInEditor?: (section: DocumentSection) => void;
+}> = ({ onOpenInEditor }) => (
+  <eCTDCoAuthor document={DEMO_ECTD_DOCUMENT} onOpenInEditor={onOpenInEditor} />
 );

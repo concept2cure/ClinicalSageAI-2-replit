@@ -1607,7 +1607,14 @@ export const ZenApp: React.FC = () => {
                     </div>
                   }
                 >
-                  <ECTDCoAuthorStandalone />
+                  <ECTDCoAuthorStandalone
+                    onOpenInEditor={section => {
+                      console.log(
+                        `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
+                      );
+                      setLayoutMode('editor');
+                    }}
+                  />
                 </Suspense>
               </div>
             </div>

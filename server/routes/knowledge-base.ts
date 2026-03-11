@@ -21,6 +21,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
+import { Document, Packer, Paragraph, HeadingLevel, TextRun, AlignmentType } from 'docx';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
@@ -113,6 +114,124 @@ async function proxyBinary(
   res.send(Buffer.from(buf));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Node-side DOCX fallback when Shadow Service is unreachable
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface DocxSection {
+  title: string;
+  content: string;
+  sectionCode?: string;
+}
+
+async function renderDocxNodeFallback(
+  title: string,
+  sections: DocxSection[],
+  submissionType?: string
+): Promise<Buffer> {
+  const children: Paragraph[] = [];
+
+  // Title page
+  children.push(
+    new Paragraph({
+      text: title || 'Regulatory Document',
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 },
+    })
+  );
+
+  if (submissionType) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `Submission Type: ${submissionType}`,
+            italics: true,
+            size: 22,
+          }),
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 600 },
+      })
+    );
+  }
+
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `Generated: ${new Date().toISOString().split('T')[0]}`,
+          size: 20,
+          color: '666666',
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 800 },
+    })
+  );
+
+  // Render each section
+  for (const section of sections) {
+    children.push(
+      new Paragraph({
+        text: section.title,
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      })
+    );
+
+    if (section.sectionCode) {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `Section: ${section.sectionCode}`,
+              italics: true,
+              size: 20,
+              color: '888888',
+            }),
+          ],
+          spacing: { after: 100 },
+        })
+      );
+    }
+
+    // Strip HTML tags and render text
+    const plainText = (section.content || '')
+      .replace(/<[^>]*>/g, '\n')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"');
+
+    const lines = plainText
+      .split('\n')
+      .map((l: string) => l.trim())
+      .filter(Boolean);
+
+    if (lines.length === 0) {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: '[Section content pending]', italics: true, color: '999999' }),
+          ],
+        })
+      );
+    } else {
+      for (const line of lines) {
+        children.push(new Paragraph({ text: line, spacing: { after: 120 } }));
+      }
+    }
+  }
+
+  const doc = new Document({
+    sections: [{ children }],
+  });
+  return Buffer.from(await Packer.toBuffer(doc));
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // POST /api/knowledge-base/upload
 // Accepts multipart/form-data with project_id (field) + files[]
@@ -176,12 +295,35 @@ router.get('/context/:projectId', async (req: Request, res: Response) => {
 // ═════════════════════════════════════════════════════════════════════════════
 
 router.post('/generate-docx', async (req: Request, res: Response) => {
-  if (!requireToken(res)) return;
   try {
+    // Try shadow service first
     await proxyBinary('/knowledge/generate-docx', 'POST', req.body, res);
   } catch (err: any) {
-    console.error('[knowledge-base] generate-docx proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    console.warn('[knowledge-base] Shadow service unavailable, using Node DOCX fallback');
+    try {
+      const { title, sections, submissionType, content } = req.body;
+      const docSections: DocxSection[] =
+        Array.isArray(sections) && sections.length > 0
+          ? sections
+          : [{ title: title || 'Document', content: content || '', sectionCode: '' }];
+
+      const buffer = await renderDocxNodeFallback(
+        title || 'Regulatory Document',
+        docSections,
+        submissionType
+      );
+
+      const filename = `${(title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(buffer);
+    } catch (fallbackErr: any) {
+      console.error('[knowledge-base] Node DOCX fallback also failed:', fallbackErr.message);
+      res.status(500).json({ error: 'DOCX generation failed', detail: fallbackErr.message });
+    }
   }
 });
 
@@ -190,12 +332,60 @@ router.post('/generate-docx', async (req: Request, res: Response) => {
 // ═════════════════════════════════════════════════════════════════════════════
 
 router.post('/generate-ind-package', async (req: Request, res: Response) => {
-  if (!requireToken(res)) return;
   try {
     await proxyBinary('/knowledge/generate-ind-package', 'POST', req.body, res);
   } catch (err: any) {
-    console.error('[knowledge-base] generate-ind-package proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    console.warn(
+      '[knowledge-base] Shadow service unavailable for IND package, using Node fallback'
+    );
+    try {
+      const { project_id, sections: reqSections, drug_name, sponsor, indication } = req.body;
+
+      // Build IND package sections from known CTD structure
+      const indSections: DocxSection[] =
+        reqSections && Array.isArray(reqSections) && reqSections.length > 0
+          ? reqSections
+          : [
+              {
+                title: '1. Administrative Information',
+                content: `Sponsor: ${sponsor || 'Not specified'}\nDrug Name: ${drug_name || 'Not specified'}\nIndication: ${indication || 'Not specified'}`,
+                sectionCode: 'M1',
+              },
+              { title: '2. Clinical Overview', content: '[To be completed]', sectionCode: 'M2.5' },
+              {
+                title: '3. Quality (CMC) Summary',
+                content: '[To be completed]',
+                sectionCode: 'M2.3',
+              },
+              {
+                title: '4. Nonclinical Overview',
+                content: '[To be completed]',
+                sectionCode: 'M2.4',
+              },
+              {
+                title: '5. Clinical Protocol Synopsis',
+                content: '[To be completed]',
+                sectionCode: 'M5',
+              },
+            ];
+
+      const buffer = await renderDocxNodeFallback(
+        `IND Package — ${drug_name || 'Investigational Drug'}`,
+        indSections,
+        'IND'
+      );
+
+      const filename = `IND_Package_${(drug_name || 'drug').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(buffer);
+    } catch (fallbackErr: any) {
+      console.error('[knowledge-base] Node IND fallback failed:', fallbackErr.message);
+      res.status(500).json({ error: 'IND package generation failed', detail: fallbackErr.message });
+    }
   }
 });
 
@@ -204,13 +394,125 @@ router.post('/generate-ind-package', async (req: Request, res: Response) => {
 // ═════════════════════════════════════════════════════════════════════════════
 
 router.post('/generate-ind-section', async (req: Request, res: Response) => {
-  if (!requireToken(res)) return;
   try {
     const result = await proxyJson('/knowledge/generate-ind-section', 'POST', req.body);
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
-    console.error('[knowledge-base] generate-ind-section proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    console.warn('[knowledge-base] Shadow service unavailable for IND section, returning scaffold');
+    const { section_code, section_title, drug_name } = req.body;
+    res.json({
+      section_code: section_code || 'unknown',
+      title: section_title || 'IND Section',
+      content: `<h1>${section_title || 'IND Section'}</h1>\n<p>This section for ${drug_name || 'the investigational drug'} requires authoring. Use the Document Editor to draft content with Regulatory Intelligence assistance.</p>`,
+      status: 'scaffold',
+      generated_by: 'node-fallback',
+    });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// POST /api/knowledge-base/generate-module3-docx
+// CMC data → Module 3 (Quality) DOCX document
+// ═════════════════════════════════════════════════════════════════════════════
+
+router.post('/generate-module3-docx', async (req: Request, res: Response) => {
+  try {
+    const {
+      drug_name,
+      substance_name,
+      molecular_formula,
+      molecular_weight,
+      dosage_form,
+      strength,
+      route_of_administration,
+      manufacturing_process,
+      specifications,
+      stability_data,
+      impurities_profile,
+      composition,
+    } = req.body;
+
+    const sections: DocxSection[] = [
+      {
+        title: '3.2.S Drug Substance',
+        sectionCode: '3.2.S',
+        content: [
+          `Substance Name: ${substance_name || drug_name || 'Not specified'}`,
+          molecular_formula ? `Molecular Formula: ${molecular_formula}` : '',
+          molecular_weight ? `Molecular Weight: ${molecular_weight}` : '',
+          '',
+          '3.2.S.1 General Information',
+          `The drug substance ${substance_name || drug_name || '[name]'} is described in this section per ICH M4Q guidelines.`,
+          '',
+          '3.2.S.2 Manufacture',
+          typeof manufacturing_process === 'string'
+            ? manufacturing_process
+            : 'Manufacturing process details to be provided.',
+          '',
+          '3.2.S.3 Characterization',
+          impurities_profile
+            ? `Impurities Profile: ${typeof impurities_profile === 'string' ? impurities_profile : JSON.stringify(impurities_profile)}`
+            : 'Characterization data to be provided.',
+          '',
+          '3.2.S.4 Control of Drug Substance',
+          specifications
+            ? `Specifications: ${typeof specifications === 'string' ? specifications : JSON.stringify(specifications)}`
+            : 'Specifications to be provided.',
+          '',
+          '3.2.S.7 Stability',
+          stability_data
+            ? `Stability Data: ${typeof stability_data === 'string' ? stability_data : JSON.stringify(stability_data)}`
+            : 'Stability data to be provided per ICH Q1A guidelines.',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      },
+      {
+        title: '3.2.P Drug Product',
+        sectionCode: '3.2.P',
+        content: [
+          dosage_form ? `Dosage Form: ${dosage_form}` : '',
+          strength ? `Strength: ${strength}` : '',
+          route_of_administration ? `Route: ${route_of_administration}` : '',
+          '',
+          '3.2.P.1 Description and Composition',
+          composition
+            ? `Composition: ${typeof composition === 'string' ? composition : JSON.stringify(composition)}`
+            : 'Composition details to be provided.',
+          '',
+          '3.2.P.2 Pharmaceutical Development',
+          'Development history and rationale to be provided.',
+          '',
+          '3.2.P.3 Manufacture',
+          'Manufacturing process and controls to be provided.',
+          '',
+          '3.2.P.5 Control of Drug Product',
+          'Product specifications and analytical procedures to be provided.',
+          '',
+          '3.2.P.8 Stability',
+          'Drug product stability data per ICH Q1A to be provided.',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      },
+    ];
+
+    const buffer = await renderDocxNodeFallback(
+      `Module 3 – Quality (CMC): ${drug_name || substance_name || 'Drug'}`,
+      sections,
+      'CTD Module 3'
+    );
+
+    const filename = `Module3_CMC_${(drug_name || substance_name || 'drug').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err: any) {
+    console.error('[knowledge-base] Module 3 DOCX generation failed:', err.message);
+    res.status(500).json({ error: 'Module 3 DOCX generation failed', detail: err.message });
   }
 });
 
