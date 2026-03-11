@@ -62,6 +62,7 @@ interface ProjectData {
 interface ProjectLauncherProps {
   project: ProjectData;
   onOpenWorkspace: () => void;
+  onOpenDocuments: () => void;
   onBack: () => void;
   onStartChat: () => void;
 }
@@ -71,6 +72,7 @@ interface ProjectLauncherProps {
 export const ProjectLauncher: React.FC<ProjectLauncherProps> = ({
   project,
   onOpenWorkspace,
+  onOpenDocuments,
   onBack,
   onStartChat,
 }) => {
@@ -149,9 +151,7 @@ export const ProjectLauncher: React.FC<ProjectLauncherProps> = ({
     trackRoute ? { label: 'Open Project Workspace', action: onOpenWorkspace, live: true } : null,
     {
       label: 'Open Documents',
-      action: () => {
-        window.location.href = '/vault';
-      },
+      action: onOpenDocuments,
       live: true,
     },
     { label: 'Ask RI', action: onStartChat, live: true },

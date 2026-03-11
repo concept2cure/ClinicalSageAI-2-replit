@@ -34,6 +34,10 @@ import {
   MapPin,
   Hash,
   PenTool,
+  Filter,
+  BadgeCheck,
+  Activity,
+  Shield,
 } from 'lucide-react';
 import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
@@ -59,8 +63,21 @@ interface Artifact {
   category: string;
   version: number;
   versions?: { version: number; content: string; createdAt: string }[];
+  status?: string;
+  ctdSection?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface SignatureInfo {
+  signatureId: string;
+  signatureType: string;
+  signerName: string;
+  signerEmail: string;
+  signerRole: string;
+  signedAt: string;
+  signatureHash: string;
+  status: string;
 }
 
 interface EditorPanelProps {
@@ -137,6 +154,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Audit export state ────────────────────────────────────────────────
   const [exportingAudit, setExportingAudit] = useState(false);
 
+  // ── Document trust indicators (P3/P4) ─────────────────────────────────
+  const [signatures, setSignatures] = useState<SignatureInfo[]>([]);
+  const [provenanceCount, setProvenanceCount] = useState(0);
+  const [integrityVerified, setIntegrityVerified] = useState<boolean | null>(null);
+
+  // ── Artifact list filters (P5) ────────────────────────────────────────
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterCtd, setFilterCtd] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
+
   const handleClaimCheck = useCallback(() => {
     if (!activeArtifact?.content) return;
     // Strip HTML and extract first substantive sentence as the claim
@@ -205,6 +233,48 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     loadArtifacts();
   }, [loadArtifacts]);
 
+  // ── Fetch trust indicators when artifact selected ─────────────────────────
+  useEffect(() => {
+    if (!projectId || !activeArtifact) {
+      setSignatures([]);
+      setProvenanceCount(0);
+      setIntegrityVerified(null);
+      return;
+    }
+    const headers = getAuthHeaders();
+    // Fetch signatures
+    fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`, {
+      headers,
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (d) setSignatures(d.data ?? d ?? []);
+      })
+      .catch(() => setSignatures([]));
+    // Fetch provenance count
+    fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/provenance`, {
+      headers,
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (d) {
+          const prov = d.data ?? d;
+          const events = prov?.reviewHistory?.length ?? prov?.events?.length ?? 0;
+          setProvenanceCount(events);
+        }
+      })
+      .catch(() => setProvenanceCount(0));
+    // Fetch integrity verification
+    fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/integrity`, {
+      headers,
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (d) setIntegrityVerified((d.data ?? d)?.verified ?? null);
+      })
+      .catch(() => setIntegrityVerified(null));
+  }, [projectId, activeArtifact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Auto-create artifact from initial content (eCTD handoff) ──────────────
   const initialContentConsumedRef = useRef(false);
   useEffect(() => {
@@ -250,7 +320,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     async (content: string, _metadata: Record<string, unknown>) => {
       if (!projectId || !activeArtifact) return;
       // Block saves on locked documents client-side
-      if ((activeArtifact as any)?.status === 'locked') {
+      if (activeArtifact?.status === 'locked') {
         setLockRejection('Document is locked — edits are not permitted. Unlock to continue.');
         setTimeout(() => setLockRejection(null), 5000);
         return;
@@ -551,12 +621,100 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Artifact list view ──────────────────────────────────────────────────
   if (showArtifactList && !activeArtifact) {
+    // Compute unique filter options from artifact data
+    const statusOptions = ['all', ...new Set(artifacts.map(a => a.status || 'draft'))];
+    const typeOptions = ['all', ...new Set(artifacts.map(a => a.type))];
+    const ctdOptions = [
+      'all',
+      ...new Set(artifacts.filter(a => a.ctdSection).map(a => a.ctdSection!)),
+    ];
+
+    // Apply filters
+    const filtered = artifacts.filter(a => {
+      if (filterStatus !== 'all' && (a.status || 'draft') !== filterStatus) return false;
+      if (filterType !== 'all' && a.type !== filterType) return false;
+      if (filterCtd !== 'all' && a.ctdSection !== filterCtd) return false;
+      return true;
+    });
+
     return (
       <div className="flex flex-col h-full bg-white">
         {/* Header */}
         <div className="flex items-center justify-between h-12 px-4 border-b border-zinc-100 bg-zinc-50/50">
           <h3 className="text-sm font-semibold text-zinc-700">Project Documents</h3>
+          {artifacts.length > 0 && (
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors',
+                showFilters ? 'bg-blue-100 text-blue-700' : 'text-zinc-500 hover:bg-zinc-100'
+              )}
+            >
+              <Filter className="w-3 h-3" />
+              Filters
+              {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              )}
+            </button>
+          )}
         </div>
+
+        {/* Filter controls (P5) */}
+        {showFilters && artifacts.length > 0 && (
+          <div
+            className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50/20 flex-wrap"
+            data-testid="artifact-filters"
+          >
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus:ring-1 focus:ring-blue-400"
+            >
+              {statusOptions.map(s => (
+                <option key={s} value={s}>
+                  {s === 'all' ? 'All Status' : s}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterType}
+              onChange={e => setFilterType(e.target.value)}
+              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus:ring-1 focus:ring-blue-400"
+            >
+              {typeOptions.map(t => (
+                <option key={t} value={t}>
+                  {t === 'all' ? 'All Types' : t.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterCtd}
+              onChange={e => setFilterCtd(e.target.value)}
+              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus:ring-1 focus:ring-blue-400"
+            >
+              {ctdOptions.map(c => (
+                <option key={c} value={c}>
+                  {c === 'all' ? 'All CTD Sections' : `CTD ${c}`}
+                </option>
+              ))}
+            </select>
+            {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
+              <button
+                onClick={() => {
+                  setFilterStatus('all');
+                  setFilterType('all');
+                  setFilterCtd('all');
+                }}
+                className="text-xs text-zinc-400 hover:text-zinc-600"
+              >
+                Clear
+              </button>
+            )}
+            <span className="text-[10px] text-zinc-400 ml-auto">
+              {filtered.length} of {artifacts.length}
+            </span>
+          </div>
+        )}
 
         {/* New doc input */}
         <div className="p-3 border-b border-zinc-100">
@@ -590,14 +748,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
             </div>
-          ) : artifacts.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="text-center py-8 text-zinc-400 text-sm">
               <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              No documents yet. Create one above.
+              {artifacts.length === 0
+                ? 'No documents yet. Create one above.'
+                : 'No documents match filters.'}
             </div>
           ) : (
             <div className="space-y-1">
-              {artifacts.map(a => (
+              {filtered.map(a => (
                 <button
                   key={a.id}
                   onClick={() => {
@@ -608,10 +768,33 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-700 truncate">{a.title}</span>
-                    <span className="text-[10px] text-zinc-400 ml-2 shrink-0">v{a.version}</span>
+                    <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                      <span
+                        className={`px-1 py-0.5 rounded text-[9px] font-medium ${
+                          a.status === 'approved'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : a.status === 'locked'
+                              ? 'bg-red-100 text-red-700'
+                              : a.status === 'review'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-zinc-100 text-zinc-500'
+                        }`}
+                      >
+                        {a.status || 'draft'}
+                      </span>
+                      <span className="text-[10px] text-zinc-400">v{a.version}</span>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">
-                    {a.type} &middot; {new Date(a.updatedAt || a.createdAt).toLocaleDateString()}
+                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 mt-0.5">
+                    <span>{a.type?.replace(/_/g, ' ')}</span>
+                    {a.ctdSection && (
+                      <>
+                        <span>&middot;</span>
+                        <span className="text-violet-500">CTD {a.ctdSection}</span>
+                      </>
+                    )}
+                    <span>&middot;</span>
+                    <span>{new Date(a.updatedAt || a.createdAt).toLocaleDateString()}</span>
                   </div>
                 </button>
               ))}
@@ -806,7 +989,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {/* Status / Lock Toggle */}
           <button
             onClick={() => {
-              const current = (activeArtifact as any)?.status || 'draft';
+              const current = activeArtifact?.status || 'draft';
               const next =
                 current === 'locked'
                   ? 'draft'
@@ -822,16 +1005,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           >
             {changingStatus ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (activeArtifact as any)?.status === 'locked' ? (
+            ) : activeArtifact?.status === 'locked' ? (
               <Unlock className="w-3.5 h-3.5" />
             ) : (
               <Lock className="w-3.5 h-3.5" />
             )}
-            {(activeArtifact as any)?.status === 'locked'
+            {activeArtifact?.status === 'locked'
               ? 'Unlock'
-              : (activeArtifact as any)?.status === 'approved'
+              : activeArtifact?.status === 'approved'
                 ? 'Lock'
-                : (activeArtifact as any)?.status === 'review'
+                : activeArtifact?.status === 'review'
                   ? 'Approve'
                   : 'Review'}
           </button>
@@ -966,7 +1149,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* Document Intelligence Summary Bar */}
       {activeArtifact && (
-        <div className="flex items-center gap-3 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/30 text-[10px] text-zinc-500 shrink-0 flex-wrap">
+        <div
+          className="flex items-center gap-3 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/30 text-[10px] text-zinc-500 shrink-0 flex-wrap"
+          data-testid="doc-intelligence-bar"
+        >
           <span className="flex items-center gap-1 font-medium text-zinc-600">
             <FileText className="w-3 h-3" />
             {activeArtifact.type?.replace(/_/g, ' ') || 'document'}
@@ -976,16 +1162,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </span>
           <span
             className={`px-1.5 py-0.5 rounded font-medium ${
-              (activeArtifact as any).status === 'approved'
+              activeArtifact.status === 'approved'
                 ? 'bg-emerald-100 text-emerald-700'
-                : (activeArtifact as any).status === 'locked'
+                : activeArtifact.status === 'locked'
                   ? 'bg-red-100 text-red-700'
-                  : (activeArtifact as any).status === 'review'
+                  : activeArtifact.status === 'review'
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-amber-100 text-amber-700'
             }`}
           >
-            {(activeArtifact as any).status || 'draft'}
+            {activeArtifact.status || 'draft'}
           </span>
           {/* CTD Section */}
           {showCtdInput ? (
@@ -1017,8 +1203,46 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               className="flex items-center gap-1 hover:text-zinc-700"
             >
               <MapPin className="w-3 h-3" />
-              {(activeArtifact as any).ctdSection || 'Set CTD Section'}
+              {activeArtifact.ctdSection || 'Set CTD Section'}
             </button>
+          )}
+          {/* Separator */}
+          <span className="w-px h-3 bg-zinc-200" />
+          {/* Signature status (P4) */}
+          {signatures.length > 0 ? (
+            <span
+              className="flex items-center gap-1 text-emerald-600 font-medium"
+              title={`Signed by: ${signatures.map(s => s.signerName).join(', ')}`}
+            >
+              <BadgeCheck className="w-3 h-3" />
+              Signed ({signatures.length})
+              <span className="text-zinc-400 font-normal">
+                · {signatures[signatures.length - 1].signerName}
+                {' · '}
+                {new Date(signatures[signatures.length - 1].signedAt).toLocaleDateString()}
+              </span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-zinc-400">
+              <PenTool className="w-3 h-3" />
+              Unsigned
+            </span>
+          )}
+          {/* Integrity status */}
+          {integrityVerified !== null && (
+            <span
+              className={`flex items-center gap-1 font-medium ${integrityVerified ? 'text-emerald-600' : 'text-red-500'}`}
+            >
+              <Shield className="w-3 h-3" />
+              {integrityVerified ? 'Integrity OK' : 'Modified'}
+            </span>
+          )}
+          {/* Provenance event count */}
+          {provenanceCount > 0 && (
+            <span className="flex items-center gap-1" title="Provenance events tracked">
+              <Activity className="w-3 h-3" />
+              {provenanceCount} events
+            </span>
           )}
           {/* Export audit as artifact */}
           <button
@@ -1042,7 +1266,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           className={`${showIntelPanel || showProvenancePanel || showComparePanel || showAuditReport ? 'flex-1' : 'w-full'} min-h-0 overflow-hidden relative`}
         >
           {/* Lock overlay when document is locked */}
-          {(activeArtifact as any)?.status === 'locked' && (
+          {activeArtifact?.status === 'locked' && (
             <div className="absolute inset-0 z-10 bg-red-50/60 backdrop-blur-[1px] flex flex-col items-center justify-center pointer-events-none">
               <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow-lg text-center pointer-events-auto">
                 <Lock className="w-8 h-8 text-red-500 mx-auto mb-2" />

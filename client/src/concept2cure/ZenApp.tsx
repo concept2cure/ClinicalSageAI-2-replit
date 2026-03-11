@@ -25,7 +25,7 @@
  * - WCAG 2.1 AA: Accessible throughout
  */
 
-import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation, useRoute } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -522,8 +522,13 @@ export const ZenApp: React.FC = () => {
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
   const [toolPanelFullscreen, setToolPanelFullscreen] = useState(false);
 
-  // Layout mode — default to 'projects' index so returning users always land on their work
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('projects');
+  // Layout mode — initialize from URL when deep-linked into a project
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(
+    urlProjectId ? 'project-launcher' : 'projects'
+  );
+
+  // Guard: prevents URL-sync from reverting a navigation that's in-flight
+  const navInProgressRef = useRef(false);
 
   // Right panel tab in workspace mode
   const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs' | 'instructions'>(
@@ -721,8 +726,11 @@ export const ZenApp: React.FC = () => {
       if (!window.location.pathname.startsWith(expected)) {
         window.history.replaceState({}, '', expected);
       }
+      navInProgressRef.current = false;
     } else if (layoutMode === 'projects' && !embeddedModule) {
       // Back to project hub — clear project from URL
+      // Skip if a navigation is in-flight (state updates still batching)
+      if (navInProgressRef.current) return;
       if (window.location.pathname.includes('/project/')) {
         window.history.replaceState({}, '', '/concept2cure');
       }
@@ -1689,6 +1697,7 @@ export const ZenApp: React.FC = () => {
                   conversationCount: activeProject.conversationCount,
                 }}
                 onOpenWorkspace={() => setLayoutMode('regulatory-workspace')}
+                onOpenDocuments={() => setLayoutMode('editor')}
                 onBack={() => {
                   setLayoutMode('projects');
                   navigate('/concept2cure');
@@ -2292,7 +2301,9 @@ export const ZenApp: React.FC = () => {
                             return (
                               <tr
                                 key={project.id}
+                                data-testid={`project-row-${project.id}`}
                                 onClick={() => {
+                                  navInProgressRef.current = true;
                                   setActiveProjectId(project.id);
                                   setLayoutMode('project-launcher');
                                   navigate(`/concept2cure/project/${project.id}`);

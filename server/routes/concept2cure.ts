@@ -2285,6 +2285,61 @@ router.post(
   }
 );
 
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
+ * List electronic signatures for an artifact (21 CFR Part 11).
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/signatures',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const signatures = await db
+        .select({
+          signatureId: concept2cureSignatures.signatureId,
+          signatureType: concept2cureSignatures.signatureType,
+          signaturePurpose: concept2cureSignatures.signaturePurpose,
+          signatureMeaning: concept2cureSignatures.signatureMeaning,
+          signerName: concept2cureSignatures.signerName,
+          signerEmail: concept2cureSignatures.signerEmail,
+          signerRole: concept2cureSignatures.signerRole,
+          signedAt: concept2cureSignatures.signedAt,
+          signatureHash: concept2cureSignatures.signatureHash,
+          status: concept2cureSignatures.status,
+        })
+        .from(concept2cureSignatures)
+        .where(
+          and(
+            eq(concept2cureSignatures.artifactId, artifact.id),
+            eq(concept2cureSignatures.organizationId, organizationId)
+          )
+        )
+        .orderBy(concept2cureSignatures.signedAt);
+
+      return sendSuccess(res, signatures);
+    } catch (error: any) {
+      logConcept2cureError('list signatures', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to list signatures');
+    }
+  }
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DOCUMENT PROVENANCE API
 // Full provenance, auditability, and compliance traceability for any artifact
