@@ -265,9 +265,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       })
       .catch(() => setProvenanceCount(0));
     // Fetch integrity verification
-    fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/integrity`, {
-      headers,
-    })
+    fetch(
+      `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/verify-integrity`,
+      {
+        headers,
+      }
+    )
       .then(r => (r.ok ? r.json() : null))
       .then(d => {
         if (d) setIntegrityVerified((d.data ?? d)?.verified ?? null);

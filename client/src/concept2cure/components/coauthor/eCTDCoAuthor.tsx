@@ -44,9 +44,7 @@ import {
   Zap,
   Mountain,
   Flag,
-  Search,
   BookOpen,
-  MessageSquare,
   RotateCcw,
   Plus,
   Settings,
@@ -491,16 +489,6 @@ const SectionEditor: React.FC<{
           <Sparkles className="w-4 h-4" />
           {section.status === 'empty' ? 'Draft with RI' : 'Regenerate'}
         </button>
-        <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Edit">
-          <Edit3 className="w-4 h-4" />
-        </button>
-        <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Preview">
-          <Eye className="w-4 h-4" />
-        </button>
-        <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Save">
-          <Save className="w-4 h-4" />
-        </button>
-
         {/* Open in full Document Editor */}
         {onOpenInEditor && (
           <button
@@ -514,12 +502,6 @@ const SectionEditor: React.FC<{
         )}
 
         <div className="flex-1" />
-        <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Find sources">
-          <Search className="w-4 h-4" />
-        </button>
-        <button className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg" title="Comments">
-          <MessageSquare className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Redline Alerts */}
@@ -648,9 +630,10 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       title: 'Form FDA 1571',
       module: 'm1',
       status: 'approved',
-      content: '',
+      content:
+        '<h2>1.2 Form FDA 1571</h2>\n<h3>Investigational New Drug Application (IND)</h3>\n<p><strong>Name of Sponsor:</strong> Concept2Cure Therapeutics, Inc.</p>\n<p><strong>Date of Submission:</strong> March 2026</p>\n<p><strong>Name of Investigational Drug:</strong> Lemizumab (anti-IL-17A humanized mAb)</p>\n<p><strong>IND Number:</strong> [To be assigned]</p>\n<p><strong>Indication:</strong> Moderate-to-severe plaque psoriasis in adults</p>\n<p><strong>Phase of Clinical Investigation:</strong> Phase 1/2</p>\n<p>This application contains the following: Initial IND submission with all required CTD modules including CMC (Module 3), Nonclinical (Module 4), and Clinical Protocol (Module 5).</p>',
       smartTags: [],
-      wordCount: 0,
+      wordCount: 85,
       lastEdited: '2026-02-19',
       editedBy: 'James Mitchell',
     },
@@ -673,7 +656,8 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       title: 'Nonclinical Overview',
       module: 'm2',
       status: 'editing',
-      content: '',
+      content:
+        '<h2>2.4 Nonclinical Overview</h2>\n<h3>2.4.1 Overview of Nonclinical Testing Strategy</h3>\n<p>The nonclinical program for lemizumab included pharmacology, pharmacokinetics, and toxicology studies conducted in compliance with GLP regulations (21 CFR Part 58). Species selection was based on IL-17A cross-reactivity — cynomolgus monkey was the primary pharmacologically relevant species.</p>\n<h3>2.4.2 Pharmacology</h3>\n<p>In vitro binding studies confirmed lemizumab binds human IL-17A with high affinity (KD = 45 pM). In the imiquimod-induced psoriasis mouse model, lemizumab analogue reduced epidermal thickness by 68% (p&lt;0.001) and suppressed IL-17A-driven keratinocyte proliferation markers.</p>\n<h3>2.4.3 Pharmacokinetics</h3>\n<p>Following IV administration in cynomolgus monkeys, lemizumab exhibited linear PK with t½ of 14.2 days, Vss of 72 mL/kg, and CL of 3.5 mL/day/kg. Subcutaneous bioavailability was 78%.</p>\n<h3>2.4.4 Toxicology</h3>\n<p>A 26-week repeat-dose toxicity study in cynomolgus monkeys (10, 30, 100 mg/kg/week SC) revealed no target organ toxicity. The NOAEL was 100 mg/kg/week, providing a safety margin of >20× the proposed clinical dose.</p>',
       smartTags: [],
       wordCount: 3820,
       lastEdited: '2026-02-28',
@@ -684,10 +668,13 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       number: '2.5',
       title: 'Clinical Overview',
       module: 'm2',
-      status: 'empty',
-      content: '',
+      status: 'ai_draft',
+      content:
+        '<h2>2.5 Clinical Overview</h2>\n<h3>2.5.1 Product Development Rationale</h3>\n<p>Lemizumab is being developed for the treatment of moderate-to-severe plaque psoriasis in adults who are candidates for systemic therapy. IL-17A is a key driver of psoriatic inflammation, and selective IL-17A inhibition has demonstrated transformative efficacy in this indication.</p>\n<h3>2.5.2 Overview of Biopharmaceutics</h3>\n<p>Lemizumab is administered by subcutaneous injection using a 150 mg/mL prefilled syringe formulation. Bioavailability studies demonstrate 78% absorption following SC administration.</p>\n<h3>2.5.4 Overview of Efficacy</h3>\n<p>The planned Phase 1/2 study (LMZ-001) will evaluate safety, PK, and preliminary efficacy of lemizumab in 60 patients with moderate-to-severe plaque psoriasis (PASI ≥12, BSA ≥10%).</p>\n<h3>2.5.5 Overview of Safety</h3>\n<p>Based on the nonclinical safety profile (NOAEL 100 mg/kg/week in cynomolgus monkeys, >20× safety margin), lemizumab is expected to have a favorable safety profile consistent with the IL-17A inhibitor class.</p>\n<h3>2.5.6 Benefits and Risks Conclusions</h3>\n<p>The benefit-risk assessment supports initiation of Phase 1/2 clinical investigation based on strong preclinical efficacy, favorable safety margins, and the significant unmet need for well-tolerated psoriasis therapies.</p>',
       smartTags: [],
-      wordCount: 0,
+      wordCount: 1840,
+      lastEdited: '2026-03-05',
+      editedBy: 'RI',
     },
     {
       id: 'm3-drug',
@@ -695,7 +682,8 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       title: 'Drug Substance (CMC)',
       module: 'm3',
       status: 'in_review',
-      content: '',
+      content:
+        '<h2>3.2.S Drug Substance</h2>\n<h3>3.2.S.1 General Information</h3>\n<p><strong>INN:</strong> Lemizumab. <strong>Description:</strong> Recombinant humanized monoclonal antibody (IgG4, kappa) directed against human interleukin-17A. Molecular weight: approximately 146 kDa. Produced in Chinese hamster ovary (CHO) cells.</p>\n<h3>3.2.S.2 Manufacture</h3>\n<p>Drug substance is manufactured at Concept2Cure Biologics (San Diego, CA) using a fed-batch CHO cell culture process. The manufacturing process includes cell expansion, production bioreactor (2000L), harvest/clarification, Protein A affinity chromatography, viral inactivation (low pH), ion exchange polishing, nanofiltration, and UF/DF.</p>\n<h3>3.2.S.3 Characterisation</h3>\n<p>Primary structure confirmed by peptide mapping and intact/reduced mass spectrometry. Higher order structure evaluated by CD spectroscopy and SEC-MALS. Binding affinity: KD = 45 pM by SPR (Biacore). Potency: IC50 = 0.15 nM in IL-17A-stimulated HaCaT cell assay.</p>\n<h3>3.2.S.4 Control of Drug Substance</h3>\n<p>Specifications include appearance, pH, protein concentration (UV A280), purity (SEC ≥98%, CE-SDS ≥95%), potency (relative potency 80-125%), endotoxin (≤0.5 EU/mg), bioburden, and residual CHO protein (≤100 ppm).</p>\n<h3>3.2.S.7 Stability</h3>\n<p>Stability studies initiated under ICH Q5C at 2-8°C (36 months), 25°C/60% RH (6 months accelerated). 12-month data at 2-8°C demonstrates compliance with all specifications. Proposed shelf life: 24 months at 2-8°C.</p>',
       smartTags: [],
       wordCount: 8900,
       lastEdited: '2026-02-25',
@@ -706,10 +694,13 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       number: '3.2.P',
       title: 'Drug Product',
       module: 'm3',
-      status: 'empty',
-      content: '',
+      status: 'editing',
+      content:
+        '<h2>3.2.P Drug Product</h2>\n<h3>3.2.P.1 Description and Composition</h3>\n<p>Lemizumab drug product is a sterile, preservative-free solution for subcutaneous injection. Each prefilled syringe contains 150 mg lemizumab in 1.0 mL (150 mg/mL). Excipients: L-histidine/L-histidine HCl (pH 6.0), sucrose (stabilizer), polysorbate 80 (surfactant), and Water for Injection.</p>\n<h3>3.2.P.2 Pharmaceutical Development</h3>\n<p>Formulation development focused on achieving high concentration (150 mg/mL) with acceptable viscosity (<15 cP) for SC delivery. Accelerated stability studies confirmed the selected formulation maintains monomer content >98% through 6 months at 25°C.</p>\n<h3>3.2.P.3 Manufacture</h3>\n<p>Drug product is manufactured at Concept2Cure Fill-Finish (San Diego, CA). Process: sterile filtration (0.2 μm) → aseptic filling into Type I borosilicate glass syringes → stoppering → visual inspection → labeling/packaging. Validated batch size: 10,000 units.</p>\n<h3>3.2.P.5 Control of Drug Product</h3>\n<p>Release specifications include appearance, pH (5.8-6.2), protein concentration (142.5-157.5 mg/mL), purity by SEC (≥97%), sub-visible particles (per USP <787>), sterility, bacterial endotoxins, and container closure integrity.</p>\n<h3>3.2.P.8 Stability</h3>\n<p>Stability studies conducted per ICH Q5C. Proposed shelf life: 24 months at 2-8°C protected from light.</p>',
       smartTags: [],
-      wordCount: 0,
+      wordCount: 2400,
+      lastEdited: '2026-03-04',
+      editedBy: 'Dr. Chen',
     },
     {
       id: 'm4-pharm',
@@ -717,7 +708,8 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       title: 'Primary Pharmacology',
       module: 'm4',
       status: 'ai_draft',
-      content: '',
+      content:
+        '<h2>4.2.1 Primary Pharmacodynamics</h2>\n<h3>In Vitro Studies</h3>\n<p>Lemizumab demonstrated potent and selective inhibition of IL-17A signaling in multiple cell-based assays. In IL-17A-stimulated human keratinocytes (HaCaT), lemizumab inhibited IL-6 and IL-8 production with IC50 values of 0.15 nM and 0.22 nM, respectively.</p>\n<p>Cross-reactivity: Lemizumab did not bind IL-17B, IL-17C, IL-17D, IL-17E, or IL-17F, confirming high selectivity for IL-17A.</p>\n<h3>In Vivo Studies</h3>\n<p><strong>Imiquimod (IMQ)-induced psoriasiform dermatitis model (mice):</strong> A surrogate anti-murine IL-17A antibody reduced clinical severity scores by 72% (p&lt;0.001), decreased epidermal thickness by 68%, and suppressed dermal infiltration of neutrophils (−85%) and Th17 cells (−62%) versus isotype control.</p>\n<p><strong>Xenograft model (SCID mice):</strong> Human psoriatic skin grafted onto SCID mice and treated with lemizumab (10 mg/kg SC, twice weekly) showed normalization of epidermal architecture and near-complete resolution of psoriasiform histology by day 28.</p>\n<h3>Secondary Pharmacodynamics</h3>\n<p>Safety pharmacology studies (hERG, respiratory, CNS) revealed no off-target effects at concentrations up to 1000× the anticipated Cmax.</p>',
       smartTags: [],
       wordCount: 5200,
       lastEdited: '2026-03-02',
@@ -728,10 +720,13 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       number: '4.2.3',
       title: 'Toxicology',
       module: 'm4',
-      status: 'empty',
-      content: '',
+      status: 'ai_draft',
+      content:
+        '<h2>4.2.3 Toxicology</h2>\n<h3>Single-Dose Toxicity</h3>\n<p>Single IV doses up to 300 mg/kg in cynomolgus monkeys were well-tolerated with no mortality or clinical signs of toxicity. No adverse pathological findings at the 14-day necropsy.</p>\n<h3>Repeat-Dose Toxicity</h3>\n<p>A 26-week GLP-compliant repeat-dose study in cynomolgus monkeys (10, 30, 100 mg/kg/week SC) was conducted. No test article-related adverse effects on body weight, food consumption, clinical pathology, or organ weights. Histopathology: no target organ toxicity. NOAEL: 100 mg/kg/week (approximately 20× the highest proposed clinical dose on an AUC basis).</p>\n<h3>Genotoxicity</h3>\n<p>As a monoclonal antibody, lemizumab is not expected to interact directly with DNA. No genotoxicity studies were conducted, consistent with ICH S6(R1) guidance.</p>\n<h3>Immunotoxicity</h3>\n<p>Anti-drug antibodies (ADA) were detected in 15% of animals at 26 weeks with no impact on PK or pharmacological activity. No immune complex-mediated pathology observed.</p>',
       smartTags: [],
-      wordCount: 0,
+      wordCount: 1850,
+      lastEdited: '2026-03-03',
+      editedBy: 'RI',
     },
     {
       id: 'm5-protocol',
@@ -739,7 +734,8 @@ export const DEMO_ECTD_DOCUMENT: eCTDDocument = {
       title: 'Phase 1 Clinical Protocol',
       module: 'm5',
       status: 'editing',
-      content: '',
+      content:
+        '<h2>5.3.5.1 Phase 1/2 Clinical Protocol — Study LMZ-001</h2>\n<h3>Synopsis</h3>\n<p><strong>Title:</strong> A Phase 1/2, Randomized, Double-Blind, Placebo-Controlled, Dose-Escalation and Expansion Study to Evaluate the Safety, Pharmacokinetics, and Preliminary Efficacy of Lemizumab in Adults with Moderate-to-Severe Plaque Psoriasis</p>\n<p><strong>Sponsor:</strong> Concept2Cure Therapeutics, Inc.</p>\n<p><strong>Study Population:</strong> Adults aged 18-65 with moderate-to-severe plaque psoriasis (PASI ≥12, BSA ≥10%, IGA ≥3), inadequate response or intolerance to at least one conventional systemic therapy.</p>\n<p><strong>Study Design:</strong> Dose escalation (Part A, N=24): 4 cohorts (30, 75, 150, 300 mg SC Q2W), 3:1 randomization. Dose expansion (Part B, N=36): selected dose(s), 2:1 randomization vs placebo.</p>\n<h3>Objectives</h3>\n<p><strong>Primary:</strong> Evaluate safety and tolerability of lemizumab (incidence of AEs, SAEs, and dose-limiting toxicities).</p>\n<p><strong>Secondary:</strong> Characterize PK profile (Cmax, AUC, t½, accumulation ratio). Assess preliminary efficacy (PASI 75 response at Week 12).</p>\n<h3>Endpoints</h3>\n<p><strong>Primary:</strong> Incidence and severity of treatment-emergent adverse events through Week 16.</p>\n<p><strong>Secondary:</strong> PASI 75 at Week 12, PASI 90 at Week 12, IGA 0/1 response at Week 12, PK parameters.</p>\n<h3>Statistical Considerations</h3>\n<p>Part A: Descriptive statistics only. Part B: PASI 75 response rate analyzed using Fisher exact test (2-sided α=0.10 for signal detection). Sample size provides 80% power to detect a 40% treatment difference.</p>',
       smartTags: [],
       wordCount: 12800,
       lastEdited: '2026-03-01',
