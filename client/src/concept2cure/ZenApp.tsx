@@ -1263,6 +1263,9 @@ export const ZenApp: React.FC = () => {
             case 'clinical-trial':
               setLayoutMode('clinical-trial');
               break;
+            case 'lumen-cortex':
+              window.location.href = '/client-portal/lumen-cortex';
+              break;
             case 'regulatory-workspace':
               setLayoutMode('regulatory-workspace');
               break;
@@ -1494,17 +1497,24 @@ export const ZenApp: React.FC = () => {
                         projectName={activeProject?.name || 'Untitled Project'}
                         submissionType={activeProject?.type || 'IND'}
                         onOpenSection={sectionCode => {
+                          const ctd = sectionCode.replace(/^m/, '');
                           setPendingEditorContent({
                             content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'IND Application'}.</p>`,
                             title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
-                            ctdSection: sectionCode,
+                            ctdSection: ctd,
                           });
                           setRiViewMode('editor');
                           setLayoutMode('regulatory-workspace');
                         }}
                         onDraftWithAI={(sectionCode, sectionTitle) => {
-                          setPendingDraftSection({ code: sectionCode, title: sectionTitle });
-                          setLayoutMode('assistant');
+                          const ctd = sectionCode.replace(/^m/, '');
+                          setPendingEditorContent({
+                            content: `<h1>${sectionTitle}</h1>\n<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'IND'})</h2>\n<p><strong>CTD Section:</strong> ${ctd}</p>\n<p><strong>Generated:</strong> ${new Date().toISOString().split('T')[0]}</p>\n<hr/>\n<h2>Section Content</h2>\n<p>[AI-assisted draft for ${sectionTitle}. This section should comply with ICH M4 guidelines and 21 CFR 312.23(a) requirements.]</p>`,
+                            title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
+                            ctdSection: ctd,
+                          });
+                          setRiViewMode('editor');
+                          setLayoutMode('regulatory-workspace');
                         }}
                         onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
                       />

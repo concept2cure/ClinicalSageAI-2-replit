@@ -37,6 +37,7 @@ import {
   FileLock2,
   Package,
   ScrollText,
+  Cpu,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -470,6 +471,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="Precedent Intelligence"
               active={activeNavId === 'precedent-intelligence'}
               onClick={() => onNavigate?.('ai-copilot')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── Intelligence ──────────────────────────────────── */}
+          <WorkspaceGroup label="Intelligence">
+            <NavItem
+              icon={<Cpu className="w-4 h-4" />}
+              label="Lumen Cortex"
+              active={activeNavId === 'lumen-cortex'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('lumen-cortex')}
             />
           </WorkspaceGroup>
 
