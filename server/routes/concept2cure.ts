@@ -49,6 +49,7 @@ import {
   concept2cureArtifactVersions,
   concept2cureSignatures,
   concept2cureProvenanceEvents,
+  concept2cureReviewComments,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 
@@ -117,8 +118,17 @@ interface AuditEntry {
   timestamp: string;
   userId: string;
   userName: string;
-  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'EXPORT' | 'SIGN' | 'APPROVE';
-  entityType: 'project' | 'conversation' | 'message' | 'artifact';
+  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'EXPORT' | 'SIGN' | 'APPROVE' | 'AI_EDIT';
+  entityType:
+    | 'project'
+    | 'conversation'
+    | 'message'
+    | 'artifact'
+    | 'artifact_status'
+    | 'audit_report_export'
+    | 'review_comment'
+    | 'document_section'
+    | 'system_error';
   entityId: string;
   previousValue?: unknown;
   newValue?: unknown;
@@ -294,6 +304,63 @@ function calculateContentHash(content: string): string {
  */
 function calculateSignatureHash(payload: Record<string, unknown>): string {
   return crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+}
+
+/**
+ * Verify the integrity chain of an artifact's version history.
+ * Recomputes SHA-256 for each version's content and verifies it matches the stored hash.
+ * Returns detailed verification results.
+ */
+function verifyIntegrityChain(
+  artifact: { content: string | null; contentHash: string | null; version: number },
+  versions: Array<{ version: number; content: string; contentHash: string; createdAt: Date | null }>
+): {
+  chainIntact: boolean;
+  currentHashVerified: boolean;
+  computedHash: string;
+  storedHash: string | null;
+  versionDetails: Array<{
+    version: number;
+    storedHash: string;
+    computedHash: string;
+    verified: boolean;
+    timestamp: Date | null;
+  }>;
+  failureReason: string | null;
+} {
+  const computedHash = artifact.content ? calculateContentHash(artifact.content) : '';
+  const currentHashVerified = computedHash === artifact.contentHash;
+
+  let chainIntact = currentHashVerified;
+  let failureReason: string | null = null;
+  const versionDetails = versions.map(v => {
+    const vComputedHash = calculateContentHash(v.content);
+    const verified = vComputedHash === v.contentHash;
+    if (!verified) {
+      chainIntact = false;
+      failureReason = failureReason || `Version ${v.version} hash mismatch`;
+    }
+    return {
+      version: v.version,
+      storedHash: v.contentHash,
+      computedHash: vComputedHash,
+      verified,
+      timestamp: v.createdAt,
+    };
+  });
+
+  if (!currentHashVerified && !failureReason) {
+    failureReason = 'Current artifact hash mismatch';
+  }
+
+  return {
+    chainIntact,
+    currentHashVerified,
+    computedHash,
+    storedHash: artifact.contentHash,
+    versionDetails,
+    failureReason,
+  };
 }
 
 /**
@@ -1935,6 +2002,33 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       return sendError(res, 404, 'Artifact not found');
     }
 
+    // P1: Lock Enforcement — locked documents cannot be edited
+    if (dbArtifact.status === 'locked') {
+      return sendError(
+        res,
+        423,
+        'Document is locked. Change status to draft or review before editing.'
+      );
+    }
+
+    // P6: Optimistic Concurrency — reject stale writes
+    const { expectedVersion } = req.body;
+    if (expectedVersion !== undefined && expectedVersion !== null) {
+      if (Number(expectedVersion) !== dbArtifact.version) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            message: 'Conflict: document was modified by another user',
+            code: 'VERSION_CONFLICT',
+            details: {
+              clientVersion: Number(expectedVersion),
+              serverVersion: dbArtifact.version,
+            },
+          },
+        });
+      }
+    }
+
     // Capture previous state for audit trail
     const previousState = {
       content: dbArtifact.content,
@@ -2595,7 +2689,14 @@ router.get(
             hash: v.contentHash,
             timestamp: v.createdAt,
           })),
-          chainIntact: true,
+          ...(() => {
+            const verification = verifyIntegrityChain(artifact, versions);
+            return {
+              chainIntact: verification.chainIntact,
+              currentHashVerified: verification.currentHashVerified,
+              failureReason: verification.failureReason,
+            };
+          })(),
         },
 
         versionTimeline: versions.map(v => ({
@@ -2773,7 +2874,14 @@ router.post(
             hash: v.contentHash,
             timestamp: v.createdAt,
           })),
-          chainIntact: true,
+          ...(() => {
+            const verification = verifyIntegrityChain(artifact, versions);
+            return {
+              chainIntact: verification.chainIntact,
+              currentHashVerified: verification.currentHashVerified,
+              failureReason: verification.failureReason,
+            };
+          })(),
         },
         versionTimeline: versions.map((v: any) => ({
           version: v.version,
@@ -2995,6 +3103,15 @@ router.put(
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
+      // Lock enforcement — cannot modify locked documents
+      if (artifact.status === 'locked') {
+        return sendError(
+          res,
+          423,
+          'Document is locked. Change status to draft or review before modifying CTD section.'
+        );
+      }
+
       const previousSection = artifact.ctdSection;
       const [updated] = await db
         .update(concept2cureArtifacts)
@@ -3033,6 +3150,491 @@ router.put(
     }
   }
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P3: INTEGRITY VERIFICATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity
+ * Recompute SHA-256 hashes for every version and the current artifact content.
+ * Returns real verification results — no hardcoded trust.
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/verify-integrity',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const versions = await db
+        .select()
+        .from(concept2cureArtifactVersions)
+        .where(eq(concept2cureArtifactVersions.artifactId, artifact.id))
+        .orderBy(concept2cureArtifactVersions.version);
+
+      const verification = verifyIntegrityChain(artifact, versions);
+
+      await logAuditEntry(req, 'READ', 'artifact', req.params.artifactId, null, {
+        action: 'integrity_verification',
+        chainIntact: verification.chainIntact,
+      });
+
+      return sendSuccess(res, {
+        artifactId: artifact.artifactId,
+        title: artifact.title,
+        currentVersion: artifact.version,
+        algorithm: 'SHA-256',
+        verified: verification.chainIntact,
+        currentHashVerified: verification.currentHashVerified,
+        computedHash: verification.computedHash,
+        storedHash: verification.storedHash,
+        chainIntact: verification.chainIntact,
+        failureReason: verification.failureReason,
+        versionDetails: verification.versionDetails,
+        verifiedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logConcept2cureError('verify integrity', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to verify integrity');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P4: VERSION ROLLBACK
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback
+ * Roll back to a previous version by creating a NEW version (v N+1) with old content.
+ * Never mutates history — fully auditable.
+ */
+router.post(
+  '/projects/:projectId/artifacts/:artifactId/rollback',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const { targetVersion } = req.body;
+      if (!targetVersion || typeof targetVersion !== 'number' || targetVersion < 1) {
+        return sendError(res, 400, 'targetVersion is required and must be a positive integer');
+      }
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      // Lock enforcement
+      if (artifact.status === 'locked') {
+        return sendError(
+          res,
+          423,
+          'Document is locked. Change status to draft or review before rolling back.'
+        );
+      }
+
+      if (targetVersion >= artifact.version) {
+        return sendError(
+          res,
+          400,
+          `Cannot roll back to version ${targetVersion} — current version is ${artifact.version}`
+        );
+      }
+
+      // Fetch the target version content
+      const [targetVer] = await db
+        .select()
+        .from(concept2cureArtifactVersions)
+        .where(
+          and(
+            eq(concept2cureArtifactVersions.artifactId, artifact.id),
+            eq(concept2cureArtifactVersions.version, targetVersion)
+          )
+        )
+        .limit(1);
+
+      if (!targetVer) {
+        return sendError(res, 404, `Version ${targetVersion} not found`);
+      }
+
+      // Create new version N+1 with the old content (immutable history)
+      const newVersion = artifact.version + 1;
+      const newContentHash = calculateContentHash(targetVer.content);
+
+      await db.insert(concept2cureArtifactVersions).values({
+        organizationId,
+        artifactId: artifact.id,
+        version: newVersion,
+        content: targetVer.content,
+        contentHash: newContentHash,
+        changeDescription: `Rolled back to version ${targetVersion}`,
+        createdById: userId,
+      });
+
+      // Update the artifact to the rolled-back content
+      const [updated] = await db
+        .update(concept2cureArtifacts)
+        .set({
+          content: targetVer.content,
+          contentHash: newContentHash,
+          version: newVersion,
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureArtifacts.id, artifact.id))
+        .returning();
+
+      // Log provenance
+      await db.insert(concept2cureProvenanceEvents).values({
+        organizationId,
+        artifactId: artifact.id,
+        eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        eventType: 'rollback',
+        eventAction: 'version_rollback',
+        sourceDescription: `Rolled back from v${artifact.version} to v${targetVersion} content (created as v${newVersion})`,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail || 'unknown',
+        actorEmail: req.userEmail || 'unknown',
+        actorType: 'human',
+        backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/rollback`,
+        backendService: 'concept2cure-api',
+        ipAddress: getClientIp(req),
+        details: {
+          rolledBackFromVersion: artifact.version,
+          targetVersion,
+          newVersion,
+          previousHash: artifact.contentHash,
+          newHash: newContentHash,
+        },
+      });
+
+      await logAuditEntry(
+        req,
+        'UPDATE',
+        'artifact',
+        req.params.artifactId,
+        {
+          version: artifact.version,
+          contentHash: artifact.contentHash,
+        },
+        {
+          version: newVersion,
+          contentHash: newContentHash,
+          rollbackTargetVersion: targetVersion,
+        }
+      );
+
+      return sendSuccess(res, {
+        artifactId: updated.artifactId,
+        previousVersion: artifact.version,
+        targetVersion,
+        newVersion,
+        contentHash: newContentHash,
+        message: `Rolled back to version ${targetVersion} content (now version ${newVersion})`,
+      });
+    } catch (error: any) {
+      logConcept2cureError('rollback artifact', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to rollback artifact');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P5: REVIEW COMMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+ * Add a review comment on an artifact at a specific version.
+ */
+router.post(
+  '/projects/:projectId/artifacts/:artifactId/comments',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const { comment } = req.body;
+      if (!comment || typeof comment !== 'string' || comment.trim().length === 0) {
+        return sendError(res, 400, 'comment is required');
+      }
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const commentId = `cmt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      const sanitizedComment = sanitizeContent(comment.trim());
+
+      const [inserted] = await db
+        .insert(concept2cureReviewComments)
+        .values({
+          commentId,
+          artifactId: artifact.id,
+          organizationId,
+          version: artifact.version,
+          status: 'open',
+          comment: sanitizedComment,
+          userId,
+          userName: (req as any).userName || req.userEmail || 'unknown',
+        })
+        .returning();
+
+      // Log provenance
+      await db.insert(concept2cureProvenanceEvents).values({
+        organizationId,
+        artifactId: artifact.id,
+        eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        eventType: 'review',
+        eventAction: 'review_comment_added',
+        sourceDescription: `Review comment added at version ${artifact.version}`,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail || 'unknown',
+        actorEmail: req.userEmail || 'unknown',
+        actorType: 'human',
+        backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/comments`,
+        backendService: 'concept2cure-api',
+        ipAddress: getClientIp(req),
+        details: { commentId, version: artifact.version },
+      });
+
+      await logAuditEntry(req, 'CREATE', 'review_comment', commentId, null, {
+        artifactId: req.params.artifactId,
+        version: artifact.version,
+        comment: sanitizedComment,
+      });
+
+      return sendSuccess(res, {
+        commentId: inserted.commentId,
+        artifactId: req.params.artifactId,
+        version: inserted.version,
+        status: inserted.status,
+        comment: inserted.comment,
+        userName: inserted.userName,
+        createdAt: inserted.createdAt,
+      });
+    } catch (error: any) {
+      logConcept2cureError('add review comment', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to add review comment');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+ * List all review comments for an artifact.
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/comments',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const comments = await db
+        .select()
+        .from(concept2cureReviewComments)
+        .where(
+          and(
+            eq(concept2cureReviewComments.artifactId, artifact.id),
+            eq(concept2cureReviewComments.organizationId, organizationId)
+          )
+        )
+        .orderBy(desc(concept2cureReviewComments.createdAt));
+
+      return sendSuccess(res, {
+        artifactId: req.params.artifactId,
+        totalComments: comments.length,
+        openComments: comments.filter(c => c.status === 'open').length,
+        comments: comments.map(c => ({
+          commentId: c.commentId,
+          version: c.version,
+          status: c.status,
+          comment: c.comment,
+          userName: c.userName,
+          createdAt: c.createdAt,
+          resolvedAt: c.resolvedAt,
+        })),
+      });
+    } catch (error: any) {
+      logConcept2cureError('list review comments', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to list review comments');
+    }
+  }
+);
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve
+ * Resolve a review comment.
+ */
+router.put(
+  '/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [comment] = await db
+        .select()
+        .from(concept2cureReviewComments)
+        .where(
+          and(
+            eq(concept2cureReviewComments.commentId, req.params.commentId),
+            eq(concept2cureReviewComments.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!comment) return sendError(res, 404, 'Comment not found');
+      if (comment.status === 'resolved') {
+        return sendError(res, 400, 'Comment is already resolved');
+      }
+
+      const [updated] = await db
+        .update(concept2cureReviewComments)
+        .set({
+          status: 'resolved',
+          resolvedById: userId,
+          resolvedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureReviewComments.id, comment.id))
+        .returning();
+
+      await logAuditEntry(
+        req,
+        'UPDATE',
+        'review_comment',
+        req.params.commentId,
+        {
+          status: 'open',
+        },
+        {
+          status: 'resolved',
+          resolvedById: userId,
+        }
+      );
+
+      return sendSuccess(res, {
+        commentId: updated.commentId,
+        status: updated.status,
+        resolvedAt: updated.resolvedAt,
+      });
+    } catch (error: any) {
+      logConcept2cureError('resolve review comment', error, { commentId: req.params.commentId });
+      return sendError(res, 500, 'Failed to resolve comment');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT LOG QUERY
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/audit-logs
+ * Query persisted audit log entries for the organization.
+ */
+router.get('/audit-logs', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const { entityType, entityId, limit: limitParam } = req.query;
+    const queryLimit = Math.min(Number(limitParam) || 50, 200);
+
+    let query = db
+      .select()
+      .from(regulatoryAuditLogs)
+      .where(eq(regulatoryAuditLogs.organizationId, organizationId))
+      .orderBy(desc(regulatoryAuditLogs.timestamp))
+      .limit(queryLimit);
+
+    const logs = await query;
+
+    // Filter in-memory for optional entityType/entityId (Drizzle doesn't support dynamic AND easily)
+    let filtered = logs;
+    if (entityType) {
+      filtered = filtered.filter(l => l.entityType === entityType);
+    }
+    if (entityId) {
+      filtered = filtered.filter(l => l.entityId === entityId);
+    }
+
+    return sendSuccess(res, {
+      total: filtered.length,
+      logs: filtered.map(l => ({
+        auditId: l.auditId,
+        entityType: l.entityType,
+        entityId: l.entityId,
+        action: l.action,
+        actionCategory: l.actionCategory,
+        userName: l.userName,
+        userRole: l.userRole,
+        ipAddress: l.ipAddress,
+        isGxpRelevant: l.isGxpRelevant,
+        timestamp: l.timestamp,
+        previousValue: l.previousValue,
+        newValue: l.newValue,
+        metadata: l.metadata,
+      })),
+    });
+  } catch (error: any) {
+    logger.error('Failed to query audit logs', { error: error.message });
+    return sendError(res, 500, 'Failed to query audit logs');
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEMPLATE ROUTES

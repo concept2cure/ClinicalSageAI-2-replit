@@ -4896,6 +4896,53 @@ export type InsertConcept2cureProvenanceEvent = z.infer<
 >;
 
 /**
+ * Concept2Cure Review Comments Table
+ *
+ * Review comments on artifacts during the review workflow.
+ * Supports open/resolved status for tracking.
+ */
+export const concept2cureReviewComments = pgTable(
+  'concept2cure_review_comments',
+  {
+    id: serial('id').primaryKey(),
+    commentId: text('comment_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    version: integer('version').notNull(),
+    status: text('status').default('open').notNull(),
+    comment: text('comment').notNull(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    userName: text('user_name').notNull(),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    resolvedAt: timestamp('resolved_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_review_comment_artifact_idx').on(table.artifactId),
+    orgIdx: index('c2c_review_comment_org_idx').on(table.organizationId),
+  })
+);
+
+export const insertConcept2cureReviewCommentSchema = createInsertSchemaOmit(
+  concept2cureReviewComments,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
+
+export type Concept2cureReviewComment = InferSelectModel<typeof concept2cureReviewComments>;
+export type InsertConcept2cureReviewComment = z.infer<typeof insertConcept2cureReviewCommentSchema>;
+
+/**
  * Project Modules Table
  *
  * Associates projects with specific module instances.
