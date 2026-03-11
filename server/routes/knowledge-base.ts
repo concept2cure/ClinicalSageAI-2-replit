@@ -533,8 +533,8 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
             );
           }
         }
-      } catch {
-        // Continue with whatever data we have
+      } catch (autoLoadErr: any) {
+        console.warn('[knowledge-base] Auto-load CMC project failed:', autoLoadErr.message);
       }
     }
 
@@ -615,47 +615,53 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
     if (saveAsArtifact && artifactProjectId && db) {
       try {
         const user = (req as any).user;
-        const docTitle = `Module 3 – Quality (CMC): ${drug_name || substance_name || 'Drug'}`;
-        const htmlContent = sections
-          .map(s => `<h2>${s.title}</h2><pre>${s.content}</pre>`)
-          .join('');
-        const artifactId = `artifact_${crypto.randomUUID()}`;
-        const contentHash = crypto.createHash('sha256').update(htmlContent).digest('hex');
+        const parsedProjId = parseInt(artifactProjectId, 10);
+        const orgId = user?.organizationId;
+        if (isNaN(parsedProjId) || !orgId) {
+          console.warn('[knowledge-base] Skipping artifact save: invalid projectId or missing org');
+        } else {
+          const docTitle = `Module 3 – Quality (CMC): ${drug_name || substance_name || 'Drug'}`;
+          const htmlContent = sections
+            .map(s => `<h2>${s.title}</h2><pre>${s.content}</pre>`)
+            .join('');
+          const artifactId = `artifact_${crypto.randomUUID()}`;
+          const contentHash = crypto.createHash('sha256').update(htmlContent).digest('hex');
 
-        await db.insert(concept2cureArtifacts).values({
-          artifactId,
-          projectId: parseInt(artifactProjectId, 10),
-          organizationId: user?.organizationId || 2,
-          type: 'regulatory_document',
-          category: 'document',
-          title: docTitle,
-          content: htmlContent,
-          contentHash,
-          version: 1,
-          ctdSection: '3.2',
-          status: 'draft',
-          createdById: user?.id || null,
-        });
-
-        // Also create first version record
-        const [inserted] = await db
-          .select()
-          .from(concept2cureArtifacts)
-          .where(eq(concept2cureArtifacts.artifactId, artifactId));
-        if (inserted) {
-          await db.insert(concept2cureArtifactVersions).values({
-            artifactId: inserted.id,
-            organizationId: user?.organizationId || 2,
-            version: 1,
+          await db.insert(concept2cureArtifacts).values({
+            artifactId,
+            projectId: parsedProjId,
+            organizationId: orgId,
+            type: 'regulatory_document',
+            category: 'document',
+            title: docTitle,
             content: htmlContent,
             contentHash,
+            version: 1,
+            ctdSection: '3.2',
+            status: 'draft',
             createdById: user?.id || null,
           });
-        }
 
-        console.log(
-          `[knowledge-base] Module 3 also saved as artifact ${artifactId} in project ${artifactProjectId}`
-        );
+          // Also create first version record
+          const [inserted] = await db
+            .select()
+            .from(concept2cureArtifacts)
+            .where(eq(concept2cureArtifacts.artifactId, artifactId));
+          if (inserted) {
+            await db.insert(concept2cureArtifactVersions).values({
+              artifactId: inserted.id,
+              organizationId: orgId,
+              version: 1,
+              content: htmlContent,
+              contentHash,
+              createdById: user?.id || null,
+            });
+          }
+
+          console.log(
+            `[knowledge-base] Module 3 also saved as artifact ${artifactId} in project ${artifactProjectId}`
+          );
+        }
       } catch (artErr: any) {
         console.warn(`[knowledge-base] Could not save Module 3 as artifact: ${artErr.message}`);
       }
@@ -751,13 +757,21 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
     }
 
     const user = (req as any).user;
+    const orgId = user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const parsedProjectId = parseInt(projectId, 10);
+    if (isNaN(parsedProjectId)) {
+      return res.status(400).json({ error: 'projectId must be a valid integer' });
+    }
     const artifactId = `artifact_${crypto.randomUUID()}`;
     const contentHash = crypto.createHash('sha256').update(htmlContent).digest('hex');
 
     await db.insert(concept2cureArtifacts).values({
       artifactId,
-      projectId: parseInt(projectId, 10),
-      organizationId: user?.organizationId || 2,
+      projectId: parsedProjectId,
+      organizationId: orgId,
       type: type || 'regulatory_document',
       category: 'document',
       title,
@@ -777,7 +791,7 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
     if (inserted) {
       await db.insert(concept2cureArtifactVersions).values({
         artifactId: inserted.id,
-        organizationId: user?.organizationId || 2,
+        organizationId: orgId,
         version: 1,
         content: htmlContent,
         contentHash,

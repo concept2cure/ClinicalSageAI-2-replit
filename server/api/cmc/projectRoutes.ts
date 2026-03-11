@@ -9,9 +9,41 @@ import {
   complianceTracking,
   regulatoryDocuments,
 } from '../../../shared/cmc-schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, inArray } from 'drizzle-orm';
+import { authenticateToken } from '../../middleware/auth.js';
 
 const router = Router();
+
+// All CMC project routes require authentication
+router.use(authenticateToken);
+
+/** Extract organizationId from the authenticated user, return null if missing */
+function getOrgId(req: any): string | null {
+  const orgId = req.user?.organizationId;
+  if (orgId == null) return null;
+  return String(orgId);
+}
+
+/** Verify a project belongs to the user's organization */
+async function verifyProjectOwnership(projectId: string, orgId: string) {
+  if (!db) return null;
+  const [project] = await db
+    .select()
+    .from(cmcProjects)
+    .where(and(eq(cmcProjects.id, projectId), eq(cmcProjects.organizationId, orgId)));
+  return project || null;
+}
+
+// Middleware: verify project ownership for all sub-resource routes
+router.param('projectId', async (req: any, res, next, projectId: string) => {
+  const orgId = getOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+  if (!db) return res.status(500).json({ error: 'Database not available' });
+  const project = await verifyProjectOwnership(projectId, orgId);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  req.cmcProject = project; // attach for downstream use
+  next();
+});
 
 // Create CMC Project
 router.post('/projects', async (req, res) => {
@@ -20,11 +52,12 @@ router.post('/projects', async (req, res) => {
       return res.status(500).json({ error: 'Database not available' });
     }
 
-    const projectData = req.body;
-    const orgId = (req as any).user?.organizationId?.toString() || projectData.organizationId;
+    const orgId = getOrgId(req);
     if (!orgId) {
-      return res.status(400).json({ error: 'organizationId is required' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
+
+    const projectData = req.body;
 
     const [newProject] = await db
       .insert(cmcProjects)
@@ -53,16 +86,16 @@ router.get('/projects', async (req, res) => {
       return res.status(500).json({ error: 'Database not available' });
     }
 
-    const organizationId =
-      (req as any).user?.organizationId?.toString() || req.query.organizationId;
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
-    const projects = organizationId
-      ? await db
-          .select()
-          .from(cmcProjects)
-          .where(eq(cmcProjects.organizationId, organizationId.toString()))
-          .orderBy(desc(cmcProjects.createdAt))
-      : await db.select().from(cmcProjects).orderBy(desc(cmcProjects.createdAt));
+    const projects = await db
+      .select()
+      .from(cmcProjects)
+      .where(eq(cmcProjects.organizationId, orgId))
+      .orderBy(desc(cmcProjects.createdAt));
 
     res.json({ success: true, data: projects });
   } catch (error) {
@@ -78,10 +111,14 @@ router.get('/projects/:id', async (req, res) => {
       return res.status(500).json({ error: 'Database not available' });
     }
 
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
     const { id } = req.params;
 
-    const [project] = await db.select().from(cmcProjects).where(eq(cmcProjects.id, id));
-
+    const project = await verifyProjectOwnership(id, orgId);
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -129,16 +166,29 @@ router.put('/projects/:id', async (req, res) => {
       return res.status(500).json({ error: 'Database not available' });
     }
 
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
     const { id } = req.params;
+
+    // Verify ownership before updating
+    const existing = await verifyProjectOwnership(id, orgId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
     const updateData = req.body;
 
     const [updatedProject] = await db
       .update(cmcProjects)
       .set({
         ...updateData,
+        organizationId: orgId, // Prevent org reassignment
         updatedAt: new Date(),
       })
-      .where(eq(cmcProjects.id, id))
+      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, orgId)))
       .returning();
 
     res.json({ success: true, data: updatedProject });
@@ -155,9 +205,22 @@ router.delete('/projects/:id', async (req, res) => {
       return res.status(500).json({ error: 'Database not available' });
     }
 
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
     const { id } = req.params;
 
-    await db.delete(cmcProjects).where(eq(cmcProjects.id, id));
+    // Verify ownership before deleting
+    const existing = await verifyProjectOwnership(id, orgId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    await db
+      .delete(cmcProjects)
+      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, orgId)));
 
     res.json({ success: true, message: 'Project deleted successfully' });
   } catch (error) {
@@ -661,14 +724,28 @@ router.delete('/projects/:projectId/drug-products/:productId', async (req, res) 
 });
 
 // ── Top-level convenience routes for drug substances and products ──
-// These allow the frontend to fetch all substances/products across all projects
+// These return all substances/products for projects owned by the user's org
 router.get('/drug-substances', async (req, res) => {
   try {
     if (!db) {
       return res.status(500).json({ error: 'Database not available' });
     }
-    const allSubstances = await db.select().from(drugSubstances);
-    res.json({ success: true, data: allSubstances });
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+
+    const orgProjects = await db
+      .select({ id: cmcProjects.id })
+      .from(cmcProjects)
+      .where(eq(cmcProjects.organizationId, orgId));
+    const projectIds = orgProjects.map(p => p.id);
+    const substances =
+      projectIds.length > 0
+        ? await db
+            .select()
+            .from(drugSubstances)
+            .where(inArray(drugSubstances.projectId, projectIds))
+        : [];
+    res.json({ success: true, data: substances });
   } catch (error) {
     console.error('Error fetching all drug substances:', error);
     res.status(500).json({ error: 'Failed to fetch drug substances' });
@@ -680,8 +757,19 @@ router.get('/drug-products', async (req, res) => {
     if (!db) {
       return res.status(500).json({ error: 'Database not available' });
     }
-    const allProducts = await db.select().from(drugProducts);
-    res.json({ success: true, data: allProducts });
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+
+    const orgProjects = await db
+      .select({ id: cmcProjects.id })
+      .from(cmcProjects)
+      .where(eq(cmcProjects.organizationId, orgId));
+    const projectIds = orgProjects.map(p => p.id);
+    const products =
+      projectIds.length > 0
+        ? await db.select().from(drugProducts).where(inArray(drugProducts.projectId, projectIds))
+        : [];
+    res.json({ success: true, data: products });
   } catch (error) {
     console.error('Error fetching all drug products:', error);
     res.status(500).json({ error: 'Failed to fetch drug products' });

@@ -986,6 +986,7 @@ export const ECTDCoAuthorStandalone: React.FC<{
           const data = await res.json();
           content = data.content || data.data?.content || '';
         } else {
+          console.warn(`[eCTD] Draft API returned ${res.status}, using scaffold fallback`);
           // Fallback to scaffold template
           content = CTD_SECTION_SCAFFOLDS[section.number] || generateDefaultScaffold(section);
         }
@@ -1002,7 +1003,8 @@ export const ECTDCoAuthorStandalone: React.FC<{
               .filter(Boolean).length,
           }),
         }));
-      } catch {
+      } catch (err) {
+        console.warn('[eCTD] Draft section failed, using scaffold fallback:', err);
         // Offline fallback — use scaffold template
         const content = CTD_SECTION_SCAFFOLDS[section.number] || generateDefaultScaffold(section);
         setDocState(prev => ({

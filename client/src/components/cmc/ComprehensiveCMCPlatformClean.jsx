@@ -26024,8 +26024,8 @@ What specific aspect would you like to explore further? I can provide detailed g
                     const dataPayload = await dataRes.json();
                     cmcData = dataPayload.data;
                   }
-                } catch {
-                  // Silently continue with fallback
+                } catch (e) {
+                  console.warn('[CMC] Could not fetch project data, using fallback:', e);
                 }
 
                 // Build payload from real data or fallback
@@ -26083,7 +26083,7 @@ What specific aspect would you like to explore further? I can provide detailed g
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
-                      projectId: '1',
+                      projectId: project?.id || cmcData?.project?.id,
                       title: `Module 3 – Quality (CMC): ${payload.drug_name}`,
                       htmlContent,
                       ctdSection: '3.2',

@@ -115,7 +115,8 @@ export function downloadBlob(blob: Blob, filename: string) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Delay revocation to allow download to start
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ── Generate Module 3 (CMC) DOCX from structured data ─────────────────────

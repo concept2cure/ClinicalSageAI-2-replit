@@ -38,7 +38,7 @@ import {
   NewProjectModal,
   EditProjectModal,
 } from './components/projects/ProjectSwitcher';
-import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
+import { WorkflowTimeline } from './components/workflow';
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
 import { CustomInstructions } from './components/knowledge/CustomInstructions';
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
@@ -67,14 +67,9 @@ import {
   CheckSquare,
   Globe,
   Folder,
-  CalendarClock,
   ShieldCheck,
-  Clock,
-  Wifi,
   WifiOff,
-  Users,
   ClipboardCheck,
-  Compass,
   Loader2,
   Target,
   FileText,
@@ -450,8 +445,6 @@ export const ZenApp: React.FC = () => {
 
   // License gating + user intelligence (personalized context)
   const {
-    canAccessLayoutMode,
-    tier: orgTier,
     industryMode: orgIndustryMode,
     greeting: platformGreeting,
     intelligence: userIntelligence,
@@ -869,35 +862,6 @@ export const ZenApp: React.FC = () => {
     [handleNewChat]
   );
 
-  const handleLayoutModeChange = useCallback(
-    (mode: LayoutMode) => {
-      setLayoutMode(mode);
-
-      if (mode === 'assistant' || mode === 'sherpa') {
-        setActiveToolPanel(null);
-        setToolPanelFullscreen(false);
-        return;
-      }
-
-      if (mode === 'ctd') {
-        setActiveToolPanel('ectd');
-        setToolPanelFullscreen(false);
-        return;
-      }
-
-      if (mode === 'editor') {
-        setActiveToolPanel(null);
-        setToolPanelFullscreen(false);
-        return;
-      }
-
-      // Analytics, timeline, audit modes are full-width content (hide tool panel)
-      setActiveToolPanel(null);
-      setToolPanelFullscreen(false);
-    },
-    [activeToolPanel]
-  );
-
   const handleCreateProject = useCallback(
     async (data: {
       name: string;
@@ -996,14 +960,6 @@ export const ZenApp: React.FC = () => {
 
   const activeProject = projects.find(p => p.id === activeProjectId);
 
-  const contextMetrics = {
-    deadlineDays: 47,
-    complianceScore: 0.87,
-    riskCount: 3,
-    lastActivity: 'FDA response received 2h ago',
-    auditStatus: 'Audit trail active',
-  };
-
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
     const subType = activeProject?.type?.toUpperCase();
@@ -1022,28 +978,6 @@ export const ZenApp: React.FC = () => {
         return 'IND Filing';
     }
   }, [activeProject?.type]);
-
-  const allLayoutModes: {
-    id: LayoutMode;
-    label: string;
-    icon?: React.ComponentType<{ className?: string }>;
-  }[] = [
-    { id: 'assistant', label: 'Assistant' },
-    { id: 'sherpa', label: 'Sherpa', icon: Compass },
-    { id: 'editor', label: 'Editor' },
-    { id: 'analytics', label: 'Analytics' },
-    { id: 'timeline', label: 'Timeline' },
-    { id: 'audit', label: 'Audit' },
-    { id: 'ctd', label: 'CTD' },
-    { id: 'mission-control' as LayoutMode, label: 'Mission Control', icon: Target },
-    { id: 'ind-workspace' as LayoutMode, label: submissionWorkspaceLabel, icon: FileText },
-  ];
-
-  // Filter layout modes by license — only show modes the org has access to
-  const layoutModes = useMemo(
-    () => allLayoutModes.filter(mode => canAccessLayoutMode(mode.id)),
-    [allLayoutModes, canAccessLayoutMode]
-  );
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
   const timelineSteps = useMemo(
@@ -1104,7 +1038,6 @@ export const ZenApp: React.FC = () => {
     []
   );
 
-  const primaryObjective = userProfile?.objectives?.[0] || 'Submission readiness';
   const userRole = userProfile?.role || 'Regulatory Lead';
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
@@ -1116,78 +1049,6 @@ export const ZenApp: React.FC = () => {
     userIntelligence?.identity?.name ||
     'User';
   const userEmail = userIntelligence?.identity?.email ?? undefined;
-
-  const agentRoster = useMemo(
-    () => [
-      {
-        id: 'agent-compliance',
-        name: `${userRole} Agent`,
-        status: 'Active',
-        focus: primaryObjective,
-      },
-      {
-        id: 'agent-evidence',
-        name: 'Evidence Agent',
-        status: 'Reviewing',
-        focus: userProfile?.criteria?.[0] || 'Clinical evidence map',
-      },
-      {
-        id: 'agent-quality',
-        name: 'Quality Agent',
-        status: 'Queued',
-        focus: userProfile?.criteria?.[1] || 'Section audit checks',
-      },
-    ],
-    [primaryObjective, userProfile, userRole]
-  );
-
-  const nextActions = useMemo(
-    () => [
-      {
-        id: 'action-compile-section',
-        name: `Advance ${(primaryObjective || 'submission').toLowerCase()}`,
-        description: `Progress ${(primaryObjective || 'submission').toLowerCase()} with evidence alignment.`,
-        stepType: 'TASK' as const,
-        status: 'READY' as const,
-        workflowName: 'Priority Objectives',
-        workflowId: 'workflow-reg-prep-01',
-        workflowRunId,
-        slaDueAt: new Date(Date.now() + 4 * 60 * 60 * 1000),
-        assigneeRole: userRole,
-        order: 1,
-        priority: 'HIGH' as const,
-      },
-      {
-        id: 'action-review-claims',
-        name: userProfile?.criteria?.[0] || 'Review efficacy claims',
-        description: 'Validate claims against source evidence.',
-        stepType: 'REVIEW' as const,
-        status: 'IN_PROGRESS' as const,
-        workflowName: 'Evidence Validation',
-        workflowId: 'workflow-evd-02',
-        workflowRunId,
-        slaDueAt: new Date(Date.now() + 10 * 60 * 60 * 1000),
-        assigneeRole: userRole,
-        order: 2,
-        priority: 'MEDIUM' as const,
-      },
-      {
-        id: 'action-approval-qa',
-        name: userProfile?.criteria?.[1] || 'QA sign-off checklist',
-        description: 'Approve final quality checklist for submission.',
-        stepType: 'APPROVAL' as const,
-        status: 'AWAITING_APPROVAL' as const,
-        workflowName: 'Quality Governance',
-        workflowId: 'workflow-qa-03',
-        workflowRunId,
-        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        assigneeRole: userRole,
-        order: 3,
-        priority: 'LOW' as const,
-      },
-    ],
-    [primaryObjective, userProfile, userRole, workflowRunId]
-  );
 
   useEffect(() => {
     const loadProfile = () => {

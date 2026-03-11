@@ -199,8 +199,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           setShowArtifactList(false);
           loadArtifacts();
         }
-      } catch {
-        // silent — user can still manually create
+      } catch (err) {
+        console.warn('[EditorPanel] Auto-create artifact from initial content failed:', err);
       } finally {
         onInitialContentConsumed?.();
       }
