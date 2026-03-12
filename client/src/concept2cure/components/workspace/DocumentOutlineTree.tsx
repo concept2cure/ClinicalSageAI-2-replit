@@ -28,10 +28,7 @@ import {
   AlertCircle,
   Plus,
 } from 'lucide-react';
-import {
-  getTemplateStructure,
-  findTemplateByKey,
-} from '../../models/ctdHierarchy';
+import { getTemplateStructure, findTemplateByKey } from '../../models/ctdHierarchy';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

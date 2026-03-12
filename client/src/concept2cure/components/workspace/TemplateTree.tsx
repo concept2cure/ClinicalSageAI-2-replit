@@ -11,13 +11,14 @@
 
 import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronRight, ChevronDown, Layers, Plus, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronDown, Layers, Plus, Sparkles, Wand2 } from 'lucide-react';
 import { IND_TEMPLATES, type TemplateNode } from '../../models/ctdHierarchy';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface TemplateTreeProps {
   onCreateFromTemplate: (templateKey: string, ctdSection: string, label: string) => void;
+  onOpenTransformCanvas?: (ctdSection: string, templateKey: string) => void;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ interface TemplateNodeRowProps {
   expanded: Set<string>;
   toggleExpand: (key: string) => void;
   onCreateFromTemplate: (templateKey: string, ctdSection: string, label: string) => void;
+  onOpenTransformCanvas?: (ctdSection: string, templateKey: string) => void;
 }
 
 function TemplateNodeRow({
@@ -37,6 +39,7 @@ function TemplateNodeRow({
   expanded,
   toggleExpand,
   onCreateFromTemplate,
+  onOpenTransformCanvas,
 }: TemplateNodeRowProps) {
   const isExpanded = expanded.has(node.templateKey);
   const hasChildren = node.children.length > 0;
@@ -54,7 +57,13 @@ function TemplateNodeRow({
       >
         {/* Chevron or spacer */}
         {hasChildren ? (
-          <button onClick={() => toggleExpand(node.templateKey)} className="shrink-0">
+          <button
+            onClick={() => toggleExpand(node.templateKey)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
+            className="shrink-0 p-0.5 rounded focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+          >
+            {' '}
             {isExpanded ? (
               <ChevronDown className="w-3 h-3 text-zinc-400" />
             ) : (
@@ -97,11 +106,23 @@ function TemplateNodeRow({
         {/* Create button */}
         <button
           onClick={() => onCreateFromTemplate(node.templateKey, node.ctdSection, node.label)}
-          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-0.5 rounded hover:bg-violet-100"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           title={`Create "${node.label}" from template`}
+          aria-label={`Create ${node.label} from template`}
         >
           <Plus className="w-3 h-3 text-violet-600" />
         </button>
+        {/* Transform Canvas button */}
+        {onOpenTransformCanvas && (
+          <button
+            onClick={() => onOpenTransformCanvas(node.ctdSection, node.templateKey)}
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            title={`Open Transform Canvas for "${node.label}"`}
+            aria-label={`Open Transform Canvas for ${node.label}`}
+          >
+            <Wand2 className="w-3 h-3 text-amber-600" />
+          </button>
+        )}
       </div>
 
       {/* Children */}
@@ -114,6 +135,7 @@ function TemplateNodeRow({
             expanded={expanded}
             toggleExpand={toggleExpand}
             onCreateFromTemplate={onCreateFromTemplate}
+            onOpenTransformCanvas={onOpenTransformCanvas}
           />
         ))}
     </>
@@ -122,7 +144,11 @@ function TemplateNodeRow({
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export const TemplateTree: React.FC<TemplateTreeProps> = ({ onCreateFromTemplate, className }) => {
+export const TemplateTree: React.FC<TemplateTreeProps> = ({
+  onCreateFromTemplate,
+  onOpenTransformCanvas,
+  className,
+}) => {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
   const toggleExpand = useCallback((key: string) => {
@@ -164,6 +190,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({ onCreateFromTemplate
             expanded={expanded}
             toggleExpand={toggleExpand}
             onCreateFromTemplate={onCreateFromTemplate}
+            onOpenTransformCanvas={onOpenTransformCanvas}
           />
         ))}
       </div>

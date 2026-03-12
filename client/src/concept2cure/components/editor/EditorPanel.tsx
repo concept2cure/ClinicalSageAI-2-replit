@@ -839,7 +839,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             setShowArtifactList(true);
             setAiResult(null);
           }}
-          className="text-[11px] text-zinc-400 hover:text-zinc-700 shrink-0 px-1"
+          className="text-[11px] text-zinc-400 hover:text-zinc-700 shrink-0 px-1 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
         >
           ← Docs
         </button>
@@ -885,7 +885,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               data-testid={`inspector-${id}`}
               onClick={() => toggleInspector(id)}
               className={cn(
-                'px-1.5 py-0.5 text-[10px] rounded transition-colors flex items-center gap-0.5 whitespace-nowrap',
+                'px-1.5 py-0.5 text-[10px] rounded transition-colors flex items-center gap-0.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                 activeInspector === id
                   ? 'bg-blue-50 text-blue-700 font-semibold'
                   : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
@@ -902,31 +902,44 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="relative">
             <button
               onClick={() => setOverflowOpen(!overflowOpen)}
-              className="px-1 py-0.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors"
+              aria-label="More actions"
+              aria-expanded={overflowOpen}
+              className="px-1 py-0.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             >
               <ChevronDown className="w-3 h-3" />
             </button>
             {overflowOpen && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+              <div
+                role="menu"
+                onKeyDown={e => {
+                  if (e.key === 'Escape') {
+                    e.stopPropagation();
+                    setOverflowOpen(false);
+                  }
+                }}
+                className="absolute right-0 top-full mt-1 w-48 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1"
+              >
                 {/* Save */}
                 <button
+                  role="menuitem"
                   onClick={() => {
                     activeArtifact && handleSave(activeArtifact.content, {});
                     setOverflowOpen(false);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <Check className="w-3 h-3 text-zinc-400" />
                   Save
                 </button>
                 {/* DOCX Export */}
                 <button
+                  role="menuitem"
                   onClick={() => {
                     handleExportDocx();
                     setOverflowOpen(false);
                   }}
                   disabled={docxExporting}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <Download className="w-3 h-3 text-zinc-400" />
                   Export DOCX
@@ -934,18 +947,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <div className="border-t border-zinc-100 my-1" />
                 {/* Sign */}
                 <button
+                  role="menuitem"
                   onClick={() => {
                     handleSignApprove();
                     setOverflowOpen(false);
                   }}
                   disabled={signing || !activeArtifact}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <PenTool className="w-3 h-3 text-zinc-400" />
                   Sign & Approve
                 </button>
                 {/* Status change */}
                 <button
+                  role="menuitem"
                   onClick={() => {
                     const current = activeArtifact?.status || 'draft';
                     const next =
@@ -960,7 +975,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setOverflowOpen(false);
                   }}
                   disabled={changingStatus || !activeArtifact}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   {activeArtifact?.status === 'locked' ? (
                     <Unlock className="w-3 h-3 text-zinc-400" />

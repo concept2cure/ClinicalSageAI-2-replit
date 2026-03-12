@@ -2005,3 +2005,154 @@ export function findTemplateByKey(key: string): TemplateNode | null {
   }
   return walk(IND_TEMPLATES);
 }
+
+// ── Phase 4 helpers ──────────────────────────────────────────────────────────
+
+/** Get expected template structure for a given artifact based on its templateId. */
+export function getTemplateStructureForArtifact(artifact: {
+  templateId?: string | null;
+  ctdSection?: string | null;
+}): TemplateStructureNode[] | null {
+  if (artifact.templateId) {
+    const structure = TEMPLATE_STRUCTURE_MAP[artifact.templateId];
+    if (structure) return structure;
+  }
+  // Fallback: find templates for the artifact's CTD section
+  if (artifact.ctdSection) {
+    const templates = findTemplatesByCTDSection(IND_TEMPLATES, artifact.ctdSection);
+    for (const t of templates) {
+      const structure = TEMPLATE_STRUCTURE_MAP[t.templateKey];
+      if (structure) return structure;
+    }
+  }
+  return null;
+}
+
+/** Get expected document types for a given CTD section. */
+export function getExpectedDocTypesForSection(section: string): string[] {
+  return SECTION_DOC_TYPES[section] || ['regulatory_document'];
+}
+
+/** Verification rules for a section: placement, template, governance checks. */
+export interface VerificationRule {
+  dimension: 'placement' | 'template' | 'evidence' | 'governance';
+  label: string;
+  check: string; // deterministic | heuristic | inferred
+}
+
+export function getVerificationRulesForSection(section: string): VerificationRule[] {
+  const rules: VerificationRule[] = [];
+  const node = findNodeBySection(CTD_HIERARCHY, section);
+  if (!node) return rules;
+
+  // Placement rules
+  const expectedTypes = SECTION_DOC_TYPES[section];
+  if (expectedTypes) {
+    rules.push({ dimension: 'placement', label: `Expected doc types: ${expectedTypes.join(', ')}`, check: 'deterministic' });
+  }
+  rules.push({ dimension: 'placement', label: `Section is ${OPTIONAL_SECTIONS.has(section) ? 'optional' : 'required'}`, check: 'deterministic' });
+
+  // Template rules
+  const templates = findTemplatesByCTDSection(IND_TEMPLATES, section);
+  if (templates.length > 0) {
+    const structure = TEMPLATE_STRUCTURE_MAP[templates[0].templateKey];
+    if (structure) {
+      const requiredBlocks = structure.filter(s => s.required);
+      rules.push({ dimension: 'template', label: `${requiredBlocks.length} required subsections`, check: 'deterministic' });
+    }
+  }
+
+  // Evidence rules
+  rules.push({ dimension: 'evidence', label: 'Evidence linkage via source_input events', check: 'inferred' });
+
+  // Governance rules
+  rules.push({ dimension: 'governance', label: 'Status lifecycle + signature + integrity', check: 'deterministic' });
+
+  return rules;
+}
+
+/** Submission app candidate definition. */
+export interface SubmissionAppCandidate {
+  appId: string;
+  label: string;
+  targetDocType: string;
+  defaultCtdSection: string;
+  templateKey?: string;
+  requiredInputs: string[];
+  description: string;
+}
+
+const SUBMISSION_APPS: SubmissionAppCandidate[] = [
+  {
+    appId: 'evidence-memo',
+    label: 'Evidence Memo',
+    targetDocType: 'evidence_memo',
+    defaultCtdSection: '5.3',
+    templateKey: 'tpl-m5-csr',
+    requiredInputs: ['evidence_set', 'target_topic'],
+    description: 'Generate an evidence summary memo from CSR/precedent search results.',
+  },
+  {
+    appId: 'protocol-rationale',
+    label: 'Protocol Rationale',
+    targetDocType: 'protocol_rationale',
+    defaultCtdSection: '5.3.5',
+    templateKey: 'tpl-m5-csr',
+    requiredInputs: ['study_design', 'indication'],
+    description: 'Generate rationale document for clinical protocol design choices.',
+  },
+  {
+    appId: 'clinical-overview',
+    label: 'Clinical Overview',
+    targetDocType: 'clinical_overview',
+    defaultCtdSection: '2.5',
+    templateKey: 'tpl-m2-2.5',
+    requiredInputs: ['clinical_data', 'indication'],
+    description: 'Generate CTD Module 2.5 Clinical Overview document.',
+  },
+  {
+    appId: 'module3-builder',
+    label: 'Module 3 Builder',
+    targetDocType: 'regulatory_document',
+    defaultCtdSection: '3.2.S',
+    templateKey: 'tpl-ds-gen-info',
+    requiredInputs: ['cmc_data', 'target_subsection'],
+    description: 'Generate or extend Module 3 Quality section documents.',
+  },
+  {
+    appId: 'risk-benefit',
+    label: 'Risk-Benefit Analysis',
+    targetDocType: 'risk_benefit_analysis',
+    defaultCtdSection: '2.5',
+    templateKey: 'tpl-m2-2.5',
+    requiredInputs: ['efficacy_data', 'safety_data'],
+    description: 'Generate structured risk-benefit assessment for submission.',
+  },
+  {
+    appId: 'audit-report',
+    label: 'Audit Report',
+    targetDocType: 'audit_report',
+    defaultCtdSection: '1.3',
+    requiredInputs: ['artifact_id'],
+    description: 'Generate inspection-ready audit report for a governed artifact.',
+  },
+];
+
+/** Get submission app candidates that match a section + artifact type. */
+export function getSubmissionAppCandidates(
+  section?: string,
+  artifactType?: string,
+  templateKey?: string
+): SubmissionAppCandidate[] {
+  return SUBMISSION_APPS.filter(app => {
+    if (section && app.defaultCtdSection === section) return true;
+    if (artifactType && app.targetDocType === artifactType) return true;
+    if (templateKey && app.templateKey === templateKey) return true;
+    return false;
+  });
+}
+
+/** Get all available submission apps. */
+export function getAllSubmissionApps(): SubmissionAppCandidate[] {
+  return SUBMISSION_APPS;
+}

@@ -33,6 +33,10 @@ import {
   getSectionRequirements,
   type SectionRequirement,
 } from '../../models/ctdHierarchy';
+import { RegulatoryTransformCanvas } from './RegulatoryTransformCanvas';
+import { GoldenDossierVerificationPanel } from './GoldenDossierVerificationPanel';
+import { ProgramTwinPanel } from './ProgramTwinPanel';
+import { SubmissionAppsPanel } from './SubmissionAppsPanel';
 import {
   ChevronLeft,
   Loader2,
@@ -52,6 +56,10 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  Sparkles,
+  ShieldCheck,
+  Target,
+  AppWindow,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -178,6 +186,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // Editor ref for outline scroll
   const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  // ── Phase 4 overlay state ──────────────────────────────────────────────
+  type Phase4Panel = 'none' | 'transform' | 'verification' | 'twin' | 'apps';
+  const [phase4Panel, setPhase4Panel] = useState<Phase4Panel>('none');
+  const [phase4Ctx, setPhase4Ctx] = useState<{
+    ctdSection?: string;
+    templateKey?: string;
+    artifactId?: string;
+    artifactTitle?: string;
+  }>({});
 
   // If initialContent is provided, go straight to edit mode
   useEffect(() => {
@@ -488,6 +506,70 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setActiveDocTitle(title);
   }, []);
 
+  // ── Phase 4 panel openers ──────────────────────────────────────────────
+  const openTransformCanvas = useCallback(
+    (ctdSection?: string, templateKey?: string, artifactId?: string, artifactTitle?: string) => {
+      setPhase4Ctx({ ctdSection, templateKey, artifactId, artifactTitle });
+      setPhase4Panel('transform');
+    },
+    []
+  );
+
+  const openVerification = useCallback(
+    (artifactId?: string) => {
+      const art = artifactId ? artifacts.find(a => a.id === artifactId) : activeArtifact;
+      setPhase4Ctx({ artifactId: art?.id, artifactTitle: art?.title });
+      setPhase4Panel('verification');
+    },
+    [artifacts, activeArtifact]
+  );
+
+  const openProgramTwin = useCallback(() => {
+    setPhase4Panel('twin');
+  }, []);
+
+  const openSubmissionApps = useCallback((ctdSection?: string, templateKey?: string) => {
+    setPhase4Ctx({ ctdSection, templateKey });
+    setPhase4Panel('apps');
+  }, []);
+
+  const closePhase4Panel = useCallback(() => {
+    setPhase4Panel('none');
+    setPhase4Ctx({});
+  }, []);
+
+  /** Called when Transform Canvas / Submission App creates a draft */
+  const handlePhase4CreateDraft = useCallback(
+    async (title: string, ctdSection: string, templateKey?: string) => {
+      if (!projectId) return;
+      try {
+        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            title,
+            content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+            type: 'regulatory_document',
+            category: 'document',
+            ctdSection,
+            templateId: templateKey,
+          }),
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          await loadArtifacts();
+          setSelectedDocId(created.id);
+          setMode('edit');
+          closePhase4Panel();
+        }
+      } catch {
+        /* silent */
+      }
+    },
+    [projectId, loadArtifacts, closePhase4Panel]
+  );
+
   // ── Create missing subsection from template structure ────────────────────
   const handleCreateSubsection = useCallback(
     async (subsectionKey: string, label: string) => {
@@ -749,6 +831,44 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             >
               <Copy className="w-3 h-3" />
             </button>
+            <span className="w-px h-4 bg-zinc-200 mx-0.5" />
+            <button
+              onClick={() => openVerification(activeArtifact.id)}
+              className="p-1 text-zinc-400 hover:text-emerald-600 rounded hover:bg-emerald-50"
+              title="Verify document"
+            >
+              <ShieldCheck className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() =>
+                openTransformCanvas(
+                  activeArtifact.ctdSection,
+                  activeArtifact.templateId,
+                  activeArtifact.id,
+                  activeArtifact.title
+                )
+              }
+              className="p-1 text-zinc-400 hover:text-violet-600 rounded hover:bg-violet-50"
+              title="Transform Canvas"
+            >
+              <Sparkles className="w-3 h-3" />
+            </button>
+            <button
+              onClick={openProgramTwin}
+              className="p-1 text-zinc-400 hover:text-blue-600 rounded hover:bg-blue-50"
+              title="Program Twin"
+            >
+              <Target className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() =>
+                openSubmissionApps(activeArtifact.ctdSection, activeArtifact.templateId)
+              }
+              className="p-1 text-zinc-400 hover:text-orange-600 rounded hover:bg-orange-50"
+              title="Submission Apps"
+            >
+              <AppWindow className="w-3 h-3" />
+            </button>
           </div>
         </div>
       )}
@@ -864,8 +984,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               pendingMove={pendingMove}
               onPasteHere={pendingMove ? handlePasteHere : undefined}
               onViewRequirements={handleViewSectionReqs}
-              onCutDocument={handleCutDocument}
-              onCopyCtdPath={handleCopyCtdPath}
+              onOpenTransformCanvas={(ctdSection: string) => openTransformCanvas(ctdSection)}
+              onOpenProgramTwin={openProgramTwin}
+              onOpenSubmissionApps={(ctdSection: string) => openSubmissionApps(ctdSection)}
             />
           ) : leftRailMode === 'outline' ? (
             outlineAvailable ? (
@@ -885,7 +1006,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </div>
             )
           ) : (
-            <TemplateTree onCreateFromTemplate={handleCreateFromTemplate} />
+            <TemplateTree
+              onCreateFromTemplate={handleCreateFromTemplate}
+              onOpenTransformCanvas={(ctdSection: string, templateKey: string) =>
+                openTransformCanvas(ctdSection, templateKey)
+              }
+            />
           )}
         </div>
 
@@ -934,8 +1060,89 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </div>
           )}
 
-          {/* Mode: browse = DocumentListPane, edit = EditorPanel */}
-          {mode === 'browse' ? (
+          {/* Mode: browse = DocumentListPane, edit = EditorPanel, Phase 4 overlay */}
+          {phase4Panel === 'transform' ? (
+            <RegulatoryTransformCanvas
+              projectId={projectId}
+              projectName={projectName || 'Project'}
+              ctdSection={phase4Ctx.ctdSection}
+              templateKey={phase4Ctx.templateKey}
+              artifactId={phase4Ctx.artifactId}
+              artifactTitle={phase4Ctx.artifactTitle}
+              onClose={closePhase4Panel}
+              onCreateDraft={handlePhase4CreateDraft}
+              onOpenEditor={(artId: string) => {
+                setSelectedDocId(artId);
+                setMode('edit');
+                closePhase4Panel();
+              }}
+              onOpenPlacement={(artId?: string) => {
+                if (artId) {
+                  const art = artifacts.find(a => a.id === artId);
+                  if (art) handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
+                }
+                closePhase4Panel();
+              }}
+              onOpenVerification={(artId: string) => openVerification(artId)}
+            />
+          ) : phase4Panel === 'verification' && phase4Ctx.artifactId ? (
+            <GoldenDossierVerificationPanel
+              projectId={projectId}
+              artifactId={phase4Ctx.artifactId}
+              onClose={closePhase4Panel}
+              onOpenEditor={(artId: string) => {
+                setSelectedDocId(artId);
+                setMode('edit');
+                closePhase4Panel();
+              }}
+              onOpenPlacement={(artId: string) => {
+                const art = artifacts.find(a => a.id === artId);
+                if (art) handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
+                closePhase4Panel();
+              }}
+              onOpenProvenance={() => {
+                if (phase4Ctx.artifactId) {
+                  setSelectedDocId(phase4Ctx.artifactId);
+                  setMode('edit');
+                }
+                closePhase4Panel();
+              }}
+              onOpenAudit={() => closePhase4Panel()}
+              onOpenCompare={() => closePhase4Panel()}
+              onOpenTransformCanvas={() =>
+                openTransformCanvas(
+                  undefined,
+                  undefined,
+                  phase4Ctx.artifactId,
+                  phase4Ctx.artifactTitle
+                )
+              }
+              onCreateSubsection={() => {}}
+            />
+          ) : phase4Panel === 'twin' ? (
+            <ProgramTwinPanel
+              projectId={projectId}
+              projectName={projectName || 'Project'}
+              onClose={closePhase4Panel}
+              onOpenVerification={openVerification}
+              onOpenTransformCanvas={() => openTransformCanvas()}
+              onSelectSection={(section: string) => {
+                setSelectedCtdSection(section);
+                setMode('browse');
+                closePhase4Panel();
+              }}
+            />
+          ) : phase4Panel === 'apps' ? (
+            <SubmissionAppsPanel
+              projectId={projectId}
+              projectName={projectName || 'Project'}
+              onClose={closePhase4Panel}
+              onCreateDraft={handlePhase4CreateDraft}
+              onOpenTransformCanvas={(ctdSec?: string, tmplKey?: string) =>
+                openTransformCanvas(ctdSec, tmplKey)
+              }
+            />
+          ) : mode === 'browse' ? (
             <DocumentListPane
               folderLabel={browseLabel}
               documents={browseDocs}

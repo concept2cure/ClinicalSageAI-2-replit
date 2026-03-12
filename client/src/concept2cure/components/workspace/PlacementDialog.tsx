@@ -221,16 +221,30 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
     });
   }, [canConfirm, artifact.id, operation, currentSection, selectedSection, reason, onConfirm]);
 
+  // Dismiss on Escape key
+  React.useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}
+      role="presentation"
     >
       <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
         onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="placement-dialog-title"
       >
         {/* Header */}
         <div
@@ -247,9 +261,15 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             ) : (
               <ShieldCheck className="w-4 h-4 text-blue-600" />
             )}
-            <h3 className="text-[14px] font-semibold text-zinc-800">{config.label}</h3>
+            <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-zinc-800">
+              {config.label}
+            </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-white/60 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded hover:bg-white/60 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            aria-label="Close dialog"
+          >
             <X className="w-4 h-4 text-zinc-500" />
           </button>
         </div>
@@ -351,7 +371,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-100 bg-zinc-50/40">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-[12px] text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors"
+            className="px-3 py-1.5 text-[12px] text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
             Cancel
           </button>
@@ -361,7 +381,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             className={cn(
               'px-4 py-1.5 text-[12px] font-medium rounded-lg transition-colors',
               canConfirm && !loading
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none'
                 : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
             )}
           >

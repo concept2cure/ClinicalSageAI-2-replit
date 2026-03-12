@@ -4269,4 +4269,664 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHASE 4 — PROGRAM TWIN / VERIFICATION / CHANGE IMPACT / TRANSFORM CONTEXT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/concept2cure/projects/:projectId/program-twin
+ * Aggregates project state across dossier, evidence, template, governance,
+ * and readiness dimensions. Returns a unified program model.
+ * All values labeled as deterministic, heuristic, or inferred.
+ */
+router.get('/projects/:projectId/program-twin', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const projectDbId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+    // Fetch all artifacts
+    const allArtifacts = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectDbId),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      );
+
+    const artifactIds = allArtifacts.map(a => a.id);
+
+    // Fetch provenance events
+    let provenanceEvents: any[] = [];
+    if (artifactIds.length > 0) {
+      provenanceEvents = await db
+        .select()
+        .from(concept2cureProvenanceEvents)
+        .where(
+          and(
+            inArray(concept2cureProvenanceEvents.artifactId, artifactIds),
+            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+          )
+        );
+    }
+
+    // Fetch signatures
+    let signatures: any[] = [];
+    if (artifactIds.length > 0) {
+      signatures = await db
+        .select()
+        .from(concept2cureSignatures)
+        .where(inArray(concept2cureSignatures.artifactId, artifactIds));
+    }
+
+    // Fetch review comments
+    let reviewComments: any[] = [];
+    if (artifactIds.length > 0) {
+      reviewComments = await db
+        .select()
+        .from(concept2cureReviewComments)
+        .where(inArray(concept2cureReviewComments.artifactId, artifactIds));
+    }
+
+    // ── Dossier state ──
+    const totalArtifacts = allArtifacts.length;
+    const draftCount = allArtifacts.filter(a => (a.status || 'draft') === 'draft').length;
+    const reviewCount = allArtifacts.filter(a => (a.status || '') === 'review').length;
+    const approvedCount = allArtifacts.filter(a => (a.status || '') === 'approved').length;
+    const lockedCount = allArtifacts.filter(a => (a.status || '') === 'locked').length;
+    const placedCount = allArtifacts.filter(a => !!a.ctdSection).length;
+    const unplacedCount = totalArtifacts - placedCount;
+
+    // Per-module breakdown
+    const moduleBreakdown: Record<
+      string,
+      { total: number; draft: number; review: number; approved: number; locked: number }
+    > = {};
+    for (const art of allArtifacts) {
+      const section = art.ctdSection || '_unplaced';
+      const mod = section === '_unplaced' ? '_unplaced' : section.split('.')[0];
+      const moduleKey = `Module ${mod}`;
+      if (!moduleBreakdown[moduleKey]) {
+        moduleBreakdown[moduleKey] = { total: 0, draft: 0, review: 0, approved: 0, locked: 0 };
+      }
+      const mb = moduleBreakdown[moduleKey];
+      mb.total++;
+      const s = (art.status || 'draft').toLowerCase();
+      if (s === 'approved') mb.approved++;
+      else if (s === 'locked') mb.locked++;
+      else if (s === 'review') mb.review++;
+      else mb.draft++;
+    }
+
+    // ── Evidence state ──
+    const sourceInputEvents = provenanceEvents.filter(e => e.eventType === 'source_input');
+    const generationEvents = provenanceEvents.filter(e => e.eventType === 'generation');
+    const evidenceBackedIds = new Set(sourceInputEvents.map(e => e.artifactId));
+    const precedentBackedIds = new Set(generationEvents.map(e => e.artifactId));
+    const evidenceBackedCount = evidenceBackedIds.size;
+    const precedentBackedCount = precedentBackedIds.size;
+    const noEvidenceCount = totalArtifacts - evidenceBackedIds.size;
+    const noEvidenceArtifacts = allArtifacts
+      .filter(a => !evidenceBackedIds.has(a.id))
+      .map(a => ({ id: a.artifactId, title: a.title, ctdSection: a.ctdSection }));
+
+    // ── Template state ──
+    const withTemplate = allArtifacts.filter(a => !!a.templateId);
+    const withoutTemplate = allArtifacts.filter(a => !a.templateId);
+
+    // ── Governance state ──
+    const signedArtifactIds = new Set(signatures.map(s => s.artifactId));
+    const unresolvedComments = reviewComments.filter(c => !c.isResolved);
+    const placementEvents = provenanceEvents.filter(e => e.eventType === 'placement');
+
+    // ── Readiness (heuristic) ──
+    const authoringReadiness =
+      totalArtifacts > 0
+        ? Math.round(((approvedCount + lockedCount + reviewCount) / totalArtifacts) * 100)
+        : 0;
+    const reviewReadiness =
+      totalArtifacts > 0 ? Math.round(((approvedCount + lockedCount) / totalArtifacts) * 100) : 0;
+    const submissionReadiness =
+      totalArtifacts > 0 ? Math.round((lockedCount / totalArtifacts) * 100) : 0;
+
+    // ── Problems list ──
+    const problems: {
+      severity: 'error' | 'warning' | 'info';
+      message: string;
+      artifactId?: string;
+      ctdSection?: string;
+    }[] = [];
+    if (unplacedCount > 0) {
+      problems.push({
+        severity: 'warning',
+        message: `${unplacedCount} artifact(s) not placed in dossier`,
+      });
+    }
+    if (noEvidenceCount > 0) {
+      problems.push({
+        severity: 'warning',
+        message: `${noEvidenceCount} artifact(s) have no evidence linkage`,
+      });
+    }
+    if (unresolvedComments.length > 0) {
+      problems.push({
+        severity: 'error',
+        message: `${unresolvedComments.length} unresolved review comment(s)`,
+      });
+    }
+    if (withoutTemplate.length > 0) {
+      problems.push({
+        severity: 'info',
+        message: `${withoutTemplate.length} artifact(s) created without template`,
+      });
+    }
+
+    return sendSuccess(res, {
+      confidence: 'deterministic',
+      dossier: {
+        confidence: 'deterministic',
+        totalArtifacts,
+        draftCount,
+        reviewCount,
+        approvedCount,
+        lockedCount,
+        placedCount,
+        unplacedCount,
+        moduleBreakdown,
+      },
+      evidence: {
+        confidence: 'inferred',
+        evidenceBackedCount,
+        precedentBackedCount,
+        noEvidenceCount,
+        totalSourceInputEvents: sourceInputEvents.length,
+        totalGenerationEvents: generationEvents.length,
+        noEvidenceArtifacts: noEvidenceArtifacts.slice(0, 20),
+      },
+      template: {
+        confidence: 'deterministic',
+        withTemplateCount: withTemplate.length,
+        withoutTemplateCount: withoutTemplate.length,
+      },
+      governance: {
+        confidence: 'deterministic',
+        signatureCount: signatures.length,
+        signedArtifactCount: signedArtifactIds.size,
+        unresolvedCommentCount: unresolvedComments.length,
+        placementEventCount: placementEvents.length,
+      },
+      readiness: {
+        confidence: 'heuristic',
+        authoringReadiness,
+        reviewReadiness,
+        submissionReadiness,
+      },
+      problems,
+    });
+  } catch (error: any) {
+    logConcept2cureError('program-twin', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to compute program twin');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification
+ * Runs verification checks on a single artifact against placement, template,
+ * evidence, and governance expectations.
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/verification',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const projectDbId = parseInt(req.params.projectId, 10);
+      if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+      // Find the artifact
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.projectId, projectDbId),
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId)
+          )
+        );
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      // Fetch related data
+      const provenanceEvents = await db
+        .select()
+        .from(concept2cureProvenanceEvents)
+        .where(
+          and(
+            eq(concept2cureProvenanceEvents.artifactId, artifact.id),
+            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+          )
+        );
+
+      const sigs = await db
+        .select()
+        .from(concept2cureSignatures)
+        .where(eq(concept2cureSignatures.artifactId, artifact.id));
+
+      const comments = await db
+        .select()
+        .from(concept2cureReviewComments)
+        .where(eq(concept2cureReviewComments.artifactId, artifact.id));
+
+      // ── Placement verification ──
+      const placementFindings: {
+        status: 'pass' | 'caution' | 'fail';
+        message: string;
+        confidence: string;
+      }[] = [];
+      if (!artifact.ctdSection) {
+        placementFindings.push({
+          status: 'fail',
+          message: 'Artifact not placed in dossier',
+          confidence: 'deterministic',
+        });
+      } else {
+        placementFindings.push({
+          status: 'pass',
+          message: `Placed in CTD section ${artifact.ctdSection}`,
+          confidence: 'deterministic',
+        });
+      }
+
+      // ── Template verification ──
+      const templateFindings: {
+        status: 'pass' | 'caution' | 'fail';
+        message: string;
+        confidence: string;
+      }[] = [];
+      if (!artifact.templateId) {
+        templateFindings.push({
+          status: 'caution',
+          message: 'No template assigned — structure unverifiable',
+          confidence: 'deterministic',
+        });
+      } else {
+        templateFindings.push({
+          status: 'pass',
+          message: `Template: ${artifact.templateId}`,
+          confidence: 'deterministic',
+        });
+        // Check content against expected subsections (heuristic: h1/h2 heading scan)
+        const content = artifact.content || '';
+        const headings = (content.match(/<h[12][^>]*>([^<]+)<\/h[12]>/gi) || []).map(h =>
+          h
+            .replace(/<[^>]+>/g, '')
+            .trim()
+            .toLowerCase()
+        );
+        templateFindings.push({
+          status: headings.length > 0 ? 'pass' : 'caution',
+          message: `${headings.length} section heading(s) found in content`,
+          confidence: 'heuristic',
+        });
+      }
+
+      // ── Evidence verification ──
+      const evidenceFindings: {
+        status: 'pass' | 'caution' | 'fail';
+        message: string;
+        confidence: string;
+      }[] = [];
+      const sourceInputs = provenanceEvents.filter(e => e.eventType === 'source_input');
+      const generations = provenanceEvents.filter(e => e.eventType === 'generation');
+      if (sourceInputs.length === 0 && generations.length === 0) {
+        evidenceFindings.push({
+          status: 'caution',
+          message: 'No evidence or precedent events linked',
+          confidence: 'inferred',
+        });
+      } else {
+        if (sourceInputs.length > 0) {
+          evidenceFindings.push({
+            status: 'pass',
+            message: `${sourceInputs.length} source input event(s)`,
+            confidence: 'inferred',
+          });
+        }
+        if (generations.length > 0) {
+          evidenceFindings.push({
+            status: 'pass',
+            message: `${generations.length} generation event(s)`,
+            confidence: 'inferred',
+          });
+        }
+      }
+
+      // ── Governance verification ──
+      const govFindings: {
+        status: 'pass' | 'caution' | 'fail';
+        message: string;
+        confidence: string;
+      }[] = [];
+      const status = (artifact.status || 'draft').toLowerCase();
+      govFindings.push({
+        status: 'pass',
+        message: `Status: ${status}`,
+        confidence: 'deterministic',
+      });
+      if (sigs.length > 0) {
+        govFindings.push({
+          status: 'pass',
+          message: `${sigs.length} signature(s)`,
+          confidence: 'deterministic',
+        });
+      } else {
+        govFindings.push({
+          status: status === 'locked' ? 'caution' : 'pass',
+          message: 'No signatures',
+          confidence: 'deterministic',
+        });
+      }
+      const unresolvedComments = comments.filter(c => !c.isResolved);
+      if (unresolvedComments.length > 0) {
+        govFindings.push({
+          status: 'fail',
+          message: `${unresolvedComments.length} unresolved review comment(s)`,
+          confidence: 'deterministic',
+        });
+      }
+      if (artifact.contentHash) {
+        govFindings.push({
+          status: 'pass',
+          message: 'Content hash present (integrity chain active)',
+          confidence: 'deterministic',
+        });
+      } else {
+        govFindings.push({
+          status: 'caution',
+          message: 'No content hash — integrity unverifiable',
+          confidence: 'deterministic',
+        });
+      }
+
+      // ── Overall score ──
+      const allFindings = [
+        ...placementFindings,
+        ...templateFindings,
+        ...evidenceFindings,
+        ...govFindings,
+      ];
+      const failCount = allFindings.filter(f => f.status === 'fail').length;
+      const cautionCount = allFindings.filter(f => f.status === 'caution').length;
+      const passCount = allFindings.filter(f => f.status === 'pass').length;
+      const total = allFindings.length;
+      const overallStatus: 'pass' | 'caution' | 'fail' =
+        failCount > 0 ? 'fail' : cautionCount > 0 ? 'caution' : 'pass';
+      const score = total > 0 ? Math.round((passCount / total) * 100) : 0;
+
+      // ── Recommended actions ──
+      const recommendedActions: string[] = [];
+      if (!artifact.ctdSection) recommendedActions.push('Place artifact in a CTD section');
+      if (!artifact.templateId) recommendedActions.push('Assign a template for structure guidance');
+      if (sourceInputs.length === 0) recommendedActions.push('Link evidence sources');
+      if (unresolvedComments.length > 0)
+        recommendedActions.push('Resolve outstanding review comments');
+      if (!artifact.contentHash) recommendedActions.push('Save to generate integrity hash');
+      if (sigs.length === 0 && (status === 'approved' || status === 'locked')) {
+        recommendedActions.push('Add electronic signature for compliance');
+      }
+
+      return sendSuccess(res, {
+        artifactId: artifact.artifactId,
+        title: artifact.title,
+        overallStatus,
+        score,
+        placement: { findings: placementFindings },
+        templateConformance: { findings: templateFindings },
+        evidenceSupport: { findings: evidenceFindings },
+        governance: { findings: govFindings },
+        findings: allFindings,
+        recommendedActions,
+      });
+    } catch (error: any) {
+      logConcept2cureError('artifact-verification', error, {
+        projectId: req.params.projectId,
+        artifactId: req.params.artifactId,
+      });
+      return sendError(res, 500, 'Failed to run verification');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/projects/:projectId/change-impact
+ * Computes downstream impact for a proposed change scenario.
+ * Query params: scenarioType, artifactId, targetSection, targetStatus
+ */
+router.get('/projects/:projectId/change-impact', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const projectDbId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+    const scenarioType = (req.query.scenarioType as string) || 'section_move';
+    const artifactId = req.query.artifactId as string;
+    const targetSection = req.query.targetSection as string;
+    const targetStatus = req.query.targetStatus as string;
+
+    // Fetch all artifacts for context
+    const allArtifacts = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectDbId),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      );
+
+    const impacts: {
+      type: string;
+      severity: 'high' | 'medium' | 'low';
+      message: string;
+      affectedArtifactId?: string;
+      confidence: string;
+    }[] = [];
+
+    if (scenarioType === 'section_move' && artifactId && targetSection) {
+      const art = allArtifacts.find(a => a.artifactId === artifactId);
+      if (art) {
+        // Affected: other artifacts in same section
+        const sameSectionArts = allArtifacts.filter(
+          a => a.ctdSection === art.ctdSection && a.artifactId !== artifactId
+        );
+        if (sameSectionArts.length > 0) {
+          impacts.push({
+            type: 'dossier',
+            severity: 'medium',
+            message: `${sameSectionArts.length} artifact(s) remain in section ${art.ctdSection}`,
+            confidence: 'deterministic',
+          });
+        }
+        // Check if target section already has artifacts
+        const targetArts = allArtifacts.filter(a => a.ctdSection === targetSection);
+        if (targetArts.length > 0) {
+          impacts.push({
+            type: 'dossier',
+            severity: 'low',
+            message: `Target section ${targetSection} already has ${targetArts.length} artifact(s)`,
+            confidence: 'deterministic',
+          });
+        }
+        // If artifact is approved/locked, warn about governance
+        if (art.status === 'approved' || art.status === 'locked') {
+          impacts.push({
+            type: 'governance',
+            severity: 'high',
+            message: `Moving ${art.status} artifact requires governance review`,
+            confidence: 'deterministic',
+          });
+        }
+      }
+    }
+
+    if (scenarioType === 'status_change' && artifactId && targetStatus) {
+      const art = allArtifacts.find(a => a.artifactId === artifactId);
+      if (art) {
+        const currentStatus = (art.status || 'draft').toLowerCase();
+        if (targetStatus === 'locked' && currentStatus !== 'approved') {
+          impacts.push({
+            type: 'governance',
+            severity: 'high',
+            message: 'Locking requires approved status first',
+            confidence: 'deterministic',
+          });
+        }
+        if (
+          targetStatus === 'draft' &&
+          (currentStatus === 'approved' || currentStatus === 'locked')
+        ) {
+          impacts.push({
+            type: 'governance',
+            severity: 'high',
+            message: `Reverting from ${currentStatus} to draft invalidates signatures`,
+            confidence: 'deterministic',
+          });
+        }
+      }
+    }
+
+    if (scenarioType === 'template_switch' && artifactId) {
+      impacts.push({
+        type: 'template',
+        severity: 'medium',
+        message: 'Template switch may invalidate existing subsection structure',
+        confidence: 'heuristic',
+      });
+    }
+
+    if (scenarioType === 'evidence_change' && artifactId) {
+      impacts.push({
+        type: 'evidence',
+        severity: 'medium',
+        message: 'Evidence source changes may affect provenance chain',
+        confidence: 'heuristic',
+      });
+    }
+
+    return sendSuccess(res, {
+      scenarioType,
+      artifactId: artifactId || null,
+      impacts,
+      affectedCount: impacts.length,
+    });
+  } catch (error: any) {
+    logConcept2cureError('change-impact', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to compute change impact');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/transform-context
+ * Returns the context needed for the Regulatory Transform Canvas:
+ * source docs, evidence counts, precedent counts, CTD targets, templates, and project context.
+ */
+router.get('/projects/:projectId/transform-context', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const projectDbId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+    // Fetch project
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectDbId), eq(projects.organizationId, organizationId)));
+
+    if (!project) return sendError(res, 404, 'Project not found');
+
+    // Fetch artifacts
+    const allArtifacts = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectDbId),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      );
+
+    // Fetch provenance
+    const artifactIds = allArtifacts.map(a => a.id);
+    let provenanceEvents: any[] = [];
+    if (artifactIds.length > 0) {
+      provenanceEvents = await db
+        .select()
+        .from(concept2cureProvenanceEvents)
+        .where(
+          and(
+            inArray(concept2cureProvenanceEvents.artifactId, artifactIds),
+            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+          )
+        );
+    }
+
+    const sourceInputs = provenanceEvents.filter(e => e.eventType === 'source_input').length;
+    const generations = provenanceEvents.filter(e => e.eventType === 'generation').length;
+
+    // Distinct CTD sections with artifacts
+    const ctdSections = [
+      ...new Set(allArtifacts.filter(a => a.ctdSection).map(a => a.ctdSection!)),
+    ].sort();
+
+    // Template usage
+    const templateIds = [
+      ...new Set(allArtifacts.filter(a => a.templateId).map(a => a.templateId!)),
+    ];
+
+    return sendSuccess(res, {
+      project: {
+        id: project.id,
+        name: project.title,
+        submissionType: project.submissionType,
+        sponsor: project.sponsor,
+        indication: project.therapeuticArea,
+        region: project.regulatoryRegion,
+      },
+      artifacts: {
+        total: allArtifacts.length,
+        byStatus: {
+          draft: allArtifacts.filter(a => (a.status || 'draft') === 'draft').length,
+          review: allArtifacts.filter(a => a.status === 'review').length,
+          approved: allArtifacts.filter(a => a.status === 'approved').length,
+          locked: allArtifacts.filter(a => a.status === 'locked').length,
+        },
+      },
+      evidence: {
+        sourceInputCount: sourceInputs,
+        generationCount: generations,
+        confidence: 'inferred',
+      },
+      ctdSections,
+      templateIds,
+    });
+  } catch (error: any) {
+    logConcept2cureError('transform-context', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to load transform context');
+  }
+});
+
 export default router;

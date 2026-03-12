@@ -32,6 +32,15 @@ interface StatPillProps {
   pulse?: boolean;
 }
 
+const ICON_COLOR_MAP: Record<string, string> = {
+  zinc: 'text-zinc-500',
+  blue: 'text-blue-500',
+  violet: 'text-violet-500',
+  amber: 'text-amber-500',
+  emerald: 'text-emerald-500',
+  red: 'text-red-500',
+};
+
 const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = 'zinc', pulse }) => (
   <div
     className={cn(
@@ -41,7 +50,7 @@ const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = '
     )}
     title={label}
   >
-    <Icon className={cn('w-3.5 h-3.5', `text-${color}-500`)} />
+    <Icon className={cn('w-3.5 h-3.5', ICON_COLOR_MAP[color] || 'text-zinc-500')} />
     <span className="text-zinc-800 font-semibold tabular-nums">{value}</span>
     <span className="text-zinc-400 hidden sm:inline">{label}</span>
   </div>

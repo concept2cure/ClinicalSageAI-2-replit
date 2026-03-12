@@ -392,19 +392,36 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
 
   if (!isOpen) return null;
 
-  // Calculate cumulative index for each item
-  let cumulativeIndex = 0;
+  // Pre-compute category start indices for absolute item indexing
+  const categoryOffsets = new Map<CommandCategory, number>();
+  let offset = 0;
+  for (const group of groupedCommands) {
+    categoryOffsets.set(group.category, offset);
+    offset += group.items.length;
+  }
 
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Dialog */}
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="command-palette-title"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+      >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-100">
           <Search className="w-5 h-5 text-zinc-400 flex-shrink-0" />
+          <span id="command-palette-title" className="sr-only">
+            Command Palette
+          </span>
           <input
             ref={inputRef}
             type="text"
@@ -423,15 +440,20 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         </div>
 
         {/* Results */}
-        <div ref={listRef} className="max-h-[60vh] overflow-y-auto py-2 zen-scroll">
+        <div
+          ref={listRef}
+          className="max-h-[60vh] overflow-y-auto py-2 zen-scroll"
+          role="listbox"
+          aria-label="Command results"
+        >
           {flatList.length === 0 ? (
-            <div className="px-4 py-12 text-center">
+            <div className="px-4 py-12 text-center" role="status">
               <Search className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
               <p className="text-sm text-zinc-500">No commands found for "{query}"</p>
             </div>
           ) : (
             groupedCommands.map(group => {
-              const groupStartIndex = cumulativeIndex;
+              const groupStart = categoryOffsets.get(group.category) ?? 0;
 
               return (
                 <div key={group.category} className="mb-2">
@@ -444,22 +466,19 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
 
                   {/* Items */}
                   {group.items.map((item, itemIndex) => {
-                    const absoluteIndex = groupStartIndex + itemIndex;
+                    const absoluteIndex = groupStart + itemIndex;
                     const isSelected = absoluteIndex === selectedIndex;
-
-                    // Increment for next iteration
-                    if (itemIndex === group.items.length - 1) {
-                      cumulativeIndex = absoluteIndex + 1;
-                    }
 
                     return (
                       <button
                         key={item.id}
+                        role="option"
+                        aria-selected={isSelected}
                         data-command-index={absoluteIndex}
                         onClick={() => item.action()}
                         onMouseEnter={() => setSelectedIndex(absoluteIndex)}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
+                          'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                           isSelected ? 'bg-zinc-100' : 'hover:bg-zinc-50'
                         )}
                       >

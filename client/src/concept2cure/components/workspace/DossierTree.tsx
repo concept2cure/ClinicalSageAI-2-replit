@@ -29,6 +29,9 @@ import {
   ClipboardPaste,
   Info,
   MapPin,
+  Sparkles,
+  Target,
+  AppWindow,
 } from 'lucide-react';
 import { CTD_HIERARCHY, type DossierNode, type DossierNodeStatus } from '../../models/ctdHierarchy';
 import type { TreeArtifact } from './ProjectFileTree';
@@ -55,8 +58,9 @@ interface DossierTreeProps {
   pendingMove?: { artifact: TreeArtifact; fromSection: string | null } | null;
   onPasteHere?: (ctdSection: string) => void;
   onViewRequirements?: (ctdSection: string) => void;
-  onCutDocument?: (art: TreeArtifact) => void;
-  onCopyCtdPath?: (art: TreeArtifact) => void;
+  onOpenTransformCanvas?: (ctdSection: string) => void;
+  onOpenProgramTwin?: () => void;
+  onOpenSubmissionApps?: (ctdSection: string) => void;
   className?: string;
 }
 
@@ -223,12 +227,13 @@ function DossierNodeRow({
         }}
         onContextMenu={e => onContextMenu(e, node)}
         className={cn(
-          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-colors group',
+          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-colors group focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 focus-visible:outline-none',
           isSelected ? 'bg-blue-50 text-blue-700' : 'text-zinc-600 hover:bg-zinc-50'
         )}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
         data-testid={`dossier-node-${node.ctdSection}`}
         title={`${node.ctdSection} — ${node.label}`}
+        aria-expanded={hasChildren ? isExpanded : undefined}
       >
         {/* Chevron */}
         {hasChildren ? (
@@ -352,8 +357,9 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   pendingMove,
   onPasteHere,
   onViewRequirements,
-  onCutDocument: _onCutDocument,
-  onCopyCtdPath: _onCopyCtdPath,
+  onOpenTransformCanvas,
+  onOpenProgramTwin,
+  onOpenSubmissionApps,
   className,
 }) => {
   // Default: expand Module roots
@@ -376,10 +382,25 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   const handleContextMenu = useCallback((e: React.MouseEvent, node: DossierNode) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({ x: e.clientX, y: e.clientY, ctdSection: node.ctdSection, label: node.label });
+    // Clamp to viewport edges so menu doesn't overflow
+    const menuW = 200,
+      menuH = 260;
+    const x = Math.min(e.clientX, window.innerWidth - menuW);
+    const y = Math.min(e.clientY, window.innerHeight - menuH);
+    setContextMenu({ x, y, ctdSection: node.ctdSection, label: node.label });
   }, []);
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // Dismiss context menu on Escape
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [contextMenu]);
 
   return (
     <div
@@ -387,8 +408,8 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       data-testid="dossier-tree"
       onClick={closeContextMenu}
     >
-      8{/* Header */}
-      <div className="flex items-center justify-between px-3 h-9 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           eCTD Dossier
         </span>
@@ -417,6 +438,8 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
           className="fixed z-50 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 min-w-[180px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={e => e.stopPropagation()}
+          role="menu"
+          aria-label="Section actions"
         >
           <div className="px-3 py-1.5 border-b border-zinc-100">
             <p className="text-[10px] text-zinc-400 font-mono">{contextMenu.ctdSection}</p>
@@ -443,7 +466,8 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPlaceArtifact(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
+              role="menuitem"
             >
               <MapPin className="w-3 h-3" />
               Place document here…
@@ -455,7 +479,8 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPasteHere(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-[12px] text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:bg-amber-50 focus-visible:outline-none"
+              role="menuitem"
             >
               <ClipboardPaste className="w-3 h-3" />
               Paste "{pendingMove.artifact.title}" here
@@ -466,7 +491,8 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
               onSelectSection(contextMenu.ctdSection, contextMenu.label);
               closeContextMenu();
             }}
-            className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2"
+            className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:bg-zinc-50 focus-visible:outline-none"
+            role="menuitem"
           >
             <FileText className="w-3 h-3" />
             View section documents
@@ -477,15 +503,56 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onViewRequirements(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:bg-zinc-50 focus-visible:outline-none"
+              role="menuitem"
             >
               <Info className="w-3 h-3" />
               View section requirements
             </button>
           )}
+          {onOpenTransformCanvas && (
+            <button
+              onClick={() => {
+                onOpenTransformCanvas(contextMenu.ctdSection);
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-violet-700 hover:bg-violet-50 transition-colors flex items-center gap-2 focus-visible:bg-violet-50 focus-visible:outline-none"
+              role="menuitem"
+            >
+              <Sparkles className="w-3 h-3" />
+              Open Transform Canvas
+            </button>
+          )}
+          {onOpenSubmissionApps && (
+            <button
+              onClick={() => {
+                onOpenSubmissionApps(contextMenu.ctdSection);
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-orange-700 hover:bg-orange-50 transition-colors flex items-center gap-2 focus-visible:bg-orange-50 focus-visible:outline-none"
+              role="menuitem"
+            >
+              <AppWindow className="w-3 h-3" />
+              Create with Submission App
+            </button>
+          )}
+          {onOpenProgramTwin && (
+            <button
+              onClick={() => {
+                onOpenProgramTwin();
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-blue-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
+              role="menuitem"
+            >
+              <Target className="w-3 h-3" />
+              Show in Program Twin
+            </button>
+          )}
           <button
             onClick={closeContextMenu}
-            className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-400 hover:bg-zinc-50 transition-colors"
+            className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-400 hover:bg-zinc-50 transition-colors focus-visible:bg-zinc-50 focus-visible:outline-none"
+            role="menuitem"
           >
             Cancel
           </button>

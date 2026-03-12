@@ -166,8 +166,9 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
         {onCreateNew && (
           <button
             onClick={onCreateNew}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+            className="p-1.5 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             title="New document"
+            aria-label="New document"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
@@ -189,8 +190,9 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                   toggleFolder(folder.key);
                   onSelectFolder(folder.key);
                 }}
+                aria-expanded={isExpanded}
                 className={cn(
-                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-colors group',
+                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-colors group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
                   isFolderSelected ? 'bg-blue-50 text-blue-700' : 'text-zinc-600 hover:bg-zinc-50'
                 )}
                 data-testid={`folder-${folder.key}`}
@@ -220,7 +222,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                       key={a.id}
                       onClick={() => onSelect(a)}
                       className={cn(
-                        'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-colors',
+                        'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
                         isSelected
                           ? 'bg-blue-100/70 text-blue-800'
                           : 'text-zinc-600 hover:bg-zinc-50'

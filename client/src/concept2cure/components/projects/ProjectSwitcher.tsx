@@ -382,14 +382,28 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Modal */}
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-project-title"
+        onKeyDown={e => {
+          if (e.key === 'Escape') onClose();
+        }}
+        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+      >
         <form onSubmit={handleSubmit}>
           {/* Header */}
           <div className="px-6 py-4 border-b border-zinc-100">
-            <h2 className="text-lg font-semibold text-zinc-900">New Project</h2>
+            <h2 id="new-project-title" className="text-lg font-semibold text-zinc-900">
+              New Project
+            </h2>
             <p className="text-sm text-zinc-500 mt-1">Create a new regulatory submission project</p>
           </div>
 
@@ -424,8 +438,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                       key={submissionType}
                       type="button"
                       onClick={() => setType(submissionType)}
+                      aria-pressed={isSelected}
                       className={cn(
-                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
+                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                         isSelected
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-zinc-200 hover:border-zinc-300'
@@ -531,7 +546,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             >
               Cancel
             </button>
@@ -539,7 +554,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               type="submit"
               disabled={!name.trim()}
               className={cn(
-                'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all',
+                'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                 name.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-zinc-300 cursor-not-allowed'
               )}
             >
@@ -594,14 +609,28 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-switcher-title"
+        onKeyDown={e => {
+          if (e.key === 'Escape') onClose();
+        }}
+        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150"
+      >
         {/* Header */}
         <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-100">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-zinc-900">Switch Project</h2>
+            <h2 id="project-switcher-title" className="text-sm font-semibold text-zinc-900">
+              Switch Project
+            </h2>
             <button
               onClick={onCreateProject}
               className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
@@ -631,9 +660,10 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                 key={tab}
                 onClick={() => setFilter(tab)}
                 className={cn(
-                  'px-2.5 py-1 text-[11px] font-medium rounded transition-colors capitalize',
+                  'px-2.5 py-1 text-[11px] font-medium rounded transition-colors capitalize focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                   filter === tab ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
                 )}
+                aria-pressed={filter === tab}
               >
                 {tab}
               </button>
@@ -840,14 +870,28 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Modal */}
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-project-title"
+        onKeyDown={e => {
+          if (e.key === 'Escape') onClose();
+        }}
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+      >
         <form onSubmit={handleSubmit}>
           {/* Header */}
           <div className="px-6 py-4 border-b border-zinc-100">
-            <h2 className="text-lg font-semibold text-zinc-900">Edit Project</h2>
+            <h2 id="edit-project-title" className="text-lg font-semibold text-zinc-900">
+              Edit Project
+            </h2>
             <p className="text-sm text-zinc-500 mt-1">Update project metadata</p>
           </div>
 
@@ -935,14 +979,14 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
-              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             >
               Save Changes
             </button>

@@ -46,15 +46,21 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
   return (
     <div className="hidden lg:flex w-72 shrink-0 border-l border-zinc-200 flex-col bg-zinc-50/30 min-h-0">
       {/* Tab bar */}
-      <div className="flex items-center border-b border-zinc-200 px-1 shrink-0 overflow-x-auto">
+      <div
+        className="flex items-center border-b border-zinc-200 px-1 shrink-0 overflow-x-auto"
+        role="tablist"
+        aria-label="Section context"
+      >
         {TABS.map(tab => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium whitespace-nowrap transition-colors border-b-2',
+                'flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium whitespace-nowrap transition-colors border-b-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                 activeTab === tab.id
                   ? 'border-violet-500 text-violet-700'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700'
@@ -307,7 +313,8 @@ const PlacementItem: React.FC<{ module: string; label: string; sections: string[
     <div className="rounded-lg border border-zinc-200 bg-white">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-2.5 py-2 text-left"
+        aria-expanded={open}
+        className="w-full flex items-center gap-2 px-2.5 py-2 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
       >
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-bold leading-none flex-shrink-0">
           M{module}

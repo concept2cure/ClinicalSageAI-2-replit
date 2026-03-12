@@ -60,7 +60,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={!projectId || isUploading}
-          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40 transition-colors"
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           {isUploading ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -115,10 +115,11 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
                 <button
                   onClick={() => removeDocument(doc.id)}
                   className={cn(
-                    'flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
-                    'p-0.5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50'
+                    'flex-shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity',
+                    'p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus-visible:opacity-100'
                   )}
                   title="Remove file"
+                  aria-label={`Remove ${doc.name}`}
                 >
                   <X className="w-3 h-3" />
                 </button>

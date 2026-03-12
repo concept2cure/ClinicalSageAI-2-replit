@@ -89,7 +89,8 @@ const WorkspaceGroup: React.FC<{
     <div className="mt-1">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest hover:text-zinc-500 transition-colors"
+        aria-expanded={open}
+        className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest hover:text-zinc-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -124,14 +125,20 @@ const NavItem: React.FC<{
   return (
     <button
       onClick={onClick}
+      aria-current={active ? 'page' : undefined}
       className={cn(
-        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-[12px] transition-all duration-150 rounded-md',
+        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-[12px] transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         active
           ? accent
             ? `${accent.bg} ${accent.text} font-medium`
             : 'bg-zinc-200/80 text-zinc-900 font-medium'
           : accent
-            ? `text-zinc-600 hover:${accent.bg} hover:${accent.text}`
+            ? cn(
+                'text-zinc-600',
+                accent.bg === 'bg-blue-50' && 'hover:bg-blue-50 hover:text-blue-700',
+                accent.bg === 'bg-violet-50' && 'hover:bg-violet-50 hover:text-violet-700',
+                accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
+              )
             : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
       )}
     >
@@ -168,8 +175,16 @@ const ConvoRow: React.FC<{
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={cn(
-        'group relative flex items-center gap-2 mx-2 px-3 py-2 rounded-lg cursor-pointer select-none transition-colors',
+        'group relative flex items-center gap-2 mx-2 px-3 py-2 rounded-lg cursor-pointer select-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         isActive
           ? 'bg-zinc-200/80 text-zinc-900'
           : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -177,13 +192,17 @@ const ConvoRow: React.FC<{
     >
       <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-50" />
       <span className="flex-1 text-sm truncate leading-5">{convo.title}</span>
-      {hovered && (
+      {(hovered || true) && (
         <button
           onClick={e => {
             e.stopPropagation();
             onDelete();
           }}
-          className="flex-shrink-0 p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-red-500 transition-colors"
+          aria-label={`Delete conversation: ${convo.title}`}
+          className={cn(
+            'flex-shrink-0 p-1 rounded text-zinc-400 hover:bg-zinc-200 hover:text-red-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-all',
+            hovered ? 'opacity-100' : 'opacity-0 focus-visible:opacity-100'
+          )}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -274,35 +293,39 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   // ── Collapsed icon-only strip ──────────────────────────────────────────────
   if (isCollapsed) {
     return (
-      <aside className="flex flex-col h-full w-14 bg-zinc-50 border-r border-zinc-200 items-center py-3 gap-2 flex-shrink-0">
+      <aside
+        className="flex flex-col h-full w-14 bg-zinc-50 border-r border-zinc-200 items-center py-3 gap-2 flex-shrink-0"
+        role="navigation"
+        aria-label="Main sidebar"
+      >
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <button
           onClick={onNewChat}
-          title="New chat"
-          className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-700 transition-colors"
+          aria-label="New chat"
+          className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           <Plus className="w-4 h-4" />
         </button>
         <button
           onClick={onOpenProjects}
-          title="Projects"
-          className="w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+          aria-label="Projects"
+          className="w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           <FolderOpen className="w-4 h-4" />
         </button>
         <button
           onClick={onToggleCollapse}
-          title="Expand sidebar"
-          className="mt-auto w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+          aria-label="Expand sidebar"
+          className="mt-auto w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
         <button
           onClick={onOpenSettings}
-          title="Settings"
-          className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+          aria-label="Settings"
+          className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -315,7 +338,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
     <>
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onToggleCollapse} />
-      <aside className="flex flex-col h-full w-56 bg-zinc-50/80 border-r border-zinc-100 flex-shrink-0 fixed z-50 md:static md:z-auto">
+      <aside
+        className="flex flex-col h-full w-56 bg-zinc-50/80 border-r border-zinc-100 flex-shrink-0 fixed z-50 md:static md:z-auto"
+        role="navigation"
+        aria-label="Main sidebar"
+      >
         {/* Brand header */}
         <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -326,7 +353,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </div>
           <button
             onClick={onToggleCollapse}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 transition-colors"
+            aria-label="Collapse sidebar"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -336,7 +364,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[12px] font-medium hover:bg-zinc-700 transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[12px] font-medium hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
             New conversation
@@ -347,7 +375,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onOpenProjects}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400" />
             My projects
@@ -568,7 +596,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="flex-shrink-0 border-t border-zinc-100 p-2">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
               <span className="text-[10px] font-bold text-violet-700 leading-none">
