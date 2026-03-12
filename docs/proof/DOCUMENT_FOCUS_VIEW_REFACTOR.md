@@ -154,35 +154,35 @@ All screenshots saved to `test-artifacts/document-focus-refactor/`.
 
 #### 1366×768 Viewport
 
-| # | Screenshot | File Size | Description |
-|---|-----------|-----------|-------------|
-| 01 | `01-projects-hub-1366x768.png` | 117,346 | Projects list — default landing |
-| 02 | `02-project-launcher-1366x768.png` | 97,484 | Project Launcher after clicking RI Copilot |
-| 03 | `03-ri-intelligence-1366x768.png` | 194,606 | RI Copilot Intelligence view (full workspace) |
-| 04 | `04-editor-artifact-list-1366x768.png` | 98,420 | Editor mode — artifact/document list |
-| 05 | `05-editor-document-open-1366x768.png` | 112,409 | Document open — slim toolbar + full-width editor |
-| 06 | `06-editor-intelligence-drawer-1366x768.png` | 132,184 | Intelligence inspector drawer open |
-| 07 | `07-editor-provenance-drawer-1366x768.png` | 159,312 | Provenance inspector drawer open |
-| 08 | `08-editor-compare-drawer-1366x768.png` | 147,155 | Compare inspector drawer open |
-| 09 | `09-editor-audit-drawer-1366x768.png` | 171,059 | Audit inspector drawer open |
-| 10 | `10-ind-workspace-1366x768.png` | 169,940 | IND Workspace (violet accent) |
-| 11 | `11-document-vault-1366x768.png` | 113,886 | Document Vault |
+| #   | Screenshot                                   | File Size | Description                                      |
+| --- | -------------------------------------------- | --------- | ------------------------------------------------ |
+| 01  | `01-projects-hub-1366x768.png`               | 117,346   | Projects list — default landing                  |
+| 02  | `02-project-launcher-1366x768.png`           | 97,484    | Project Launcher after clicking RI Copilot       |
+| 03  | `03-ri-intelligence-1366x768.png`            | 194,606   | RI Copilot Intelligence view (full workspace)    |
+| 04  | `04-editor-artifact-list-1366x768.png`       | 98,420    | Editor mode — artifact/document list             |
+| 05  | `05-editor-document-open-1366x768.png`       | 112,409   | Document open — slim toolbar + full-width editor |
+| 06  | `06-editor-intelligence-drawer-1366x768.png` | 132,184   | Intelligence inspector drawer open               |
+| 07  | `07-editor-provenance-drawer-1366x768.png`   | 159,312   | Provenance inspector drawer open                 |
+| 08  | `08-editor-compare-drawer-1366x768.png`      | 147,155   | Compare inspector drawer open                    |
+| 09  | `09-editor-audit-drawer-1366x768.png`        | 171,059   | Audit inspector drawer open                      |
+| 10  | `10-ind-workspace-1366x768.png`              | 169,940   | IND Workspace (violet accent)                    |
+| 11  | `11-document-vault-1366x768.png`             | 113,886   | Document Vault                                   |
 
 #### 1440×900 Viewport
 
-| # | Screenshot | File Size | Description |
-|---|-----------|-----------|-------------|
-| 01 | `01-projects-hub-1440x900.png` | 123,914 | Projects list — default landing |
-| 02 | `02-project-launcher-1440x900.png` | 103,041 | Project Launcher after clicking RI Copilot |
-| 03 | `03-ri-intelligence-1440x900.png` | 215,109 | RI Copilot Intelligence view (full workspace) |
-| 04 | `04-editor-artifact-list-1440x900.png` | 103,797 | Editor mode — artifact/document list |
-| 05 | `05-editor-document-open-1440x900.png` | 117,812 | Document open — slim toolbar + full-width editor |
-| 06 | `06-editor-intelligence-drawer-1440x900.png` | 135,784 | Intelligence inspector drawer open |
-| 07 | `07-editor-provenance-drawer-1440x900.png` | 172,800 | Provenance inspector drawer open |
-| 08 | `08-editor-compare-drawer-1440x900.png` | 152,945 | Compare inspector drawer open |
-| 09 | `09-editor-audit-drawer-1440x900.png` | 184,354 | Audit inspector drawer open |
-| 10 | `10-ind-workspace-1440x900.png` | 182,017 | IND Workspace (violet accent) |
-| 11 | `11-document-vault-1440x900.png` | 131,695 | Document Vault |
+| #   | Screenshot                                   | File Size | Description                                      |
+| --- | -------------------------------------------- | --------- | ------------------------------------------------ |
+| 01  | `01-projects-hub-1440x900.png`               | 123,914   | Projects list — default landing                  |
+| 02  | `02-project-launcher-1440x900.png`           | 103,041   | Project Launcher after clicking RI Copilot       |
+| 03  | `03-ri-intelligence-1440x900.png`            | 215,109   | RI Copilot Intelligence view (full workspace)    |
+| 04  | `04-editor-artifact-list-1440x900.png`       | 103,797   | Editor mode — artifact/document list             |
+| 05  | `05-editor-document-open-1440x900.png`       | 117,812   | Document open — slim toolbar + full-width editor |
+| 06  | `06-editor-intelligence-drawer-1440x900.png` | 135,784   | Intelligence inspector drawer open               |
+| 07  | `07-editor-provenance-drawer-1440x900.png`   | 172,800   | Provenance inspector drawer open                 |
+| 08  | `08-editor-compare-drawer-1440x900.png`      | 152,945   | Compare inspector drawer open                    |
+| 09  | `09-editor-audit-drawer-1440x900.png`        | 184,354   | Audit inspector drawer open                      |
+| 10  | `10-ind-workspace-1440x900.png`              | 182,017   | IND Workspace (violet accent)                    |
+| 11  | `11-document-vault-1440x900.png`             | 131,695   | Document Vault                                   |
 
 ### Uniqueness Verification
 
@@ -194,22 +194,22 @@ All screenshots saved to `test-artifacts/document-focus-refactor/`.
 
 ## 9. Runtime Acceptance Matrix
 
-| Check | 1366×768 | 1440×900 | Verdict |
-|-------|----------|----------|---------|
-| Projects hub renders | PASS | PASS | ✅ |
-| RI Copilot → Project Launcher | PASS | PASS | ✅ |
-| Open Project Workspace → Intelligence | PASS | PASS | ✅ |
-| Toggle Editor → Artifact list | PASS | PASS | ✅ |
-| Open document → Editor + toolbar | PASS | PASS | ✅ |
-| Editor full-width (no side panels) | PASS | PASS | ✅ |
-| Intelligence drawer toggles on | PASS | PASS | ✅ |
-| Provenance drawer toggles on | PASS | PASS | ✅ |
-| Compare drawer toggles on | PASS | PASS | ✅ |
-| Audit drawer toggles on | PASS | PASS | ✅ |
-| Only one inspector open at a time | PASS | PASS | ✅ |
-| IND Workspace accessible from sidebar | PASS | PASS | ✅ |
-| Document Vault accessible from sidebar | PASS | PASS | ✅ |
-| Sidebar visible throughout navigation | PASS | PASS | ✅ |
-| No React errors after hooks fix | PASS | PASS | ✅ |
+| Check                                  | 1366×768 | 1440×900 | Verdict |
+| -------------------------------------- | -------- | -------- | ------- |
+| Projects hub renders                   | PASS     | PASS     | ✅      |
+| RI Copilot → Project Launcher          | PASS     | PASS     | ✅      |
+| Open Project Workspace → Intelligence  | PASS     | PASS     | ✅      |
+| Toggle Editor → Artifact list          | PASS     | PASS     | ✅      |
+| Open document → Editor + toolbar       | PASS     | PASS     | ✅      |
+| Editor full-width (no side panels)     | PASS     | PASS     | ✅      |
+| Intelligence drawer toggles on         | PASS     | PASS     | ✅      |
+| Provenance drawer toggles on           | PASS     | PASS     | ✅      |
+| Compare drawer toggles on              | PASS     | PASS     | ✅      |
+| Audit drawer toggles on                | PASS     | PASS     | ✅      |
+| Only one inspector open at a time      | PASS     | PASS     | ✅      |
+| IND Workspace accessible from sidebar  | PASS     | PASS     | ✅      |
+| Document Vault accessible from sidebar | PASS     | PASS     | ✅      |
+| Sidebar visible throughout navigation  | PASS     | PASS     | ✅      |
+| No React errors after hooks fix        | PASS     | PASS     | ✅      |
 
 **Overall: 15/15 PASS at both viewports. ACCEPTED.**

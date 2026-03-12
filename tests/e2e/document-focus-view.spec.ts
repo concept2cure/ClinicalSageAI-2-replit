@@ -17,7 +17,7 @@ const jwt = require('jsonwebtoken');
 
 const APP_BASE = process.env.APP_BASE || 'http://localhost:5000';
 const JWT_SECRET = process.env.JWT_SECRET || 'trialsage-codespace-jwt-secret-2026';
-const SCREENSHOT_DIR = path.resolve(process.cwd(), 'test-artifacts/document-focus-refactor');
+const SCREENSHOT_DIR = path.resolve(process.cwd(), 'test-artifacts/document-focus-final');
 
 fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 

@@ -1920,86 +1920,75 @@ export const ZenApp: React.FC = () => {
           {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
           {!embeddedModule && layoutMode === 'regulatory-workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
-              {/* ── RI Copilot Header ──────────────────────────────────── */}
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('assistant')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Chat</span>
-                </button>
-                <div className="w-px h-4 bg-zinc-200" />
-                <Brain className="w-4 h-4 text-blue-500" />
-                <div className="min-w-0">
-                  <span className="text-sm font-medium text-zinc-900">RI Copilot</span>
-                  <span className="text-xs text-zinc-400 ml-2 hidden md:inline">
-                    Historical evidence, precedent intelligence, and regulatory reasoning
-                  </span>
-                </div>
-                {activeProject && (
-                  <span className="hidden sm:inline text-[10px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 font-medium ml-1">
-                    {activeProject.name}
-                    {activeProject.type && ` · ${activeProject.type}`}
-                  </span>
-                )}
-                {/* Header CTAs */}
-                <div className="ml-auto flex items-center gap-1.5">
+              {/* ── Header — only visible in intelligence mode.
+                   Editor mode: EditorPanel owns its own toolbar. Zero extra chrome. */}
+              {riViewMode === 'intelligence' && (
+                <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                   <button
-                    onClick={() => {
-                      const content = `<h1>Evidence-Based Regulatory Analysis</h1>
+                    onClick={() => setLayoutMode('projects')}
+                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Projects</span>
+                  </button>
+                  <span className="text-zinc-200">·</span>
+                  <Brain className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="text-xs font-medium text-zinc-800">RI Copilot</span>
+                  {activeProject && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                      {activeProject.name}
+                    </span>
+                  )}
+                  <div className="ml-auto flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        const content = `<h1>Evidence-Based Regulatory Analysis</h1>
 <h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'N/A'})</h2>
 <p>Generated from RI Copilot intelligence canvas.</p>
 <h2>Evidence Summary</h2><p>[Evidence data populated from CSR repository and precedent engine.]</p>
 <h2>Recommendations</h2><p>[Strategic recommendations based on historical precedents.]</p>`;
-                      setPendingEditorContent({
-                        content,
-                        title: `Evidence Analysis — ${activeProject?.name || activeProject?.type}`,
-                        ctdSection: undefined,
-                      });
-                      setRiViewMode('editor');
-                    }}
-                    className="hidden md:flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-                  >
-                    <FileText className="w-3 h-3" />
-                    Generate Document
-                  </button>
-                  <button
-                    onClick={() => setRiViewMode('intelligence')}
-                    className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md font-medium bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Evidence
-                  </button>
-                  {/* View toggle */}
-                  <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
-                    <button
-                      data-testid="view-toggle-intelligence"
-                      onClick={() => setRiViewMode('intelligence')}
-                      className={cn(
-                        'px-2.5 py-1 text-[11px] font-medium transition-colors',
-                        riViewMode === 'intelligence'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-zinc-500 hover:bg-zinc-50'
-                      )}
+                        setPendingEditorContent({
+                          content,
+                          title: `Evidence Analysis — ${activeProject?.name || activeProject?.type}`,
+                          ctdSection: undefined,
+                        });
+                        setRiViewMode('editor');
+                      }}
+                      className="hidden md:flex items-center gap-1 px-2 py-0.5 text-[11px] rounded font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                     >
-                      Intelligence
+                      <FileText className="w-3 h-3" />
+                      Generate
                     </button>
-                    <button
-                      data-testid="view-toggle-editor"
-                      onClick={() => setRiViewMode('editor')}
-                      className={cn(
-                        'px-2.5 py-1 text-[11px] font-medium transition-colors',
-                        riViewMode === 'editor'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-zinc-500 hover:bg-zinc-50'
-                      )}
-                    >
-                      Editor
-                    </button>
+                    {/* View toggle */}
+                    <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
+                      <button
+                        data-testid="view-toggle-intelligence"
+                        onClick={() => setRiViewMode('intelligence')}
+                        className={cn(
+                          'px-2 py-0.5 text-[11px] font-medium transition-colors',
+                          riViewMode === 'intelligence'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'text-zinc-500 hover:bg-zinc-50'
+                        )}
+                      >
+                        Intelligence
+                      </button>
+                      <button
+                        data-testid="view-toggle-editor"
+                        onClick={() => setRiViewMode('editor')}
+                        className={cn(
+                          'px-2 py-0.5 text-[11px] font-medium transition-colors',
+                          riViewMode === 'editor'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'text-zinc-500 hover:bg-zinc-50'
+                        )}
+                      >
+                        Editor
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* ── Body: Intelligence mode = full 3-pane RICopilotHome ──── */}
               {/* ── Body: Editor mode = Editor + Intelligence Panel + Chat ── */}
@@ -2049,40 +2038,44 @@ export const ZenApp: React.FC = () => {
                 </div>
               )}
 
-              {/* ── Bottom panels toggle bar ────────────────────────── */}
-              <div className="shrink-0 flex items-center gap-1 px-3 py-1.5 border-t border-zinc-200 bg-zinc-50/60">
-                {!regChatOpen && (
+              {/* ── Bottom panels — hidden in editor mode for clean document focus ── */}
+              {riViewMode !== 'editor' && (
+                <div className="shrink-0 flex items-center gap-1 px-3 py-1 border-t border-zinc-100 bg-zinc-50/40">
+                  {!regChatOpen && (
+                    <button
+                      onClick={() => setRegChatOpen(true)}
+                      className="flex items-center gap-1 px-2 py-0.5 text-[11px] text-zinc-500 hover:bg-zinc-100 rounded"
+                    >
+                      <MessageSquare className="w-3 h-3" /> Chat
+                    </button>
+                  )}
                   <button
-                    onClick={() => setRegChatOpen(true)}
-                    className="flex items-center gap-1 px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-100 rounded-md"
+                    onClick={() => setRegArtifactsOpen(!regArtifactsOpen)}
+                    className={cn(
+                      'flex items-center gap-1 px-2 py-0.5 text-[11px] rounded',
+                      regArtifactsOpen
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-zinc-500 hover:bg-zinc-100'
+                    )}
                   >
-                    <MessageSquare className="w-3 h-3" /> RI Chat
+                    <Layers className="w-3 h-3" /> Artifacts
                   </button>
-                )}
-                <button
-                  onClick={() => setRegArtifactsOpen(!regArtifactsOpen)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-1 text-[11px] rounded-md',
-                    regArtifactsOpen
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-zinc-600 hover:bg-zinc-100'
-                  )}
-                >
-                  <Layers className="w-3 h-3" /> Artifacts
-                </button>
-                <button
-                  onClick={() => setRegSimOpen(!regSimOpen)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-1 text-[11px] rounded-md',
-                    regSimOpen ? 'bg-violet-100 text-violet-700' : 'text-zinc-600 hover:bg-zinc-100'
-                  )}
-                >
-                  <BarChart2 className="w-3 h-3" /> Simulation
-                </button>
-              </div>
+                  <button
+                    onClick={() => setRegSimOpen(!regSimOpen)}
+                    className={cn(
+                      'flex items-center gap-1 px-2 py-0.5 text-[11px] rounded',
+                      regSimOpen
+                        ? 'bg-violet-50 text-violet-600'
+                        : 'text-zinc-500 hover:bg-zinc-100'
+                    )}
+                  >
+                    <BarChart2 className="w-3 h-3" /> Simulation
+                  </button>
+                </div>
+              )}
 
-              {/* ── Artifacts / Reports Row ─────────────────────────── */}
-              {regArtifactsOpen && (
+              {/* ── Artifacts / Reports Row (hidden in editor focus mode) ── */}
+              {riViewMode !== 'editor' && regArtifactsOpen && (
                 <div className="shrink-0 border-t border-zinc-200 bg-white">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 bg-zinc-50/50">
                     <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
@@ -2187,8 +2180,8 @@ export const ZenApp: React.FC = () => {
                 </div>
               )}
 
-              {/* ── Simulation / Scenario Row ───────────────────────── */}
-              {regSimOpen && (
+              {/* ── Simulation / Scenario Row (hidden in editor focus mode) ── */}
+              {riViewMode !== 'editor' && regSimOpen && (
                 <div className="shrink-0 border-t border-zinc-200 bg-white">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 bg-zinc-50/50">
                     <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">

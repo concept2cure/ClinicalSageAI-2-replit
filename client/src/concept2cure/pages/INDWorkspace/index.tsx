@@ -893,11 +893,11 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
     <>
       <div className="flex-1 flex flex-col bg-white min-h-0 border-t-2 border-violet-500/20">
         {/* Header — ultra minimal */}
-        <div className="border-b border-zinc-100 px-6 py-4">
+        <div className="border-b border-zinc-100 px-5 py-2.5">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-zinc-900">{projectName}</h1>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <h1 className="text-sm font-semibold text-zinc-900">{projectName}</h1>
+              <p className="text-[11px] text-zinc-400 mt-0.5">
                 IND Application • eCTD 4.0 • {requiredLeaves} required sections • ~{totalHours}h
                 estimated
               </p>
@@ -955,7 +955,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
           </div>
 
           {/* Module progress bars */}
-          <div className="grid grid-cols-5 gap-4 mt-4">
+          <div className="grid grid-cols-5 gap-3 mt-2.5">
             {modules.map(mod => (
               <div key={mod.code}>
                 <div className="flex items-center justify-between mb-1">
@@ -973,7 +973,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
         </div>
 
         {/* Toolbar */}
-        <div className="border-b border-zinc-100 px-6 py-2 flex items-center gap-3">
+        <div className="border-b border-zinc-100 px-5 py-1.5 flex items-center gap-2">
           {/* Search */}
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />

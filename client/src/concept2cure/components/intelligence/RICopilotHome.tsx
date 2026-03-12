@@ -283,7 +283,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
       {/* ═══════════════════════════════════════════════════════════════════════
           LEFT INVESTIGATION RAIL
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="w-64 shrink-0 border-r border-zinc-200 bg-zinc-50/50 flex flex-col min-h-0">
+      <div className="w-56 shrink-0 border-r border-zinc-100 bg-zinc-50/30 flex flex-col min-h-0">
         {/* Investigation prompt input */}
         <div className="p-3 border-b border-zinc-100 shrink-0">
           <div className="relative">
@@ -441,7 +441,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           CENTER INTELLIGENCE CANVAS
           ═══════════════════════════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto zen-scroll min-w-0">
-        <div className="max-w-3xl mx-auto px-6 py-6">
+        <div className="max-w-3xl mx-auto px-5 py-4">
           {/* ── 1. Intelligence Summary ─────────────────────────────── */}
           <div className="mb-5">
             <p className="text-sm text-zinc-500">
@@ -835,7 +835,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
       {/* ═══════════════════════════════════════════════════════════════════════
           RIGHT GOVERNANCE RAIL
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="hidden lg:flex w-64 shrink-0 border-l border-zinc-200 bg-zinc-50/30 flex-col min-h-0">
+      <div className="hidden xl:flex w-52 shrink-0 border-l border-zinc-100 bg-zinc-50/20 flex-col min-h-0">
         <div className="flex-1 overflow-y-auto zen-scroll">
           {/* Source Lineage */}
           <div className="p-3 border-b border-zinc-100">
