@@ -167,14 +167,8 @@ const RICopilotHome = lazy(() =>
   }))
 );
 
-// DocumentAppHub removed — absorbed into ProjectLauncher (Wave 2)
-
-// Project Launcher (project-level bridge — track-aware CTAs)
-const ProjectLauncher = lazy(() =>
-  import('./components/launcher/ProjectLauncher').then(m => ({
-    default: m.ProjectLauncher,
-  }))
-);
+// DocumentAppHub removed — absorbed into workspace flow (Wave 2)
+// ProjectLauncher removed — all project routes go directly to regulatory-workspace
 
 // ─── Regulatory module lazy-loads for tool panels ─────────────────────────────
 const CAPAManagementPanel = lazy(() =>
@@ -253,8 +247,7 @@ type LayoutMode =
   | 'precedent-intelligence'
   | 'regulatory-workspace'
   | 'document-vault'
-  | 'clinical-trial'
-  | 'project-launcher';
+  | 'clinical-trial';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -737,12 +730,7 @@ export const ZenApp: React.FC = () => {
 
   // Sync URL path when active project or layout changes
   useEffect(() => {
-    if (
-      (layoutMode === 'workspace' ||
-        layoutMode === 'regulatory-workspace' ||
-        layoutMode === 'project-launcher') &&
-      activeProjectId
-    ) {
+    if ((layoutMode === 'workspace' || layoutMode === 'regulatory-workspace') && activeProjectId) {
       // Only update URL if not already on the right project path
       const expected = `/concept2cure/project/${activeProjectId}`;
       if (!window.location.pathname.startsWith(expected)) {
@@ -1883,42 +1871,6 @@ export const ZenApp: React.FC = () => {
             'workspace',
           ].includes(layoutMode) && (
             <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
-          )}
-
-          {/* ── Project Launcher (track-aware bridge) ──────────────────────── */}
-          {!embeddedModule && layoutMode === 'project-launcher' && activeProject && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                </div>
-              }
-            >
-              <ProjectLauncher
-                project={{
-                  id: activeProject.id,
-                  name: activeProject.name,
-                  type: activeProject.type,
-                  description: activeProject.description,
-                  lastUpdated: activeProject.lastUpdated,
-                  conversationCount: activeProject.conversationCount,
-                }}
-                onOpenWorkspace={() => setLayoutMode('regulatory-workspace')}
-                onOpenDocuments={() => {
-                  setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
-                }}
-                onBack={() => {
-                  setLayoutMode('projects');
-                  navigate('/concept2cure');
-                }}
-                onStartChat={() => {
-                  setActiveConversationId(undefined);
-                  setActiveThreadId(undefined);
-                  setLayoutMode('regulatory-workspace');
-                }}
-              />
-            </Suspense>
           )}
 
           {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}

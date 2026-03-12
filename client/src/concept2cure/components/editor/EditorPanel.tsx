@@ -624,8 +624,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     return (
       <div className="flex flex-col h-full bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between h-12 px-4 border-b border-zinc-100 bg-zinc-50/50">
-          <h3 className="text-sm font-semibold text-zinc-700">Project Documents</h3>
+        <div className="flex items-center justify-between h-14 px-5 border-b border-zinc-200/80 bg-gradient-to-r from-zinc-50 to-white">
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-base font-bold text-zinc-800 tracking-tight">Documents</h3>
+            {artifacts.length > 0 && (
+              <span className="text-xs text-zinc-400 font-medium tabular-nums">
+                {artifacts.length}
+              </span>
+            )}
+          </div>
           {artifacts.length > 0 && (
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -733,14 +740,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-zinc-400 text-sm">
-              <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              {artifacts.length === 0
-                ? 'No documents yet. Create one above.'
-                : 'No documents match filters.'}
+            <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+              <FileText className="w-10 h-10 text-zinc-200 mb-3" />
+              <p className="text-sm font-medium text-zinc-500 mb-1">
+                {artifacts.length === 0
+                  ? 'No regulatory documents yet'
+                  : 'No documents match your filters'}
+              </p>
+              <p className="text-xs text-zinc-400 max-w-[240px]">
+                {artifacts.length === 0
+                  ? 'Create your first document above to begin building the submission dossier.'
+                  : 'Try broadening your filter criteria.'}
+              </p>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {filtered.map(a => (
                 <button
                   key={a.id}
@@ -748,37 +762,46 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setActiveArtifact(a);
                     setShowArtifactList(false);
                   }}
-                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-zinc-50 border border-transparent hover:border-zinc-200 transition-colors group"
+                  className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-zinc-200 hover:bg-zinc-50/80 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all group relative"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-700 truncate">{a.title}</span>
-                    <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                  {/* Title row */}
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[13px] font-semibold text-zinc-800 leading-snug line-clamp-2">
+                      {a.title}
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                       <span
-                        className={`px-1 py-0.5 rounded text-[9px] font-medium ${
+                        className={cn(
+                          'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide',
                           a.status === 'approved'
-                            ? 'bg-emerald-100 text-emerald-700'
+                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
                             : a.status === 'locked'
-                              ? 'bg-red-100 text-red-700'
+                              ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
                               : a.status === 'review'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-zinc-100 text-zinc-500'
-                        }`}
+                                ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                                : 'bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200'
+                        )}
                       >
+                        {a.status === 'approved' && <CheckCircle className="w-2.5 h-2.5" />}
+                        {a.status === 'locked' && <Lock className="w-2.5 h-2.5" />}
                         {a.status || 'draft'}
                       </span>
-                      <span className="text-[10px] text-zinc-400">v{a.version}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 mt-0.5">
-                    <span>{a.type?.replace(/_/g, ' ')}</span>
+                  {/* Metadata row */}
+                  <div className="flex items-center gap-1.5 mt-1">
                     {a.ctdSection && (
-                      <>
-                        <span>&middot;</span>
-                        <span className="text-violet-500">CTD {a.ctdSection}</span>
-                      </>
+                      <span className="inline-flex items-center px-1.5 py-px rounded bg-violet-50 text-violet-600 text-[10px] font-semibold ring-1 ring-violet-200/60 tracking-wide">
+                        CTD {a.ctdSection}
+                      </span>
                     )}
-                    <span>&middot;</span>
-                    <span>{new Date(a.updatedAt || a.createdAt).toLocaleDateString()}</span>
+                    <span className="text-[10px] text-zinc-400">{a.type?.replace(/_/g, ' ')}</span>
+                    <span className="text-zinc-300">&middot;</span>
+                    <span className="text-[10px] text-zinc-400 tabular-nums">v{a.version}</span>
+                    <span className="text-zinc-300">&middot;</span>
+                    <span className="text-[10px] text-zinc-400 tabular-nums">
+                      {new Date(a.updatedAt || a.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                 </button>
               ))}

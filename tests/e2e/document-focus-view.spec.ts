@@ -149,7 +149,7 @@ for (const vp of [
       await snap(page, `02-document-clicked-${tag}.png`);
 
       // ── 03: Open first document → direct document-open default ──────
-      const firstDoc = page.locator('.space-y-1 > button').first();
+      const firstDoc = page.locator('div[class*="space-y"] > button').first();
       const hasDoc = await firstDoc.isVisible({ timeout: 3000 }).catch(() => false);
       if (hasDoc) {
         await firstDoc.click();
