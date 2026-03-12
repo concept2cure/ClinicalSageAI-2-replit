@@ -29,6 +29,7 @@ export interface TreeArtifact {
   category: string;
   status?: string;
   ctdSection?: string;
+  templateId?: string;
   version: number;
   updatedAt: string;
 }

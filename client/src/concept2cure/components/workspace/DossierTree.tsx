@@ -26,6 +26,9 @@ import {
   Eye,
   ShieldCheck,
   MoreHorizontal,
+  ClipboardPaste,
+  Info,
+  MapPin,
 } from 'lucide-react';
 import { CTD_HIERARCHY, type DossierNode, type DossierNodeStatus } from '../../models/ctdHierarchy';
 import type { TreeArtifact } from './ProjectFileTree';
@@ -37,6 +40,22 @@ interface DossierTreeProps {
   selectedSection?: string;
   onSelectSection: (ctdSection: string, nodeLabel: string) => void;
   onPlaceArtifact?: (ctdSection: string) => void;
+  /** Per-section metrics from backend */
+  metrics?: Record<
+    string,
+    {
+      artifactCount: number;
+      completionPercent: number;
+      evidenceCount: number;
+      precedentCount: number;
+    }
+  >;
+  /** Active pending move (cut/paste) */
+  pendingMove?: { artifact: TreeArtifact; fromSection: string | null } | null;
+  onPasteHere?: (ctdSection: string) => void;
+  onViewRequirements?: (ctdSection: string) => void;
+  onCutDocument?: (art: TreeArtifact) => void;
+  onCopyCtdPath?: (art: TreeArtifact) => void;
   className?: string;
 }
 
@@ -163,6 +182,15 @@ interface DossierNodeRowProps {
   onSelectSection: (ctdSection: string, label: string) => void;
   counts: SectionCounts;
   onContextMenu: (e: React.MouseEvent, node: DossierNode) => void;
+  metrics?: Record<
+    string,
+    {
+      artifactCount: number;
+      completionPercent: number;
+      evidenceCount: number;
+      precedentCount: number;
+    }
+  >;
 }
 
 function DossierNodeRow({
@@ -174,6 +202,7 @@ function DossierNodeRow({
   onSelectSection,
   counts,
   onContextMenu,
+  metrics,
 }: DossierNodeRowProps) {
   const isExpanded = expanded.has(node.nodeId);
   const hasChildren = node.children.length > 0;
@@ -232,6 +261,37 @@ function DossierNodeRow({
         {/* Status */}
         <StatusIndicator status={status} />
 
+        {/* Completion mini-bar (from backend metrics) */}
+        {metrics?.[node.ctdSection] && metrics[node.ctdSection].artifactCount > 0 && (
+          <span
+            className="shrink-0 w-[28px] h-[4px] bg-zinc-100 rounded-full overflow-hidden"
+            title={`${metrics[node.ctdSection].completionPercent}% complete`}
+          >
+            <span
+              className="block h-full bg-blue-500 rounded-full"
+              style={{ width: `${Math.min(100, metrics[node.ctdSection].completionPercent)}%` }}
+            />
+          </span>
+        )}
+
+        {/* Evidence/precedent chips */}
+        {metrics?.[node.ctdSection] && metrics[node.ctdSection].evidenceCount > 0 && (
+          <span
+            className="text-[9px] text-emerald-600 bg-emerald-50 rounded px-0.5 shrink-0"
+            title="Evidence linked"
+          >
+            E{metrics[node.ctdSection].evidenceCount}
+          </span>
+        )}
+        {metrics?.[node.ctdSection] && metrics[node.ctdSection].precedentCount > 0 && (
+          <span
+            className="text-[9px] text-violet-600 bg-violet-50 rounded px-0.5 shrink-0"
+            title="Precedents"
+          >
+            P{metrics[node.ctdSection].precedentCount}
+          </span>
+        )}
+
         {/* Action dot */}
         <span className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <MoreHorizontal className="w-3 h-3 text-zinc-400" />
@@ -251,6 +311,7 @@ function DossierNodeRow({
             onSelectSection={onSelectSection}
             counts={counts}
             onContextMenu={onContextMenu}
+            metrics={metrics}
           />
         ))}
     </>
@@ -264,6 +325,12 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   selectedSection,
   onSelectSection,
   onPlaceArtifact,
+  metrics,
+  pendingMove,
+  onPasteHere,
+  onViewRequirements,
+  onCutDocument: _onCutDocument,
+  onCopyCtdPath: _onCopyCtdPath,
   className,
 }) => {
   // Default: expand Module roots
@@ -318,6 +385,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
             onSelectSection={onSelectSection}
             counts={counts}
             onContextMenu={handleContextMenu}
+            metrics={metrics}
           />
         ))}
       </div>
@@ -332,6 +400,21 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
           <div className="px-3 py-1.5 border-b border-zinc-100">
             <p className="text-[10px] text-zinc-400 font-mono">{contextMenu.ctdSection}</p>
             <p className="text-[11px] text-zinc-600 truncate">{contextMenu.label}</p>
+            {metrics?.[contextMenu.ctdSection] && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[9px] text-zinc-400">
+                  {metrics[contextMenu.ctdSection].completionPercent}% complete
+                </span>
+                <span className="w-[40px] h-[3px] bg-zinc-100 rounded-full overflow-hidden">
+                  <span
+                    className="block h-full bg-blue-500 rounded-full"
+                    style={{
+                      width: `${Math.min(100, metrics[contextMenu.ctdSection].completionPercent)}%`,
+                    }}
+                  />
+                </span>
+              </div>
+            )}
           </div>
           {onPlaceArtifact && (
             <button
@@ -339,9 +422,22 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPlaceArtifact(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2"
             >
+              <MapPin className="w-3 h-3" />
               Place document here…
+            </button>
+          )}
+          {pendingMove && onPasteHere && (
+            <button
+              onClick={() => {
+                onPasteHere(contextMenu.ctdSection);
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2"
+            >
+              <ClipboardPaste className="w-3 h-3" />
+              Paste "{pendingMove.artifact.title}" here
             </button>
           )}
           <button
@@ -349,10 +445,23 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
               onSelectSection(contextMenu.ctdSection, contextMenu.label);
               closeContextMenu();
             }}
-            className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2"
           >
+            <FileText className="w-3 h-3" />
             View section documents
           </button>
+          {onViewRequirements && (
+            <button
+              onClick={() => {
+                onViewRequirements(contextMenu.ctdSection);
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2"
+            >
+              <Info className="w-3 h-3" />
+              View section requirements
+            </button>
+          )}
           <button
             onClick={closeContextMenu}
             className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-400 hover:bg-zinc-50 transition-colors"

@@ -80,6 +80,20 @@ function TemplateNodeRow({
         {/* Label */}
         <span className="text-[12px] truncate flex-1 leading-snug">{node.label}</span>
 
+        {/* Template type badge */}
+        {node.templateType && node.templateType !== 'starter' && (
+          <span
+            className={cn(
+              'text-[9px] px-1 rounded shrink-0 font-medium',
+              node.templateType === 'subsection'
+                ? 'bg-blue-50 text-blue-600'
+                : 'bg-amber-50 text-amber-600'
+            )}
+          >
+            {node.templateType}
+          </span>
+        )}
+
         {/* Create button */}
         <button
           onClick={() => onCreateFromTemplate(node.templateKey, node.ctdSection, node.label)}

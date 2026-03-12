@@ -2278,6 +2278,151 @@ router.put(
 );
 
 /**
+ * GET /api/concept2cure/projects/:projectId/dossier-metrics
+ * Returns per-CTD-section aggregation: artifact counts, status breakdown,
+ * completion percentage, template coverage, and evidence linkage.
+ * Computed from real artifact + provenance data only. No synthetic rollups.
+ */
+router.get('/projects/:projectId/dossier-metrics', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    // Get project DB id
+    const projectDbIdStr = req.params.projectId;
+    const projectDbId = parseInt(projectDbIdStr, 10);
+    if (isNaN(projectDbId)) {
+      return sendError(res, 400, 'Invalid project ID');
+    }
+
+    // Fetch all artifacts for project
+    const allArtifacts = await db
+      .select({
+        id: concept2cureArtifacts.id,
+        artifactId: concept2cureArtifacts.artifactId,
+        ctdSection: concept2cureArtifacts.ctdSection,
+        status: concept2cureArtifacts.status,
+        templateId: concept2cureArtifacts.templateId,
+        type: concept2cureArtifacts.type,
+      })
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectDbId),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      );
+
+    // Fetch provenance events related to evidence (source_input events)
+    const artifactIds = allArtifacts.map(a => a.id);
+    let evidenceEvents: { artifactId: number; eventType: string; eventAction: string }[] = [];
+    if (artifactIds.length > 0) {
+      evidenceEvents = await db
+        .select({
+          artifactId: concept2cureProvenanceEvents.artifactId,
+          eventType: concept2cureProvenanceEvents.eventType,
+          eventAction: concept2cureProvenanceEvents.eventAction,
+        })
+        .from(concept2cureProvenanceEvents)
+        .where(
+          and(
+            inArray(concept2cureProvenanceEvents.artifactId, artifactIds),
+            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+          )
+        );
+    }
+
+    // Build per-artifact evidence map
+    const artifactEvidenceMap = new Map<number, { sourceInputs: number; generations: number }>();
+    for (const ev of evidenceEvents) {
+      const entry = artifactEvidenceMap.get(ev.artifactId) || { sourceInputs: 0, generations: 0 };
+      if (ev.eventType === 'source_input') entry.sourceInputs++;
+      if (ev.eventType === 'generation') entry.generations++;
+      artifactEvidenceMap.set(ev.artifactId, entry);
+    }
+
+    // Aggregate per CTD section
+    const sectionMetrics: Record<
+      string,
+      {
+        artifactCount: number;
+        draftCount: number;
+        reviewCount: number;
+        approvedCount: number;
+        lockedCount: number;
+        templateCoverageAvailable: boolean;
+        evidenceCount: number;
+        precedentCount: number;
+      }
+    > = {};
+
+    for (const art of allArtifacts) {
+      const section = art.ctdSection || '_unplaced';
+      if (!sectionMetrics[section]) {
+        sectionMetrics[section] = {
+          artifactCount: 0,
+          draftCount: 0,
+          reviewCount: 0,
+          approvedCount: 0,
+          lockedCount: 0,
+          templateCoverageAvailable: false,
+          evidenceCount: 0,
+          precedentCount: 0,
+        };
+      }
+      const m = sectionMetrics[section];
+      m.artifactCount++;
+      const s = (art.status || 'draft').toLowerCase();
+      if (s === 'approved') m.approvedCount++;
+      else if (s === 'locked' || s === 'published') m.lockedCount++;
+      else if (s === 'review' || s === 'under_review') m.reviewCount++;
+      else m.draftCount++;
+      if (art.templateId) m.templateCoverageAvailable = true;
+      const evidence = artifactEvidenceMap.get(art.id);
+      if (evidence) {
+        m.evidenceCount += evidence.sourceInputs;
+        m.precedentCount += evidence.generations;
+      }
+    }
+
+    // Compute completion per section
+    const result: Record<
+      string,
+      {
+        artifactCount: number;
+        draftCount: number;
+        reviewCount: number;
+        approvedCount: number;
+        lockedCount: number;
+        completionPercent: number;
+        templateCoverageAvailable: boolean;
+        evidenceCount: number;
+        precedentCount: number;
+      }
+    > = {};
+
+    for (const [section, m] of Object.entries(sectionMetrics)) {
+      let completionPercent = 0;
+      if (m.artifactCount > 0) {
+        // Weighted: locked=100, approved=85, review=60, draft=30
+        const weighted =
+          m.lockedCount * 100 + m.approvedCount * 85 + m.reviewCount * 60 + m.draftCount * 30;
+        completionPercent = Math.round(weighted / m.artifactCount);
+      }
+      result[section] = { ...m, completionPercent };
+    }
+
+    return sendSuccess(res, result);
+  } catch (error: any) {
+    logConcept2cureError('dossier-metrics', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to compute dossier metrics');
+  }
+});
+
+/**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
  * Create an electronic signature for an artifact version (21 CFR Part 11).
  */

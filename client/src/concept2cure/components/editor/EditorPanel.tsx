@@ -83,6 +83,8 @@ interface EditorPanelProps {
   initialCtdSection?: string;
   /** Called when the pending initial content has been consumed */
   onInitialContentConsumed?: () => void;
+  /** Called when the active document content/title changes (for outline tracking) */
+  onContentChange?: (content: string, title: string) => void;
 }
 
 type AIAction = 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references';
@@ -103,6 +105,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   initialTitle,
   initialCtdSection,
   onInitialContentConsumed,
+  onContentChange,
 }) => {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
@@ -312,6 +315,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     onInitialContentConsumed,
     loadArtifacts,
   ]);
+
+  // ── Notify parent of active doc content changes (for outline) ────────────
+  useEffect(() => {
+    if (onContentChange && activeArtifact) {
+      onContentChange(activeArtifact.content || '', activeArtifact.title || '');
+    }
+  }, [activeArtifact?.content, activeArtifact?.title, onContentChange]);
 
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(

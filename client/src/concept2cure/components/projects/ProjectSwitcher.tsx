@@ -597,7 +597,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[10%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[70vh] animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-100">
           <div className="flex items-center justify-between mb-2">

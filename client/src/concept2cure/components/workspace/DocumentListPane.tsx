@@ -7,7 +7,18 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { FileText, CheckCircle, Lock, Clock, AlertTriangle, Plus } from 'lucide-react';
+import {
+  FileText,
+  CheckCircle,
+  Lock,
+  Clock,
+  AlertTriangle,
+  Plus,
+  Scissors,
+  MapPin,
+  Copy,
+} from 'lucide-react';
+import type { PlacementOperation } from './PlacementDialog';
 import type { TreeArtifact } from './ProjectFileTree';
 
 interface DocumentListPaneProps {
@@ -16,6 +27,9 @@ interface DocumentListPaneProps {
   selectedId?: string;
   onSelect: (doc: TreeArtifact) => void;
   onCreateNew?: () => void;
+  onCutDocument?: (art: TreeArtifact) => void;
+  onCopyCtdPath?: (art: TreeArtifact) => void;
+  onOpenPlacement?: (art: TreeArtifact, op: PlacementOperation) => void;
   className?: string;
 }
 
@@ -54,6 +68,9 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
   selectedId,
   onSelect,
   onCreateNew,
+  onCutDocument,
+  onCopyCtdPath,
+  onOpenPlacement,
   className,
 }) => {
   return (
@@ -103,6 +120,9 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                 <th className="px-3 py-2 font-medium text-zinc-400 text-[10px] uppercase tracking-wider w-24 text-right hidden md:table-cell">
                   Updated
                 </th>
+                {(onCutDocument || onOpenPlacement || onCopyCtdPath) && (
+                  <th className="px-2 py-2 w-8" />
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
@@ -141,6 +161,48 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                       day: 'numeric',
                     })}
                   </td>
+                  {(onCutDocument || onOpenPlacement || onCopyCtdPath) && (
+                    <td className="px-1 py-2">
+                      <div className="flex items-center gap-0.5">
+                        {onCutDocument && doc.status !== 'locked' && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              onCutDocument(doc);
+                            }}
+                            className="p-1 text-zinc-300 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                            title="Cut — move to another section"
+                          >
+                            <Scissors className="w-3 h-3" />
+                          </button>
+                        )}
+                        {onOpenPlacement && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              onOpenPlacement(doc, doc.ctdSection ? 'relocate' : 'place');
+                            }}
+                            className="p-1 text-zinc-300 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                            title={doc.ctdSection ? 'Relocate' : 'Place in dossier'}
+                          >
+                            <MapPin className="w-3 h-3" />
+                          </button>
+                        )}
+                        {onCopyCtdPath && doc.ctdSection && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              onCopyCtdPath(doc);
+                            }}
+                            className="p-1 text-zinc-300 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                            title="Copy CTD path"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

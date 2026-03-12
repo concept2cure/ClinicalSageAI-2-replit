@@ -60,17 +60,6 @@ export interface ArtifactPlacement {
   placedBy?: string;
 }
 
-// ── Template node (for TemplateTree) ─────────────────────────────────────────
-
-export interface TemplateNode {
-  templateKey: string;
-  label: string;
-  ctdSection: string;
-  description?: string;
-  parentTemplateKey?: string;
-  children: TemplateNode[];
-}
-
 // ── Full ICH CTD Hierarchy ───────────────────────────────────────────────────
 // Canonical structure. All trees derive from this.
 
@@ -908,40 +897,347 @@ export const CTD_HIERARCHY: DossierNode[] = [
 // ── IND Template Pyramid ─────────────────────────────────────────────────────
 // Templates layered on CTD nodes with parent→sub→micro hierarchy.
 
+export type TemplateType = 'starter' | 'subsection' | 'micro';
+
+export interface TemplateNode {
+  templateKey: string;
+  label: string;
+  ctdSection: string;
+  description?: string;
+  templateType?: TemplateType;
+  parentTemplateKey?: string;
+  children: TemplateNode[];
+}
+
+// ── Section requirement descriptors ──────────────────────────────────────────
+
+export interface SectionRequirement {
+  ctdSection: string;
+  label: string;
+  description: string;
+  expectedDocTypes: string[];
+  required: boolean;
+  hasTemplates: boolean;
+}
+
+export function getSectionRequirements(ctdSection: string): SectionRequirement | null {
+  const node = findNodeBySection(CTD_HIERARCHY, ctdSection);
+  if (!node) return null;
+  const templates = findTemplatesByCTDSection(IND_TEMPLATES, ctdSection);
+  return {
+    ctdSection,
+    label: node.label,
+    description: SECTION_DESCRIPTIONS[ctdSection] || `Content for CTD section ${ctdSection}.`,
+    expectedDocTypes: SECTION_DOC_TYPES[ctdSection] || ['regulatory_document'],
+    required: !OPTIONAL_SECTIONS.has(ctdSection),
+    hasTemplates: templates.length > 0,
+  };
+}
+
+function findTemplatesByCTDSection(nodes: TemplateNode[], section: string): TemplateNode[] {
+  const result: TemplateNode[] = [];
+  function walk(n: TemplateNode) {
+    if (n.ctdSection === section) result.push(n);
+    n.children.forEach(walk);
+  }
+  nodes.forEach(walk);
+  return result;
+}
+
+const OPTIONAL_SECTIONS = new Set([
+  '1.4',
+  '1.12',
+  '3.3',
+  '4.3',
+  '5.4',
+  '2.3.A',
+  '2.3.R',
+  '3.2.A',
+  '3.2.R',
+]);
+
+const SECTION_DESCRIPTIONS: Record<string, string> = {
+  '1.1': 'FDA forms required for the submission (e.g., Form 1571, 356h).',
+  '1.2': 'Cover letter(s) addressing the submission purpose and contents.',
+  '1.3': 'Sponsor/contact information, financial disclosures, certifications.',
+  '1.14': 'Proposed labeling including prescribing information and patient labeling.',
+  '2.1': 'Table of contents for the CTD.',
+  '2.2': 'Brief introduction to the drug substance and product.',
+  '2.3': 'Quality overall summary covering drug substance and drug product.',
+  '2.4': 'Nonclinical overview summarizing pharmacology, PK and toxicology.',
+  '2.5': 'Clinical overview including benefit-risk assessment.',
+  '2.6': 'Written and tabulated summaries for nonclinical studies.',
+  '2.7': 'Clinical summary of biopharmaceutic, pharmacology, efficacy and safety studies.',
+  '3.2.S':
+    'Drug substance data: general properties, manufacture, characterization, control, stability.',
+  '3.2.S.1': 'Nomenclature, structure, and general properties of the drug substance.',
+  '3.2.S.2':
+    'Manufacturer information, process description, process controls, and controls of materials.',
+  '3.2.S.3': 'Elucidation of structure and other characteristics.',
+  '3.2.S.4':
+    'Specification, analytical procedures, validation, batch analyses, and justification of specification.',
+  '3.2.S.5': 'Description of reference standards or reference materials.',
+  '3.2.S.6': 'Description and suitability of the container closure system.',
+  '3.2.S.7': 'Stability summary, post-approval stability protocol, and stability data.',
+  '3.2.P': 'Drug product data: description, development, manufacture, control, stability.',
+  '3.2.P.1': 'Description of the dosage form and composition.',
+  '3.2.P.2':
+    'Development studies including formulation, manufacturing process, and container closure.',
+  '3.2.P.3': 'Batch formula, manufacturing process description, and process controls.',
+  '3.2.P.4': 'Specifications and analytical procedures for excipients.',
+  '3.2.P.5': 'Specifications, analytical procedures, validation, batch analyses.',
+  '3.2.P.6': 'Description of reference standards used for drug product testing.',
+  '3.2.P.7': 'Description and suitability of the container closure system for drug product.',
+  '3.2.P.8': 'Stability summary, post-approval stability protocol, and stability data.',
+  '4.2.1': 'Reports of pharmacology studies: primary, secondary, safety pharmacology.',
+  '4.2.2': 'Reports of pharmacokinetics studies.',
+  '4.2.3': 'Reports of toxicology studies: single/repeat dose, geno/carcinogenicity, reproductive.',
+  '5.3.5': 'Reports of controlled and uncontrolled clinical efficacy and safety studies.',
+  '5.3.5.1': 'Reports of controlled clinical studies pertinent to the claimed indication.',
+  '5.3.5.2': 'Reports of uncontrolled clinical studies.',
+  '5.3.5.3': 'Reports of analyses of data from more than one study.',
+  '5.3.7': 'Case report forms and individual patient listings.',
+};
+
+const SECTION_DOC_TYPES: Record<string, string[]> = {
+  '1.1': ['form'],
+  '1.2': ['cover_letter'],
+  '1.3': ['administrative_document'],
+  '1.14': ['labeling'],
+  '2.3': ['quality_overall_summary'],
+  '2.4': ['nonclinical_overview'],
+  '2.5': ['clinical_overview'],
+  '2.6': ['nonclinical_summary'],
+  '2.7': ['clinical_summary'],
+  '3.2.S': ['regulatory_document'],
+  '3.2.P': ['regulatory_document'],
+  '4.2': ['study_report'],
+  '5.3.5': ['clinical_study_report'],
+};
+
 export const IND_TEMPLATES: TemplateNode[] = [
+  // ── Module 1: Administrative ──
+  {
+    templateKey: 'tpl-m1-forms',
+    label: 'FDA Forms',
+    ctdSection: '1.1',
+    templateType: 'starter',
+    children: [
+      {
+        templateKey: 'tpl-form-1571',
+        label: 'Form FDA 1571',
+        ctdSection: '1.1',
+        templateType: 'micro',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-form-356h',
+        label: 'Form FDA 356h',
+        ctdSection: '1.1',
+        templateType: 'micro',
+        children: [],
+      },
+    ],
+  },
+  {
+    templateKey: 'tpl-m1-cover',
+    label: 'Cover Letters',
+    ctdSection: '1.2',
+    templateType: 'starter',
+    children: [
+      {
+        templateKey: 'tpl-cover-initial',
+        label: 'Initial IND Cover Letter',
+        ctdSection: '1.2',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-cover-amendment',
+        label: 'Amendment Cover Letter',
+        ctdSection: '1.2',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-cover-annual',
+        label: 'Annual Report Cover Letter',
+        ctdSection: '1.2',
+        templateType: 'subsection',
+        children: [],
+      },
+    ],
+  },
+  {
+    templateKey: 'tpl-m1-admin',
+    label: 'Administrative Information',
+    ctdSection: '1.3',
+    templateType: 'starter',
+    children: [
+      {
+        templateKey: 'tpl-admin-sponsor',
+        label: 'Sponsor/Contact Information',
+        ctdSection: '1.3.1',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-admin-financial',
+        label: 'Financial Disclosure',
+        ctdSection: '1.3.4',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-admin-debarment',
+        label: 'Debarment Certification',
+        ctdSection: '1.3.3',
+        templateType: 'subsection',
+        children: [],
+      },
+    ],
+  },
+  // ── Module 2: Summaries ──
+  {
+    templateKey: 'tpl-m2-2.3',
+    label: 'Quality Overall Summary',
+    ctdSection: '2.3',
+    templateType: 'starter',
+    children: [
+      {
+        templateKey: 'tpl-qos-ds',
+        label: 'QOS Drug Substance',
+        ctdSection: '2.3.S',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-qos-dp',
+        label: 'QOS Drug Product',
+        ctdSection: '2.3.P',
+        templateType: 'subsection',
+        children: [],
+      },
+    ],
+  },
+  {
+    templateKey: 'tpl-m2-2.4',
+    label: 'Nonclinical Overview',
+    ctdSection: '2.4',
+    templateType: 'starter',
+    children: [
+      {
+        templateKey: 'tpl-nc-pharmacology',
+        label: 'Pharmacology Overview',
+        ctdSection: '2.4',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-pk',
+        label: 'Pharmacokinetics Overview',
+        ctdSection: '2.4',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-tox',
+        label: 'Toxicology Overview',
+        ctdSection: '2.4',
+        templateType: 'subsection',
+        children: [],
+      },
+    ],
+  },
   {
     templateKey: 'tpl-m2-2.5',
     label: 'Clinical Overview',
     ctdSection: '2.5',
+    templateType: 'starter',
     children: [
       {
         templateKey: 'tpl-benefit-risk',
         label: 'Benefit-Risk Assessment',
         ctdSection: '2.5',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-clinical-context',
         label: 'Clinical Context',
         ctdSection: '2.5',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-key-supporting-studies',
         label: 'Key Supporting Studies',
         ctdSection: '2.5',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-regulatory-positioning',
         label: 'Regulatory Positioning',
         ctdSection: '2.5',
+        templateType: 'micro',
         children: [],
       },
       {
         templateKey: 'tpl-regional-differences',
         label: 'Regional Differences',
         ctdSection: '2.5',
+        templateType: 'micro',
+        children: [],
+      },
+    ],
+  },
+  {
+    templateKey: 'tpl-m2-2.6',
+    label: 'Nonclinical Written & Tabulated Summaries',
+    ctdSection: '2.6',
+    templateType: 'starter',
+    children: [
+      {
+        templateKey: 'tpl-nc-pharm-written',
+        label: 'Pharmacology Written Summary',
+        ctdSection: '2.6.2',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-pharm-tab',
+        label: 'Pharmacology Tabulated Summary',
+        ctdSection: '2.6.3',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-pk-written',
+        label: 'Pharmacokinetics Written Summary',
+        ctdSection: '2.6.4',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-pk-tab',
+        label: 'Pharmacokinetics Tabulated Summary',
+        ctdSection: '2.6.5',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-tox-written',
+        label: 'Toxicology Written Summary',
+        ctdSection: '2.6.6',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-tox-tab',
+        label: 'Toxicology Tabulated Summary',
+        ctdSection: '2.6.7',
+        templateType: 'subsection',
         children: [],
       },
     ],
@@ -950,192 +1246,406 @@ export const IND_TEMPLATES: TemplateNode[] = [
     templateKey: 'tpl-m2-2.7',
     label: 'Clinical Summary',
     ctdSection: '2.7',
+    templateType: 'starter',
     children: [
       {
         templateKey: 'tpl-biopharm-summary',
         label: 'Biopharmaceutic Summary',
         ctdSection: '2.7.1',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-pk-summary',
         label: 'Clinical Pharmacology Summary',
         ctdSection: '2.7.2',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-efficacy-summary',
         label: 'Efficacy Summary',
         ctdSection: '2.7.3',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-safety-summary',
         label: 'Safety Summary',
         ctdSection: '2.7.4',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-clin-lit-refs',
+        label: 'Literature References',
+        ctdSection: '2.7.5',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-synopses-individual',
+        label: 'Synopses of Individual Studies',
+        ctdSection: '2.7.6',
+        templateType: 'subsection',
         children: [],
       },
     ],
   },
+  // ── Module 3: Quality ──
   {
     templateKey: 'tpl-m3-3.2.S',
     label: 'Drug Substance',
     ctdSection: '3.2.S',
+    templateType: 'starter',
     children: [
       {
         templateKey: 'tpl-ds-gen-info',
         label: 'General Information',
         ctdSection: '3.2.S.1',
-        children: [],
+        templateType: 'subsection',
+        children: [
+          {
+            templateKey: 'tpl-ds-nomenclature',
+            label: 'Nomenclature',
+            ctdSection: '3.2.S.1',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-ds-structure',
+            label: 'Structure',
+            ctdSection: '3.2.S.1',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-ds-gen-properties',
+            label: 'General Properties',
+            ctdSection: '3.2.S.1',
+            templateType: 'micro',
+            children: [],
+          },
+        ],
       },
       {
         templateKey: 'tpl-ds-manufacture',
         label: 'Manufacture',
         ctdSection: '3.2.S.2',
-        children: [],
+        templateType: 'subsection',
+        children: [
+          {
+            templateKey: 'tpl-ds-mfg-info',
+            label: 'Manufacturer Info',
+            ctdSection: '3.2.S.2',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-ds-process-desc',
+            label: 'Process Description',
+            ctdSection: '3.2.S.2',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-ds-materials-ctrl',
+            label: 'Controls of Materials',
+            ctdSection: '3.2.S.2',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-ds-process-ctrl',
+            label: 'Process Controls',
+            ctdSection: '3.2.S.2',
+            templateType: 'micro',
+            children: [],
+          },
+        ],
       },
       {
         templateKey: 'tpl-ds-characterisation',
         label: 'Characterisation',
         ctdSection: '3.2.S.3',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-ds-control',
         label: 'Control of Drug Substance',
         ctdSection: '3.2.S.4',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-ds-ref-standards',
         label: 'Reference Standards',
         ctdSection: '3.2.S.5',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-ds-container',
         label: 'Container Closure System',
         ctdSection: '3.2.S.6',
+        templateType: 'subsection',
         children: [],
       },
-      { templateKey: 'tpl-ds-stability', label: 'Stability', ctdSection: '3.2.S.7', children: [] },
+      {
+        templateKey: 'tpl-ds-stability',
+        label: 'Stability',
+        ctdSection: '3.2.S.7',
+        templateType: 'subsection',
+        children: [],
+      },
     ],
   },
   {
     templateKey: 'tpl-m3-3.2.P',
     label: 'Drug Product',
     ctdSection: '3.2.P',
+    templateType: 'starter',
     children: [
       {
         templateKey: 'tpl-dp-desc',
         label: 'Description & Composition',
         ctdSection: '3.2.P.1',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-dp-devt',
         label: 'Pharmaceutical Development',
         ctdSection: '3.2.P.2',
-        children: [],
+        templateType: 'subsection',
+        children: [
+          {
+            templateKey: 'tpl-dp-formulation',
+            label: 'Formulation Development',
+            ctdSection: '3.2.P.2',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-dp-mfg-process-devt',
+            label: 'Manufacturing Process Development',
+            ctdSection: '3.2.P.2',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-dp-container-devt',
+            label: 'Container Closure Development',
+            ctdSection: '3.2.P.2',
+            templateType: 'micro',
+            children: [],
+          },
+        ],
       },
       {
         templateKey: 'tpl-dp-manufacture',
         label: 'Manufacture',
         ctdSection: '3.2.P.3',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-dp-excipients',
         label: 'Control of Excipients',
         ctdSection: '3.2.P.4',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-dp-control',
         label: 'Control of Drug Product',
         ctdSection: '3.2.P.5',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-dp-ref-standards',
         label: 'Reference Standards',
         ctdSection: '3.2.P.6',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-dp-container',
         label: 'Container Closure System',
         ctdSection: '3.2.P.7',
+        templateType: 'subsection',
         children: [],
       },
-      { templateKey: 'tpl-dp-stability', label: 'Stability', ctdSection: '3.2.P.8', children: [] },
+      {
+        templateKey: 'tpl-dp-stability',
+        label: 'Stability',
+        ctdSection: '3.2.P.8',
+        templateType: 'subsection',
+        children: [],
+      },
     ],
   },
+  // ── Module 4: Nonclinical ──
   {
-    templateKey: 'tpl-m2-2.4',
-    label: 'Nonclinical Overview',
-    ctdSection: '2.4',
+    templateKey: 'tpl-m4-4.2',
+    label: 'Nonclinical Study Reports',
+    ctdSection: '4.2',
+    templateType: 'starter',
     children: [
       {
-        templateKey: 'tpl-nc-pharmacology',
-        label: 'Pharmacology Overview',
-        ctdSection: '2.4',
+        templateKey: 'tpl-nc-pharm-primary',
+        label: 'Primary Pharmacodynamics',
+        ctdSection: '4.2.1.1',
+        templateType: 'subsection',
         children: [],
       },
       {
-        templateKey: 'tpl-nc-pk',
-        label: 'Pharmacokinetics Overview',
-        ctdSection: '2.4',
+        templateKey: 'tpl-nc-pharm-secondary',
+        label: 'Secondary Pharmacodynamics',
+        ctdSection: '4.2.1.2',
+        templateType: 'subsection',
         children: [],
       },
-      { templateKey: 'tpl-nc-tox', label: 'Toxicology Overview', ctdSection: '2.4', children: [] },
+      {
+        templateKey: 'tpl-nc-safety-pharm',
+        label: 'Safety Pharmacology',
+        ctdSection: '4.2.1.3',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-pk-studies',
+        label: 'Pharmacokinetics Studies',
+        ctdSection: '4.2.2',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-tox-single',
+        label: 'Single-Dose Toxicity',
+        ctdSection: '4.2.3.1',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-tox-repeat',
+        label: 'Repeat-Dose Toxicity',
+        ctdSection: '4.2.3.2',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-genotox',
+        label: 'Genotoxicity',
+        ctdSection: '4.2.3.3',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-nc-repro-tox',
+        label: 'Reproductive & Developmental Toxicity',
+        ctdSection: '4.2.3.5',
+        templateType: 'subsection',
+        children: [],
+      },
     ],
   },
+  // ── Module 5: Clinical ──
   {
-    templateKey: 'tpl-m1-cover',
-    label: 'Cover Letter',
-    ctdSection: '1.2',
-    children: [
-      {
-        templateKey: 'tpl-cover-initial',
-        label: 'Initial IND Cover Letter',
-        ctdSection: '1.2',
-        children: [],
-      },
-      {
-        templateKey: 'tpl-cover-amendment',
-        label: 'Amendment Cover Letter',
-        ctdSection: '1.2',
-        children: [],
-      },
-    ],
+    templateKey: 'tpl-m5-5.2',
+    label: 'Tabular Listing of Clinical Studies',
+    ctdSection: '5.2',
+    templateType: 'starter',
+    children: [],
   },
   {
     templateKey: 'tpl-m5-csr',
     label: 'Clinical Study Report',
     ctdSection: '5.3.5',
+    templateType: 'starter',
     children: [
-      { templateKey: 'tpl-csr-synopsis', label: 'Synopsis', ctdSection: '5.3.5', children: [] },
+      {
+        templateKey: 'tpl-csr-synopsis',
+        label: 'Study Synopsis',
+        ctdSection: '5.3.5',
+        templateType: 'subsection',
+        children: [
+          {
+            templateKey: 'tpl-csr-synopsis-design',
+            label: 'Study Design Summary',
+            ctdSection: '5.3.5',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-csr-synopsis-results',
+            label: 'Results Summary',
+            ctdSection: '5.3.5',
+            templateType: 'micro',
+            children: [],
+          },
+        ],
+      },
       {
         templateKey: 'tpl-csr-protocol',
         label: 'Study Protocol',
         ctdSection: '5.3.5',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-csr-sap',
         label: 'Statistical Analysis Plan',
         ctdSection: '5.3.5',
+        templateType: 'subsection',
         children: [],
       },
       {
         templateKey: 'tpl-csr-efficacy',
         label: 'Efficacy Results',
         ctdSection: '5.3.5',
+        templateType: 'subsection',
+        children: [
+          {
+            templateKey: 'tpl-csr-endpoint-rationale',
+            label: 'Endpoint Rationale',
+            ctdSection: '5.3.5',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-csr-population',
+            label: 'Population Summary',
+            ctdSection: '5.3.5',
+            templateType: 'micro',
+            children: [],
+          },
+          {
+            templateKey: 'tpl-csr-stat-interp',
+            label: 'Statistical Interpretation',
+            ctdSection: '5.3.5',
+            templateType: 'micro',
+            children: [],
+          },
+        ],
+      },
+      {
+        templateKey: 'tpl-csr-safety',
+        label: 'Safety Results',
+        ctdSection: '5.3.5',
+        templateType: 'subsection',
         children: [],
       },
-      { templateKey: 'tpl-csr-safety', label: 'Safety Results', ctdSection: '5.3.5', children: [] },
     ],
+  },
+  {
+    templateKey: 'tpl-m5-5.3.7',
+    label: 'Case Report Forms & Patient Listings',
+    ctdSection: '5.3.7',
+    templateType: 'starter',
+    children: [],
   },
 ];
 
