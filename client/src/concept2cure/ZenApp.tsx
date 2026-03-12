@@ -46,9 +46,9 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
-import { useForesightPrediction, type ForesightPrediction } from './hooks/useWorkspaceIntelligence';
-import { useGenerateDocx, downloadBlob } from './hooks/useDocumentFactory';
+
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
+import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
 import { isFeatureEnabled } from '@/flags/featureFlags';
@@ -69,9 +69,7 @@ import {
   Folder,
   ShieldCheck,
   WifiOff,
-  ClipboardCheck,
   Loader2,
-  Target,
   FileText,
   Plus,
   Star,
@@ -143,20 +141,6 @@ const DossierNavigatorStandalone = lazy(() =>
 const PrecedentIntelligenceDashboard = lazy(() =>
   import('./components/precedent/PrecedentIntelligenceDashboard').then(m => ({
     default: m.PrecedentIntelligenceDashboard,
-  }))
-);
-
-// Regulatory Intelligence Panel (Lumen + Foresight + CSR + Precedents)
-const RegulatoryIntelligencePanel = lazy(() =>
-  import('./components/intelligence/RegulatoryIntelligencePanel').then(m => ({
-    default: m.RegulatoryIntelligencePanel,
-  }))
-);
-
-// Regulatory Status Card (dashboard widget)
-const RegulatoryStatusCard = lazy(() =>
-  import('./components/intelligence/RegulatoryStatusCard').then(m => ({
-    default: m.RegulatoryStatusCard,
   }))
 );
 
@@ -544,23 +528,6 @@ export const ZenApp: React.FC = () => {
   );
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
 
-  // Regulatory workspace panels
-  const [regChatOpen, setRegChatOpen] = useState(false);
-  const [regArtifactsOpen, setRegArtifactsOpen] = useState(false);
-  const [regSimOpen, setRegSimOpen] = useState(false);
-  const [regChatMessage, setRegChatMessage] = useState<string | null>(null);
-  // Simulation parameters (for Foresight scenario analysis)
-  const [simParams, setSimParams] = useState({
-    sampleSize: 100,
-    phase: 'III',
-    endpoint: 'primary',
-  });
-  // Simulation result from direct Foresight API call
-  const [simResult, setSimResult] = useState<ForesightPrediction | null>(null);
-  const foresightSim = useForesightPrediction();
-  // DOCX generation for artifacts
-  const generateDocx = useGenerateDocx();
-  const [generatingArtifact, setGeneratingArtifact] = useState<string | null>(null);
   const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
 
   // Pending editor content — when a module wants to open the editor with pre-populated content
@@ -1873,12 +1840,12 @@ export const ZenApp: React.FC = () => {
             <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
           )}
 
-          {/* ── Regulatory Intelligence Workspace (full IDE view) ──────────── */}
-          {!embeddedModule && layoutMode === 'regulatory-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* ── Header — only visible in intelligence mode.
-                   Editor mode: EditorPanel owns its own toolbar. Zero extra chrome. */}
-              {riViewMode === 'intelligence' && (
+          {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
+          {!embeddedModule &&
+            layoutMode === 'regulatory-workspace' &&
+            (riViewMode === 'intelligence' ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Intelligence mode header */}
                 <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                   <button
                     onClick={() => setLayoutMode('projects')}
@@ -1896,35 +1863,13 @@ export const ZenApp: React.FC = () => {
                     </span>
                   )}
                   <div className="ml-auto flex items-center gap-1">
-                    <button
-                      onClick={() => {
-                        const content = `<h1>Evidence-Based Regulatory Analysis</h1>
-<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'N/A'})</h2>
-<p>Generated from RI Copilot intelligence canvas.</p>
-<h2>Evidence Summary</h2><p>[Evidence data populated from CSR repository and precedent engine.]</p>
-<h2>Recommendations</h2><p>[Strategic recommendations based on historical precedents.]</p>`;
-                        setPendingEditorContent({
-                          content,
-                          title: `Evidence Analysis — ${activeProject?.name || activeProject?.type}`,
-                          ctdSection: undefined,
-                        });
-                        setRiViewMode('editor');
-                      }}
-                      className="hidden md:flex items-center gap-1 px-2 py-0.5 text-[11px] rounded font-medium text-blue-600 hover:bg-blue-50 transition-colors"
-                    >
-                      <FileText className="w-3 h-3" />
-                      Generate
-                    </button>
-                    {/* View toggle */}
                     <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
                       <button
                         data-testid="view-toggle-intelligence"
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
                           'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          riViewMode === 'intelligence'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-zinc-500 hover:bg-zinc-50'
+                          'bg-blue-100 text-blue-700'
                         )}
                       >
                         Intelligence
@@ -1932,23 +1877,13 @@ export const ZenApp: React.FC = () => {
                       <button
                         data-testid="view-toggle-editor"
                         onClick={() => setRiViewMode('editor')}
-                        className={cn(
-                          'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          riViewMode === 'editor'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-zinc-500 hover:bg-zinc-50'
-                        )}
+                        className="px-2 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 transition-colors"
                       >
-                        Editor
+                        Documents
                       </button>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* ── Body: Intelligence mode = full 3-pane RICopilotHome ──── */}
-              {/* ── Body: Editor mode = Editor + Intelligence Panel + Chat ── */}
-              {riViewMode === 'intelligence' ? (
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center">
@@ -1970,356 +1905,22 @@ export const ZenApp: React.FC = () => {
                     onSelectProject={() => setProjectSwitcherOpen(true)}
                   />
                 </Suspense>
-              ) : (
-                <div className="flex-1 flex min-h-0">
-                  {/* Editor — full width, document-first */}
-                  <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-                    <Suspense
-                      fallback={
-                        <div className="flex-1 flex items-center justify-center">
-                          <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                        </div>
-                      }
-                    >
-                      <EditorPanel
-                        projectId={activeProjectId}
-                        submissionType={activeProject?.type}
-                        initialContent={pendingEditorContent?.content}
-                        initialTitle={pendingEditorContent?.title}
-                        initialCtdSection={pendingEditorContent?.ctdSection}
-                        onInitialContentConsumed={() => setPendingEditorContent(null)}
-                      />
-                    </Suspense>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Bottom panels — hidden in editor mode for clean document focus ── */}
-              {riViewMode !== 'editor' && (
-                <div className="shrink-0 flex items-center gap-1 px-3 py-1 border-t border-zinc-100 bg-zinc-50/40">
-                  {!regChatOpen && (
-                    <button
-                      onClick={() => setRegChatOpen(true)}
-                      className="flex items-center gap-1 px-2 py-0.5 text-[11px] text-zinc-500 hover:bg-zinc-100 rounded"
-                    >
-                      <MessageSquare className="w-3 h-3" /> Chat
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setRegArtifactsOpen(!regArtifactsOpen)}
-                    className={cn(
-                      'flex items-center gap-1 px-2 py-0.5 text-[11px] rounded',
-                      regArtifactsOpen
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-zinc-500 hover:bg-zinc-100'
-                    )}
-                  >
-                    <Layers className="w-3 h-3" /> Artifacts
-                  </button>
-                  <button
-                    onClick={() => setRegSimOpen(!regSimOpen)}
-                    className={cn(
-                      'flex items-center gap-1 px-2 py-0.5 text-[11px] rounded',
-                      regSimOpen
-                        ? 'bg-violet-50 text-violet-600'
-                        : 'text-zinc-500 hover:bg-zinc-100'
-                    )}
-                  >
-                    <BarChart2 className="w-3 h-3" /> Simulation
-                  </button>
-                </div>
-              )}
-
-              {/* ── Artifacts / Reports Row (hidden in editor focus mode) ── */}
-              {riViewMode !== 'editor' && regArtifactsOpen && (
-                <div className="shrink-0 border-t border-zinc-200 bg-white">
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 bg-zinc-50/50">
-                    <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-blue-500" />
-                      Reports &amp; Artifacts
-                    </span>
-                    <button
-                      onClick={() => setRegArtifactsOpen(false)}
-                      className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="p-3 max-h-48 overflow-y-auto">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {[
-                        {
-                          label: 'Regulatory Strategy Report',
-                          icon: Target,
-                          color: 'text-violet-600 bg-violet-50',
-                          filename: 'Regulatory_Strategy_Report.docx',
-                          content: `<h1>Regulatory Strategy Report</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Recommended pathway, key risks, timeline, and testing requirements for regulatory submission.</p>`,
-                        },
-                        {
-                          label: 'Risk Assessment Summary',
-                          icon: ShieldCheck,
-                          color: 'text-amber-600 bg-amber-50',
-                          filename: 'Risk_Assessment_Summary.docx',
-                          content: `<h1>Risk Assessment Summary</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Risk categories, severity ratings, mitigation strategies, and go/no-go recommendation.</p>`,
-                        },
-                        {
-                          label: 'Precedent Analysis Package',
-                          icon: BookOpen,
-                          color: 'text-blue-600 bg-blue-50',
-                          filename: 'Precedent_Analysis_Package.docx',
-                          content: `<h1>Precedent Analysis Package</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Related clearances, comparison table, and regulatory pathway analysis.</p>`,
-                        },
-                        {
-                          label: 'Clinical Evidence Binder',
-                          icon: ClipboardCheck,
-                          color: 'text-emerald-600 bg-emerald-50',
-                          filename: 'Clinical_Evidence_Binder.docx',
-                          content: `<h1>Clinical Evidence Binder</h1><h2>Project: ${activeProject?.name || 'Untitled'}</h2><h3>Submission Type: ${activeProject?.type || 'N/A'}</h3><p>Evidence sources, study summaries, gap analysis, and clinical data requirements.</p>`,
-                        },
-                      ].map((item, i) => (
-                        <button
-                          key={i}
-                          disabled={generatingArtifact === item.label}
-                          onClick={async () => {
-                            setGeneratingArtifact(item.label);
-                            try {
-                              const blob = await generateDocx.mutateAsync({
-                                title: item.label,
-                                content: item.content,
-                                submissionType: activeProject?.type,
-                                metadata: {
-                                  project: activeProject?.name || '',
-                                  generatedAt: new Date().toISOString(),
-                                },
-                              });
-                              downloadBlob(blob, item.filename);
-                            } catch {
-                              // Error state handled via generateDocx.isError
-                            } finally {
-                              setGeneratingArtifact(null);
-                            }
-                          }}
-                          className="flex items-center gap-2 p-2.5 rounded-lg border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50 transition-colors text-left disabled:opacity-50"
-                        >
-                          {generatingArtifact === item.label ? (
-                            <Loader2 className="w-4 h-4 shrink-0 animate-spin text-zinc-400" />
-                          ) : (
-                            <item.icon
-                              className={`w-4 h-4 shrink-0 ${(item.color ?? '').split(' ')[0]}`}
-                            />
-                          )}
-                          <div>
-                            <span className="text-[11px] font-medium text-zinc-700 block leading-tight">
-                              {item.label}
-                            </span>
-                            <span className="text-[10px] text-zinc-400 flex items-center gap-0.5">
-                              {generatingArtifact === item.label ? (
-                                'Generating...'
-                              ) : (
-                                <>
-                                  <Download className="w-2.5 h-2.5" /> Download DOCX
-                                </>
-                              )}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    {generateDocx.isError && (
-                      <div className="mt-2 p-2 rounded bg-red-50 border border-red-200 text-[10px] text-red-700">
-                        <AlertTriangle className="w-3 h-3 inline mr-1" />
-                        Generation failed:{' '}
-                        {(generateDocx.error as Error)?.message || 'Service unavailable'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Simulation / Scenario Row (hidden in editor focus mode) ── */}
-              {riViewMode !== 'editor' && regSimOpen && (
-                <div className="shrink-0 border-t border-zinc-200 bg-white">
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 bg-zinc-50/50">
-                    <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
-                      <BarChart2 className="w-3.5 h-3.5 text-violet-500" />
-                      Scenario Simulation
-                    </span>
-                    <button
-                      onClick={() => setRegSimOpen(false)}
-                      className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="p-3 max-h-48 overflow-y-auto">
-                    <div className="flex flex-wrap gap-3 items-end">
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block mb-1">
-                          Sample Size
-                        </label>
-                        <input
-                          type="number"
-                          value={simParams.sampleSize}
-                          onChange={e =>
-                            setSimParams(p => ({ ...p, sampleSize: Number(e.target.value) || 100 }))
-                          }
-                          className="w-24 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block mb-1">
-                          Phase
-                        </label>
-                        <select
-                          value={simParams.phase}
-                          onChange={e => setSimParams(p => ({ ...p, phase: e.target.value }))}
-                          className="w-20 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500/30 bg-white"
-                        >
-                          <option value="I">I</option>
-                          <option value="II">II</option>
-                          <option value="III">III</option>
-                          <option value="IV">IV</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block mb-1">
-                          Endpoint
-                        </label>
-                        <select
-                          value={simParams.endpoint}
-                          onChange={e => setSimParams(p => ({ ...p, endpoint: e.target.value }))}
-                          className="w-28 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500/30 bg-white"
-                        >
-                          <option value="primary">Primary</option>
-                          <option value="secondary">Secondary</option>
-                          <option value="composite">Composite</option>
-                          <option value="surrogate">Surrogate</option>
-                        </select>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSimResult(null);
-                          foresightSim.mutate(
-                            {
-                              phase: simParams.phase,
-                              indication: activeProject?.description || 'general',
-                              sampleSize: simParams.sampleSize,
-                              endpoints: [simParams.endpoint],
-                            },
-                            { onSuccess: data => setSimResult(data) }
-                          );
-                        }}
-                        disabled={foresightSim.isPending}
-                        className="px-3 py-1 text-xs bg-violet-600 text-white rounded hover:bg-violet-700 font-medium disabled:opacity-50 flex items-center gap-1"
-                      >
-                        {foresightSim.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-                        {foresightSim.isPending ? 'Running...' : 'Run Simulation'}
-                      </button>
-                    </div>
-
-                    {/* Simulation Results */}
-                    {foresightSim.isPending && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-violet-600">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Running Foresight prediction model...
-                      </div>
-                    )}
-                    {foresightSim.isError && (
-                      <div className="mt-3 p-2 rounded bg-red-50 border border-red-200 text-xs text-red-700">
-                        <AlertTriangle className="w-3 h-3 inline mr-1" />
-                        Simulation failed:{' '}
-                        {(foresightSim.error as Error)?.message || 'Unknown error'}
-                      </div>
-                    )}
-                    {simResult && (
-                      <div className="mt-3 space-y-2">
-                        {/* Success Score */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <div className="flex justify-between text-[11px] mb-1">
-                              <span className="text-zinc-600 font-medium">Success Probability</span>
-                              <span className="font-bold text-zinc-900">
-                                {Math.round((simResult.successScore ?? 0) * 100)}%
-                              </span>
-                            </div>
-                            <div className="h-2.5 bg-zinc-100 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-700 ${
-                                  (simResult.successScore ?? 0) >= 0.7
-                                    ? 'bg-emerald-500'
-                                    : (simResult.successScore ?? 0) >= 0.4
-                                      ? 'bg-amber-500'
-                                      : 'bg-red-500'
-                                }`}
-                                style={{
-                                  width: `${Math.round((simResult.successScore ?? 0) * 100)}%`,
-                                }}
-                              />
-                            </div>
-                            {simResult.confidenceInterval && (
-                              <div className="text-[10px] text-zinc-400 mt-0.5">
-                                CI: {Math.round(simResult.confidenceInterval.low * 100)}% –{' '}
-                                {Math.round(simResult.confidenceInterval.high * 100)}%
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        {/* Risk Factors */}
-                        {simResult.riskFactors?.length > 0 && (
-                          <div>
-                            <span className="text-[10px] font-semibold text-zinc-600 block mb-1">
-                              Risk Factors
-                            </span>
-                            <div className="space-y-1">
-                              {simResult.riskFactors.slice(0, 4).map((rf, i) => (
-                                <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                      rf.severity === 'high'
-                                        ? 'bg-red-500'
-                                        : rf.severity === 'medium'
-                                          ? 'bg-amber-500'
-                                          : 'bg-emerald-500'
-                                    }`}
-                                  />
-                                  <span className="text-zinc-700 truncate">{rf.factor}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {/* Recommendations */}
-                        {simResult.recommendations?.length > 0 && (
-                          <div>
-                            <span className="text-[10px] font-semibold text-zinc-600 block mb-1">
-                              Recommendations
-                            </span>
-                            <ul className="space-y-0.5">
-                              {simResult.recommendations.slice(0, 3).map((rec, i) => (
-                                <li
-                                  key={i}
-                                  className="text-[10px] text-zinc-600 flex items-start gap-1"
-                                >
-                                  <Sparkles className="w-3 h-3 text-violet-400 shrink-0 mt-0.5" />
-                                  <span>{rec}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {!simResult && !foresightSim.isPending && !foresightSim.isError && (
-                      <p className="text-[10px] text-zinc-400 mt-2">
-                        Vary parameters to predict success probability via Foresight RI.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
+              </div>
+            ) : (
+              <ProjectWorkspaceShell
+                projectId={activeProjectId}
+                projectName={activeProject?.name}
+                projectType={activeProject?.type}
+                submissionType={activeProject?.type}
+                onBackToProjects={() => setLayoutMode('projects')}
+                onSelectProject={() => setProjectSwitcherOpen(true)}
+                onSwitchToIntelligence={() => setRiViewMode('intelligence')}
+                initialContent={pendingEditorContent?.content}
+                initialTitle={pendingEditorContent?.title}
+                initialCtdSection={pendingEditorContent?.ctdSection}
+                onInitialContentConsumed={() => setPendingEditorContent(null)}
+              />
+            ))}
           {/* Rules Engine Manager */}
           {!embeddedModule && layoutMode === 'rules' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">

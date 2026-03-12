@@ -597,41 +597,42 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[10%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-3xl bg-white rounded-2xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed inset-4 sm:inset-auto sm:top-[10%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[70vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex-shrink-0 px-6 py-4 border-b border-zinc-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-zinc-900">Projects</h2>
+        <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-100">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-zinc-900">Switch Project</h2>
             <button
               onClick={onCreateProject}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3" />
               New
             </button>
           </div>
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              autoFocus
             />
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-3">
+          <div className="flex gap-0.5 mt-2">
             {(['all', 'starred', 'archived'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
                 className={cn(
-                  'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
-                  filter === tab ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+                  'px-2.5 py-1 text-[11px] font-medium rounded transition-colors capitalize',
+                  filter === tab ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
                 )}
               >
                 {tab}
@@ -640,72 +641,130 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Content — compact list rows, not cards */}
+        <div className="flex-1 overflow-y-auto">
           {filteredProjects.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-zinc-100 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-zinc-400" />
-              </div>
-              <h3 className="text-base font-medium text-zinc-900 mb-1">No projects found</h3>
-              <p className="text-sm text-zinc-500">
-                {searchQuery
-                  ? 'Try a different search term'
-                  : 'Create your first project to get started'}
+            <div className="text-center py-8 px-4">
+              <FileText className="w-5 h-5 mx-auto mb-2 text-zinc-300" />
+              <p className="text-xs text-zinc-500">
+                {searchQuery ? 'No projects match your search' : 'No projects yet'}
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="divide-y divide-zinc-50">
               {/* Starred section */}
               {starredProjects.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                    Starred
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {starredProjects.map(project => (
-                      <ProjectCard
+                <>
+                  <div className="px-4 pt-2 pb-1">
+                    <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      Starred
+                    </span>
+                  </div>
+                  {starredProjects.map(project => {
+                    const tc = SUBMISSION_TYPES[project.type] ?? SUBMISSION_TYPE_FALLBACK;
+                    const TypeIcon = tc.icon;
+                    return (
+                      <button
                         key={project.id}
-                        project={project}
-                        isActive={project.id === activeProjectId}
-                        onSelect={() => {
+                        onClick={() => {
                           onSelectProject(project.id);
                           onClose();
                         }}
-                        onToggleStar={() => onToggleStar(project.id)}
-                        onArchive={() => onArchiveProject(project.id)}
-                        onDelete={() => onDeleteProject(project.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                        className={cn(
+                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
+                          project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
+                        )}
+                      >
+                        <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[12px] font-medium text-zinc-900 truncate">
+                              {project.name}
+                            </span>
+                            {project.starred && (
+                              <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
+                            )}
+                            {project.id === activeProjectId && (
+                              <Check className="w-3 h-3 text-blue-600 shrink-0" />
+                            )}
+                          </div>
+                          {project.description && (
+                            <span className="text-[11px] text-zinc-400 truncate block">
+                              {project.description}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                            tc.bgColor,
+                            tc.color
+                          )}
+                        >
+                          {tc.label}
+                        </span>
+                        <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      </button>
+                    );
+                  })}
+                </>
               )}
 
               {/* Regular projects */}
               {regularProjects.length > 0 && (
-                <div>
+                <>
                   {starredProjects.length > 0 && (
-                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                      All Projects
-                    </h3>
+                    <div className="px-4 pt-2 pb-1">
+                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                        All Projects
+                      </span>
+                    </div>
                   )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {regularProjects.map(project => (
-                      <ProjectCard
+                  {regularProjects.map(project => {
+                    const tc = SUBMISSION_TYPES[project.type] ?? SUBMISSION_TYPE_FALLBACK;
+                    const TypeIcon = tc.icon;
+                    return (
+                      <button
                         key={project.id}
-                        project={project}
-                        isActive={project.id === activeProjectId}
-                        onSelect={() => {
+                        onClick={() => {
                           onSelectProject(project.id);
                           onClose();
                         }}
-                        onToggleStar={() => onToggleStar(project.id)}
-                        onArchive={() => onArchiveProject(project.id)}
-                        onDelete={() => onDeleteProject(project.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                        className={cn(
+                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
+                          project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
+                        )}
+                      >
+                        <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[12px] font-medium text-zinc-900 truncate">
+                              {project.name}
+                            </span>
+                            {project.id === activeProjectId && (
+                              <Check className="w-3 h-3 text-blue-600 shrink-0" />
+                            )}
+                          </div>
+                          {project.description && (
+                            <span className="text-[11px] text-zinc-400 truncate block">
+                              {project.description}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                            tc.bgColor,
+                            tc.color
+                          )}
+                        >
+                          {tc.label}
+                        </span>
+                        <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      </button>
+                    );
+                  })}
+                </>
               )}
             </div>
           )}
