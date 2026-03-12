@@ -433,7 +433,10 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-            <p className="text-xs text-zinc-500">{error || 'No data'}</p>
+            <p className="text-xs text-zinc-500">
+              {error ||
+                'No provenance data recorded yet. Provenance tracking begins when the document is created, edited, or signed.'}
+            </p>
           </div>
         </div>
       </div>
@@ -527,7 +530,10 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           defaultOpen={sourceInputs.length > 0}
         >
           {sourceInputs.length === 0 ? (
-            <p className="text-[11px] text-zinc-400 italic">No tracked source inputs</p>
+            <p className="text-[11px] text-zinc-400">
+              No source inputs recorded. Source data (CSR references, prior submissions) will appear
+              here once linked.
+            </p>
           ) : (
             <div className="space-y-2">
               {sourceInputs.map(si => (
@@ -567,7 +573,10 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
         >
           {generationLineage.events.length === 0 &&
           generationLineage.transformations.length === 0 ? (
-            <p className="text-[11px] text-zinc-400 italic">No generation events recorded</p>
+            <p className="text-[11px] text-zinc-400">
+              No generation events recorded. AI-assisted edits, template expansions, and content
+              transforms will be logged here.
+            </p>
           ) : (
             <div className="space-y-2">
               {generationLineage.events.map(ge => (
@@ -895,7 +904,9 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               <Loader2 className="w-3 h-3 animate-spin" /> Loading comments…
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-[11px] text-zinc-400 italic">No review comments yet</p>
+            <p className="text-[11px] text-zinc-400">
+              No review comments yet. Add a comment to initiate the regulatory review workflow.
+            </p>
           ) : (
             <div className="space-y-1.5">
               {comments.map(c => (

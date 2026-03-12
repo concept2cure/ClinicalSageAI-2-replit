@@ -335,7 +335,10 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-            <p className="text-xs text-zinc-500">{error || 'No versions to compare'}</p>
+            <p className="text-xs text-zinc-500">
+              {error ||
+                'No versions available for comparison. Save document edits to create version history for regulatory change control.'}
+            </p>
           </div>
         </div>
       </div>

@@ -327,7 +327,10 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-            <p className="text-xs text-zinc-500">{error || 'No data'}</p>
+            <p className="text-xs text-zinc-500">
+              {error ||
+                'No audit data available yet. The audit trail begins when the document is created, edited, signed, or exported.'}
+            </p>
           </div>
         </div>
       </div>
@@ -537,7 +540,10 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 3. Version Timeline */}
         <ReportSection icon={<GitBranch className="w-4 h-4" />} title="Version Timeline">
           {report.versionTimeline.length === 0 ? (
-            <p className="text-[11px] text-zinc-400 italic">No versions recorded</p>
+            <p className="text-[11px] text-zinc-400">
+              No version history recorded. Each save creates an auditable version entry for
+              regulatory traceability.
+            </p>
           ) : (
             <table className="w-full text-[10px]">
               <thead>
@@ -565,7 +571,10 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 4. Source Lineage */}
         <ReportSection icon={<FileInput className="w-4 h-4" />} title="Source Lineage">
           {report.sourceLineage.length === 0 ? (
-            <p className="text-[11px] text-zinc-400 italic">No source inputs tracked</p>
+            <p className="text-[11px] text-zinc-400">
+              No source inputs tracked. Linked CSR data, prior submissions, and reference materials
+              will appear here.
+            </p>
           ) : (
             report.sourceLineage.map((s, i) => (
               <div
@@ -589,7 +598,10 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 5. Generation Lineage */}
         <ReportSection icon={<Sparkles className="w-4 h-4" />} title="Generation Lineage">
           {report.generationLineage.length === 0 ? (
-            <p className="text-[11px] text-zinc-400 italic">No generation events</p>
+            <p className="text-[11px] text-zinc-400">
+              No generation events logged. AI-assisted edits and content transforms are recorded
+              here for compliance.
+            </p>
           ) : (
             report.generationLineage.map((g, i) => (
               <div key={i} className="py-1.5 border-b border-zinc-50 last:border-0">
@@ -650,14 +662,19 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
               </tbody>
             </table>
           ) : (
-            <p className="text-[11px] text-zinc-400 italic mt-1">No signatures recorded</p>
+            <p className="text-[11px] text-zinc-400 mt-1">
+              No signatures on record. Electronic signatures provide 21 CFR Part 11 compliance
+              evidence.
+            </p>
           )}
         </ReportSection>
 
         {/* 7. Export History */}
         <ReportSection icon={<Download className="w-4 h-4" />} title="Export History">
           {report.exportHistory.length === 0 ? (
-            <p className="text-[11px] text-zinc-400 italic">No exports recorded</p>
+            <p className="text-[11px] text-zinc-400">
+              No exports recorded. DOCX and PDF exports are logged for submission traceability.
+            </p>
           ) : (
             report.exportHistory.map((e, i) => (
               <div key={i} className="flex items-center gap-2 py-0.5 text-[10px] text-zinc-500">
@@ -718,7 +735,10 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
               </tbody>
             </table>
           ) : (
-            <p className="text-[11px] text-zinc-400 italic mt-1">No review comments</p>
+            <p className="text-[11px] text-zinc-400 mt-1">
+              No review comments. Comments document the regulatory review process and resolution
+              history.
+            </p>
           )}
         </ReportSection>
 
