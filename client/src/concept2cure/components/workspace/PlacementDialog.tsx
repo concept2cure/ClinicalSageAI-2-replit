@@ -268,7 +268,30 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
                 {getSectionLabel(currentSection)}
               </p>
             )}
+            {artifact.status && (
+              <p className="text-[11px] text-zinc-400 mt-0.5">
+                Status: <span className="font-medium text-zinc-600">{artifact.status}</span>
+                {artifact.version ? ` · v${artifact.version}` : ''}
+              </p>
+            )}
           </div>
+
+          {/* Impact statement */}
+          {operation === 'relocate' && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50/60 border border-amber-100 text-[11px] text-amber-800">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+              <div>
+                <p className="font-medium">Regulatory Placement Impact</p>
+                <p className="text-amber-700 mt-0.5">
+                  Relocating this document changes its position in the CTD submission structure.
+                  {artifact.status === 'approved' &&
+                    ' This document is currently approved — relocation will require re-review.'}
+                  {artifact.status === 'locked' &&
+                    ' This document is locked and cannot be relocated.'}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Move visualization */}
           {operation === 'relocate' &&

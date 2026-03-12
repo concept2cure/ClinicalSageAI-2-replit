@@ -906,31 +906,207 @@ export interface TemplateNode {
   description?: string;
   templateType?: TemplateType;
   parentTemplateKey?: string;
+  appliesTo?: string;
+  suggestedChildren?: string[];
+  requiredBlocks?: string[];
+  optionalBlocks?: string[];
   children: TemplateNode[];
 }
+
+// ── Template structure map: expected subsections per template ─────────────────
+// Used by the "Template Structure" view to show what a document should contain.
+
+export interface TemplateStructureNode {
+  key: string;
+  label: string;
+  description?: string;
+  required: boolean;
+}
+
+/**
+ * Returns expected subsection structure for a given template key.
+ * Used to drive the "Document Outline | Template Structure" subview.
+ */
+export function getTemplateStructure(templateKey: string): TemplateStructureNode[] | null {
+  return TEMPLATE_STRUCTURE_MAP[templateKey] ?? null;
+}
+
+const TEMPLATE_STRUCTURE_MAP: Record<string, TemplateStructureNode[]> = {
+  'tpl-ds-gen-info': [
+    { key: 'nomenclature', label: 'Nomenclature', required: true },
+    { key: 'structure', label: 'Structure', required: true },
+    { key: 'general-properties', label: 'General Properties', required: true },
+  ],
+  'tpl-ds-manufacture': [
+    { key: 'manufacturer', label: 'Manufacturer(s)', required: true },
+    {
+      key: 'mfg-process',
+      label: 'Description of Manufacturing Process and Process Controls',
+      required: true,
+    },
+    { key: 'materials-control', label: 'Control of Materials', required: true },
+    {
+      key: 'critical-steps',
+      label: 'Controls of Critical Steps and Intermediates',
+      required: true,
+    },
+    { key: 'process-validation', label: 'Process Validation / Evaluation', required: false },
+    { key: 'mfg-process-devt', label: 'Manufacturing Process Development', required: false },
+  ],
+  'tpl-ds-characterisation': [
+    { key: 'structure-elucidation', label: 'Elucidation of Structure', required: true },
+    { key: 'impurities', label: 'Impurities', required: true },
+  ],
+  'tpl-ds-control': [
+    { key: 'specification', label: 'Specification', required: true },
+    { key: 'analytical-procedures', label: 'Analytical Procedures', required: true },
+    { key: 'validation', label: 'Validation of Analytical Procedures', required: true },
+    { key: 'batch-analyses', label: 'Batch Analyses', required: true },
+    { key: 'justification', label: 'Justification of Specification', required: true },
+  ],
+  'tpl-ds-stability': [
+    { key: 'stability-summary', label: 'Stability Summary and Conclusions', required: true },
+    {
+      key: 'post-approval',
+      label: 'Post-Approval Stability Protocol and Stability Commitment',
+      required: false,
+    },
+    { key: 'stability-data', label: 'Stability Data', required: true },
+  ],
+  'tpl-dp-desc': [
+    { key: 'dosage-form', label: 'Description of Dosage Form', required: true },
+    { key: 'composition', label: 'Composition', required: true },
+  ],
+  'tpl-dp-devt': [
+    { key: 'formulation-devt', label: 'Formulation Development', required: true },
+    { key: 'overages', label: 'Overages', required: false },
+    { key: 'physicochemical', label: 'Physicochemical and Biological Properties', required: true },
+    { key: 'mfg-process-devt', label: 'Manufacturing Process Development', required: true },
+    { key: 'container-closure', label: 'Container Closure System', required: true },
+    { key: 'microbiological', label: 'Microbiological Attributes', required: false },
+    { key: 'compatibility', label: 'Compatibility', required: false },
+  ],
+  'tpl-dp-manufacture': [
+    { key: 'batch-formula', label: 'Batch Formula', required: true },
+    { key: 'mfg-process', label: 'Manufacturing Process and Process Controls', required: true },
+    { key: 'process-validation', label: 'Process Validation / Evaluation', required: false },
+  ],
+  'tpl-m2-2.3': [
+    { key: 'intro', label: 'Introduction', required: true },
+    { key: 'drug-substance', label: 'Drug Substance', required: true },
+    { key: 'drug-product', label: 'Drug Product', required: true },
+    { key: 'appendices', label: 'Appendices', required: false },
+    { key: 'regional-info', label: 'Regional Information', required: false },
+  ],
+  'tpl-m2-2.5': [
+    { key: 'product-devt-rationale', label: 'Product Development Rationale', required: true },
+    { key: 'overview-clinical-pharm', label: 'Overview of Clinical Pharmacology', required: true },
+    { key: 'overview-efficacy', label: 'Overview of Efficacy', required: true },
+    { key: 'overview-safety', label: 'Overview of Safety', required: true },
+    { key: 'benefit-risk', label: 'Benefits and Risks Conclusions', required: true },
+  ],
+  'tpl-m2-2.6': [
+    { key: 'intro', label: 'Introduction', required: true },
+    { key: 'pharmacology-written', label: 'Pharmacology Written Summary', required: true },
+    { key: 'pharmacology-tabulated', label: 'Pharmacology Tabulated Summary', required: true },
+    { key: 'pk-written', label: 'Pharmacokinetics Written Summary', required: true },
+    { key: 'pk-tabulated', label: 'Pharmacokinetics Tabulated Summary', required: true },
+    { key: 'tox-written', label: 'Toxicology Written Summary', required: true },
+    { key: 'tox-tabulated', label: 'Toxicology Tabulated Summary', required: true },
+  ],
+  'tpl-m2-2.7': [
+    {
+      key: 'biopharm',
+      label: 'Summary of Biopharmaceutic Studies and Associated Analytical Methods',
+      required: true,
+    },
+    { key: 'clin-pharm', label: 'Summary of Clinical Pharmacology Studies', required: true },
+    { key: 'efficacy', label: 'Summary of Clinical Efficacy', required: true },
+    { key: 'safety', label: 'Summary of Clinical Safety', required: true },
+    { key: 'lit-refs', label: 'Literature References', required: false },
+    { key: 'synopses', label: 'Synopses of Individual Studies', required: false },
+  ],
+  'tpl-m5-csr': [
+    { key: 'synopsis', label: 'Synopsis', required: true },
+    { key: 'intro', label: 'Introduction', required: true },
+    { key: 'study-objectives', label: 'Study Objectives', required: true },
+    { key: 'investigational-plan', label: 'Investigational Plan', required: true },
+    { key: 'study-patients', label: 'Study Patients', required: true },
+    { key: 'efficacy-evaluation', label: 'Efficacy Evaluation', required: true },
+    { key: 'safety-evaluation', label: 'Safety Evaluation', required: true },
+    { key: 'discussion', label: 'Discussion and Overall Conclusions', required: true },
+    {
+      key: 'tables-figures',
+      label: 'Tables, Figures, and Graphs Referred to but Not Included in Text',
+      required: false,
+    },
+    { key: 'reference-list', label: 'Reference List', required: false },
+    { key: 'appendices', label: 'Appendices', required: false },
+  ],
+  'tpl-m5-5.2': [
+    { key: 'study-listing', label: 'Tabular Listing of All Clinical Studies', required: true },
+  ],
+  'tpl-m4-4.2': [
+    { key: 'pharmacology', label: 'Pharmacology Studies', required: true },
+    { key: 'pharmacokinetics', label: 'Pharmacokinetics Studies', required: true },
+    { key: 'toxicology', label: 'Toxicology Studies', required: true },
+  ],
+};
 
 // ── Section requirement descriptors ──────────────────────────────────────────
 
 export interface SectionRequirement {
   ctdSection: string;
+  section: string; // alias for UI convenience
   label: string;
   description: string;
   expectedDocTypes: string[];
+  requiredDocTypes: string[]; // alias
   required: boolean;
+  optional: boolean;
   hasTemplates: boolean;
+  templateKeys: string[];
+  requiredChildren: string[];
+  optionalChildren: string[];
+  commonMissingBlocks: string[];
+  starterTemplatesAvailable: string[];
 }
 
 export function getSectionRequirements(ctdSection: string): SectionRequirement | null {
   const node = findNodeBySection(CTD_HIERARCHY, ctdSection);
   if (!node) return null;
   const templates = findTemplatesByCTDSection(IND_TEMPLATES, ctdSection);
+  const docTypes = SECTION_DOC_TYPES[ctdSection] || ['regulatory_document'];
+  const childSections = node.children || [];
+  const requiredChildren = childSections
+    .filter(c => !OPTIONAL_SECTIONS.has(c.ctdSection))
+    .map(c => `${c.ctdSection} — ${c.label}`);
+  const optionalChildren = childSections
+    .filter(c => OPTIONAL_SECTIONS.has(c.ctdSection))
+    .map(c => `${c.ctdSection} — ${c.label}`);
+
+  // Find starter templates for this section
+  const starters = templates.filter(t => t.templateType === 'starter').map(t => t.label);
+
+  // Common missing blocks from template structure
+  const templateStructures = templates.flatMap(t => TEMPLATE_STRUCTURE_MAP[t.templateKey] ?? []);
+  const commonMissing = templateStructures.filter(s => s.required).map(s => s.label);
+
   return {
     ctdSection,
+    section: ctdSection,
     label: node.label,
     description: SECTION_DESCRIPTIONS[ctdSection] || `Content for CTD section ${ctdSection}.`,
-    expectedDocTypes: SECTION_DOC_TYPES[ctdSection] || ['regulatory_document'],
+    expectedDocTypes: docTypes,
+    requiredDocTypes: docTypes,
     required: !OPTIONAL_SECTIONS.has(ctdSection),
+    optional: OPTIONAL_SECTIONS.has(ctdSection),
     hasTemplates: templates.length > 0,
+    templateKeys: templates.map(t => t.templateKey),
+    requiredChildren,
+    optionalChildren,
+    commonMissingBlocks: commonMissing,
+    starterTemplatesAvailable: starters,
   };
 }
 
@@ -1103,6 +1279,10 @@ export const IND_TEMPLATES: TemplateNode[] = [
     label: 'Quality Overall Summary',
     ctdSection: '2.3',
     templateType: 'starter',
+    appliesTo: 'IND, NDA, BLA',
+    suggestedChildren: ['QOS Drug Substance', 'QOS Drug Product'],
+    requiredBlocks: ['Introduction', 'Drug Substance', 'Drug Product'],
+    optionalBlocks: ['Appendices', 'Regional Information'],
     children: [
       {
         templateKey: 'tpl-qos-ds',
@@ -1154,6 +1334,16 @@ export const IND_TEMPLATES: TemplateNode[] = [
     label: 'Clinical Overview',
     ctdSection: '2.5',
     templateType: 'starter',
+    appliesTo: 'IND, NDA, BLA',
+    suggestedChildren: ['Benefit-Risk Assessment', 'Clinical Context', 'Key Supporting Studies'],
+    requiredBlocks: [
+      'Product Development Rationale',
+      'Overview of Clinical Pharmacology',
+      'Overview of Efficacy',
+      'Overview of Safety',
+      'Benefits and Risks Conclusions',
+    ],
+    optionalBlocks: ['Regulatory Positioning', 'Regional Differences'],
     children: [
       {
         templateKey: 'tpl-benefit-risk',
@@ -1163,8 +1353,29 @@ export const IND_TEMPLATES: TemplateNode[] = [
         children: [],
       },
       {
+        templateKey: 'tpl-product-devt-rationale',
+        label: 'Product Development Rationale',
+        ctdSection: '2.5',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
         templateKey: 'tpl-clinical-context',
-        label: 'Clinical Context',
+        label: 'Clinical Pharmacology Interpretation',
+        ctdSection: '2.5',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-efficacy-interp',
+        label: 'Efficacy Interpretation',
+        ctdSection: '2.5',
+        templateType: 'subsection',
+        children: [],
+      },
+      {
+        templateKey: 'tpl-safety-interp',
+        label: 'Safety Interpretation',
         ctdSection: '2.5',
         templateType: 'subsection',
         children: [],
@@ -1197,6 +1408,25 @@ export const IND_TEMPLATES: TemplateNode[] = [
     label: 'Nonclinical Written & Tabulated Summaries',
     ctdSection: '2.6',
     templateType: 'starter',
+    appliesTo: 'IND, NDA, BLA',
+    suggestedChildren: [
+      'Pharmacology Written Summary',
+      'Pharmacology Tabulated Summary',
+      'PK Written Summary',
+      'PK Tabulated Summary',
+      'Toxicology Written Summary',
+      'Toxicology Tabulated Summary',
+    ],
+    requiredBlocks: [
+      'Introduction',
+      'Pharmacology Written Summary',
+      'Pharmacology Tabulated Summary',
+      'PK Written Summary',
+      'PK Tabulated Summary',
+      'Toxicology Written Summary',
+      'Toxicology Tabulated Summary',
+    ],
+    optionalBlocks: [],
     children: [
       {
         templateKey: 'tpl-nc-pharm-written',
@@ -1247,6 +1477,20 @@ export const IND_TEMPLATES: TemplateNode[] = [
     label: 'Clinical Summary',
     ctdSection: '2.7',
     templateType: 'starter',
+    appliesTo: 'IND, NDA, BLA',
+    suggestedChildren: [
+      'Biopharmaceutic Summary',
+      'Clinical Pharmacology Summary',
+      'Efficacy Summary',
+      'Safety Summary',
+    ],
+    requiredBlocks: [
+      'Summary of Biopharmaceutic Studies',
+      'Summary of Clinical Pharmacology',
+      'Summary of Clinical Efficacy',
+      'Summary of Clinical Safety',
+    ],
+    optionalBlocks: ['Literature References', 'Synopses of Individual Studies'],
     children: [
       {
         templateKey: 'tpl-biopharm-summary',
@@ -1298,6 +1542,23 @@ export const IND_TEMPLATES: TemplateNode[] = [
     label: 'Drug Substance',
     ctdSection: '3.2.S',
     templateType: 'starter',
+    appliesTo: 'IND, NDA, BLA, ANDA',
+    suggestedChildren: [
+      'General Information',
+      'Manufacture',
+      'Characterisation',
+      'Control of Drug Substance',
+      'Reference Standards',
+      'Container Closure System',
+      'Stability',
+    ],
+    requiredBlocks: [
+      'General Information',
+      'Manufacture',
+      'Control of Drug Substance',
+      'Stability',
+    ],
+    optionalBlocks: ['Reference Standards', 'Container Closure System'],
     children: [
       {
         templateKey: 'tpl-ds-gen-info',
@@ -1406,6 +1667,25 @@ export const IND_TEMPLATES: TemplateNode[] = [
     label: 'Drug Product',
     ctdSection: '3.2.P',
     templateType: 'starter',
+    appliesTo: 'IND, NDA, BLA, ANDA',
+    suggestedChildren: [
+      'Description & Composition',
+      'Pharmaceutical Development',
+      'Manufacture',
+      'Control of Excipients',
+      'Control of Drug Product',
+      'Reference Standards',
+      'Container Closure',
+      'Stability',
+    ],
+    requiredBlocks: [
+      'Description & Composition',
+      'Pharmaceutical Development',
+      'Manufacture',
+      'Control of Drug Product',
+      'Stability',
+    ],
+    optionalBlocks: ['Control of Excipients', 'Reference Standards', 'Container Closure System'],
     children: [
       {
         templateKey: 'tpl-dp-desc',
@@ -1565,6 +1845,25 @@ export const IND_TEMPLATES: TemplateNode[] = [
     label: 'Clinical Study Report',
     ctdSection: '5.3.5',
     templateType: 'starter',
+    appliesTo: 'IND, NDA, BLA',
+    suggestedChildren: [
+      'Study Synopsis',
+      'Study Protocol',
+      'Statistical Analysis Plan',
+      'Efficacy Results',
+      'Safety Results',
+    ],
+    requiredBlocks: [
+      'Synopsis',
+      'Introduction',
+      'Study Objectives',
+      'Investigational Plan',
+      'Study Patients',
+      'Efficacy Evaluation',
+      'Safety Evaluation',
+      'Discussion and Overall Conclusions',
+    ],
+    optionalBlocks: ['Tables, Figures, and Graphs', 'Reference List', 'Appendices'],
     children: [
       {
         templateKey: 'tpl-csr-synopsis',
@@ -1692,4 +1991,17 @@ export function countLeafNodes(nodes: DossierNode[]): number {
   }
   nodes.forEach(walk);
   return count;
+}
+
+/** Find a TemplateNode by templateKey in the IND_TEMPLATES tree. */
+export function findTemplateByKey(key: string): TemplateNode | null {
+  function walk(nodes: TemplateNode[]): TemplateNode | null {
+    for (const n of nodes) {
+      if (n.templateKey === key) return n;
+      const found = walk(n.children);
+      if (found) return found;
+    }
+    return null;
+  }
+  return walk(IND_TEMPLATES);
 }

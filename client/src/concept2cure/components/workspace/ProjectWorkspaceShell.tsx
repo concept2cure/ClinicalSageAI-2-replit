@@ -1,18 +1,19 @@
 /**
- * ProjectWorkspaceShell — 3-pane regulated document workspace.
+ * ProjectWorkspaceShell — Regulated document workspace.
  *
  * Layout: far-left nav rail (ZenSidebar) → [this shell]
  *   left: File/Dossier/Template/Outline tree (220px) with mode toggle
  *   center: DocumentListPane (browse) or EditorPanel (edit) with doc header
  *   right: Inspector panel (provenance/compare/audit) — only when doc open
  *
- * Phase 2 additions:
- *   - Outline mode (per-document heading navigator)
- *   - Dossier metrics rollup (real artifact aggregation)
- *   - Cut/paste governed document move
- *   - Section requirements panel
- *   - Tree-aware document header (CTD path, template, status)
- *   - Evidence/precedent linkage counts
+ * Phase 3 additions:
+ *   - Persistent active-document context band across all modes
+ *   - Template structure view (Outline | Structure segmented subview)
+ *   - Create missing subsection from template structure
+ *   - Enhanced cut/paste: locked blocking, approved warning, destination preview
+ *   - Expanded section requirements panel
+ *   - DnD feature flag groundwork (ENABLE_GOVERNED_DND)
+ *   - Scale discipline for 1366x768
  */
 
 import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense, useRef } from 'react';
@@ -48,10 +49,17 @@ import {
   MapPin,
   Copy,
   Info,
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Lazy-load the existing EditorPanel (it handles save, load, AI, inspector drawers)
+// Feature flag for governed drag-and-drop (Phase 3C groundwork)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const ENABLE_GOVERNED_DND = false;
+
+// Lazy-load the existing EditorPanel
 const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ default: m.default })));
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
@@ -82,6 +90,7 @@ interface SectionMetrics {
 interface PendingMove {
   artifact: TreeArtifact;
   fromSection: string | null;
+  targetSection?: string;
 }
 
 // ── Folder label map ─────────────────────────────────────────────────────────
@@ -386,8 +395,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   // ── Open placement dialog from dossier tree ──────────────────────────────
   const handlePlaceArtifact = useCallback(
     (ctdSection: string) => {
-      // If there's a pending move, use that artifact
       if (pendingMove) {
+        setPendingMove(prev => (prev ? { ...prev, targetSection: ctdSection } : null));
         setPlacementDialog({
           open: true,
           artifact: pendingMove.artifact,
@@ -396,7 +405,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         });
         return;
       }
-      // If a document is selected, open placement for that doc
       const art = artifacts.find(a => a.id === selectedDocId);
       if (art) {
         const hasExistingSection = !!art.ctdSection;
@@ -421,6 +429,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const handlePasteHere = useCallback(
     (ctdSection: string) => {
       if (!pendingMove) return;
+      if (pendingMove.artifact.status === 'locked') {
+        setPendingMove(null);
+        return;
+      }
+      setPendingMove(prev => (prev ? { ...prev, targetSection: ctdSection } : null));
       setPlacementDialog({
         open: true,
         artifact: pendingMove.artifact,
@@ -475,6 +488,35 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setActiveDocTitle(title);
   }, []);
 
+  // ── Create missing subsection from template structure ────────────────────
+  const handleCreateSubsection = useCallback(
+    async (subsectionKey: string, label: string) => {
+      if (!projectId || !activeArtifactRef.current) return;
+      const art = activeArtifactRef.current;
+      try {
+        const scaffoldHtml = `<h2>${label}</h2><p>[Content for ${label} — fill this section per regulatory requirements.]</p>`;
+        const res = await fetch(
+          `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({
+              content: (activeDocContent || '') + '\n' + scaffoldHtml,
+              changeDescription: `Added template subsection: ${label}`,
+              changeType: 'template_subsection_insert',
+            }),
+          }
+        );
+        if (res.ok) {
+          await loadArtifacts();
+        }
+      } catch {
+        // silent
+      }
+    },
+    [projectId, activeDocContent, loadArtifacts]
+  );
+
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectDoc = useCallback((doc: TreeArtifact) => {
     setSelectedDocId(doc.id);
@@ -516,6 +558,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     return artifacts.find(a => a.id === selectedDocId) || null;
   }, [selectedDocId, artifacts]);
 
+  // Ref for use in callbacks that need current activeArtifact
+  const activeArtifactRef = useRef(activeArtifact);
+  activeArtifactRef.current = activeArtifact;
+
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
 
@@ -550,7 +596,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
       {/* ── Compact breadcrumb bar ────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white shrink-0">
+      <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-100 bg-white shrink-0">
         <button
           onClick={onBackToProjects}
           className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -605,7 +651,23 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           {pendingMove.fromSection && (
             <span className="text-[10px] text-amber-600">from {pendingMove.fromSection}</span>
           )}
-          <span className="text-[10px] text-amber-500 ml-1">Select a dossier section to paste</span>
+          {pendingMove.targetSection ? (
+            <>
+              <span className="text-[10px] text-amber-500">→</span>
+              <span className="text-[10px] text-amber-700 font-medium">
+                {pendingMove.targetSection}
+              </span>
+            </>
+          ) : (
+            <span className="text-[10px] text-amber-500 ml-1">
+              Select a dossier section to paste
+            </span>
+          )}
+          {pendingMove.artifact.status === 'approved' && (
+            <span className="text-[9px] px-1 rounded bg-amber-100 text-amber-700 font-medium">
+              ⚠ Approved
+            </span>
+          )}
           <button
             onClick={handleCancelMove}
             className="ml-auto text-[10px] text-amber-700 hover:text-red-600 font-medium flex items-center gap-0.5"
@@ -734,6 +796,50 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             ))}
           </div>
 
+          {/* ── Active document context band ──────────────────────────────── */}
+          {activeArtifact && (
+            <div
+              className="border-b border-zinc-100 bg-zinc-50/40 px-2 py-1.5 shrink-0"
+              data-testid="active-doc-context"
+            >
+              <div className="flex items-center gap-1 mb-0.5">
+                <FileText className="w-3 h-3 text-zinc-400 shrink-0" />
+                <span className="text-[11px] font-medium text-zinc-700 truncate flex-1">
+                  {activeArtifact.title}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 flex-wrap">
+                {activeArtifact.ctdSection && (
+                  <span className="text-[9px] px-1 rounded bg-blue-50 text-blue-700 font-medium">
+                    {activeArtifact.ctdSection}
+                  </span>
+                )}
+                {activeArtifact.templateId && (
+                  <span className="text-[9px] px-1 rounded bg-violet-50 text-violet-700">
+                    {activeArtifact.templateId.replace('tpl-', '')}
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    'text-[9px] px-1 rounded font-medium',
+                    activeArtifact.status === 'locked'
+                      ? 'bg-red-50 text-red-700'
+                      : activeArtifact.status === 'approved'
+                        ? 'bg-green-50 text-green-700'
+                        : activeArtifact.status === 'review'
+                          ? 'bg-yellow-50 text-yellow-700'
+                          : 'bg-zinc-100 text-zinc-500'
+                  )}
+                >
+                  {activeArtifact.status || 'draft'}
+                </span>
+                {activeArtifact.version && (
+                  <span className="text-[9px] text-zinc-400">v{activeArtifact.version}</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Tree content based on mode */}
           {loading && artifacts.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
@@ -766,7 +872,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               <DocumentOutlineTree
                 content={activeDocContent}
                 title={activeDocTitle || activeArtifact?.title || ''}
+                templateKey={activeArtifact?.templateId}
+                ctdSection={activeArtifact?.ctdSection}
                 onNavigate={handleOutlineNavigate}
+                onCreateSubsection={handleCreateSubsection}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center p-4">
@@ -862,98 +971,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
         {/* ── Section requirements side panel ─────────────────────────────── */}
         {sectionReqs && (
-          <div className="w-[260px] border-l border-zinc-100 shrink-0 flex flex-col bg-white overflow-y-auto">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50/40">
-              <div className="flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-[11px] font-semibold text-zinc-700">
-                  Section Requirements
-                </span>
-              </div>
-              <button
-                onClick={() => setSectionReqs(null)}
-                className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="p-3 space-y-3">
-              <div>
-                <div className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1">
-                  Section
-                </div>
-                <div className="text-[12px] font-semibold text-zinc-800">{sectionReqs.section}</div>
-                <div className="text-[11px] text-zinc-600 mt-0.5">{sectionReqs.label}</div>
-              </div>
-              <div>
-                <div className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1">
-                  Description
-                </div>
-                <p className="text-[11px] text-zinc-600 leading-relaxed">
-                  {sectionReqs.description}
-                </p>
-              </div>
-              <div>
-                <div className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1">
-                  Required Documents
-                </div>
-                <ul className="space-y-1">
-                  {sectionReqs.requiredDocTypes.map((dt, i) => (
-                    <li key={i} className="text-[11px] text-zinc-700 flex items-center gap-1.5">
-                      <FileText className="w-3 h-3 text-zinc-400" />
-                      {dt}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {sectionReqs.optional && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded bg-blue-50">
-                  <Info className="w-3 h-3 text-blue-500" />
-                  <span className="text-[10px] text-blue-700 font-medium">Optional section</span>
-                </div>
-              )}
-              {dossierMetrics[sectionReqs.section] && (
-                <div>
-                  <div className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1">
-                    Current Status
-                  </div>
-                  <div className="space-y-1">
-                    {(() => {
-                      const m = dossierMetrics[sectionReqs.section];
-                      return (
-                        <>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-zinc-500">Documents</span>
-                            <span className="font-medium text-zinc-700">{m.artifactCount}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-zinc-500">Completion</span>
-                            <span className="font-medium text-zinc-700">
-                              {m.completionPercent}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-zinc-100 rounded-full h-1.5">
-                            <div
-                              className="bg-blue-600 h-1.5 rounded-full transition-all"
-                              style={{ width: `${Math.min(100, m.completionPercent)}%` }}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-zinc-500">Evidence</span>
-                            <span className="font-medium text-zinc-700">{m.evidenceCount}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-zinc-500">Precedents</span>
-                            <span className="font-medium text-zinc-700">{m.precedentCount}</span>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <SectionRequirementsPanel
+            reqs={sectionReqs}
+            metrics={dossierMetrics[sectionReqs.section]}
+            onClose={() => setSectionReqs(null)}
+          />
         )}
       </div>
 
@@ -972,5 +994,194 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     </div>
   );
 };
+
+// ── Section requirements panel (extracted) ───────────────────────────────────
+
+interface SectionReqsPanelProps {
+  reqs: SectionRequirement;
+  metrics?: SectionMetrics;
+  onClose: () => void;
+}
+
+function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelProps) {
+  const [showChildren, setShowChildren] = useState(false);
+
+  return (
+    <div className="w-[240px] border-l border-zinc-100 shrink-0 flex flex-col bg-white overflow-y-auto">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/40">
+        <div className="flex items-center gap-1.5">
+          <Info className="w-3 h-3 text-blue-600" />
+          <span className="text-[10px] font-semibold text-zinc-700">Section Requirements</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+      <div className="p-2.5 space-y-2.5 text-[11px]">
+        {/* Section */}
+        <div>
+          <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5">Section</div>
+          <div className="font-semibold text-zinc-800">{reqs.ctdSection}</div>
+          <div className="text-zinc-600 mt-0.5">{reqs.label}</div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5">Description</div>
+          <p className="text-zinc-600 leading-relaxed">{reqs.description}</p>
+        </div>
+
+        {/* Expected doc types */}
+        <div>
+          <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5">
+            Expected Documents
+          </div>
+          <ul className="space-y-0.5">
+            {reqs.requiredDocTypes.map((dt, i) => (
+              <li key={i} className="text-zinc-700 flex items-center gap-1">
+                <FileText className="w-2.5 h-2.5 text-zinc-400" />
+                {dt}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Required / Optional */}
+        <div className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-50">
+          {reqs.optional ? (
+            <>
+              <Info className="w-3 h-3 text-blue-500" />
+              <span className="text-[10px] text-blue-700 font-medium">Optional section</span>
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] text-amber-700 font-medium">Required section</span>
+            </>
+          )}
+        </div>
+
+        {/* Templates available */}
+        {reqs.starterTemplatesAvailable.length > 0 && (
+          <div>
+            <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5">
+              Starter Templates
+            </div>
+            {reqs.starterTemplatesAvailable.map((t, i) => (
+              <div key={i} className="text-zinc-600 flex items-center gap-1 py-0.5">
+                <Layers className="w-2.5 h-2.5 text-violet-500" />
+                {t}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Common missing blocks */}
+        {reqs.commonMissingBlocks.length > 0 && (
+          <div>
+            <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5">
+              Expected Content Blocks
+            </div>
+            {reqs.commonMissingBlocks.map((b, i) => (
+              <div key={i} className="text-zinc-500 text-[10px] py-0.5">
+                • {b}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Children sections */}
+        {(reqs.requiredChildren.length > 0 || reqs.optionalChildren.length > 0) && (
+          <div>
+            <button
+              onClick={() => setShowChildren(!showChildren)}
+              className="flex items-center gap-1 text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5 hover:text-zinc-600"
+            >
+              {showChildren ? (
+                <ChevronDown className="w-2.5 h-2.5" />
+              ) : (
+                <ChevronRight className="w-2.5 h-2.5" />
+              )}
+              Child Sections ({reqs.requiredChildren.length + reqs.optionalChildren.length})
+            </button>
+            {showChildren && (
+              <div className="space-y-0.5 mt-0.5">
+                {reqs.requiredChildren.map((c, i) => (
+                  <div key={i} className="text-zinc-600 text-[10px]">
+                    ▸ {c}
+                  </div>
+                ))}
+                {reqs.optionalChildren.map((c, i) => (
+                  <div key={i} className="text-zinc-400 text-[10px] italic">
+                    ▹ {c}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Current metrics */}
+        {metrics && (
+          <div>
+            <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5">
+              Current Status
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Documents</span>
+                <span className="font-medium text-zinc-700">{metrics.artifactCount}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Completion</span>
+                <span className="font-medium text-zinc-700">{metrics.completionPercent}%</span>
+              </div>
+              <div className="w-full bg-zinc-100 rounded-full h-1.5">
+                <div
+                  className={cn(
+                    'h-1.5 rounded-full transition-all',
+                    metrics.completionPercent >= 75
+                      ? 'bg-emerald-500'
+                      : metrics.completionPercent >= 25
+                        ? 'bg-amber-500'
+                        : 'bg-red-400'
+                  )}
+                  style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Evidence</span>
+                <span className="font-medium text-zinc-700">{metrics.evidenceCount}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Precedents</span>
+                <span className="font-medium text-zinc-700">{metrics.precedentCount}</span>
+              </div>
+              {/* Warning signals */}
+              {metrics.artifactCount > 0 && metrics.evidenceCount === 0 && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px]">
+                  <AlertTriangle className="w-2.5 h-2.5" /> No evidence linked
+                </div>
+              )}
+              {metrics.artifactCount > 0 && metrics.precedentCount === 0 && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-[10px]">
+                  <AlertTriangle className="w-2.5 h-2.5" /> No precedents
+                </div>
+              )}
+              {metrics.artifactCount === 0 && reqs.hasTemplates && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px]">
+                  <Info className="w-2.5 h-2.5" /> Template available, no doc created
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default ProjectWorkspaceShell;

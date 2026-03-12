@@ -137,7 +137,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({ onCreateFromTemplate
   return (
     <div className={cn('flex flex-col h-full', className)} data-testid="template-tree">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-9 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           Templates
         </span>

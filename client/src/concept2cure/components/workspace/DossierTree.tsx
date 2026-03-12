@@ -48,6 +48,7 @@ interface DossierTreeProps {
       completionPercent: number;
       evidenceCount: number;
       precedentCount: number;
+      templateCoverageAvailable?: boolean;
     }
   >;
   /** Active pending move (cut/paste) */
@@ -188,6 +189,7 @@ interface DossierNodeRowProps {
       artifactCount: number;
       completionPercent: number;
       evidenceCount: number;
+      templateCoverageAvailable?: boolean;
       precedentCount: number;
     }
   >;
@@ -292,6 +294,27 @@ function DossierNodeRow({
           </span>
         )}
 
+        {/* Warning signals */}
+        {docCount > 0 &&
+          metrics?.[node.ctdSection] &&
+          metrics[node.ctdSection].evidenceCount === 0 &&
+          metrics[node.ctdSection].precedentCount === 0 && (
+            <AlertCircle
+              className="w-3 h-3 text-amber-400 shrink-0"
+              title="No evidence or precedents linked"
+            />
+          )}
+        {docCount === 0 &&
+          metrics?.[node.ctdSection] &&
+          metrics[node.ctdSection].templateCoverageAvailable && (
+            <span
+              className="text-[8px] text-blue-500 bg-blue-50 rounded px-0.5 shrink-0"
+              title="Template available, no document created"
+            >
+              T
+            </span>
+          )}
+
         {/* Action dot */}
         <span className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <MoreHorizontal className="w-3 h-3 text-zinc-400" />
@@ -364,14 +387,13 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       data-testid="dossier-tree"
       onClick={closeContextMenu}
     >
-      {/* Header */}
+      8{/* Header */}
       <div className="flex items-center justify-between px-3 h-9 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           eCTD Dossier
         </span>
         <span className="text-[10px] text-zinc-400 tabular-nums">{artifacts.length} docs</span>
       </div>
-
       {/* Tree body */}
       <div className="flex-1 overflow-y-auto py-1 zen-scroll" data-testid="dossier-tree-body">
         {CTD_HIERARCHY.map(module => (
@@ -389,7 +411,6 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
           />
         ))}
       </div>
-
       {/* Context menu overlay */}
       {contextMenu && (
         <div
