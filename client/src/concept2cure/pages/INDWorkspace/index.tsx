@@ -539,7 +539,7 @@ const STATUS_CONFIG: Record<
   { icon: typeof CheckCircle2; color: string; bg: string; label: string }
 > = {
   not_started: { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-100', label: 'Not Started' },
-  drafting: { icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50', label: 'Drafting' },
+  drafting: { icon: Clock, color: 'text-violet-500', bg: 'bg-violet-50', label: 'Drafting' },
   review: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50', label: 'In Review' },
   approved: {
     icon: CheckCircle2,
@@ -600,7 +600,7 @@ const SectionRow: React.FC<{
         className={cn(
           'group flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors',
           'hover:bg-zinc-50',
-          isSelected && 'bg-blue-50 border-l-2 border-blue-500',
+          isSelected && 'bg-violet-50 border-l-2 border-violet-500',
           !isSelected && 'border-l-2 border-transparent'
         )}
         style={{ paddingLeft: `${12 + depth * 16}px` }}
@@ -891,7 +891,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
 
   return (
     <>
-      <div className="flex-1 flex flex-col bg-white min-h-0">
+      <div className="flex-1 flex flex-col bg-white min-h-0 border-t-2 border-violet-500/20">
         {/* Header — ultra minimal */}
         <div className="border-b border-zinc-100 px-6 py-4">
           <div className="flex items-center justify-between">

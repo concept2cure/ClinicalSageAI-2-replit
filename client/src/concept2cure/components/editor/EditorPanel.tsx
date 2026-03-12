@@ -24,20 +24,14 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Info,
   Brain,
-  PanelRightClose,
   GitCompare,
   ClipboardList,
   Lock,
   Unlock,
   MapPin,
-  Hash,
   PenTool,
   Filter,
-  BadgeCheck,
-  Activity,
-  Shield,
 } from 'lucide-react';
 import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
@@ -131,14 +125,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimCheckMutation = useClaimCheck();
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Intelligence panel toggle ──────────────────────────────────────────
-  const [showIntelPanel, setShowIntelPanel] = useState(false);
-  // ── Provenance panel toggle ────────────────────────────────────────────
-  const [showProvenancePanel, setShowProvenancePanel] = useState(false);
-  // ── Version Compare panel toggle ────────────────────────────────────────
-  const [showComparePanel, setShowComparePanel] = useState(false);
-  // ── Audit Report panel toggle ──────────────────────────────────────────
-  const [showAuditReport, setShowAuditReport] = useState(false);
+  // ── Single secondary inspector panel (only one open at a time) ────────
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit';
+  const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
+  const toggleInspector = useCallback((panel: InspectorPanel) => {
+    setActiveInspector(prev => (prev === panel ? null : panel));
+  }, []);
 
   // ── Sign/Approve state ────────────────────────────────────────────────
   const [signing, setSigning] = useState(false);
@@ -592,23 +584,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   }, [projectId, activeArtifact, loadArtifacts]);
 
   // ── Cross-panel navigation callbacks ─────────────────────────────────
-  const openCompare = useCallback(() => {
-    setShowComparePanel(true);
-    setShowProvenancePanel(false);
-    setShowAuditReport(false);
-  }, []);
-
-  const openProvenance = useCallback(() => {
-    setShowProvenancePanel(true);
-    setShowComparePanel(false);
-    setShowAuditReport(false);
-  }, []);
-
-  const openAudit = useCallback(() => {
-    setShowAuditReport(true);
-    setShowComparePanel(false);
-    setShowProvenancePanel(false);
-  }, []);
+  const openCompare = useCallback(() => setActiveInspector('compare'), []);
+  const openProvenance = useCallback(() => setActiveInspector('provenance'), []);
+  const openAudit = useCallback(() => setActiveInspector('audit'), []);
 
   // ── No project selected ─────────────────────────────────────────────────
   if (!projectId) {
@@ -808,188 +786,127 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     );
   }
 
-  // ── Editor view ─────────────────────────────────────────────────────────
+  // ── Editor view — Document Focus ─────────────────────────────────────────
+  // Overflow menu state
+  const [overflowOpen, setOverflowOpen] = useState(false);
+
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Top bar with AI tools */}
-      <div className="flex items-center justify-between h-auto min-h-[2.5rem] px-2 sm:px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0 flex-wrap gap-y-1 py-1">
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            onClick={() => {
-              setActiveArtifact(null);
-              setShowArtifactList(true);
-              setAiResult(null);
-            }}
-            className="text-xs text-zinc-500 hover:text-zinc-700 shrink-0"
-          >
-            &larr; Documents
-          </button>
-          <span className="text-zinc-300">/</span>
-          <span className="text-xs font-medium text-zinc-700 truncate max-w-[120px] sm:max-w-[160px] md:max-w-[200px]">
-            {activeArtifact?.title}
+      {/* ── Slim toolbar ─────────────────────────────────────────────────── */}
+      <div className="flex items-center h-10 px-3 border-b border-zinc-100 bg-white shrink-0 gap-2">
+        {/* Left: breadcrumb + status */}
+        <button
+          onClick={() => {
+            setActiveArtifact(null);
+            setShowArtifactList(true);
+            setAiResult(null);
+          }}
+          className="text-xs text-zinc-400 hover:text-zinc-700 shrink-0"
+        >
+          &larr; Docs
+        </button>
+        <span className="text-zinc-200">/</span>
+        <span className="text-xs font-medium text-zinc-800 truncate max-w-[200px]">
+          {activeArtifact?.title}
+        </span>
+        {activeArtifact?.ctdSection && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium shrink-0">
+            CTD {activeArtifact.ctdSection}
           </span>
-          {saveStatus === 'saved' && (
-            <span className="flex items-center gap-1 text-[10px] text-emerald-600">
-              <Check className="w-3 h-3" /> Saved
-            </span>
+        )}
+        <span
+          className={cn(
+            'text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0',
+            activeArtifact?.status === 'approved'
+              ? 'bg-emerald-50 text-emerald-600'
+              : activeArtifact?.status === 'locked'
+                ? 'bg-red-50 text-red-600'
+                : activeArtifact?.status === 'review'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'bg-zinc-100 text-zinc-500'
           )}
-          {saveStatus === 'error' && (
-            <span className="flex items-center gap-1 text-[10px] text-red-500">
-              <AlertCircle className="w-3 h-3" /> Error
-            </span>
-          )}
-        </div>
+        >
+          {activeArtifact?.status || 'draft'}
+        </span>
+        {saveStatus === 'saved' && (
+          <span className="text-[10px] text-emerald-500 flex items-center gap-0.5">
+            <Check className="w-3 h-3" />
+            Saved
+          </span>
+        )}
 
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-          {/* AI actions dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setAiMenuOpen(!aiMenuOpen)}
-              disabled={aiLoading}
-              className="flex items-center gap-1 px-2 py-1 text-xs bg-violet-50 text-violet-700 rounded-md hover:bg-violet-100 disabled:opacity-50"
-            >
-              {aiLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
-              RI Edit
-              <ChevronDown className="w-3 h-3" />
-            </button>
-            {aiMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
-                {AI_ACTIONS.map(a => (
-                  <button
-                    key={a.id}
-                    onClick={() => handleAIEdit(a.id)}
-                    className="w-full text-left px-3 py-2 hover:bg-zinc-50 transition-colors"
-                  >
-                    <div className="text-xs font-medium text-zinc-700">{a.label}</div>
-                    <div className="text-[10px] text-zinc-400">{a.description}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Right: primary actions */}
+        <div className="flex items-center gap-1">
+          {/* Save */}
+          <button
+            onClick={() => activeArtifact && handleSave(activeArtifact.content, {})}
+            className="px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50 rounded transition-colors"
+          >
+            Save
+          </button>
 
           {/* Export DOCX */}
           <button
             onClick={handleExportDocx}
             disabled={docxExporting}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100 disabled:opacity-50"
+            className="px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50 rounded transition-colors disabled:opacity-50"
           >
             {docxExporting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 className="w-3 h-3 animate-spin" />
             ) : (
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3 h-3 inline mr-1" />
             )}
-            Export DOCX
+            DOCX
           </button>
 
-          {/* Claim Check (Precedent Engine) — live monitoring indicator */}
-          <button
-            onClick={handleClaimCheck}
-            disabled={claimCheckMutation.isPending || !activeArtifact?.content}
-            className={cn(
-              'flex items-center gap-1 px-2 py-1 text-xs rounded-md disabled:opacity-50',
-              claimStatus === 'supported'
-                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                : claimStatus === 'needs-evidence'
-                  ? 'bg-red-50 text-red-700 hover:bg-red-100'
-                  : claimStatus === 'checking'
-                    ? 'bg-amber-50 text-amber-600'
-                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-            )}
-          >
-            {claimStatus === 'checking' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : claimStatus === 'supported' ? (
-              <CheckCircle className="w-3.5 h-3.5" />
-            ) : claimStatus === 'needs-evidence' ? (
-              <AlertTriangle className="w-3.5 h-3.5" />
-            ) : (
-              <ShieldCheck className="w-3.5 h-3.5" />
-            )}
-            {claimStatus === 'supported'
-              ? 'Claims OK'
-              : claimStatus === 'needs-evidence'
-                ? 'Needs Evidence'
-                : claimStatus === 'checking'
-                  ? 'Checking...'
-                  : 'Check Claims'}
-          </button>
+          {/* Divider */}
+          <span className="w-px h-4 bg-zinc-200" />
 
-          {/* Regulatory Intelligence Panel Toggle */}
-          <button
-            onClick={() => setShowIntelPanel(!showIntelPanel)}
-            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
-              showIntelPanel
-                ? 'bg-indigo-100 text-indigo-700'
-                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-            }`}
-          >
-            {showIntelPanel ? (
-              <PanelRightClose className="w-3.5 h-3.5" />
-            ) : (
-              <Brain className="w-3.5 h-3.5" />
-            )}
-            Intelligence
-          </button>
+          {/* Inspector toggles — single active */}
+          {(
+            [
+              { id: 'intelligence' as const, icon: Brain, label: 'Intelligence' },
+              { id: 'provenance' as const, icon: ShieldCheck, label: 'Provenance' },
+              { id: 'compare' as const, icon: GitCompare, label: 'Compare' },
+              { id: 'audit' as const, icon: ClipboardList, label: 'Audit' },
+            ] as const
+          ).map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => toggleInspector(id)}
+              className={cn(
+                'px-2 py-1 text-[11px] rounded transition-colors flex items-center gap-1',
+                activeInspector === id
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+              )}
+            >
+              <Icon className="w-3 h-3" />
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
 
-          {/* Document Provenance Panel Toggle */}
-          <button
-            onClick={() => setShowProvenancePanel(!showProvenancePanel)}
-            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
-              showProvenancePanel
-                ? 'bg-violet-100 text-violet-700'
-                : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Provenance
-          </button>
+          {/* Divider */}
+          <span className="w-px h-4 bg-zinc-200" />
 
-          {/* Version Compare Toggle */}
-          <button
-            onClick={() => setShowComparePanel(!showComparePanel)}
-            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
-              showComparePanel
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-            }`}
-          >
-            <GitCompare className="w-3.5 h-3.5" />
-            Compare
-          </button>
-
-          {/* Audit Report Toggle */}
-          <button
-            onClick={() => setShowAuditReport(!showAuditReport)}
-            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
-              showAuditReport
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-            }`}
-          >
-            <ClipboardList className="w-3.5 h-3.5" />
-            Audit
-          </button>
-
-          {/* Sign & Approve */}
+          {/* Sign */}
           <button
             onClick={handleSignApprove}
             disabled={signing || !activeArtifact}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 disabled:opacity-50"
+            className="px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50 rounded transition-colors disabled:opacity-50 flex items-center gap-1"
           >
             {signing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 className="w-3 h-3 animate-spin" />
             ) : (
-              <PenTool className="w-3.5 h-3.5" />
+              <PenTool className="w-3 h-3" />
             )}
             Sign
           </button>
 
-          {/* Status / Lock Toggle */}
+          {/* Status */}
           <button
             onClick={() => {
               const current = activeArtifact?.status || 'draft';
@@ -1004,14 +921,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               handleStatusChange(next);
             }}
             disabled={changingStatus || !activeArtifact}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-zinc-50 text-zinc-600 rounded-md hover:bg-zinc-100 disabled:opacity-50"
+            className="px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50 rounded transition-colors disabled:opacity-50 flex items-center gap-1"
           >
-            {changingStatus ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : activeArtifact?.status === 'locked' ? (
-              <Unlock className="w-3.5 h-3.5" />
+            {activeArtifact?.status === 'locked' ? (
+              <Unlock className="w-3 h-3" />
             ) : (
-              <Lock className="w-3.5 h-3.5" />
+              <Lock className="w-3 h-3" />
             )}
             {activeArtifact?.status === 'locked'
               ? 'Unlock'
@@ -1021,15 +936,76 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   ? 'Approve'
                   : 'Review'}
           </button>
+
+          {/* Overflow menu */}
+          <div className="relative">
+            <button
+              onClick={() => setOverflowOpen(!overflowOpen)}
+              className="px-1.5 py-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+            {overflowOpen && (
+              <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+                {/* RI Edit submenu */}
+                {AI_ACTIONS.map(a => (
+                  <button
+                    key={a.id}
+                    onClick={() => {
+                      handleAIEdit(a.id);
+                      setOverflowOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700"
+                  >
+                    <Sparkles className="w-3 h-3 inline mr-1.5 text-violet-500" />
+                    {a.label}
+                  </button>
+                ))}
+                <div className="border-t border-zinc-100 my-1" />
+                <button
+                  onClick={() => {
+                    handleClaimCheck();
+                    setOverflowOpen(false);
+                  }}
+                  disabled={claimCheckMutation.isPending || !activeArtifact?.content}
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50"
+                >
+                  <ShieldCheck className="w-3 h-3 inline mr-1.5 text-amber-500" />
+                  Check Claims
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCtdInput(!showCtdInput);
+                    setOverflowOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700"
+                >
+                  <MapPin className="w-3 h-3 inline mr-1.5 text-zinc-400" />
+                  Set CTD Section
+                </button>
+                <button
+                  onClick={() => {
+                    handleExportAudit();
+                    setOverflowOpen(false);
+                  }}
+                  disabled={exportingAudit}
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50"
+                >
+                  <ClipboardList className="w-3 h-3 inline mr-1.5 text-zinc-400" />
+                  Export Audit
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* AI result banner */}
+      {/* ── Contextual banners (only when relevant) ──────────────────────── */}
       {aiResult && (
-        <div className="border-b border-amber-200 bg-amber-50/80 p-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="border-b border-amber-200 bg-amber-50/80 px-3 py-2">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-semibold text-amber-800 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" /> RI Suggestion
+              <Sparkles className="w-3 h-3" /> RI Suggestion
             </span>
             <div className="flex gap-1.5">
               <button
@@ -1046,83 +1022,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </button>
             </div>
           </div>
-          <div className="text-xs text-amber-900 max-h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+          <div className="text-xs text-amber-900 max-h-24 overflow-y-auto whitespace-pre-wrap leading-relaxed">
             {aiResult}
           </div>
         </div>
       )}
 
-      {/* Claim check results banner (Precedent Engine) */}
-      {claimResult && (
-        <div
-          className={`border-b p-3 ${claimResult.supported ? 'border-emerald-200 bg-emerald-50/80' : 'border-red-200 bg-red-50/60'}`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span
-              className={`text-xs font-semibold flex items-center gap-1 ${claimResult.supported ? 'text-emerald-800' : 'text-red-800'}`}
-            >
-              {claimResult.supported ? (
-                <CheckCircle className="w-3.5 h-3.5" />
-              ) : (
-                <AlertTriangle className="w-3.5 h-3.5" />
-              )}
-              Claim Check — {claimResult.supported ? 'Supported by Precedents' : 'Needs Evidence'}
-            </span>
-            <button
-              onClick={() => setClaimResult(null)}
-              className="px-2 py-0.5 text-[11px] bg-zinc-200 text-zinc-600 rounded hover:bg-zinc-300"
-            >
-              Dismiss
-            </button>
-          </div>
-          {claimResult.recommendation && (
-            <p className="text-xs text-zinc-700 mb-2 flex items-start gap-1">
-              <Info className="w-3 h-3 flex-shrink-0 mt-0.5 text-zinc-400" />
-              {claimResult.recommendation}
-            </p>
-          )}
-          {claimResult.warnings.length > 0 && (
-            <div className="space-y-1 mb-2">
-              {claimResult.warnings.map((w, i) => (
-                <div key={i} className="flex items-start gap-1.5 text-[11px] text-red-700">
-                  <XCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                  {w.message}
-                </div>
-              ))}
-            </div>
-          )}
-          {claimResult.suggestedCitations.length > 0 && (
-            <div className="space-y-1">
-              <span className="text-[10px] text-zinc-500 font-medium">Suggested Citations:</span>
-              {claimResult.suggestedCitations.map((c, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-[11px] text-emerald-700">
-                  <CheckCircle className="w-3 h-3 flex-shrink-0" />
-                  {c.clearanceNumber} — {c.deviceName}
-                </div>
-              ))}
-            </div>
-          )}
-          {claimResult.precedents.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-zinc-200/50">
-              <span className="text-[10px] text-zinc-500 font-medium">
-                Related Precedents ({claimResult.precedents.length}):
-              </span>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {claimResult.precedents.slice(0, 5).map((p, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-white border border-zinc-200 text-zinc-600"
-                  >
-                    {p.clearanceNumber || p.deviceName || 'Precedent'}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Sign result banner */}
       {signResult && (
         <div
           className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${signResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
@@ -1136,147 +1041,80 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
-      {/* Lock rejection banner */}
       {lockRejection && (
-        <div className="border-b border-red-300 bg-red-50 px-3 py-2 text-xs flex items-center gap-2 text-red-800">
-          <Lock className="w-4 h-4 text-red-600 shrink-0" />
+        <div className="border-b border-red-300 bg-red-50 px-3 py-1.5 text-xs flex items-center gap-2 text-red-800">
+          <Lock className="w-3.5 h-3.5 text-red-600 shrink-0" />
           <span className="font-semibold">{lockRejection}</span>
           <button
             onClick={() => setLockRejection(null)}
             className="ml-auto text-red-400 hover:text-red-600"
           >
-            <XCircle className="w-3.5 h-3.5" />
+            <XCircle className="w-3 h-3" />
           </button>
         </div>
       )}
 
-      {/* Document Intelligence Summary Bar */}
-      {activeArtifact && (
+      {claimResult && (
         <div
-          className="flex items-center gap-3 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/30 text-[10px] text-zinc-500 shrink-0 flex-wrap"
-          data-testid="doc-intelligence-bar"
+          className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${claimResult.supported ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
         >
-          <span className="flex items-center gap-1 font-medium text-zinc-600">
-            <FileText className="w-3 h-3" />
-            {activeArtifact.type?.replace(/_/g, ' ') || 'document'}
-          </span>
-          <span className="flex items-center gap-1">
-            <Hash className="w-3 h-3" />v{activeArtifact.version}
-          </span>
-          <span
-            className={`px-1.5 py-0.5 rounded font-medium ${
-              activeArtifact.status === 'approved'
-                ? 'bg-emerald-100 text-emerald-700'
-                : activeArtifact.status === 'locked'
-                  ? 'bg-red-100 text-red-700'
-                  : activeArtifact.status === 'review'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-amber-100 text-amber-700'
-            }`}
-          >
-            {activeArtifact.status || 'draft'}
-          </span>
-          {/* CTD Section */}
-          {showCtdInput ? (
-            <span className="flex items-center gap-1">
-              <input
-                type="text"
-                value={ctdSectionInput}
-                onChange={e => setCtdSectionInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCtdSection()}
-                placeholder="e.g. 3.2.S"
-                className="w-20 px-1 py-0.5 text-[10px] border border-zinc-200 rounded"
-              />
-              <button
-                onClick={handleCtdSection}
-                className="text-emerald-600 hover:text-emerald-800"
-              >
-                <Check className="w-3 h-3" />
-              </button>
-              <button
-                onClick={() => setShowCtdInput(false)}
-                className="text-zinc-400 hover:text-zinc-600"
-              >
-                <XCircle className="w-3 h-3" />
-              </button>
-            </span>
+          {claimResult.supported ? (
+            <CheckCircle className="w-3.5 h-3.5" />
           ) : (
-            <button
-              onClick={() => setShowCtdInput(true)}
-              className="flex items-center gap-1 hover:text-zinc-700"
-            >
-              <MapPin className="w-3 h-3" />
-              {activeArtifact.ctdSection || 'Set CTD Section'}
-            </button>
+            <AlertTriangle className="w-3.5 h-3.5" />
           )}
-          {/* Separator */}
-          <span className="w-px h-3 bg-zinc-200" />
-          {/* Signature status (P4) */}
-          {signatures.length > 0 ? (
-            <span
-              className="flex items-center gap-1 text-emerald-600 font-medium"
-              title={`Signed by: ${signatures.map(s => s.signerName).join(', ')}`}
-            >
-              <BadgeCheck className="w-3 h-3" />
-              Signed ({signatures.length})
-              <span className="text-zinc-400 font-normal">
-                · {signatures[signatures.length - 1].signerName}
-                {' · '}
-                {new Date(signatures[signatures.length - 1].signedAt).toLocaleDateString()}
-              </span>
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-zinc-400">
-              <PenTool className="w-3 h-3" />
-              Unsigned
-            </span>
+          Claim Check — {claimResult.supported ? 'Supported by Precedents' : 'Needs Evidence'}
+          {claimResult.warnings?.length > 0 && (
+            <span className="text-[10px] opacity-70">({claimResult.warnings.length} warnings)</span>
           )}
-          {/* Integrity status */}
-          {integrityVerified !== null && (
-            <span
-              className={`flex items-center gap-1 font-medium ${integrityVerified ? 'text-emerald-600' : 'text-red-500'}`}
-            >
-              <Shield className="w-3 h-3" />
-              {integrityVerified ? 'Integrity OK' : 'Modified'}
-            </span>
-          )}
-          {/* Provenance event count */}
-          {provenanceCount > 0 && (
-            <span className="flex items-center gap-1" title="Provenance events tracked">
-              <Activity className="w-3 h-3" />
-              {provenanceCount} events
-            </span>
-          )}
-          {/* Export audit as artifact */}
           <button
-            onClick={handleExportAudit}
-            disabled={exportingAudit}
-            className="flex items-center gap-1 ml-auto text-indigo-500 hover:text-indigo-700 disabled:opacity-50"
+            onClick={() => setClaimResult(null)}
+            className="ml-auto text-zinc-400 hover:text-zinc-600"
           >
-            {exportingAudit ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <ClipboardList className="w-3 h-3" />
-            )}
-            Export Audit
+            <XCircle className="w-3 h-3" />
           </button>
         </div>
       )}
 
-      {/* Editor + Side Panels */}
+      {/* CTD section inline input (from overflow) */}
+      {showCtdInput && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/50">
+          <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+          <input
+            type="text"
+            value={ctdSectionInput}
+            onChange={e => setCtdSectionInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleCtdSection()}
+            placeholder="e.g. 3.2.S"
+            className="w-28 px-2 py-1 text-xs border border-zinc-200 rounded bg-white focus:ring-1 focus:ring-blue-400"
+          />
+          <button
+            onClick={handleCtdSection}
+            className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => setShowCtdInput(false)}
+            className="text-xs text-zinc-400 hover:text-zinc-600"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* ── Main canvas: Editor + optional single inspector drawer ──────── */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
+        {/* Editor — always fills available width */}
         <div
-          className={`${showIntelPanel || showProvenancePanel || showComparePanel || showAuditReport ? 'flex-1' : 'w-full'} min-h-0 overflow-hidden relative`}
+          className={cn('min-h-0 overflow-hidden relative', activeInspector ? 'flex-1' : 'w-full')}
         >
-          {/* Lock overlay when document is locked */}
           {activeArtifact?.status === 'locked' && (
-            <div className="absolute inset-0 z-10 bg-red-50/60 backdrop-blur-[1px] flex flex-col items-center justify-center pointer-events-none">
-              <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow-lg text-center pointer-events-auto">
-                <Lock className="w-8 h-8 text-red-500 mx-auto mb-2" />
+            <div className="absolute inset-0 z-10 bg-red-50/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+              <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto">
+                <Lock className="w-6 h-6 text-red-500 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-red-800">Document Locked</p>
-                <p className="text-xs text-red-600 mt-1">
-                  Editing is disabled. Unlock the document to make changes.
-                </p>
+                <p className="text-xs text-red-600 mt-1">Unlock to edit.</p>
               </div>
             </div>
           )}
@@ -1287,51 +1125,53 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             documentTitle={activeArtifact?.title}
             documentType={activeArtifact?.type}
             submissionType={submissionType}
-            showCompliance
-            showTraceability
+            showCompliance={false}
+            showTraceability={false}
             onSave={handleSave}
           />
         </div>
-        {showIntelPanel && (
-          <div className="w-80 min-w-[280px] max-w-[360px] shrink-0">
+
+        {/* Single inspector drawer — only one at a time */}
+        {activeInspector === 'intelligence' && (
+          <div className="w-80 shrink-0 border-l border-zinc-100">
             <RegulatoryIntelligencePanel
               submissionType={submissionType}
               indication={activeArtifact?.title}
               deviceName={activeArtifact?.title}
               documentContent={activeArtifact?.content}
-              onClose={() => setShowIntelPanel(false)}
+              onClose={() => setActiveInspector(null)}
             />
           </div>
         )}
-        {showProvenancePanel && projectId && activeArtifact && (
-          <div className="w-80 min-w-[280px] max-w-[360px] shrink-0 h-full">
+        {activeInspector === 'provenance' && projectId && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-100 h-full">
             <DocumentProvenancePanel
               projectId={projectId}
               artifactId={activeArtifact.id}
-              onClose={() => setShowProvenancePanel(false)}
+              onClose={() => setActiveInspector(null)}
               onOpenCompare={openCompare}
               onOpenAudit={openAudit}
             />
           </div>
         )}
-        {showComparePanel && projectId && activeArtifact && (
-          <div className="w-[480px] min-w-[400px] max-w-[560px] shrink-0 h-full">
+        {activeInspector === 'compare' && projectId && activeArtifact && (
+          <div className="w-[480px] shrink-0 border-l border-zinc-100 h-full">
             <DocumentVersionCompare
               projectId={projectId}
               artifactId={activeArtifact.id}
-              onClose={() => setShowComparePanel(false)}
+              onClose={() => setActiveInspector(null)}
               onOpenAudit={openAudit}
               onOpenProvenance={openProvenance}
               onRollbackComplete={loadArtifacts}
             />
           </div>
         )}
-        {showAuditReport && projectId && activeArtifact && (
-          <div className="w-96 min-w-[340px] max-w-[480px] shrink-0 h-full">
+        {activeInspector === 'audit' && projectId && activeArtifact && (
+          <div className="w-96 shrink-0 border-l border-zinc-100 h-full">
             <DocumentAuditReport
               projectId={projectId}
               artifactId={activeArtifact.id}
-              onClose={() => setShowAuditReport(false)}
+              onClose={() => setActiveInspector(null)}
               onOpenProvenance={openProvenance}
               onOpenCompare={openCompare}
               onExportAsArtifact={handleExportAudit}

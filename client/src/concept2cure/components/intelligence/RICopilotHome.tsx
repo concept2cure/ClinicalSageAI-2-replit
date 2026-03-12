@@ -279,7 +279,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
   // 3-PANE LAYOUT: LEFT (investigation) | CENTER (intelligence) | RIGHT (governance)
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="flex-1 flex min-h-0">
+    <div className="flex-1 flex min-h-0 border-t-2 border-blue-500/20">
       {/* ═══════════════════════════════════════════════════════════════════════
           LEFT INVESTIGATION RAIL
           ═══════════════════════════════════════════════════════════════════════ */}

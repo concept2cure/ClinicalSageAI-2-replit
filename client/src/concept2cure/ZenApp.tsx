@@ -552,7 +552,7 @@ export const ZenApp: React.FC = () => {
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
 
   // Regulatory workspace panels
-  const [regChatOpen, setRegChatOpen] = useState(true);
+  const [regChatOpen, setRegChatOpen] = useState(false);
   const [regArtifactsOpen, setRegArtifactsOpen] = useState(false);
   const [regSimOpen, setRegSimOpen] = useState(false);
   const [regChatMessage, setRegChatMessage] = useState<string | null>(null);
@@ -2025,7 +2025,7 @@ export const ZenApp: React.FC = () => {
                 </Suspense>
               ) : (
                 <div className="flex-1 flex min-h-0">
-                  {/* Column 1: Editor */}
+                  {/* Editor — full width, document-first */}
                   <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
                     <Suspense
                       fallback={
@@ -2044,110 +2044,6 @@ export const ZenApp: React.FC = () => {
                       />
                     </Suspense>
                   </div>
-
-                  {/* Column 2: Intelligence Panel */}
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center justify-center h-full">
-                        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                      </div>
-                    }
-                  >
-                    <RegulatoryIntelligencePanel
-                      submissionType={activeProject?.type}
-                      indication={activeProject?.description}
-                      deviceName={activeProject?.name}
-                      phase="III"
-                      onCreateDocument={(content, title, ctdSection) => {
-                        setPendingEditorContent({ content, title, ctdSection });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                    />
-                  </Suspense>
-
-                  {/* Column 3: RI Analyst Chat */}
-                  {regChatOpen && (
-                    <div className="hidden xl:flex w-80 shrink-0 border-l border-zinc-200 flex-col min-h-0">
-                      <div className="flex items-center justify-between h-10 px-3 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
-                        <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
-                          <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
-                          RI Analyst
-                        </span>
-                        <button
-                          onClick={() => setRegChatOpen(false)}
-                          className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <div className="flex-1 min-h-0 overflow-hidden">
-                        <ZenChat
-                          projectId={activeProjectId}
-                          projectName={activeProject?.name}
-                          submissionType={activeProject?.type}
-                          threadId={activeThreadId}
-                          greeting={`Regulatory Intelligence Analyst ready. Working on ${activeProject?.name || 'your project'} (${activeProject?.type || 'submission'}).`}
-                          suggestedActions={(() => {
-                            const type = activeProject?.type;
-                            if (type === 'IND')
-                              return [
-                                'Review preclinical data package completeness',
-                                'Draft Investigator Brochure summary',
-                                'Identify CMC gaps for Phase I',
-                                'Generate clinical protocol synopsis',
-                              ];
-                            if (type === '510K')
-                              return [
-                                'Compare with predicate device',
-                                'Assess substantial equivalence',
-                                'Review performance testing requirements',
-                                'Draft SE determination rationale',
-                              ];
-                            if (type === 'NDA' || type === 'BLA')
-                              return [
-                                'Summarize Phase III efficacy data',
-                                'Draft integrated safety summary',
-                                'Review labeling requirements',
-                                'Identify post-marketing commitments',
-                              ];
-                            if (type === 'PMA')
-                              return [
-                                'Review clinical evidence for PMA',
-                                'Assess risk-benefit profile',
-                                'Draft manufacturing summary',
-                                'Identify panel meeting requirements',
-                              ];
-                            return [
-                              'Summarize evidence for this indication',
-                              'Draft executive summary',
-                              'Identify regulatory gaps',
-                              'Compare with predicate devices',
-                            ];
-                          })()}
-                          initialMessage={regChatMessage}
-                          onNavigate={(path: string) => {
-                            try {
-                              const params = new URLSearchParams(
-                                new URL(path, window.location.origin).search
-                              );
-                              const p = params.get('panel') as ToolPanel | null;
-                              if (p && p in TOOL_PANELS) {
-                                setActiveToolPanel(p);
-                                return;
-                              }
-                            } catch (_) {
-                              /* fallback */
-                            }
-                          }}
-                          onThreadChange={tid => {
-                            handleThreadChange(tid);
-                            if (regChatMessage) setRegChatMessage(null);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 

@@ -15,11 +15,8 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
-  Activity,
   FileText,
   Beaker,
-  Layers,
-  Stethoscope,
   FlaskConical,
   Search,
   ShieldAlert,
@@ -30,7 +27,6 @@ import {
   MessageCircle,
   BadgeCheck,
   ClipboardList,
-  BookOpen,
   Database,
   History,
   Microscope,
@@ -81,28 +77,6 @@ export interface ZenSidebarProps {
   industryMode?: string;
 }
 
-// ─── Workspace item ───────────────────────────────────────────────────────────
-
-const WorkspaceItem: React.FC<{
-  icon: React.ReactNode;
-  label: string;
-  badge?: string;
-  onClick: () => void;
-}> = ({ icon, label, badge, onClick }) => (
-  <button
-    onClick={onClick}
-    className="w-full flex items-center gap-2.5 pl-7 pr-3 py-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 text-sm transition-colors rounded-lg"
-  >
-    <span className="flex-shrink-0 text-zinc-400">{icon}</span>
-    <span className="flex-1 text-left truncate">{label}</span>
-    {badge && (
-      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium leading-none flex-shrink-0">
-        {badge}
-      </span>
-    )}
-  </button>
-);
-
 // ─── Workspace group ──────────────────────────────────────────────────────────
 
 const WorkspaceGroup: React.FC<{
@@ -112,17 +86,20 @@ const WorkspaceGroup: React.FC<{
 }> = ({ label, defaultOpen = true, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div>
+    <div className="mt-1">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-600 transition-colors"
+        className="w-full flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider hover:text-zinc-600 transition-colors"
       >
         <ChevronDown
-          className={cn('w-3 h-3 flex-shrink-0 transition-transform', !open && '-rotate-90')}
+          className={cn(
+            'w-3 h-3 flex-shrink-0 transition-transform duration-150',
+            !open && '-rotate-90'
+          )}
         />
         <span>{label}</span>
       </button>
-      {open && <div className="pb-1">{children}</div>}
+      {open && <div className="pb-2 space-y-0.5">{children}</div>}
     </div>
   );
 };
@@ -148,7 +125,7 @@ const NavItem: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2.5 pl-7 pr-3 py-1.5 text-sm transition-colors rounded-lg',
+        'w-full flex items-center gap-2.5 mx-1 pl-6 pr-3 py-[7px] text-[13px] transition-all duration-150 rounded-lg',
         active
           ? accent
             ? `${accent.bg} ${accent.text} font-medium`
@@ -384,7 +361,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         {/* ── Grouped product navigation ──────────────────────────────── */}
         <div
-          className="flex-1 overflow-y-auto min-h-0 zen-scroll"
+          className="flex-1 overflow-y-auto min-h-0 zen-scroll py-1"
           style={{ scrollbarWidth: 'thin' }}
         >
           {/* ── Workspaces ──────────────────────────────────────── */}
@@ -532,7 +509,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             />
           </WorkspaceGroup>
 
-          <div className="mx-3 my-1 border-t border-zinc-200" />
+          <div className="mx-3 my-2 border-t border-zinc-100" />
 
           {/* ── Conversations ──────────────────────────────────── */}
           <WorkspaceGroup label="Conversations" defaultOpen={conversations.length > 0}>
