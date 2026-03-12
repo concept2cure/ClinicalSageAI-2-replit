@@ -1974,6 +1974,7 @@ export const ZenApp: React.FC = () => {
                   {/* View toggle */}
                   <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
                     <button
+                      data-testid="view-toggle-intelligence"
                       onClick={() => setRiViewMode('intelligence')}
                       className={cn(
                         'px-2.5 py-1 text-[11px] font-medium transition-colors',
@@ -1985,6 +1986,7 @@ export const ZenApp: React.FC = () => {
                       Intelligence
                     </button>
                     <button
+                      data-testid="view-toggle-editor"
                       onClick={() => setRiViewMode('editor')}
                       className={cn(
                         'px-2.5 py-1 text-[11px] font-medium transition-colors',

@@ -157,6 +157,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [filterCtd, setFilterCtd] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
+  // ── Overflow menu (editor toolbar) ────────────────────────────────────
+  const [overflowOpen, setOverflowOpen] = useState(false);
+
   const handleClaimCheck = useCallback(() => {
     if (!activeArtifact?.content) return;
     // Strip HTML and extract first substantive sentence as the claim
@@ -787,9 +790,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   }
 
   // ── Editor view — Document Focus ─────────────────────────────────────────
-  // Overflow menu state
-  const [overflowOpen, setOverflowOpen] = useState(false);
-
   return (
     <div className="flex flex-col h-full bg-white">
       {/* ── Slim toolbar ─────────────────────────────────────────────────── */}
@@ -876,6 +876,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           ).map(({ id, icon: Icon, label }) => (
             <button
               key={id}
+              data-testid={`inspector-${id}`}
               onClick={() => toggleInspector(id)}
               className={cn(
                 'px-2 py-1 text-[11px] rounded transition-colors flex items-center gap-1',
