@@ -2158,6 +2158,126 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
 });
 
 /**
+ * PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement
+ * Governed placement / relocation of an artifact within the CTD hierarchy.
+ * Records a provenance event for the audit trail.
+ */
+router.put(
+  '/projects/:projectId/artifacts/:artifactId/placement',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const { operation, fromSection, toSection, reason } = req.body;
+
+      // Validate required fields
+      if (!operation || !toSection || !reason) {
+        return sendError(res, 400, 'Missing required fields: operation, toSection, reason');
+      }
+      if (!['reclassify', 'place', 'relocate'].includes(operation)) {
+        return sendError(res, 400, 'Invalid operation. Must be: reclassify, place, or relocate');
+      }
+      if (typeof reason !== 'string' || reason.trim().length < 5) {
+        return sendError(res, 400, 'Reason must be at least 5 characters');
+      }
+      if (typeof toSection !== 'string' || !/^[\dA-Z]+(\.[\dA-Z]+)*$/i.test(toSection)) {
+        return sendError(res, 400, 'Invalid CTD section format (expected e.g. 3.2.S.1)');
+      }
+
+      // Find the artifact
+      const [dbArtifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!dbArtifact) {
+        return sendError(res, 404, 'Artifact not found');
+      }
+
+      // Locked artifacts cannot be moved
+      if (dbArtifact.status === 'locked') {
+        return sendError(res, 423, 'Document is locked. Unlock before changing placement.');
+      }
+
+      const previousSection = dbArtifact.ctdSection || null;
+
+      // Update ctdSection on the artifact
+      const [updated] = await db
+        .update(concept2cureArtifacts)
+        .set({
+          ctdSection: toSection,
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureArtifacts.id, dbArtifact.id))
+        .returning();
+
+      // Log audit entry
+      await logAuditEntry(
+        req,
+        'UPDATE',
+        'artifact',
+        req.params.artifactId,
+        { ctdSection: previousSection },
+        { ctdSection: toSection, operation, reason }
+      );
+
+      // Emit provenance event for the placement operation
+      await emitProvenanceEvent({
+        artifactDbId: dbArtifact.id,
+        organizationId,
+        eventType: 'placement',
+        eventAction: operation,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail,
+        actorEmail: req.userEmail,
+        details: {
+          operation,
+          fromSection: previousSection,
+          toSection,
+          reason: reason.trim(),
+          title: dbArtifact.title,
+        },
+        sourceDescription: `${operation}: ${previousSection || '(unassigned)'} → ${toSection} — ${reason.trim()}`,
+        backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement',
+        backendService: 'concept2cure',
+        ipAddress: getClientIp(req),
+      });
+
+      logger.info('Artifact placement updated', {
+        artifactId: req.params.artifactId,
+        operation,
+        from: previousSection,
+        to: toSection,
+      });
+
+      return sendSuccess(res, {
+        id: updated.artifactId,
+        ctdSection: updated.ctdSection,
+        operation,
+        previousSection,
+      });
+    } catch (error: any) {
+      logConcept2cureError('artifact placement', error, {
+        artifactId: req.params.artifactId,
+      });
+      return sendError(res, 500, 'Failed to update placement');
+    }
+  }
+);
+
+/**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
  * Create an electronic signature for an artifact version (21 CFR Part 11).
  */

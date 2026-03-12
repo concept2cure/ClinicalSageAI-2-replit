@@ -2,18 +2,39 @@
  * ProjectWorkspaceShell — Clean 3-pane project workspace.
  *
  * Layout: far-left nav rail (ZenSidebar) → [this shell]
- *   left: ProjectFileTree (220px)
+ *   left: File/Dossier/Template tree (220px) with mode toggle
  *   center: DocumentListPane (folder) or EditorPanel (document)
  *   right: Inspector panel (provenance/compare/audit) — only when doc open
  *
- * Replaces the old regulatory-workspace block in ZenApp.
+ * Left-rail modes:
+ *   Files     — ProjectFileTree (Codespaces-style category explorer)
+ *   Dossier   — DossierTree (ICH CTD Module 1-5 submission structure)
+ *   Templates — TemplateTree (IND pyramid template launcher)
  */
 
 import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
 
 import { ProjectFileTree, type TreeArtifact } from './ProjectFileTree';
 import { DocumentListPane } from './DocumentListPane';
-import { ChevronLeft, Loader2, FileText, Plus, FolderOpen, Brain } from 'lucide-react';
+import { DossierTree } from './DossierTree';
+import { TemplateTree } from './TemplateTree';
+import {
+  PlacementDialog,
+  type PlacementConfirmation,
+  type PlacementOperation,
+} from './PlacementDialog';
+import {
+  ChevronLeft,
+  Loader2,
+  FileText,
+  Plus,
+  FolderOpen,
+  Brain,
+  Files,
+  BookOpen,
+  Layers,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Lazy-load the existing EditorPanel (it handles save, load, AI, inspector drawers)
 const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ default: m.default })));
@@ -25,6 +46,9 @@ function getAuthHeaders(): Record<string, string> {
     localStorage.getItem('trialsage_access_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
+// ── Left-rail mode type ──────────────────────────────────────────────────────
+type LeftRailMode = 'files' | 'dossier' | 'templates';
 
 // ── Folder label map ─────────────────────────────────────────────────────────
 const FOLDER_LABELS: Record<string, string> = {
@@ -79,11 +103,22 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'browse' | 'edit'>('browse');
+  const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
+  const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
   // New document creation
   const [showNewDoc, setShowNewDoc] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
+
+  // Placement dialog state
+  const [placementDialog, setPlacementDialog] = useState<{
+    open: boolean;
+    artifact: TreeArtifact | null;
+    operation: PlacementOperation;
+    targetSection?: string;
+  }>({ open: false, artifact: null, operation: 'place' });
+  const [placementLoading, setPlacementLoading] = useState(false);
 
   // If initialContent is provided, go straight to edit mode
   useEffect(() => {
@@ -133,9 +168,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     return 'drafts';
   }
 
+  // folderDocs: used in Files mode
   const folderDocs = useMemo(() => {
     return artifacts.filter(a => classifyArtifact(a) === selectedFolder);
   }, [artifacts, selectedFolder]);
+
+  // sectionDocs: used in Dossier mode — filter by ctdSection
+  const sectionDocs = useMemo(() => {
+    if (!selectedCtdSection) return [];
+    return artifacts.filter(a => {
+      const s = a.ctdSection || '';
+      return s === selectedCtdSection || s.startsWith(selectedCtdSection + '.');
+    });
+  }, [artifacts, selectedCtdSection]);
 
   // ── Create new document ──────────────────────────────────────────────────
   const handleCreateNew = useCallback(async () => {
@@ -168,6 +213,91 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
   }, [projectId, newDocTitle, loadArtifacts]);
 
+  // ── Create from template ─────────────────────────────────────────────────
+  const handleCreateFromTemplate = useCallback(
+    async (templateKey: string, ctdSection: string, label: string) => {
+      if (!projectId) return;
+      setCreatingNew(true);
+      try {
+        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            title: label,
+            content: `<h1>${label}</h1><p>Generated from template <code>${templateKey}</code> for CTD section ${ctdSection}.</p>`,
+            type: 'regulatory_document',
+            category: 'document',
+            ctdSection,
+            templateId: templateKey,
+          }),
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          await loadArtifacts();
+          setSelectedDocId(created.id);
+          setMode('edit');
+          setLeftRailMode('dossier');
+        }
+      } catch {
+        // silent
+      } finally {
+        setCreatingNew(false);
+      }
+    },
+    [projectId, loadArtifacts]
+  );
+
+  // ── Placement confirmation handler ───────────────────────────────────────
+  const handlePlacementConfirm = useCallback(
+    async (params: PlacementConfirmation) => {
+      if (!projectId) return;
+      setPlacementLoading(true);
+      try {
+        const res = await fetch(
+          `/api/concept2cure/projects/${projectId}/artifacts/${params.artifactId}/placement`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({
+              operation: params.operation,
+              fromSection: params.fromSection,
+              toSection: params.toSection,
+              reason: params.reason,
+            }),
+          }
+        );
+        if (res.ok) {
+          await loadArtifacts();
+          setPlacementDialog({ open: false, artifact: null, operation: 'place' });
+        }
+      } catch {
+        // silent
+      } finally {
+        setPlacementLoading(false);
+      }
+    },
+    [projectId, loadArtifacts]
+  );
+
+  // ── Open placement dialog from dossier tree ──────────────────────────────
+  const handlePlaceArtifact = useCallback(
+    (ctdSection: string) => {
+      // If a document is selected, open placement for that doc
+      const art = artifacts.find(a => a.id === selectedDocId);
+      if (art) {
+        const hasExistingSection = !!art.ctdSection;
+        setPlacementDialog({
+          open: true,
+          artifact: art,
+          operation: hasExistingSection ? 'relocate' : 'place',
+          targetSection: ctdSection,
+        });
+      }
+    },
+    [artifacts, selectedDocId]
+  );
+
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectDoc = useCallback((doc: TreeArtifact) => {
     setSelectedDocId(doc.id);
@@ -180,10 +310,25 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setMode('browse');
   }, []);
 
+  const handleSelectSection = useCallback((ctdSection: string, _label: string) => {
+    setSelectedCtdSection(ctdSection);
+    setSelectedDocId(undefined);
+    setMode('browse');
+  }, []);
+
   const handleBackToList = useCallback(() => {
     setSelectedDocId(undefined);
     setMode('browse');
   }, []);
+
+  // Which docs to show in the center pane when browsing
+  const browseLabel =
+    leftRailMode === 'dossier'
+      ? selectedCtdSection
+        ? `Section ${selectedCtdSection}`
+        : 'Select a section'
+      : FOLDER_LABELS[selectedFolder] || selectedFolder;
+  const browseDocs = leftRailMode === 'dossier' ? sectionDocs : folderDocs;
 
   // ── No project guard ────────────────────────────────────────────────────
   if (!projectId) {
@@ -263,13 +408,39 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
       {/* ── 3-pane body ───────────────────────────────────────────────────── */}
       <div className="flex-1 flex min-h-0">
-        {/* Left: File tree (always visible) */}
+        {/* Left: Tree panel with mode toggle */}
         <div className="w-[220px] border-r border-zinc-100 shrink-0 flex flex-col bg-white">
+          {/* Mode toggle tabs */}
+          <div className="flex border-b border-zinc-100 shrink-0 bg-zinc-50/40">
+            {[
+              { key: 'files' as LeftRailMode, icon: Files, label: 'Files' },
+              { key: 'dossier' as LeftRailMode, icon: BookOpen, label: 'Dossier' },
+              { key: 'templates' as LeftRailMode, icon: Layers, label: 'Templates' },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setLeftRailMode(tab.key)}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-semibold transition-colors',
+                  leftRailMode === tab.key
+                    ? 'text-blue-700 bg-white border-b-2 border-blue-600'
+                    : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50'
+                )}
+                data-testid={`rail-mode-${tab.key}`}
+                title={tab.label}
+              >
+                <tab.icon className="w-3 h-3" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Tree content based on mode */}
           {loading && artifacts.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
             </div>
-          ) : (
+          ) : leftRailMode === 'files' ? (
             <ProjectFileTree
               artifacts={artifacts}
               selectedId={selectedDocId}
@@ -278,6 +449,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               selectedFolder={selectedFolder}
               onCreateNew={() => setShowNewDoc(true)}
             />
+          ) : leftRailMode === 'dossier' ? (
+            <DossierTree
+              artifacts={artifacts}
+              selectedSection={selectedCtdSection}
+              onSelectSection={handleSelectSection}
+              onPlaceArtifact={selectedDocId ? handlePlaceArtifact : undefined}
+            />
+          ) : (
+            <TemplateTree onCreateFromTemplate={handleCreateFromTemplate} />
           )}
         </div>
 
@@ -329,8 +509,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           {/* Mode: browse = DocumentListPane, edit = EditorPanel */}
           {mode === 'browse' ? (
             <DocumentListPane
-              folderLabel={FOLDER_LABELS[selectedFolder] || selectedFolder}
-              documents={folderDocs}
+              folderLabel={browseLabel}
+              documents={browseDocs}
               selectedId={selectedDocId}
               onSelect={handleSelectDoc}
               onCreateNew={() => setShowNewDoc(true)}
@@ -355,6 +535,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           )}
         </div>
       </div>
+
+      {/* ── Placement dialog ──────────────────────────────────────────────── */}
+      {placementDialog.artifact && (
+        <PlacementDialog
+          open={placementDialog.open}
+          onClose={() => setPlacementDialog({ open: false, artifact: null, operation: 'place' })}
+          artifact={placementDialog.artifact}
+          operation={placementDialog.operation}
+          targetSection={placementDialog.targetSection}
+          onConfirm={handlePlacementConfirm}
+          loading={placementLoading}
+        />
+      )}
     </div>
   );
 };
