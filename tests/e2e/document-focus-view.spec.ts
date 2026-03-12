@@ -123,32 +123,32 @@ for (const vp of [
   test.describe(`Document Focus View @ ${tag}`, () => {
     test.use({ viewport: { width: vp.w, height: vp.h } });
 
-    test(`full acceptance pass at ${tag}`, async ({ page }) => {
+    test(`document-open flow at ${tag}`, async ({ page }) => {
       test.setTimeout(120_000);
 
       await injectAuth(page);
       await page.goto(`${APP_BASE}/concept2cure`, { waitUntil: 'networkidle', timeout: 30_000 });
       await page.waitForTimeout(3000);
 
-      // ── 01: Projects hub ────────────────────────────────────────────
-      await snap(page, `01-projects-hub-${tag}.png`);
+      // ── 01: Projects hub — select a project ─────────────────────────
+      await snap(page, `01-project-selected-${tag}.png`);
 
-      // ── 02: Click RI Copilot → ProjectLauncher ──────────────────────
-      await clickBtn(page, 'RI Copilot');
-      await snap(page, `02-project-launcher-${tag}.png`);
+      // Click the first project row → goes DIRECTLY to editor/artifact list
+      const projectRow = page.locator('[data-testid^="project-row-"]').first();
+      const hasProject = await projectRow.isVisible({ timeout: 5000 }).catch(() => false);
+      if (hasProject) {
+        await projectRow.click();
+        await page.waitForTimeout(3000);
+        console.log('  [nav] Clicked project → direct workspace');
+      } else {
+        console.log('  [nav] No project rows found');
+      }
 
-      // ── 03: Enter workspace → RI Copilot Intelligence ──────────────
-      (await clickBtn(page, 'Open Project Workspace')) ||
-        (await clickBtn(page, 'Open Workspace')) ||
-        (await clickBtn(page, 'Ask RI'));
-      await snap(page, `03-ri-intelligence-${tag}.png`);
+      // ── 02: Document clicked — should be on artifact list, NO launcher ─
+      // This proves the launcher is bypassed: we're on the editor artifact list
+      await snap(page, `02-document-clicked-${tag}.png`);
 
-      // ── 04: Toggle to Editor mode → Artifact list ───────────────────
-      await clickTestId(page, 'view-toggle-editor');
-      await snap(page, `04-editor-artifact-list-${tag}.png`);
-
-      // ── 05: Click first document → Editor with toolbar ──────────────
-      // The artifact list items are <button> elements in a list
+      // ── 03: Open first document → direct document-open default ──────
       const firstDoc = page.locator('.space-y-1 > button').first();
       const hasDoc = await firstDoc.isVisible({ timeout: 3000 }).catch(() => false);
       if (hasDoc) {
@@ -167,26 +167,32 @@ for (const vp of [
           console.log('  [nav] No documents and no create input found');
         }
       }
-      await snap(page, `05-editor-document-open-${tag}.png`);
+      await snap(page, `03-document-open-default-${tag}.png`);
 
-      // ── 06–09: Inspector drawers ────────────────────────────────────
+      // ── 04–07: Inspector drawers (one at a time) ────────────────────
       for (const [panel, num] of [
-        ['intelligence', '06'],
-        ['provenance', '07'],
-        ['compare', '08'],
-        ['audit', '09'],
+        ['intelligence', '04'],
+        ['provenance', '05'],
+        ['compare', '06'],
+        ['audit', '07'],
       ]) {
         await clickTestId(page, `inspector-${panel}`);
-        await snap(page, `${num}-editor-${panel}-drawer-${tag}.png`);
+        await snap(page, `${num}-${panel}-drawer-${tag}.png`);
       }
 
-      // ── 10: IND Workspace ───────────────────────────────────────────
-      await clickBtn(page, 'IND Workspace');
-      await snap(page, `10-ind-workspace-${tag}.png`);
+      // ── 08: RI Copilot (distinct from IND) ──────────────────────────
+      // Navigate via sidebar to RI Copilot intelligence view
+      await clickBtn(page, 'RI Copilot');
+      await snap(page, `08-ri-copilot-${tag}.png`);
 
-      // ── 11: Document Vault ──────────────────────────────────────────
+      // ── 09: IND Workspace (distinct from RI) ───────────────────────
+      await clickBtn(page, 'IND Workspace');
+      await snap(page, `09-ind-workspace-${tag}.png`);
+
+      // ── 10: Left rail scroll proof ──────────────────────────────────
+      // Navigate back to projects to show the full sidebar
       await clickBtn(page, 'Document Vault');
-      await snap(page, `11-document-vault-${tag}.png`);
+      await snap(page, `10-left-rail-scroll-${tag}.png`);
     });
   });
 }

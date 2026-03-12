@@ -539,7 +539,7 @@ export const ZenApp: React.FC = () => {
 
   // Layout mode — initialize from URL when deep-linked into a project
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(
-    urlProjectId ? 'project-launcher' : 'projects'
+    urlProjectId ? 'regulatory-workspace' : 'projects'
   );
 
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
@@ -578,7 +578,9 @@ export const ZenApp: React.FC = () => {
   } | null>(null);
 
   // RI Copilot view: 'intelligence' = evidence-first home, 'editor' = document editing
-  const [riViewMode, setRiViewMode] = useState<'intelligence' | 'editor'>('intelligence');
+  const [riViewMode, setRiViewMode] = useState<'intelligence' | 'editor'>(
+    urlProjectId ? 'editor' : 'intelligence'
+  );
 
   // Active selection — URL projectId takes precedence
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
@@ -709,11 +711,12 @@ export const ZenApp: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Deep-link: if URL has /project/:projectId, set active project + layout mode
+  // Deep-link: if URL has /project/:projectId, set active project + go to workspace
   useEffect(() => {
     if (urlProjectId && urlProjectId !== activeProjectId) {
       setActiveProjectId(urlProjectId);
-      setLayoutMode('project-launcher');
+      setRiViewMode('editor');
+      setLayoutMode('regulatory-workspace');
     }
     // Also support legacy ?projectId= query param for backwards compat
     try {
@@ -721,7 +724,8 @@ export const ZenApp: React.FC = () => {
       const qp = params.get('projectId');
       if (qp && !urlProjectId) {
         setActiveProjectId(qp);
-        setLayoutMode('project-launcher');
+        setRiViewMode('editor');
+        setLayoutMode('regulatory-workspace');
         // Upgrade to path-based URL
         navigate(`/concept2cure/project/${qp}`);
       }
@@ -759,7 +763,7 @@ export const ZenApp: React.FC = () => {
     // Clear active conversation/thread and enter workspace/assistant
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
-    setLayoutMode(activeProjectId ? 'project-launcher' : 'assistant');
+    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'assistant');
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
@@ -2452,7 +2456,8 @@ export const ZenApp: React.FC = () => {
                                 onClick={() => {
                                   navInProgressRef.current = true;
                                   setActiveProjectId(project.id);
-                                  setLayoutMode('project-launcher');
+                                  setRiViewMode('editor');
+                                  setLayoutMode('regulatory-workspace');
                                   navigate(`/concept2cure/project/${project.id}`);
                                 }}
                                 className="cursor-pointer hover:bg-zinc-50 transition-colors"
@@ -3171,6 +3176,8 @@ export const ZenApp: React.FC = () => {
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
+          setRiViewMode('editor');
+          setLayoutMode('regulatory-workspace');
           navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);
