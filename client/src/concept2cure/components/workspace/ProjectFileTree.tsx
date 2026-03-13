@@ -5,7 +5,7 @@
  * sections, document counts, status badges, and active selection state.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import {
   ChevronRight,
@@ -17,6 +17,10 @@ import {
   Clock,
   AlertTriangle,
   Plus,
+  Scissors,
+  MapPin,
+  Copy,
+  ClipboardPaste,
 } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -46,6 +50,13 @@ interface ProjectFileTreeProps {
   onSelectFolder: (folderKey: string) => void;
   selectedFolder?: string;
   onCreateNew?: () => void;
+  /** Governed placement actions */
+  onCutDocument?: (artifact: TreeArtifact) => void;
+  onOpenPlacement?: (artifact: TreeArtifact) => void;
+  onCopyCtdPath?: (artifact: TreeArtifact) => void;
+  /** Active pending move (cut/paste) */
+  pendingMove?: { artifact: TreeArtifact; fromSection: string | null } | null;
+  onPasteHere?: (folderKey: string) => void;
   className?: string;
 }
 
@@ -120,6 +131,11 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
   onSelectFolder,
   selectedFolder,
   onCreateNew,
+  onCutDocument,
+  onOpenPlacement,
+  onCopyCtdPath,
+  pendingMove,
+  onPasteHere,
   className,
 }) => {
   // Track which folders are expanded (default: expand folders that have items)
@@ -128,6 +144,39 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
     FOLDER_ORDER.forEach(f => initial.add(f));
     return initial;
   });
+
+  // Context menu state for file nodes
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    artifact: TreeArtifact;
+  } | null>(null);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  const handleFileContextMenu = useCallback(
+    (e: React.MouseEvent, artifact: TreeArtifact) => {
+      if (!onCutDocument && !onOpenPlacement && !onCopyCtdPath) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const menuW = 200,
+        menuH = 180;
+      const x = Math.min(e.clientX, window.innerWidth - menuW);
+      const y = Math.min(e.clientY, window.innerHeight - menuH);
+      setContextMenu({ x, y, artifact });
+    },
+    [onCutDocument, onOpenPlacement, onCopyCtdPath]
+  );
+
+  // Dismiss context menu on Escape
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [contextMenu]);
 
   const folders = useMemo<FolderNode[]>(() => {
     const grouped: Record<string, TreeArtifact[]> = {};
@@ -225,6 +274,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                     <button
                       key={a.id}
                       onClick={() => onSelect(a)}
+                      onContextMenu={e => handleFileContextMenu(e, a)}
                       className={cn(
                         'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
                         isSelected
@@ -265,6 +315,89 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
           </div>
         )}
       </div>
+
+      {/* Pending cut/paste banner */}
+      {pendingMove && (
+        <div className="px-3 py-1.5 border-t border-amber-200 bg-amber-50 text-[11px] text-amber-700 flex items-center gap-1.5 shrink-0">
+          <Scissors className="w-3 h-3" />
+          <span className="truncate flex-1">Cut: {pendingMove.artifact.title}</span>
+        </div>
+      )}
+
+      {/* File context menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={e => {
+            e.stopPropagation();
+            closeContextMenu();
+          }}
+          role="menu"
+          aria-label="File actions"
+        >
+          <div className="px-3 py-1.5 border-b border-zinc-100">
+            <p className="text-[11px] text-zinc-600 truncate">{contextMenu.artifact.title}</p>
+            {contextMenu.artifact.ctdSection && (
+              <p className="text-[10px] text-zinc-400 font-mono">
+                {contextMenu.artifact.ctdSection}
+              </p>
+            )}
+          </div>
+          {onCutDocument && (
+            <button
+              onClick={() => {
+                onCutDocument(contextMenu.artifact);
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              role="menuitem"
+            >
+              <Scissors className="w-3 h-3" />
+              Cut (move)
+            </button>
+          )}
+          {onOpenPlacement && (
+            <button
+              onClick={() => {
+                onOpenPlacement(contextMenu.artifact);
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              role="menuitem"
+            >
+              <MapPin className="w-3 h-3" />
+              Place in dossier…
+            </button>
+          )}
+          {onCopyCtdPath && contextMenu.artifact.ctdSection && (
+            <button
+              onClick={() => {
+                onCopyCtdPath(contextMenu.artifact);
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              role="menuitem"
+            >
+              <Copy className="w-3 h-3" />
+              Copy CTD path
+            </button>
+          )}
+          {pendingMove && onPasteHere && (
+            <button
+              onClick={() => {
+                onPasteHere(contextMenu.artifact.ctdSection || '');
+                closeContextMenu();
+              }}
+              className="w-full text-left px-3 py-1.5 text-[12px] text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              role="menuitem"
+            >
+              <ClipboardPaste className="w-3 h-3" />
+              Paste "{pendingMove.artifact.title}" here
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -963,7 +963,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       {/* ── 3-pane body ───────────────────────────────────────────────────── */}
       <div className="flex-1 flex min-h-0">
         {/* Left: Tree panel with mode toggle */}
-        <div className="w-[220px] border-r border-zinc-100 shrink-0 flex flex-col bg-white">
+        <div className="w-[180px] 2xl:w-[220px] border-r border-zinc-100 shrink-0 flex flex-col bg-white">
           {/* Mode toggle tabs */}
           <div className="flex border-b border-zinc-100 shrink-0 bg-zinc-50/40">
             {[
@@ -1068,6 +1068,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               onSelectFolder={handleSelectFolder}
               selectedFolder={selectedFolder}
               onCreateNew={() => setShowNewDoc(true)}
+              onCutDocument={handleCutDocument}
+              onOpenPlacement={art =>
+                handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place')
+              }
+              onCopyCtdPath={handleCopyCtdPath}
+              pendingMove={pendingMove}
+              onPasteHere={pendingMove ? handlePasteHere : undefined}
             />
           ) : leftRailMode === 'dossier' ? (
             <DossierTree
@@ -1311,7 +1318,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
   const [showChildren, setShowChildren] = useState(false);
 
   return (
-    <div className="w-[240px] border-l border-zinc-100 shrink-0 flex flex-col bg-white overflow-y-auto">
+    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-100 shrink-0 flex flex-col bg-white overflow-y-auto">
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/40">
         <div className="flex items-center gap-1.5">
           <Info className="w-3 h-3 text-blue-600" />

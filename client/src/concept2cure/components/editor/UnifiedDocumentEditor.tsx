@@ -119,6 +119,8 @@ export interface UnifiedDocumentEditorProps {
   complianceScore?: number;
   versions?: DocumentVersion[];
   className?: string;
+  /** Live content callback for outline sync */
+  onLiveContentChange?: (html: string) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,6 +128,7 @@ export interface UnifiedDocumentEditorProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Mark, mergeAttributes } from '@tiptap/core';
+import Heading from '@tiptap/extension-heading';
 
 const TraceabilityMark = Mark.create({
   name: 'traceability',
@@ -162,6 +165,29 @@ const TraceabilityMark = Mark.create({
       }),
       0,
     ];
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Heading extension with auto-generated IDs for outline navigation
+// ─────────────────────────────────────────────────────────────────────────────
+
+function slugify(text: string): string {
+  return (
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'heading'
+  );
+}
+
+const HeadingWithId = Heading.extend({
+  renderHTML({ node, HTMLAttributes }) {
+    const level = node.attrs.level;
+    const text = node.textContent || '';
+    const id = `outline-${slugify(text)}`;
+    return [`h${level}`, mergeAttributes(HTMLAttributes, { id, 'data-outline-id': id }), 0];
   },
 });
 
@@ -662,6 +688,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   complianceScore = 100,
   versions = [],
   className = '',
+  onLiveContentChange,
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(isReadOnly);
@@ -674,7 +701,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ heading: false }),
+      HeadingWithId,
       Highlight.configure({ multicolor: true }),
       TextStyle,
       Color,
@@ -693,7 +721,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     content: initialContent,
     editable: !isLocked,
     onUpdate: ({ editor }) => {
-      // Could trigger auto-save or compliance check here
+      onLiveContentChange?.(editor.getHTML());
     },
   });
 

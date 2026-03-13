@@ -32,7 +32,12 @@ import {
   Target,
   AppWindow,
 } from 'lucide-react';
-import { CTD_HIERARCHY, type DossierNode, type DossierNodeStatus } from '../../models/ctdHierarchy';
+import {
+  CTD_HIERARCHY,
+  getSectionRequirements,
+  type DossierNode,
+  type DossierNodeStatus,
+} from '../../models/ctdHierarchy';
 import type { TreeArtifact } from './ProjectFileTree';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -50,6 +55,10 @@ interface DossierTreeProps {
       completionPercent: number;
       evidenceCount: number;
       precedentCount: number;
+      draftCount?: number;
+      reviewCount?: number;
+      approvedCount?: number;
+      lockedCount?: number;
       templateCoverageAvailable?: boolean;
     }
   >;
@@ -194,6 +203,10 @@ interface DossierNodeRowProps {
       evidenceCount: number;
       templateCoverageAvailable?: boolean;
       precedentCount: number;
+      draftCount?: number;
+      reviewCount?: number;
+      approvedCount?: number;
+      lockedCount?: number;
     }
   >;
 }
@@ -216,6 +229,13 @@ function DossierNodeRow({
     ? getAggregatedStatus(node, counts)
     : getNodeStatus(node.ctdSection, counts);
   const docCount = getAggregatedCount(node, counts);
+
+  // Required children check: how many required children have no artifacts?
+  const reqs = getSectionRequirements(node.ctdSection);
+  const missingRequired =
+    reqs?.requiredChildren?.filter(
+      childSection => !counts[childSection] || counts[childSection].total === 0
+    ) ?? [];
 
   return (
     <>
@@ -264,6 +284,35 @@ function DossierNodeRow({
         {docCount > 0 && (
           <span className="text-[10px] tabular-nums text-zinc-400 shrink-0 bg-zinc-100 rounded px-1">
             {docCount}
+          </span>
+        )}
+
+        {/* Per-status breakdown (from backend metrics) */}
+        {metrics?.[node.ctdSection] && metrics[node.ctdSection].artifactCount > 0 && (
+          <span
+            className="flex items-center gap-px shrink-0"
+            title={`${metrics[node.ctdSection].draftCount ?? 0}D / ${metrics[node.ctdSection].reviewCount ?? 0}R / ${metrics[node.ctdSection].approvedCount ?? 0}A / ${metrics[node.ctdSection].lockedCount ?? 0}L`}
+          >
+            {(metrics[node.ctdSection].draftCount ?? 0) > 0 && (
+              <span className="text-[8px] tabular-nums text-amber-600 bg-amber-50 rounded px-0.5">
+                {metrics[node.ctdSection].draftCount}D
+              </span>
+            )}
+            {(metrics[node.ctdSection].reviewCount ?? 0) > 0 && (
+              <span className="text-[8px] tabular-nums text-blue-600 bg-blue-50 rounded px-0.5">
+                {metrics[node.ctdSection].reviewCount}R
+              </span>
+            )}
+            {(metrics[node.ctdSection].approvedCount ?? 0) > 0 && (
+              <span className="text-[8px] tabular-nums text-emerald-600 bg-emerald-50 rounded px-0.5">
+                {metrics[node.ctdSection].approvedCount}A
+              </span>
+            )}
+            {(metrics[node.ctdSection].lockedCount ?? 0) > 0 && (
+              <span className="text-[8px] tabular-nums text-red-600 bg-red-50 rounded px-0.5">
+                {metrics[node.ctdSection].lockedCount}L
+              </span>
+            )}
           </span>
         )}
 
@@ -321,6 +370,16 @@ function DossierNodeRow({
               T
             </span>
           )}
+
+        {/* Required children missing indicator */}
+        {missingRequired.length > 0 && docCount > 0 && (
+          <span
+            className="text-[8px] text-red-500 bg-red-50 rounded px-0.5 shrink-0"
+            title={`${missingRequired.length} required section${missingRequired.length > 1 ? 's' : ''} missing: ${missingRequired.join(', ')}`}
+          >
+            !{missingRequired.length}
+          </span>
+        )}
 
         {/* Action dot */}
         <span className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">

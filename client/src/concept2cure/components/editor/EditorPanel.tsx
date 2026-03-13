@@ -1446,6 +1446,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showCompliance={false}
             showTraceability={false}
             onSave={handleSave}
+            onLiveContentChange={html => {
+              onContentChange?.(html, activeArtifact?.title || '');
+            }}
             transition-all
             duration-200
             animate-in
