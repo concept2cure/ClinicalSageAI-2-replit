@@ -278,6 +278,22 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     []
   );
 
+  // ── Global keyboard shortcuts ────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Escape — cancel pending move
+      if (e.key === 'Escape' && pendingMove) {
+        setPendingMove(null);
+      }
+      // Escape — dismiss phase4 panel
+      if (e.key === 'Escape' && phase4Panel !== 'none') {
+        setPhase4Panel('none');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [pendingMove, phase4Panel]);
+
   // ── Outline navigation ───────────────────────────────────────────────────
   const handleOutlineNavigate = useCallback((nodeId: string) => {
     const container = editorContainerRef.current;
@@ -791,6 +807,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           >
             <X className="w-3 h-3" />
             Cancel
+            <kbd className="ml-1 text-[8px] px-1 py-px rounded bg-amber-200/60 text-amber-700 font-mono">
+              Esc
+            </kbd>
           </button>
         </div>
       )}

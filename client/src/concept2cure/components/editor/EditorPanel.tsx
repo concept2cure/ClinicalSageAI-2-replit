@@ -379,6 +379,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [activeArtifact?.content, activeArtifact?.title, onContentChange]);
 
+  // ── Global keyboard shortcuts ───────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+S — save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (activeArtifact) handleSave(activeArtifact.content, {});
+      }
+      // Escape — close menus
+      if (e.key === 'Escape') {
+        setOverflowOpen(false);
+        setAiMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeArtifact, handleSave]);
+
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
@@ -867,22 +885,47 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* List */}
         <div className="flex-1 overflow-y-auto p-3">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+            <div className="space-y-2 px-4 py-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse rounded-lg border border-zinc-100 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="h-3.5 bg-zinc-200 rounded w-3/5" />
+                    <div className="h-4 bg-zinc-200 rounded-full w-16" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 bg-zinc-100 rounded w-12" />
+                    <div className="h-2.5 bg-zinc-100 rounded w-16" />
+                    <div className="h-2.5 bg-zinc-100 rounded w-20" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-              <FileText className="w-10 h-10 text-zinc-200 mb-3" />
-              <p className="text-sm font-medium text-zinc-500 mb-1">
+              <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-zinc-300" />
+              </div>
+              <p className="text-sm font-medium text-zinc-600 mb-1">
                 {artifacts.length === 0
-                  ? 'No regulatory documents yet'
+                  ? 'Start your submission dossier'
                   : 'No documents match your filters'}
               </p>
-              <p className="text-xs text-zinc-400 max-w-[240px]">
+              <p className="text-xs text-zinc-400 max-w-[260px] leading-relaxed">
                 {artifacts.length === 0
-                  ? 'Create your first document above to begin building the submission dossier.'
-                  : 'Try broadening your filter criteria.'}
+                  ? 'Create your first regulatory document above, or use Intelligence to generate one from precedent data.'
+                  : 'Try broadening your filter criteria or clearing all filters.'}
               </p>
+              {artifacts.length === 0 && (
+                <button
+                  onClick={() => {
+                    setNewDocTitle('Untitled Document');
+                  }}
+                  className="mt-4 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-3 h-3" />
+                  Create First Document
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-0.5" data-testid="artifact-list">
@@ -987,7 +1030,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           {activeArtifact?.status || 'draft'}
         </span>
-        {saveStatus === 'saved' && <Check className="w-2.5 h-2.5 text-emerald-500 shrink-0" />}
+        {saveStatus === 'saved' && (
+          <span className="flex items-center gap-0.5 text-[9px] text-emerald-600 font-medium shrink-0 animate-in fade-in duration-200">
+            <Check className="w-2.5 h-2.5" />
+            Saved
+          </span>
+        )}
+        {saveStatus === 'error' && (
+          <span className="flex items-center gap-0.5 text-[9px] text-red-600 font-medium shrink-0">
+            <AlertCircle className="w-2.5 h-2.5" />
+            Error
+          </span>
+        )}
 
         {/* Trust indicators strip — clickable pills */}
         {activeArtifact && (
@@ -1226,6 +1280,27 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <span className="text-violet-400">from template</span>
             </>
           )}
+          {claimStatus === 'checking' && (
+            <>
+              <span className="text-zinc-200">·</span>
+              <span className="text-blue-400 flex items-center gap-0.5">
+                <Loader2 className="w-2 h-2 animate-spin" /> checking claims
+              </span>
+            </>
+          )}
+          {claimStatus === 'supported' && (
+            <>
+              <span className="text-zinc-200">·</span>
+              <span className="text-emerald-500 font-medium">✓ claims supported</span>
+            </>
+          )}
+          {claimStatus === 'needs-evidence' && (
+            <>
+              <span className="text-zinc-200">·</span>
+              <span className="text-amber-500 font-medium">⚠ needs evidence</span>
+            </>
+          )}
+          <span className="ml-auto text-zinc-300 hidden sm:inline">⌘S save</span>
         </div>
       )}
 

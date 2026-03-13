@@ -388,3 +388,99 @@ describe('Phase 6 — Browse-mode context band prominence', () => {
     expect(shellSrc).toContain("mode === 'browse'");
   });
 });
+
+// ── Phase 6B: Polish round 2 ────────────────────────────────────────────────
+
+const DOC_LIST_PANE = path.join(
+  ROOT,
+  'client/src/concept2cure/components/workspace/DocumentListPane.tsx'
+);
+
+describe('Phase 6B — Keyboard shortcuts', () => {
+  const editorSrc = readSrc(EDITOR_PANEL);
+  const shellSrc = readSrc(WORKSPACE_SHELL);
+
+  it('EditorPanel registers Ctrl+S keyboard shortcut', () => {
+    expect(editorSrc).toContain("e.key === 's'");
+    expect(editorSrc).toContain('e.preventDefault()');
+  });
+
+  it('EditorPanel Escape closes overflow menu', () => {
+    expect(editorSrc).toContain("e.key === 'Escape'");
+    expect(editorSrc).toContain('setOverflowOpen(false)');
+  });
+
+  it('Shell registers Escape to cancel pending move', () => {
+    expect(shellSrc).toContain("e.key === 'Escape'");
+    expect(shellSrc).toContain('setPendingMove(null)');
+  });
+
+  it('Pending move banner shows Esc kbd hint', () => {
+    expect(shellSrc).toContain('Esc</kbd>');
+  });
+
+  it('Controlled record bar shows ⌘S hint', () => {
+    expect(editorSrc).toContain('⌘S save');
+  });
+});
+
+describe('Phase 6B — DocumentListPane row animation', () => {
+  const src = readSrc(DOC_LIST_PANE);
+
+  it('Expanded rows have fade-in animation', () => {
+    expect(src).toContain('animate-in fade-in');
+  });
+
+  it('Chevron uses CSS rotation instead of icon swap', () => {
+    expect(src).toContain('rotate-90');
+    // Should NOT have both ChevronDown and ChevronRight toggled
+    expect(src).not.toContain('ChevronDown');
+  });
+});
+
+describe('Phase 6B — Enhanced empty states', () => {
+  const editorSrc = readSrc(EDITOR_PANEL);
+
+  it('Empty artifact list has CTA button when no documents', () => {
+    expect(editorSrc).toContain('Create First Document');
+  });
+
+  it('Artifact list uses skeleton loading instead of spinner', () => {
+    // Should have animate-pulse skeleton, not Loader2 spinner
+    const skeletonMatches = editorSrc.match(/animate-pulse.*rounded-lg/g) ?? [];
+    expect(skeletonMatches.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('Phase 6B — Save status indicator', () => {
+  const editorSrc = readSrc(EDITOR_PANEL);
+
+  it('Shows "Saved" label beside check icon', () => {
+    expect(editorSrc).toContain('>Saved<');
+    expect(editorSrc).toContain("saveStatus === 'saved'");
+  });
+
+  it('Shows "Error" label on save failure', () => {
+    expect(editorSrc).toContain('>Error<');
+    expect(editorSrc).toContain("saveStatus === 'error'");
+  });
+});
+
+describe('Phase 6B — Controlled record bar claim status', () => {
+  const editorSrc = readSrc(EDITOR_PANEL);
+
+  it('Shows claim checking spinner', () => {
+    expect(editorSrc).toContain("claimStatus === 'checking'");
+    expect(editorSrc).toContain('checking claims');
+  });
+
+  it('Shows supported claim indicator', () => {
+    expect(editorSrc).toContain("claimStatus === 'supported'");
+    expect(editorSrc).toContain('claims supported');
+  });
+
+  it('Shows needs-evidence claim warning', () => {
+    expect(editorSrc).toContain("claimStatus === 'needs-evidence'");
+    expect(editorSrc).toContain('needs evidence');
+  });
+});

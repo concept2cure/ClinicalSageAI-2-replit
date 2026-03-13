@@ -18,7 +18,6 @@ import {
   Scissors,
   MapPin,
   Copy,
-  ChevronDown,
   ChevronRight,
   Layers,
 } from 'lucide-react';
@@ -161,14 +160,18 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                               e.stopPropagation();
                               toggleRow(doc.id);
                             }}
-                            className="p-0.5 text-zinc-300 hover:text-zinc-500 shrink-0"
+                            className={cn(
+                              'p-0.5 shrink-0 transition-transform duration-150',
+                              isExpanded ? 'text-zinc-500' : 'text-zinc-300 hover:text-zinc-500'
+                            )}
                             title="Toggle details"
                           >
-                            {isExpanded ? (
-                              <ChevronDown className="w-3 h-3" />
-                            ) : (
-                              <ChevronRight className="w-3 h-3" />
-                            )}
+                            <ChevronRight
+                              className={cn(
+                                'w-3 h-3 transition-transform duration-150',
+                                isExpanded && 'rotate-90'
+                              )}
+                            />
                           </button>
                           <FileText className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                           <div className="min-w-0">
@@ -238,7 +241,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                     </tr>
                     {/* Expanded detail band */}
                     {isExpanded && (
-                      <tr className="bg-zinc-50/40">
+                      <tr className="bg-zinc-50/40 animate-in fade-in slide-in-from-top-1 duration-150">
                         <td colSpan={5} className="px-4 py-1.5">
                           <div className="flex items-center gap-3 text-[10px] text-zinc-500">
                             {doc.ctdSection && (
