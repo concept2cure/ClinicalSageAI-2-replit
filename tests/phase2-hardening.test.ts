@@ -281,3 +281,110 @@ describe('No forbidden surfaces', () => {
     expect(provJsxMatches.length).toBe(1);
   });
 });
+
+// ── Phase 6: Polish — Toast feedback & UX hardening ──────────────────────────
+
+describe('Phase 6 — Toast notification system', () => {
+  const editorSrc = readSrc(EDITOR_PANEL);
+  const shellSrc = readSrc(WORKSPACE_SHELL);
+
+  it('EditorPanel has toast queue with pushToast helper', () => {
+    expect(editorSrc).toContain('pushToast');
+    expect(editorSrc).toContain('setToasts');
+  });
+
+  it('EditorPanel save handler fires success toast', () => {
+    expect(editorSrc).toContain('pushToast(`Saved at');
+  });
+
+  it('EditorPanel save handler fires error toast on failure', () => {
+    expect(editorSrc).toContain("pushToast('Save failed");
+  });
+
+  it('EditorPanel AI edit fires info toast during generation', () => {
+    expect(editorSrc).toContain('Generating');
+    expect(editorSrc).toContain("'info'");
+  });
+
+  it('EditorPanel AI edit fires error toast on failure', () => {
+    expect(editorSrc).toContain("pushToast('AI edit failed");
+  });
+
+  it('EditorPanel DOCX export fires toast', () => {
+    expect(editorSrc).toContain("pushToast('Exporting DOCX");
+  });
+
+  it('EditorPanel sign fires info toast', () => {
+    expect(editorSrc).toContain("pushToast('Signing document");
+  });
+
+  it('EditorPanel renders toast notification container', () => {
+    expect(editorSrc).toContain('Toast notifications');
+    expect(editorSrc).toContain('fixed bottom-4 right-4');
+  });
+
+  it('ProjectWorkspaceShell has toast queue', () => {
+    expect(shellSrc).toContain('pushShellToast');
+    expect(shellSrc).toContain('shellToasts');
+  });
+
+  it('Shell placement handler fires success toast', () => {
+    expect(shellSrc).toContain('pushShellToast(`Placed in');
+  });
+
+  it('Shell document creation fires success toast', () => {
+    expect(shellSrc).toContain('pushShellToast(`Created');
+  });
+
+  it('Shell renders toast notification container', () => {
+    expect(shellSrc).toContain('Toast notifications');
+  });
+});
+
+describe('Phase 6 — Lock overlay unlock button', () => {
+  const src = readSrc(EDITOR_PANEL);
+
+  it('Lock overlay has an Unlock button', () => {
+    expect(src).toContain('Unlock to Edit');
+  });
+
+  it('Unlock button calls handleStatusChange(draft)', () => {
+    expect(src).toContain("handleStatusChange('draft')");
+  });
+
+  it('Unlock button shows loading spinner while status is changing', () => {
+    // changingStatus drives loading state on button
+    expect(src).toContain('changingStatus');
+    expect(src).toContain('animate-spin');
+  });
+});
+
+describe('Phase 6 — Dead button cleanup', () => {
+  const editorSrc = readSrc(
+    path.join(ROOT, 'client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx')
+  );
+
+  it('Version History dead button removed', () => {
+    // Should no longer have onClick={() => {}} for history
+    const deadHandlerMatches =
+      editorSrc.match(/onClick=\{.*\(\).*=>.*\{.*\}.*\}.*Version History/gs) ?? [];
+    expect(deadHandlerMatches.length).toBe(0);
+  });
+});
+
+describe('Phase 6 — Skeleton loading', () => {
+  const shellSrc = readSrc(WORKSPACE_SHELL);
+
+  it('Left rail uses skeleton loader instead of spinner when loading', () => {
+    expect(shellSrc).toContain('animate-pulse');
+  });
+});
+
+describe('Phase 6 — Browse-mode context band prominence', () => {
+  const shellSrc = readSrc(WORKSPACE_SHELL);
+
+  it('Browse-mode context band has blue tint for visibility', () => {
+    expect(shellSrc).toContain('bg-blue-50');
+    expect(shellSrc).toContain("mode === 'browse'");
+  });
+});

@@ -171,9 +171,7 @@ test.describe('Governed Workspace Hardening', () => {
     expect(runtimeErrors).toEqual([]);
   });
 
-  test('browse-to-edit mode continuity: context band shows selected doc info', async ({
-    page,
-  }) => {
+  test('browse-to-edit mode continuity: context band shows selected doc info', async ({ page }) => {
     const runtimeErrors: string[] = [];
     page.on('pageerror', e => runtimeErrors.push(e.message));
 

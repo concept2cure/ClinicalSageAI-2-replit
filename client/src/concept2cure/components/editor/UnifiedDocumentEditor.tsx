@@ -834,13 +834,6 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               <FileCheck className="w-5 h-5" />
             </button>
           )}
-          <button
-            onClick={() => {}}
-            className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
-            title="Version History"
-          >
-            <History className="w-5 h-5" />
-          </button>
         </div>
       </div>
 

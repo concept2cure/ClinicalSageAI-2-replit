@@ -149,6 +149,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Status change state ───────────────────────────────────────────────
   const [changingStatus, setChangingStatus] = useState(false);
 
+  // ── Toast notification queue ──────────────────────────────────────────
+  type ToastItem = { id: number; message: string; type: 'success' | 'error' | 'info' };
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const toastIdRef = useRef(0);
+  const pushToast = useCallback(
+    (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+      const id = ++toastIdRef.current;
+      setToasts(prev => [...prev.slice(-2), { id, message, type }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+    },
+    []
+  );
+
   // ── CTD Section assignment state ──────────────────────────────────────
   const [showCtdInput, setShowCtdInput] = useState(false);
   const [ctdSectionInput, setCtdSectionInput] = useState('');
@@ -393,19 +406,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const updated = payload.data ?? payload;
           setActiveArtifact(updated);
           setSaveStatus('saved');
-          // Refresh list
+          pushToast(`Saved at ${new Date().toLocaleTimeString()}`, 'success');
           loadArtifacts();
           setTimeout(() => setSaveStatus('idle'), 3000);
         } else if (res.status === 423) {
           const err = await res.json().catch(() => ({ message: 'Document is locked' }));
           setLockRejection(err.message || 'Document is locked — save rejected (HTTP 423)');
           setSaveStatus('error');
+          pushToast('Save blocked — document is locked', 'error');
           setTimeout(() => setLockRejection(null), 6000);
         } else {
           setSaveStatus('error');
+          pushToast('Save failed — please try again', 'error');
         }
       } catch {
         setSaveStatus('error');
+        pushToast('Save failed — network error', 'error');
       } finally {
         setSaving(false);
       }
@@ -435,9 +451,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         setNewDocTitle('');
         setShowArtifactList(false);
         loadArtifacts();
+        pushToast(`Created "${created.title || newDocTitle.trim()}"`, 'success');
+      } else {
+        pushToast('Could not create document', 'error');
       }
     } catch {
-      // silent
+      pushToast('Network error — document not created', 'error');
     } finally {
       setCreatingNew(false);
     }
@@ -450,6 +469,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       setAiLoading(true);
       setAiMenuOpen(false);
       setAiResult(null);
+      pushToast(`Generating ${action.replace(/-/g, ' ')}…`, 'info');
       try {
         const res = await fetch('/api/concept2cure/ai/edit-section', {
           method: 'POST',
@@ -466,10 +486,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const result = payload.data?.result ?? payload.result;
           if (result) {
             setAiResult(result);
+            pushToast('AI suggestion ready — review below', 'success');
+          } else {
+            pushToast('AI returned empty result', 'error');
           }
+        } else {
+          pushToast('AI edit failed — try again', 'error');
         }
       } catch {
-        // silent
+        pushToast('AI service unavailable', 'error');
       } finally {
         setAiLoading(false);
       }
@@ -498,6 +523,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const handleExportDocx = useCallback(async () => {
     if (!activeArtifact) return;
     setDocxExporting(true);
+    pushToast('Exporting DOCX…', 'info');
     try {
       const blob = await generateDocxMutation.mutateAsync({
         title: activeArtifact.title,
@@ -513,20 +539,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       });
       const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
       downloadBlob(blob, filename);
+      pushToast(`Downloaded ${filename}`, 'success');
     } catch {
-      // Fallback: try download endpoint for pre-generated docs
       const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
       window.open(`/api/concept2cure/documents/download/${encodeURIComponent(filename)}`, '_blank');
+      pushToast('Exported via fallback download', 'info');
     } finally {
       setDocxExporting(false);
     }
-  }, [activeArtifact, submissionType, generateDocxMutation]);
+  }, [activeArtifact, submissionType, generateDocxMutation, pushToast]);
 
   // ── Sign & Approve ───────────────────────────────────────────────────
   const handleSignApprove = useCallback(async () => {
     if (!projectId || !activeArtifact) return;
     setSigning(true);
     setSignResult(null);
+    pushToast('Signing document…', 'info');
     try {
       const res = await fetch(
         `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`,
@@ -585,9 +613,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const updated = payload.data;
           setActiveArtifact(prev => (prev ? { ...prev, ...updated } : prev));
           loadArtifacts();
+          pushToast(`Status → ${newStatus}`, 'success');
+        } else {
+          pushToast('Status change failed', 'error');
         }
       } catch {
-        // silent
+        pushToast('Status change failed — network error', 'error');
       } finally {
         setChangingStatus(false);
       }
@@ -610,12 +641,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       if (res.ok) {
         loadArtifacts();
         setShowCtdInput(false);
+        pushToast(`CTD section set to ${ctdSectionInput.trim()}`, 'success');
         setCtdSectionInput('');
+      } else {
+        pushToast('CTD section update failed', 'error');
       }
     } catch {
-      // silent
+      pushToast('CTD section update failed', 'error');
     }
-  }, [projectId, activeArtifact, ctdSectionInput, loadArtifacts]);
+  }, [projectId, activeArtifact, ctdSectionInput, loadArtifacts, pushToast]);
 
   // ── Audit Report Export ──────────────────────────────────────────────
   const handleExportAudit = useCallback(async () => {
@@ -631,9 +665,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       );
       if (res.ok) {
         loadArtifacts();
+        pushToast('Audit report exported', 'success');
+      } else {
+        pushToast('Audit export failed', 'error');
       }
     } catch {
-      // silent
+      pushToast('Audit export failed', 'error');
     } finally {
       setExportingAudit(false);
     }
@@ -1306,7 +1343,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto">
                 <Lock className="w-6 h-6 text-red-500 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-red-800">Document Locked</p>
-                <p className="text-xs text-red-600 mt-1">Unlock to edit.</p>
+                <p className="text-xs text-red-600 mt-1 mb-3">
+                  This document is locked and read-only.
+                </p>
+                <button
+                  onClick={() => handleStatusChange('draft')}
+                  disabled={changingStatus}
+                  className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-1.5 mx-auto"
+                >
+                  {changingStatus ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Unlock className="w-3 h-3" />
+                  )}
+                  Unlock to Edit
+                </button>
               </div>
             </div>
           )}
@@ -1320,6 +1371,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showCompliance={false}
             showTraceability={false}
             onSave={handleSave}
+            transition-all
+            duration-200
+            animate-in
+            slide-in-from-right-4
           />
         </div>
 
@@ -1353,16 +1408,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setShowArtifactList(false);
                     setActiveInspector(null);
                     loadArtifacts();
+                    pushToast(`Created "${title}" from Intelligence`, 'success');
+                  } else {
+                    pushToast('Document creation failed', 'error');
                   }
                 } catch {
-                  // silent
+                  pushToast('Network error — document not created', 'error');
                 }
               }}
             />
           </div>
         )}
         {activeInspector === 'provenance' && projectId && activeArtifact && (
-          <div className="w-72 shrink-0 border-l border-zinc-100 h-full">
+          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
             <DocumentProvenancePanel
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -1373,7 +1431,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'compare' && projectId && activeArtifact && (
-          <div className="w-80 max-w-[35vw] shrink-0 border-l border-zinc-100 h-full">
+          <div className="w-80 max-w-[35vw] shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
             <DocumentVersionCompare
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -1385,7 +1443,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'audit' && projectId && activeArtifact && (
-          <div className="w-72 shrink-0 border-l border-zinc-100 h-full">
+          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
             <DocumentAuditReport
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -1398,6 +1456,34 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* ── Toast notifications ── */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+          {toasts.map(t => (
+            <div
+              key={t.id}
+              className={cn(
+                'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium animate-in slide-in-from-bottom-2 fade-in duration-200',
+                t.type === 'success' && 'bg-emerald-600 text-white',
+                t.type === 'error' && 'bg-red-600 text-white',
+                t.type === 'info' && 'bg-zinc-700 text-white'
+              )}
+            >
+              {t.type === 'success' && <CheckCircle className="w-3.5 h-3.5 shrink-0" />}
+              {t.type === 'error' && <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
+              {t.type === 'info' && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />}
+              {t.message}
+              <button
+                onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
+                className="ml-1 opacity-60 hover:opacity-100"
+              >
+                <XCircle className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

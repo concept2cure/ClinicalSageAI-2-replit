@@ -265,6 +265,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setPendingMove(null);
   }, [projectId]);
 
+  // ── Toast notification queue ─────────────────────────────────────────────
+  type ShellToast = { id: number; message: string; type: 'success' | 'error' | 'info' };
+  const [shellToasts, setShellToasts] = useState<ShellToast[]>([]);
+  const shellToastIdRef = useRef(0);
+  const pushShellToast = useCallback(
+    (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+      const id = ++shellToastIdRef.current;
+      setShellToasts(prev => [...prev.slice(-2), { id, message, type }]);
+      setTimeout(() => setShellToasts(prev => prev.filter(t => t.id !== id)), 5000);
+    },
+    []
+  );
+
   // ── Outline navigation ───────────────────────────────────────────────────
   const handleOutlineNavigate = useCallback((nodeId: string) => {
     const container = editorContainerRef.current;
@@ -347,13 +360,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         await loadArtifacts();
         setSelectedDocId(created.id);
         setMode('edit');
+        pushShellToast(`Created "${newDocTitle.trim()}"`, 'success');
+      } else {
+        pushShellToast('Document creation failed', 'error');
       }
     } catch {
-      // silent
+      pushShellToast('Network error — document not created', 'error');
     } finally {
       setCreatingNew(false);
     }
-  }, [projectId, newDocTitle, loadArtifacts]);
+  }, [projectId, newDocTitle, loadArtifacts, pushShellToast]);
 
   // ── Create from template ─────────────────────────────────────────────────
   const handleCreateFromTemplate = useCallback(
@@ -380,14 +396,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           setSelectedDocId(created.id);
           setMode('edit');
           setLeftRailMode('dossier');
+          pushShellToast(`Created "${label}" from template`, 'success');
+        } else {
+          pushShellToast('Template creation failed', 'error');
         }
       } catch {
-        // silent
+        pushShellToast('Network error', 'error');
       } finally {
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts]
+    [projectId, loadArtifacts, pushShellToast]
   );
 
   // ── Placement confirmation handler ───────────────────────────────────────
@@ -412,9 +431,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         if (res.ok) {
           await loadArtifacts();
           setPlacementDialog({ open: false, artifact: null, operation: 'place' });
+          pushShellToast(`Placed in ${params.toSection}`, 'success');
+          setPendingMove(null);
+        } else {
+          pushShellToast('Placement failed', 'error');
         }
       } catch {
-        // silent
+        pushShellToast('Placement error — try again', 'error');
       } finally {
         setPlacementLoading(false);
       }
@@ -772,11 +795,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
       )}
 
-      {/* ── Persistent context band (browse mode — subtle reminder of selected doc) */}
+      {/* ── Persistent context band (browse mode — selected doc reminder) */}
       {mode === 'browse' && activeArtifact && (
-        <div className="flex items-center gap-2 px-3 h-6 border-b border-zinc-50 bg-zinc-50/30 shrink-0">
-          <FileText className="w-3 h-3 text-zinc-300" />
-          <span className="text-[10px] text-zinc-500 truncate">{activeArtifact.title}</span>
+        <div className="flex items-center gap-2 px-3 h-7 border-b border-blue-100 bg-blue-50/40 shrink-0">
+          <FileText className="w-3 h-3 text-blue-400" />
+          <span className="text-[10px] text-blue-700 font-medium truncate">
+            {activeArtifact.title}
+          </span>
           {activeArtifact.ctdSection && (
             <span className="text-[9px] px-1 py-px rounded bg-blue-50/60 text-blue-500 font-medium">
               {activeArtifact.ctdSection}
@@ -1005,8 +1030,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
           {/* Tree content based on mode */}
           {loading && artifacts.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+            <div className="flex-1 flex flex-col gap-2 p-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-2 animate-pulse">
+                  <div className="w-3 h-3 rounded bg-zinc-200" />
+                  <div
+                    className="h-3 rounded bg-zinc-200"
+                    style={{ width: `${60 + (i % 3) * 20}%` }}
+                  />
+                </div>
+              ))}
             </div>
           ) : leftRailMode === 'files' ? (
             <ProjectFileTree
@@ -1432,6 +1465,31 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           </div>
         )}
       </div>
+
+      {/* ── Toast notifications ── */}
+      {shellToasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+          {shellToasts.map(t => (
+            <div
+              key={t.id}
+              className={cn(
+                'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium',
+                t.type === 'success' && 'bg-emerald-600 text-white',
+                t.type === 'error' && 'bg-red-600 text-white',
+                t.type === 'info' && 'bg-zinc-700 text-white'
+              )}
+            >
+              {t.message}
+              <button
+                onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
+                className="ml-1 opacity-60 hover:opacity-100"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
