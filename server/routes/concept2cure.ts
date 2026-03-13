@@ -50,6 +50,7 @@ import {
   concept2cureSignatures,
   concept2cureProvenanceEvents,
   concept2cureReviewComments,
+  concept2cureSubmissionSnapshots,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 
@@ -2444,6 +2445,13 @@ router.post(
         return sendError(res, 404, 'Project not found');
       }
 
+      // ── Signing role check ────────────────────────────────────────
+      const signerRole = (req.userRole || 'user').toLowerCase();
+      const canSign = ['admin', 'approver', 'reviewer'].includes(signerRole);
+      if (!canSign) {
+        return sendError(res, 403, 'Your role does not permit electronic signatures');
+      }
+
       const data = createSignatureSchema.parse(req.body);
 
       const [artifact] = await db
@@ -2612,6 +2620,67 @@ router.get(
     } catch (error: any) {
       logConcept2cureError('list signatures', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to list signatures');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots
+ * List immutable submission/export snapshots for an artifact.
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/snapshots',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const snapshots = await db
+        .select({
+          snapshotId: concept2cureSubmissionSnapshots.snapshotId,
+          versionId: concept2cureSubmissionSnapshots.versionId,
+          approvedVersionId: concept2cureSubmissionSnapshots.approvedVersionId,
+          publishedVersionId: concept2cureSubmissionSnapshots.publishedVersionId,
+          contentHash: concept2cureSubmissionSnapshots.contentHash,
+          exportHash: concept2cureSubmissionSnapshots.exportHash,
+          title: concept2cureSubmissionSnapshots.title,
+          ctdSection: concept2cureSubmissionSnapshots.ctdSection,
+          filename: concept2cureSubmissionSnapshots.filename,
+          fileSize: concept2cureSubmissionSnapshots.fileSize,
+          actionType: concept2cureSubmissionSnapshots.actionType,
+          actorName: concept2cureSubmissionSnapshots.actorName,
+          actorRole: concept2cureSubmissionSnapshots.actorRole,
+          attestationText: concept2cureSubmissionSnapshots.attestationText,
+          signatureMeaning: concept2cureSubmissionSnapshots.signatureMeaning,
+          createdAt: concept2cureSubmissionSnapshots.createdAt,
+        })
+        .from(concept2cureSubmissionSnapshots)
+        .where(
+          and(
+            eq(concept2cureSubmissionSnapshots.artifactId, artifact.id),
+            eq(concept2cureSubmissionSnapshots.organizationId, organizationId)
+          )
+        )
+        .orderBy(concept2cureSubmissionSnapshots.createdAt);
+
+      return sendSuccess(res, snapshots);
+    } catch (error: any) {
+      logConcept2cureError('list snapshots', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to list snapshots');
     }
   }
 );
@@ -3393,10 +3462,27 @@ router.put(
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const { status, reason } = req.body;
+      const { status, reason, attestation } = req.body;
       const validStatuses = ['draft', 'review', 'approved', 'locked'];
       if (!status || !validStatuses.includes(status)) {
         return sendError(res, 400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+      }
+
+      // ── Attestation required for approve and lock/publish ────────────
+      const requiresAttestation = status === 'approved' || status === 'locked';
+      if (requiresAttestation) {
+        if (
+          !attestation ||
+          typeof attestation !== 'object' ||
+          !attestation.meaning ||
+          !attestation.attestationText
+        ) {
+          return sendError(
+            res,
+            400,
+            `Attestation is required for ${status}. Must include: meaning (e.g. "Approved", "Released"), attestationText (acknowledgement of intent)`
+          );
+        }
       }
 
       const [artifact] = await db
@@ -3484,29 +3570,189 @@ router.put(
         .where(eq(concept2cureArtifacts.id, artifact.id))
         .returning();
 
+      const signerName = (req as any).userName || req.userEmail || 'unknown';
+      const signerEmail = req.userEmail || 'unknown';
+
+      // ── Create attestation signature for approve/lock ────────────────
+      let signatureRecord = null;
+      if (requiresAttestation && attestation) {
+        const signedAt = new Date();
+        const signatureId = `sig_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+        const signaturePurpose =
+          status === 'approved' ? 'approval_attestation' : 'publish_attestation';
+
+        // Find version record for signature linkage
+        const [versionRow] = await db
+          .select()
+          .from(concept2cureArtifactVersions)
+          .where(
+            and(
+              eq(concept2cureArtifactVersions.artifactId, artifact.id),
+              eq(concept2cureArtifactVersions.version, artifact.version)
+            )
+          )
+          .limit(1);
+
+        if (versionRow) {
+          const signatureHash = crypto
+            .createHash('sha256')
+            .update(
+              JSON.stringify({
+                signatureId,
+                artifactId: artifact.artifactId,
+                version: artifact.version,
+                contentHash: versionRow.contentHash,
+                signerId: userId,
+                signaturePurpose,
+                signatureMeaning: attestation.meaning,
+                signedAt: signedAt.toISOString(),
+              })
+            )
+            .digest('hex');
+
+          const [sig] = await db
+            .insert(concept2cureSignatures)
+            .values({
+              organizationId,
+              signatureId,
+              artifactId: artifact.id,
+              artifactVersionId: versionRow.id,
+              signatureType: status === 'approved' ? 'approval' : 'publish',
+              signaturePurpose,
+              signatureMeaning: attestation.meaning,
+              signerId: userId,
+              signerName,
+              signerEmail,
+              signerRole: userRole,
+              authenticationMethod: 'session_jwt',
+              authenticationTimestamp: signedAt,
+              secondFactorVerified: false,
+              signatureHash,
+              signatureManifest: {
+                attestationText: attestation.attestationText,
+                reason: attestation.reason || reason || null,
+                previousStatus,
+                newStatus: status,
+              },
+              ipAddress: getClientIp(req),
+              deviceInfo: null,
+              status: 'active',
+              signedAt,
+            })
+            .returning();
+
+          signatureRecord = {
+            signatureId: sig.signatureId,
+            signatureType: sig.signatureType,
+            signatureMeaning: sig.signatureMeaning,
+            signerName: sig.signerName,
+            signerRole: sig.signerRole,
+            signedAt: sig.signedAt,
+            signatureHash: sig.signatureHash,
+          };
+
+          await logAuditEntry(req, 'SIGN', 'signature', signatureId, null, {
+            artifactId: req.params.artifactId,
+            version: artifact.version,
+            signatureType: sig.signatureType,
+            signaturePurpose,
+            signatureMeaning: attestation.meaning,
+            attestationText: attestation.attestationText,
+          });
+        }
+      }
+
+      // ── Create submission snapshot for lock/publish ──────────────────
+      let snapshotRecord = null;
+      if (status === 'locked') {
+        const snapshotId = `snap_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+        const [snapshot] = await db
+          .insert(concept2cureSubmissionSnapshots)
+          .values({
+            snapshotId,
+            artifactId: artifact.id,
+            organizationId,
+            versionId: artifact.version,
+            approvedVersionId: artifact.approvedVersionId ?? artifact.version,
+            publishedVersionId: artifact.version,
+            contentHash: artifact.contentHash || '',
+            title: artifact.title,
+            ctdSection: artifact.ctdSection,
+            templateId: artifact.templateId,
+            actionType: 'publish',
+            actorId: userId,
+            actorName: signerName,
+            actorEmail: signerEmail,
+            actorRole: userRole,
+            attestationText: attestation?.attestationText || null,
+            signatureMeaning: attestation?.meaning || null,
+            metadata: {
+              previousStatus,
+              newStatus: status,
+              reason: reason || null,
+              signatureId: signatureRecord?.signatureId || null,
+            },
+          })
+          .returning();
+
+        snapshotRecord = {
+          snapshotId: snapshot.snapshotId,
+          versionId: snapshot.versionId,
+          contentHash: snapshot.contentHash,
+          actionType: snapshot.actionType,
+          actorName: snapshot.actorName,
+          createdAt: snapshot.createdAt,
+        };
+      }
+
       // Log provenance
       await db.insert(concept2cureProvenanceEvents).values({
         organizationId,
         artifactId: artifact.id,
         eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
-        eventType: 'status_change',
+        eventType: requiresAttestation ? 'approval' : 'status_change',
         eventAction: `status_${status}`,
-        sourceDescription: `Status changed from ${previousStatus} to ${status}`,
+        sourceDescription: `Status changed from ${previousStatus} to ${status}${
+          attestation?.meaning ? ` (${attestation.meaning})` : ''
+        }`,
         actorId: userId,
         actorName: (req as any).userName || req.userEmail || 'unknown',
         actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
-        details: { previousStatus, newStatus: status, reason: reason || null },
+        details: {
+          previousStatus,
+          newStatus: status,
+          reason: reason || null,
+          attestation: attestation
+            ? {
+                meaning: attestation.meaning,
+                attestationText: attestation.attestationText,
+                signerName: (req as any).userName || req.userEmail || 'unknown',
+                signerRole: userRole,
+              }
+            : null,
+          signatureId: signatureRecord?.signatureId || null,
+          snapshotId: snapshotRecord?.snapshotId || null,
+        },
       });
 
-      await logAuditEntry(req, 'UPDATE', 'artifact_status', req.params.artifactId, null, {
-        previousStatus,
-        newStatus: status,
-        reason: reason || null,
-      });
+      await logAuditEntry(
+        req,
+        requiresAttestation ? 'APPROVE' : 'UPDATE',
+        'artifact_status',
+        req.params.artifactId,
+        null,
+        {
+          previousStatus,
+          newStatus: status,
+          reason: reason || null,
+          attestation: attestation || null,
+          signatureId: signatureRecord?.signatureId || null,
+          snapshotId: snapshotRecord?.snapshotId || null,
+        }
+      );
 
       return sendSuccess(res, {
         artifactId: updated.artifactId,
@@ -3517,6 +3763,8 @@ router.put(
         publishedVersionId: updated.publishedVersionId,
         publishedAt: updated.publishedAt,
         enforcedRole: userRole,
+        signature: signatureRecord,
+        snapshot: snapshotRecord,
       });
     } catch (error: any) {
       logConcept2cureError('update artifact status', error, { artifactId: req.params.artifactId });
@@ -4363,6 +4611,13 @@ router.get('/templates/:id', (req: Request, res: Response) => {
 
 router.get('/documents/download/:filename', async (req: Request, res: Response) => {
   try {
+    // ── Export role check ───────────────────────────────────────────
+    const exportRole = (req.userRole || 'user').toLowerCase();
+    const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(exportRole);
+    if (!canExport) {
+      return sendError(res, 403, 'Your role does not permit document exports');
+    }
+
     const { filename } = req.params;
     // Sanitize: only allow alphanumeric, dashes, underscores, dots
     const safe = filename.replace(/[^a-zA-Z0-9_.\-]/g, '');
@@ -4403,6 +4658,10 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
+      const actorName = (req as any).userName || req.userEmail || 'unknown';
+      const actorEmail = req.userEmail || 'unknown';
+      const actorRole = (req.userRole || 'user').toLowerCase();
+
       await db.insert(concept2cureProvenanceEvents).values({
         organizationId,
         eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
@@ -4410,16 +4669,59 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
         eventAction: 'document_download',
         sourceDescription: `Document "${safe}" downloaded (${fileStat.size} bytes)`,
         actorId: userId,
-        actorName: (req as any).userName || req.userEmail || 'unknown',
-        actorEmail: req.userEmail || 'unknown',
-        actorType: 'human',
+        actorName,
+        actorEmail,
         backendRoute: `/documents/download/${safe}`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
         details: { filename: safe, fileSize: fileStat.size, exportHash },
       });
+
+      // ── Snapshot: create export snapshot record ─────────────────────
+      // Try to find matching artifact by filename pattern
+      const filenameBase = safe.replace(/\.(docx|pdf|json)$/, '');
+      const matchingArtifacts = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(eq(concept2cureArtifacts.organizationId, organizationId))
+        .limit(50);
+
+      const matchedArtifact = matchingArtifacts.find(
+        a =>
+          a.title?.toLowerCase().replace(/\s+/g, '_').includes(filenameBase.toLowerCase()) ||
+          filenameBase.toLowerCase().includes(a.title?.toLowerCase().replace(/\s+/g, '_') || '---')
+      );
+
+      const snapshotId = `snap_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      await db.insert(concept2cureSubmissionSnapshots).values({
+        snapshotId,
+        artifactId: matchedArtifact?.id || 0,
+        organizationId,
+        versionId: matchedArtifact?.version || 0,
+        approvedVersionId: matchedArtifact?.approvedVersionId ?? null,
+        publishedVersionId: matchedArtifact?.publishedVersionId ?? null,
+        contentHash: exportHash,
+        exportHash,
+        title: matchedArtifact?.title || safe,
+        ctdSection: matchedArtifact?.ctdSection || null,
+        templateId: matchedArtifact?.templateId || null,
+        filename: safe,
+        fileSize: fileStat.size,
+        actionType: 'export-docx',
+        actorId: userId,
+        actorName,
+        actorEmail,
+        actorRole,
+        metadata: {
+          filename: safe,
+          fileSize: fileStat.size,
+          exportHash,
+          exportedAt: new Date().toISOString(),
+          artifactId: matchedArtifact?.artifactId || null,
+        },
+      });
     } catch {
-      // Don't fail download if provenance logging fails
+      // Don't fail download if provenance/snapshot logging fails
     }
 
     const isDocx = safe.endsWith('.docx');

@@ -4833,6 +4833,64 @@ export const concept2cureProvenanceEvents = pgTable(
   })
 );
 
+/**
+ * Concept2Cure Submission Snapshots Table
+ *
+ * Immutable point-in-time records created when an artifact is published,
+ * exported, or submitted. Each snapshot captures the exact state of the
+ * document at the time of the action — version, hashes, placement,
+ * provenance, and actor attribution — so the org can prove what was
+ * released or submitted and by whom.
+ * Append-only by policy.
+ */
+export const concept2cureSubmissionSnapshots = pgTable(
+  'concept2cure_submission_snapshots',
+  {
+    id: serial('id').primaryKey(),
+    snapshotId: text('snapshot_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // Version state at time of action
+    versionId: integer('version_id').notNull(),
+    approvedVersionId: integer('approved_version_id'),
+    publishedVersionId: integer('published_version_id'),
+    // Integrity hashes
+    contentHash: text('content_hash').notNull(),
+    exportHash: text('export_hash'),
+    // Document identity at time of snapshot
+    title: text('title').notNull(),
+    ctdSection: text('ctd_section'),
+    templateId: text('template_id'),
+    // File details (for export snapshots)
+    filename: text('filename'),
+    fileSize: integer('file_size'),
+    // Action classification
+    actionType: text('action_type').notNull(), // publish, export-docx, export-pdf, submission-snapshot
+    // Actor attribution
+    actorId: integer('actor_id').references(() => users.id),
+    actorName: text('actor_name').notNull(),
+    actorEmail: text('actor_email'),
+    actorRole: text('actor_role'),
+    // Attestation (for publish/approve actions)
+    attestationText: text('attestation_text'),
+    signatureMeaning: text('signature_meaning'),
+    // Immutable metadata payload
+    metadata: json('metadata').$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    snapshotIdIdx: index('c2c_snap_id_idx').on(table.snapshotId),
+    artifactIdx: index('c2c_snap_artifact_idx').on(table.artifactId),
+    actionTypeIdx: index('c2c_snap_action_type_idx').on(table.actionType),
+    orgIdx: index('c2c_snap_org_idx').on(table.organizationId),
+    createdAtIdx: index('c2c_snap_created_at_idx').on(table.createdAt),
+  })
+);
+
 // Insert Schemas
 export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
   concept2cureConversations,
@@ -4884,6 +4942,21 @@ export type InsertConcept2cureArtifactVersion = z.infer<
 
 export type Concept2cureSignature = InferSelectModel<typeof concept2cureSignatures>;
 export type InsertConcept2cureSignature = z.infer<typeof insertConcept2cureSignatureSchema>;
+
+export const insertConcept2cureSubmissionSnapshotSchema = createInsertSchemaOmit(
+  concept2cureSubmissionSnapshots,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
+
+export type Concept2cureSubmissionSnapshot = InferSelectModel<
+  typeof concept2cureSubmissionSnapshots
+>;
+export type InsertConcept2cureSubmissionSnapshot = z.infer<
+  typeof insertConcept2cureSubmissionSnapshotSchema
+>;
 
 export const insertConcept2cureProvenanceEventSchema = createInsertSchemaOmit(
   concept2cureProvenanceEvents,

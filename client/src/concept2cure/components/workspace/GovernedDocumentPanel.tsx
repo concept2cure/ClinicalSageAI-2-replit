@@ -90,6 +90,25 @@ interface UserPermissions {
   canExport: boolean;
 }
 
+interface SnapshotEntry {
+  snapshotId: string;
+  versionId: number;
+  approvedVersionId?: number;
+  publishedVersionId?: number;
+  contentHash: string;
+  exportHash?: string;
+  title: string;
+  ctdSection?: string;
+  filename?: string;
+  fileSize?: number;
+  actionType: string;
+  actorName: string;
+  actorRole?: string;
+  attestationText?: string;
+  signatureMeaning?: string;
+  createdAt: string;
+}
+
 interface GovernedDocumentPanelProps {
   projectId: string;
   artifact: Artifact;
@@ -186,12 +205,22 @@ export function GovernedDocumentPanel({
   const [loading, setLoading] = useState(true);
   const [changingStatus, setChangingStatus] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
-  const [activeTab, setActiveTab] = useState<'status' | 'audit' | 'versions'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'audit' | 'versions' | 'snapshots'>(
+    'status'
+  );
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
 
   // Rationale modal state
   const [rationaleTarget, setRationaleTarget] = useState<string | null>(null);
   const [rationale, setRationale] = useState('');
+
+  // Attestation modal state (for approve/lock)
+  const [attestationTarget, setAttestationTarget] = useState<string | null>(null);
+  const [attestationMeaning, setAttestationMeaning] = useState('');
+  const [attestationText, setAttestationText] = useState('');
+
+  // Snapshots
+  const [snapshots, setSnapshots] = useState<SnapshotEntry[]>([]);
 
   const currentStatus = artifact.status || 'draft';
   const allowedTransitions = VALID_TRANSITIONS[currentStatus] || [];
@@ -213,16 +242,19 @@ export function GovernedDocumentPanel({
     })();
   }, []);
 
-  // ── Fetch provenance + versions ──────────────────────────────────────
+  // ── Fetch provenance + versions + snapshots ─────────────────────────
   const fetchData = useCallback(async () => {
     if (!projectId || !artifact.id) return;
     setLoading(true);
     try {
-      const [provRes, verRes] = await Promise.all([
+      const [provRes, verRes, snapRes] = await Promise.all([
         fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/provenance`, {
           headers: getAuthHeaders(),
         }),
         fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/versions`, {
+          headers: getAuthHeaders(),
+        }),
+        fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/snapshots`, {
           headers: getAuthHeaders(),
         }),
       ]);
@@ -289,6 +321,19 @@ export function GovernedDocumentPanel({
             : []
         );
       }
+
+      if (snapRes.ok) {
+        const snapPayload = await snapRes.json();
+        const snapData = snapPayload.data ?? snapPayload;
+        setSnapshots(
+          Array.isArray(snapData)
+            ? snapData.sort(
+                (a: SnapshotEntry, b: SnapshotEntry) =>
+                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              )
+            : []
+        );
+      }
     } catch {
       // silent
     } finally {
@@ -302,12 +347,17 @@ export function GovernedDocumentPanel({
 
   // ── Status change ────────────────────────────────────────────────────
   const handleTransition = useCallback(
-    async (targetStatus: string, reason?: string) => {
+    async (
+      targetStatus: string,
+      reason?: string,
+      attestation?: { meaning: string; attestationText: string }
+    ) => {
       if (!projectId || !artifact.id) return;
       setChangingStatus(true);
       try {
-        const body: Record<string, string> = { status: targetStatus };
+        const body: Record<string, unknown> = { status: targetStatus };
         if (reason) body.reason = reason;
+        if (attestation) body.attestation = attestation;
 
         const res = await fetch(
           `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/status`,
@@ -327,6 +377,9 @@ export function GovernedDocumentPanel({
         setChangingStatus(false);
         setRationaleTarget(null);
         setRationale('');
+        setAttestationTarget(null);
+        setAttestationMeaning('');
+        setAttestationText('');
       }
     },
     [projectId, artifact.id, onStatusChange, fetchData]
@@ -337,6 +390,11 @@ export function GovernedDocumentPanel({
       if (isRegression(currentStatus, targetStatus)) {
         setRationaleTarget(targetStatus);
         setRationale('');
+      } else if (targetStatus === 'approved' || targetStatus === 'locked') {
+        // Show attestation modal for approval/publish
+        setAttestationTarget(targetStatus);
+        setAttestationMeaning(targetStatus === 'approved' ? 'Approved' : 'Released');
+        setAttestationText('');
       } else {
         handleTransition(targetStatus);
       }
@@ -390,18 +448,18 @@ export function GovernedDocumentPanel({
 
       {/* Tab bar */}
       <div className="flex border-b border-zinc-100">
-        {(['status', 'audit', 'versions'] as const).map(tab => (
+        {(['status', 'audit', 'versions', 'snapshots'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'flex-1 py-1.5 text-[10px] font-medium capitalize transition-colors',
+              'flex-1 py-1.5 text-[9px] font-medium capitalize transition-colors',
               activeTab === tab
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30'
                 : 'text-zinc-400 hover:text-zinc-600'
             )}
           >
-            {tab === 'status' ? 'Status' : tab === 'audit' ? 'Audit' : 'Versions'}
+            {tab === 'snapshots' ? 'History' : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -424,6 +482,8 @@ export function GovernedDocumentPanel({
           />
         ) : activeTab === 'audit' ? (
           <AuditTab events={events} />
+        ) : activeTab === 'snapshots' ? (
+          <SnapshotsTab snapshots={snapshots} />
         ) : (
           <VersionsTab
             versions={versions}
@@ -480,6 +540,88 @@ export function GovernedDocumentPanel({
               </button>
             </div>
             <p className="text-[9px] text-zinc-400 mt-1">Minimum 5 characters</p>
+          </div>
+        </div>
+      )}
+
+      {/* Attestation modal overlay (for approve/lock) */}
+      {attestationTarget && (
+        <div className="absolute inset-0 bg-black/20 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl p-4 mx-3 w-full max-w-[280px]">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle className="w-4 h-4 text-emerald-500" />
+              <span className="text-sm font-semibold text-zinc-800">
+                {attestationTarget === 'approved' ? 'Approval' : 'Publish'} Attestation
+              </span>
+            </div>
+            <p className="text-xs text-zinc-500 mb-2">
+              You are {attestationTarget === 'approved' ? 'approving' : 'publishing/locking'} this
+              document. Please provide your attestation.
+            </p>
+            <div className="space-y-2">
+              <div>
+                <label className="text-[9px] text-zinc-400 uppercase">Meaning of Signature</label>
+                <select
+                  value={attestationMeaning}
+                  onChange={e => setAttestationMeaning(e.target.value)}
+                  className="w-full text-xs border border-zinc-200 rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {attestationTarget === 'approved' ? (
+                    <>
+                      <option value="Approved">Approved</option>
+                      <option value="Reviewed">Reviewed</option>
+                      <option value="Verified">Verified</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Released">Released</option>
+                      <option value="Published">Published</option>
+                      <option value="Submitted">Submitted</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-400 uppercase">Attestation Statement</label>
+                <textarea
+                  value={attestationText}
+                  onChange={e => setAttestationText(e.target.value)}
+                  placeholder="I confirm that I have reviewed this document and am authorized to perform this action..."
+                  className="w-full h-16 text-xs border border-zinc-200 rounded-md p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2 text-[9px] text-zinc-400">
+              <Shield className="w-3 h-3" />
+              <span>Signed as {permissions?.role || 'user'} · 21 CFR Part 11</span>
+            </div>
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={() => {
+                  setAttestationTarget(null);
+                  setAttestationMeaning('');
+                  setAttestationText('');
+                }}
+                className="px-3 py-1 text-xs text-zinc-500 hover:text-zinc-700 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  handleTransition(attestationTarget, undefined, {
+                    meaning: attestationMeaning,
+                    attestationText: attestationText.trim(),
+                  })
+                }
+                disabled={attestationText.trim().length < 10 || changingStatus}
+                className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
+                {attestationTarget === 'approved' ? 'Approve' : 'Publish'}
+              </button>
+            </div>
+            <p className="text-[9px] text-zinc-400 mt-1">Minimum 10 characters</p>
           </div>
         </div>
       )}
@@ -756,6 +898,24 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                     </span>
                   </div>
                 )}
+                {e.details?.attestation && (
+                  <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-[9px] text-emerald-800 border-l-2 border-emerald-400">
+                    <div className="flex items-center gap-1">
+                      <PenTool className="w-2.5 h-2.5" />
+                      <span className="font-medium">
+                        {e.details.attestation.meaning || 'Attested'}
+                      </span>
+                      {e.details.signatureId && (
+                        <span className="text-[8px] text-emerald-500 font-mono">
+                          sig:{e.details.signatureId}
+                        </span>
+                      )}
+                    </div>
+                    <div className="italic mt-0.5">
+                      &ldquo;{e.details.attestation.attestationText}&rdquo;
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -766,6 +926,104 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
 }
 
 // ── Versions Tab ─────────────────────────────────────────────────────────────
+
+function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
+  if (snapshots.length === 0) {
+    return (
+      <div className="p-4 text-center text-[11px] text-zinc-400">No snapshot history yet.</div>
+    );
+  }
+
+  const actionIcons: Record<string, React.ReactNode> = {
+    publish: <Lock className="w-3 h-3 text-indigo-500" />,
+    'export-docx': <FileText className="w-3 h-3 text-blue-500" />,
+    'export-pdf': <FileText className="w-3 h-3 text-red-500" />,
+    'submission-snapshot': <Shield className="w-3 h-3 text-emerald-500" />,
+  };
+
+  const actionLabels: Record<string, string> = {
+    publish: 'Published / Locked',
+    'export-docx': 'Exported (DOCX)',
+    'export-pdf': 'Exported (PDF)',
+    'submission-snapshot': 'Submission Snapshot',
+  };
+
+  return (
+    <div className="p-2.5">
+      <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-2">
+        Submission Snapshots ({snapshots.length})
+      </div>
+      <div className="space-y-1.5">
+        {snapshots.map(s => (
+          <div
+            key={s.snapshotId}
+            className="px-2 py-1.5 rounded text-[10px] ring-1 bg-zinc-50 ring-zinc-200/60"
+          >
+            <div className="flex items-center gap-1.5 mb-0.5">
+              {actionIcons[s.actionType] || <Clock className="w-3 h-3 text-zinc-400" />}
+              <span className="font-semibold text-zinc-800">
+                {actionLabels[s.actionType] || s.actionType}
+              </span>
+              {s.versionId && (
+                <span className="text-[8px] px-1 py-px bg-zinc-200 text-zinc-600 rounded">
+                  v{s.versionId}
+                </span>
+              )}
+            </div>
+
+            {s.attestationText && (
+              <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-[9px] text-emerald-800 border-l-2 border-emerald-400">
+                <div className="flex items-center gap-1 mb-0.5">
+                  <PenTool className="w-2.5 h-2.5" />
+                  <span className="font-medium">{s.signatureMeaning || 'Attested'}</span>
+                </div>
+                <div className="italic">&ldquo;{s.attestationText}&rdquo;</div>
+              </div>
+            )}
+
+            {s.filename && (
+              <div className="text-[9px] text-zinc-500 mt-0.5 flex items-center gap-1">
+                <FileText className="w-2.5 h-2.5" />
+                {s.filename}
+                {s.fileSize && (
+                  <span className="text-zinc-400">({(s.fileSize / 1024).toFixed(1)} KB)</span>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mt-0.5 text-[9px] text-zinc-400">
+              {s.contentHash && (
+                <span className="font-mono flex items-center gap-0.5">
+                  <Hash className="w-2.5 h-2.5" />
+                  {s.contentHash.slice(0, 12)}…
+                </span>
+              )}
+              {s.exportHash && (
+                <span className="font-mono flex items-center gap-0.5">
+                  <Hash className="w-2.5 h-2.5" />
+                  {s.exportHash.slice(0, 12)}…
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mt-0.5 text-[9px] text-zinc-400">
+              <span className="flex items-center gap-1">
+                <User className="w-2.5 h-2.5" />
+                {s.actorName || 'System'}
+                {s.actorRole && (
+                  <span className="text-[8px] px-1 py-px bg-zinc-200 text-zinc-500 rounded">
+                    {s.actorRole}
+                  </span>
+                )}
+              </span>
+              <span>{formatTime(s.createdAt)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function VersionsTab({
   versions,
