@@ -10,7 +10,7 @@
  * shown so authors know what's needed.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Heading1,
@@ -20,7 +20,6 @@ import {
   Link2,
   MessageSquare,
   BookOpen,
-  ChevronDown,
   ChevronRight,
   FileSearch,
   CheckCircle2,
@@ -241,18 +240,21 @@ function OutlineNodeRow({ node, activeId, onNavigate }: OutlineNodeRowProps) {
           onNavigate?.(node.id);
         }}
         className={cn(
-          'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors',
-          isActive ? 'bg-blue-50 text-blue-700' : 'text-zinc-600 hover:bg-zinc-50'
+          'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-all duration-150',
+          isActive
+            ? 'bg-blue-50 text-blue-700'
+            : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + node.depth * 12}px` }}
         title={node.label}
       >
         {hasChildren ? (
-          expanded ? (
-            <ChevronDown className="w-3 h-3 shrink-0 text-zinc-400" />
-          ) : (
-            <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400" />
-          )
+          <ChevronRight
+            className={cn(
+              'w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150',
+              expanded && 'rotate-90'
+            )}
+          />
         ) : (
           <span className="w-3 h-3 shrink-0" />
         )}

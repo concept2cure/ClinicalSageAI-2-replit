@@ -484,3 +484,122 @@ describe('Phase 6B — Controlled record bar claim status', () => {
     expect(editorSrc).toContain('needs evidence');
   });
 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Phase 6C — Tier 1 component polish
+// ═════════════════════════════════════════════════════════════════════════════
+
+const OUTLINE_TREE = path.join(
+  ROOT,
+  'client/src/concept2cure/components/workspace/DocumentOutlineTree.tsx'
+);
+const DOSSIER_TREE = path.join(
+  ROOT,
+  'client/src/concept2cure/components/workspace/DossierTree.tsx'
+);
+const PLACEMENT_DIALOG_SRC = path.join(
+  ROOT,
+  'client/src/concept2cure/components/workspace/PlacementDialog.tsx'
+);
+const FILE_TREE = path.join(
+  ROOT,
+  'client/src/concept2cure/components/workspace/ProjectFileTree.tsx'
+);
+const SUB_APPS = path.join(
+  ROOT,
+  'client/src/concept2cure/components/workspace/SubmissionAppsPanel.tsx'
+);
+
+describe('Phase 6C — DocumentOutlineTree polish', () => {
+  const src = readSrc(OUTLINE_TREE);
+
+  it('Uses CSS rotation instead of ChevronDown', () => {
+    expect(src).not.toContain('ChevronDown');
+    expect(src).toContain('rotate-90');
+    expect(src).toContain('transition-transform duration-150');
+  });
+
+  it('Has hover translate nudge on nodes', () => {
+    expect(src).toContain('hover:translate-x-px');
+    expect(src).toContain('transition-all duration-150');
+  });
+});
+
+describe('Phase 6C — DossierTree polish', () => {
+  const src = readSrc(DOSSIER_TREE);
+
+  it('Uses CSS rotation instead of ChevronDown', () => {
+    expect(src).not.toContain('ChevronDown');
+    expect(src).toContain('rotate-90');
+  });
+
+  it('Has hover translate nudge on nodes', () => {
+    expect(src).toContain('hover:translate-x-px');
+  });
+
+  it('Context menu entrance animation', () => {
+    expect(src).toContain('animate-in fade-in slide-in-from-top-1');
+  });
+});
+
+describe('Phase 6C — PlacementDialog polish', () => {
+  const src = readSrc(PLACEMENT_DIALOG_SRC);
+
+  it('Uses CSS rotation instead of ChevronDown', () => {
+    expect(src).not.toContain('ChevronDown');
+    expect(src).toContain('rotate-90');
+  });
+
+  it('Modal entrance animation with zoom', () => {
+    expect(src).toContain('zoom-in-95');
+    expect(src).toContain('animate-in fade-in');
+  });
+
+  it('Supports ⌘Enter to confirm', () => {
+    expect(src).toContain('metaKey');
+    expect(src).toMatch(/e\.key\s*===?\s*'Enter'/s);
+  });
+
+  it('Has character counter on reason textarea', () => {
+    expect(src).toContain('/5 min');
+  });
+
+  it('Shows ⌘Enter hint', () => {
+    expect(src).toContain('⌘Enter');
+  });
+});
+
+describe('Phase 6C — ProjectFileTree polish', () => {
+  const src = readSrc(FILE_TREE);
+
+  it('Uses CSS rotation instead of ChevronDown', () => {
+    expect(src).not.toContain('ChevronDown');
+    expect(src).toContain('rotate-90');
+  });
+
+  it('Has hover translate nudge on folder and file rows', () => {
+    expect(src).toContain('hover:translate-x-px');
+    expect(src).toContain('transition-all duration-150');
+  });
+
+  it('Shows empty folder hint', () => {
+    expect(src).toContain('No documents');
+  });
+});
+
+describe('Phase 6C — SubmissionAppsPanel polish', () => {
+  const src = readSrc(SUB_APPS);
+
+  it('App cards have hover lift and shadow', () => {
+    expect(src).toContain('hover:-translate-y-px');
+    expect(src).toContain('hover:shadow-sm');
+  });
+
+  it('Detail view slides in from right', () => {
+    expect(src).toContain('slide-in-from-right-2');
+  });
+
+  it('Back arrow animates on hover', () => {
+    expect(src).toContain('group-hover/back:-translate-x');
+  });
+});

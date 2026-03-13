@@ -125,7 +125,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
               <button
                 key={app.appId}
                 onClick={() => setSelectedApp(app)}
-                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-zinc-100 hover:border-blue-200 hover:bg-blue-50/30 transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none group"
+                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-zinc-100 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-sm hover:-translate-y-px transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none group"
               >
                 <div className="flex items-center gap-2 w-full">
                   {APP_ICONS[app.appId] || <FileText className="w-5 h-5 text-zinc-400" />}
@@ -146,12 +146,15 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
           </div>
         ) : (
           /* App detail / run view */
-          <div className="space-y-4">
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
             <button
               onClick={() => setSelectedApp(null)}
-              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
+              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded group/back"
             >
-              ← Back to apps
+              <span className="inline-block transition-transform duration-150 group-hover/back:-translate-x-0.5">
+                ←
+              </span>{' '}
+              Back to apps
             </button>
 
             <div className="flex items-center gap-3">

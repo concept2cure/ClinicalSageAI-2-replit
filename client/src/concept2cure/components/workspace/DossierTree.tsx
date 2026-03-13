@@ -13,7 +13,6 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import {
   ChevronRight,
-  ChevronDown,
   Package,
   FolderOpen,
   Folder,
@@ -227,8 +226,10 @@ function DossierNodeRow({
         }}
         onContextMenu={e => onContextMenu(e, node)}
         className={cn(
-          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-colors group focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 focus-visible:outline-none',
-          isSelected ? 'bg-blue-50 text-blue-700' : 'text-zinc-600 hover:bg-zinc-50'
+          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 focus-visible:outline-none',
+          isSelected
+            ? 'bg-blue-50 text-blue-700'
+            : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
         data-testid={`dossier-node-${node.ctdSection}`}
@@ -237,11 +238,12 @@ function DossierNodeRow({
       >
         {/* Chevron */}
         {hasChildren ? (
-          isExpanded ? (
-            <ChevronDown className="w-3 h-3 shrink-0 text-zinc-400" />
-          ) : (
-            <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400" />
-          )
+          <ChevronRight
+            className={cn(
+              'w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150',
+              isExpanded && 'rotate-90'
+            )}
+          />
         ) : (
           <span className="w-3 h-3 shrink-0" />
         )}
@@ -435,7 +437,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       {/* Context menu overlay */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 min-w-[180px]"
+          className="fixed z-50 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={e => e.stopPropagation()}
           role="menu"

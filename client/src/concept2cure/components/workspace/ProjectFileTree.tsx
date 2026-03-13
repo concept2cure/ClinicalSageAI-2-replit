@@ -9,7 +9,6 @@ import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
   ChevronRight,
-  ChevronDown,
   FileText,
   FolderOpen,
   Folder,
@@ -192,15 +191,17 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 }}
                 aria-expanded={isExpanded}
                 className={cn(
-                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-colors group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
-                  isFolderSelected ? 'bg-blue-50 text-blue-700' : 'text-zinc-600 hover:bg-zinc-50'
+                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
+                  isFolderSelected
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
                 )}
                 data-testid={`folder-${folder.key}`}
               >
                 {isExpanded ? (
-                  <ChevronDown className="w-3 h-3 shrink-0 text-zinc-400" />
+                  <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150 rotate-90" />
                 ) : (
-                  <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400" />
+                  <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150" />
                 )}
                 {isExpanded ? (
                   <FolderOpen className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
@@ -214,6 +215,9 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
               </button>
 
               {/* Children (files) */}
+              {isExpanded && folder.children.length === 0 && (
+                <p className="pl-7 pr-2 py-1.5 text-[10px] text-zinc-300 italic">No documents</p>
+              )}
               {isExpanded &&
                 folder.children.map(a => {
                   const isSelected = a.id === selectedId;
@@ -222,10 +226,10 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                       key={a.id}
                       onClick={() => onSelect(a)}
                       className={cn(
-                        'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
+                        'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
                         isSelected
                           ? 'bg-blue-100/70 text-blue-800'
-                          : 'text-zinc-600 hover:bg-zinc-50'
+                          : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
                       )}
                       data-testid="tree-file-node"
                       title={a.title}

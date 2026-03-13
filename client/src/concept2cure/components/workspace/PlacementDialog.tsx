@@ -12,15 +12,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import {
-  ArrowRight,
-  AlertTriangle,
-  ShieldCheck,
-  Search,
-  ChevronRight,
-  ChevronDown,
-  X,
-} from 'lucide-react';
+import { ArrowRight, AlertTriangle, ShieldCheck, Search, ChevronRight, X } from 'lucide-react';
 import {
   CTD_HIERARCHY,
   flattenDossierTree,
@@ -100,11 +92,12 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
           style={{ paddingLeft: `${4 + depth * 12}px` }}
         >
           {hasChildren ? (
-            isExpanded ? (
-              <ChevronDown className="w-3 h-3 shrink-0 text-zinc-400" />
-            ) : (
-              <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400" />
-            )
+            <ChevronRight
+              className={cn(
+                'w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150',
+                isExpanded && 'rotate-90'
+              )}
+            />
           ) : (
             <span className="w-3 h-3 shrink-0" />
           )}
@@ -224,15 +217,19 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
     });
   }, [canConfirm, artifact.id, operation, currentSection, selectedSection, reason, onConfirm]);
 
-  // Dismiss on Escape key
+  // Dismiss on Escape key, Enter to confirm
   React.useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && canConfirm && !loading) {
+        e.preventDefault();
+        handleConfirm();
+      }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+  }, [open, onClose, canConfirm, loading, handleConfirm]);
 
   if (!open) return null;
 
@@ -243,7 +240,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
       role="presentation"
     >
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
+        className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -411,8 +408,19 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder="Provide justification (min 5 characters)…"
-              className="w-full px-3 py-2 text-[12px] border border-zinc-200 rounded-lg resize-none h-16 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full px-3 py-2 text-[12px] border border-zinc-200 rounded-lg resize-none h-16 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-shadow duration-150"
             />
+            <div className="flex items-center justify-between mt-1">
+              <span
+                className={cn(
+                  'text-[10px] tabular-nums',
+                  reason.trim().length < 5 ? 'text-zinc-400' : 'text-emerald-500'
+                )}
+              >
+                {reason.trim().length}/5 min
+              </span>
+              <span className="text-[10px] text-zinc-300">⌘Enter to confirm</span>
+            </div>
           </div>
 
           {/* Audit notice */}
