@@ -83,6 +83,10 @@ interface EditorPanelProps {
   initialCtdSection?: string;
   /** Called when the pending initial content has been consumed */
   onInitialContentConsumed?: () => void;
+  /** When provided, open this existing artifact directly (no creation) */
+  openArtifactId?: string;
+  /** Called when the openArtifactId has been consumed */
+  onOpenArtifactConsumed?: () => void;
   /** Called when the active document content/title changes (for outline tracking) */
   onContentChange?: (content: string, title: string) => void;
 }
@@ -105,6 +109,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   initialTitle,
   initialCtdSection,
   onInitialContentConsumed,
+  openArtifactId,
+  onOpenArtifactConsumed,
   onContentChange,
 }) => {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
@@ -119,6 +125,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
   const [lockRejection, setLockRejection] = useState<string | null>(null);
+  const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
 
   // ── Claim checker (Precedent Engine) ─────────────────────────────────────
   const [claimResult, setClaimResult] = useState<ClaimCheckResult | null>(null);
@@ -315,6 +322,42 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     onInitialContentConsumed,
     loadArtifacts,
   ]);
+
+  // ── Open a specific artifact by ID (CMC handoff — no creation) ───────────
+  const openArtifactConsumedRef = useRef(false);
+  const openArtifactRetryRef = useRef(false);
+  useEffect(() => {
+    if (!openArtifactId || openArtifactConsumedRef.current) return;
+    // Wait for artifacts to be loaded
+    if (loading) return;
+    const target = artifacts.find(a => a.id === openArtifactId);
+    if (target) {
+      // Success: artifact found — activate it, THEN consume
+      openArtifactConsumedRef.current = true;
+      setOpenArtifactNotFound(false);
+      setActiveArtifact(target);
+      setShowArtifactList(false);
+      onOpenArtifactConsumed?.();
+    } else if (!openArtifactRetryRef.current) {
+      // First miss — artifacts may be stale. Refresh once.
+      openArtifactRetryRef.current = true;
+      loadArtifacts();
+    } else {
+      // Second miss after refresh — artifact genuinely not found
+      openArtifactConsumedRef.current = true;
+      setOpenArtifactNotFound(true);
+      onOpenArtifactConsumed?.();
+    }
+  }, [openArtifactId, artifacts, loading, loadArtifacts, onOpenArtifactConsumed]);
+
+  // Reset refs when openArtifactId changes to a new value
+  useEffect(() => {
+    if (openArtifactId) {
+      openArtifactConsumedRef.current = false;
+      openArtifactRetryRef.current = false;
+      setOpenArtifactNotFound(false);
+    }
+  }, [openArtifactId]);
 
   // ── Notify parent of active doc content changes (for outline) ────────────
   useEffect(() => {
@@ -617,6 +660,43 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     );
   }
 
+  // ── Artifact not found after openArtifactId handoff ─────────────────────
+  if (openArtifactNotFound && !activeArtifact) {
+    return (
+      <div className="flex items-center justify-center h-full bg-white">
+        <div className="text-center max-w-md px-6">
+          <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-4" />
+          <p className="text-sm font-semibold text-zinc-700 mb-2">
+            Saved document was created, but the editor could not load that artifact automatically.
+          </p>
+          <p className="text-xs text-zinc-400 mb-6">
+            The artifact may still be processing or the ID could not be matched.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                setOpenArtifactNotFound(false);
+                loadArtifacts();
+              }}
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Refresh documents
+            </button>
+            <button
+              onClick={() => {
+                setOpenArtifactNotFound(false);
+                setShowArtifactList(true);
+              }}
+              className="px-4 py-2 text-sm border border-zinc-300 text-zinc-600 rounded-lg hover:bg-zinc-50 transition-colors"
+            >
+              Open artifact list
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Artifact list view ──────────────────────────────────────────────────
   if (showArtifactList && !activeArtifact) {
     // Compute unique filter options from artifact data
@@ -848,9 +928,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {activeArtifact?.title}
         </span>
         {activeArtifact?.ctdSection && (
-          <span className="text-[9px] px-1 py-px rounded bg-violet-50 text-violet-600 font-semibold shrink-0 ring-1 ring-violet-200/60">
+          <button
+            onClick={() => setShowCtdInput(prev => !prev)}
+            className="text-[9px] px-1 py-px rounded bg-violet-50 text-violet-600 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
+            title="Edit CTD section placement"
+          >
             CTD {activeArtifact.ctdSection}
-          </span>
+          </button>
         )}
         <span
           className={cn(
@@ -867,6 +951,50 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {activeArtifact?.status || 'draft'}
         </span>
         {saveStatus === 'saved' && <Check className="w-2.5 h-2.5 text-emerald-500 shrink-0" />}
+
+        {/* Trust indicators strip — clickable pills */}
+        {activeArtifact && (
+          <div className="flex items-center gap-1.5 ml-1.5">
+            <button
+              onClick={() => toggleInspector('compare')}
+              className="text-[9px] text-zinc-400 tabular-nums font-medium hover:text-blue-600 transition-colors cursor-pointer"
+              title="Open version compare"
+            >
+              v{activeArtifact.version}
+            </button>
+            {signatures.length > 0 && (
+              <button
+                onClick={() => toggleInspector('audit')}
+                className="text-[9px] px-1 py-px rounded bg-emerald-50 text-emerald-600 font-semibold ring-1 ring-emerald-200/60 tabular-nums hover:bg-emerald-100 transition-colors cursor-pointer"
+                title="View signatures in audit trail"
+              >
+                {signatures.length} sig{signatures.length !== 1 ? 's' : ''}
+              </button>
+            )}
+            {provenanceCount > 0 && (
+              <button
+                onClick={() => toggleInspector('provenance')}
+                className="text-[9px] px-1 py-px rounded bg-blue-50 text-blue-600 font-semibold ring-1 ring-blue-200/60 tabular-nums hover:bg-blue-100 transition-colors cursor-pointer"
+                title="Open provenance timeline"
+              >
+                {provenanceCount} event{provenanceCount !== 1 ? 's' : ''}
+              </button>
+            )}
+            {integrityVerified !== null && (
+              <button
+                onClick={() => toggleInspector('audit')}
+                className={`text-[9px] px-1 py-px rounded font-semibold ring-1 cursor-pointer transition-colors ${integrityVerified ? 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100' : 'bg-red-50 text-red-600 ring-red-200/60 hover:bg-red-100'}`}
+                title={
+                  integrityVerified
+                    ? 'Integrity verified — view audit'
+                    : 'Integrity modified — view audit'
+                }
+              >
+                {integrityVerified ? '✓ verified' : '✗ modified'}
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="flex-1" />
 
@@ -1043,6 +1171,27 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       </div>
 
+      {/* ── Controlled record micro-bar ──────────────────────────────────── */}
+      {activeArtifact && (
+        <div className="flex items-center h-5 px-2 border-b border-zinc-50 bg-zinc-50/40 shrink-0 gap-2 text-[9px] text-zinc-400">
+          <ShieldCheck className="w-2.5 h-2.5 text-zinc-300" />
+          <span className="font-medium">Controlled Record</span>
+          <span className="text-zinc-200">·</span>
+          <span className="tabular-nums">
+            {new Date(activeArtifact.updatedAt || activeArtifact.createdAt).toLocaleString(
+              undefined,
+              { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+            )}
+          </span>
+          {(activeArtifact as Artifact & { templateId?: string }).templateId && (
+            <>
+              <span className="text-zinc-200">·</span>
+              <span className="text-violet-400">from template</span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* ── Contextual banners (only when relevant) ──────────────────────── */}
       {aiResult && (
         <div className="border-b border-amber-200 bg-amber-50/80 px-3 py-2">
@@ -1183,6 +1332,32 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               deviceName={activeArtifact?.title}
               documentContent={activeArtifact?.content}
               onClose={() => setActiveInspector(null)}
+              onCreateDocument={async (content: string, title: string, ctdSection?: string) => {
+                if (!projectId) return;
+                try {
+                  const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                    body: JSON.stringify({
+                      title,
+                      content,
+                      type: 'regulatory_document',
+                      category: 'document',
+                      ctdSection: ctdSection || undefined,
+                    }),
+                  });
+                  if (res.ok) {
+                    const payload = await res.json();
+                    const created = payload.data ?? payload;
+                    setActiveArtifact(created);
+                    setShowArtifactList(false);
+                    setActiveInspector(null);
+                    loadArtifacts();
+                  }
+                } catch {
+                  // silent
+                }
+              }}
             />
           </div>
         )}

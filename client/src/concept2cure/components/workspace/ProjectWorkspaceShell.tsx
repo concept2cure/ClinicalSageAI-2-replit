@@ -131,6 +131,9 @@ interface ProjectWorkspaceShellProps {
   initialTitle?: string;
   initialCtdSection?: string;
   onInitialContentConsumed?: () => void;
+  /** Open a specific existing artifact directly (no creation) */
+  openArtifactId?: string;
+  onOpenArtifactConsumed?: () => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -147,6 +150,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   initialTitle,
   initialCtdSection,
   onInitialContentConsumed,
+  openArtifactId,
+  onOpenArtifactConsumed,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -203,6 +208,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setMode('edit');
     }
   }, [initialContent, initialTitle]);
+
+  // If openArtifactId is provided, switch to edit mode for that artifact
+  useEffect(() => {
+    if (!openArtifactId) return;
+    setSelectedDocId(openArtifactId);
+    setMode('edit');
+  }, [openArtifactId]);
 
   // ── Load artifacts ───────────────────────────────────────────────────────
   const loadArtifacts = useCallback(async () => {
@@ -760,6 +772,37 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
       )}
 
+      {/* ── Persistent context band (browse mode — subtle reminder of selected doc) */}
+      {mode === 'browse' && activeArtifact && (
+        <div className="flex items-center gap-2 px-3 h-6 border-b border-zinc-50 bg-zinc-50/30 shrink-0">
+          <FileText className="w-3 h-3 text-zinc-300" />
+          <span className="text-[10px] text-zinc-500 truncate">{activeArtifact.title}</span>
+          {activeArtifact.ctdSection && (
+            <span className="text-[9px] px-1 py-px rounded bg-blue-50/60 text-blue-500 font-medium">
+              {activeArtifact.ctdSection}
+            </span>
+          )}
+          <span
+            className={cn(
+              'text-[9px] px-1 py-px rounded font-medium',
+              activeArtifact.status === 'locked'
+                ? 'bg-red-50/60 text-red-500'
+                : activeArtifact.status === 'approved'
+                  ? 'bg-green-50/60 text-green-500'
+                  : 'bg-zinc-100/60 text-zinc-400'
+            )}
+          >
+            {activeArtifact.status || 'draft'}
+          </span>
+          <button
+            onClick={() => setMode('edit')}
+            className="ml-auto text-[9px] text-blue-500 hover:text-blue-700 font-medium"
+          >
+            Open →
+          </button>
+        </div>
+      )}
+
       {/* ── Doc-aware header (shown when editing) ─────────────────────────── */}
       {mode === 'edit' && activeArtifact && (
         <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
@@ -1169,6 +1212,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   initialTitle={initialTitle}
                   initialCtdSection={initialCtdSection}
                   onInitialContentConsumed={onInitialContentConsumed}
+                  openArtifactId={openArtifactId}
+                  onOpenArtifactConsumed={onOpenArtifactConsumed}
                   onContentChange={handleDocContentChange}
                 />
               </Suspense>

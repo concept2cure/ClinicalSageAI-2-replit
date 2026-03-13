@@ -205,10 +205,13 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
   const config = OP_CONFIG[operation];
   const currentSection = artifact.ctdSection || null;
 
+  const isLocked = artifact.status === 'locked';
+
   const canConfirm =
     selectedSection &&
     reason.trim().length >= 5 &&
-    (operation !== 'relocate' || selectedSection !== currentSection);
+    (operation !== 'relocate' || selectedSection !== currentSection) &&
+    !(operation === 'relocate' && isLocked);
 
   const handleConfirm = useCallback(() => {
     if (!canConfirm) return;
@@ -296,44 +299,99 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             )}
           </div>
 
-          {/* Impact statement */}
+          {/* Impact statement — relocate */}
           {operation === 'relocate' && (
-            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50/60 border border-amber-100 text-[11px] text-amber-800">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+            <div
+              className={cn(
+                'flex items-start gap-2 px-3 py-2 rounded-lg text-[11px]',
+                isLocked
+                  ? 'bg-red-50/60 border border-red-200 text-red-800'
+                  : 'bg-amber-50/60 border border-amber-100 text-amber-800'
+              )}
+            >
+              <AlertTriangle
+                className={cn(
+                  'w-3.5 h-3.5 shrink-0 mt-0.5',
+                  isLocked ? 'text-red-600' : 'text-amber-600'
+                )}
+              />
               <div>
-                <p className="font-medium">Regulatory Placement Impact</p>
-                <p className="text-amber-700 mt-0.5">
-                  Relocating this document changes its position in the CTD submission structure.
+                <p className="font-medium">
+                  {isLocked
+                    ? 'Document Locked — Relocation Blocked'
+                    : 'Regulatory Placement Impact'}
+                </p>
+                <p className={cn('mt-0.5', isLocked ? 'text-red-700' : 'text-amber-700')}>
+                  {isLocked
+                    ? 'This document is locked. Unlock it before relocating.'
+                    : 'Relocating this document changes its position in the CTD submission structure.'}
                   {artifact.status === 'approved' &&
                     ' This document is currently approved — relocation will require re-review.'}
-                  {artifact.status === 'locked' &&
-                    ' This document is locked and cannot be relocated.'}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Move visualization */}
-          {operation === 'relocate' &&
+          {/* Impact note — initial placement */}
+          {operation === 'place' && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50/60 border border-blue-100 text-[11px] text-blue-800">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-600" />
+              <div>
+                <p className="font-medium">Placement creates a governed record</p>
+                <p className="text-blue-700 mt-0.5">
+                  Once placed, this document becomes part of the submission dossier. Future moves
+                  will require justification and leave an audit trail.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Move / placement visualization */}
+          {((operation === 'relocate' &&
             currentSection &&
             selectedSection &&
-            selectedSection !== currentSection && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100">
+            selectedSection !== currentSection) ||
+            (operation === 'place' && selectedSection)) && (
+            <div
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg border',
+                operation === 'relocate'
+                  ? 'bg-amber-50 border-amber-100'
+                  : 'bg-blue-50 border-blue-100'
+              )}
+            >
+              {currentSection && (
                 <div className="flex-1 text-center">
                   <p className="text-[10px] text-zinc-400">From</p>
                   <p className="text-[11px] font-mono font-medium text-zinc-700">
                     {currentSection}
                   </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-amber-600 shrink-0" />
-                <div className="flex-1 text-center">
-                  <p className="text-[10px] text-zinc-400">To</p>
-                  <p className="text-[11px] font-mono font-medium text-blue-700">
-                    {selectedSection}
+                  <p className="text-[9px] text-zinc-400 truncate">
+                    {getSectionLabel(currentSection)}
                   </p>
                 </div>
+              )}
+              {!currentSection && (
+                <div className="flex-1 text-center">
+                  <p className="text-[10px] text-zinc-400">From</p>
+                  <p className="text-[11px] font-medium text-zinc-400 italic">Unplaced</p>
+                </div>
+              )}
+              <ArrowRight
+                className={cn(
+                  'w-4 h-4 shrink-0',
+                  operation === 'relocate' ? 'text-amber-600' : 'text-blue-600'
+                )}
+              />
+              <div className="flex-1 text-center">
+                <p className="text-[10px] text-zinc-400">To</p>
+                <p className="text-[11px] font-mono font-medium text-blue-700">{selectedSection}</p>
+                <p className="text-[9px] text-zinc-400 truncate">
+                  {getSectionLabel(selectedSection)}
+                </p>
               </div>
-            )}
+            </div>
+          )}
 
           {/* Target section picker */}
           <div>

@@ -847,7 +847,7 @@ function BulkAssignmentDialogContent({ studyId, onClose }) {
   );
 }
 
-const ComprehensiveCMCPlatform = () => {
+const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [viewingMethodId, setViewingMethodId] = useState(null);
   const [analyticalMethods, setAnalyticalMethods] = useState([]);
@@ -26079,7 +26079,7 @@ What specific aspect would you like to explore further? I can provide detailed g
 <p><strong>Route:</strong> ${payload.route_of_administration || 'N/A'}</p>
 <h3>3.2.P.1 Description and Composition</h3><p>See generated DOCX for full content.</p>`;
 
-                  await fetch('/api/knowledge-base/save-docx-as-artifact', {
+                  const saveRes = await fetch('/api/knowledge-base/save-docx-as-artifact', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
@@ -26090,14 +26090,33 @@ What specific aspect would you like to explore further? I can provide detailed g
                       type: 'regulatory_document',
                     }),
                   });
-                } catch {
-                  // Non-critical — DOCX still downloaded
+                  if (saveRes.ok) {
+                    const saveResult = await saveRes.json();
+                    if (saveResult.success && onDocumentCreated) {
+                      onDocumentCreated({
+                        artifactId: saveResult.data.artifactId,
+                        title: saveResult.data.title,
+                        ctdSection: '3.2',
+                      });
+                    }
+                    toast({
+                      title: 'Module 3 DOCX Generated',
+                      description: 'Document downloaded and saved to project artifacts',
+                    });
+                  } else {
+                    toast({
+                      title: 'Module 3 DOCX Generated',
+                      description:
+                        'Document downloaded. Artifact save failed — open workspace to retry.',
+                    });
+                  }
+                } catch (saveErr) {
+                  console.warn('[CMC] Artifact save failed:', saveErr);
+                  toast({
+                    title: 'Module 3 DOCX Generated',
+                    description: 'Document downloaded. Artifact save could not complete.',
+                  });
                 }
-
-                toast({
-                  title: 'Module 3 DOCX Generated',
-                  description: 'Document downloaded and saved to project artifacts',
-                });
               } catch (err) {
                 toast({
                   title: 'Generation Failed',

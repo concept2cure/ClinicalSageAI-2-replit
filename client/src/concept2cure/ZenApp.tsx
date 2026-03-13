@@ -537,6 +537,9 @@ export const ZenApp: React.FC = () => {
     ctdSection?: string;
   } | null>(null);
 
+  // Direct artifact open — when a module has already saved an artifact and wants to open it
+  const [openArtifactId, setOpenArtifactId] = useState<string | undefined>();
+
   // RI Copilot view: 'intelligence' = evidence-first home, 'editor' = document editing
   const [riViewMode, setRiViewMode] = useState<'intelligence' | 'editor'>(
     urlProjectId ? 'editor' : 'intelligence'
@@ -1688,7 +1691,13 @@ export const ZenApp: React.FC = () => {
                         </div>
                       }
                     >
-                      <CMCModuleStandalone />
+                      <CMCModuleStandalone
+                        onDocumentCreated={({ artifactId }: { artifactId: string }) => {
+                          setOpenArtifactId(artifactId);
+                          setRiViewMode('editor');
+                          setLayoutMode('regulatory-workspace');
+                        }}
+                      />
                     </Suspense>
                   </div>
                 </>
@@ -1919,6 +1928,8 @@ export const ZenApp: React.FC = () => {
                 initialTitle={pendingEditorContent?.title}
                 initialCtdSection={pendingEditorContent?.ctdSection}
                 onInitialContentConsumed={() => setPendingEditorContent(null)}
+                openArtifactId={openArtifactId}
+                onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
               />
             ))}
           {/* Rules Engine Manager */}
