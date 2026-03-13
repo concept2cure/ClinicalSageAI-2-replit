@@ -28,6 +28,7 @@ import {
   type PlacementConfirmation,
   type PlacementOperation,
 } from './PlacementDialog';
+import { GovernedDocumentPanel } from './GovernedDocumentPanel';
 import {
   getSectionLabel,
   getSectionRequirements,
@@ -188,6 +189,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // Section requirements panel
   const [sectionReqs, setSectionReqs] = useState<SectionRequirement | null>(null);
+
+  // Governed document panel (right inspector)
+  const [showGovernedPanel, setShowGovernedPanel] = useState(false);
 
   // Editor ref for outline scroll
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -557,6 +561,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setActiveDocTitle(title);
   }, []);
 
+  // ── Handle governed status change from panel ────────────────────────────
+  const handleGovernedStatusChange = useCallback(
+    (newStatus: string) => {
+      // Refresh artifacts and metrics after status change
+      loadArtifacts();
+      loadDossierMetrics();
+    },
+    [loadArtifacts, loadDossierMetrics]
+  );
+
   // ── Phase 4 panel openers ──────────────────────────────────────────────
   const openTransformCanvas = useCallback(
     (ctdSection?: string, templateKey?: string, artifactId?: string, artifactTitle?: string) => {
@@ -654,7 +668,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const handleSelectDoc = useCallback((doc: TreeArtifact) => {
     setSelectedDocId(doc.id);
     setMode('edit');
-    // Don't auto-switch to outline — keep user's current rail mode
+    setShowGovernedPanel(true);
+    setSectionReqs(null); // close reqs panel when opening governed panel
   }, []);
 
   const handleSelectFolder = useCallback((folderKey: string) => {
@@ -1281,11 +1296,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
 
         {/* ── Section requirements side panel ─────────────────────────────── */}
-        {sectionReqs && (
+        {sectionReqs && !showGovernedPanel && (
           <SectionRequirementsPanel
             reqs={sectionReqs}
             metrics={dossierMetrics[sectionReqs.section]}
             onClose={() => setSectionReqs(null)}
+          />
+        )}
+
+        {/* ── Governed document panel ─────────────────────────────────────── */}
+        {showGovernedPanel && selectedDocId && activeArtifact && projectId && (
+          <GovernedDocumentPanel
+            projectId={projectId}
+            artifact={activeArtifact}
+            onStatusChange={handleGovernedStatusChange}
+            onClose={() => setShowGovernedPanel(false)}
           />
         )}
       </div>

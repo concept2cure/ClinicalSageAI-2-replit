@@ -3311,7 +3311,15 @@ router.post(
 
 /**
  * PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status
- * Change artifact status (draft → review → approved → locked).
+ * Change artifact status with workflow enforcement.
+ *
+ * Valid transitions:
+ *   draft   → review
+ *   review  → approved | draft (regression — requires reason)
+ *   approved → locked  | review (regression — requires reason)
+ *   locked  → draft    (regression — requires reason)
+ *
+ * Body: { status: string, reason?: string }
  */
 router.put(
   '/projects/:projectId/artifacts/:artifactId/status',
@@ -3322,7 +3330,7 @@ router.put(
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const { status } = req.body;
+      const { status, reason } = req.body;
       const validStatuses = ['draft', 'review', 'approved', 'locked'];
       if (!status || !validStatuses.includes(status)) {
         return sendError(res, 400, `Invalid status. Must be one of: ${validStatuses.join(', ')}`);
@@ -3341,7 +3349,42 @@ router.put(
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
-      const previousStatus = artifact.status;
+      const previousStatus = artifact.status || 'draft';
+
+      // ── Transition validation ────────────────────────────────────────
+      const VALID_TRANSITIONS: Record<string, string[]> = {
+        draft: ['review'],
+        review: ['approved', 'draft'],
+        approved: ['locked', 'review'],
+        locked: ['draft'],
+      };
+
+      const allowed = VALID_TRANSITIONS[previousStatus] || [];
+      if (!allowed.includes(status)) {
+        return sendError(
+          res,
+          400,
+          `Invalid transition: ${previousStatus} → ${status}. Allowed: ${allowed.join(', ')}`
+        );
+      }
+
+      // ── Regression requires reason ───────────────────────────────────
+      const REGRESSIONS: Record<string, string[]> = {
+        review: ['draft'],
+        approved: ['review'],
+        locked: ['draft'],
+      };
+      const regressions = REGRESSIONS[previousStatus] || [];
+      if (regressions.includes(status)) {
+        if (!reason || typeof reason !== 'string' || reason.trim().length < 5) {
+          return sendError(
+            res,
+            400,
+            'Reason is required (min 5 characters) when regressing document status'
+          );
+        }
+      }
+
       const updateData: Record<string, any> = {
         status,
         updatedAt: new Date(),
@@ -3350,7 +3393,7 @@ router.put(
         updateData.lockedAt = new Date();
         updateData.lockedById = userId;
       }
-      if (status === 'draft' && previousStatus === 'locked') {
+      if (previousStatus === 'locked' && status === 'draft') {
         updateData.lockedAt = null;
         updateData.lockedById = null;
       }
@@ -3376,12 +3419,13 @@ router.put(
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
         backendService: 'concept2cure-api',
         ipAddress: getClientIp(req),
-        details: { previousStatus, newStatus: status },
+        details: { previousStatus, newStatus: status, reason: reason || null },
       });
 
       await logAuditEntry(req, 'UPDATE', 'artifact_status', req.params.artifactId, null, {
         previousStatus,
         newStatus: status,
+        reason: reason || null,
       });
 
       return sendSuccess(res, {

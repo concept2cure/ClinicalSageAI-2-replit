@@ -125,6 +125,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
   const [lockRejection, setLockRejection] = useState<string | null>(null);
+  const [unlockReason, setUnlockReason] = useState('');
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
 
   // ── Claim checker (Precedent Engine) ─────────────────────────────────────
@@ -614,16 +615,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Status change ────────────────────────────────────────────────────
   const handleStatusChange = useCallback(
-    async (newStatus: string) => {
+    async (newStatus: string, reason?: string) => {
       if (!projectId || !activeArtifact) return;
       setChangingStatus(true);
       try {
+        const body: Record<string, string> = { status: newStatus };
+        if (reason) body.reason = reason;
         const res = await fetch(
           `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/status`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ status: newStatus }),
+            body: JSON.stringify(body),
           }
         );
         if (res.ok) {
@@ -633,7 +636,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           loadArtifacts();
           pushToast(`Status → ${newStatus}`, 'success');
         } else {
-          pushToast('Status change failed', 'error');
+          const err = await res.json().catch(() => ({ message: 'Status change failed' }));
+          pushToast(err.message || 'Status change failed', 'error');
         }
       } catch {
         pushToast('Status change failed — network error', 'error');
@@ -1177,38 +1181,32 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <PenTool className="w-3 h-3 text-zinc-400" />
                   Sign & Approve
                 </button>
-                {/* Status change */}
-                <button
-                  role="menuitem"
-                  onClick={() => {
-                    const current = activeArtifact?.status || 'draft';
-                    const next =
-                      current === 'locked'
-                        ? 'draft'
-                        : current === 'approved'
+                {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
+                {activeArtifact?.status !== 'locked' && (
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      const current = activeArtifact?.status || 'draft';
+                      const next =
+                        current === 'approved'
                           ? 'locked'
                           : current === 'review'
                             ? 'approved'
                             : 'review';
-                    handleStatusChange(next);
-                    setOverflowOpen(false);
-                  }}
-                  disabled={changingStatus || !activeArtifact}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                >
-                  {activeArtifact?.status === 'locked' ? (
-                    <Unlock className="w-3 h-3 text-zinc-400" />
-                  ) : (
+                      handleStatusChange(next);
+                      setOverflowOpen(false);
+                    }}
+                    disabled={changingStatus || !activeArtifact}
+                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  >
                     <Lock className="w-3 h-3 text-zinc-400" />
-                  )}
-                  {activeArtifact?.status === 'locked'
-                    ? 'Unlock'
-                    : activeArtifact?.status === 'approved'
+                    {activeArtifact?.status === 'approved'
                       ? 'Lock'
                       : activeArtifact?.status === 'review'
                         ? 'Approve'
                         : 'Submit for Review'}
-                </button>
+                  </button>
+                )}
                 <div className="border-t border-zinc-100 my-1" />
                 {AI_ACTIONS.map(a => (
                   <button
@@ -1415,15 +1413,25 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           {activeArtifact?.status === 'locked' && (
             <div className="absolute inset-0 z-10 bg-red-50/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-              <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto">
+              <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto max-w-xs">
                 <Lock className="w-6 h-6 text-red-500 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-red-800">Document Locked</p>
                 <p className="text-xs text-red-600 mt-1 mb-3">
-                  This document is locked and read-only.
+                  This document is locked and read-only. Provide a reason to unlock.
                 </p>
+                <input
+                  type="text"
+                  value={unlockReason}
+                  onChange={e => setUnlockReason(e.target.value)}
+                  placeholder="Reason for unlocking (min 5 chars)"
+                  className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
                 <button
-                  onClick={() => handleStatusChange('draft')}
-                  disabled={changingStatus}
+                  onClick={() => {
+                    handleStatusChange('draft', unlockReason.trim());
+                    setUnlockReason('');
+                  }}
+                  disabled={changingStatus || unlockReason.trim().length < 5}
                   className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-1.5 mx-auto"
                 >
                   {changingStatus ? (
@@ -1445,6 +1453,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             submissionType={submissionType}
             showCompliance={false}
             showTraceability={false}
+            isReadOnly={activeArtifact?.status === 'locked'}
             onSave={handleSave}
             onLiveContentChange={html => {
               onContentChange?.(html, activeArtifact?.title || '');
