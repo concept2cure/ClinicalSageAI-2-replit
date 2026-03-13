@@ -63,8 +63,12 @@ describe('10A — Schema: concept2cureSubmissionSnapshots table', () => {
   });
 
   it('has attestationText and signatureMeaning columns', () => {
-    expect(src).toMatch(/attestation_text.*concept2cureSubmissionSnapshots|concept2cureSubmissionSnapshots.*attestation_text/s);
-    expect(src).toMatch(/signature_meaning.*concept2cureSubmissionSnapshots|concept2cureSubmissionSnapshots.*signature_meaning/s);
+    expect(src).toMatch(
+      /attestation_text.*concept2cureSubmissionSnapshots|concept2cureSubmissionSnapshots.*attestation_text/s
+    );
+    expect(src).toMatch(
+      /signature_meaning.*concept2cureSubmissionSnapshots|concept2cureSubmissionSnapshots.*signature_meaning/s
+    );
   });
 
   it('has actor attribution columns', () => {
@@ -149,7 +153,9 @@ describe('10D — Backend: snapshot creation on lock/publish', () => {
   const src = readSrc(BACKEND);
 
   it('inserts into concept2cureSubmissionSnapshots on lock', () => {
-    expect(src).toMatch(/concept2cureSubmissionSnapshots.*insert|insert.*concept2cureSubmissionSnapshots/s);
+    expect(src).toMatch(
+      /concept2cureSubmissionSnapshots.*insert|insert.*concept2cureSubmissionSnapshots/s
+    );
   });
 
   it('creates snapshot with actionType', () => {
@@ -211,7 +217,9 @@ describe('10G — Backend: signature role check', () => {
 
   it('restricts signature creation to authorized roles', () => {
     // POST signatures should check for admin/approver/reviewer
-    expect(src).toMatch(/signatures.*admin.*approver.*reviewer|admin.*approver.*reviewer.*signatures/s);
+    expect(src).toMatch(
+      /signatures.*admin.*approver.*reviewer|admin.*approver.*reviewer.*signatures/s
+    );
   });
 
   it('returns 403 for unauthorized signature roles', () => {
