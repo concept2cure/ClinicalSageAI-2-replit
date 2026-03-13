@@ -89,6 +89,8 @@ interface EditorPanelProps {
   onOpenArtifactConsumed?: () => void;
   /** Called when the active document content/title changes (for outline tracking) */
   onContentChange?: (content: string, title: string) => void;
+  /** When set, auto-open this inspector panel */
+  initialInspector?: 'compare' | 'provenance' | 'audit' | null;
 }
 
 type AIAction = 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references';
@@ -112,6 +114,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   openArtifactId,
   onOpenArtifactConsumed,
   onContentChange,
+  initialInspector,
 }) => {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
@@ -142,6 +145,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
   }, []);
+
+  // Auto-open inspector when initialInspector is set from parent
+  useEffect(() => {
+    if (initialInspector) setActiveInspector(initialInspector);
+  }, [initialInspector]);
 
   // ── Sign/Approve state ────────────────────────────────────────────────
   const [signing, setSigning] = useState(false);

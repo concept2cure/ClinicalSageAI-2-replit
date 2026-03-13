@@ -4689,6 +4689,9 @@ export const concept2cureArtifacts = pgTable(
     ctdSection: text('ctd_section'), // eCTD section reference
     templateId: text('template_id'), // Reference to source template
     status: text('status').default('draft').notNull(), // draft, review, approved, locked
+    approvedVersionId: integer('approved_version_id'), // version when last approved
+    publishedVersionId: integer('published_version_id'), // version when locked/published
+    publishedAt: timestamp('published_at'), // when last locked for submission
     lockedAt: timestamp('locked_at'), // When content was locked for submission
     lockedById: integer('locked_by_id').references(() => users.id),
     createdById: integer('created_by_id').references(() => users.id),

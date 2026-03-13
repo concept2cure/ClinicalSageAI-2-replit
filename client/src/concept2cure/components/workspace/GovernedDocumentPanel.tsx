@@ -55,6 +55,9 @@ interface Artifact {
   ctdSection?: string;
   templateId?: string;
   contentHash?: string;
+  approvedVersionId?: number;
+  publishedVersionId?: number;
+  publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
   lockedAt?: string;
@@ -79,10 +82,19 @@ interface VersionEntry {
   createdByName?: string;
 }
 
+interface UserPermissions {
+  role: string;
+  allowedTransitions: string[];
+  canRollback: boolean;
+  canSign: boolean;
+  canExport: boolean;
+}
+
 interface GovernedDocumentPanelProps {
   projectId: string;
   artifact: Artifact;
   onStatusChange?: (newStatus: string) => void;
+  onOpenDiff?: () => void;
   onClose: () => void;
 }
 
@@ -166,6 +178,7 @@ export function GovernedDocumentPanel({
   projectId,
   artifact,
   onStatusChange,
+  onOpenDiff,
   onClose,
 }: GovernedDocumentPanelProps) {
   const [events, setEvents] = useState<ProvenanceEvent[]>([]);
@@ -174,6 +187,7 @@ export function GovernedDocumentPanel({
   const [changingStatus, setChangingStatus] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [activeTab, setActiveTab] = useState<'status' | 'audit' | 'versions'>('status');
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
 
   // Rationale modal state
   const [rationaleTarget, setRationaleTarget] = useState<string | null>(null);
@@ -181,6 +195,23 @@ export function GovernedDocumentPanel({
 
   const currentStatus = artifact.status || 'draft';
   const allowedTransitions = VALID_TRANSITIONS[currentStatus] || [];
+
+  // ── Fetch user permissions ───────────────────────────────────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/concept2cure/user/permissions', {
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          setPermissions(payload.data ?? payload);
+        }
+      } catch {
+        // Default to restrictive if permissions fetch fails
+      }
+    })();
+  }, []);
 
   // ── Fetch provenance + versions ──────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -388,6 +419,8 @@ export function GovernedDocumentPanel({
             changingStatus={changingStatus}
             onTransition={handleTransitionClick}
             events={events}
+            permissions={permissions}
+            onOpenDiff={onOpenDiff}
           />
         ) : activeTab === 'audit' ? (
           <AuditTab events={events} />
@@ -398,6 +431,10 @@ export function GovernedDocumentPanel({
             isLocked={currentStatus === 'locked'}
             rollingBack={rollingBack}
             onRollback={handleRollback}
+            canRollback={permissions?.canRollback !== false}
+            onOpenDiff={onOpenDiff}
+            approvedVersionId={artifact.approvedVersionId}
+            publishedVersionId={artifact.publishedVersionId}
           />
         )}
       </div>
@@ -459,6 +496,8 @@ function StatusTab({
   changingStatus,
   onTransition,
   events,
+  permissions,
+  onOpenDiff,
 }: {
   artifact: Artifact;
   currentStatus: string;
@@ -466,14 +505,30 @@ function StatusTab({
   changingStatus: boolean;
   onTransition: (status: string) => void;
   events: ProvenanceEvent[];
+  permissions: UserPermissions | null;
+  onOpenDiff?: () => void;
 }) {
   const statusEvents = events.filter(e => e.eventType === 'status_change').slice(0, 5);
 
+  // Filter transitions by user's role permissions
+  const permittedTransitions = allowedTransitions.filter(target => {
+    if (!permissions) return true; // If permissions not loaded, show all
+    const key = `${currentStatus}→${target}`;
+    return permissions.allowedTransitions.includes(key);
+  });
+
   return (
     <div className="p-2.5 space-y-3">
-      {/* Current status */}
+      {/* Current status + role badge */}
       <div>
-        <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-1">Current Status</div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[9px] text-zinc-400 uppercase tracking-wide">Current Status</div>
+          {permissions && (
+            <span className="text-[8px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium uppercase">
+              {permissions.role}
+            </span>
+          )}
+        </div>
         <div
           className={cn(
             'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ring-1',
@@ -491,11 +546,44 @@ function StatusTab({
         </div>
       </div>
 
-      {/* Workflow transitions */}
+      {/* Published / Approved version indicators */}
+      {(artifact.publishedVersionId || artifact.approvedVersionId) && (
+        <div>
+          <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-1">
+            Version Milestones
+          </div>
+          <div className="space-y-1">
+            {artifact.approvedVersionId && (
+              <div className="flex items-center gap-1.5 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-1 rounded ring-1 ring-emerald-200/60">
+                <CheckCircle className="w-3 h-3" />
+                <span>Approved at v{artifact.approvedVersionId}</span>
+              </div>
+            )}
+            {artifact.publishedVersionId && (
+              <div className="flex items-center gap-1.5 text-[10px] text-blue-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-blue-200/60">
+                <Lock className="w-3 h-3" />
+                <span>Published at v{artifact.publishedVersionId}</span>
+                {artifact.publishedAt && (
+                  <span className="text-[9px] text-blue-500 ml-auto">
+                    {formatTime(artifact.publishedAt)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Workflow transitions — permission filtered */}
       <div>
         <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-1">Actions</div>
         <div className="space-y-1">
-          {allowedTransitions.map(target => {
+          {permittedTransitions.length === 0 && (
+            <div className="text-[10px] text-zinc-400 italic px-2 py-1">
+              No transitions available for your role
+            </div>
+          )}
+          {permittedTransitions.map(target => {
             const key = `${currentStatus}→${target}`;
             const label = TRANSITION_LABELS[key] || `→ ${STATUS_LABELS[target]}`;
             const regression = isRegression(currentStatus, target);
@@ -587,6 +675,19 @@ function StatusTab({
           </div>
         </div>
       )}
+
+      {/* Compare versions */}
+      {onOpenDiff && (
+        <div>
+          <button
+            onClick={onOpenDiff}
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors"
+          >
+            <GitBranch className="w-3 h-3" />
+            Compare Versions
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -672,12 +773,20 @@ function VersionsTab({
   isLocked,
   rollingBack,
   onRollback,
+  canRollback,
+  onOpenDiff,
+  approvedVersionId,
+  publishedVersionId,
 }: {
   versions: VersionEntry[];
   currentVersion: number;
   isLocked: boolean;
   rollingBack: boolean;
   onRollback: (version: number) => void;
+  canRollback?: boolean;
+  onOpenDiff?: () => void;
+  approvedVersionId?: number;
+  publishedVersionId?: number;
 }) {
   if (versions.length === 0) {
     return <div className="p-4 text-center text-[11px] text-zinc-400">No version history yet.</div>;
@@ -708,8 +817,18 @@ function VersionsTab({
                     current
                   </span>
                 )}
+                {v.version === approvedVersionId && (
+                  <span className="text-[8px] px-1 py-px bg-emerald-600 text-white rounded">
+                    approved
+                  </span>
+                )}
+                {v.version === publishedVersionId && (
+                  <span className="text-[8px] px-1 py-px bg-indigo-600 text-white rounded">
+                    published
+                  </span>
+                )}
               </div>
-              {v.version < currentVersion && !isLocked && (
+              {v.version < currentVersion && !isLocked && canRollback !== false && (
                 <button
                   onClick={() => onRollback(v.version)}
                   disabled={rollingBack}
@@ -736,6 +855,25 @@ function VersionsTab({
         <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-[9px] text-amber-700 flex items-center gap-1">
           <Lock className="w-3 h-3" />
           Rollback disabled while locked
+        </div>
+      )}
+
+      {!isLocked && canRollback === false && (
+        <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-[9px] text-amber-700 flex items-center gap-1">
+          <Shield className="w-3 h-3" />
+          Rollback not permitted for your role
+        </div>
+      )}
+
+      {onOpenDiff && (
+        <div className="mt-2">
+          <button
+            onClick={onOpenDiff}
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors"
+          >
+            <GitBranch className="w-3 h-3" />
+            Compare Versions
+          </button>
         </div>
       )}
     </div>

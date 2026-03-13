@@ -828,6 +828,12 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
     metadata: art.metadata as Record<string, unknown>,
     status: art.status || 'draft',
     ctdSection: art.ctdSection,
+    templateId: art.templateId,
+    contentHash: art.contentHash,
+    approvedVersionId: art.approvedVersionId,
+    publishedVersionId: art.publishedVersionId,
+    publishedAt: art.publishedAt,
+    lockedAt: art.lockedAt,
     createdAt: art.createdAt,
     updatedAt: art.updatedAt,
   }));
@@ -3319,14 +3325,71 @@ router.post(
  *   approved → locked  | review (regression — requires reason)
  *   locked  → draft    (regression — requires reason)
  *
+ * Role-based enforcement:
+ *   author / user : draft → review only
+ *   reviewer      : review → approved, review → draft
+ *   approver / admin : approved → locked, locked → draft, rollback, publish
+ *
  * Body: { status: string, reason?: string }
  */
+
+// ── Role-based permission map for status transitions ───────────────────
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: [
+    'draft→review',
+    'review→approved',
+    'review→draft',
+    'approved→locked',
+    'approved→review',
+    'locked→draft',
+  ],
+  approver: [
+    'draft→review',
+    'review→approved',
+    'review→draft',
+    'approved→locked',
+    'approved→review',
+    'locked→draft',
+  ],
+  reviewer: ['draft→review', 'review→approved', 'review→draft', 'approved→review'],
+  author: ['draft→review'],
+  user: ['draft→review'],
+  viewer: [],
+};
+
+const ROLLBACK_ROLES = ['admin', 'approver', 'reviewer'];
+
+/**
+ * GET /api/concept2cure/user/permissions
+ * Returns the current user's governance permissions based on their role.
+ */
+router.get('/user/permissions', async (req: Request, res: Response) => {
+  try {
+    const userRole = (req.userRole || 'user').toLowerCase();
+    const allowedTransitions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS['user'];
+    const canRollback = ROLLBACK_ROLES.includes(userRole);
+    const canSign = ['admin', 'approver', 'reviewer'].includes(userRole);
+    const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(userRole);
+
+    return sendSuccess(res, {
+      role: userRole,
+      allowedTransitions,
+      canRollback,
+      canSign,
+      canExport,
+    });
+  } catch (error: any) {
+    return sendError(res, 500, 'Failed to fetch permissions');
+  }
+});
+
 router.put(
   '/projects/:projectId/artifacts/:artifactId/status',
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
+      const userRole = (req.userRole || 'user').toLowerCase();
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess) return sendError(res, 404, 'Project not found');
 
@@ -3350,6 +3413,18 @@ router.put(
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
       const previousStatus = artifact.status || 'draft';
+
+      // ── Role-based permission check ──────────────────────────────────
+      const transitionKey = `${previousStatus}→${status}`;
+      const allowedTransitions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS['user'];
+      if (!allowedTransitions.includes(transitionKey)) {
+        return sendError(
+          res,
+          403,
+          `Role "${userRole}" is not permitted to perform transition: ${transitionKey}. ` +
+            `Allowed transitions for your role: ${allowedTransitions.join(', ') || 'none'}`
+        );
+      }
 
       // ── Transition validation ────────────────────────────────────────
       const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -3389,9 +3464,14 @@ router.put(
         status,
         updatedAt: new Date(),
       };
+      if (status === 'approved') {
+        updateData.approvedVersionId = artifact.version;
+      }
       if (status === 'locked') {
         updateData.lockedAt = new Date();
         updateData.lockedById = userId;
+        updateData.publishedVersionId = artifact.version;
+        updateData.publishedAt = new Date();
       }
       if (previousStatus === 'locked' && status === 'draft') {
         updateData.lockedAt = null;
@@ -3433,6 +3513,10 @@ router.put(
         status: updated.status,
         previousStatus,
         lockedAt: updated.lockedAt,
+        approvedVersionId: updated.approvedVersionId,
+        publishedVersionId: updated.publishedVersionId,
+        publishedAt: updated.publishedAt,
+        enforcedRole: userRole,
       });
     } catch (error: any) {
       logConcept2cureError('update artifact status', error, { artifactId: req.params.artifactId });
@@ -3599,8 +3683,18 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
+      const userRole = (req.userRole || 'user').toLowerCase();
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
       if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      // ── Role check: only reviewer, approver, admin can rollback ──────
+      if (!ROLLBACK_ROLES.includes(userRole)) {
+        return sendError(
+          res,
+          403,
+          `Role "${userRole}" is not permitted to rollback. Requires: ${ROLLBACK_ROLES.join(', ')}`
+        );
+      }
 
       const { targetVersion } = req.body;
       if (!targetVersion || typeof targetVersion !== 'number' || targetVersion < 1) {
@@ -4277,7 +4371,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
     }
 
     const { resolve, join } = await import('path');
-    const { access } = await import('fs/promises');
+    const { access, stat } = await import('fs/promises');
     const { createReadStream } = await import('fs');
 
     const docDir = resolve(process.cwd(), 'generated_documents');
@@ -4289,6 +4383,44 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
     }
 
     await access(filePath);
+    const fileStat = await stat(filePath);
+
+    // ── Audit: log every export/download ──────────────────────────────
+    const exportHash = crypto
+      .createHash('sha256')
+      .update(`${safe}:${fileStat.size}:${fileStat.mtimeMs}`)
+      .digest('hex');
+    await logAuditEntry(req, 'EXPORT', 'artifact', safe, null, {
+      filename: safe,
+      fileSize: fileStat.size,
+      exportHash,
+      exportedAt: new Date().toISOString(),
+      exportedBy: req.userEmail || 'unknown',
+      exportedByRole: req.userRole || 'user',
+    });
+
+    // ── Provenance: record export event ───────────────────────────────
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      await db.insert(concept2cureProvenanceEvents).values({
+        organizationId,
+        eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        eventType: 'export',
+        eventAction: 'document_download',
+        sourceDescription: `Document "${safe}" downloaded (${fileStat.size} bytes)`,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail || 'unknown',
+        actorEmail: req.userEmail || 'unknown',
+        actorType: 'human',
+        backendRoute: `/documents/download/${safe}`,
+        backendService: 'concept2cure-api',
+        ipAddress: getClientIp(req),
+        details: { filename: safe, fileSize: fileStat.size, exportHash },
+      });
+    } catch {
+      // Don't fail download if provenance logging fails
+    }
 
     const isDocx = safe.endsWith('.docx');
     const isJson = safe.endsWith('.json');

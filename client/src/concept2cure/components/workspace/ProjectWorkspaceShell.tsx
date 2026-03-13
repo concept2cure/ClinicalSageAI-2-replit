@@ -168,6 +168,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
 
+  // Inspector panel to auto-open in EditorPanel (set via GovernedDocumentPanel)
+  const [editorInitialInspector, setEditorInitialInspector] = useState<
+    'compare' | 'provenance' | 'audit' | null
+  >(null);
+
   // Placement dialog state
   const [placementDialog, setPlacementDialog] = useState<{
     open: boolean;
@@ -1289,6 +1294,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   openArtifactId={openArtifactId}
                   onOpenArtifactConsumed={onOpenArtifactConsumed}
                   onContentChange={handleDocContentChange}
+                  initialInspector={editorInitialInspector}
                 />
               </Suspense>
             </div>
@@ -1311,6 +1317,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             artifact={activeArtifact}
             onStatusChange={handleGovernedStatusChange}
             onClose={() => setShowGovernedPanel(false)}
+            onOpenDiff={() => {
+              setShowGovernedPanel(false);
+              setMode('edit');
+              setEditorInitialInspector('compare');
+            }}
           />
         )}
       </div>
