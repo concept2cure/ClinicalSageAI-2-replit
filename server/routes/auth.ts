@@ -270,12 +270,21 @@ router.post('/login', async (req: Request, res: Response) => {
       .where(eq(organizations.id, organizationId))
       .limit(1);
 
+    // Get the actual role from organization_users (needed for JWT)
+    const [membershipRoleForJwt] = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, userData.id))
+      .limit(1);
+    const jwtRole = membershipRoleForJwt?.role || 'user';
+
     const accessToken = jwt.sign(
       {
         userId: userData.id.toString(),
         email: userData.email,
         organizationId: organizationId.toString(),
         organizationUuid: organization?.uuid || null,
+        role: jwtRole,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
@@ -293,15 +302,12 @@ router.post('/login', async (req: Request, res: Response) => {
     const lastName = nameParts.slice(1).join(' ') || '';
     const displayName = (userData.name || '').trim() || userData.email;
 
-    // Get the actual role from organization_users
-    const [membershipRole] = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(1);
-    const userRole = membershipRole?.role || 'user';
+    // Reuse the role already fetched above for JWT
+    const userRole = jwtRole;
     const roles =
-      userRole === 'admin' ? ['admin', 'user'] : [userRole === 'editor' ? 'editor' : 'user'];
+      userRole === 'admin'
+        ? ['admin', 'user']
+        : [userRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
 
     res.json({
       success: true,
