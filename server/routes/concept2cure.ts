@@ -43,6 +43,8 @@ import path from 'path';
 import {
   regulatoryAuditLogs,
   projects,
+  users,
+  organizationUsers,
   concept2cureConversations,
   concept2cureMessages,
   concept2cureArtifacts,
@@ -50,6 +52,8 @@ import {
   concept2cureSignatures,
   concept2cureProvenanceEvents,
   concept2cureReviewComments,
+  concept2cureReviewAssignments,
+  concept2cureReviewDecisions,
   concept2cureSubmissionSnapshots,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
@@ -3546,6 +3550,58 @@ router.put(
         }
       }
 
+      // ── P12: Review quorum gate ─────────────────────────────────────
+      // Block review → approved if reviewers are assigned but not all approved
+      if (previousStatus === 'review' && status === 'approved') {
+        const roundAssignments = await db
+          .select()
+          .from(concept2cureReviewAssignments)
+          .where(
+            and(
+              eq(concept2cureReviewAssignments.artifactId, artifact.id),
+              eq(concept2cureReviewAssignments.organizationId, organizationId)
+            )
+          )
+          .orderBy(desc(concept2cureReviewAssignments.reviewRound));
+
+        if (roundAssignments.length > 0) {
+          const latestRound = roundAssignments[0].reviewRound;
+          const currentRoundAssignments = roundAssignments.filter(
+            a => a.reviewRound === latestRound
+          );
+          const pendingReviews = currentRoundAssignments.filter(a => a.status !== 'completed');
+
+          if (pendingReviews.length > 0) {
+            return sendError(
+              res,
+              400,
+              `Cannot approve: ${pendingReviews.length} of ${currentRoundAssignments.length} reviewers have not yet submitted their decision`
+            );
+          }
+
+          // All completed — verify all decisions are "approve"
+          const roundDecisions = await db
+            .select()
+            .from(concept2cureReviewDecisions)
+            .where(
+              and(
+                eq(concept2cureReviewDecisions.artifactId, artifact.id),
+                eq(concept2cureReviewDecisions.reviewRound, latestRound),
+                eq(concept2cureReviewDecisions.organizationId, organizationId)
+              )
+            );
+
+          const nonApprovals = roundDecisions.filter(d => d.decision !== 'approve');
+          if (nonApprovals.length > 0) {
+            return sendError(
+              res,
+              400,
+              `Cannot approve: ${nonApprovals.length} reviewer(s) did not approve (decisions: ${nonApprovals.map(d => d.decision).join(', ')})`
+            );
+          }
+        }
+      }
+
       const updateData: Record<string, any> = {
         status,
         updatedAt: new Date(),
@@ -4290,6 +4346,588 @@ router.put(
     }
   }
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P12: MULTI-USER REVIEW OPERATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers
+ * Assign one or more reviewers to an artifact for the current review round.
+ * Only admin/approver/reviewer roles can assign reviewers.
+ * Body: { reviewerIds: number[], dueDate?: string, notes?: string }
+ */
+router.post(
+  '/projects/:projectId/artifacts/:artifactId/reviewers',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const userRole = (req.userRole || 'user').toLowerCase();
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      if (!['admin', 'approver', 'reviewer'].includes(userRole)) {
+        return sendError(res, 403, 'Only admin, approver, or reviewer can assign reviewers');
+      }
+
+      const { reviewerIds, dueDate, notes } = req.body;
+      if (!Array.isArray(reviewerIds) || reviewerIds.length === 0) {
+        return sendError(res, 400, 'reviewerIds must be a non-empty array of user IDs');
+      }
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      // Determine the current review round (max existing round + 1, or 1 if none)
+      const existingAssignments = await db
+        .select({ reviewRound: concept2cureReviewAssignments.reviewRound })
+        .from(concept2cureReviewAssignments)
+        .where(eq(concept2cureReviewAssignments.artifactId, artifact.id))
+        .orderBy(desc(concept2cureReviewAssignments.reviewRound))
+        .limit(1);
+
+      const currentRound = existingAssignments.length > 0 ? existingAssignments[0].reviewRound : 1;
+
+      // If artifact is in draft and we're assigning, use the current or next round
+      const reviewRound = artifact.status === 'review' ? currentRound : currentRound + 1;
+
+      // Verify all reviewer IDs belong to the same organization
+      const validReviewers = await db
+        .select({ userId: organizationUsers.userId, role: organizationUsers.role })
+        .from(organizationUsers)
+        .where(
+          and(
+            eq(organizationUsers.organizationId, organizationId),
+            inArray(organizationUsers.userId, reviewerIds.map(Number))
+          )
+        );
+
+      const validIds = new Set(validReviewers.map(r => r.userId));
+      const invalidIds = reviewerIds.filter((id: number) => !validIds.has(Number(id)));
+      if (invalidIds.length > 0) {
+        return sendError(res, 400, `Users not in organization: ${invalidIds.join(', ')}`);
+      }
+
+      const parsedDueDate = dueDate ? new Date(dueDate) : null;
+      const results = [];
+
+      for (const reviewerId of reviewerIds) {
+        const assignmentId = `asgn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+        try {
+          const [inserted] = await db
+            .insert(concept2cureReviewAssignments)
+            .values({
+              assignmentId,
+              artifactId: artifact.id,
+              organizationId,
+              reviewerId: Number(reviewerId),
+              assignedById: userId,
+              reviewRound,
+              status: 'pending',
+              dueDate: parsedDueDate,
+              notes: notes ? sanitizeContent(notes) : null,
+            })
+            .returning();
+          results.push({
+            assignmentId: inserted.assignmentId,
+            reviewerId: inserted.reviewerId,
+            status: inserted.status,
+            reviewRound: inserted.reviewRound,
+          });
+        } catch (dupErr: any) {
+          if (dupErr.code === '23505') {
+            // Duplicate — reviewer already assigned for this round
+            results.push({
+              reviewerId: Number(reviewerId),
+              status: 'already_assigned',
+              reviewRound,
+            });
+          } else {
+            throw dupErr;
+          }
+        }
+      }
+
+      await logAuditEntry(req, 'CREATE', 'review_assignment', req.params.artifactId, null, {
+        reviewerIds,
+        reviewRound,
+        dueDate: parsedDueDate,
+      });
+
+      return sendSuccess(res, {
+        artifactId: req.params.artifactId,
+        reviewRound,
+        assignments: results,
+      });
+    } catch (error: any) {
+      logConcept2cureError('assign reviewers', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to assign reviewers');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers
+ * List all review assignments for an artifact (all rounds).
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/reviewers',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      const assignments = await db
+        .select({
+          id: concept2cureReviewAssignments.id,
+          assignmentId: concept2cureReviewAssignments.assignmentId,
+          reviewerId: concept2cureReviewAssignments.reviewerId,
+          reviewerName: users.name,
+          reviewerEmail: users.email,
+          reviewRound: concept2cureReviewAssignments.reviewRound,
+          status: concept2cureReviewAssignments.status,
+          dueDate: concept2cureReviewAssignments.dueDate,
+          notes: concept2cureReviewAssignments.notes,
+          createdAt: concept2cureReviewAssignments.createdAt,
+        })
+        .from(concept2cureReviewAssignments)
+        .innerJoin(users, eq(users.id, concept2cureReviewAssignments.reviewerId))
+        .where(
+          and(
+            eq(concept2cureReviewAssignments.artifactId, artifact.id),
+            eq(concept2cureReviewAssignments.organizationId, organizationId)
+          )
+        )
+        .orderBy(
+          desc(concept2cureReviewAssignments.reviewRound),
+          concept2cureReviewAssignments.createdAt
+        );
+
+      // Load decisions for each assignment
+      const assignmentIds = assignments.map(a => a.id);
+      const decisions =
+        assignmentIds.length > 0
+          ? await db
+              .select()
+              .from(concept2cureReviewDecisions)
+              .where(inArray(concept2cureReviewDecisions.assignmentId, assignmentIds))
+          : [];
+
+      const decisionsByAssignment = new Map<number, (typeof decisions)[0]>();
+      for (const d of decisions) {
+        decisionsByAssignment.set(d.assignmentId, d);
+      }
+
+      return sendSuccess(res, {
+        artifactId: req.params.artifactId,
+        totalAssignments: assignments.length,
+        assignments: assignments.map(a => ({
+          assignmentId: a.assignmentId,
+          reviewerId: a.reviewerId,
+          reviewerName: a.reviewerName,
+          reviewerEmail: a.reviewerEmail,
+          reviewRound: a.reviewRound,
+          status: a.status,
+          dueDate: a.dueDate,
+          notes: a.notes,
+          createdAt: a.createdAt,
+          decision: decisionsByAssignment.get(a.id)
+            ? {
+                decisionId: decisionsByAssignment.get(a.id)!.decisionId,
+                decision: decisionsByAssignment.get(a.id)!.decision,
+                comment: decisionsByAssignment.get(a.id)!.comment,
+                versionReviewed: decisionsByAssignment.get(a.id)!.versionReviewed,
+                createdAt: decisionsByAssignment.get(a.id)!.createdAt,
+              }
+            : null,
+        })),
+      });
+    } catch (error: any) {
+      logConcept2cureError('list reviewers', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to list reviewers');
+    }
+  }
+);
+
+/**
+ * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+ * Submit a formal review decision for the current review round.
+ * Body: { decision: 'approve'|'request_changes'|'reject', comment?: string }
+ */
+router.post(
+  '/projects/:projectId/artifacts/:artifactId/reviews/submit',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const userRole = (req.userRole || 'user').toLowerCase();
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const { decision, comment } = req.body;
+      const validDecisions = ['approve', 'request_changes', 'reject'];
+      if (!decision || !validDecisions.includes(decision)) {
+        return sendError(res, 400, `decision must be one of: ${validDecisions.join(', ')}`);
+      }
+
+      // Only reviewer/approver/admin can submit decisions
+      if (!['reviewer', 'approver', 'admin'].includes(userRole)) {
+        return sendError(res, 403, 'Only reviewer, approver, or admin can submit review decisions');
+      }
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+      if (artifact.status !== 'review') {
+        return sendError(res, 400, 'Artifact must be in review status to submit a decision');
+      }
+
+      // Find this user's pending assignment for the current round
+      const [assignment] = await db
+        .select()
+        .from(concept2cureReviewAssignments)
+        .where(
+          and(
+            eq(concept2cureReviewAssignments.artifactId, artifact.id),
+            eq(concept2cureReviewAssignments.reviewerId, userId),
+            eq(concept2cureReviewAssignments.organizationId, organizationId),
+            inArray(concept2cureReviewAssignments.status, ['pending', 'in_progress'])
+          )
+        )
+        .orderBy(desc(concept2cureReviewAssignments.reviewRound))
+        .limit(1);
+
+      if (!assignment) {
+        return sendError(res, 403, 'You are not assigned as a reviewer for this artifact');
+      }
+
+      // Check for duplicate decision
+      const [existingDecision] = await db
+        .select()
+        .from(concept2cureReviewDecisions)
+        .where(eq(concept2cureReviewDecisions.assignmentId, assignment.id))
+        .limit(1);
+
+      if (existingDecision) {
+        return sendError(res, 409, 'You have already submitted a decision for this review round');
+      }
+
+      const decisionId = `dec_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+      const sanitizedComment = comment ? sanitizeContent(comment.trim()) : null;
+
+      const [inserted] = await db
+        .insert(concept2cureReviewDecisions)
+        .values({
+          decisionId,
+          assignmentId: assignment.id,
+          artifactId: artifact.id,
+          organizationId,
+          reviewerId: userId,
+          reviewRound: assignment.reviewRound,
+          decision,
+          comment: sanitizedComment,
+          versionReviewed: artifact.version,
+        })
+        .returning();
+
+      // Update assignment status
+      await db
+        .update(concept2cureReviewAssignments)
+        .set({ status: 'completed', updatedAt: new Date() })
+        .where(eq(concept2cureReviewAssignments.id, assignment.id));
+
+      // Log provenance
+      await db.insert(concept2cureProvenanceEvents).values({
+        organizationId,
+        artifactId: artifact.id,
+        eventId: `evt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        eventType: 'review',
+        eventAction: `review_decision_${decision}`,
+        sourceDescription: `Reviewer submitted decision: ${decision} (round ${assignment.reviewRound})`,
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail || 'unknown',
+        actorEmail: req.userEmail || 'unknown',
+        actorType: 'human',
+        backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviews/submit`,
+        backendService: 'concept2cure-api',
+        ipAddress: getClientIp(req),
+        details: {
+          decisionId,
+          decision,
+          reviewRound: assignment.reviewRound,
+          versionReviewed: artifact.version,
+        },
+      });
+
+      await logAuditEntry(req, 'CREATE', 'review_decision', decisionId, null, {
+        artifactId: req.params.artifactId,
+        decision,
+        reviewRound: assignment.reviewRound,
+        versionReviewed: artifact.version,
+      });
+
+      // Check if all reviewers in this round have completed
+      const roundAssignments = await db
+        .select()
+        .from(concept2cureReviewAssignments)
+        .where(
+          and(
+            eq(concept2cureReviewAssignments.artifactId, artifact.id),
+            eq(concept2cureReviewAssignments.reviewRound, assignment.reviewRound),
+            eq(concept2cureReviewAssignments.organizationId, organizationId)
+          )
+        );
+
+      const totalAssigned = roundAssignments.length;
+      const completedCount = roundAssignments.filter(a => a.status === 'completed').length;
+      const allApproved =
+        completedCount === totalAssigned &&
+        (
+          await db
+            .select()
+            .from(concept2cureReviewDecisions)
+            .where(
+              and(
+                eq(concept2cureReviewDecisions.artifactId, artifact.id),
+                eq(concept2cureReviewDecisions.reviewRound, assignment.reviewRound),
+                eq(concept2cureReviewDecisions.organizationId, organizationId)
+              )
+            )
+        ).every(d => d.decision === 'approve');
+
+      return sendSuccess(res, {
+        decisionId: inserted.decisionId,
+        decision: inserted.decision,
+        reviewRound: inserted.reviewRound,
+        versionReviewed: inserted.versionReviewed,
+        roundSummary: {
+          totalAssigned,
+          completedCount,
+          pendingCount: totalAssigned - completedCount,
+          allApproved,
+          readyForApproval: allApproved && completedCount === totalAssigned,
+        },
+      });
+    } catch (error: any) {
+      logConcept2cureError('submit review decision', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to submit review decision');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status
+ * Get the review status for an artifact: assignments, decisions, quorum progress.
+ */
+router.get(
+  '/projects/:projectId/artifacts/:artifactId/reviews/status',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!artifact) return sendError(res, 404, 'Artifact not found');
+
+      // Get all assignments for the latest round
+      const allAssignments = await db
+        .select()
+        .from(concept2cureReviewAssignments)
+        .where(
+          and(
+            eq(concept2cureReviewAssignments.artifactId, artifact.id),
+            eq(concept2cureReviewAssignments.organizationId, organizationId)
+          )
+        )
+        .orderBy(desc(concept2cureReviewAssignments.reviewRound));
+
+      if (allAssignments.length === 0) {
+        return sendSuccess(res, {
+          artifactId: req.params.artifactId,
+          artifactStatus: artifact.status,
+          hasReviewers: false,
+          currentRound: 0,
+          reviewers: [],
+          readyForApproval: false,
+        });
+      }
+
+      const currentRound = allAssignments[0].reviewRound;
+      const roundAssignments = allAssignments.filter(a => a.reviewRound === currentRound);
+
+      // Get decisions for the current round
+      const decisions = await db
+        .select()
+        .from(concept2cureReviewDecisions)
+        .where(
+          and(
+            eq(concept2cureReviewDecisions.artifactId, artifact.id),
+            eq(concept2cureReviewDecisions.reviewRound, currentRound),
+            eq(concept2cureReviewDecisions.organizationId, organizationId)
+          )
+        );
+
+      const decisionMap = new Map(decisions.map(d => [d.reviewerId, d]));
+
+      // Get reviewer details
+      const reviewerIds = roundAssignments.map(a => a.reviewerId);
+      const reviewerDetails =
+        reviewerIds.length > 0
+          ? await db
+              .select({ id: users.id, name: users.name, email: users.email })
+              .from(users)
+              .where(inArray(users.id, reviewerIds))
+          : [];
+      const reviewerMap = new Map(reviewerDetails.map(u => [u.id, u]));
+
+      const totalAssigned = roundAssignments.length;
+      const completedCount = roundAssignments.filter(a => a.status === 'completed').length;
+      const allApproved =
+        completedCount === totalAssigned &&
+        decisions.length === totalAssigned &&
+        decisions.every(d => d.decision === 'approve');
+
+      return sendSuccess(res, {
+        artifactId: req.params.artifactId,
+        artifactStatus: artifact.status,
+        hasReviewers: true,
+        currentRound,
+        totalAssigned,
+        completedCount,
+        pendingCount: totalAssigned - completedCount,
+        allApproved,
+        readyForApproval: allApproved,
+        reviewers: roundAssignments.map(a => {
+          const reviewer = reviewerMap.get(a.reviewerId);
+          const dec = decisionMap.get(a.reviewerId);
+          return {
+            assignmentId: a.assignmentId,
+            reviewerId: a.reviewerId,
+            reviewerName: reviewer?.name || 'Unknown',
+            reviewerEmail: reviewer?.email || '',
+            status: a.status,
+            dueDate: a.dueDate,
+            decision: dec
+              ? {
+                  decision: dec.decision,
+                  comment: dec.comment,
+                  versionReviewed: dec.versionReviewed,
+                  createdAt: dec.createdAt,
+                }
+              : null,
+          };
+        }),
+      });
+    } catch (error: any) {
+      logConcept2cureError('review status', error, { artifactId: req.params.artifactId });
+      return sendError(res, 500, 'Failed to fetch review status');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/reviews/pending
+ * Reviewer dashboard: list all pending review assignments for the current user.
+ */
+router.get('/reviews/pending', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+
+    const pendingAssignments = await db
+      .select({
+        assignmentId: concept2cureReviewAssignments.assignmentId,
+        artifactId: concept2cureArtifacts.artifactId,
+        artifactTitle: concept2cureArtifacts.title,
+        artifactStatus: concept2cureArtifacts.status,
+        artifactVersion: concept2cureArtifacts.version,
+        reviewRound: concept2cureReviewAssignments.reviewRound,
+        status: concept2cureReviewAssignments.status,
+        dueDate: concept2cureReviewAssignments.dueDate,
+        notes: concept2cureReviewAssignments.notes,
+        createdAt: concept2cureReviewAssignments.createdAt,
+        projectId: concept2cureArtifacts.projectId,
+      })
+      .from(concept2cureReviewAssignments)
+      .innerJoin(
+        concept2cureArtifacts,
+        eq(concept2cureArtifacts.id, concept2cureReviewAssignments.artifactId)
+      )
+      .where(
+        and(
+          eq(concept2cureReviewAssignments.reviewerId, userId),
+          eq(concept2cureReviewAssignments.organizationId, organizationId),
+          inArray(concept2cureReviewAssignments.status, ['pending', 'in_progress'])
+        )
+      )
+      .orderBy(concept2cureReviewAssignments.dueDate, concept2cureReviewAssignments.createdAt);
+
+    return sendSuccess(res, {
+      totalPending: pendingAssignments.length,
+      assignments: pendingAssignments.map(a => ({
+        assignmentId: a.assignmentId,
+        artifactId: a.artifactId,
+        artifactTitle: a.artifactTitle,
+        artifactStatus: a.artifactStatus,
+        artifactVersion: a.artifactVersion,
+        projectId: a.projectId,
+        reviewRound: a.reviewRound,
+        status: a.status,
+        dueDate: a.dueDate,
+        notes: a.notes,
+        createdAt: a.createdAt,
+      })),
+    });
+  } catch (error: any) {
+    logConcept2cureError('pending reviews', error);
+    return sendError(res, 500, 'Failed to fetch pending reviews');
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUDIT LOG QUERY

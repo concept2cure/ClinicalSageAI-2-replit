@@ -5018,6 +5018,82 @@ export const insertConcept2cureReviewCommentSchema = createInsertSchemaOmit(
 export type Concept2cureReviewComment = InferSelectModel<typeof concept2cureReviewComments>;
 export type InsertConcept2cureReviewComment = z.infer<typeof insertConcept2cureReviewCommentSchema>;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 12: Multi-User Review Assignments & Decisions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Review Assignments — tracks which reviewers are assigned to each artifact review round.
+ */
+export const concept2cureReviewAssignments = pgTable(
+  'concept2cure_review_assignments',
+  {
+    id: serial('id').primaryKey(),
+    assignmentId: text('assignment_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    reviewerId: integer('reviewer_id')
+      .notNull()
+      .references(() => users.id),
+    assignedById: integer('assigned_by_id')
+      .notNull()
+      .references(() => users.id),
+    reviewRound: integer('review_round').notNull().default(1),
+    status: text('status').notNull().default('pending'),
+    dueDate: timestamp('due_date', { withTimezone: true }),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_review_assign_artifact_idx').on(table.artifactId),
+    reviewerIdx: index('c2c_review_assign_reviewer_idx').on(table.reviewerId, table.status),
+    orgIdx: index('c2c_review_assign_org_idx').on(table.organizationId),
+  })
+);
+
+export type Concept2cureReviewAssignment = InferSelectModel<typeof concept2cureReviewAssignments>;
+
+/**
+ * Review Decisions — each reviewer's formal review decision per round.
+ */
+export const concept2cureReviewDecisions = pgTable(
+  'concept2cure_review_decisions',
+  {
+    id: serial('id').primaryKey(),
+    decisionId: text('decision_id').notNull().unique(),
+    assignmentId: integer('assignment_id')
+      .notNull()
+      .references(() => concept2cureReviewAssignments.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    reviewerId: integer('reviewer_id')
+      .notNull()
+      .references(() => users.id),
+    reviewRound: integer('review_round').notNull(),
+    decision: text('decision').notNull(),
+    comment: text('comment'),
+    versionReviewed: integer('version_reviewed').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_review_decision_artifact_idx').on(table.artifactId, table.reviewRound),
+    assignmentIdx: index('c2c_review_decision_assignment_idx').on(table.assignmentId),
+    reviewerIdx: index('c2c_review_decision_reviewer_idx').on(table.reviewerId),
+    orgIdx: index('c2c_review_decision_org_idx').on(table.organizationId),
+  })
+);
+
+export type Concept2cureReviewDecision = InferSelectModel<typeof concept2cureReviewDecisions>;
+
 /**
  * Project Modules Table
  *
