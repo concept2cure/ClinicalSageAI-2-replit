@@ -37,6 +37,7 @@ import {
   PenTool,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ReviewThreadsPanel } from './ReviewThreadsPanel';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -205,9 +206,9 @@ export function GovernedDocumentPanel({
   const [loading, setLoading] = useState(true);
   const [changingStatus, setChangingStatus] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
-  const [activeTab, setActiveTab] = useState<'status' | 'audit' | 'versions' | 'snapshots'>(
-    'status'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'status' | 'audit' | 'versions' | 'snapshots' | 'threads'
+  >('status');
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
 
   // Rationale modal state
@@ -448,7 +449,7 @@ export function GovernedDocumentPanel({
 
       {/* Tab bar */}
       <div className="flex border-b border-zinc-100">
-        {(['status', 'audit', 'versions', 'snapshots'] as const).map(tab => (
+        {(['status', 'audit', 'versions', 'snapshots', 'threads'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -459,7 +460,11 @@ export function GovernedDocumentPanel({
                 : 'text-zinc-400 hover:text-zinc-600'
             )}
           >
-            {tab === 'snapshots' ? 'History' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === 'snapshots'
+              ? 'History'
+              : tab === 'threads'
+                ? 'Threads'
+                : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -484,6 +489,8 @@ export function GovernedDocumentPanel({
           <AuditTab events={events} />
         ) : activeTab === 'snapshots' ? (
           <SnapshotsTab snapshots={snapshots} />
+        ) : activeTab === 'threads' ? (
+          <ReviewThreadsPanel projectId={projectId} artifactId={artifact.id} />
         ) : (
           <VersionsTab
             versions={versions}

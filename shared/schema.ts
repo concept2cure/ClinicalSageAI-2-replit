@@ -5094,6 +5094,151 @@ export const concept2cureReviewDecisions = pgTable(
 
 export type Concept2cureReviewDecision = InferSelectModel<typeof concept2cureReviewDecisions>;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 13: Review Threads, Comments & Tasks
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Review Threads — top-level discussion tied to an artifact, optionally version and anchor.
+ */
+export const concept2cureReviewThreads = pgTable(
+  'concept2cure_review_threads',
+  {
+    id: serial('id').primaryKey(),
+    threadId: text('thread_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    versionId: integer('version_id'),
+    createdById: integer('created_by_id')
+      .notNull()
+      .references(() => users.id),
+    createdByName: text('created_by_name').notNull(),
+    createdByRole: text('created_by_role'),
+    title: text('title'),
+    anchorType: text('anchor_type'), // 'section' | 'heading' | 'range' | 'general'
+    anchorKey: text('anchor_key'), // section id, heading id, etc.
+    anchorLabel: text('anchor_label'), // human-readable label
+    status: text('status').notNull().default('open'), // 'open' | 'resolved'
+    priority: text('priority'), // 'low' | 'medium' | 'high'
+    assigneeId: integer('assignee_id').references(() => users.id),
+    assigneeName: text('assignee_name'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    resolvedByName: text('resolved_by_name'),
+  },
+  table => ({
+    artifactIdx: index('c2c_thread_artifact_idx').on(table.artifactId),
+    versionIdx: index('c2c_thread_version_idx').on(table.versionId),
+    statusIdx: index('c2c_thread_status_idx').on(table.status),
+    assigneeIdx: index('c2c_thread_assignee_idx').on(table.assigneeId),
+    orgProjectIdx: index('c2c_thread_org_project_idx').on(table.orgId, table.projectId),
+    createdAtIdx: index('c2c_thread_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type Concept2cureReviewThread = InferSelectModel<typeof concept2cureReviewThreads>;
+
+/**
+ * Thread Comments — messages inside a review thread.
+ */
+export const concept2cureThreadComments = pgTable(
+  'concept2cure_thread_comments',
+  {
+    id: serial('id').primaryKey(),
+    commentId: text('comment_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    threadId: integer('thread_id')
+      .notNull()
+      .references(() => concept2cureReviewThreads.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    versionId: integer('version_id'),
+    parentCommentId: integer('parent_comment_id'),
+    authorId: integer('author_id')
+      .notNull()
+      .references(() => users.id),
+    authorName: text('author_name').notNull(),
+    authorRole: text('author_role'),
+    body: text('body').notNull(),
+    kind: text('kind').notNull().default('comment'), // 'comment' | 'request_changes' | 'system'
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    editedAt: timestamp('edited_at', { withTimezone: true }),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    threadIdx: index('c2c_tcomment_thread_idx').on(table.threadId),
+    artifactIdx: index('c2c_tcomment_artifact_idx').on(table.artifactId),
+    authorIdx: index('c2c_tcomment_author_idx').on(table.authorId),
+    orgIdx: index('c2c_tcomment_org_idx').on(table.orgId),
+    createdAtIdx: index('c2c_tcomment_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type Concept2cureThreadComment = InferSelectModel<typeof concept2cureThreadComments>;
+
+/**
+ * Review Tasks — structured actionable items linked to threads or artifacts.
+ */
+export const concept2cureReviewTasks = pgTable(
+  'concept2cure_review_tasks',
+  {
+    id: serial('id').primaryKey(),
+    taskId: text('task_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    versionId: integer('version_id'),
+    threadId: integer('thread_id').references(() => concept2cureReviewThreads.id, {
+      onDelete: 'set null',
+    }),
+    createdById: integer('created_by_id')
+      .notNull()
+      .references(() => users.id),
+    createdByName: text('created_by_name').notNull(),
+    assignedToId: integer('assigned_to_id').references(() => users.id),
+    assignedToName: text('assigned_to_name'),
+    title: text('title').notNull(),
+    description: text('description'),
+    taskType: text('task_type').notNull().default('review_task'), // 'change_request' | 'follow_up' | 'review_task'
+    status: text('status').notNull().default('open'), // 'open' | 'in_progress' | 'resolved' | 'closed'
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    resolvedByName: text('resolved_by_name'),
+  },
+  table => ({
+    artifactIdx: index('c2c_task_artifact_idx').on(table.artifactId),
+    assignedToIdx: index('c2c_task_assigned_to_idx').on(table.assignedToId),
+    statusIdx: index('c2c_task_status_idx').on(table.status),
+    orgProjectIdx: index('c2c_task_org_project_idx').on(table.orgId, table.projectId),
+    threadIdx: index('c2c_task_thread_idx').on(table.threadId),
+    createdAtIdx: index('c2c_task_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type Concept2cureReviewTask = InferSelectModel<typeof concept2cureReviewTasks>;
+
 /**
  * Project Modules Table
  *
