@@ -38,6 +38,7 @@ import { RegulatoryTransformCanvas } from './RegulatoryTransformCanvas';
 import { GoldenDossierVerificationPanel } from './GoldenDossierVerificationPanel';
 import { ProgramTwinPanel } from './ProgramTwinPanel';
 import { SubmissionAppsPanel } from './SubmissionAppsPanel';
+import { ReviewPulseDashboard } from './ReviewPulseDashboard';
 import {
   ChevronLeft,
   Loader2,
@@ -61,6 +62,7 @@ import {
   ShieldCheck,
   Target,
   AppWindow,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -202,7 +204,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   // ── Phase 4 overlay state ──────────────────────────────────────────────
-  type Phase4Panel = 'none' | 'transform' | 'verification' | 'twin' | 'apps';
+  type Phase4Panel = 'none' | 'transform' | 'verification' | 'twin' | 'apps' | 'pulse';
   const [phase4Panel, setPhase4Panel] = useState<Phase4Panel>('none');
   const [phase4Ctx, setPhase4Ctx] = useState<{
     ctdSection?: string;
@@ -603,6 +605,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setPhase4Panel('apps');
   }, []);
 
+  const openReviewPulse = useCallback(() => {
+    setPhase4Panel('pulse');
+  }, []);
+
   const closePhase4Panel = useCallback(() => {
     setPhase4Panel('none');
     setPhase4Ctx({});
@@ -976,6 +982,18 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             >
               <AppWindow className="w-3 h-3" />
             </button>
+            <button
+              onClick={openReviewPulse}
+              className={cn(
+                'p-1 rounded',
+                phase4Panel === 'pulse'
+                  ? 'text-rose-600 bg-rose-50'
+                  : 'text-zinc-400 hover:text-rose-600 hover:bg-rose-50'
+              )}
+              title="Review Pulse"
+            >
+              <Activity className="w-3 h-3" />
+            </button>
           </div>
         </div>
       )}
@@ -1135,6 +1153,23 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               }
             />
           )}
+
+          {/* Project-level Review Pulse button */}
+          <div className="shrink-0 border-t border-zinc-100 p-2">
+            <button
+              onClick={openReviewPulse}
+              className={cn(
+                'w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-medium transition-colors',
+                phase4Panel === 'pulse'
+                  ? 'text-rose-700 bg-rose-50'
+                  : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50'
+              )}
+              title="Review Pulse — project-wide review status"
+            >
+              <Activity className="w-3 h-3" />
+              Review Pulse
+            </button>
+          </div>
         </div>
 
         {/* Center + Right: Content area */}
@@ -1264,6 +1299,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 openTransformCanvas(ctdSec, tmplKey)
               }
             />
+          ) : phase4Panel === 'pulse' ? (
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <ReviewPulseDashboard
+                projectId={projectId}
+                onNavigateToArtifact={artifactId => {
+                  closePhase4Panel();
+                  setSelectedDocId(artifactId);
+                  setMode('edit');
+                }}
+              />
+            </div>
           ) : mode === 'browse' ? (
             <DocumentListPane
               folderLabel={browseLabel}

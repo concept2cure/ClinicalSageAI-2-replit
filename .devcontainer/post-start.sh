@@ -3,7 +3,8 @@
 # C2C Codespace Post-Start Hook
 # Runs each time the container starts
 # ═══════════════════════════════════════════════════════════════════════════════
-set -e
+# Do NOT use set -e — a single failed optional step must not trigger recovery mode
+set +e
 
 echo "🔄 C2C Codespace starting..."
 

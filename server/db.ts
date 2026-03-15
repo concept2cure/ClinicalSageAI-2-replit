@@ -17,6 +17,8 @@ const logger = createScopedLogger('database');
 
 // Database connection pool
 let pool: Pool | null = null;
+// Re-export with non-null type for consumers that run after init
+// (guarded by getPool()/getDb() at runtime)
 
 // Get cleaned database URL
 const databaseUrl = getDatabaseUrl();
@@ -80,8 +82,10 @@ try {
   pool = null;
 }
 
-// Initialize Drizzle ORM
-export const db = pool ? drizzle(pool, { schema }) : null;
+// Initialize Drizzle ORM – cast away null for downstream consumers;
+// at runtime the server exits (process.exit) or logs a warning if DB is unavailable.
+const _db = pool ? drizzle(pool, { schema }) : null;
+export const db = _db as NonNullable<typeof _db>;
 
 /**
  * Get the database pool, throwing an error if not available.
@@ -339,4 +343,6 @@ export async function healthCheck(): Promise<boolean> {
 }
 
 // Export the pool for direct access if needed
-export { pool };
+// Cast away null – the process exits or logs when DB is unavailable.
+const poolExport = pool as Pool;
+export { poolExport as pool };

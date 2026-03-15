@@ -58,6 +58,7 @@ import {
   concept2cureReviewThreads,
   concept2cureThreadComments,
   concept2cureReviewTasks,
+  projectActivities,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 
@@ -5678,7 +5679,7 @@ router.get('/projects/:projectId/program-twin', async (req: Request, res: Respon
 
     // ── Governance state ──
     const signedArtifactIds = new Set(signatures.map(s => s.artifactId));
-    const unresolvedComments = reviewComments.filter(c => !c.isResolved);
+    const unresolvedComments = reviewComments.filter(c => !c.resolvedAt);
     const placementEvents = provenanceEvents.filter(e => e.eventType === 'placement');
 
     // ── Readiness (heuristic) ──
@@ -5931,7 +5932,7 @@ router.get(
           confidence: 'deterministic',
         });
       }
-      const unresolvedComments = comments.filter(c => !c.isResolved);
+      const unresolvedComments = comments.filter(c => !c.resolvedAt);
       if (unresolvedComments.length > 0) {
         govFindings.push({
           status: 'fail',
@@ -6249,6 +6250,44 @@ function getThreadPermissions(role: string): Set<ThreadPermission> {
   return new Set(['read']);
 }
 
+// ── Auto-propagation: Document events → Project Management signals ───────────
+
+/**
+ * Propagates a document-level review event into the project management layer.
+ * Creates a projectActivities record so PM dashboards, readiness strips,
+ * and milestone views can ingest review activity without polling.
+ */
+async function propagateReviewSignal(params: {
+  organizationId: number;
+  projectId: number;
+  userId: number;
+  activityType: string;
+  entityType: string;
+  entityId: string;
+  description: string;
+  details?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<void> {
+  try {
+    await db.insert(projectActivities).values({
+      organizationId: params.organizationId,
+      projectId: params.projectId,
+      userId: params.userId,
+      activityType: params.activityType,
+      entityType: params.entityType,
+      entityId: params.entityId,
+      description: params.description,
+      details: params.details || null,
+      ipAddress: params.ipAddress || null,
+      userAgent: params.userAgent || null,
+    });
+  } catch (err) {
+    // Non-fatal: log but don't block the primary operation
+    logger.warn('Failed to propagate review signal to PM layer', { error: (err as Error).message });
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // REVIEW THREADS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -6502,6 +6541,28 @@ router.post(
         details: { threadId: threadIdStr, title: title.trim(), anchorType, anchorKey },
       });
 
+      // ── PM propagation: surface thread in project activity feed ──
+      await propagateReviewSignal({
+        organizationId,
+        projectId: projectDbId,
+        userId,
+        activityType: 'review_thread_created',
+        entityType: 'review_thread',
+        entityId: threadIdStr,
+        description: `Review thread opened on "${artifact.title}": ${title.trim()}`,
+        details: {
+          threadId: threadIdStr,
+          artifactId: req.params.artifactId,
+          artifactTitle: artifact.title,
+          priority: priority || null,
+          assigneeId: assigneeId ? Number(assigneeId) : null,
+          assigneeName: resolvedAssigneeName,
+          anchorLabel: anchorLabel || null,
+        },
+        ipAddress: getClientIp(req),
+        userAgent: req.headers['user-agent'] || undefined,
+      });
+
       return sendSuccess(res, {
         threadId: thread.threadId,
         title: thread.title,
@@ -6675,6 +6736,19 @@ router.post('/review-threads/:threadId/resolve', async (req: Request, res: Respo
       details: { threadId: thread.threadId },
     });
 
+    // ── PM propagation: thread resolved ──
+    await propagateReviewSignal({
+      organizationId,
+      projectId: thread.projectId,
+      userId,
+      activityType: 'review_thread_resolved',
+      entityType: 'review_thread',
+      entityId: thread.threadId,
+      description: `Review thread resolved: "${thread.title}"`,
+      details: { threadId: thread.threadId, artifactId: thread.artifactId },
+      ipAddress: getClientIp(req),
+    });
+
     return sendSuccess(res, {
       threadId: thread.threadId,
       status: 'resolved',
@@ -6759,6 +6833,19 @@ router.post('/review-threads/:threadId/reopen', async (req: Request, res: Respon
       backendService: 'concept2cure-api',
       ipAddress: getClientIp(req),
       details: { threadId: thread.threadId },
+    });
+
+    // ── PM propagation: thread reopened ──
+    await propagateReviewSignal({
+      organizationId,
+      projectId: thread.projectId,
+      userId,
+      activityType: 'review_thread_reopened',
+      entityType: 'review_thread',
+      entityId: thread.threadId,
+      description: `Review thread reopened: "${thread.title}"`,
+      details: { threadId: thread.threadId, artifactId: thread.artifactId },
+      ipAddress: getClientIp(req),
     });
 
     return sendSuccess(res, {
@@ -7227,6 +7314,28 @@ router.post(
         details: { taskId: taskIdStr, title: title.trim(), taskType: resolvedType },
       });
 
+      // ── PM propagation: task created ──
+      await propagateReviewSignal({
+        organizationId,
+        projectId: projectDbId,
+        userId,
+        activityType: 'review_task_created',
+        entityType: 'review_task',
+        entityId: taskIdStr,
+        description: `Review task created on "${artifact.title}": ${title.trim()}`,
+        details: {
+          taskId: taskIdStr,
+          artifactId: req.params.artifactId,
+          artifactTitle: artifact.title,
+          taskType: resolvedType,
+          dueAt: dueAt || null,
+          assignedToId: assignedToId ? Number(assignedToId) : null,
+          assignedToName: resolvedAssigneeName,
+        },
+        ipAddress: getClientIp(req),
+        userAgent: req.headers['user-agent'] || undefined,
+      });
+
       return sendSuccess(res, {
         taskId: inserted.taskId,
         title: inserted.title,
@@ -7395,6 +7504,19 @@ router.post('/review-tasks/:taskId/resolve', async (req: Request, res: Response)
       backendService: 'concept2cure-api',
       ipAddress: getClientIp(req),
       details: { taskId: task.taskId },
+    });
+
+    // ── PM propagation: task resolved ──
+    await propagateReviewSignal({
+      organizationId,
+      projectId: task.projectId,
+      userId,
+      activityType: 'review_task_resolved',
+      entityType: 'review_task',
+      entityId: task.taskId,
+      description: `Review task resolved: "${task.title}"`,
+      details: { taskId: task.taskId, artifactId: task.artifactId },
+      ipAddress: getClientIp(req),
     });
 
     return sendSuccess(res, {
@@ -7648,6 +7770,255 @@ router.get('/projects/:projectId/reviews/project-queue', async (req: Request, re
   } catch (error: any) {
     logConcept2cureError('project review queue', error, { projectId: req.params.projectId });
     return sendError(res, 500, 'Failed to fetch project review queue');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHASE 13B — PM REVIEW PULSE (Orchestration & Visibility Layer)
+// Documents first, projects second. The PM system reflects document
+// review activity without replacing the governed document workflow.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/concept2cure/projects/:projectId/review-pulse
+ *
+ * Aggregated project-management signals derived from document-level review activity.
+ * Returns:
+ *   - summary counts (open threads, overdue tasks, unassigned, by priority)
+ *   - per-artifact review readiness (which docs are clear vs. blocked)
+ *   - recent activity feed (last N review events)
+ *   - risk signals (overdue tasks, high-priority open threads, stale threads)
+ *
+ * This is the orchestration view — it tells PM dashboards what is happening
+ * inside the document workspace without users ever leaving that workspace.
+ */
+router.get('/projects/:projectId/review-pulse', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const projectDbId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+    const now = new Date();
+    const staleDays = 7;
+    const staleThreshold = new Date(now.getTime() - staleDays * 24 * 60 * 60 * 1000);
+
+    // ── 1. Thread summary ────────────────────────────────────────────────
+    const allThreads = await db
+      .select({
+        id: concept2cureReviewThreads.id,
+        threadId: concept2cureReviewThreads.threadId,
+        title: concept2cureReviewThreads.title,
+        status: concept2cureReviewThreads.status,
+        priority: concept2cureReviewThreads.priority,
+        assigneeId: concept2cureReviewThreads.assigneeId,
+        assigneeName: concept2cureReviewThreads.assigneeName,
+        artifactId: concept2cureReviewThreads.artifactId,
+        updatedAt: concept2cureReviewThreads.updatedAt,
+        createdAt: concept2cureReviewThreads.createdAt,
+      })
+      .from(concept2cureReviewThreads)
+      .where(
+        and(
+          eq(concept2cureReviewThreads.projectId, projectDbId),
+          eq(concept2cureReviewThreads.orgId, organizationId)
+        )
+      );
+
+    const openThreads = allThreads.filter(t => t.status === 'open');
+    const resolvedThreads = allThreads.filter(t => t.status === 'resolved');
+    const highPriorityOpen = openThreads.filter(t => t.priority === 'high');
+    const unassignedThreads = openThreads.filter(t => !t.assigneeId);
+    const staleThreads = openThreads.filter(
+      t => t.updatedAt && new Date(t.updatedAt) < staleThreshold
+    );
+
+    // ── 2. Task summary ─────────────────────────────────────────────────
+    const allTasks = await db
+      .select({
+        id: concept2cureReviewTasks.id,
+        taskId: concept2cureReviewTasks.taskId,
+        title: concept2cureReviewTasks.title,
+        status: concept2cureReviewTasks.status,
+        taskType: concept2cureReviewTasks.taskType,
+        dueAt: concept2cureReviewTasks.dueAt,
+        assignedToId: concept2cureReviewTasks.assignedToId,
+        assignedToName: concept2cureReviewTasks.assignedToName,
+        artifactId: concept2cureReviewTasks.artifactId,
+        createdAt: concept2cureReviewTasks.createdAt,
+        updatedAt: concept2cureReviewTasks.updatedAt,
+      })
+      .from(concept2cureReviewTasks)
+      .where(
+        and(
+          eq(concept2cureReviewTasks.projectId, projectDbId),
+          eq(concept2cureReviewTasks.orgId, organizationId)
+        )
+      );
+
+    const activeTasks = allTasks.filter(t => ['open', 'in_progress'].includes(t.status));
+    const overdueTasks = activeTasks.filter(t => t.dueAt && new Date(t.dueAt) < now);
+    const changeRequests = activeTasks.filter(t => t.taskType === 'change_request');
+    const unassignedTasks = activeTasks.filter(t => !t.assignedToId);
+
+    // ── 3. Per-artifact readiness ────────────────────────────────────────
+    const artifacts = await db
+      .select({
+        id: concept2cureArtifacts.id,
+        artifactId: concept2cureArtifacts.artifactId,
+        title: concept2cureArtifacts.title,
+        ctdSection: concept2cureArtifacts.ctdSection,
+        status: concept2cureArtifacts.status,
+      })
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectDbId),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      );
+
+    const artifactReadiness = artifacts.map(a => {
+      const artThreads = openThreads.filter(t => t.artifactId === a.id);
+      const artTasks = activeTasks.filter(t => t.artifactId === a.id);
+      const artOverdue = overdueTasks.filter(t => t.artifactId === a.id);
+      const artHighPriority = artThreads.filter(t => t.priority === 'high');
+      const blocked = artHighPriority.length > 0 || artOverdue.length > 0;
+
+      return {
+        artifactId: a.artifactId,
+        title: a.title,
+        ctdSection: a.ctdSection,
+        documentStatus: a.status,
+        openThreads: artThreads.length,
+        activeTasks: artTasks.length,
+        overdueTasks: artOverdue.length,
+        highPriorityThreads: artHighPriority.length,
+        reviewStatus: blocked ? 'blocked' : artThreads.length > 0 ? 'in_review' : 'clear',
+      };
+    });
+
+    // ── 4. Recent review activity (from projectActivities) ───────────────
+    const recentActivity = await db
+      .select()
+      .from(projectActivities)
+      .where(
+        and(
+          eq(projectActivities.projectId, projectDbId),
+          eq(projectActivities.organizationId, organizationId),
+          sql`${projectActivities.activityType} LIKE 'review_%'`
+        )
+      )
+      .orderBy(desc(projectActivities.createdAt))
+      .limit(20);
+
+    // ── 5. Assignee workload ─────────────────────────────────────────────
+    const assigneeMap = new Map<
+      number,
+      { name: string; threads: number; tasks: number; overdue: number }
+    >();
+    for (const t of openThreads) {
+      if (t.assigneeId) {
+        const entry = assigneeMap.get(t.assigneeId) || {
+          name: t.assigneeName || 'Unknown',
+          threads: 0,
+          tasks: 0,
+          overdue: 0,
+        };
+        entry.threads++;
+        assigneeMap.set(t.assigneeId, entry);
+      }
+    }
+    for (const t of activeTasks) {
+      if (t.assignedToId) {
+        const entry = assigneeMap.get(t.assignedToId) || {
+          name: t.assignedToName || 'Unknown',
+          threads: 0,
+          tasks: 0,
+          overdue: 0,
+        };
+        entry.tasks++;
+        if (t.dueAt && new Date(t.dueAt) < now) entry.overdue++;
+        assigneeMap.set(t.assignedToId, entry);
+      }
+    }
+
+    // ── Risk signals ─────────────────────────────────────────────────────
+    const riskSignals: Array<{
+      severity: string;
+      signal: string;
+      entityId: string;
+      entityType: string;
+    }> = [];
+    for (const t of overdueTasks) {
+      riskSignals.push({
+        severity: 'high',
+        signal: `Overdue task: "${t.title}" (due ${t.dueAt ? new Date(t.dueAt).toLocaleDateString() : 'unknown'})`,
+        entityId: t.taskId,
+        entityType: 'review_task',
+      });
+    }
+    for (const t of staleThreads) {
+      riskSignals.push({
+        severity: 'medium',
+        signal: `Stale thread (${staleDays}+ days): "${t.title}"`,
+        entityId: t.threadId,
+        entityType: 'review_thread',
+      });
+    }
+    for (const t of unassignedThreads.filter(t => t.priority === 'high')) {
+      riskSignals.push({
+        severity: 'high',
+        signal: `High-priority unassigned thread: "${t.title}"`,
+        entityId: t.threadId,
+        entityType: 'review_thread',
+      });
+    }
+
+    return sendSuccess(res, {
+      projectId: req.params.projectId,
+      generatedAt: now.toISOString(),
+
+      summary: {
+        totalThreads: allThreads.length,
+        openThreads: openThreads.length,
+        resolvedThreads: resolvedThreads.length,
+        highPriorityOpen: highPriorityOpen.length,
+        unassignedThreads: unassignedThreads.length,
+        staleThreads: staleThreads.length,
+        totalTasks: allTasks.length,
+        activeTasks: activeTasks.length,
+        overdueTasks: overdueTasks.length,
+        changeRequests: changeRequests.length,
+        unassignedTasks: unassignedTasks.length,
+        reviewCompletionRate:
+          allThreads.length > 0
+            ? Math.round((resolvedThreads.length / allThreads.length) * 100)
+            : 100,
+      },
+
+      artifactReadiness,
+
+      riskSignals,
+
+      assigneeWorkload: Array.from(assigneeMap.entries()).map(([userId, data]) => ({
+        userId,
+        ...data,
+      })),
+
+      recentActivity: recentActivity.map(a => ({
+        activityType: a.activityType,
+        entityType: a.entityType,
+        entityId: a.entityId,
+        description: a.description,
+        createdAt: a.createdAt,
+      })),
+    });
+  } catch (error: any) {
+    logConcept2cureError('review pulse', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to generate review pulse');
   }
 });
 

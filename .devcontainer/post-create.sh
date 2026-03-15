@@ -3,7 +3,8 @@
 # C2C Codespace Post-Create Setup
 # Runs once when the container is first created
 # ═══════════════════════════════════════════════════════════════════════════════
-set -e
+# Do NOT use set -e — a single failed optional step must not trigger recovery mode
+set +e
 
 echo "🚀 C2C Codespace Post-Create Setup..."
 
