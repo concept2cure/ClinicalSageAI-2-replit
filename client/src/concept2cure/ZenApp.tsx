@@ -1318,7 +1318,10 @@ export const ZenApp: React.FC = () => {
 
           {/* Sherpa Mode - Convergent Canvas */}
           {!embeddedModule && layoutMode === 'sherpa' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-sherpa"
+            >
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -1378,14 +1381,17 @@ export const ZenApp: React.FC = () => {
           )}
 
           {!embeddedModule && layoutMode === 'audit' && (
-            <div className="flex-1 overflow-y-auto bg-zinc-50">
+            <div className="flex-1 overflow-y-auto bg-zinc-50" data-testid="workspace-audit">
               <ProductAuditQuestionnaire />
             </div>
           )}
 
           {/* Phase 7: Mission Control Dashboard */}
           {!embeddedModule && layoutMode === 'mission-control' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-mission-control"
+            >
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -1405,7 +1411,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
           {!embeddedModule && layoutMode === 'ind-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
               <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('assistant')}
@@ -1502,7 +1508,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
           {!embeddedModule && layoutMode === 'ectd-coauthor' && (
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ectd-coauthor">
               <WorkspaceHeader
                 title="eCTD Co-Author"
                 subtitle="IND · NDA · BLA · 510(k) · CTD section-by-section drafting"
@@ -1528,11 +1534,11 @@ export const ZenApp: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 flex flex-col min-h-0">
                   <ErrorBoundary>
                     <Suspense
                       fallback={
-                        <div className="flex-1 flex items-center justify-center bg-white h-full">
+                        <div className="flex-1 flex items-center justify-center bg-white">
                           <div className="text-center">
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
                             <p className="text-zinc-500">Loading eCTD Co-Author...</p>
@@ -1573,7 +1579,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── CMC Platform (in-shell) ────────────────────────────────────── */}
           {!embeddedModule && layoutMode === 'cmc' && (
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-cmc">
               <WorkspaceHeader
                 title="CMC Platform"
                 subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
@@ -1696,7 +1702,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Document Vault (in-shell) ──────────────────────────────────── */}
           {!embeddedModule && layoutMode === 'document-vault' && (
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-vault">
               <WorkspaceHeader
                 title="Document Vault"
                 subtitle="Field-ready document control · Compliance · Audit trails"
@@ -1723,7 +1729,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Clinical Trial Hub (in-shell) ──────────────────────────────── */}
           {!embeddedModule && layoutMode === 'clinical-trial' && (
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-clinical-trial">
               <WorkspaceHeader
                 title="Clinical Trial Hub"
                 subtitle="Study design · Protocol optimization · CSR intelligence · Trial management"
@@ -1752,7 +1758,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
           {!embeddedModule && layoutMode === 'submission-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-ops">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('regulatory-workspace')}
@@ -1810,15 +1816,15 @@ export const ZenApp: React.FC = () => {
           {/* Precedent Intelligence — disabled (consolidated into RI Copilot) */}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace'].includes(layoutMode) && (
-            <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
-          )}
+          {['workspace', 'medtech-dashboard', 'dossier', 'precedent-intelligence'].includes(
+            layoutMode
+          ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
 
           {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
           {!embeddedModule &&
             layoutMode === 'regulatory-workspace' &&
             (riViewMode === 'intelligence' ? (
-              <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
                 {/* Intelligence mode header */}
                 <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                   <button
@@ -1902,7 +1908,10 @@ export const ZenApp: React.FC = () => {
             ))}
           {/* Rules Engine Manager */}
           {!embeddedModule && layoutMode === 'rules' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-rules"
+            >
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -2589,7 +2598,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
           {!embeddedModule && layoutMode === 'editor' && (
-            <div className="flex-1 flex min-w-0 min-h-0">
+            <div className="flex-1 flex min-w-0 min-h-0" data-testid="workspace-editor">
               <ErrorBoundary>
                 <Suspense
                   fallback={

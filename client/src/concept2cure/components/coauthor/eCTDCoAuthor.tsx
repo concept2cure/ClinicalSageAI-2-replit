@@ -762,9 +762,12 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
   };
 
   return (
-    <div className={cn('flex h-full bg-slate-50', className)}>
+    <div className={cn('flex h-full bg-slate-50', className)} data-testid="ectd-coauthor-content">
       {/* Left Panel: Document Outline */}
-      <div className="w-80 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
+      <div
+        className="w-80 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col"
+        data-testid="ectd-coauthor-outline"
+      >
         {/* Header */}
         <div className="p-4 border-b border-slate-200">
           <div className="flex items-center gap-3 mb-3">
