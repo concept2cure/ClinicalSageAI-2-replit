@@ -23,16 +23,7 @@ import {
   Brain,
   Archive,
   PenLine,
-  GitCompare,
-  MessageCircle,
-  BadgeCheck,
   ClipboardList,
-  Database,
-  History,
-  Microscope,
-  FileLock2,
-  Package,
-  ScrollText,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -192,7 +183,7 @@ const ConvoRow: React.FC<{
     >
       <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-50" />
       <span className="flex-1 text-sm truncate leading-5">{convo.title}</span>
-      {(hovered || true) && (
+      {hovered && (
         <button
           onClick={e => {
             e.stopPropagation();
@@ -455,28 +446,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="Evidence Search"
               onClick={() => onNavigate?.('evidence-search')}
             />
-            <NavItem
-              icon={<Database className="w-3.5 h-3.5" />}
-              label="CSR Repository"
-              active={activeNavId === 'csr-repository'}
-              onClick={() => onNavigate?.('evidence-search')}
-            />
-            <NavItem
-              icon={<History className="w-3.5 h-3.5" />}
-              label="Historical Outcomes"
-              active={activeNavId === 'historical-outcomes'}
-              onClick={() => onNavigate?.('evidence-search')}
-            />
-            <NavItem
-              icon={<Microscope className="w-3.5 h-3.5" />}
-              label="Precedent Intelligence"
-              active={activeNavId === 'precedent-intelligence'}
-              onClick={() => onNavigate?.('ai-copilot')}
-            />
           </WorkspaceGroup>
-
-          {/* Lumen Cortex: HIDDEN — duplicates RI Copilot, no governed artifacts, shell breakout.
-              See docs/proof/LUMEN_CORTEX_POSITIONING_DECISION.md for rationale. */}
 
           {/* ── Documents ───────────────────────────────────────── */}
           <WorkspaceGroup label="Documents">
@@ -486,51 +456,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'document-vault'}
               onClick={() => onNavigate?.('document-vault')}
             />
-            <NavItem
-              icon={<Package className="w-3.5 h-3.5" />}
-              label="Active Dossier"
-              active={activeNavId === 'active-dossier'}
-              onClick={() => onNavigate?.('ind-workspace')}
-            />
-            <NavItem
-              icon={<ScrollText className="w-3.5 h-3.5" />}
-              label="Drafts"
-              active={activeNavId === 'drafts'}
-              onClick={() => onNavigate?.('document-vault')}
-            />
           </WorkspaceGroup>
 
           {/* ── Governance ──────────────────────────────────────── */}
           <WorkspaceGroup label="Governance" defaultOpen={false}>
             <NavItem
-              icon={<FileLock2 className="w-3.5 h-3.5" />}
-              label="Provenance"
-              active={activeNavId === 'provenance'}
-              onClick={() => onNavigate?.('ai-copilot')}
-            />
-            <NavItem
-              icon={<GitCompare className="w-3.5 h-3.5" />}
-              label="Version Compare"
-              active={activeNavId === 'version-compare'}
-              onClick={() => onNavigate?.('ai-copilot')}
-            />
-            <NavItem
-              icon={<MessageCircle className="w-3.5 h-3.5" />}
-              label="Review Comments"
-              active={activeNavId === 'review-comments'}
-              onClick={() => onNavigate?.('ai-copilot')}
-            />
-            <NavItem
-              icon={<BadgeCheck className="w-3.5 h-3.5" />}
-              label="Signatures"
-              active={activeNavId === 'signatures'}
-              onClick={() => onNavigate?.('ai-copilot')}
-            />
-            <NavItem
               icon={<ClipboardList className="w-3.5 h-3.5" />}
-              label="Audit Reports"
-              active={activeNavId === 'audit-reports'}
-              onClick={() => onNavigate?.('ai-copilot')}
+              label="Mission Control"
+              onClick={() => onNavigate?.('mission-control')}
             />
           </WorkspaceGroup>
 

@@ -119,29 +119,9 @@ const INDRightRail = lazy(() =>
 const EditorPanel = lazy(() =>
   import('./components/editor/EditorPanel').then(m => ({ default: m.default }))
 );
-// Medical Device & Diagnostics
-const MedicalDeviceDashboardStandalone = lazy(() =>
-  import('./components/medtech/MedicalDeviceDashboard').then(m => ({
-    default: m.MedicalDeviceDashboardStandalone,
-  }))
-);
 // eCTD Co-Author (IND / NDA / BLA / 510k document authoring)
 const ECTDCoAuthorStandalone = lazy(() =>
   import('./components/coauthor/eCTDCoAuthor').then(m => ({ default: m.ECTDCoAuthorStandalone }))
-);
-
-// Submission Dossier Navigator (eCTD module-by-module tracker)
-const DossierNavigatorStandalone = lazy(() =>
-  import('./components/submission/DossierNavigator').then(m => ({
-    default: m.DossierNavigatorStandalone,
-  }))
-);
-
-// Precedent Intelligence Dashboard (live Precedent Engine)
-const PrecedentIntelligenceDashboard = lazy(() =>
-  import('./components/precedent/PrecedentIntelligenceDashboard').then(m => ({
-    default: m.PrecedentIntelligenceDashboard,
-  }))
 );
 
 // RI Copilot Intelligence Home (evidence-first landing surface)
@@ -1069,11 +1049,13 @@ export const ZenApp: React.FC = () => {
     subtitle,
     icon,
     onBack,
+    backLabel,
   }: {
     title: string;
     subtitle?: string;
     icon?: React.ReactNode;
     onBack: () => void;
+    backLabel?: string;
   }) => (
     <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
       <button
@@ -1081,12 +1063,12 @@ export const ZenApp: React.FC = () => {
         className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
-        <span>Chat</span>
+        <span>{backLabel || 'Back'}</span>
       </button>
       <div className="w-px h-4 bg-zinc-200" />
       {icon && <span className="text-zinc-400">{icon}</span>}
       <span className="text-sm font-medium text-zinc-900">{title}</span>
-      {subtitle && <span className="text-xs text-zinc-400 ml-1">{subtitle}</span>}
+      {subtitle && <span className="text-xs text-zinc-400 ml-1 hidden sm:inline">{subtitle}</span>}
     </div>
   );
 
@@ -1140,19 +1122,16 @@ export const ZenApp: React.FC = () => {
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
         activeNavId={
-          layoutMode === 'regulatory-workspace'
-            ? 'ai-copilot'
-            : layoutMode === 'ind-workspace'
-              ? 'ind-workspace'
-              : layoutMode === 'ectd-coauthor'
-                ? 'ectd-coauthor'
-                : layoutMode === 'cmc'
-                  ? 'cmc'
-                  : layoutMode === 'document-vault'
-                    ? 'document-vault'
-                    : layoutMode === 'clinical-trial'
-                      ? 'clinical-trial'
-                      : undefined
+          (
+            {
+              'regulatory-workspace': 'ai-copilot',
+              'ind-workspace': 'ind-workspace',
+              'ectd-coauthor': 'ectd-coauthor',
+              cmc: 'cmc',
+              'document-vault': 'document-vault',
+              'clinical-trial': 'clinical-trial',
+            } as Record<string, string>
+          )[layoutMode] ?? undefined
         }
         onSelectConversation={id => {
           setActiveConversationId(id);
@@ -1350,10 +1329,17 @@ export const ZenApp: React.FC = () => {
                 <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-50 flex items-center justify-center">
                   <BarChart2 className="w-6 h-6 text-amber-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-900">Analytics Mode</h3>
-                <p className="text-sm text-zinc-500">
-                  Portfolio analytics and risk trends will render here with full-width dashboards.
+                <h3 className="text-lg font-semibold text-zinc-900">Analytics</h3>
+                <p className="text-sm text-zinc-500 mt-1 mb-6">
+                  Portfolio analytics and risk dashboards are being built. Check back soon.
                 </p>
+                <button
+                  onClick={() => setLayoutMode('assistant')}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Back to Chat
+                </button>
               </div>
             </div>
           )}
@@ -1490,30 +1476,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Medical Device & Diagnostics Dashboard ──────────────────────── */}
-          {false && layoutMode === 'medtech-dashboard' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              <WorkspaceHeader
-                title="Medical Device & Diagnostics"
-                subtitle="510(k) · PMA · De Novo · IVD / CDx · CER authoring"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Medical Device Dashboard...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <MedicalDeviceDashboardStandalone />
-                </Suspense>
-              </div>
-            </div>
-          )}
+          {/* Medical Device Dashboard — disabled (consolidated into RI Copilot workspace) */}
 
           {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
           {!embeddedModule && layoutMode === 'ectd-coauthor' && (
@@ -1755,97 +1718,14 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Submission Dossier Navigator (eCTD module tracker) ───────────── */}
-          {false && layoutMode === 'dossier' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              <WorkspaceHeader
-                title="Dossier Navigator"
-                subtitle="eCTD Module 1–5 tracker · NDA / BLA / IND · Target filing dashboard"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Dossier Navigator...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <DossierNavigatorStandalone />
-                </Suspense>
-              </div>
-            </div>
-          )}
+          {/* Dossier Navigator — disabled (consolidated into IND Workspace) */}
 
-          {/* ── Submission Workspace (eCTD dossier + filing) ────────────── */}
-          {false && layoutMode === 'submission-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              <WorkspaceHeader
-                title="Submission Workspace"
-                subtitle="eCTD assembly · Module 1–5 tracking · Filing dashboard"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Submission Workspace...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <DossierNavigatorStandalone />
-                </Suspense>
-              </div>
-            </div>
-          )}
+          {/* Submission Workspace — disabled (consolidated into IND Workspace) */}
 
-          {/* ── Precedent Intelligence (live Precedent Engine) ──────────────── */}
-          {false && layoutMode === 'precedent-intelligence' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              <WorkspaceHeader
-                title="Precedent Intelligence"
-                subtitle="Search · Compare · Risk Analysis · Strategy — live FDA precedent data"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Precedent Intelligence...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <PrecedentIntelligenceDashboard
-                    projectSubmissionType={activeProject?.type}
-                    projectDeviceName={activeProject?.name}
-                    projectIndication={activeProject?.description}
-                    onNavigateToEditor={() => {
-                      setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
-                    }}
-                  />
-                </Suspense>
-              </div>
-            </div>
-          )}
+          {/* Precedent Intelligence — disabled (consolidated into RI Copilot) */}
 
-          {/* Redirect dead module routes to unified workspace */}
-          {[
-            'medtech-dashboard',
-            'dossier',
-            'submission-workspace',
-            'precedent-intelligence',
-            'workspace',
-          ].includes(layoutMode) && (
+          {/* Redirect deprecated routes to unified workspace */}
+          {['workspace'].includes(layoutMode) && (
             <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
           )}
 

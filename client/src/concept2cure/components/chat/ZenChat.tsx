@@ -25,7 +25,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import {
-  Paperclip,
   Sparkles,
   Copy,
   RotateCcw,
@@ -620,14 +619,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
               : 'border-zinc-200 hover:border-zinc-300'
           )}
         >
-          {/* Attachment button */}
-          <button
-            className="flex-shrink-0 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
-            title="Attach file"
-          >
-            <Paperclip className="w-5 h-5" />
-          </button>
-
           {/* Textarea */}
           <textarea
             ref={textareaRef}

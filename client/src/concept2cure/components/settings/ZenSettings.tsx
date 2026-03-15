@@ -545,33 +545,28 @@ const HelpSection: React.FC = () => {
       />
 
       <div className="space-y-3 mb-6">
-        {resources.map(({ id, label, icon: Icon, link }) => (
-          <a
+        {resources.map(({ id, label, icon: Icon }) => (
+          <div
             key={id}
-            href={link}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200"
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-zinc-500" />
               <span className="text-sm font-medium text-zinc-900">{label}</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-zinc-400" />
-          </a>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
+              Coming soon
+            </span>
+          </div>
         ))}
       </div>
 
       <div className="text-center py-6 border-t border-zinc-100">
         <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
         <div className="flex justify-center gap-4 text-xs">
-          <a href="#" className="text-zinc-500 hover:text-zinc-700">
-            Terms
-          </a>
-          <a href="#" className="text-zinc-500 hover:text-zinc-700">
-            Privacy
-          </a>
-          <a href="#" className="text-zinc-500 hover:text-zinc-700">
-            Licenses
-          </a>
+          <span className="text-zinc-400">Terms</span>
+          <span className="text-zinc-400">Privacy</span>
+          <span className="text-zinc-400">Licenses</span>
         </div>
       </div>
     </div>
