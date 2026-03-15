@@ -2,11 +2,11 @@
  * @fileoverview Concept2Cure Error Boundary
  * @module concept2cure/components/ErrorBoundary
  * @version 2.0.0
- * 
+ *
  * @description
  * React error boundary for graceful error handling in the Concept2Cure module.
  * Captures errors, logs them for audit trail, and provides user-friendly recovery.
- * 
+ *
  * @compliance
  * - FDA 21 CFR Part 11: All errors logged with timestamp, user context
  * - Error state preserved for investigation
@@ -50,12 +50,12 @@ interface ErrorBoundaryState {
 
 /**
  * Error Boundary Component
- * 
+ *
  * @description
  * Wraps child components and catches JavaScript errors anywhere in the
  * child component tree. Logs errors for 21 CFR Part 11 compliance and
  * displays a fallback UI instead of crashing the entire application.
- * 
+ *
  * @example
  * ```tsx
  * <ErrorBoundary onError={(e) => logToServer(e)}>
@@ -190,17 +190,15 @@ Component Stack: ${errorInfo?.componentStack}
         return fallback;
       }
 
-      // Default error UI
+      // Default error UI (panel-safe — no min-h-screen so it works inside panels)
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="flex-1 flex items-center justify-center bg-gray-50 p-4 min-h-[200px]">
           <div className="max-w-lg w-full border border-zinc-200 rounded-md bg-white shadow-sm">
             <div className="text-center px-6 pt-6 pb-3">
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Something went wrong
-              </h3>
+              <h3 className="text-xl font-semibold text-gray-900">Something went wrong</h3>
               <p className="text-sm text-gray-600 mt-1">
                 We've logged this error for investigation. Your work has been preserved.
               </p>
@@ -263,7 +261,7 @@ Component Stack: ${errorInfo?.componentStack}
  */
 export function useErrorThrower(): (error: Error) => void {
   const [, setError] = React.useState<Error | null>(null);
-  
+
   return React.useCallback((error: Error) => {
     setError(() => {
       throw error;

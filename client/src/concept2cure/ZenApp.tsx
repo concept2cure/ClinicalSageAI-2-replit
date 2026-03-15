@@ -49,6 +49,7 @@ import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
 import { isFeatureEnabled } from '@/flags/featureFlags';
@@ -363,30 +364,32 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto zen-scroll">
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-            </div>
-          }
-        >
-          {PANEL_COMPONENTS[panel] ? (
-            (() => {
-              const PanelComponent = PANEL_COMPONENTS[panel];
-              return <PanelComponent />;
-            })()
-          ) : (
-            <div className="flex items-center justify-center h-full text-center p-8">
-              <div>
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
-                  <Icon className="w-8 h-8 text-zinc-500" />
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
-                <p className="text-sm text-zinc-500 max-w-sm">{config.title} module loading...</p>
+        <ErrorBoundary>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
               </div>
-            </div>
-          )}
-        </Suspense>
+            }
+          >
+            {PANEL_COMPONENTS[panel] ? (
+              (() => {
+                const PanelComponent = PANEL_COMPONENTS[panel];
+                return <PanelComponent />;
+              })()
+            ) : (
+              <div className="flex items-center justify-center h-full text-center p-8">
+                <div>
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
+                    <Icon className="w-8 h-8 text-zinc-500" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
+                  <p className="text-sm text-zinc-500 max-w-sm">{config.title} module loading...</p>
+                </div>
+              </div>
+            )}
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </div>
   );
@@ -1243,22 +1246,24 @@ export const ZenApp: React.FC = () => {
                   moduleAssistantOpen && 'mr-0'
                 )}
               >
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading 510(k) Module...</p>
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center bg-white">
+                        <div className="text-center">
+                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                          <p className="text-zinc-500">Loading 510(k) Module...</p>
+                        </div>
                       </div>
-                    </div>
-                  }
-                >
-                  <EmbeddedCERV2Page
-                    embedded={true}
-                    projectId={urlProjectId}
-                    onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
-                  />
-                </Suspense>
+                    }
+                  >
+                    <EmbeddedCERV2Page
+                      embedded={true}
+                      projectId={urlProjectId}
+                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
 
               {/* Assistant toggle button (fixed right edge) */}
@@ -1314,23 +1319,25 @@ export const ZenApp: React.FC = () => {
           {/* Sherpa Mode - Convergent Canvas */}
           {!embeddedModule && layoutMode === 'sherpa' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                      <p className="text-zinc-500">Loading Sherpa System...</p>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Sherpa System...</p>
+                      </div>
                     </div>
-                  </div>
-                }
-              >
-                <ConvergentCanvas
-                  userId={activeProjectId || 'anonymous'}
-                  userName={userName}
-                  userRole={userRole}
-                  industry={industryMode}
-                />
-              </Suspense>
+                  }
+                >
+                  <ConvergentCanvas
+                    userId={activeProjectId || 'anonymous'}
+                    userName={userName}
+                    userRole={userRole}
+                    industry={industryMode}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
@@ -1379,18 +1386,20 @@ export const ZenApp: React.FC = () => {
           {/* Phase 7: Mission Control Dashboard */}
           {!embeddedModule && layoutMode === 'mission-control' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                      <p className="text-zinc-500">Loading Mission Control...</p>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Mission Control...</p>
+                      </div>
                     </div>
-                  </div>
-                }
-              >
-                <MissionControl />
-              </Suspense>
+                  }
+                >
+                  <MissionControl />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
@@ -1438,43 +1447,45 @@ export const ZenApp: React.FC = () => {
                 <div className="flex-1 flex min-h-0">
                   {/* Main area: IND section tree */}
                   <div className="flex-1 overflow-auto">
-                    <Suspense
-                      fallback={
-                        <div className="flex-1 flex items-center justify-center bg-white h-full">
-                          <div className="text-center">
-                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                            <p className="text-zinc-500">Loading IND Workspace...</p>
+                    <ErrorBoundary>
+                      <Suspense
+                        fallback={
+                          <div className="flex-1 flex items-center justify-center bg-white h-full">
+                            <div className="text-center">
+                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                              <p className="text-zinc-500">Loading IND Workspace...</p>
+                            </div>
                           </div>
-                        </div>
-                      }
-                    >
-                      <INDWorkspace
-                        projectId={activeProjectId}
-                        projectName={activeProject?.name || 'Untitled Project'}
-                        submissionType={activeProject?.type || 'IND'}
-                        onOpenSection={sectionCode => {
-                          const ctd = sectionCode.replace(/^m/, '');
-                          setPendingEditorContent({
-                            content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'IND Application'}.</p>`,
-                            title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
-                            ctdSection: ctd,
-                          });
-                          setRiViewMode('editor');
-                          setLayoutMode('regulatory-workspace');
-                        }}
-                        onDraftWithAI={(sectionCode, sectionTitle) => {
-                          const ctd = sectionCode.replace(/^m/, '');
-                          setPendingEditorContent({
-                            content: `<h1>${sectionTitle}</h1>\n<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'IND'})</h2>\n<p><strong>CTD Section:</strong> ${ctd}</p>\n<p><strong>Generated:</strong> ${new Date().toISOString().split('T')[0]}</p>\n<hr/>\n<h2>Section Content</h2>\n<p>[AI-assisted draft for ${sectionTitle}. This section should comply with ICH M4 guidelines and 21 CFR 312.23(a) requirements.]</p>`,
-                            title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
-                            ctdSection: ctd,
-                          });
-                          setRiViewMode('editor');
-                          setLayoutMode('regulatory-workspace');
-                        }}
-                        onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
-                      />
-                    </Suspense>
+                        }
+                      >
+                        <INDWorkspace
+                          projectId={activeProjectId}
+                          projectName={activeProject?.name || 'Untitled Project'}
+                          submissionType={activeProject?.type || 'IND'}
+                          onOpenSection={sectionCode => {
+                            const ctd = sectionCode.replace(/^m/, '');
+                            setPendingEditorContent({
+                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'IND Application'}.</p>`,
+                              title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
+                              ctdSection: ctd,
+                            });
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                          }}
+                          onDraftWithAI={(sectionCode, sectionTitle) => {
+                            const ctd = sectionCode.replace(/^m/, '');
+                            setPendingEditorContent({
+                              content: `<h1>${sectionTitle}</h1>\n<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'IND'})</h2>\n<p><strong>CTD Section:</strong> ${ctd}</p>\n<p><strong>Generated:</strong> ${new Date().toISOString().split('T')[0]}</p>\n<hr/>\n<h2>Section Content</h2>\n<p>[AI-assisted draft for ${sectionTitle}. This section should comply with ICH M4 guidelines and 21 CFR 312.23(a) requirements.]</p>`,
+                              title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
+                              ctdSection: ctd,
+                            });
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                          }}
+                          onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
+                        />
+                      </Suspense>
+                    </ErrorBoundary>
                   </div>
                   {/* Right rail: Section context tabs */}
                   <INDRightRail
@@ -1518,41 +1529,43 @@ export const ZenApp: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex-1 overflow-auto">
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading eCTD Co-Author...</p>
+                  <ErrorBoundary>
+                    <Suspense
+                      fallback={
+                        <div className="flex-1 flex items-center justify-center bg-white h-full">
+                          <div className="text-center">
+                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                            <p className="text-zinc-500">Loading eCTD Co-Author...</p>
+                          </div>
                         </div>
-                      </div>
-                    }
-                  >
-                    <ECTDCoAuthorStandalone
-                      onOpenInEditor={section => {
-                        console.log(
-                          `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
-                        );
-                        // Build populated content from the section
-                        const sectionContent =
-                          section.content && section.content.trim()
-                            ? section.content
-                            : `<h1>${section.number} ${section.title}</h1>
+                      }
+                    >
+                      <ECTDCoAuthorStandalone
+                        onOpenInEditor={section => {
+                          console.log(
+                            `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
+                          );
+                          // Build populated content from the section
+                          const sectionContent =
+                            section.content && section.content.trim()
+                              ? section.content
+                              : `<h1>${section.number} ${section.title}</h1>
 <p>This section covers the regulatory requirements for <strong>${section.title}</strong> as part of the CTD submission.</p>
 <h2>Scope</h2>
 <p>[Section content to be drafted. Use the RI Edit tools above to generate regulatory-compliant language.]</p>
 <h2>References</h2>
 <p>[Cross-references and source citations will be added here.]</p>`;
-                        setPendingEditorContent({
-                          title: `${section.number} ${section.title}`,
-                          content: sectionContent,
-                          ctdSection: section.number,
-                        });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                    />
-                  </Suspense>
+                          setPendingEditorContent({
+                            title: `${section.number} ${section.title}`,
+                            content: sectionContent,
+                            ctdSection: section.number,
+                          });
+                          setRiViewMode('editor');
+                          setLayoutMode('regulatory-workspace');
+                        }}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
                 </div>
               )}
             </div>
@@ -1655,24 +1668,26 @@ export const ZenApp: React.FC = () => {
                     </button>
                   </div>
                   <div className="flex-1 overflow-auto">
-                    <Suspense
-                      fallback={
-                        <div className="flex-1 flex items-center justify-center bg-white h-full">
-                          <div className="text-center">
-                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                            <p className="text-zinc-500">Loading CMC Platform...</p>
+                    <ErrorBoundary>
+                      <Suspense
+                        fallback={
+                          <div className="flex-1 flex items-center justify-center bg-white h-full">
+                            <div className="text-center">
+                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                              <p className="text-zinc-500">Loading CMC Platform...</p>
+                            </div>
                           </div>
-                        </div>
-                      }
-                    >
-                      <CMCModuleStandalone
-                        onDocumentCreated={({ artifactId }: { artifactId: string }) => {
-                          setOpenArtifactId(artifactId);
-                          setRiViewMode('editor');
-                          setLayoutMode('regulatory-workspace');
-                        }}
-                      />
-                    </Suspense>
+                        }
+                      >
+                        <CMCModuleStandalone
+                          onDocumentCreated={({ artifactId }: { artifactId: string }) => {
+                            setOpenArtifactId(artifactId);
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                          }}
+                        />
+                      </Suspense>
+                    </ErrorBoundary>
                   </div>
                 </>
               )}
@@ -1688,18 +1703,20 @@ export const ZenApp: React.FC = () => {
                 onBack={() => setLayoutMode('assistant')}
               />
               <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Document Vault...</p>
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center bg-white h-full">
+                        <div className="text-center">
+                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                          <p className="text-zinc-500">Loading Document Vault...</p>
+                        </div>
                       </div>
-                    </div>
-                  }
-                >
-                  <VaultPageStandalone />
-                </Suspense>
+                    }
+                  >
+                    <VaultPageStandalone />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             </div>
           )}
@@ -1713,18 +1730,20 @@ export const ZenApp: React.FC = () => {
                 onBack={() => setLayoutMode('assistant')}
               />
               <div className="flex-1 overflow-auto">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white h-full">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Clinical Trial Hub...</p>
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center bg-white h-full">
+                        <div className="text-center">
+                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                          <p className="text-zinc-500">Loading Clinical Trial Hub...</p>
+                        </div>
                       </div>
-                    </div>
-                  }
-                >
-                  <StudyArchitectModuleStandalone />
-                </Suspense>
+                    }
+                  >
+                    <StudyArchitectModuleStandalone />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             </div>
           )}
@@ -1767,21 +1786,23 @@ export const ZenApp: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <SubmissionOpsCommandCenter
-                    projectId={activeProjectId}
-                    projectName={activeProject?.name}
-                    onNavigateToArtifact={artifactId => {
-                      setLayoutMode('regulatory-workspace');
-                    }}
-                  />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <SubmissionOpsCommandCenter
+                      projectId={activeProjectId}
+                      projectName={activeProject?.name}
+                      onNavigateToArtifact={artifactId => {
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
               )}
             </div>
           )}
@@ -1837,27 +1858,29 @@ export const ZenApp: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <RICopilotHome
-                    projectId={activeProjectId}
-                    projectName={activeProject?.name}
-                    submissionType={activeProject?.type}
-                    indication={activeProject?.description}
-                    onAnalyzeEvidence={() => setRiViewMode('editor')}
-                    onDraftFromPrecedent={(content, title, ctdSection) => {
-                      setPendingEditorContent({ content, title, ctdSection });
-                      setRiViewMode('editor');
-                    }}
-                    onOpenEditor={() => setRiViewMode('editor')}
-                    onSelectProject={() => setProjectSwitcherOpen(true)}
-                  />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <RICopilotHome
+                      projectId={activeProjectId}
+                      projectName={activeProject?.name}
+                      submissionType={activeProject?.type}
+                      indication={activeProject?.description}
+                      onAnalyzeEvidence={() => setRiViewMode('editor')}
+                      onDraftFromPrecedent={(content, title, ctdSection) => {
+                        setPendingEditorContent({ content, title, ctdSection });
+                        setRiViewMode('editor');
+                      }}
+                      onOpenEditor={() => setRiViewMode('editor')}
+                      onSelectProject={() => setProjectSwitcherOpen(true)}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             ) : (
               <ProjectWorkspaceShell
@@ -1880,18 +1903,20 @@ export const ZenApp: React.FC = () => {
           {/* Rules Engine Manager */}
           {!embeddedModule && layoutMode === 'rules' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                      <p className="text-zinc-500">Loading Rules Engine...</p>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <div className="text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+                        <p className="text-zinc-500">Loading Rules Engine...</p>
+                      </div>
                     </div>
-                  </div>
-                }
-              >
-                <RulesManager onBack={() => setLayoutMode('mission-control')} />
-              </Suspense>
+                  }
+                >
+                  <RulesManager onBack={() => setLayoutMode('mission-control')} />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
@@ -2565,22 +2590,24 @@ export const ZenApp: React.FC = () => {
           )}
           {!embeddedModule && layoutMode === 'editor' && (
             <div className="flex-1 flex min-w-0 min-h-0">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                  </div>
-                }
-              >
-                <EditorPanel
-                  projectId={activeProjectId}
-                  submissionType={activeProject?.type}
-                  initialContent={pendingEditorContent?.content}
-                  initialTitle={pendingEditorContent?.title}
-                  initialCtdSection={pendingEditorContent?.ctdSection}
-                  onInitialContentConsumed={() => setPendingEditorContent(null)}
-                />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <EditorPanel
+                    projectId={activeProjectId}
+                    submissionType={activeProject?.type}
+                    initialContent={pendingEditorContent?.content}
+                    initialTitle={pendingEditorContent?.title}
+                    initialCtdSection={pendingEditorContent?.ctdSection}
+                    onInitialContentConsumed={() => setPendingEditorContent(null)}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
           {!embeddedModule && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
