@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReviewThreadsPanel } from './ReviewThreadsPanel';
+import { getGovWorkflowTailoring } from '../../config/industry-tailoring';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -113,6 +114,7 @@ interface SnapshotEntry {
 interface GovernedDocumentPanelProps {
   projectId: string;
   artifact: Artifact;
+  industryMode?: string;
   onStatusChange?: (newStatus: string) => void;
   onOpenDiff?: () => void;
   onClose: () => void;
@@ -197,10 +199,12 @@ function formatTime(iso: string): string {
 export function GovernedDocumentPanel({
   projectId,
   artifact,
+  industryMode,
   onStatusChange,
   onOpenDiff,
   onClose,
 }: GovernedDocumentPanelProps) {
+  const tailoring = getGovWorkflowTailoring(industryMode);
   const [events, setEvents] = useState<ProvenanceEvent[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -394,7 +398,9 @@ export function GovernedDocumentPanel({
       } else if (targetStatus === 'approved' || targetStatus === 'locked') {
         // Show attestation modal for approval/publish
         setAttestationTarget(targetStatus);
-        setAttestationMeaning(targetStatus === 'approved' ? 'Approved' : 'Released');
+        setAttestationMeaning(
+          targetStatus === 'approved' ? tailoring.approvalMeanings[0] : tailoring.publishMeanings[0]
+        );
         setAttestationText('');
       } else {
         handleTransition(targetStatus);
@@ -437,7 +443,7 @@ export function GovernedDocumentPanel({
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/40">
         <div className="flex items-center gap-1.5">
           <Shield className="w-3 h-3 text-blue-600" />
-          <span className="text-[10px] font-semibold text-zinc-700">Document Governance</span>
+          <span className="text-[10px] font-semibold text-zinc-700">{tailoring.panelTitle}</span>
         </div>
         <button
           onClick={onClose}
@@ -484,13 +490,18 @@ export function GovernedDocumentPanel({
             events={events}
             permissions={permissions}
             onOpenDiff={onOpenDiff}
+            industryMode={industryMode}
           />
         ) : activeTab === 'audit' ? (
           <AuditTab events={events} />
         ) : activeTab === 'snapshots' ? (
           <SnapshotsTab snapshots={snapshots} />
         ) : activeTab === 'threads' ? (
-          <ReviewThreadsPanel projectId={projectId} artifactId={artifact.id} />
+          <ReviewThreadsPanel
+            projectId={projectId}
+            artifactId={artifact.id}
+            industryMode={industryMode}
+          />
         ) : (
           <VersionsTab
             versions={versions}
@@ -515,10 +526,15 @@ export function GovernedDocumentPanel({
               <span className="text-sm font-semibold text-zinc-800">Reason Required</span>
             </div>
             <p className="text-xs text-zinc-500 mb-2">
-              Regressing <strong>{STATUS_LABELS[currentStatus]}</strong>
+              Regressing{' '}
+              <strong>
+                {tailoring.statusLabels[currentStatus] || STATUS_LABELS[currentStatus]}
+              </strong>
               {' → '}
-              <strong>{STATUS_LABELS[rationaleTarget]}</strong> requires a justification for the
-              audit trail.
+              <strong>
+                {tailoring.statusLabels[rationaleTarget] || STATUS_LABELS[rationaleTarget]}
+              </strong>{' '}
+              requires a justification for the audit trail.
             </p>
             <textarea
               value={rationale}
@@ -558,12 +574,18 @@ export function GovernedDocumentPanel({
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="w-4 h-4 text-emerald-500" />
               <span className="text-sm font-semibold text-zinc-800">
-                {attestationTarget === 'approved' ? 'Approval' : 'Publish'} Attestation
+                {attestationTarget === 'approved'
+                  ? tailoring.statusLabels.approved
+                  : tailoring.lockActionLabel}{' '}
+                Attestation
               </span>
             </div>
             <p className="text-xs text-zinc-500 mb-2">
-              You are {attestationTarget === 'approved' ? 'approving' : 'publishing/locking'} this
-              document. Please provide your attestation.
+              You are{' '}
+              {attestationTarget === 'approved'
+                ? `marking this document as "${tailoring.statusLabels.approved}"`
+                : `performing "${tailoring.lockActionLabel}"`}
+              . Please provide your attestation.
             </p>
             <div className="space-y-2">
               <div>
@@ -573,19 +595,17 @@ export function GovernedDocumentPanel({
                   onChange={e => setAttestationMeaning(e.target.value)}
                   className="w-full text-xs border border-zinc-200 rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {attestationTarget === 'approved' ? (
-                    <>
-                      <option value="Approved">Approved</option>
-                      <option value="Reviewed">Reviewed</option>
-                      <option value="Verified">Verified</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="Released">Released</option>
-                      <option value="Published">Published</option>
-                      <option value="Submitted">Submitted</option>
-                    </>
-                  )}
+                  {attestationTarget === 'approved'
+                    ? tailoring.approvalMeanings.map(m => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))
+                    : tailoring.publishMeanings.map(m => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
                 </select>
               </div>
               <div>
@@ -593,7 +613,7 @@ export function GovernedDocumentPanel({
                 <textarea
                   value={attestationText}
                   onChange={e => setAttestationText(e.target.value)}
-                  placeholder="I confirm that I have reviewed this document and am authorized to perform this action..."
+                  placeholder={tailoring.attestationPlaceholder}
                   className="w-full h-16 text-xs border border-zinc-200 rounded-md p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
@@ -601,7 +621,9 @@ export function GovernedDocumentPanel({
             </div>
             <div className="flex items-center gap-1.5 mt-2 text-[9px] text-zinc-400">
               <Shield className="w-3 h-3" />
-              <span>Signed as {permissions?.role || 'user'} · 21 CFR Part 11</span>
+              <span>
+                Signed as {permissions?.role || 'user'} · {tailoring.regulatoryRef}
+              </span>
             </div>
             <div className="flex justify-end gap-2 mt-3">
               <button
@@ -625,7 +647,9 @@ export function GovernedDocumentPanel({
                 className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
-                {attestationTarget === 'approved' ? 'Approve' : 'Publish'}
+                {attestationTarget === 'approved'
+                  ? tailoring.statusLabels.approved
+                  : tailoring.lockActionLabel}
               </button>
             </div>
             <p className="text-[9px] text-zinc-400 mt-1">Minimum 10 characters</p>
@@ -647,6 +671,7 @@ function StatusTab({
   events,
   permissions,
   onOpenDiff,
+  industryMode,
 }: {
   artifact: Artifact;
   currentStatus: string;
@@ -656,7 +681,9 @@ function StatusTab({
   events: ProvenanceEvent[];
   permissions: UserPermissions | null;
   onOpenDiff?: () => void;
+  industryMode?: string;
 }) {
+  const tailoring = getGovWorkflowTailoring(industryMode);
   const statusEvents = events.filter(e => e.eventType === 'status_change').slice(0, 5);
 
   // Filter transitions by user's role permissions
@@ -691,7 +718,7 @@ function StatusTab({
           ) : (
             <FileText className="w-3 h-3" />
           )}
-          {STATUS_LABELS[currentStatus] || currentStatus}
+          {tailoring.statusLabels[currentStatus] || STATUS_LABELS[currentStatus] || currentStatus}
         </div>
       </div>
 
@@ -734,7 +761,10 @@ function StatusTab({
           )}
           {permittedTransitions.map(target => {
             const key = `${currentStatus}→${target}`;
-            const label = TRANSITION_LABELS[key] || `→ ${STATUS_LABELS[target]}`;
+            const label =
+              tailoring.transitionLabels[key] ||
+              TRANSITION_LABELS[key] ||
+              `→ ${tailoring.statusLabels[target] || STATUS_LABELS[target]}`;
             const regression = isRegression(currentStatus, target);
             return (
               <button

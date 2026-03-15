@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getThreadTaskTailoring } from '../../config/industry-tailoring';
 
 function getAuthHeaders(): Record<string, string> {
   const token =
@@ -44,6 +45,7 @@ interface Notification {
 
 interface NotificationCenterProps {
   projectId?: string;
+  industryMode?: string;
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -81,7 +83,8 @@ function getNotifIcon(type: string) {
   }
 }
 
-export function NotificationCenter({ projectId }: NotificationCenterProps) {
+export function NotificationCenter({ projectId, industryMode }: NotificationCenterProps) {
+  const tailoring = getThreadTaskTailoring(industryMode);
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -277,12 +280,12 @@ export function NotificationCenter({ projectId }: NotificationCenterProps) {
                       <span className="text-[8px] text-zinc-400">{formatTimeAgo(n.createdAt)}</span>
                       {n.severity === 'critical' && (
                         <span className="text-[7px] bg-red-100 text-red-700 px-1 rounded font-medium">
-                          CRITICAL
+                          {tailoring.severityLabels.critical?.toUpperCase() || 'CRITICAL'}
                         </span>
                       )}
                       {n.severity === 'warning' && (
                         <span className="text-[7px] bg-amber-100 text-amber-700 px-1 rounded font-medium">
-                          WARNING
+                          {tailoring.severityLabels.warning?.toUpperCase() || 'WARNING'}
                         </span>
                       )}
                       {(n.escalationLevel ?? 0) > 0 && (

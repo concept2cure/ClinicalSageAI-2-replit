@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getThreadTaskTailoring } from '../../config/industry-tailoring';
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -90,6 +91,7 @@ interface ReviewTask {
 interface ReviewThreadsPanelProps {
   projectId: string;
   artifactId: string; // the route-level artifactId (string like "art_xxx")
+  industryMode?: string;
 }
 
 function formatTime(iso: string): string {
@@ -106,7 +108,12 @@ function formatTime(iso: string): string {
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
-export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanelProps) {
+export function ReviewThreadsPanel({
+  projectId,
+  artifactId,
+  industryMode,
+}: ReviewThreadsPanelProps) {
+  const tailoring = getThreadTaskTailoring(industryMode);
   const [subTab, setSubTab] = useState<'threads' | 'tasks'>('threads');
   const [threads, setThreads] = useState<ReviewThread[]>([]);
   const [tasks, setTasks] = useState<ReviewTask[]>([]);
@@ -128,7 +135,7 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
   // New task from thread
   const [showNewTask, setShowNewTask] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskType, setNewTaskType] = useState('review_task');
+  const [newTaskType, setNewTaskType] = useState('follow_up');
   const [newTaskDueAt, setNewTaskDueAt] = useState('');
   const [creatingTask, setCreatingTask] = useState(false);
 
@@ -263,7 +270,7 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
       );
       if (res.ok) {
         setNewTaskTitle('');
-        setNewTaskType('review_task');
+        setNewTaskType('follow_up');
         setNewTaskDueAt('');
         setShowNewTask(null);
         await fetchTasks();
@@ -435,9 +442,11 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                     className="flex-1 px-1.5 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   >
                     <option value="">Priority...</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
+                    {Object.entries(tailoring.priorityLabels).map(([val, label]) => (
+                      <option key={val} value={val}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                   <select
                     value={newThreadAnchorType}
@@ -445,10 +454,11 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                     className="flex-1 px-1.5 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   >
                     <option value="">Anchor...</option>
-                    <option value="general">General</option>
-                    <option value="section">Section</option>
-                    <option value="heading">Heading</option>
-                    <option value="range">Range</option>
+                    {tailoring.anchorTypes.map(a => (
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 {newThreadAnchorType && newThreadAnchorType !== 'general' && (
@@ -460,17 +470,19 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                     className="w-full px-2 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   />
                 )}
-                <input
-                  type="date"
-                  value={newThreadDueAt}
-                  onChange={e => setNewThreadDueAt(e.target.value)}
-                  className="w-full px-2 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
-                  title="Due date (optional)"
-                />
+                <div className="flex items-center gap-1.5">
+                  <label className="text-[8px] text-zinc-400 shrink-0">Due</label>
+                  <input
+                    type="date"
+                    value={newThreadDueAt}
+                    onChange={e => setNewThreadDueAt(e.target.value)}
+                    className="flex-1 px-2 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                </div>
                 <textarea
                   value={newThreadComment}
                   onChange={e => setNewThreadComment(e.target.value)}
-                  placeholder="Initial comment (optional)..."
+                  placeholder={tailoring.threadPlaceholder}
                   className="w-full px-2 py-1 text-[10px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
                   rows={2}
                   maxLength={10000}
@@ -533,6 +545,8 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                 onCreateTask={handleCreateTask}
                 creatingTask={creatingTask}
                 onRequestChanges={handleRequestChanges}
+                taskTypeOptions={tailoring.taskTypes}
+                priorityLabels={tailoring.priorityLabels}
               />
             ))}
 
@@ -568,6 +582,8 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                     onCreateTask={handleCreateTask}
                     creatingTask={creatingTask}
                     onRequestChanges={handleRequestChanges}
+                    taskTypeOptions={tailoring.taskTypes}
+                    priorityLabels={tailoring.priorityLabels}
                   />
                 ))}
               </div>
@@ -585,6 +601,7 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                 key={task.taskId}
                 task={task}
                 onResolve={() => handleResolveTask(task.taskId)}
+                taskTypeOptions={tailoring.taskTypes}
               />
             ))}
 
@@ -598,6 +615,7 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                     key={task.taskId}
                     task={task}
                     onReopen={() => handleReopenTask(task.taskId)}
+                    taskTypeOptions={tailoring.taskTypes}
                   />
                 ))}
               </div>
@@ -635,6 +653,8 @@ interface ThreadCardProps {
   onCreateTask?: (threadId: string) => void;
   creatingTask?: boolean;
   onRequestChanges?: (threadId: string, body: string) => void;
+  taskTypeOptions?: { value: string; label: string }[];
+  priorityLabels?: Record<string, string>;
 }
 
 function ThreadCard({
@@ -662,6 +682,8 @@ function ThreadCard({
   onCreateTask,
   creatingTask,
   onRequestChanges,
+  taskTypeOptions,
+  priorityLabels,
 }: ThreadCardProps) {
   const isOpen = thread.status === 'open';
   const [requestChangesBody, setRequestChangesBody] = useState('');
@@ -707,7 +729,7 @@ function ThreadCard({
                     : 'bg-zinc-100 text-zinc-500'
                 )}
               >
-                {thread.priority.toUpperCase()}
+                {priorityLabels?.[thread.priority] || thread.priority.toUpperCase()}
               </span>
             )}
             {thread.anchorLabel && (
@@ -898,9 +920,17 @@ function ThreadCard({
                       onChange={e => onSetNewTaskType?.(e.target.value)}
                       className="flex-1 px-1.5 py-0.5 text-[9px] bg-white border border-blue-200 rounded"
                     >
-                      <option value="follow_up">Follow-up</option>
-                      <option value="change_request">Change Request</option>
-                      <option value="approval_task">Approval</option>
+                      {(
+                        taskTypeOptions || [
+                          { value: 'follow_up', label: 'Follow-up' },
+                          { value: 'change_request', label: 'Change Request' },
+                          { value: 'approval_task', label: 'Approval' },
+                        ]
+                      ).map(t => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
                     </select>
                     <input
                       type="date"
@@ -978,22 +1008,31 @@ interface TaskCardProps {
   task: ReviewTask;
   onResolve?: () => void;
   onReopen?: () => void;
+  taskTypeOptions?: { value: string; label: string }[];
 }
 
-function TaskCard({ task, onResolve, onReopen }: TaskCardProps) {
+function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps) {
   const isActive = task.status === 'open' || task.status === 'in_progress';
+  const isOverdue = isActive && task.dueAt ? new Date(task.dueAt) < new Date() : false;
   const typeLabel =
-    task.taskType === 'change_request'
+    taskTypeOptions?.find(t => t.value === task.taskType)?.label ||
+    (task.taskType === 'change_request'
       ? 'Change Request'
       : task.taskType === 'follow_up'
         ? 'Follow-up'
-        : 'Task';
+        : task.taskType === 'approval_task'
+          ? 'Approval'
+          : 'Task');
 
   return (
     <div
       className={cn(
         'mb-2 rounded-lg border p-2',
-        isActive ? 'border-zinc-200 bg-white' : 'border-zinc-100 bg-zinc-50/50'
+        isActive
+          ? isOverdue
+            ? 'border-red-200 bg-red-50/30'
+            : 'border-zinc-200 bg-white'
+          : 'border-zinc-100 bg-zinc-50/50'
       )}
     >
       <div className="flex items-start gap-1.5">
@@ -1015,9 +1054,14 @@ function TaskCard({ task, onResolve, onReopen }: TaskCardProps) {
               <span className="text-[8px] text-zinc-400">→ {task.assignedToName}</span>
             )}
             {task.dueAt && (
-              <span className="text-[8px] text-zinc-400 flex items-center gap-0.5">
+              <span
+                className={cn(
+                  'text-[8px] flex items-center gap-0.5',
+                  isOverdue ? 'text-red-600 font-medium' : 'text-zinc-400'
+                )}
+              >
                 <Clock className="w-2.5 h-2.5" />
-                {formatTime(task.dueAt)}
+                {isOverdue ? 'Overdue' : formatTime(task.dueAt)}
               </span>
             )}
           </div>

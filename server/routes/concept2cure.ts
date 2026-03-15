@@ -8463,20 +8463,26 @@ async function createNotification(params: {
   dueAt?: Date | string | null;
 }): Promise<void> {
   try {
+    // Guard: skip if no valid recipient
+    if (!params.recipientUserId || params.recipientUserId <= 0) return;
+
     // Avoid duplicate unread notifications of the same type for the same source
+    const sourceCondition = params.threadId
+      ? eq(concept2cureNotifications.threadId, params.threadId)
+      : params.reviewTaskId
+        ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
+        : null;
+
     const existing = await db
       .select({ id: concept2cureNotifications.id })
       .from(concept2cureNotifications)
       .where(
         and(
+          eq(concept2cureNotifications.orgId, params.orgId),
           eq(concept2cureNotifications.recipientUserId, params.recipientUserId),
           eq(concept2cureNotifications.notificationType, params.notificationType),
           eq(concept2cureNotifications.status, 'unread'),
-          params.threadId
-            ? eq(concept2cureNotifications.threadId, params.threadId)
-            : params.reviewTaskId
-              ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
-              : sql`true`
+          ...(sourceCondition ? [sourceCondition] : [])
         )
       )
       .limit(1);
@@ -8599,6 +8605,7 @@ router.get('/notifications/my', async (req: Request, res: Response) => {
  */
 router.post('/notifications/:id/read', async (req: Request, res: Response) => {
   try {
+    const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const notifId = parseInt(req.params.id, 10);
     if (isNaN(notifId)) return sendError(res, 400, 'Invalid notification ID');
@@ -8609,7 +8616,8 @@ router.post('/notifications/:id/read', async (req: Request, res: Response) => {
       .where(
         and(
           eq(concept2cureNotifications.id, notifId),
-          eq(concept2cureNotifications.recipientUserId, userId)
+          eq(concept2cureNotifications.recipientUserId, userId),
+          eq(concept2cureNotifications.orgId, organizationId)
         )
       )
       .limit(1);
@@ -8633,6 +8641,7 @@ router.post('/notifications/:id/read', async (req: Request, res: Response) => {
  */
 router.post('/notifications/:id/dismiss', async (req: Request, res: Response) => {
   try {
+    const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const notifId = parseInt(req.params.id, 10);
     if (isNaN(notifId)) return sendError(res, 400, 'Invalid notification ID');
@@ -8643,7 +8652,8 @@ router.post('/notifications/:id/dismiss', async (req: Request, res: Response) =>
       .where(
         and(
           eq(concept2cureNotifications.id, notifId),
-          eq(concept2cureNotifications.recipientUserId, userId)
+          eq(concept2cureNotifications.recipientUserId, userId),
+          eq(concept2cureNotifications.orgId, organizationId)
         )
       )
       .limit(1);
@@ -8698,6 +8708,9 @@ router.get('/notifications/project', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const projectId = parseInt(req.query.projectId as string, 10);
     if (isNaN(projectId)) return sendError(res, 400, 'projectId is required');
+
+    const hasAccess = await verifyProjectAccess(req, String(projectId));
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
 
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
 
@@ -8779,8 +8792,7 @@ router.get('/projects/:projectId/readiness-summary', async (req: Request, res: R
       .where(
         and(
           eq(concept2cureArtifacts.projectId, projectDbId),
-          eq(concept2cureArtifacts.organizationId, organizationId),
-          isNull(concept2cureArtifacts.deletedAt)
+          eq(concept2cureArtifacts.organizationId, organizationId)
         )
       );
 

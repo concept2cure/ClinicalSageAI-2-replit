@@ -126,6 +126,7 @@ interface ProjectWorkspaceShellProps {
   projectName?: string;
   projectType?: string;
   submissionType?: string;
+  industryMode?: string;
   onBackToProjects: () => void;
   onSelectProject: () => void;
   /** Switch to RI Copilot intelligence view */
@@ -147,6 +148,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   projectName,
   projectType,
   submissionType,
+  industryMode,
   onBackToProjects,
   onSelectProject,
   onSwitchToIntelligence,
@@ -995,7 +997,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             >
               <Activity className="w-3 h-3" />
             </button>
-            <NotificationCenter projectId={projectId} />
+            <NotificationCenter projectId={projectId} industryMode={industryMode} />
           </div>
         </div>
       )}
@@ -1363,6 +1365,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           <GovernedDocumentPanel
             projectId={projectId}
             artifact={activeArtifact}
+            industryMode={industryMode}
             onStatusChange={handleGovernedStatusChange}
             onClose={() => setShowGovernedPanel(false)}
             onOpenDiff={() => {

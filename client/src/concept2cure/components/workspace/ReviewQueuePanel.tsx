@@ -118,6 +118,11 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
               {totalItems}
             </span>
           )}
+          {unreadNotifications > 0 && (
+            <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
+              {unreadNotifications} new
+            </span>
+          )}
         </div>
         <button
           onClick={fetchQueue}

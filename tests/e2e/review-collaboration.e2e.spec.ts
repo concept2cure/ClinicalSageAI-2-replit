@@ -268,7 +268,9 @@ test.describe.serial('Phase 13 — Review Collaboration E2E', () => {
     const body = await res.json();
     expect(body.data).toBeTruthy();
     // Should contain processing counts
-    expect(typeof body.data.processed).toBe('number');
+    expect(body.data.processed).toBeTruthy();
+    expect(typeof body.data.processed.overdueThreads).toBe('number');
+    expect(typeof body.data.processed.overdueTasks).toBe('number');
   });
 
   test('13Q: Reopen the task', async ({ request }) => {

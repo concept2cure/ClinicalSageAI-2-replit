@@ -1801,6 +1801,7 @@ export const ZenApp: React.FC = () => {
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 submissionType={activeProject?.type}
+                industryMode={industryMode}
                 onBackToProjects={() => setLayoutMode('projects')}
                 onSelectProject={() => setProjectSwitcherOpen(true)}
                 onSwitchToIntelligence={() => setRiViewMode('intelligence')}
