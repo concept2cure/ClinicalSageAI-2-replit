@@ -114,6 +114,13 @@ const INDRightRail = lazy(() =>
   import('./components/workspace/INDRightRail').then(m => ({ default: m.INDRightRail }))
 );
 
+// Lazy load Phase 15 Submission Operations Command Center
+const SubmissionOpsCommandCenter = lazy(() =>
+  import('./pages/SubmissionOpsCommandCenter').then(m => ({
+    default: m.SubmissionOpsCommandCenter,
+  }))
+);
+
 // ─── Regulatory module standalones ────────────────────────────────────────────
 // Document Editor panel (bridge to UnifiedDocumentEditor + live APIs)
 const EditorPanel = lazy(() =>
@@ -1130,6 +1137,7 @@ export const ZenApp: React.FC = () => {
               cmc: 'cmc',
               'document-vault': 'document-vault',
               'clinical-trial': 'clinical-trial',
+              'submission-workspace': 'submission-workspace',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1209,6 +1217,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'mission-control':
               setLayoutMode('mission-control');
+              break;
+            case 'submission-workspace':
+              setLayoutMode('submission-workspace');
               break;
             default:
               break;
@@ -1720,7 +1731,60 @@ export const ZenApp: React.FC = () => {
 
           {/* Dossier Navigator — disabled (consolidated into IND Workspace) */}
 
-          {/* Submission Workspace — disabled (consolidated into IND Workspace) */}
+          {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
+          {!embeddedModule && layoutMode === 'submission-workspace' && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('regulatory-workspace')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Workspace</span>
+                </button>
+                <span className="text-zinc-200">·</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-800">
+                  {submissionWorkspaceLabel} — Submission Ops
+                </span>
+              </div>
+              {!activeProjectId ? (
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                  <div className="max-w-md text-center">
+                    <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-violet-400" />
+                    <h2 className="text-lg font-semibold text-zinc-900 mb-2">
+                      Submission Operations
+                    </h2>
+                    <p className="text-sm text-zinc-500 mb-4">
+                      Select a project to view its submission readiness and blockers.
+                    </p>
+                    <button
+                      onClick={() => setProjectSwitcherOpen(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
+                    >
+                      Select Project
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <SubmissionOpsCommandCenter
+                    projectId={activeProjectId}
+                    projectName={activeProject?.name}
+                    onNavigateToArtifact={artifactId => {
+                      setLayoutMode('regulatory-workspace');
+                    }}
+                  />
+                </Suspense>
+              )}
+            </div>
+          )}
 
           {/* Precedent Intelligence — disabled (consolidated into RI Copilot) */}
 

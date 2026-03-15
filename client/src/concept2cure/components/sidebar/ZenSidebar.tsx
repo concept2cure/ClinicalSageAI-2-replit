@@ -24,6 +24,7 @@ import {
   Archive,
   PenLine,
   ClipboardList,
+  Shield,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -464,6 +465,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               icon={<ClipboardList className="w-3.5 h-3.5" />}
               label="Mission Control"
               onClick={() => onNavigate?.('mission-control')}
+            />
+            <NavItem
+              icon={<Shield className="w-3.5 h-3.5" />}
+              label="Submission Ops"
+              active={activeNavId === 'submission-workspace'}
+              onClick={() => onNavigate?.('submission-workspace')}
             />
           </WorkspaceGroup>
 
