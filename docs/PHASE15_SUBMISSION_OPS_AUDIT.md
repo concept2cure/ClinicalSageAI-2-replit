@@ -9,19 +9,19 @@
 
 ## 1. Drawer Consolidation — IMPLEMENTED
 
-### Before: 9 Drawers
+### Before → After Mapping
 
-| #   | Drawer      | Data Source Hook           | Status     |
-| --- | ----------- | -------------------------- | ---------- |
-| 1   | Readiness   | `useReadiness()`           | **Kept**   |
-| 2   | Bottlenecks | `useApprovalBottlenecks()` | **Kept**   |
-| 3   | Hotspots    | `useHotspots()`            | **Merged** |
-| 4   | Workload    | `useWorkload()`            | **Merged** |
-| 5   | Timeline    | `useDueSoon()`             | **Merged** |
-| 6   | Policies    | `usePolicies()`            | **Merged** |
-| 7   | Milestones  | `useMilestones()`          | **Merged** |
-| 8   | Digests     | `useDigests()`             | **Merged** |
-| 9   | Automation  | `useAutomationRuns()`      | **Merged** |
+| Old Drawer (removed) | Merged Into →                                     | Rationale                                          |
+| -------------------- | ------------------------------------------------- | -------------------------------------------------- |
+| Hotspots             | **Health & Trends** (`health_trends`)             | "Where should I look next?" analytics trio         |
+| Workload             | **Health & Trends** (`health_trends`)             | Capacity + churn + deadlines consumed together     |
+| Timeline             | **Health & Trends** (`health_trends`)             | Due-soon items complement hotspot/workload context |
+| Policies             | **Policies & Milestones** (`policies_milestones`) | Infrequent admin config — combined with milestones |
+| Milestones           | **Policies & Milestones** (`policies_milestones`) | Gate definitions pair naturally with policy rules  |
+| Digests              | **Activity** (`activity`)                         | Historical/log data — notification feed            |
+| Automation           | **Activity** (`activity`)                         | Historical/log data — sweep run history            |
+
+Readiness and Bottlenecks were **kept as standalone drawers** — they answer distinct core operational questions ("how ready are we?" vs "who is blocking whom?") and are used every session.
 
 ### After: 5 Drawers (LIVE IN CODE)
 
@@ -47,54 +47,87 @@
 
 ## 2. Role Presets — WIRED TO LIVE BEHAVIOR
 
-### Problem Found
+### Problem Found & Fixed
 
-`getQuickViewFilters()` was defined and exported but **never called** in `processedItems`. Role presets had zero behavioral effect — selecting a quick-view preset changed a label but did NOT filter, sort, or group any data. This was dead code.
+`getQuickViewFilters()` was defined but **never called** — role presets were dead code. Now `processedItems` calls it on every render. Selecting a role preset materially changes what the user sees: different items, different order, different emphasis.
 
-### Fix Implemented
+### Role Presets Verified (4 required + 6 additional)
 
-`processedItems` useMemo now calls `getQuickViewFilters(quickView)` and applies:
+**Regulatory Lead** (`reg_lead`)
 
-| Filter Property     | Effect                                                                   |
-| ------------------- | ------------------------------------------------------------------------ |
-| `filterSeverity`    | Filters blockers to only matching severity levels                        |
-| `filterStatus`      | Filters by status or `waitingState`                                      |
-| `filterSection`     | Filters by `sectionKey` or `documentFamily` substring match              |
-| `filterOwnership`   | Filters by `ownershipType` field                                         |
-| `filterIndustry`    | Filters by `industry` field (respects `isDevice` flag)                   |
-| `filterBlockerType` | Filters by `blockerType` or `waitingState`                               |
-| `sortBy`            | Overrides default sort: `severity` / `overdue` / `readiness` / `handoff` |
+- **Sees**: Only critical/high-severity blockers in `blocked` or `at_risk` status
+- **Sorted by**: Severity (critical first) — drives triage priority
+- **Domain behavior**: A Reg Lead's daily question is "what critical/high items are blocked or at risk right now?" This preset strips away medium/low noise and surfaces only escalation-worthy blockers. Stage labels show pharma vocabulary ("Sponsor Approval Pending", "QA / Compliance Review").
 
-### Role Presets Verified (4 required)
+**CMC Lead** (`cmc_lead`)
 
-| Preset        | Filters Applied                           | Sort Mode   | Behavioral Effect                                         |
-| ------------- | ----------------------------------------- | ----------- | --------------------------------------------------------- |
-| **Reg Lead**  | `filterStatus`, `filterSection`           | `severity`  | Shows only items in regulatory scope, sorted by urgency   |
-| **CMC Lead**  | `filterSection: 'cmc'`, `filterOwnership` | `severity`  | Narrows to CMC-owned quality/chemistry blockers           |
-| **CRO PM**    | `filterOwnership`, `filterBlockerType`    | `handoff`   | Shows CRO-owned items sorted by handoff priority          |
-| **Device RA** | `filterIndustry: 'medtech'`               | `readiness` | Filters to medtech-only blockers, sorted by readiness gap |
+- **Sees**: Only blockers where `sectionKey` or `documentFamily` contains `module3_cmc` — i.e., drug substance (3.2.S), drug product (3.2.P), specifications, stability, manufacturing docs
+- **Sorted by**: Severity
+- **Domain behavior**: A CMC Lead works exclusively in Module 3 (Quality). This preset hides all Module 2 summaries, Module 4 nonclinical, Module 5 clinical, and admin items. The list becomes a pure CMC punch list: batch analysis gaps, stability protocol blockers, control strategy issues.
+
+**CRO PM** (`cro_pm`)
+
+- **Sees**: Only blockers owned by CRO (`ownershipType === 'cro'`) — CRO-authored CSRs, CRO clinical data, CRO stats packages
+- **Sorted by**: Handoff priority — items are ranked by handoff urgency: `blocked_critical_findings` → `blocked_evidence_gap` → `waiting_cro_author` → `waiting_cmc_lead`
+- **Domain behavior**: A CRO PM needs to know which items under their org's ownership need action, ordered by handoff deadline. This preset filters out all sponsor-authored and vendor-authored artifacts, showing only CRO's deliverables sorted by handoff bottleneck severity.
+
+**Device RA** (`device_ra`)
+
+- **Sees**: Only blockers in the `medtech` industry — 510(k), De Novo, PMA, CER, technical file items
+- **Sorted by**: Readiness % (lowest first) — shows biggest gaps at top
+- **Domain behavior**: A Device RA needs device-specific blockers (V&V bench testing, biocompatibility, GSPR compliance), not pharma IND/NDA items. Stage labels switch to device vocabulary ("Technical Drafting" not "Drafting", "Evidence Review" not "SME Review", "Final RA Review" not "Final Approval"). Blockers are grouped by device workstream (risk management, software/cyber, labeling) rather than CTD module.
+
+**Additional presets** (wired, each with distinct behavior):
+
+| Preset                   | Filter                       | Sort        | Domain Emphasis                                            |
+| ------------------------ | ---------------------------- | ----------- | ---------------------------------------------------------- |
+| **Submission Manager**   | `blocked` + `at_risk` status | `overdue`   | SLA-focused: overdue items first for escalation            |
+| **Medical Writer**       | `authored` ownership         | `age`       | My authored docs, oldest-untouched first                   |
+| **CER / Clinical Eval**  | `cer` section                | `severity`  | CER chapters only (scope, literature, benefit-risk, PMCF)  |
+| **QA / Compliance**      | `compliance_finding` blocker | `severity`  | Only compliance/audit findings, not operational blockers   |
+| **Executive**            | `blocked` status only        | `readiness` | Strategic view: only fully blocked items, by readiness gap |
+| **Publishing / Release** | `publish_blocked` blocker    | `severity`  | Only publish-blocked items that prevent release            |
 
 ---
 
 ## 3. Package Modes — WIRED TO LIVE BEHAVIOR
 
-### Problem Found
+### Problem Found & Fixed
 
-`getDefaultGrouping()` was defined and exported but **never called** in `processedItems`. Package modes had zero behavioral effect — switching packages changed a label but did NOT group items differently. This was dead code.
+`getDefaultGrouping()` was defined but **never called** — switching packages was cosmetic. Now `processedItems` calls it on every render. Selecting a different package type materially changes how blockers are grouped, what labels appear, and which approval vocabulary is used.
 
-### Fix Implemented
+### Package Modes Verified (3 required + 3 additional)
 
-`processedItems` useMemo now calls `getDefaultGrouping(selectedPkg?.packageFamily)` and groups blocker items accordingly.
+**IND / CTA / CTD packages** (`ind`, `cta`, `nda`, `bla`, `pre_ind`, `amendment`, `meeting_package`, `scientific_advice`, `interact`)
 
-### Package Modes Verified (3 required)
+- **Grouping**: `ctd_module` — blockers grouped by CTD Module (Module 1 Admin → Module 2 Summaries → Module 3 CMC → Module 4 Nonclinical → Module 5 Clinical)
+- **Labels**: Pharma vocabulary — "Drafting", "SME Review", "QA / Compliance Review", "Sponsor Approval Pending", "Published / Locked"
+- **Approval-class emphasis**: Sponsor review → QA compliance review → sponsor approval pending → final approval → publishing prep. The approval chain is sponsor-centric with QA gate.
+- **Default filter emphasis**: Section keys match CTD hierarchy (`module1`, `module2`, `module3_cmc`, `module4`, `module5_clinical`). Document families show pharma doc types: protocol, CSR, IB, drug substance, stability report.
 
-| Package Mode      | Package Families                                    | Grouping Mode       | Group Key Source                                                  |
-| ----------------- | --------------------------------------------------- | ------------------- | ----------------------------------------------------------------- |
-| **IND/CTA/CTD**   | `ind`, `cta`, `nda`, `bla`, `pre_ind`, `amendment`+ | `ctd_module`        | `item.sectionLabel \|\| item.ctdModule \|\| item.documentFamily`  |
-| **510(k)/Device** | `510k`, `pma`, `de_novo`, `mdr`, `udi`+             | `device_workstream` | `item.workstream \|\| item.sectionLabel \|\| item.blockerType`    |
-| **CER**           | `cer`, `pmcf`, `sscp`, `pms_plan`                   | `cer_chapter`       | `item.cerChapter \|\| item.sectionLabel \|\| item.documentFamily` |
+**510(k) / Device packages** (`fiveten_k`, `de_novo`, `pma`, `pma_supplement`)
 
-Additional grouping modes: `evidence_family`, `cmc_subsection`, `deficiency_area`. Default fallback: `severity`.
+- **Grouping**: `device_workstream` — blockers grouped by workstream (Device Description → Predicate Comparison → Risk Management → Software/Cyber → V&V Bench → Biocompatibility → CER/Clinical → Standards)
+- **Labels**: Device vocabulary — "Technical Drafting" (not "Drafting"), "Evidence Review" (not "SME Review"), "Standards / Compliance Review" (not "QA / Compliance Review"), "Final RA Review" (not "Sponsor Approval Pending"), "Submission Ready" (not "Published / Locked")
+- **Approval-class emphasis**: Design/risk review → standards/compliance review → final RA review. The approval chain is design-control-centric with RA gate, reflecting DHF workflow.
+- **Default filter emphasis**: Items naturally group around device evidence workstreams. Blocker types include device-specific categories (design verification gap, predicate comparison deficiency, GSPR non-conformance).
+
+**CER packages** (`cer`, `cer_update`)
+
+- **Grouping**: `cer_chapter` — blockers grouped by CER chapter structure (Scope & Plan → Device Description → State of the Art → Clinical Data → Literature Review → Benefit-Risk → Conclusions → PMCF Plan)
+- **Labels**: Device vocabulary (CER is medtech-industry)
+- **Approval-class emphasis**: CER review chain — evidence review → CER-specific review gates → final RA review. PMCF plan readiness is a distinct gate.
+- **Default filter emphasis**: CER section keys map to MEDDEV 2.7/1 Rev 4 structure. Literature review and clinical data sections are typically the highest-blocker chapters.
+
+**Additional package grouping modes** (wired, triggered by specific package families):
+
+| Package Families                          | Grouping Mode     | What Changes                                                            |
+| ----------------------------------------- | ----------------- | ----------------------------------------------------------------------- |
+| `cmc_variation`, `cmc_supplement`         | `cmc_subsection`  | Groups by CMC subsection (3.2.S/3.2.P/specs/stability/manufacturing)    |
+| `ivdr_perf_eval`, `ivdr_td`, `ivdr_pms`   | `evidence_family` | Groups by IVD evidence family (analytical/clinical/scientific validity) |
+| `response_package`, `deficiency_response` | `deficiency_area` | Groups by deficiency area from agency questions                         |
+
+**Fallback**: Any unrecognized package family defaults to `severity`-based grouping.
 
 ---
 
