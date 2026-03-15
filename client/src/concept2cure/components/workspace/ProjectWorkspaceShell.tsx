@@ -39,6 +39,7 @@ import { GoldenDossierVerificationPanel } from './GoldenDossierVerificationPanel
 import { ProgramTwinPanel } from './ProgramTwinPanel';
 import { SubmissionAppsPanel } from './SubmissionAppsPanel';
 import { ReviewPulseDashboard } from './ReviewPulseDashboard';
+import { NotificationCenter } from './NotificationCenter';
 import {
   ChevronLeft,
   Loader2,
@@ -994,6 +995,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             >
               <Activity className="w-3 h-3" />
             </button>
+            <NotificationCenter projectId={projectId} />
           </div>
         </div>
       )}

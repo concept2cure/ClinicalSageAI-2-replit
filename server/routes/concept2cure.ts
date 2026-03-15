@@ -59,6 +59,8 @@ import {
   concept2cureThreadComments,
   concept2cureReviewTasks,
   projectActivities,
+  c2cProjectWorkItems,
+  concept2cureNotifications,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 
@@ -6563,6 +6565,42 @@ router.post(
         userAgent: req.headers['user-agent'] || undefined,
       });
 
+      // ── PM work item: project thread as open work ──
+      await upsertProjectWorkItem({
+        orgId: organizationId,
+        projectId: projectDbId,
+        sourceType: 'review_thread',
+        sourceId: thread.id,
+        artifactId: artifact.id,
+        ctdSection: artifact.ctdSection || null,
+        ownerId: assigneeId ? Number(assigneeId) : null,
+        ownerName: resolvedAssigneeName,
+        title: `Thread: ${title.trim()}`,
+        status: 'open',
+        priority: priority || null,
+        dueAt: req.body.dueAt || null,
+        blockerType: 'unresolved_review',
+      });
+
+      // ── Notification: assignment ──
+      if (assigneeId && Number(assigneeId) !== userId) {
+        await createNotification({
+          orgId: organizationId,
+          projectId: projectDbId,
+          artifactId: artifact.id,
+          threadId: thread.id,
+          recipientUserId: Number(assigneeId),
+          recipientName: resolvedAssigneeName,
+          actorUserId: userId,
+          actorName: actorName,
+          notificationType: 'assignment',
+          title: `Assigned: "${title.trim()}"`,
+          body: `${actorName} assigned you a review thread on "${artifact.title}".`,
+          severity: priority === 'high' ? 'warning' : 'info',
+          dueAt: req.body.dueAt || null,
+        });
+      }
+
       return sendSuccess(res, {
         threadId: thread.threadId,
         title: thread.title,
@@ -6749,6 +6787,36 @@ router.post('/review-threads/:threadId/resolve', async (req: Request, res: Respo
       ipAddress: getClientIp(req),
     });
 
+    // ── PM work item: close linked item ──
+    await upsertProjectWorkItem({
+      orgId: organizationId,
+      projectId: thread.projectId,
+      sourceType: 'review_thread',
+      sourceId: thread.id,
+      title: `Thread: ${thread.title}`,
+      status: 'resolved',
+    });
+
+    // ── Suppress stale notifications ──
+    await suppressNotificationsForSource({ threadId: thread.id });
+
+    // ── Notify thread creator / assignee ──
+    if (thread.createdById && thread.createdById !== userId) {
+      await createNotification({
+        orgId: organizationId,
+        projectId: thread.projectId,
+        artifactId: thread.artifactId,
+        threadId: thread.id,
+        recipientUserId: thread.createdById,
+        recipientName: thread.createdByName,
+        actorUserId: userId,
+        actorName,
+        notificationType: 'thread_resolved',
+        title: `Resolved: "${thread.title}"`,
+        body: `${actorName} resolved the review thread "${thread.title}".`,
+      });
+    }
+
     return sendSuccess(res, {
       threadId: thread.threadId,
       status: 'resolved',
@@ -6847,6 +6915,37 @@ router.post('/review-threads/:threadId/reopen', async (req: Request, res: Respon
       details: { threadId: thread.threadId, artifactId: thread.artifactId },
       ipAddress: getClientIp(req),
     });
+
+    // ── PM work item: reopen linked item ──
+    await upsertProjectWorkItem({
+      orgId: organizationId,
+      projectId: thread.projectId,
+      sourceType: 'review_thread',
+      sourceId: thread.id,
+      artifactId: thread.artifactId,
+      title: `Thread: ${thread.title}`,
+      status: 'open',
+      priority: thread.priority || null,
+      blockerType: 'unresolved_review',
+    });
+
+    // ── Notify assignee that thread was reopened ──
+    if (thread.assigneeId && thread.assigneeId !== userId) {
+      await createNotification({
+        orgId: organizationId,
+        projectId: thread.projectId,
+        artifactId: thread.artifactId,
+        threadId: thread.id,
+        recipientUserId: thread.assigneeId,
+        recipientName: thread.assigneeName,
+        actorUserId: userId,
+        actorName,
+        notificationType: 'assignment',
+        title: `Reopened: "${thread.title}"`,
+        body: `${actorName} reopened the review thread "${thread.title}".`,
+        severity: 'warning',
+      });
+    }
 
     return sendSuccess(res, {
       threadId: thread.threadId,
@@ -7006,6 +7105,59 @@ router.post('/review-threads/:threadId/comments', async (req: Request, res: Resp
       ipAddress: getClientIp(req),
       details: { threadId: thread.threadId, commentId: commentIdStr, kind: commentKind },
     });
+
+    // ── Notification: reply to thread assignee / creator ──
+    const notifyTargets = new Set<number>();
+    if (thread.assigneeId && thread.assigneeId !== userId) notifyTargets.add(thread.assigneeId);
+    if (thread.createdById && thread.createdById !== userId) notifyTargets.add(thread.createdById);
+
+    for (const targetId of notifyTargets) {
+      if (commentKind === 'request_changes') {
+        await createNotification({
+          orgId: organizationId,
+          projectId: thread.projectId,
+          artifactId: thread.artifactId,
+          threadId: thread.id,
+          recipientUserId: targetId,
+          actorUserId: userId,
+          actorName,
+          notificationType: 'changes_requested',
+          title: `Changes requested: "${thread.title}"`,
+          body: `${actorName} requested changes on thread "${thread.title}".`,
+          severity: 'warning',
+        });
+      } else {
+        await createNotification({
+          orgId: organizationId,
+          projectId: thread.projectId,
+          artifactId: thread.artifactId,
+          threadId: thread.id,
+          recipientUserId: targetId,
+          actorUserId: userId,
+          actorName,
+          notificationType: 'thread_reply',
+          title: `Reply: "${thread.title}"`,
+          body: `${actorName} replied to thread "${thread.title}".`,
+        });
+      }
+    }
+
+    // ── PM work item: if request_changes, create/update blocker ──
+    if (commentKind === 'request_changes') {
+      await upsertProjectWorkItem({
+        orgId: organizationId,
+        projectId: thread.projectId,
+        sourceType: 'requested_changes',
+        sourceId: thread.id,
+        artifactId: thread.artifactId,
+        title: `Changes requested: ${thread.title}`,
+        status: 'open',
+        priority: thread.priority || 'medium',
+        blockerType: 'requested_changes',
+        ownerId: thread.assigneeId || thread.createdById,
+        ownerName: thread.assigneeName || thread.createdByName,
+      });
+    }
 
     return sendSuccess(res, {
       commentId: inserted.commentId,
@@ -7336,6 +7488,50 @@ router.post(
         userAgent: req.headers['user-agent'] || undefined,
       });
 
+      // ── PM work item: project task as open work ──
+      await upsertProjectWorkItem({
+        orgId: organizationId,
+        projectId: projectDbId,
+        sourceType: 'review_task',
+        sourceId: inserted.id,
+        artifactId: artifact.id,
+        ctdSection: artifact.ctdSection || null,
+        ownerId: assignedToId ? Number(assignedToId) : null,
+        ownerName: resolvedAssigneeName,
+        title: `Task: ${title.trim()}`,
+        status: 'open',
+        priority: req.body.priority || null,
+        dueAt: dueAt || null,
+        blockerType:
+          resolvedType === 'change_request'
+            ? 'requested_changes'
+            : resolvedType === 'approval_task'
+              ? 'approval_pending'
+              : 'unresolved_review',
+      });
+
+      // ── Notification: assignment ──
+      if (assignedToId && Number(assignedToId) !== userId) {
+        await createNotification({
+          orgId: organizationId,
+          projectId: projectDbId,
+          artifactId: artifact.id,
+          reviewTaskId: inserted.id,
+          recipientUserId: Number(assignedToId),
+          recipientName: resolvedAssigneeName,
+          actorUserId: userId,
+          actorName,
+          notificationType: resolvedType === 'approval_task' ? 'approval_needed' : 'assignment',
+          title:
+            resolvedType === 'approval_task'
+              ? `Approval needed: "${title.trim()}"`
+              : `Assigned: "${title.trim()}"`,
+          body: `${actorName} assigned you a ${resolvedType.replace('_', ' ')} on "${artifact.title}".`,
+          severity: resolvedType === 'change_request' ? 'warning' : 'info',
+          dueAt: dueAt || null,
+        });
+      }
+
       return sendSuccess(res, {
         taskId: inserted.taskId,
         title: inserted.title,
@@ -7519,6 +7715,36 @@ router.post('/review-tasks/:taskId/resolve', async (req: Request, res: Response)
       ipAddress: getClientIp(req),
     });
 
+    // ── PM work item: close linked item ──
+    await upsertProjectWorkItem({
+      orgId: organizationId,
+      projectId: task.projectId,
+      sourceType: 'review_task',
+      sourceId: task.id,
+      title: `Task: ${task.title}`,
+      status: 'resolved',
+    });
+
+    // ── Suppress stale notifications ──
+    await suppressNotificationsForSource({ reviewTaskId: task.id });
+
+    // ── Notify task creator ──
+    if (task.createdById && task.createdById !== userId) {
+      await createNotification({
+        orgId: organizationId,
+        projectId: task.projectId,
+        artifactId: task.artifactId,
+        reviewTaskId: task.id,
+        recipientUserId: task.createdById,
+        recipientName: task.createdByName,
+        actorUserId: userId,
+        actorName,
+        notificationType: 'task_resolved',
+        title: `Resolved: "${task.title}"`,
+        body: `${actorName} resolved the review task "${task.title}".`,
+      });
+    }
+
     return sendSuccess(res, {
       taskId: task.taskId,
       status: 'resolved',
@@ -7590,6 +7816,40 @@ router.post('/review-tasks/:taskId/reopen', async (req: Request, res: Response) 
       ipAddress: getClientIp(req),
       details: { taskId: task.taskId },
     });
+
+    const actorName = (req as any).userName || req.userEmail || 'unknown';
+
+    // ── PM work item: reopen linked item ──
+    await upsertProjectWorkItem({
+      orgId: organizationId,
+      projectId: task.projectId,
+      sourceType: 'review_task',
+      sourceId: task.id,
+      artifactId: task.artifactId,
+      title: `Task: ${task.title}`,
+      status: 'open',
+      priority: task.priority || null,
+      dueAt: task.dueAt || null,
+      blockerType: task.taskType === 'change_request' ? 'requested_changes' : 'unresolved_review',
+    });
+
+    // ── Notify assignee that task was reopened ──
+    if (task.assignedToId && task.assignedToId !== userId) {
+      await createNotification({
+        orgId: organizationId,
+        projectId: task.projectId,
+        artifactId: task.artifactId,
+        reviewTaskId: task.id,
+        recipientUserId: task.assignedToId,
+        recipientName: task.assignedToName,
+        actorUserId: userId,
+        actorName,
+        notificationType: 'assignment',
+        title: `Reopened: "${task.title}"`,
+        body: `${actorName} reopened the review task "${task.title}".`,
+        severity: 'warning',
+      });
+    }
 
     return sendSuccess(res, {
       taskId: task.taskId,
@@ -7674,11 +7934,38 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
       )
       .orderBy(concept2cureReviewTasks.dueAt, desc(concept2cureReviewTasks.updatedAt));
 
+    // Unread notifications for current user
+    const [unreadCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.orgId, organizationId),
+          eq(concept2cureNotifications.recipientUserId, userId),
+          eq(concept2cureNotifications.status, 'unread')
+        )
+      );
+
+    const now = new Date();
+    const overdueTasks = myTasks.filter(t => t.dueAt && new Date(t.dueAt) < now);
+    const dueSoonTasks = myTasks.filter(t => {
+      if (!t.dueAt) return false;
+      const d = new Date(t.dueAt);
+      return d >= now && d <= new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    });
+    const changeRequestTasks = myTasks.filter(t => t.taskType === 'change_request');
+    const approvalTasks = myTasks.filter(t => t.taskType === 'approval_task');
+
     return sendSuccess(res, {
       threads: myThreads,
       tasks: myTasks,
       totalThreads: myThreads.length,
       totalTasks: myTasks.length,
+      unreadNotifications: unreadCount?.count || 0,
+      overdueTasks: overdueTasks.length,
+      dueSoonTasks: dueSoonTasks.length,
+      changeRequests: changeRequestTasks.length,
+      approvalsNeeded: approvalTasks.length,
     });
   } catch (error: any) {
     logConcept2cureError('my review queue', error);
@@ -7760,12 +8047,64 @@ router.get('/projects/:projectId/reviews/project-queue', async (req: Request, re
       )
       .orderBy(concept2cureReviewTasks.dueAt, desc(concept2cureReviewTasks.updatedAt));
 
+    const now = new Date();
+    const overdueProjectTasks = projectTasks.filter(t => t.dueAt && new Date(t.dueAt) < now);
+
+    // Escalated items count
+    const [escalatedCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.orgId, organizationId),
+          eq(concept2cureNotifications.projectId, projectDbId),
+          sql`${concept2cureNotifications.escalationLevel} >= 1`,
+          eq(concept2cureNotifications.status, 'unread')
+        )
+      );
+
+    // Group by owner
+    const ownerMap = new Map<string, { threads: number; tasks: number; overdue: number }>();
+    for (const t of projectThreads) {
+      const key = t.assigneeName || 'Unassigned';
+      if (!ownerMap.has(key)) ownerMap.set(key, { threads: 0, tasks: 0, overdue: 0 });
+      ownerMap.get(key)!.threads++;
+    }
+    for (const t of projectTasks) {
+      const key = t.assignedToName || 'Unassigned';
+      if (!ownerMap.has(key)) ownerMap.set(key, { threads: 0, tasks: 0, overdue: 0 });
+      ownerMap.get(key)!.tasks++;
+      if (t.dueAt && new Date(t.dueAt) < now) ownerMap.get(key)!.overdue++;
+    }
+
+    // Group by artifact
+    const artifactMap = new Map<string, { title: string; threads: number; tasks: number }>();
+    for (const t of projectThreads) {
+      const key = t.artifactId;
+      if (!artifactMap.has(key))
+        artifactMap.set(key, { title: t.artifactTitle, threads: 0, tasks: 0 });
+      artifactMap.get(key)!.threads++;
+    }
+    for (const t of projectTasks) {
+      const key = t.artifactId;
+      if (!artifactMap.has(key))
+        artifactMap.set(key, { title: t.artifactTitle, threads: 0, tasks: 0 });
+      artifactMap.get(key)!.tasks++;
+    }
+
     return sendSuccess(res, {
       projectId: req.params.projectId,
       threads: projectThreads,
       tasks: projectTasks,
       totalThreads: projectThreads.length,
       totalTasks: projectTasks.length,
+      overdueTasks: overdueProjectTasks.length,
+      escalatedItems: escalatedCount?.count || 0,
+      byOwner: Array.from(ownerMap.entries()).map(([name, data]) => ({ name, ...data })),
+      byArtifact: Array.from(artifactMap.entries()).map(([artifactId, data]) => ({
+        artifactId,
+        ...data,
+      })),
     });
   } catch (error: any) {
     logConcept2cureError('project review queue', error, { projectId: req.params.projectId });
@@ -8019,6 +8358,822 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
   } catch (error: any) {
     logConcept2cureError('review pulse', error, { projectId: req.params.projectId });
     return sendError(res, 500, 'Failed to generate review pulse');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHASE 13 FULL — PM WORK ITEMS, NOTIFICATIONS & ESCALATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Creates or updates a PM work item projected from a document review object.
+ */
+async function upsertProjectWorkItem(params: {
+  orgId: number;
+  projectId: number;
+  sourceType: string;
+  sourceId: number;
+  artifactId?: number | null;
+  versionId?: number | null;
+  ctdSection?: string | null;
+  ownerId?: number | null;
+  ownerName?: string | null;
+  title: string;
+  status: string;
+  priority?: string | null;
+  dueAt?: Date | string | null;
+  blockerType?: string | null;
+}): Promise<void> {
+  try {
+    const existing = await db
+      .select()
+      .from(c2cProjectWorkItems)
+      .where(
+        and(
+          eq(c2cProjectWorkItems.sourceType, params.sourceType),
+          eq(c2cProjectWorkItems.sourceId, params.sourceId),
+          eq(c2cProjectWorkItems.orgId, params.orgId)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(c2cProjectWorkItems)
+        .set({
+          title: params.title,
+          status: params.status,
+          priority: params.priority || null,
+          dueAt: params.dueAt ? new Date(params.dueAt as string) : null,
+          ownerId: params.ownerId || null,
+          ownerName: params.ownerName || null,
+          blockerType: params.blockerType || null,
+          resolvedAt:
+            params.status === 'resolved' || params.status === 'closed' ? new Date() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(c2cProjectWorkItems.id, existing[0].id));
+    } else {
+      const workItemId = `pwi_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      await db.insert(c2cProjectWorkItems).values({
+        workItemId,
+        orgId: params.orgId,
+        projectId: params.projectId,
+        sourceType: params.sourceType,
+        sourceId: params.sourceId,
+        artifactId: params.artifactId || null,
+        versionId: params.versionId || null,
+        ctdSection: params.ctdSection || null,
+        ownerId: params.ownerId || null,
+        ownerName: params.ownerName || null,
+        title: params.title,
+        status: params.status,
+        priority: params.priority || null,
+        dueAt: params.dueAt ? new Date(params.dueAt as string) : null,
+        blockerType: params.blockerType || null,
+      });
+    }
+  } catch (err) {
+    logger.warn('Failed to upsert PM work item', { error: (err as Error).message });
+  }
+}
+
+/**
+ * Creates a notification for a user.
+ */
+async function createNotification(params: {
+  orgId: number;
+  projectId?: number | null;
+  artifactId?: number | null;
+  versionId?: number | null;
+  threadId?: number | null;
+  reviewTaskId?: number | null;
+  projectWorkItemId?: number | null;
+  recipientUserId: number;
+  recipientName?: string | null;
+  actorUserId?: number | null;
+  actorName?: string | null;
+  notificationType: string;
+  title: string;
+  body: string;
+  severity?: string;
+  actionUrl?: string | null;
+  dueAt?: Date | string | null;
+}): Promise<void> {
+  try {
+    // Avoid duplicate unread notifications of the same type for the same source
+    const existing = await db
+      .select({ id: concept2cureNotifications.id })
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.recipientUserId, params.recipientUserId),
+          eq(concept2cureNotifications.notificationType, params.notificationType),
+          eq(concept2cureNotifications.status, 'unread'),
+          params.threadId
+            ? eq(concept2cureNotifications.threadId, params.threadId)
+            : params.reviewTaskId
+              ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
+              : sql`true`
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) return; // suppress duplicate
+
+    const notifId = `ntf_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+    await db.insert(concept2cureNotifications).values({
+      notificationId: notifId,
+      orgId: params.orgId,
+      projectId: params.projectId || null,
+      artifactId: params.artifactId || null,
+      versionId: params.versionId || null,
+      threadId: params.threadId || null,
+      reviewTaskId: params.reviewTaskId || null,
+      projectWorkItemId: params.projectWorkItemId || null,
+      recipientUserId: params.recipientUserId,
+      recipientName: params.recipientName || null,
+      actorUserId: params.actorUserId || null,
+      actorName: params.actorName || null,
+      notificationType: params.notificationType,
+      title: params.title,
+      body: params.body,
+      severity: params.severity || 'info',
+      status: 'unread',
+      actionUrl: params.actionUrl || null,
+      dueAt: params.dueAt ? new Date(params.dueAt as string) : null,
+      lastNotifiedAt: new Date(),
+      escalationLevel: 0,
+    });
+  } catch (err) {
+    logger.warn('Failed to create notification', { error: (err as Error).message });
+  }
+}
+
+/**
+ * Suppresses (dismisses) all unread notifications for a resolved source.
+ */
+async function suppressNotificationsForSource(params: {
+  threadId?: number | null;
+  reviewTaskId?: number | null;
+}): Promise<void> {
+  try {
+    const condition = params.threadId
+      ? eq(concept2cureNotifications.threadId, params.threadId)
+      : params.reviewTaskId
+        ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
+        : null;
+
+    if (!condition) return;
+
+    await db
+      .update(concept2cureNotifications)
+      .set({
+        status: 'dismissed',
+        dismissedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(condition, eq(concept2cureNotifications.status, 'unread')));
+  } catch (err) {
+    logger.warn('Failed to suppress notifications', { error: (err as Error).message });
+  }
+}
+
+// ── Notification API Routes ──────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/notifications/my
+ * Returns the current user's notifications, newest first.
+ */
+router.get('/notifications/my', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const statusFilter = req.query.status as string | undefined;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const conditions = [
+      eq(concept2cureNotifications.orgId, organizationId),
+      eq(concept2cureNotifications.recipientUserId, userId),
+    ];
+    if (statusFilter && ['unread', 'read', 'dismissed'].includes(statusFilter)) {
+      conditions.push(eq(concept2cureNotifications.status, statusFilter));
+    }
+
+    const notifs = await db
+      .select()
+      .from(concept2cureNotifications)
+      .where(and(...conditions))
+      .orderBy(desc(concept2cureNotifications.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.orgId, organizationId),
+          eq(concept2cureNotifications.recipientUserId, userId),
+          eq(concept2cureNotifications.status, 'unread')
+        )
+      );
+
+    return sendSuccess(res, {
+      notifications: notifs,
+      unreadCount: countResult?.count || 0,
+      total: notifs.length,
+      offset,
+    });
+  } catch (error: any) {
+    logConcept2cureError('get my notifications', error);
+    return sendError(res, 500, 'Failed to fetch notifications');
+  }
+});
+
+/**
+ * POST /api/concept2cure/notifications/:id/read
+ */
+router.post('/notifications/:id/read', async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const notifId = parseInt(req.params.id, 10);
+    if (isNaN(notifId)) return sendError(res, 400, 'Invalid notification ID');
+
+    const [notif] = await db
+      .select()
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.id, notifId),
+          eq(concept2cureNotifications.recipientUserId, userId)
+        )
+      )
+      .limit(1);
+
+    if (!notif) return sendError(res, 404, 'Notification not found');
+
+    await db
+      .update(concept2cureNotifications)
+      .set({ status: 'read', readAt: new Date(), updatedAt: new Date() })
+      .where(eq(concept2cureNotifications.id, notifId));
+
+    return sendSuccess(res, { id: notifId, status: 'read' });
+  } catch (error: any) {
+    logConcept2cureError('mark notification read', error);
+    return sendError(res, 500, 'Failed to mark notification as read');
+  }
+});
+
+/**
+ * POST /api/concept2cure/notifications/:id/dismiss
+ */
+router.post('/notifications/:id/dismiss', async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const notifId = parseInt(req.params.id, 10);
+    if (isNaN(notifId)) return sendError(res, 400, 'Invalid notification ID');
+
+    const [notif] = await db
+      .select()
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.id, notifId),
+          eq(concept2cureNotifications.recipientUserId, userId)
+        )
+      )
+      .limit(1);
+
+    if (!notif) return sendError(res, 404, 'Notification not found');
+
+    await db
+      .update(concept2cureNotifications)
+      .set({ status: 'dismissed', dismissedAt: new Date(), updatedAt: new Date() })
+      .where(eq(concept2cureNotifications.id, notifId));
+
+    return sendSuccess(res, { id: notifId, status: 'dismissed' });
+  } catch (error: any) {
+    logConcept2cureError('dismiss notification', error);
+    return sendError(res, 500, 'Failed to dismiss notification');
+  }
+});
+
+/**
+ * POST /api/concept2cure/notifications/mark-all-read
+ */
+router.post('/notifications/mark-all-read', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+
+    const result = await db
+      .update(concept2cureNotifications)
+      .set({ status: 'read', readAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(concept2cureNotifications.orgId, organizationId),
+          eq(concept2cureNotifications.recipientUserId, userId),
+          eq(concept2cureNotifications.status, 'unread')
+        )
+      )
+      .returning({ id: concept2cureNotifications.id });
+
+    return sendSuccess(res, { markedRead: result.length });
+  } catch (error: any) {
+    logConcept2cureError('mark all notifications read', error);
+    return sendError(res, 500, 'Failed to mark all notifications as read');
+  }
+});
+
+/**
+ * GET /api/concept2cure/notifications/project
+ * Project-scoped notifications for admin/review leads.
+ */
+router.get('/notifications/project', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = parseInt(req.query.projectId as string, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'projectId is required');
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+
+    const notifs = await db
+      .select()
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.orgId, organizationId),
+          eq(concept2cureNotifications.projectId, projectId)
+        )
+      )
+      .orderBy(desc(concept2cureNotifications.createdAt))
+      .limit(limit);
+
+    return sendSuccess(res, { notifications: notifs });
+  } catch (error: any) {
+    logConcept2cureError('get project notifications', error);
+    return sendError(res, 500, 'Failed to fetch project notifications');
+  }
+});
+
+// ── PM Work Items Routes ─────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/work-items
+ * Returns all PM work items for a project.
+ */
+router.get('/projects/:projectId/work-items', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const projectDbId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+    const statusFilter = req.query.status as string | undefined;
+    const conditions = [
+      eq(c2cProjectWorkItems.orgId, organizationId),
+      eq(c2cProjectWorkItems.projectId, projectDbId),
+    ];
+    if (statusFilter && ['open', 'in_progress', 'resolved', 'closed'].includes(statusFilter)) {
+      conditions.push(eq(c2cProjectWorkItems.status, statusFilter));
+    }
+
+    const items = await db
+      .select()
+      .from(c2cProjectWorkItems)
+      .where(and(...conditions))
+      .orderBy(desc(c2cProjectWorkItems.createdAt));
+
+    return sendSuccess(res, { workItems: items });
+  } catch (error: any) {
+    logConcept2cureError('get work items', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to fetch work items');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/readiness-summary
+ * Full project readiness aggregation from review state.
+ */
+router.get('/projects/:projectId/readiness-summary', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const projectDbId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+    const now = new Date();
+
+    // Artifacts
+    const allArtifacts = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectDbId),
+          eq(concept2cureArtifacts.organizationId, organizationId),
+          isNull(concept2cureArtifacts.deletedAt)
+        )
+      );
+
+    const totalArtifacts = allArtifacts.length;
+    const draftCount = allArtifacts.filter(a => (a.status || 'draft') === 'draft').length;
+    const reviewCount = allArtifacts.filter(a => a.status === 'review').length;
+    const approvedCount = allArtifacts.filter(a => a.status === 'approved').length;
+    const lockedCount = allArtifacts.filter(a => a.status === 'locked').length;
+
+    // Threads
+    const allThreads = await db
+      .select()
+      .from(concept2cureReviewThreads)
+      .where(
+        and(
+          eq(concept2cureReviewThreads.orgId, organizationId),
+          eq(concept2cureReviewThreads.projectId, projectDbId)
+        )
+      );
+
+    const openThreads = allThreads.filter(t => t.status === 'open');
+    const resolvedThreads = allThreads.filter(t => t.status === 'resolved');
+
+    // Tasks
+    const allTasks = await db
+      .select()
+      .from(concept2cureReviewTasks)
+      .where(
+        and(
+          eq(concept2cureReviewTasks.orgId, organizationId),
+          eq(concept2cureReviewTasks.projectId, projectDbId)
+        )
+      );
+
+    const openTasks = allTasks.filter(t => t.status === 'open' || t.status === 'in_progress');
+    const overdueTasks = openTasks.filter(t => t.dueAt && new Date(t.dueAt) < now);
+    const changeRequestTasks = allTasks.filter(
+      t => t.taskType === 'change_request' && t.status !== 'resolved' && t.status !== 'closed'
+    );
+
+    // PM work items
+    const workItems = await db
+      .select()
+      .from(c2cProjectWorkItems)
+      .where(
+        and(
+          eq(c2cProjectWorkItems.orgId, organizationId),
+          eq(c2cProjectWorkItems.projectId, projectDbId)
+        )
+      );
+
+    const openWorkItems = workItems.filter(w => w.status === 'open' || w.status === 'in_progress');
+    const blockedWorkItems = workItems.filter(w => w.blockerType !== null && w.status === 'open');
+
+    // Escalated notifications
+    const [escalatedCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(concept2cureNotifications)
+      .where(
+        and(
+          eq(concept2cureNotifications.orgId, organizationId),
+          eq(concept2cureNotifications.projectId, projectDbId),
+          sql`${concept2cureNotifications.escalationLevel} >= 1`,
+          eq(concept2cureNotifications.status, 'unread')
+        )
+      );
+
+    // Per-artifact unresolved review density
+    const artifactReviewMap = new Map<
+      number,
+      {
+        title: string;
+        ctdSection: string | null;
+        openThreads: number;
+        openTasks: number;
+        overdue: number;
+        status: string;
+      }
+    >();
+    for (const art of allArtifacts) {
+      artifactReviewMap.set(art.id, {
+        title: art.title,
+        ctdSection: art.ctdSection || null,
+        openThreads: 0,
+        openTasks: 0,
+        overdue: 0,
+        status: art.status || 'draft',
+      });
+    }
+    for (const t of openThreads) {
+      const entry = artifactReviewMap.get(t.artifactId);
+      if (entry) entry.openThreads++;
+    }
+    for (const t of openTasks) {
+      const entry = artifactReviewMap.get(t.artifactId);
+      if (entry) {
+        entry.openTasks++;
+        if (t.dueAt && new Date(t.dueAt) < now) entry.overdue++;
+      }
+    }
+
+    // Per-section readiness
+    const sectionReadiness = new Map<string, { total: number; ready: number; blocked: number }>();
+    for (const art of allArtifacts) {
+      const sec = art.ctdSection || 'unplaced';
+      if (!sectionReadiness.has(sec)) sectionReadiness.set(sec, { total: 0, ready: 0, blocked: 0 });
+      const entry = sectionReadiness.get(sec)!;
+      entry.total++;
+      if (art.status === 'approved' || art.status === 'locked') entry.ready++;
+      const artReview = artifactReviewMap.get(art.id);
+      if (artReview && (artReview.openThreads > 0 || artReview.openTasks > 0)) entry.blocked++;
+    }
+
+    // Approval bottlenecks
+    const approvalsWaiting = allTasks.filter(
+      t => t.taskType === 'approval_task' && (t.status === 'open' || t.status === 'in_progress')
+    );
+
+    return sendSuccess(res, {
+      artifacts: {
+        total: totalArtifacts,
+        draft: draftCount,
+        review: reviewCount,
+        approved: approvedCount,
+        locked: lockedCount,
+      },
+      threads: {
+        total: allThreads.length,
+        open: openThreads.length,
+        resolved: resolvedThreads.length,
+      },
+      tasks: {
+        total: allTasks.length,
+        open: openTasks.length,
+        overdue: overdueTasks.length,
+        changeRequests: changeRequestTasks.length,
+        approvalsWaiting: approvalsWaiting.length,
+      },
+      workItems: {
+        total: workItems.length,
+        open: openWorkItems.length,
+        blocked: blockedWorkItems.length,
+      },
+      escalations: escalatedCount?.count || 0,
+      sectionReadiness: Array.from(sectionReadiness.entries()).map(([section, data]) => ({
+        section,
+        ...data,
+        readyPercent: data.total > 0 ? Math.round((data.ready / data.total) * 100) : 0,
+      })),
+      artifactDetails: Array.from(artifactReviewMap.entries())
+        .filter(([, data]) => data.openThreads > 0 || data.openTasks > 0)
+        .map(([id, data]) => ({
+          artifactId: id,
+          ...data,
+        })),
+    });
+  } catch (error: any) {
+    logConcept2cureError('readiness summary', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to generate readiness summary');
+  }
+});
+
+// ── Reminder / Escalation Processing ─────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/escalation/process
+ * Scans open threads/tasks for overdue items and creates/escalates notifications.
+ * Designed to be called periodically (cron, scheduler, or manually).
+ */
+router.post('/escalation/process', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const now = new Date();
+    const dueSoonThreshold = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h ahead
+    const escalation1Threshold = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24h overdue
+    const escalation2Threshold = new Date(now.getTime() - 72 * 60 * 60 * 1000); // 72h overdue
+
+    let dueSoonCreated = 0;
+    let overdueCreated = 0;
+    let escalated = 0;
+
+    // ── Process overdue threads ──
+    const overdueThreads = await db
+      .select()
+      .from(concept2cureReviewThreads)
+      .where(
+        and(
+          eq(concept2cureReviewThreads.orgId, organizationId),
+          eq(concept2cureReviewThreads.status, 'open'),
+          sql`${concept2cureReviewThreads.dueAt} IS NOT NULL AND ${concept2cureReviewThreads.dueAt} < ${now}`
+        )
+      );
+
+    for (const thread of overdueThreads) {
+      if (!thread.assigneeId) continue;
+
+      const overdueDuration = now.getTime() - new Date(thread.dueAt!).getTime();
+      let newLevel = 0;
+      if (overdueDuration > 72 * 60 * 60 * 1000) newLevel = 2;
+      else if (overdueDuration > 24 * 60 * 60 * 1000) newLevel = 1;
+
+      // Check existing escalation notification
+      const [existing] = await db
+        .select()
+        .from(concept2cureNotifications)
+        .where(
+          and(
+            eq(concept2cureNotifications.threadId, thread.id),
+            eq(concept2cureNotifications.notificationType, newLevel > 0 ? 'escalation' : 'overdue'),
+            eq(concept2cureNotifications.status, 'unread')
+          )
+        )
+        .limit(1);
+
+      if (existing && (existing.escalationLevel || 0) >= newLevel) continue;
+
+      // Create escalation/overdue notification
+      const notifId = `ntf_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      await db.insert(concept2cureNotifications).values({
+        notificationId: notifId,
+        orgId: organizationId,
+        projectId: thread.projectId,
+        artifactId: thread.artifactId,
+        threadId: thread.id,
+        recipientUserId: thread.assigneeId,
+        recipientName: thread.assigneeName,
+        actorUserId: null,
+        actorName: 'System',
+        notificationType: newLevel > 0 ? 'escalation' : 'overdue',
+        title:
+          newLevel > 0
+            ? `Escalation L${newLevel}: "${thread.title}" is overdue`
+            : `Overdue: "${thread.title}" review thread`,
+        body: `Review thread "${thread.title}" was due ${thread.dueAt!.toISOString()} and remains unresolved.`,
+        severity: newLevel >= 2 ? 'critical' : newLevel >= 1 ? 'warning' : 'info',
+        status: 'unread',
+        dueAt: thread.dueAt,
+        escalationLevel: newLevel,
+        lastNotifiedAt: now,
+        nextReminderAt: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+        escalatesAt: newLevel < 2 ? new Date(now.getTime() + 24 * 60 * 60 * 1000) : null,
+      });
+
+      if (newLevel > 0) escalated++;
+      else overdueCreated++;
+    }
+
+    // ── Process overdue tasks ──
+    const overdueTasks = await db
+      .select()
+      .from(concept2cureReviewTasks)
+      .where(
+        and(
+          eq(concept2cureReviewTasks.orgId, organizationId),
+          or(
+            eq(concept2cureReviewTasks.status, 'open'),
+            eq(concept2cureReviewTasks.status, 'in_progress')
+          ),
+          sql`${concept2cureReviewTasks.dueAt} IS NOT NULL AND ${concept2cureReviewTasks.dueAt} < ${now}`
+        )
+      );
+
+    for (const task of overdueTasks) {
+      if (!task.assignedToId) continue;
+
+      const overdueDuration = now.getTime() - new Date(task.dueAt!).getTime();
+      let newLevel = 0;
+      if (overdueDuration > 72 * 60 * 60 * 1000) newLevel = 2;
+      else if (overdueDuration > 24 * 60 * 60 * 1000) newLevel = 1;
+
+      const [existing] = await db
+        .select()
+        .from(concept2cureNotifications)
+        .where(
+          and(
+            eq(concept2cureNotifications.reviewTaskId, task.id),
+            eq(concept2cureNotifications.notificationType, newLevel > 0 ? 'escalation' : 'overdue'),
+            eq(concept2cureNotifications.status, 'unread')
+          )
+        )
+        .limit(1);
+
+      if (existing && (existing.escalationLevel || 0) >= newLevel) continue;
+
+      const notifId = `ntf_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      await db.insert(concept2cureNotifications).values({
+        notificationId: notifId,
+        orgId: organizationId,
+        projectId: task.projectId,
+        artifactId: task.artifactId,
+        reviewTaskId: task.id,
+        recipientUserId: task.assignedToId,
+        recipientName: task.assignedToName,
+        actorUserId: null,
+        actorName: 'System',
+        notificationType: newLevel > 0 ? 'escalation' : 'overdue',
+        title:
+          newLevel > 0
+            ? `Escalation L${newLevel}: "${task.title}" is overdue`
+            : `Overdue: "${task.title}" review task`,
+        body: `Review task "${task.title}" was due ${task.dueAt!.toISOString()} and remains unresolved.`,
+        severity: newLevel >= 2 ? 'critical' : newLevel >= 1 ? 'warning' : 'info',
+        status: 'unread',
+        dueAt: task.dueAt,
+        escalationLevel: newLevel,
+        lastNotifiedAt: now,
+        nextReminderAt: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+        escalatesAt: newLevel < 2 ? new Date(now.getTime() + 24 * 60 * 60 * 1000) : null,
+      });
+
+      if (newLevel > 0) escalated++;
+      else overdueCreated++;
+    }
+
+    // ── Due-soon reminders for threads ──
+    const dueSoonThreads = await db
+      .select()
+      .from(concept2cureReviewThreads)
+      .where(
+        and(
+          eq(concept2cureReviewThreads.orgId, organizationId),
+          eq(concept2cureReviewThreads.status, 'open'),
+          sql`${concept2cureReviewThreads.dueAt} IS NOT NULL AND ${concept2cureReviewThreads.dueAt} > ${now} AND ${concept2cureReviewThreads.dueAt} <= ${dueSoonThreshold}`
+        )
+      );
+
+    for (const thread of dueSoonThreads) {
+      if (!thread.assigneeId) continue;
+      await createNotification({
+        orgId: organizationId,
+        projectId: thread.projectId,
+        artifactId: thread.artifactId,
+        threadId: thread.id,
+        recipientUserId: thread.assigneeId,
+        recipientName: thread.assigneeName,
+        notificationType: 'due_soon',
+        title: `Due soon: "${thread.title}"`,
+        body: `Review thread "${thread.title}" is due ${thread.dueAt!.toISOString()}.`,
+        severity: 'warning',
+        dueAt: thread.dueAt,
+      });
+      dueSoonCreated++;
+    }
+
+    // ── Due-soon reminders for tasks ──
+    const dueSoonTasks = await db
+      .select()
+      .from(concept2cureReviewTasks)
+      .where(
+        and(
+          eq(concept2cureReviewTasks.orgId, organizationId),
+          or(
+            eq(concept2cureReviewTasks.status, 'open'),
+            eq(concept2cureReviewTasks.status, 'in_progress')
+          ),
+          sql`${concept2cureReviewTasks.dueAt} IS NOT NULL AND ${concept2cureReviewTasks.dueAt} > ${now} AND ${concept2cureReviewTasks.dueAt} <= ${dueSoonThreshold}`
+        )
+      );
+
+    for (const task of dueSoonTasks) {
+      if (!task.assignedToId) continue;
+      await createNotification({
+        orgId: organizationId,
+        projectId: task.projectId,
+        artifactId: task.artifactId,
+        reviewTaskId: task.id,
+        recipientUserId: task.assignedToId,
+        recipientName: task.assignedToName,
+        notificationType: 'due_soon',
+        title: `Due soon: "${task.title}"`,
+        body: `Review task "${task.title}" is due ${task.dueAt!.toISOString()}.`,
+        severity: 'warning',
+        dueAt: task.dueAt,
+      });
+      dueSoonCreated++;
+    }
+
+    return sendSuccess(res, {
+      processed: {
+        overdueThreads: overdueThreads.length,
+        overdueTasks: overdueTasks.length,
+        dueSoonThreads: dueSoonThreads.length,
+        dueSoonTasks: dueSoonTasks.length,
+      },
+      created: {
+        dueSoon: dueSoonCreated,
+        overdue: overdueCreated,
+        escalated,
+      },
+    });
+  } catch (error: any) {
+    logConcept2cureError('escalation process', error);
+    return sendError(res, 500, 'Failed to process escalations');
   }
 });
 

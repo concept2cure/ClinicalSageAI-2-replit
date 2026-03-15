@@ -42,6 +42,7 @@ interface ReviewThread {
   anchorKey?: string;
   anchorLabel?: string;
   versionId?: number;
+  dueAt?: string;
   createdById: number;
   createdByName: string;
   createdByRole?: string;
@@ -118,7 +119,18 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
   const [showNewThread, setShowNewThread] = useState(false);
   const [newThreadTitle, setNewThreadTitle] = useState('');
   const [newThreadComment, setNewThreadComment] = useState('');
+  const [newThreadPriority, setNewThreadPriority] = useState('');
+  const [newThreadAnchorType, setNewThreadAnchorType] = useState('');
+  const [newThreadAnchorLabel, setNewThreadAnchorLabel] = useState('');
+  const [newThreadDueAt, setNewThreadDueAt] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // New task from thread
+  const [showNewTask, setShowNewTask] = useState<string | null>(null);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskType, setNewTaskType] = useState('review_task');
+  const [newTaskDueAt, setNewTaskDueAt] = useState('');
+  const [creatingTask, setCreatingTask] = useState(false);
 
   // Reply form
   const [replyTarget, setReplyTarget] = useState<string | null>(null);
@@ -207,12 +219,20 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
           body: JSON.stringify({
             title: newThreadTitle.trim(),
             initialComment: newThreadComment.trim() || undefined,
+            priority: newThreadPriority || undefined,
+            anchorType: newThreadAnchorType || undefined,
+            anchorLabel: newThreadAnchorLabel.trim() || undefined,
+            dueAt: newThreadDueAt || undefined,
           }),
         }
       );
       if (res.ok) {
         setNewThreadTitle('');
         setNewThreadComment('');
+        setNewThreadPriority('');
+        setNewThreadAnchorType('');
+        setNewThreadAnchorLabel('');
+        setNewThreadDueAt('');
         setShowNewThread(false);
         await fetchThreads();
       }
@@ -220,6 +240,54 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
       // silent
     } finally {
       setCreating(false);
+    }
+  };
+
+  // ── Create task from thread ────────────────────────────────────
+  const handleCreateTask = async (threadId: string) => {
+    if (!newTaskTitle.trim()) return;
+    setCreatingTask(true);
+    try {
+      const res = await fetch(
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-tasks`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            title: newTaskTitle.trim(),
+            taskType: newTaskType,
+            threadId,
+            dueAt: newTaskDueAt || undefined,
+          }),
+        }
+      );
+      if (res.ok) {
+        setNewTaskTitle('');
+        setNewTaskType('review_task');
+        setNewTaskDueAt('');
+        setShowNewTask(null);
+        await fetchTasks();
+      }
+    } catch {
+      // silent
+    } finally {
+      setCreatingTask(false);
+    }
+  };
+
+  // ── Request changes (special comment kind) ─────────────────────
+  const handleRequestChanges = async (threadId: string, body: string) => {
+    if (!body.trim()) return;
+    try {
+      await fetch(`/api/concept2cure/review-threads/${threadId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ body: body.trim(), kind: 'request_changes' }),
+      });
+      await fetchComments(threadId);
+      await fetchThreads();
+    } catch {
+      // silent
     }
   };
 
@@ -360,6 +428,45 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                   className="w-full px-2 py-1 text-[10px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   maxLength={500}
                 />
+                <div className="flex gap-1.5">
+                  <select
+                    value={newThreadPriority}
+                    onChange={e => setNewThreadPriority(e.target.value)}
+                    className="flex-1 px-1.5 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  >
+                    <option value="">Priority...</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                  <select
+                    value={newThreadAnchorType}
+                    onChange={e => setNewThreadAnchorType(e.target.value)}
+                    className="flex-1 px-1.5 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  >
+                    <option value="">Anchor...</option>
+                    <option value="general">General</option>
+                    <option value="section">Section</option>
+                    <option value="heading">Heading</option>
+                    <option value="range">Range</option>
+                  </select>
+                </div>
+                {newThreadAnchorType && newThreadAnchorType !== 'general' && (
+                  <input
+                    type="text"
+                    value={newThreadAnchorLabel}
+                    onChange={e => setNewThreadAnchorLabel(e.target.value)}
+                    placeholder="Anchor label (e.g. section name)..."
+                    className="w-full px-2 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                )}
+                <input
+                  type="date"
+                  value={newThreadDueAt}
+                  onChange={e => setNewThreadDueAt(e.target.value)}
+                  className="w-full px-2 py-1 text-[9px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  title="Due date (optional)"
+                />
                 <textarea
                   value={newThreadComment}
                   onChange={e => setNewThreadComment(e.target.value)}
@@ -374,6 +481,10 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                       setShowNewThread(false);
                       setNewThreadTitle('');
                       setNewThreadComment('');
+                      setNewThreadPriority('');
+                      setNewThreadAnchorType('');
+                      setNewThreadAnchorLabel('');
+                      setNewThreadDueAt('');
                     }}
                     className="px-2 py-0.5 text-[9px] text-zinc-500 hover:bg-zinc-200 rounded"
                   >
@@ -411,6 +522,17 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                 onSetReplyTarget={setReplyTarget}
                 onSetReplyBody={setReplyBody}
                 onReply={() => handleReply(thread.threadId)}
+                showNewTask={showNewTask}
+                onShowNewTask={setShowNewTask}
+                newTaskTitle={newTaskTitle}
+                newTaskType={newTaskType}
+                newTaskDueAt={newTaskDueAt}
+                onSetNewTaskTitle={setNewTaskTitle}
+                onSetNewTaskType={setNewTaskType}
+                onSetNewTaskDueAt={setNewTaskDueAt}
+                onCreateTask={handleCreateTask}
+                creatingTask={creatingTask}
+                onRequestChanges={handleRequestChanges}
               />
             ))}
 
@@ -435,6 +557,17 @@ export function ReviewThreadsPanel({ projectId, artifactId }: ReviewThreadsPanel
                     onSetReplyTarget={setReplyTarget}
                     onSetReplyBody={setReplyBody}
                     onReply={() => handleReply(thread.threadId)}
+                    showNewTask={showNewTask}
+                    onShowNewTask={setShowNewTask}
+                    newTaskTitle={newTaskTitle}
+                    newTaskType={newTaskType}
+                    newTaskDueAt={newTaskDueAt}
+                    onSetNewTaskTitle={setNewTaskTitle}
+                    onSetNewTaskType={setNewTaskType}
+                    onSetNewTaskDueAt={setNewTaskDueAt}
+                    onCreateTask={handleCreateTask}
+                    creatingTask={creatingTask}
+                    onRequestChanges={handleRequestChanges}
                   />
                 ))}
               </div>
@@ -491,6 +624,17 @@ interface ThreadCardProps {
   onSetReplyTarget: (id: string | null) => void;
   onSetReplyBody: (v: string) => void;
   onReply: () => void;
+  showNewTask?: string | null;
+  onShowNewTask?: (threadId: string | null) => void;
+  newTaskTitle?: string;
+  newTaskType?: string;
+  newTaskDueAt?: string;
+  onSetNewTaskTitle?: (v: string) => void;
+  onSetNewTaskType?: (v: string) => void;
+  onSetNewTaskDueAt?: (v: string) => void;
+  onCreateTask?: (threadId: string) => void;
+  creatingTask?: boolean;
+  onRequestChanges?: (threadId: string, body: string) => void;
 }
 
 function ThreadCard({
@@ -507,8 +651,27 @@ function ThreadCard({
   onSetReplyTarget,
   onSetReplyBody,
   onReply,
+  showNewTask,
+  onShowNewTask,
+  newTaskTitle,
+  newTaskType,
+  newTaskDueAt,
+  onSetNewTaskTitle,
+  onSetNewTaskType,
+  onSetNewTaskDueAt,
+  onCreateTask,
+  creatingTask,
+  onRequestChanges,
 }: ThreadCardProps) {
   const isOpen = thread.status === 'open';
+  const [requestChangesBody, setRequestChangesBody] = useState('');
+  const [showRequestChanges, setShowRequestChanges] = useState(false);
+
+  const isDueOverdue = thread.dueAt ? new Date(thread.dueAt) < new Date() : false;
+  const isDueSoon =
+    thread.dueAt && !isDueOverdue
+      ? new Date(thread.dueAt).getTime() - Date.now() < 48 * 60 * 60 * 1000
+      : false;
 
   return (
     <div
@@ -533,11 +696,38 @@ function ThreadCard({
           >
             {thread.title}
           </p>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
             <span className="text-[8px] text-zinc-400">{thread.createdByName}</span>
+            {thread.priority && thread.priority !== 'medium' && (
+              <span
+                className={cn(
+                  'text-[7px] px-1 rounded font-medium',
+                  thread.priority === 'high'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-zinc-100 text-zinc-500'
+                )}
+              >
+                {thread.priority.toUpperCase()}
+              </span>
+            )}
             {thread.anchorLabel && (
               <span className="text-[8px] text-violet-500 bg-violet-50 px-1 rounded">
                 {thread.anchorLabel}
+              </span>
+            )}
+            {thread.dueAt && isOpen && (
+              <span
+                className={cn(
+                  'text-[8px] flex items-center gap-0.5',
+                  isDueOverdue
+                    ? 'text-red-600 font-medium'
+                    : isDueSoon
+                      ? 'text-amber-600'
+                      : 'text-zinc-400'
+                )}
+              >
+                <Clock className="w-2.5 h-2.5" />
+                {isDueOverdue ? 'Overdue' : formatTime(thread.dueAt)}
               </span>
             )}
             <span className="text-[8px] text-zinc-400">
@@ -649,7 +839,7 @@ function ThreadCard({
               )}
 
               {/* Actions */}
-              <div className="flex gap-1.5 mt-2 pt-1.5 border-t border-zinc-100">
+              <div className="flex gap-1.5 mt-2 pt-1.5 border-t border-zinc-100 flex-wrap">
                 {isOpen && onResolve && (
                   <button
                     onClick={onResolve}
@@ -668,7 +858,113 @@ function ThreadCard({
                     Reopen
                   </button>
                 )}
+                {isOpen && onShowNewTask && (
+                  <button
+                    onClick={() =>
+                      onShowNewTask(showNewTask === thread.threadId ? null : thread.threadId)
+                    }
+                    className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-700"
+                  >
+                    <ListTodo className="w-3 h-3" />
+                    Create Task
+                  </button>
+                )}
+                {isOpen && onRequestChanges && (
+                  <button
+                    onClick={() => setShowRequestChanges(!showRequestChanges)}
+                    className="flex items-center gap-1 text-[9px] text-amber-600 hover:text-amber-700"
+                  >
+                    <AlertTriangle className="w-3 h-3" />
+                    Request Changes
+                  </button>
+                )}
               </div>
+
+              {/* Create Task from Thread form */}
+              {showNewTask === thread.threadId && onCreateTask && (
+                <div className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 space-y-1.5">
+                  <p className="text-[8px] font-medium text-blue-700">Create linked task</p>
+                  <input
+                    type="text"
+                    value={newTaskTitle || ''}
+                    onChange={e => onSetNewTaskTitle?.(e.target.value)}
+                    placeholder="Task title..."
+                    className="w-full px-1.5 py-0.5 text-[9px] bg-white border border-blue-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    maxLength={500}
+                  />
+                  <div className="flex gap-1">
+                    <select
+                      value={newTaskType || 'follow_up'}
+                      onChange={e => onSetNewTaskType?.(e.target.value)}
+                      className="flex-1 px-1.5 py-0.5 text-[9px] bg-white border border-blue-200 rounded"
+                    >
+                      <option value="follow_up">Follow-up</option>
+                      <option value="change_request">Change Request</option>
+                      <option value="approval_task">Approval</option>
+                    </select>
+                    <input
+                      type="date"
+                      value={newTaskDueAt || ''}
+                      onChange={e => onSetNewTaskDueAt?.(e.target.value)}
+                      className="flex-1 px-1.5 py-0.5 text-[9px] bg-white border border-blue-200 rounded"
+                      title="Task due date"
+                    />
+                  </div>
+                  <div className="flex gap-1 justify-end">
+                    <button
+                      onClick={() => onShowNewTask?.(null)}
+                      className="px-1.5 py-0.5 text-[8px] text-zinc-500 hover:bg-zinc-100 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => onCreateTask(thread.threadId)}
+                      disabled={creatingTask || !(newTaskTitle || '').trim()}
+                      className="px-1.5 py-0.5 text-[8px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-0.5"
+                    >
+                      {creatingTask && <Loader2 className="w-2 h-2 animate-spin" />}
+                      Create
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Request Changes form */}
+              {showRequestChanges && onRequestChanges && (
+                <div className="mt-2 p-1.5 bg-amber-50 rounded border border-amber-100 space-y-1.5">
+                  <p className="text-[8px] font-medium text-amber-700">Request Changes</p>
+                  <textarea
+                    value={requestChangesBody}
+                    onChange={e => setRequestChangesBody(e.target.value)}
+                    placeholder="Describe the required changes..."
+                    className="w-full px-1.5 py-0.5 text-[9px] bg-white border border-amber-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none"
+                    rows={2}
+                    maxLength={10000}
+                  />
+                  <div className="flex gap-1 justify-end">
+                    <button
+                      onClick={() => {
+                        setShowRequestChanges(false);
+                        setRequestChangesBody('');
+                      }}
+                      className="px-1.5 py-0.5 text-[8px] text-zinc-500 hover:bg-zinc-100 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        onRequestChanges(thread.threadId, requestChangesBody);
+                        setRequestChangesBody('');
+                        setShowRequestChanges(false);
+                      }}
+                      disabled={!requestChangesBody.trim()}
+                      className="px-1.5 py-0.5 text-[8px] bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      Submit
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

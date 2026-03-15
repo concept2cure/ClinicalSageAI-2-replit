@@ -71,6 +71,11 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
   const [threads, setThreads] = useState<QueueThread[]>([]);
   const [tasks, setTasks] = useState<QueueTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [overdueTasks, setOverdueTasks] = useState(0);
+  const [dueSoonTasks, setDueSoonTasks] = useState(0);
+  const [changeRequests, setChangeRequests] = useState(0);
+  const [approvalsNeeded, setApprovalsNeeded] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const fetchQueue = useCallback(async () => {
     setLoading(true);
@@ -82,6 +87,11 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
         const payload = await res.json();
         setThreads(payload.data?.threads || []);
         setTasks(payload.data?.tasks || []);
+        setOverdueTasks(payload.data?.overdueTasks ?? 0);
+        setDueSoonTasks(payload.data?.dueSoonTasks ?? 0);
+        setChangeRequests(payload.data?.changeRequests ?? 0);
+        setApprovalsNeeded(payload.data?.approvalsNeeded ?? 0);
+        setUnreadNotifications(payload.data?.unreadNotifications ?? 0);
       }
     } catch {
       // silent
@@ -130,6 +140,34 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
           </div>
         ) : (
           <>
+            {/* Summary badges */}
+            {(overdueTasks > 0 ||
+              dueSoonTasks > 0 ||
+              changeRequests > 0 ||
+              approvalsNeeded > 0) && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {overdueTasks > 0 && (
+                  <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                    <AlertTriangle className="w-2.5 h-2.5" /> {overdueTasks} overdue
+                  </span>
+                )}
+                {dueSoonTasks > 0 && (
+                  <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                    <Clock className="w-2.5 h-2.5" /> {dueSoonTasks} due soon
+                  </span>
+                )}
+                {changeRequests > 0 && (
+                  <span className="text-[8px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">
+                    {changeRequests} changes requested
+                  </span>
+                )}
+                {approvalsNeeded > 0 && (
+                  <span className="text-[8px] bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full font-medium">
+                    {approvalsNeeded} awaiting approval
+                  </span>
+                )}
+              </div>
+            )}
             {/* Threads */}
             {threads.length > 0 && (
               <div className="mb-3">

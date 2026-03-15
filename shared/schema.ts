@@ -5129,6 +5129,7 @@ export const concept2cureReviewThreads = pgTable(
     priority: text('priority'), // 'low' | 'medium' | 'high'
     assigneeId: integer('assignee_id').references(() => users.id),
     assigneeName: text('assignee_name'),
+    dueAt: timestamp('due_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
@@ -5142,6 +5143,7 @@ export const concept2cureReviewThreads = pgTable(
     assigneeIdx: index('c2c_thread_assignee_idx').on(table.assigneeId),
     orgProjectIdx: index('c2c_thread_org_project_idx').on(table.orgId, table.projectId),
     createdAtIdx: index('c2c_thread_created_at_idx').on(table.createdAt),
+    dueAtIdx: index('c2c_thread_due_at_idx').on(table.dueAt),
   })
 );
 
@@ -5218,8 +5220,9 @@ export const concept2cureReviewTasks = pgTable(
     assignedToName: text('assigned_to_name'),
     title: text('title').notNull(),
     description: text('description'),
-    taskType: text('task_type').notNull().default('review_task'), // 'change_request' | 'follow_up' | 'review_task'
+    taskType: text('task_type').notNull().default('review_task'), // 'change_request' | 'follow_up' | 'review_task' | 'approval_task'
     status: text('status').notNull().default('open'), // 'open' | 'in_progress' | 'resolved' | 'closed'
+    priority: text('priority'), // 'low' | 'medium' | 'high'
     dueAt: timestamp('due_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -5238,6 +5241,119 @@ export const concept2cureReviewTasks = pgTable(
 );
 
 export type Concept2cureReviewTask = InferSelectModel<typeof concept2cureReviewTasks>;
+
+/**
+ * PM Work Items — document-derived work projected into the PM layer.
+ * Every item points back to its source review object.
+ */
+export const c2cProjectWorkItems = pgTable(
+  'c2c_project_work_items',
+  {
+    id: serial('id').primaryKey(),
+    workItemId: text('work_item_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    sourceType: text('source_type').notNull(), // 'review_thread' | 'review_task' | 'approval_blocker' | 'requested_changes'
+    sourceId: integer('source_id').notNull(),
+    artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id, {
+      onDelete: 'cascade',
+    }),
+    versionId: integer('version_id'),
+    ctdSection: text('ctd_section'),
+    ownerId: integer('owner_id').references(() => users.id),
+    ownerName: text('owner_name'),
+    title: text('title').notNull(),
+    status: text('status').notNull().default('open'), // 'open' | 'in_progress' | 'resolved' | 'closed'
+    priority: text('priority'), // 'low' | 'medium' | 'high'
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    blockerType: text('blocker_type'), // 'unresolved_review' | 'approval_pending' | 'requested_changes' | 'overdue_review'
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  },
+  table => ({
+    projectIdx: index('c2c_pwi_project_idx').on(table.projectId),
+    sourceIdx: index('c2c_pwi_source_idx').on(table.sourceType, table.sourceId),
+    artifactIdx: index('c2c_pwi_artifact_idx').on(table.artifactId),
+    ownerIdx: index('c2c_pwi_owner_idx').on(table.ownerId),
+    statusIdx: index('c2c_pwi_status_idx').on(table.status),
+    dueAtIdx: index('c2c_pwi_due_at_idx').on(table.dueAt),
+    orgProjectIdx: index('c2c_pwi_org_project_idx').on(table.orgId, table.projectId),
+  })
+);
+
+export type C2cProjectWorkItem = InferSelectModel<typeof c2cProjectWorkItems>;
+
+/**
+ * C2C Notifications — review-specific notifications with escalation support.
+ */
+export const concept2cureNotifications = pgTable(
+  'concept2cure_notifications',
+  {
+    id: serial('id').primaryKey(),
+    notificationId: text('notification_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id, {
+      onDelete: 'cascade',
+    }),
+    versionId: integer('version_id'),
+    threadId: integer('thread_id').references(() => concept2cureReviewThreads.id, {
+      onDelete: 'set null',
+    }),
+    reviewTaskId: integer('review_task_id').references(() => concept2cureReviewTasks.id, {
+      onDelete: 'set null',
+    }),
+    projectWorkItemId: integer('project_work_item_id').references(() => c2cProjectWorkItems.id, {
+      onDelete: 'set null',
+    }),
+    recipientUserId: integer('recipient_user_id')
+      .notNull()
+      .references(() => users.id),
+    recipientName: text('recipient_name'),
+    actorUserId: integer('actor_user_id').references(() => users.id),
+    actorName: text('actor_name'),
+    notificationType: text('notification_type').notNull(), // 'assignment' | 'due_soon' | 'overdue' | 'approval_needed' | 'changes_requested' | 'thread_reply' | 'thread_resolved' | 'task_resolved' | 'publish_complete' | 'escalation'
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    severity: text('severity').default('info'), // 'info' | 'warning' | 'critical'
+    status: text('status').notNull().default('unread'), // 'unread' | 'read' | 'dismissed'
+    actionUrl: text('action_url'),
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
+    // Escalation fields
+    escalationLevel: integer('escalation_level').default(0), // 0 | 1 | 2
+    lastNotifiedAt: timestamp('last_notified_at', { withTimezone: true }),
+    nextReminderAt: timestamp('next_reminder_at', { withTimezone: true }),
+    escalatesAt: timestamp('escalates_at', { withTimezone: true }),
+    escalationTargetUserId: integer('escalation_target_user_id').references(() => users.id),
+    escalationTargetRole: text('escalation_target_role'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    recipientIdx: index('c2c_notif_recipient_idx').on(table.recipientUserId),
+    statusIdx: index('c2c_notif_status_idx').on(table.status),
+    typeIdx: index('c2c_notif_type_idx').on(table.notificationType),
+    projectIdx: index('c2c_notif_project_idx').on(table.projectId),
+    threadIdx: index('c2c_notif_thread_idx').on(table.threadId),
+    taskIdx: index('c2c_notif_task_idx').on(table.reviewTaskId),
+    dueAtIdx: index('c2c_notif_due_at_idx').on(table.dueAt),
+    nextReminderIdx: index('c2c_notif_next_reminder_idx').on(table.nextReminderAt),
+    orgProjectIdx: index('c2c_notif_org_project_idx').on(table.orgId, table.projectId),
+    createdAtIdx: index('c2c_notif_created_at_idx').on(table.createdAt),
+    artifactIdx: index('c2c_notif_artifact_idx').on(table.artifactId),
+  })
+);
+
+export type Concept2cureNotification = InferSelectModel<typeof concept2cureNotifications>;
 
 /**
  * Project Modules Table
