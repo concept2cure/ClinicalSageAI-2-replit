@@ -11,7 +11,6 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertCircle,
-  Calendar,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -19,7 +18,6 @@ import {
   Filter,
   Flame,
   Gauge,
-  GitBranch,
   Layers,
   Lock,
   Mail,
@@ -29,7 +27,6 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
-  Users,
   XCircle,
   Zap,
 } from 'lucide-react';
@@ -77,13 +74,9 @@ const SEVERITY_FG: Record<string, string> = {
 type DrawerKind =
   | 'readiness'
   | 'bottlenecks'
-  | 'hotspots'
-  | 'workload'
-  | 'timeline'
-  | 'policies'
-  | 'milestones'
-  | 'digests'
-  | 'automation'
+  | 'health_trends'
+  | 'policies_milestones'
+  | 'activity'
   | null;
 
 type QuickView =
@@ -114,13 +107,9 @@ const QUICK_VIEWS: { key: QuickView; label: string }[] = [
 const DRAWER_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   readiness: { label: 'Readiness Matrix', icon: <Target className="w-4 h-4" /> },
   bottlenecks: { label: 'Approval Bottlenecks', icon: <Lock className="w-4 h-4" /> },
-  hotspots: { label: 'Hotspot Density', icon: <Flame className="w-4 h-4" /> },
-  workload: { label: 'Ownership & Workload', icon: <Users className="w-4 h-4" /> },
-  timeline: { label: 'Timeline / Due Soon', icon: <Calendar className="w-4 h-4" /> },
-  policies: { label: 'Policy Settings', icon: <Settings className="w-4 h-4" /> },
-  milestones: { label: 'Milestone Gates', icon: <GitBranch className="w-4 h-4" /> },
-  digests: { label: 'Digest Center', icon: <Mail className="w-4 h-4" /> },
-  automation: { label: 'Automation Log', icon: <Zap className="w-4 h-4" /> },
+  health_trends: { label: 'Health & Trends', icon: <Flame className="w-4 h-4" /> },
+  policies_milestones: { label: 'Policies & Milestones', icon: <Settings className="w-4 h-4" /> },
+  activity: { label: 'Activity', icon: <Zap className="w-4 h-4" /> },
 };
 
 // Grouping logic per package family
@@ -237,31 +226,102 @@ export function SubmissionOpsCommandCenter({
     }
   }, [packages, selectedPackageId]);
 
-  // Filtered & grouped blocker list
+  // Filtered & grouped blocker list — package-mode and role-preset aware
   const processedItems = useMemo(() => {
     let items = [...(blockers ?? [])];
-    // Severity filter
+
+    // Apply role-based quick-view preset filters
+    if (quickView) {
+      const preset = getQuickViewFilters(quickView);
+      if (preset.filterSeverity) {
+        items = items.filter((b: any) => preset.filterSeverity!.includes(b.severity));
+      }
+      if (preset.filterStatus) {
+        items = items.filter(
+          (b: any) =>
+            preset.filterStatus!.includes(b.status) || preset.filterStatus!.includes(b.waitingState)
+        );
+      }
+      if (preset.filterSection) {
+        items = items.filter(
+          (b: any) =>
+            b.sectionKey?.includes(preset.filterSection!) ||
+            b.documentFamily?.includes(preset.filterSection!)
+        );
+      }
+      if (preset.filterOwnership) {
+        items = items.filter((b: any) => b.ownershipType === preset.filterOwnership);
+      }
+      if (preset.filterIndustry) {
+        items = items.filter((b: any) => b.industry === preset.filterIndustry || isDevice);
+      }
+      if (preset.filterBlockerType) {
+        items = items.filter(
+          (b: any) =>
+            b.blockerType === preset.filterBlockerType ||
+            b.waitingState === preset.filterBlockerType
+        );
+      }
+    }
+
+    // Severity filter (manual toolbar)
     if (severityFilter.length > 0) {
       items = items.filter((b: any) => severityFilter.includes(b.severity));
     }
-    // Doc family filter
+    // Doc family filter (manual toolbar)
     if (docFamilyFilter) {
       items = items.filter((b: any) => b.documentFamily === docFamilyFilter);
     }
-    // Sort
-    items.sort((a: any, b: any) => {
+
+    // Sort — role preset can override default
+    const sortKey = quickView ? (getQuickViewFilters(quickView).sortBy ?? 'severity') : 'severity';
+    if (sortKey === 'severity') {
       const sev = ['critical', 'high', 'medium', 'low'];
-      return sev.indexOf(a.severity) - sev.indexOf(b.severity);
-    });
-    // Group
+      items.sort((a: any, b: any) => sev.indexOf(a.severity) - sev.indexOf(b.severity));
+    } else if (sortKey === 'overdue') {
+      items.sort((a: any, b: any) => (b.overdueHours ?? 0) - (a.overdueHours ?? 0));
+    } else if (sortKey === 'readiness') {
+      items.sort((a: any, b: any) => (a.readinessPercent ?? 100) - (b.readinessPercent ?? 100));
+    } else if (sortKey === 'handoff') {
+      items.sort((a: any, b: any) => {
+        const handoffOrder = [
+          'blocked_critical_findings',
+          'blocked_evidence_gap',
+          'waiting_cro_author',
+          'waiting_cmc_lead',
+        ];
+        return (
+          handoffOrder.indexOf(a.waitingState ?? '') - handoffOrder.indexOf(b.waitingState ?? '')
+        );
+      });
+    }
+
+    // Group — package-mode-aware via getDefaultGrouping
+    const groupingMode = getDefaultGrouping(selectedPkg?.packageFamily);
     const groups: Record<string, any[]> = {};
     for (const item of items) {
-      const key = item.sectionLabel || item.blockerType || 'Other';
+      let key: string;
+      if (groupingMode === 'ctd_module') {
+        key = item.sectionLabel || item.ctdModule || item.documentFamily || 'Other';
+      } else if (groupingMode === 'device_workstream') {
+        key = item.workstream || item.sectionLabel || item.blockerType || 'Other';
+      } else if (groupingMode === 'cer_chapter') {
+        key = item.cerChapter || item.sectionLabel || item.documentFamily || 'Other';
+      } else if (groupingMode === 'evidence_family') {
+        key = item.evidenceFamily || item.sectionLabel || item.documentFamily || 'Other';
+      } else if (groupingMode === 'cmc_subsection') {
+        key = item.cmcSubsection || item.sectionLabel || 'Other';
+      } else if (groupingMode === 'deficiency_area') {
+        key = item.deficiencyArea || item.blockerType || 'Other';
+      } else {
+        // severity-based grouping (default)
+        key = item.severity || 'Other';
+      }
       if (!groups[key]) groups[key] = [];
       groups[key].push(item);
     }
     return groups;
-  }, [blockers, severityFilter, docFamilyFilter]);
+  }, [blockers, severityFilter, docFamilyFilter, quickView, isDevice, selectedPkg?.packageFamily]);
 
   const totalBlockers = blockers?.length ?? 0;
   const criticalCount = (blockers ?? []).filter((b: any) => b.severity === 'critical').length;
@@ -454,13 +514,9 @@ export function SubmissionOpsCommandCenter({
             [
               'readiness',
               'bottlenecks',
-              'hotspots',
-              'workload',
-              'timeline',
-              'automation',
-              'digests',
-              'policies',
-              'milestones',
+              'health_trends',
+              'policies_milestones',
+              'activity',
             ] as DrawerKind[]
           ).map(dk => {
             const d = DRAWER_LABELS[dk!];
@@ -1135,20 +1191,12 @@ function DrawerContent({
       return <ReadinessDrawer packageId={packageId} isDevice={isDevice} />;
     case 'bottlenecks':
       return <BottlenecksDrawer projectId={projectId} />;
-    case 'hotspots':
-      return <HotspotsDrawer packageId={packageId} />;
-    case 'workload':
-      return <WorkloadDrawer projectId={projectId} />;
-    case 'timeline':
-      return <TimelineDrawer projectId={projectId} />;
-    case 'policies':
-      return <PoliciesDrawer />;
-    case 'milestones':
-      return <MilestonesDrawer packageId={packageId} />;
-    case 'digests':
-      return <DigestsDrawer projectId={projectId} />;
-    case 'automation':
-      return <AutomationDrawer projectId={projectId} />;
+    case 'health_trends':
+      return <HealthTrendsDrawer projectId={projectId} packageId={packageId} />;
+    case 'policies_milestones':
+      return <PoliciesMilestonesDrawer packageId={packageId} />;
+    case 'activity':
+      return <ActivityDrawer projectId={projectId} />;
     default:
       return null;
   }
@@ -1260,284 +1308,334 @@ function BottlenecksDrawer({ projectId }: { projectId: number }) {
   );
 }
 
-// ── Hotspots Drawer ──
+// ── Health & Trends Drawer (consolidated: hotspots + workload + timeline) ──
 
-function HotspotsDrawer({ packageId }: { packageId?: string }) {
-  const { data: hotspots, isLoading } = useHotspots(packageId);
-  if (isLoading) return <DrawerLoading />;
-  if (!hotspots?.length) return <DrawerEmpty message="No hotspots detected" />;
+function HealthTrendsDrawer({ projectId, packageId }: { projectId: number; packageId?: string }) {
+  const { data: hotspots, isLoading: hLoading } = useHotspots(packageId);
+  const { data: workload, isLoading: wLoading } = useWorkload(projectId);
+  const { data: dueSoon, isLoading: tLoading } = useDueSoon(projectId);
+  const loading = hLoading || wLoading || tLoading;
+  if (loading) return <DrawerLoading />;
+
+  const dueSoonItems = dueSoon?.items ?? [];
+
   return (
-    <table className="w-full text-[11px]">
-      <thead>
-        <tr className="border-b border-zinc-200">
-          <th className="text-left py-1.5 font-semibold text-zinc-500">Artifact</th>
-          <th className="text-right py-1.5 font-semibold text-zinc-500">Threads</th>
-          <th className="text-right py-1.5 font-semibold text-zinc-500">Changes</th>
-          <th className="text-right py-1.5 font-semibold text-zinc-500">Heat</th>
-        </tr>
-      </thead>
-      <tbody>
-        {hotspots.map((h: any, i: number) => (
-          <tr key={i} className="border-b border-zinc-50 hover:bg-zinc-50/50">
-            <td className="py-1.5 text-zinc-700 truncate max-w-[200px]">
-              {h.artifactTitle || h.title || '—'}
-            </td>
-            <td className="py-1.5 text-right text-zinc-500">{h.threadCount ?? 0}</td>
-            <td className="py-1.5 text-right text-zinc-500">{h.changeCount ?? 0}</td>
-            <td className="py-1.5 text-right">
-              <span
+    <div className="space-y-5">
+      {/* Hotspots */}
+      <div>
+        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+          Change Hotspots
+        </h4>
+        {!hotspots?.length ? (
+          <p className="text-[10px] text-zinc-400">No hotspots detected</p>
+        ) : (
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-zinc-200">
+                <th className="text-left py-1.5 font-semibold text-zinc-500">Artifact</th>
+                <th className="text-right py-1.5 font-semibold text-zinc-500">Threads</th>
+                <th className="text-right py-1.5 font-semibold text-zinc-500">Changes</th>
+                <th className="text-right py-1.5 font-semibold text-zinc-500">Heat</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hotspots.map((h: any, i: number) => (
+                <tr key={i} className="border-b border-zinc-50 hover:bg-zinc-50/50">
+                  <td className="py-1.5 text-zinc-700 truncate max-w-[200px]">
+                    {h.artifactTitle || h.title || '—'}
+                  </td>
+                  <td className="py-1.5 text-right text-zinc-500">{h.threadCount ?? 0}</td>
+                  <td className="py-1.5 text-right text-zinc-500">{h.changeCount ?? 0}</td>
+                  <td className="py-1.5 text-right">
+                    <span
+                      className={cn(
+                        'text-[10px] font-medium',
+                        h.heat === 'critical'
+                          ? 'text-red-600'
+                          : h.heat === 'high'
+                            ? 'text-orange-600'
+                            : 'text-amber-600'
+                      )}
+                    >
+                      {h.heat}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Workload */}
+      <div>
+        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+          Ownership & Workload
+        </h4>
+        {!workload?.length ? (
+          <p className="text-[10px] text-zinc-400">No workload data</p>
+        ) : (
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-zinc-200">
+                <th className="text-left py-1.5 font-semibold text-zinc-500">Owner</th>
+                <th className="text-left py-1.5 font-semibold text-zinc-500">Role</th>
+                <th className="text-right py-1.5 font-semibold text-zinc-500">Open</th>
+                <th className="text-right py-1.5 font-semibold text-zinc-500">Overdue</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workload.map((w: any, i: number) => (
+                <tr key={i} className="border-b border-zinc-50 hover:bg-zinc-50/50">
+                  <td className="py-1.5 text-zinc-700">{w.ownerName || '—'}</td>
+                  <td className="py-1.5 text-zinc-500">{w.role || '—'}</td>
+                  <td className="py-1.5 text-right text-zinc-600">{w.openItems ?? 0}</td>
+                  <td className="py-1.5 text-right">
+                    <span
+                      className={cn(
+                        w.overdueItems > 0 ? 'text-red-600 font-medium' : 'text-zinc-400'
+                      )}
+                    >
+                      {w.overdueItems ?? 0}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Due Soon */}
+      <div>
+        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+          Due Soon
+        </h4>
+        {!dueSoonItems.length ? (
+          <p className="text-[10px] text-zinc-400">Nothing due in next 48h</p>
+        ) : (
+          <div className="space-y-1">
+            {dueSoonItems.map((d: any, i: number) => (
+              <div key={i} className="flex items-center gap-2 py-1.5 border-b border-zinc-50">
+                <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-zinc-700 truncate">{d.title || d.artifactTitle}</p>
+                  <p className="text-[9px] text-zinc-400">{d.type || d.itemType}</p>
+                </div>
+                <span
+                  className={cn(
+                    'text-[10px] shrink-0',
+                    d.isOverdue ? 'text-red-600 font-medium' : 'text-zinc-500'
+                  )}
+                >
+                  {d.dueDate ? new Date(d.dueDate).toLocaleDateString() : '—'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Policies & Milestones Drawer (consolidated) ──
+
+function PoliciesMilestonesDrawer({ packageId }: { packageId?: string }) {
+  const { data: policies, isLoading: pLoading } = usePolicies();
+  const { data: milestones, isLoading: mLoading } = useMilestones(packageId);
+  const loading = pLoading || mLoading;
+  if (loading) return <DrawerLoading />;
+
+  return (
+    <div className="space-y-5">
+      {/* Policies */}
+      <div>
+        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+          Policy Settings
+        </h4>
+        {!policies?.length ? (
+          <p className="text-[10px] text-zinc-400">No policies configured</p>
+        ) : (
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-zinc-200">
+                <th className="text-left py-1.5 font-semibold text-zinc-500">Policy</th>
+                <th className="text-left py-1.5 font-semibold text-zinc-500">Scope</th>
+                <th className="text-right py-1.5 font-semibold text-zinc-500">Review</th>
+                <th className="text-right py-1.5 font-semibold text-zinc-500">Overdue</th>
+              </tr>
+            </thead>
+            <tbody>
+              {policies.map((p: any, i: number) => (
+                <tr key={i} className="border-b border-zinc-50 hover:bg-zinc-50/50">
+                  <td className="py-1.5 text-zinc-700">{p.name || p.policyId}</td>
+                  <td className="py-1.5 text-zinc-500 truncate max-w-[120px]">
+                    {p.packageFamily || p.documentFamily || 'All'}
+                  </td>
+                  <td className="py-1.5 text-right text-zinc-600">
+                    {p.reviewWindowHours ? `${p.reviewWindowHours}h` : '—'}
+                  </td>
+                  <td className="py-1.5 text-right text-zinc-600">
+                    {p.overdueThresholdHours ? `${p.overdueThresholdHours}h` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Milestones */}
+      <div>
+        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+          Milestone Gates
+        </h4>
+        {!milestones?.length ? (
+          <p className="text-[10px] text-zinc-400">No milestones</p>
+        ) : (
+          <div className="space-y-2">
+            {milestones.map((m: any, i: number) => (
+              <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-100">
+                <span
+                  className={cn(
+                    'w-2 h-2 rounded-full shrink-0',
+                    m.status === 'completed'
+                      ? 'bg-emerald-500'
+                      : m.status === 'blocked'
+                        ? 'bg-red-500'
+                        : 'bg-zinc-300'
+                  )}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-medium text-zinc-700">{m.label || m.name}</p>
+                  <p className="text-[9px] text-zinc-400">
+                    {m.targetDate ? `Target: ${new Date(m.targetDate).toLocaleDateString()}` : ''}
+                    {m.gateType && ` · ${m.gateType}`}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'text-[10px]',
+                    m.status === 'completed'
+                      ? 'text-emerald-600'
+                      : m.status === 'blocked'
+                        ? 'text-red-600'
+                        : 'text-zinc-500'
+                  )}
+                >
+                  {m.status || 'pending'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Activity Drawer (consolidated: digests + automation) ──
+
+function ActivityDrawer({ projectId }: { projectId: number }) {
+  const { data: digests, isLoading: dLoading } = useDigests(projectId);
+  const { data: runs, isLoading: aLoading } = useAutomationRuns(projectId);
+  const markRead = useMarkDigestRead();
+  const loading = dLoading || aLoading;
+  if (loading) return <DrawerLoading />;
+
+  return (
+    <div className="space-y-5">
+      {/* Digests */}
+      <div>
+        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+          Digest Center
+        </h4>
+        {!digests?.length ? (
+          <p className="text-[10px] text-zinc-400">No digests</p>
+        ) : (
+          <div className="space-y-1">
+            {digests.map((d: any, i: number) => (
+              <div
+                key={i}
                 className={cn(
-                  'text-[10px] font-medium',
-                  h.heat === 'critical'
-                    ? 'text-red-600'
-                    : h.heat === 'high'
-                      ? 'text-orange-600'
-                      : 'text-amber-600'
+                  'flex items-start gap-2 py-2 border-b border-zinc-50',
+                  !d.readAt && 'bg-blue-50/30'
                 )}
               >
-                {h.heat}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-// ── Workload Drawer ──
-
-function WorkloadDrawer({ projectId }: { projectId: number }) {
-  const { data: workload, isLoading } = useWorkload(projectId);
-  if (isLoading) return <DrawerLoading />;
-  if (!workload?.length) return <DrawerEmpty message="No workload data" />;
-  return (
-    <table className="w-full text-[11px]">
-      <thead>
-        <tr className="border-b border-zinc-200">
-          <th className="text-left py-1.5 font-semibold text-zinc-500">Owner</th>
-          <th className="text-left py-1.5 font-semibold text-zinc-500">Role</th>
-          <th className="text-right py-1.5 font-semibold text-zinc-500">Open</th>
-          <th className="text-right py-1.5 font-semibold text-zinc-500">Overdue</th>
-        </tr>
-      </thead>
-      <tbody>
-        {workload.map((w: any, i: number) => (
-          <tr key={i} className="border-b border-zinc-50 hover:bg-zinc-50/50">
-            <td className="py-1.5 text-zinc-700">{w.ownerName || '—'}</td>
-            <td className="py-1.5 text-zinc-500">{w.role || '—'}</td>
-            <td className="py-1.5 text-right text-zinc-600">{w.openItems ?? 0}</td>
-            <td className="py-1.5 text-right">
-              <span
-                className={cn(w.overdueItems > 0 ? 'text-red-600 font-medium' : 'text-zinc-400')}
-              >
-                {w.overdueItems ?? 0}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-// ── Timeline Drawer ──
-
-function TimelineDrawer({ projectId }: { projectId: number }) {
-  const { data: dueSoon, isLoading } = useDueSoon(projectId);
-  if (isLoading) return <DrawerLoading />;
-  const items = dueSoon?.items ?? [];
-  if (!items.length) return <DrawerEmpty message="Nothing due soon" />;
-  return (
-    <div className="space-y-1">
-      {items.map((d: any, i: number) => (
-        <div key={i} className="flex items-center gap-2 py-1.5 border-b border-zinc-50">
-          <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] text-zinc-700 truncate">{d.title || d.artifactTitle}</p>
-            <p className="text-[9px] text-zinc-400">{d.type || d.itemType}</p>
+                <Mail
+                  className={cn(
+                    'w-3.5 h-3.5 mt-0.5 shrink-0',
+                    d.readAt ? 'text-zinc-300' : 'text-blue-500'
+                  )}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-zinc-700">{d.subject || d.digestType}</p>
+                  <p className="text-[9px] text-zinc-400">
+                    {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ''}
+                  </p>
+                </div>
+                {!d.readAt && (
+                  <button
+                    onClick={() => markRead.mutate(d.digestId)}
+                    className="text-[9px] text-blue-600 hover:text-blue-800 shrink-0"
+                  >
+                    Mark read
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-          <span
-            className={cn(
-              'text-[10px] shrink-0',
-              d.isOverdue ? 'text-red-600 font-medium' : 'text-zinc-500'
-            )}
-          >
-            {d.dueDate ? new Date(d.dueDate).toLocaleDateString() : '—'}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
+        )}
+      </div>
 
-// ── Policies Drawer ──
-
-function PoliciesDrawer() {
-  const { data: policies, isLoading } = usePolicies();
-  if (isLoading) return <DrawerLoading />;
-  if (!policies?.length) return <DrawerEmpty message="No policies configured" />;
-  return (
-    <table className="w-full text-[11px]">
-      <thead>
-        <tr className="border-b border-zinc-200">
-          <th className="text-left py-1.5 font-semibold text-zinc-500">Policy</th>
-          <th className="text-left py-1.5 font-semibold text-zinc-500">Scope</th>
-          <th className="text-right py-1.5 font-semibold text-zinc-500">Review</th>
-          <th className="text-right py-1.5 font-semibold text-zinc-500">Overdue</th>
-        </tr>
-      </thead>
-      <tbody>
-        {policies.map((p: any, i: number) => (
-          <tr key={i} className="border-b border-zinc-50 hover:bg-zinc-50/50">
-            <td className="py-1.5 text-zinc-700">{p.name || p.policyId}</td>
-            <td className="py-1.5 text-zinc-500 truncate max-w-[120px]">
-              {p.packageFamily || p.documentFamily || 'All'}
-            </td>
-            <td className="py-1.5 text-right text-zinc-600">
-              {p.reviewWindowHours ? `${p.reviewWindowHours}h` : '—'}
-            </td>
-            <td className="py-1.5 text-right text-zinc-600">
-              {p.overdueThresholdHours ? `${p.overdueThresholdHours}h` : '—'}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-// ── Milestones Drawer ──
-
-function MilestonesDrawer({ packageId }: { packageId?: string }) {
-  const { data: milestones, isLoading } = useMilestones(packageId);
-  if (isLoading) return <DrawerLoading />;
-  if (!milestones?.length) return <DrawerEmpty message="No milestones" />;
-  return (
-    <div className="space-y-2">
-      {milestones.map((m: any, i: number) => (
-        <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-100">
-          <span
-            className={cn(
-              'w-2 h-2 rounded-full shrink-0',
-              m.status === 'completed'
-                ? 'bg-emerald-500'
-                : m.status === 'blocked'
-                  ? 'bg-red-500'
-                  : 'bg-zinc-300'
-            )}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium text-zinc-700">{m.label || m.name}</p>
-            <p className="text-[9px] text-zinc-400">
-              {m.targetDate ? `Target: ${new Date(m.targetDate).toLocaleDateString()}` : ''}
-              {m.gateType && ` · ${m.gateType}`}
-            </p>
+      {/* Automation Runs */}
+      <div>
+        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+          Automation Log
+        </h4>
+        {!runs?.length ? (
+          <p className="text-[10px] text-zinc-400">No automation runs</p>
+        ) : (
+          <div className="space-y-1">
+            {runs.map((r: any, i: number) => (
+              <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-50">
+                <Zap
+                  className={cn(
+                    'w-3.5 h-3.5 shrink-0',
+                    r.status === 'completed'
+                      ? 'text-emerald-500'
+                      : r.status === 'failed'
+                        ? 'text-red-500'
+                        : 'text-zinc-400'
+                  )}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-zinc-700">
+                    Sweep {r.status === 'completed' ? 'completed' : r.status}
+                  </p>
+                  <p className="text-[9px] text-zinc-400">
+                    {r.actionsCreated ?? 0} actions ·{' '}
+                    {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'text-[10px]',
+                    r.status === 'completed'
+                      ? 'text-emerald-600'
+                      : r.status === 'failed'
+                        ? 'text-red-600'
+                        : 'text-zinc-500'
+                  )}
+                >
+                  {r.durationMs ? `${Math.round(r.durationMs / 1000)}s` : ''}
+                </span>
+              </div>
+            ))}
           </div>
-          <span
-            className={cn(
-              'text-[10px]',
-              m.status === 'completed'
-                ? 'text-emerald-600'
-                : m.status === 'blocked'
-                  ? 'text-red-600'
-                  : 'text-zinc-500'
-            )}
-          >
-            {m.status || 'pending'}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Digests Drawer ──
-
-function DigestsDrawer({ projectId }: { projectId: number }) {
-  const { data: digests, isLoading } = useDigests(projectId);
-  const markRead = useMarkDigestRead();
-  if (isLoading) return <DrawerLoading />;
-  if (!digests?.length) return <DrawerEmpty message="No digests" />;
-  return (
-    <div className="space-y-1">
-      {digests.map((d: any, i: number) => (
-        <div
-          key={i}
-          className={cn(
-            'flex items-start gap-2 py-2 border-b border-zinc-50',
-            !d.readAt && 'bg-blue-50/30'
-          )}
-        >
-          <Mail
-            className={cn(
-              'w-3.5 h-3.5 mt-0.5 shrink-0',
-              d.readAt ? 'text-zinc-300' : 'text-blue-500'
-            )}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] text-zinc-700">{d.subject || d.digestType}</p>
-            <p className="text-[9px] text-zinc-400">
-              {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ''}
-            </p>
-          </div>
-          {!d.readAt && (
-            <button
-              onClick={() => markRead.mutate(d.digestId)}
-              className="text-[9px] text-blue-600 hover:text-blue-800 shrink-0"
-            >
-              Mark read
-            </button>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Automation Drawer ──
-
-function AutomationDrawer({ projectId }: { projectId: number }) {
-  const { data: runs, isLoading } = useAutomationRuns(projectId);
-  if (isLoading) return <DrawerLoading />;
-  if (!runs?.length) return <DrawerEmpty message="No automation runs" />;
-  return (
-    <div className="space-y-1">
-      {runs.map((r: any, i: number) => (
-        <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-50">
-          <Zap
-            className={cn(
-              'w-3.5 h-3.5 shrink-0',
-              r.status === 'completed'
-                ? 'text-emerald-500'
-                : r.status === 'failed'
-                  ? 'text-red-500'
-                  : 'text-zinc-400'
-            )}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] text-zinc-700">
-              Sweep {r.status === 'completed' ? 'completed' : r.status}
-            </p>
-            <p className="text-[9px] text-zinc-400">
-              {r.actionsCreated ?? 0} actions ·{' '}
-              {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
-            </p>
-          </div>
-          <span
-            className={cn(
-              'text-[10px]',
-              r.status === 'completed'
-                ? 'text-emerald-600'
-                : r.status === 'failed'
-                  ? 'text-red-600'
-                  : 'text-zinc-500'
-            )}
-          >
-            {r.durationMs ? `${Math.round(r.durationMs / 1000)}s` : ''}
-          </span>
-        </div>
-      ))}
+        )}
+      </div>
     </div>
   );
 }

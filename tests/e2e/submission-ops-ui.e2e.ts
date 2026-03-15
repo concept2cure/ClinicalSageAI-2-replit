@@ -9,7 +9,7 @@
  *   UI-3  Selecting a blocker row updates the inspector panel
  *   UI-4  Package selector dropdown opens and shows options
  *   UI-5  Quick-view preset selector opens and changes state
- *   UI-6  Drawer buttons open sheet overlays (readiness + bottlenecks)
+ *   UI-6  Drawer buttons open sheet overlays (readiness + health_trends, verifies 5-drawer consolidation)
  *   UI-7  Sidebar "Submission Ops" nav item opens correct workspace
  *
  * Screenshots:
@@ -18,7 +18,7 @@
  *   SS-3  Package selector open
  *   SS-4  Quick-view preset open
  *   SS-5  Readiness drawer open
- *   SS-6  Bottlenecks drawer open
+ *   SS-6  Health & Trends consolidated drawer open
  */
 import { test, expect, Page } from '@playwright/test';
 
@@ -302,9 +302,9 @@ test.describe('Phase 15 — Submission Ops UI Tests', () => {
     });
   });
 
-  // ── UI-6: Drawer buttons open sheet overlays ──
+  // ── UI-6: Drawer buttons open sheet overlays (consolidated drawers) ──
 
-  test('UI-6: Readiness and Bottlenecks drawers open correctly', async ({ page }) => {
+  test('UI-6: Readiness and Health & Trends drawers open correctly', async ({ page }) => {
     await loginAndNavigate(page);
     await openSubmissionOps(page);
 
@@ -332,28 +332,48 @@ test.describe('Phase 15 — Submission Ops UI Tests', () => {
       fullPage: true,
     });
 
-    // Close the drawer by clicking outside or the close button
+    // Close the drawer
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
-    // ── Test Bottlenecks drawer ──
-    const bottlenecksBtn = page.locator('[data-testid="drawer-btn-bottlenecks"]');
-    await expect(bottlenecksBtn).toBeVisible();
-    await bottlenecksBtn.click();
+    // ── Test consolidated Health & Trends drawer ──
+    const healthBtn = page.locator('[data-testid="drawer-btn-health_trends"]');
+    await expect(healthBtn).toBeVisible();
+    await healthBtn.click();
     await page.waitForTimeout(500);
 
-    // Sheet should now show Bottlenecks
+    // Sheet should now show Health & Trends
     await expect(drawerTitle).toBeVisible({ timeout: 3000 });
-    await expect(drawerTitle).toContainText(/Bottleneck/i);
+    await expect(drawerTitle).toContainText(/Health & Trends/i);
 
-    // Screenshot: SS-6 Bottlenecks drawer open
+    // Should contain subheaders for all three consolidated sections
+    const drawerContent = page.locator('[role="dialog"]');
+    await expect(drawerContent).toContainText(/Change Hotspots|Ownership & Workload|Due Soon/i);
+
+    // Screenshot: SS-6 Health & Trends drawer open
     await page.screenshot({
-      path: `${SCREENSHOT_DIR}/ss-6-bottlenecks-drawer.png`,
+      path: `${SCREENSHOT_DIR}/ss-6-health-trends-drawer.png`,
       fullPage: true,
     });
 
     // Close
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
+
+    // ── Verify only 5 drawer buttons exist (consolidation proof) ──
+    await expect(page.locator('[data-testid="drawer-btn-readiness"]')).toBeVisible();
+    await expect(page.locator('[data-testid="drawer-btn-bottlenecks"]')).toBeVisible();
+    await expect(page.locator('[data-testid="drawer-btn-health_trends"]')).toBeVisible();
+    await expect(page.locator('[data-testid="drawer-btn-policies_milestones"]')).toBeVisible();
+    await expect(page.locator('[data-testid="drawer-btn-activity"]')).toBeVisible();
+
+    // Old drawer buttons should NOT exist
+    await expect(page.locator('[data-testid="drawer-btn-hotspots"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="drawer-btn-workload"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="drawer-btn-timeline"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="drawer-btn-automation"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="drawer-btn-digests"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="drawer-btn-policies"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="drawer-btn-milestones"]')).toHaveCount(0);
   });
 });
