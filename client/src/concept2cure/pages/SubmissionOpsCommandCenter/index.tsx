@@ -296,12 +296,16 @@ export function SubmissionOpsCommandCenter({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-white">
+    <div data-testid="submission-ops-root" className="flex-1 flex flex-col min-h-0 bg-white">
       {/* ── HEADER ── */}
-      <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white shrink-0">
+      <div
+        data-testid="submission-ops-header"
+        className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white shrink-0"
+      >
         {/* Package selector */}
         <div className="relative">
           <button
+            data-testid="package-selector"
             onClick={() => setPkgDropdownOpen(!pkgDropdownOpen)}
             className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-700 hover:text-zinc-900"
           >
@@ -353,20 +357,23 @@ export function SubmissionOpsCommandCenter({
         </span>
 
         {/* Summary counters */}
-        <div className="flex items-center gap-3 text-[10px] text-zinc-500 ml-1">
-          <span title="Readiness">
+        <div
+          data-testid="summary-strip"
+          className="flex items-center gap-3 text-[10px] text-zinc-500 ml-1"
+        >
+          <span title="Readiness" data-testid="kpi-readiness">
             <Target className="w-3 h-3 inline -mt-px mr-0.5 text-zinc-400" />
             {readinessPercent}%
           </span>
-          <span title="Blockers">
+          <span title="Blockers" data-testid="kpi-blockers">
             <XCircle className="w-3 h-3 inline -mt-px mr-0.5 text-zinc-400" />
             {totalBlockers}
           </span>
-          <span title="Critical">
+          <span title="Critical" data-testid="kpi-critical">
             <AlertCircle className="w-3 h-3 inline -mt-px mr-0.5 text-red-400" />
             {criticalCount}
           </span>
-          <span title="Overdue">
+          <span title="Overdue" data-testid="kpi-overdue">
             <Clock className="w-3 h-3 inline -mt-px mr-0.5 text-amber-400" />
             {overdueCount}
           </span>
@@ -378,6 +385,7 @@ export function SubmissionOpsCommandCenter({
         {/* Quick-view preset */}
         <div className="relative">
           <button
+            data-testid="quick-view-selector"
             onClick={() => setQuickViewOpen(!quickViewOpen)}
             className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-700 border border-zinc-200 rounded px-2 py-0.5"
           >
@@ -438,7 +446,10 @@ export function SubmissionOpsCommandCenter({
         </button>
 
         {/* Drawer toolbar buttons */}
-        <div className="flex items-center gap-0.5 ml-1 border-l border-zinc-100 pl-2">
+        <div
+          data-testid="drawer-toolbar"
+          className="flex items-center gap-0.5 ml-1 border-l border-zinc-100 pl-2"
+        >
           {(
             [
               'readiness',
@@ -457,6 +468,7 @@ export function SubmissionOpsCommandCenter({
             return (
               <button
                 key={dk}
+                data-testid={`drawer-btn-${dk}`}
                 onClick={() => setActiveDrawer(activeDrawer === dk ? null : dk)}
                 title={d.label}
                 className={cn(
@@ -522,9 +534,9 @@ export function SubmissionOpsCommandCenter({
       )}
 
       {/* ── SPLIT PANE BODY ── */}
-      <div className="flex-1 flex min-h-0">
+      <div data-testid="split-pane" className="flex-1 flex min-h-0">
         {/* LEFT: Primary List */}
-        <ScrollArea className="flex-1 min-w-0">
+        <ScrollArea data-testid="blocker-list" className="flex-1 min-w-0">
           <div className="p-0">
             {Object.keys(processedItems).length === 0 ? (
               <EmptyState message="No blockers or items found for this package." />
@@ -571,7 +583,10 @@ export function SubmissionOpsCommandCenter({
         </ScrollArea>
 
         {/* RIGHT: Inspector */}
-        <div className="w-[280px] 2xl:w-[320px] border-l border-zinc-100 shrink-0 bg-white flex flex-col min-h-0">
+        <div
+          data-testid="inspector-panel"
+          className="w-[280px] 2xl:w-[320px] border-l border-zinc-100 shrink-0 bg-white flex flex-col min-h-0"
+        >
           <ScrollArea className="flex-1">
             {selectedItem && selectedItemKind === 'blocker' ? (
               <BlockerInspector
@@ -608,9 +623,12 @@ export function SubmissionOpsCommandCenter({
         >
           {activeDrawer && (
             <>
-              <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+              <div
+                data-testid="drawer-header"
+                className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0"
+              >
                 {DRAWER_LABELS[activeDrawer]?.icon}
-                <span className="text-sm font-semibold text-zinc-800">
+                <span data-testid="drawer-title" className="text-sm font-semibold text-zinc-800">
                   {DRAWER_LABELS[activeDrawer]?.label}
                 </span>
               </div>
@@ -659,6 +677,7 @@ function BlockerRow({
 
   return (
     <button
+      data-testid="blocker-row"
       onClick={onClick}
       className={cn(
         'w-full flex items-start gap-2 px-3 py-2 border-b border-zinc-50 text-left transition-colors',
