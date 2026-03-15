@@ -4402,7 +4402,16 @@ router.post(
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
-      // Determine the current review round (max existing round + 1, or 1 if none)
+      // Artifact must be in 'review' status to assign reviewers
+      if (artifact.status !== 'review') {
+        return sendError(
+          res,
+          400,
+          `Cannot assign reviewers: artifact is in '${artifact.status}' status (must be 'review')`
+        );
+      }
+
+      // Determine the current review round (max existing round, or 1 if none)
       const existingAssignments = await db
         .select({ reviewRound: concept2cureReviewAssignments.reviewRound })
         .from(concept2cureReviewAssignments)
@@ -4410,10 +4419,7 @@ router.post(
         .orderBy(desc(concept2cureReviewAssignments.reviewRound))
         .limit(1);
 
-      const currentRound = existingAssignments.length > 0 ? existingAssignments[0].reviewRound : 1;
-
-      // If artifact is in draft and we're assigning, use the current or next round
-      const reviewRound = artifact.status === 'review' ? currentRound : currentRound + 1;
+      const reviewRound = existingAssignments.length > 0 ? existingAssignments[0].reviewRound : 1;
 
       // Verify all reviewer IDs belong to the same organization
       const validReviewers = await db
@@ -4652,6 +4658,22 @@ router.delete(
 
       if (!assignment) return sendError(res, 404, 'Assignment not found');
 
+      // Validate the assignment belongs to the artifact in the URL
+      const [withdrawArtifact] = await db
+        .select({ id: concept2cureArtifacts.id })
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.artifactId, req.params.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!withdrawArtifact || assignment.artifactId !== withdrawArtifact.id) {
+        return sendError(res, 404, 'Assignment not found for this artifact');
+      }
+
       if (assignment.status === 'completed') {
         return sendError(
           res,
@@ -4858,6 +4880,7 @@ router.post(
 
       // Exclude withdrawn assignments from round summary (consistent with quorum gate)
       const activeAssignments = roundAssignments.filter(a => a.status !== 'withdrawn');
+      const activeReviewerIds = new Set(activeAssignments.map(a => a.reviewerId));
       const totalAssigned = activeAssignments.length;
       const completedCount = activeAssignments.filter(a => a.status === 'completed').length;
       const allApproved =
@@ -4874,7 +4897,9 @@ router.post(
                 eq(concept2cureReviewDecisions.organizationId, organizationId)
               )
             )
-        ).every(d => d.decision === 'approve');
+        )
+          .filter(d => activeReviewerIds.has(d.reviewerId))
+          .every(d => d.decision === 'approve');
 
       return sendSuccess(res, {
         decisionId: inserted.decisionId,
@@ -4975,11 +5000,14 @@ router.get(
 
       const totalAssigned = activeAssignments.length;
       const completedCount = activeAssignments.filter(a => a.status === 'completed').length;
+      // Filter decisions to only active (non-withdrawn) reviewers
+      const activeReviewerIds = new Set(activeAssignments.map(a => a.reviewerId));
+      const activeDecisions = decisions.filter(d => activeReviewerIds.has(d.reviewerId));
       const allApproved =
         totalAssigned > 0 &&
         completedCount === totalAssigned &&
-        decisions.length >= totalAssigned &&
-        decisions.every(d => d.decision === 'approve');
+        activeDecisions.length === totalAssigned &&
+        activeDecisions.every(d => d.decision === 'approve');
 
       return sendSuccess(res, {
         artifactId: req.params.artifactId,

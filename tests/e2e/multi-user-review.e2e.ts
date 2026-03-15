@@ -378,6 +378,42 @@ test.describe('P12-D — Self-Review Prevention', () => {
     expect(res.status()).toBe(200);
     expect((await res.json()).data.assignments).toHaveLength(1);
   });
+
+  test('16. Author cannot submit review decision on own artifact', async ({ request }) => {
+    // Author role (user 4) is blocked from submitting review decisions (role-based),
+    // and the self-review GxP check provides a second safety net for admin-authors
+    const res = await request.post(
+      `${BASE}/projects/${projectId}/artifacts/${artifactId}/reviews/submit`,
+      {
+        headers: authHeaders(authorToken),
+        data: { decision: 'approve', comment: 'Trying to self-review' },
+      }
+    );
+    expect(res.status()).toBe(403);
+  });
+
+  test('17. Cannot assign reviewers to a draft artifact', async ({ request }) => {
+    // Create a new artifact that stays in draft
+    const createRes = await request.post(`${BASE}/projects/${projectId}/artifacts`, {
+      headers: authHeaders(adminToken),
+      data: {
+        type: 'document',
+        category: 'document',
+        title: 'P12-D Draft Assignment Block',
+        content: 'Draft doc.',
+        ctdSection: '5.2',
+      },
+    });
+    expect(createRes.status()).toBe(201);
+    const draftId = (await createRes.json()).data.id;
+
+    const res = await request.post(`${BASE}/projects/${projectId}/artifacts/${draftId}/reviewers`, {
+      headers: authHeaders(adminToken),
+      data: { reviewerIds: [seed.users.reviewer.id] },
+    });
+    expect(res.status()).toBe(400);
+    expect((await res.json()).error.message).toContain('must be');
+  });
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -397,7 +433,7 @@ test.describe('P12-E — Edge Cases & Dashboard', () => {
     reviewerToken = await login(request, 'reviewer');
   });
 
-  test('16. Review status with no reviewers returns hasReviewers=false', async ({ request }) => {
+  test('18. Review status with no reviewers returns hasReviewers=false', async ({ request }) => {
     // Create artifact with no reviewers assigned
     const createRes = await request.post(`${BASE}/projects/${projectId}/artifacts`, {
       headers: authHeaders(adminToken),
@@ -425,7 +461,7 @@ test.describe('P12-E — Edge Cases & Dashboard', () => {
     expect(json.data.readyForApproval).toBe(false);
   });
 
-  test('17. Duplicate assignment returns already_assigned status', async ({ request }) => {
+  test('19. Duplicate assignment returns already_assigned status', async ({ request }) => {
     const createRes = await request.post(`${BASE}/projects/${projectId}/artifacts`, {
       headers: authHeaders(adminToken),
       data: {
@@ -458,7 +494,7 @@ test.describe('P12-E — Edge Cases & Dashboard', () => {
     expect(json.data.assignments[0].status).toBe('already_assigned');
   });
 
-  test('18. Pending dashboard returns only in-review artifacts', async ({ request }) => {
+  test('20. Pending dashboard returns only in-review artifacts', async ({ request }) => {
     const res = await request.get(`${BASE}/reviews/pending`, {
       headers: authHeaders(reviewerToken),
     });
@@ -472,7 +508,7 @@ test.describe('P12-E — Edge Cases & Dashboard', () => {
     }
   });
 
-  test('19. Invalid reviewer IDs rejected', async ({ request }) => {
+  test('21. Invalid reviewer IDs rejected', async ({ request }) => {
     const createRes = await request.post(`${BASE}/projects/${projectId}/artifacts`, {
       headers: authHeaders(adminToken),
       data: {
@@ -498,7 +534,7 @@ test.describe('P12-E — Edge Cases & Dashboard', () => {
     expect((await res.json()).error.message).toContain('not in organization');
   });
 
-  test('20. Completed assignment cannot be withdrawn', async ({ request }) => {
+  test('22. Completed assignment cannot be withdrawn', async ({ request }) => {
     const createRes = await request.post(`${BASE}/projects/${projectId}/artifacts`, {
       headers: authHeaders(adminToken),
       data: {

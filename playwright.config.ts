@@ -10,6 +10,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   timeout: 60_000,
+  workers: 1, // Serialize to avoid server rate-limiting across test files
   retries: 0,
   reporter: [['list'], ['json', { outputFile: 'test-results/e2e-results.json' }]],
   outputDir: 'test-results/e2e',
