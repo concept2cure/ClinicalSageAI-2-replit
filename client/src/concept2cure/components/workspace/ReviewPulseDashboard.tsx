@@ -111,11 +111,11 @@ const StatCard: React.FC<{
   color: string;
   subtext?: string;
 }> = ({ icon: Icon, label, value, color, subtext }) => (
-  <div className="flex flex-col items-center gap-1 px-4 py-3 rounded-lg border bg-white min-w-[100px]">
-    <Icon className={cn('w-4 h-4', color)} />
-    <span className="text-lg font-bold tabular-nums text-zinc-900">{value}</span>
-    <span className="text-[11px] text-zinc-500 font-medium text-center leading-tight">{label}</span>
-    {subtext && <span className="text-[10px] text-zinc-400">{subtext}</span>}
+  <div className="flex items-center gap-2 px-3 py-1.5 border border-zinc-100 rounded bg-zinc-50/50 min-w-0">
+    <Icon className={cn('w-3.5 h-3.5 shrink-0', color)} />
+    <span className="text-sm font-bold tabular-nums text-zinc-900">{value}</span>
+    <span className="text-[11px] text-zinc-500 truncate">{label}</span>
+    {subtext && <span className="text-[10px] text-zinc-400 ml-auto">{subtext}</span>}
   </div>
 );
 

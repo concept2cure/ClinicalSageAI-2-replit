@@ -10,7 +10,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -249,14 +248,14 @@ export function PrecedentIntelligenceDashboard({
         {/* ─── SEARCH TAB ──────────────────────────────────────────────────── */}
         <TabsContent value="search" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
           {/* Search form */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-3">
+              <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                 <Search className="w-4 h-4 text-violet-600" />
                 Search Regulatory Precedents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="px-3 py-2">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-zinc-500 mb-1 block">Submission Type *</label>
@@ -322,25 +321,25 @@ export function PrecedentIntelligenceDashboard({
                   Search Precedents
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Search results */}
           {searchActive && (
-            <Card>
-              <CardHeader className="pb-2">
+            <div className="border border-border/40 rounded-sm bg-background">
+              <div className="px-3 py-2 border-b border-border/30 pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">
+                  <h3 className="text-sm font-semibold text-sm">
                     Results {searchResults?.length ? `(${searchResults.length})` : ''}
-                  </CardTitle>
+                  </h3>
                   {searchResults?.length ? (
                     <Badge variant="secondary" className="text-xs">
                       {searchSubmissionType}
                     </Badge>
                   ) : null}
                 </div>
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="px-3 py-2">
                 {searchLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
@@ -421,16 +420,16 @@ export function PrecedentIntelligenceDashboard({
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </TabsContent>
 
         {/* ─── COMPARE TAB ─────────────────────────────────────────────────── */}
         <TabsContent value="compare" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
           {!selectedPrecedent ? (
-            <Card>
-              <CardContent className="py-12 text-center">
+            <div className="border border-border/40 rounded-sm bg-background">
+              <div className="px-3 py-2 py-12 text-center">
                 <GitCompare className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">
                   Select a Precedent to Compare
@@ -446,18 +445,18 @@ export function PrecedentIntelligenceDashboard({
                 >
                   <Search className="w-3.5 h-3.5 mr-1" /> Go to Search
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <>
               {/* Selected precedent summary */}
-              <Card className="border-blue-200 bg-blue-50/30">
-                <CardHeader className="pb-2">
+              <div className="border border-border/40 rounded-sm bg-background border-blue-200 bg-blue-50/30">
+                <div className="px-3 py-2 border-b border-border/30 pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                       <FileText className="w-4 h-4 text-blue-600" />
                       Comparing Against
-                    </CardTitle>
+                    </h3>
                     {selectedPrecedent.decisionOutcome && (
                       <Badge
                         variant="secondary"
@@ -471,8 +470,8 @@ export function PrecedentIntelligenceDashboard({
                       </Badge>
                     )}
                   </div>
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div className="px-3 py-2">
                   <div className="grid grid-cols-3 gap-3 text-xs">
                     <div>
                       <span className="text-zinc-500">Device</span>
@@ -493,18 +492,18 @@ export function PrecedentIntelligenceDashboard({
                       </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Your device fields */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 border-b border-border/30 pb-3">
+                  <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                     <Target className="w-4 h-4 text-blue-600" />
                     Your Submission Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  </h3>
+                </div>
+                <div className="px-3 py-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-zinc-500 mb-1 block">Your Device Name</label>
@@ -549,22 +548,22 @@ export function PrecedentIntelligenceDashboard({
                       Run Comparison
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Comparison results */}
               {compareResult && (
-                <Card>
-                  <CardHeader className="pb-3">
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">Comparison Results</CardTitle>
+                      <h3 className="text-sm font-semibold text-sm">Comparison Results</h3>
                       <div className="flex items-center gap-2">
                         <RiskBadge level={compareResult.riskLevel} />
                         <ScoreBar value={compareResult.overallScore} label="Match" />
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                  </div>
+                  <div className="px-3 py-2 space-y-4">
                     {/* Similarities */}
                     {compareResult.similarities.length > 0 && (
                       <div>
@@ -652,8 +651,8 @@ export function PrecedentIntelligenceDashboard({
                         </ul>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
             </>
           )}
@@ -661,14 +660,14 @@ export function PrecedentIntelligenceDashboard({
 
         {/* ─── RISK TAB ────────────────────────────────────────────────────── */}
         <TabsContent value="risk" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-3">
+              <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 text-amber-600" />
                 Regulatory Risk Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="px-3 py-2">
               <p className="text-xs text-zinc-500 mb-3">
                 Cross-references adversarial precedents, safety signals, toxic predicates, and FDA
                 objection patterns.
@@ -686,22 +685,22 @@ export function PrecedentIntelligenceDashboard({
                 )}
                 Analyze Risk
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {riskResult && (
             <>
               {/* Risk score card */}
-              <Card
+              <div
                 className={cn(
-                  'border-l-4',
+                  'border border-border/40 rounded-sm bg-background border-l-4',
                   riskResult.overallRisk === 'low' && 'border-l-emerald-500',
                   riskResult.overallRisk === 'medium' && 'border-l-amber-500',
                   riskResult.overallRisk === 'high' && 'border-l-red-500',
                   riskResult.overallRisk === 'critical' && 'border-l-red-700'
                 )}
               >
-                <CardContent className="pt-4">
+                <div className="px-3 py-2 pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <h3 className="text-lg font-semibold text-zinc-900">Risk Assessment</h3>
@@ -715,16 +714,16 @@ export function PrecedentIntelligenceDashboard({
                     </div>
                   </div>
                   <ScoreBar value={riskResult.riskScore} max={100} label="Risk Level" />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Risk factors */}
               {riskResult.factors.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Risk Factors</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sm">Risk Factors</h3>
+                  </div>
+                  <div className="px-3 py-2">
                     <div className="space-y-2">
                       {riskResult.factors.map((f, i) => (
                         <div
@@ -742,19 +741,19 @@ export function PrecedentIntelligenceDashboard({
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {/* Safety signals */}
               {riskResult.safetySignals.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                       <Zap className="w-4 h-4 text-red-500" /> Safety Signals
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    </h3>
+                  </div>
+                  <div className="px-3 py-2">
                     <div className="space-y-1.5">
                       {riskResult.safetySignals.map((s, i) => (
                         <div
@@ -768,19 +767,19 @@ export function PrecedentIntelligenceDashboard({
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {/* Mitigation strategies */}
               {riskResult.mitigationStrategies.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" /> Mitigation Strategies
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    </h3>
+                  </div>
+                  <div className="px-3 py-2">
                     <ul className="space-y-1.5">
                       {riskResult.mitigationStrategies.map((s, i) => (
                         <li
@@ -792,21 +791,21 @@ export function PrecedentIntelligenceDashboard({
                         </li>
                       ))}
                     </ul>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {riskResult.factors.length === 0 && riskResult.safetySignals.length === 0 && (
-                <Card>
-                  <CardContent className="py-8 text-center">
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 py-8 text-center">
                     <ShieldCheck className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
                     <h3 className="text-sm font-medium text-zinc-700">Low Risk Profile</h3>
                     <p className="text-xs text-zinc-500 mt-1">
                       No adversarial precedents, safety signals, or toxic predicates found for this
                       submission profile.
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
             </>
           )}
@@ -814,14 +813,14 @@ export function PrecedentIntelligenceDashboard({
 
         {/* ─── STRATEGY TAB ────────────────────────────────────────────────── */}
         <TabsContent value="strategy" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-3">
+              <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                 <Compass className="w-4 h-4 text-emerald-600" />
                 Regulatory Strategy Advisor
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="px-3 py-2">
               <p className="text-xs text-zinc-500 mb-3">
                 Analyzes approved vs. rejected precedents to recommend the optimal submission
                 strategy.
@@ -839,14 +838,14 @@ export function PrecedentIntelligenceDashboard({
                 )}
                 Get Strategy
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {strategyResult && (
             <>
               {/* Primary strategy */}
-              <Card className="border-l-4 border-l-emerald-500">
-                <CardContent className="pt-4">
+              <div className="border border-border/40 rounded-sm bg-background border-l-4 border-l-emerald-500">
+                <div className="px-3 py-2 pt-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-base font-semibold text-zinc-900">
@@ -863,19 +862,19 @@ export function PrecedentIntelligenceDashboard({
                       <ScoreBar value={strategyResult.confidence} label="Confidence" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Supporting precedents */}
               {strategyResult.supportingPrecedents.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                       <FileText className="w-4 h-4 text-blue-600" />
                       Supporting Precedents ({strategyResult.supportingPrecedents.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    </h3>
+                  </div>
+                  <div className="px-3 py-2">
                     <div className="space-y-1.5">
                       {strategyResult.supportingPrecedents.map((p, i) => (
                         <div
@@ -902,17 +901,17 @@ export function PrecedentIntelligenceDashboard({
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {/* Alternative strategies */}
               {strategyResult.alternativeStrategies.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Alternative Strategies</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sm">Alternative Strategies</h3>
+                  </div>
+                  <div className="px-3 py-2">
                     <div className="space-y-2">
                       {strategyResult.alternativeStrategies.map((alt, i) => (
                         <div
@@ -929,20 +928,20 @@ export function PrecedentIntelligenceDashboard({
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {/* Testing requirements */}
               {strategyResult.testingRequirements.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                       <Scale className="w-4 h-4 text-violet-600" />
                       Testing Requirements
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    </h3>
+                  </div>
+                  <div className="px-3 py-2">
                     <ul className="space-y-1">
                       {strategyResult.testingRequirements.map((t, i) => (
                         <li key={i} className="flex items-center gap-2 text-xs text-zinc-600 p-1.5">
@@ -951,20 +950,20 @@ export function PrecedentIntelligenceDashboard({
                         </li>
                       ))}
                     </ul>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {/* Key risks */}
               {strategyResult.keyRisks.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-amber-600" />
                       Key Risks to Address
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    </h3>
+                  </div>
+                  <div className="px-3 py-2">
                     <ul className="space-y-1">
                       {strategyResult.keyRisks.map((r, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs text-zinc-600 p-1.5">
@@ -973,8 +972,8 @@ export function PrecedentIntelligenceDashboard({
                         </li>
                       ))}
                     </ul>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {/* Action: navigate to editor */}

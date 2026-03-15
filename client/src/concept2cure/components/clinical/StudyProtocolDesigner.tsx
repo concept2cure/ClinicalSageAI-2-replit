@@ -23,7 +23,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -384,15 +383,15 @@ const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelec
         const isSelected = selectedDesign === design.type;
 
         return (
-          <Card
+          <div
             key={design.id}
             className={cn(
-              'cursor-pointer transition-all hover:shadow-md',
+              'border border-border/40 rounded-sm bg-background cursor-pointer transition-all',
               isSelected && 'ring-2 ring-blue-500 bg-blue-50'
             )}
             onClick={() => onSelect(design.type)}
           >
-            <CardContent className="p-4">
+            <div className="px-3 py-2 p-4">
               <div className="flex items-start gap-3">
                 <div
                   className={cn(
@@ -414,8 +413,8 @@ const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelec
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">{design.description}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         );
       })}
     </div>
@@ -583,14 +582,14 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
 
       {/* Results */}
       {result && (
-        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
+        <div className="border border-border/40 rounded-sm bg-background bg-gradient-to-br from-blue-50 to-white border-blue-200">
+          <div className="px-3 py-2 border-b border-border/30 pb-2">
+            <h3 className="text-sm font-semibold text-base flex items-center gap-2">
               <Calculator className="h-4 w-4 text-blue-600" />
               Sample Size Estimate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
+          <div className="px-3 py-2">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <p className="text-2xl font-bold text-blue-700">{result.perArm}</p>
@@ -616,8 +615,8 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
                 ))}
               </ul>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -800,8 +799,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
             </div>
 
             {selectedDesign && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
+              <div className="border border-border/40 rounded-sm bg-background bg-blue-50 border-blue-200">
+                <div className="px-3 py-2 p-4">
                   <div className="flex items-start gap-3">
                     <selectedDesign.icon className="h-6 w-6 text-blue-600 mt-1" />
                     <div>
@@ -833,8 +832,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
@@ -887,11 +886,11 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
             </div>
 
             {selectedEndpoints.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Selected Endpoints Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 border-b border-border/30 pb-2">
+                  <h3 className="text-sm font-semibold text-base">Selected Endpoints Summary</h3>
+                </div>
+                <div className="px-3 py-2">
                   <div className="space-y-2">
                     {primaryEndpoint && (
                       <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
@@ -911,8 +910,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                         </div>
                       ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </TabsContent>
 
@@ -936,8 +935,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
           {/* Protocol Tab */}
           <TabsContent value="protocol" className="m-0 space-y-4">
             {protocolSections.map((section, idx) => (
-              <Card key={section.id}>
-                <CardContent className="p-4 flex items-center justify-between">
+              <div key={section.id} className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-medium flex items-center justify-center">
                       {idx + 1}
@@ -973,8 +972,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </TabsContent>
         </ScrollArea>

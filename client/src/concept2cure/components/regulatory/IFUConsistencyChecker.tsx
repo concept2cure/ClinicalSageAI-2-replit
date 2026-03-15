@@ -25,7 +25,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -182,8 +181,8 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
   };
 
   return (
-    <Card className={cn('border', getSeverityColor(issue.severity))}>
-      <CardHeader className="cursor-pointer py-3" onClick={() => setIsExpanded(!isExpanded)}>
+    <div className={cn('border rounded-md', getSeverityColor(issue.severity))}>
+      <div className="cursor-pointer px-4 py-3" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-start gap-3">
           <SeverityIcon
             className={cn(
@@ -195,21 +194,21 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <CardTitle className="text-sm font-medium">{issue.title}</CardTitle>
+              <span className="text-sm font-medium">{issue.title}</span>
               <Badge variant="outline" className="text-[10px]">
                 {CATEGORY_LABELS[issue.category]}
               </Badge>
             </div>
-            <CardDescription className="text-xs mt-1">{issue.description}</CardDescription>
+            <p className="text-xs text-zinc-500 mt-1">{issue.description}</p>
           </div>
           <ChevronRight
             className={cn('h-4 w-4 text-gray-400 transition-transform', isExpanded && 'rotate-90')}
           />
         </div>
-      </CardHeader>
+      </div>
 
       {isExpanded && (
-        <CardContent className="pt-0 pb-4">
+        <div className="px-4 pb-4">
           <div className="space-y-4">
             {/* Source comparison */}
             <div className="grid grid-cols-2 gap-4">
@@ -285,9 +284,9 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
               </div>
             </div>
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };
 

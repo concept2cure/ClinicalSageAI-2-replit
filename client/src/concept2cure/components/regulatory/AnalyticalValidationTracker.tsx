@@ -24,7 +24,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -526,34 +525,34 @@ export default function AnalyticalValidationTracker() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader>
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-xl">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-xl">
                 <FlaskConical className="h-6 w-6" />
                 Analytical Validation Tracker
-              </CardTitle>
-              <CardDescription className="mt-1">
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5 mt-1">
                 IVDR Annex I GSPR 9.1(a) — Analytical performance evaluation per CLSI guidelines and
                 EU Common Specifications
-              </CardDescription>
+              </p>
             </div>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Validation
             </Button>
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
 
       {/* Create Form */}
       {showCreate && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">New Analytical Validation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 border-b border-border/30">
+            <h3 className="text-sm font-semibold text-lg">New Analytical Validation</h3>
+          </div>
+          <div className="px-3 py-2 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Device Name *</Label>
@@ -593,17 +592,17 @@ export default function AnalyticalValidationTracker() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Validation List */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Validations</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="border border-border/40 rounded-sm bg-background lg:col-span-1">
+          <div className="px-3 py-2 border-b border-border/30">
+            <h3 className="text-sm font-semibold text-lg">Validations</h3>
+          </div>
+          <div className="px-3 py-2">
             {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
             {!loading && validations.length === 0 && (
               <p className="text-sm text-muted-foreground">
@@ -639,21 +638,21 @@ export default function AnalyticalValidationTracker() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Parameter Detail */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
+        <div className="border border-border/40 rounded-sm bg-background lg:col-span-2">
+          <div className="px-3 py-2 border-b border-border/30">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">
+                <h3 className="text-sm font-semibold text-lg">
                   {selected
                     ? `${selected.device_name} — ${selected.analyte_name}`
                     : 'Select a Validation'}
-                </CardTitle>
+                </h3>
                 {selected && (
-                  <CardDescription className="mt-1">Completeness: {completeness}%</CardDescription>
+                  <p className="text-xs text-muted-foreground mt-0.5 mt-1">Completeness: {completeness}%</p>
                 )}
               </div>
               {selected && (
@@ -664,8 +663,8 @@ export default function AnalyticalValidationTracker() {
               )}
             </div>
             {selected && <Progress value={completeness} className="mt-2 h-2" />}
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="px-3 py-2">
             {!selected ? (
               <p className="text-sm text-muted-foreground">
                 Select a validation from the list to view and edit parameters.
@@ -900,8 +899,8 @@ export default function AnalyticalValidationTracker() {
                 </TabsContent>
               </Tabs>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

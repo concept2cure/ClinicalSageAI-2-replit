@@ -15,7 +15,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -220,43 +219,43 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-12">
+      <div className="border border-zinc-200 rounded-md">
+        <div className="flex items-center justify-center p-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           <span className="ml-2 text-muted-foreground">Loading evidence binder…</span>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="p-6">
+      <div className="border border-zinc-200 rounded-md">
+        <div className="p-6">
           <div className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
             <span>Failed to load evidence binder: {(error as Error)?.message}</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <div className="border border-zinc-200 rounded-md">
+        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-zinc-100">
           <div>
-            <CardTitle className="text-lg">Evidence Binder</CardTitle>
-            <CardDescription>
+            <h3 className="text-lg font-semibold">Evidence Binder</h3>
+            <p className="text-sm text-muted-foreground">
               Manage regulatory claims and attach supporting evidence from the Document Vault
-            </CardDescription>
+            </p>
           </div>
           <Button size="sm" onClick={() => setShowNewClaim(true)}>
             <Plus className="mr-1 h-4 w-4" /> New Claim
           </Button>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-4 py-3">
           {claims.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="mx-auto h-10 w-10 mb-2 opacity-50" />
@@ -405,8 +404,8 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ── New Claim Dialog ──────────────────────────────────────────────── */}
       <Dialog open={showNewClaim} onOpenChange={setShowNewClaim}>

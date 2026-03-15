@@ -21,7 +21,6 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -485,26 +484,26 @@ export default function IVDRAnnexVIIIClassifier() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader>
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-xl">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-xl">
                 <Shield className="h-6 w-6" />
                 IVDR Annex VIII — Classification Wizard
-              </CardTitle>
-              <CardDescription className="mt-1">
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5 mt-1">
                 EU 2017/746 In Vitro Diagnostic Regulation — Risk-based device classification (Rules
                 1–7) with full rule trace for regulatory audit
-              </CardDescription>
+              </p>
             </div>
             <Button variant="outline" onClick={loadHistory}>
               <ClipboardList className="h-4 w-4 mr-2" />
               History
             </Button>
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
 
       {/* Progress Bar */}
       <div className="space-y-2">
@@ -532,8 +531,8 @@ export default function IVDRAnnexVIIIClassifier() {
       </div>
 
       {/* Wizard Steps */}
-      <Card>
-        <CardContent className="pt-6">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 pt-6">
           {/* Step 0: Device Info */}
           {currentStep === 0 && (
             <div className="space-y-4">
@@ -985,21 +984,21 @@ export default function IVDRAnnexVIIIClassifier() {
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* History Panel */}
       {showHistory && (
-        <Card>
-          <CardHeader>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 border-b border-border/30">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Classification History</CardTitle>
+              <h3 className="text-sm font-semibold text-lg">Classification History</h3>
               <Button variant="ghost" size="sm" onClick={() => setShowHistory(false)}>
                 Close
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="px-3 py-2">
             {records.length === 0 ? (
               <p className="text-sm text-muted-foreground">No classifications saved yet.</p>
             ) : (
@@ -1039,8 +1038,8 @@ export default function IVDRAnnexVIIIClassifier() {
                 </TableBody>
               </Table>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

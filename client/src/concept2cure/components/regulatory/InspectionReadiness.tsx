@@ -20,7 +20,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -473,8 +472,8 @@ function InspectionMetrics({
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Upcoming</p>
@@ -482,11 +481,11 @@ function InspectionMetrics({
             </div>
             <Calendar className="w-8 h-8 text-blue-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open Findings</p>
@@ -494,11 +493,11 @@ function InspectionMetrics({
             </div>
             <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Avg Readiness</p>
@@ -516,11 +515,11 @@ function InspectionMetrics({
             </div>
             <TrendingUp className="w-8 h-8 text-green-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Ready Items</p>
@@ -530,8 +529,8 @@ function InspectionMetrics({
             </div>
             <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -555,14 +554,14 @@ function InspectionList({
         );
 
         return (
-          <Card
+          <div
             key={inspection.id}
-            className={`cursor-pointer hover:shadow-md transition-shadow ${
+            className={`border border-border/40 rounded-sm bg-background cursor-pointer transition-shadow ${
               inspection.status === 'preparing' && daysUntil <= 14 ? 'border-orange-300' : ''
             }`}
             onClick={() => onSelect(inspection)}
           >
-            <CardContent className="p-4">
+            <div className="px-3 py-2 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   <div
@@ -619,8 +618,8 @@ function InspectionList({
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         );
       })}
     </div>
@@ -665,8 +664,8 @@ function ReadinessChecklist({ items }: { items: ReadinessItem[] }) {
           const config = READINESS_CATEGORIES[category as ReadinessCategory];
           const progress = (stats.ready / stats.total) * 100;
           return (
-            <Card key={category}>
-              <CardContent className="p-4">
+            <div key={category} className="border border-border/40 rounded-sm bg-background">
+              <div className="px-3 py-2 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   {config.icon}
                   <span className="font-medium text-sm">{config.label}</span>
@@ -675,8 +674,8 @@ function ReadinessChecklist({ items }: { items: ReadinessItem[] }) {
                 <p className="text-xs text-muted-foreground mt-1">
                   {stats.ready}/{stats.total} ready
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -710,8 +709,8 @@ function ReadinessChecklist({ items }: { items: ReadinessItem[] }) {
       </div>
 
       {/* Checklist Table */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -773,8 +772,8 @@ function ReadinessChecklist({ items }: { items: ReadinessItem[] }) {
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -798,8 +797,8 @@ function SMEDirectory({ smes }: { smes: SubjectMatterExpert[] }) {
 
       <div className="grid md:grid-cols-2 gap-4">
         {smes.map(sme => (
-          <Card key={sme.id}>
-            <CardContent className="p-4">
+          <div key={sme.id} className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-blue-100 rounded-full">
@@ -843,8 +842,8 @@ function SMEDirectory({ smes }: { smes: SubjectMatterExpert[] }) {
               {sme.backupName && (
                 <p className="text-xs text-muted-foreground mt-3">Backup: {sme.backupName}</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -872,12 +871,12 @@ function FindingsTracker({ inspections }: { inspections: InspectionEvent[] }) {
       </div>
 
       {openFindings.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-8 text-center">
             <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-500 opacity-50" />
             <p className="text-muted-foreground">No open findings</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <Table>
           <TableHeader>
@@ -993,15 +992,15 @@ export function InspectionReadiness() {
         </TabsContent>
 
         <TabsContent value="backroom" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
                 <Briefcase className="w-5 h-5" />
                 Back Room Setup
-              </CardTitle>
-              <CardDescription>Resources and materials for inspection support team</CardDescription>
-            </CardHeader>
-            <CardContent>
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Resources and materials for inspection support team</p>
+            </div>
+            <div className="px-3 py-2">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="font-semibold mb-3">Document Binders</h4>
@@ -1029,29 +1028,29 @@ export function InspectionReadiness() {
                 <div>
                   <h4 className="font-semibold mb-3">Communication</h4>
                   <div className="space-y-3">
-                    <Card className="p-3">
+                    <div className="border border-border/40 rounded-sm bg-background p-3">
                       <p className="text-sm font-medium">Back Room Hotline</p>
                       <p className="text-lg font-mono">ext. 5555</p>
-                    </Card>
-                    <Card className="p-3">
+                    </div>
+                    <div className="border border-border/40 rounded-sm bg-background p-3">
                       <p className="text-sm font-medium">Runner Assignments</p>
                       <div className="space-y-1 mt-2">
                         <p className="text-sm">Day 1: Alex Johnson</p>
                         <p className="text-sm">Day 2: Maria Garcia</p>
                         <p className="text-sm">Day 3: Chris Lee</p>
                       </div>
-                    </Card>
+                    </div>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
       {/* RI Assistance */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
               <Sparkles className="w-6 h-6 text-purple-600" />
@@ -1068,8 +1067,8 @@ export function InspectionReadiness() {
             </Button>
             <Button className="bg-purple-600 hover:bg-purple-700">Mock Interview</Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

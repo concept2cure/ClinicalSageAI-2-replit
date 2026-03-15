@@ -19,7 +19,6 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -364,34 +363,34 @@ export default function ClinicalEvidenceTracker() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader>
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-xl">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-xl">
                 <Activity className="h-6 w-6" />
                 Clinical Evidence Tracker
-              </CardTitle>
-              <CardDescription className="mt-1">
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5 mt-1">
                 IVDR Annex XIII Part A — Clinical performance evaluation, 2×2 contingency tables,
                 and performance claims with Wilson score confidence intervals
-              </CardDescription>
+              </p>
             </div>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Study
             </Button>
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
 
       {/* Create Form */}
       {showCreate && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">New Clinical Study</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 border-b border-border/30">
+            <h3 className="text-sm font-semibold text-lg">New Clinical Study</h3>
+          </div>
+          <div className="px-3 py-2 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Study Title *</Label>
@@ -532,17 +531,17 @@ export default function ClinicalEvidenceTracker() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Study List */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Studies</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="border border-border/40 rounded-sm bg-background lg:col-span-1">
+          <div className="px-3 py-2 border-b border-border/30">
+            <h3 className="text-sm font-semibold text-lg">Studies</h3>
+          </div>
+          <div className="px-3 py-2">
             {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
             {!loading && records.length === 0 && (
               <p className="text-sm text-muted-foreground">
@@ -591,16 +590,16 @@ export default function ClinicalEvidenceTracker() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Study Detail */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
+        <div className="border border-border/40 rounded-sm bg-background lg:col-span-2">
+          <div className="px-3 py-2 border-b border-border/30">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
+              <h3 className="text-sm font-semibold text-lg">
                 {selected ? selected.study_title : 'Select a Study'}
-              </CardTitle>
+              </h3>
               {selected && (
                 <Button onClick={handleSaveResults} disabled={saving}>
                   <Save className="h-4 w-4 mr-2" />
@@ -608,8 +607,8 @@ export default function ClinicalEvidenceTracker() {
                 </Button>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="px-3 py-2">
             {!selected ? (
               <p className="text-sm text-muted-foreground">
                 Select a study from the list to enter 2×2 contingency table results.
@@ -1141,8 +1140,8 @@ export default function ClinicalEvidenceTracker() {
                 </TabsContent>
               </Tabs>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

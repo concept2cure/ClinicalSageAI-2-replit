@@ -13,7 +13,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -303,21 +302,21 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
         jobStatus &&
         jobStatus.status !== 'COMPLETED' &&
         jobStatus.status !== 'FAILED' && (
-          <Card className="border-blue-200 dark:border-blue-800">
-            <CardContent className="flex items-center gap-3 py-4">
+          <div className="border border-blue-200 dark:border-blue-800 rounded-md">
+            <div className="flex items-center gap-3 px-4 py-3">
               <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Pack build in progress…</p>
                 <p className="text-xs text-muted-foreground">Job ID: {activeJobId}</p>
               </div>
               <JobStatusBadge status={jobStatus.status} />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
       {activeJobId && jobStatus?.status === 'COMPLETED' && (
-        <Card className="border-green-200 dark:border-green-800">
-          <CardContent className="flex items-center gap-3 py-4">
+        <div className="border border-green-200 dark:border-green-800 rounded-md">
+          <div className="flex items-center gap-3 px-4 py-3">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
             <div className="flex-1">
               <p className="text-sm font-medium">Pack build completed!</p>
@@ -335,13 +334,13 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
             >
               Dismiss
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {activeJobId && jobStatus?.status === 'FAILED' && (
-        <Card className="border-destructive/50">
-          <CardContent className="flex items-center gap-3 py-4">
+        <div className="border border-destructive/50 rounded-md">
+          <div className="flex items-center gap-3 px-4 py-3">
             <XCircle className="h-5 w-5 text-destructive" />
             <div className="flex-1">
               <p className="text-sm font-medium text-destructive">Pack build failed</p>
@@ -359,27 +358,27 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
             >
               Dismiss
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* ── Pack History Table ─────────────────────────────────────────────── */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <div className="border border-zinc-200 rounded-md">
+        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-zinc-100">
           <div>
-            <CardTitle className="text-lg">
+            <h3 className="text-lg font-semibold">
               <Package className="inline mr-2 h-5 w-5" />
               Technical File Packs
-            </CardTitle>
-            <CardDescription>
+            </h3>
+            <p className="text-sm text-muted-foreground">
               Immutable, hash-verified regulatory submission artifacts
-            </CardDescription>
+            </p>
           </div>
           <Button size="sm" onClick={() => setShowBuild(true)}>
             <Play className="mr-1 h-4 w-4" /> Build Pack
           </Button>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-4 py-3">
           {packsLoading ? (
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -490,8 +489,8 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ── Build Pack Dialog ─────────────────────────────────────────────── */}
       <Dialog open={showBuild} onOpenChange={setShowBuild}>

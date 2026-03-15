@@ -16,7 +16,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 /**
  * Error log entry for audit trail compliance
@@ -194,19 +193,19 @@ Component Stack: ${errorInfo?.componentStack}
       // Default error UI
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <Card className="max-w-lg w-full shadow-lg">
-            <CardHeader className="text-center">
+          <div className="max-w-lg w-full border border-zinc-200 rounded-md bg-white shadow-sm">
+            <div className="text-center px-6 pt-6 pb-3">
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
-              <CardTitle className="text-xl text-gray-900">
+              <h3 className="text-xl font-semibold text-gray-900">
                 Something went wrong
-              </CardTitle>
-              <CardDescription className="text-gray-600">
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
                 We've logged this error for investigation. Your work has been preserved.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </p>
+            </div>
+            <div className="px-6 pb-6 space-y-4">
               {/* Error ID for support reference */}
               <div className="text-center text-sm text-gray-500">
                 Error Reference: <code className="bg-gray-100 px-2 py-1 rounded">{errorId}</code>
@@ -248,8 +247,8 @@ Component Stack: ${errorInfo?.componentStack}
                 <Bug className="h-3 w-3 mr-2" />
                 Copy Error Details
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       );
     }

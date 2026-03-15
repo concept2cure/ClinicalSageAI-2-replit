@@ -18,7 +18,6 @@ import { NextActionsPanel, StepCard } from '@/concept2cure/components/workflow';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -359,8 +358,8 @@ interface MetricCardProps {
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
   return (
-    <Card>
-      <CardContent className="p-4">
+    <div className="border border-zinc-200 rounded-md">
+      <div className="p-3">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-gray-500 font-medium">{metric.label}</p>
@@ -405,8 +404,8 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
             <Progress value={(metric.value / metric.target) * 100} className="h-1.5" />
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
@@ -567,17 +566,17 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
   };
 
   return (
-    <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
+    <div className="border border-blue-200 rounded-md bg-gradient-to-br from-blue-50 to-white">
+      <div className="px-4 py-3 pb-2">
+        <h3 className="text-base font-semibold flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
           Ask RI
-        </CardTitle>
-        <CardDescription className="text-xs">
+        </h3>
+        <p className="text-xs text-zinc-500">
           RI-powered assistance for {roleConfig.shortTitle} workflows
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="px-4 pb-4">
         <div className="space-y-2">
           {suggestions[role]?.slice(0, 3).map((suggestion, idx) => (
             <button
@@ -589,8 +588,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
             </button>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
@@ -742,20 +741,20 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Tasks */}
             <div className="lg:col-span-2">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
+              <div className="border border-zinc-200 rounded-md">
+                <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
                     <ClipboardList className="h-4 w-4" />
                     My Tasks
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  </h3>
+                </div>
+                <div className="px-4 py-3">
                   <TaskList tasks={tasks} onTaskClick={onNavigateToTask} />
                   {tasks.length === 0 && (
                     <div className="text-center py-6 text-sm text-gray-500">No pending tasks</div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             {/* RI Assistant */}
@@ -765,17 +764,17 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           </div>
 
           {/* Workflow Snapshot */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
+          <div className="border border-zinc-200 rounded-md">
+            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+              <h3 className="text-base font-semibold flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
                 Active Workflow Steps
-              </CardTitle>
-              <CardDescription className="text-xs">
+              </h3>
+              <p className="text-xs text-zinc-500">
                 Proof-backed execution trail for the current workflow run
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </p>
+            </div>
+            <div className="px-4 py-3 space-y-3">
               {activeWorkflowSteps.map(step => (
                 <StepCard
                   key={step.id}
@@ -787,8 +786,8 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                   }
                 />
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Next Actions */}
           <div>
@@ -796,17 +795,17 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           </div>
 
           {/* Relevant Submissions */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
+          <div className="border border-zinc-200 rounded-md">
+            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+              <h3 className="text-base font-semibold flex items-center gap-2">
                 <Globe2 className="h-4 w-4" />
                 Relevant Submission Types
-              </CardTitle>
-              <CardDescription className="text-xs">
+              </h3>
+              <p className="text-xs text-zinc-500">
                 Submission types most relevant to your role
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
+            </div>
+            <div className="px-4 py-3">
               <div className="flex flex-wrap gap-2">
                 {roleConfig.relevantSubmissions.map(type => (
                   <Badge key={type} variant="outline" className="text-xs">
@@ -814,8 +813,8 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                   </Badge>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </ScrollArea>
     </div>

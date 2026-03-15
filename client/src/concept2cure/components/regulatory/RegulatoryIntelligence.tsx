@@ -13,7 +13,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -302,8 +301,8 @@ const MOCK_APPROVALS: CompetitorApproval[] = [
 function IntelligenceMetrics() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">New Guidance</p>
@@ -312,11 +311,11 @@ function IntelligenceMetrics() {
             </div>
             <FileText className="w-8 h-8 text-blue-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Active Alerts</p>
@@ -325,11 +324,11 @@ function IntelligenceMetrics() {
             </div>
             <Bell className="w-8 h-8 text-orange-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Recent Approvals</p>
@@ -338,11 +337,11 @@ function IntelligenceMetrics() {
             </div>
             <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Comment Deadlines</p>
@@ -351,11 +350,11 @@ function IntelligenceMetrics() {
             </div>
             <Calendar className="w-8 h-8 text-purple-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Bookmarked</p>
@@ -364,8 +363,8 @@ function IntelligenceMetrics() {
             </div>
             <Bookmark className="w-8 h-8 text-yellow-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -438,8 +437,8 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
         {filteredDocs.map(doc => {
           const agencyConfig = AGENCY_CONFIG[doc.agency];
           return (
-            <Card key={doc.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
+            <div key={doc.id} className="border border-border/40 rounded-sm bg-background hover:shadow-md transition-shadow">
+              <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -495,8 +494,8 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -533,11 +532,11 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
           const config = priorityConfig[alert.priority];
           const agencyConfig = AGENCY_CONFIG[alert.agency];
           return (
-            <Card
+            <div
               key={alert.id}
-              className={!alert.acknowledged ? 'border-l-4 border-l-orange-500' : ''}
+              className={`border border-border/40 rounded-sm bg-background ${!alert.acknowledged ? 'border-l-4 border-l-orange-500' : ''}`}
             >
-              <CardContent className="p-4">
+              <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
                     <div className={`p-2 rounded-full ${config.color}`}>{config.icon}</div>
@@ -571,8 +570,8 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
                     <Button size="sm">View Details</Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -667,38 +666,38 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
       </Table>
 
       {/* Approval Trends */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
             Approval Trends
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div>
+        <div className="px-3 py-2">
           <div className="grid grid-cols-4 gap-4">
-            <Card className="p-4 bg-blue-50">
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">FDA 2024</p>
               <p className="text-2xl font-bold">50</p>
               <p className="text-xs text-green-600">+12% vs 2023</p>
-            </Card>
-            <Card className="p-4 bg-indigo-50">
+            </div>
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-indigo-50">
               <p className="text-sm text-muted-foreground">EMA 2024</p>
               <p className="text-2xl font-bold">42</p>
               <p className="text-xs text-green-600">+8% vs 2023</p>
-            </Card>
-            <Card className="p-4 bg-purple-50">
+            </div>
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-purple-50">
               <p className="text-sm text-muted-foreground">Priority Reviews</p>
               <p className="text-2xl font-bold">35%</p>
               <p className="text-xs text-muted-foreground">of total</p>
-            </Card>
-            <Card className="p-4 bg-green-50">
+            </div>
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-green-50">
               <p className="text-sm text-muted-foreground">Avg Review Time</p>
               <p className="text-2xl font-bold">10.2</p>
               <p className="text-xs text-muted-foreground">months</p>
-            </Card>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -720,14 +719,14 @@ function GlobalLandscape() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.entries(AGENCY_CONFIG).map(([agency, config]) => (
-          <Card key={agency}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
+          <div key={agency} className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-2">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-lg">
                 <span className="text-2xl">{config.flag}</span>
                 {config.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="px-3 py-2">
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Recent Updates</span>
@@ -745,8 +744,8 @@ function GlobalLandscape() {
                   View Details
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -816,8 +815,8 @@ export function RegulatoryIntelligence() {
       </Tabs>
 
       {/* RI Assistance */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
               <Sparkles className="w-6 h-6 text-purple-600" />
@@ -834,8 +833,8 @@ export function RegulatoryIntelligence() {
             </Button>
             <Button className="bg-purple-600 hover:bg-purple-700">Ask RI</Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

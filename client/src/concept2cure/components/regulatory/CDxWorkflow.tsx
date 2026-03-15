@@ -25,7 +25,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -307,37 +306,37 @@ export default function CDxWorkflow() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader>
+      <div className="border border-zinc-200 rounded-md">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-xl">
+              <h3 className="flex items-center gap-2 text-xl font-semibold">
                 <Pill className="h-6 w-6" />
                 Companion Diagnostic (CDx) Workflow
-              </CardTitle>
-              <CardDescription className="mt-1">
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
                 IVDR Article 2(7) — Manage IVD/therapeutic product co-development through the full
                 CDx regulatory lifecycle (initiation → post-market)
-              </CardDescription>
+              </p>
             </div>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New CDx Pairing
             </Button>
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
 
       {/* Create Form */}
       {showCreate && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">New CDx Pairing</CardTitle>
-            <CardDescription>
+        <div className="border border-zinc-200 rounded-md">
+          <div className="px-4 py-3 border-b border-zinc-100">
+            <h3 className="text-lg font-semibold">New CDx Pairing</h3>
+            <p className="text-sm text-muted-foreground">
               Define the IVD — Medicinal Product pairing for companion diagnostic co-development
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="px-4 py-3 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Medicinal Product Name *</Label>
@@ -496,17 +495,17 @@ export default function CDxWorkflow() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workflow List */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">CDx Pairings</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="border border-zinc-200 rounded-md lg:col-span-1">
+          <div className="px-4 py-3 border-b border-zinc-100">
+            <h3 className="text-lg font-semibold">CDx Pairings</h3>
+          </div>
+          <div className="px-4 py-3">
             {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
             {!loading && workflows.length === 0 && (
               <p className="text-sm text-muted-foreground">
@@ -547,24 +546,24 @@ export default function CDxWorkflow() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Workflow Detail */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">
+        <div className="border border-zinc-200 rounded-md lg:col-span-2">
+          <div className="px-4 py-3 border-b border-zinc-100">
+            <h3 className="text-lg font-semibold">
               {selected ? selected.medicinal_product_name : 'Select a CDx Pairing'}
-            </CardTitle>
+            </h3>
             {selected && (
-              <CardDescription>
+              <p className="text-sm text-muted-foreground">
                 Biomarker: {selected.biomarker}
                 {selected.therapeutic_indication &&
                   ` | Indication: ${selected.therapeutic_indication}`}
-              </CardDescription>
+              </p>
             )}
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="px-4 py-3">
             {!selected ? (
               <p className="text-sm text-muted-foreground">
                 Select a CDx pairing from the list to view the co-development workflow.
@@ -778,8 +777,8 @@ export default function CDxWorkflow() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

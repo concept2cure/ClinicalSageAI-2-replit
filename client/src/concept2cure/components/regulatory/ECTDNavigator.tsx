@@ -16,7 +16,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -623,15 +622,15 @@ function SectionNode({
  */
 function SectionDetail({ section }: { section: eCTDSection }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <Folder className="w-5 h-5 text-blue-500" />
           {section.title}
-        </CardTitle>
-        {section.description && <CardDescription>{section.description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
+        </h3>
+        {section.description && <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>}
+      </div>
+      <div className="px-3 py-2">
         {section.documents && section.documents.length > 0 ? (
           <Table>
             <TableHeader>
@@ -689,8 +688,8 @@ function SectionDetail({ section }: { section: eCTDSection }) {
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -715,17 +714,17 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
 
       <div className="grid gap-4">
         {sequences.map(seq => (
-          <Card
+          <div
             key={seq.id}
-            className={
+            className={`border border-border/40 rounded-sm bg-background ${
               seq.status === 'submitted'
                 ? 'border-green-200'
                 : seq.status === 'ready'
                   ? 'border-blue-200'
                   : ''
-            }
+            }`}
           >
-            <CardContent className="p-4">
+            <div className="px-3 py-2 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-indigo-100 rounded-lg">
@@ -791,8 +790,8 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -817,14 +816,14 @@ function ModuleProgress({ sections }: { sections: eCTDSection[] }) {
   }, [sections]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
           Module Progress
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h3>
+      </div>
+      <div className="px-3 py-2">
         <div className="space-y-4">
           {moduleStats.map(module => (
             <div key={module.id}>
@@ -838,8 +837,8 @@ function ModuleProgress({ sections }: { sections: eCTDSection[] }) {
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -903,8 +902,8 @@ export function ECTDNavigator() {
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Documents</p>
@@ -912,10 +911,10 @@ export function ECTDNavigator() {
               </div>
               <FileText className="w-8 h-8 text-blue-500" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Approved</p>
@@ -923,10 +922,10 @@ export function ECTDNavigator() {
               </div>
               <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">In Review</p>
@@ -934,10 +933,10 @@ export function ECTDNavigator() {
               </div>
               <Clock className="w-8 h-8 text-yellow-500" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Draft</p>
@@ -945,8 +944,8 @@ export function ECTDNavigator() {
               </div>
               <File className="w-8 h-8 text-gray-500" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -961,8 +960,8 @@ export function ECTDNavigator() {
           <div className="grid grid-cols-12 gap-6">
             {/* Tree View */}
             <div className="col-span-4">
-              <Card className="h-[600px] overflow-auto">
-                <CardHeader className="sticky top-0 bg-white z-10 border-b">
+              <div className="border border-border/40 rounded-sm bg-background h-[600px] overflow-auto">
+                <div className="px-3 py-2 border-b border-border/30 sticky top-0 bg-white z-10 border-b">
                   <div className="flex items-center gap-2">
                     <Search className="w-4 h-4 text-muted-foreground" />
                     <Input
@@ -972,13 +971,13 @@ export function ECTDNavigator() {
                       className="h-8"
                     />
                   </div>
-                </CardHeader>
-                <CardContent className="p-2">
+                </div>
+                <div className="px-3 py-2 p-2">
                   {ECTD_STRUCTURE.map(section => (
                     <SectionNode key={section.id} section={section} onSelect={setSelectedSection} />
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             {/* Detail Panel */}
@@ -986,12 +985,12 @@ export function ECTDNavigator() {
               {selectedSection ? (
                 <SectionDetail section={selectedSection} />
               ) : (
-                <Card className="h-64 flex items-center justify-center">
+                <div className="border border-border/40 rounded-sm bg-background h-64 flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
                     <Folder className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>Select a section from the tree to view details</p>
                   </div>
-                </Card>
+                </div>
               )}
 
               <ModuleProgress sections={ECTD_STRUCTURE} />
@@ -1004,14 +1003,14 @@ export function ECTDNavigator() {
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
                 <History className="w-5 h-5" />
                 Submission History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="px-3 py-2">
               <div className="text-center py-8 text-muted-foreground">
                 <GitBranch className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>View complete submission history and lifecycle</p>
@@ -1019,14 +1018,14 @@ export function ECTDNavigator() {
                   View Timeline
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
       {/* RI Assistance */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
               <Sparkles className="w-6 h-6 text-purple-600" />
@@ -1043,8 +1042,8 @@ export function ECTDNavigator() {
             </Button>
             <Button className="bg-purple-600 hover:bg-purple-700">RI Guidance</Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

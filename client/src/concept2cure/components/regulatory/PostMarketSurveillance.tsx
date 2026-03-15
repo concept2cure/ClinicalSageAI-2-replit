@@ -14,7 +14,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -377,8 +376,8 @@ function PMSMetrics({
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Active Signals</p>
@@ -386,11 +385,11 @@ function PMSMetrics({
             </div>
             <Activity className="w-8 h-8 text-blue-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">High Priority</p>
@@ -398,11 +397,11 @@ function PMSMetrics({
             </div>
             <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Pending Reports</p>
@@ -410,11 +409,11 @@ function PMSMetrics({
             </div>
             <FileText className="w-8 h-8 text-indigo-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
@@ -422,11 +421,11 @@ function PMSMetrics({
             </div>
             <Clock className="w-8 h-8 text-orange-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open Vigilance</p>
@@ -434,11 +433,11 @@ function PMSMetrics({
             </div>
             <Shield className="w-8 h-8 text-purple-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Urgent Cases</p>
@@ -446,8 +445,8 @@ function PMSMetrics({
             </div>
             <AlertCircle className="w-8 h-8 text-red-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -465,17 +464,17 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
           ← Back to Signals
         </Button>
 
-        <Card>
-          <CardHeader>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 border-b border-border/30">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
                   {selectedSignal.name}
                   <Badge variant={selectedSignal.priority === 'high' ? 'destructive' : 'outline'}>
                     {selectedSignal.priority}
                   </Badge>
-                </CardTitle>
-                <CardDescription>{selectedSignal.product}</CardDescription>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{selectedSignal.product}</p>
               </div>
               <Badge
                 variant={
@@ -489,23 +488,23 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                 {selectedSignal.status.replace('_', ' ')}
               </Badge>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          </div>
+          <div className="px-3 py-2 space-y-6">
             <div className="grid grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="p-4">
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 p-4">
                   <p className="text-sm text-muted-foreground">Observed Cases</p>
                   <p className="text-2xl font-bold">{selectedSignal.caseCount}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
+                </div>
+              </div>
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 p-4">
                   <p className="text-sm text-muted-foreground">Expected Cases</p>
                   <p className="text-2xl font-bold">{selectedSignal.expectedCount}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
+                </div>
+              </div>
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 p-4">
                   <p className="text-sm text-muted-foreground">Risk Score</p>
                   <p
                     className={`text-2xl font-bold ${
@@ -518,8 +517,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                   >
                     {selectedSignal.riskScore}
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -542,8 +541,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
               <Label className="text-muted-foreground">Assessment History</Label>
               <div className="mt-2 space-y-3">
                 {selectedSignal.assessments.map((assessment, idx) => (
-                  <Card key={idx}>
-                    <CardContent className="p-4">
+                  <div key={idx} className="border border-border/40 rounded-sm bg-background">
+                    <div className="px-3 py-2 p-4">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-sm font-medium">{assessment.assessor}</span>
                         <span className="text-sm text-muted-foreground">{assessment.date}</span>
@@ -559,8 +558,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                           Next review: {assessment.nextReviewDate}
                         </p>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -570,8 +569,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
               <Button variant="outline">Request Data</Button>
               <Button variant="outline">Generate Report</Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -662,8 +661,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
       </Table>
 
       {/* RI Signal Detection */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
               <Sparkles className="w-6 h-6 text-purple-600" />
@@ -677,8 +676,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
             </div>
             <Button className="bg-purple-600 hover:bg-purple-700">Run Analysis</Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -714,8 +713,8 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
           const isOverdue = daysRemaining < 0;
 
           return (
-            <Card key={report.id} className={isOverdue ? 'border-red-300' : ''}>
-              <CardContent className="p-4">
+            <div key={report.id} className={`border border-border/40 rounded-sm bg-background ${isOverdue ? 'border-red-300' : ''}`}>
+              <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 rounded-lg">
@@ -793,21 +792,21 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
 
       {/* Reporting Calendar */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Reporting Calendar
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div>
+        <div className="px-3 py-2">
           <div className="text-center text-muted-foreground py-8">
             <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Interactive reporting calendar showing upcoming deadlines</p>
@@ -815,8 +814,8 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
               View Full Calendar
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -843,7 +842,7 @@ function VigilanceReporting({ cases }: { cases: VigilanceCase[] }) {
       {/* Timeline Alerts */}
       <div className="grid grid-cols-5 gap-2">
         {Object.entries(VIGILANCE_TIMELINES).map(([type, config]) => (
-          <Card key={type} className="p-3">
+          <div key={type} className="border border-border/40 rounded-sm bg-background p-3">
             <div className="flex items-center gap-2 text-sm">
               {config.icon}
               <div>
@@ -851,7 +850,7 @@ function VigilanceReporting({ cases }: { cases: VigilanceCase[] }) {
                 <p className="text-xs text-muted-foreground">{config.deadline}</p>
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
@@ -953,12 +952,12 @@ function RiskBenefitTab() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>CardioGuard 50mg - Benefit-Risk Summary</CardTitle>
-          <CardDescription>Last updated: 2025-01-15</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
+          <h3 className="text-sm font-semibold">CardioGuard 50mg - Benefit-Risk Summary</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Last updated: 2025-01-15</p>
+        </div>
+        <div className="px-3 py-2">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Benefits */}
             <div>
@@ -1053,12 +1052,12 @@ function RiskBenefitTab() {
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* RI Assistance */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
               <Sparkles className="w-6 h-6 text-purple-600" />
@@ -1072,8 +1071,8 @@ function RiskBenefitTab() {
             </div>
             <Button className="bg-purple-600 hover:bg-purple-700">Generate Analysis</Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

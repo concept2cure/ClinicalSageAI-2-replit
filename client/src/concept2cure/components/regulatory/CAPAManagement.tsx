@@ -14,7 +14,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -381,8 +380,8 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open CAPAs</p>
@@ -390,11 +389,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <FileWarning className="w-8 h-8 text-blue-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
@@ -402,11 +401,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <Clock className="w-8 h-8 text-red-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Critical</p>
@@ -414,11 +413,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Regulatory</p>
@@ -426,11 +425,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <FileWarning className="w-8 h-8 text-purple-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Avg Days Open</p>
@@ -438,8 +437,8 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <Calendar className="w-8 h-8 text-gray-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -491,17 +490,17 @@ function RootCausePanel({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <Brain className="w-5 h-5" />
           Root Cause Analysis
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Perform structured root cause analysis to identify the underlying issue
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </p>
+      </div>
+      <div className="px-3 py-2 space-y-4">
         <div>
           <Label>Analysis Method</Label>
           <Select value={method} onValueChange={v => setMethod(v as any)}>
@@ -576,8 +575,8 @@ function RootCausePanel({
         <Button onClick={handleSave} className="w-full">
           Save Root Cause Analysis
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -588,17 +587,17 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
   const [newAction, setNewAction] = useState({ description: '', assignee: '', dueDate: '' });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <ClipboardList className="w-5 h-5" />
           Corrective/Preventive Actions
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Track actions to address root cause and prevent recurrence
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="px-3 py-2">
         <Table>
           <TableHeader>
             <TableRow>
@@ -656,8 +655,8 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
             Add Action
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -666,17 +665,17 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
  */
 function EffectivenessPanel({ capa }: { capa: CAPA }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Effectiveness Verification
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Verify that corrective actions have been effective in addressing the root cause
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="px-3 py-2">
         {capa.effectivenessChecks.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -723,8 +722,8 @@ function EffectivenessPanel({ capa }: { capa: CAPA }) {
             </TableBody>
           </Table>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -760,24 +759,24 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Days Open</p>
             <p className="text-2xl font-bold">{daysOpen}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">
               {isOverdue ? 'Days Overdue' : 'Days Remaining'}
             </p>
             <p className={`text-2xl font-bold ${isOverdue ? 'text-red-600' : ''}`}>
               {Math.abs(daysRemaining)}
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Actions Progress</p>
             <div className="flex items-center gap-2">
               <Progress value={progress} className="flex-1" />
@@ -785,10 +784,10 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                 {completedActions}/{totalActions}
               </span>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Risk Score</p>
             <p
               className={`text-2xl font-bold ${
@@ -801,16 +800,16 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
             >
               {capa.riskScore || 'N/A'}
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>CAPA Details</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
+          <h3 className="text-sm font-semibold">CAPA Details</h3>
+        </div>
+        <div className="px-3 py-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-muted-foreground">Description</Label>
@@ -855,8 +854,8 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
               </Badge>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Tabs for RCA, Actions, Effectiveness */}
       <Tabs defaultValue="rca">
@@ -869,13 +868,13 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
 
         <TabsContent value="rca">
           {capa.rootCauseAnalysis ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>
+            <div className="border border-border/40 rounded-sm bg-background">
+              <div className="px-3 py-2 border-b border-border/30">
+                <h3 className="text-sm font-semibold">
                   Root Cause Analysis - {capa.rootCauseAnalysis.method.toUpperCase()}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h3>
+              </div>
+              <div className="px-3 py-2 space-y-4">
                 <div>
                   <Label className="text-muted-foreground">Analysis Findings</Label>
                   <ul className="list-disc list-inside mt-2 space-y-1">
@@ -894,8 +893,8 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                   <span>Performed by: {capa.rootCauseAnalysis.performedBy}</span>
                   <span>Date: {capa.rootCauseAnalysis.date}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <RootCausePanel capa={capa} onUpdate={() => {}} />
           )}
@@ -910,11 +909,11 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
         </TabsContent>
 
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>CAPA History</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30">
+              <h3 className="text-sm font-semibold">CAPA History</h3>
+            </div>
+            <div className="px-3 py-2">
               <div className="space-y-4">
                 {capa.history.map((entry, idx) => (
                   <div key={idx} className="flex items-center gap-4 p-3 border-l-2 border-blue-500">
@@ -924,8 +923,8 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -1117,8 +1116,8 @@ export function CAPAManagement() {
       <CAPAMetrics capas={capas} />
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <Input
@@ -1153,12 +1152,12 @@ export function CAPAManagement() {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* CAPA List */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -1218,12 +1217,12 @@ export function CAPAManagement() {
               })}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* RI Integration */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
               <Sparkles className="w-6 h-6 text-purple-600" />
@@ -1247,8 +1246,8 @@ export function CAPAManagement() {
               RI Analysis
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

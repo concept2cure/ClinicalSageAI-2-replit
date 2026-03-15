@@ -412,9 +412,9 @@ function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName
 
 function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center p-2 rounded-lg border border-zinc-100 bg-zinc-50/50">
+    <div className="flex items-center gap-1.5 px-2 py-1 border border-zinc-100 rounded bg-zinc-50/50">
       {icon}
-      <span className="text-lg font-bold text-zinc-800 leading-none mt-1">{value}</span>
+      <span className="text-sm font-bold text-zinc-800 tabular-nums">{value}</span>
       <span className="text-[10px] text-zinc-400">{label}</span>
     </div>
   );

@@ -35,13 +35,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -672,14 +665,14 @@ export const PreSubPackageGenerator: React.FC<PreSubPackageGeneratorProps> = ({
 
             {/* Generate Tab */}
             <TabsContent value="generate" className="space-y-4 m-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Package Summary</CardTitle>
-                  <CardDescription>
+              <div className="border border-zinc-200 rounded-md">
+                <div className="px-4 py-3 border-b border-zinc-100">
+                  <h3 className="text-lg font-semibold">Package Summary</h3>
+                  <p className="text-sm text-muted-foreground">
                     Review your pre-submission package before generating
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                  </p>
+                </div>
+                <div className="px-4 py-3 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-gray-50 rounded-lg">
                       <div className="text-sm font-medium text-gray-700">Meeting Type</div>
@@ -721,8 +714,8 @@ export const PreSubPackageGenerator: React.FC<PreSubPackageGeneratorProps> = ({
                       </ul>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               <div className="flex items-center justify-end gap-2">
                 <Button

@@ -22,6 +22,7 @@ import productAuditRoutes from './product-audit';
 import precedentEngineRoutes from './precedent-engine';
 import workflowRoutes from './workflow';
 import cmcDashboardRoutes from './cmc-dashboard';
+import submissionOpsRoutes from './submission-ops';
 import { authMiddleware } from '../auth';
 
 const router = Router();
@@ -66,6 +67,9 @@ router.use('/workflow', workflowRoutes);
 
 // CMC Dashboard (base API)
 router.use('/cmc', cmcDashboardRoutes);
+
+// Phase 15 Submission Operations Command Center
+router.use('/submission-ops', submissionOpsRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {
