@@ -9,7 +9,10 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { auditLogger } from '../../utils/logger';
+import { Loader2 } from 'lucide-react';
 import {
   History,
   Search,

@@ -63,10 +63,7 @@ import {
   FileText,
 } from 'lucide-react';
 
-// Lazy load the Convergent Canvas for the Sherpa System
-const ConvergentCanvas = lazy(() =>
-  import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
-);
+// ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
 
 // Lazy load Phase 7 Mission Control components
 const MissionControl = lazy(() =>
@@ -286,6 +283,7 @@ export const ZenApp: React.FC = () => {
   // Projects from database
   const {
     projects: rawProjects,
+    isLoading: projectsLoading,
     createProject: createProjectMutation,
     updateProject: updateProjectMutation,
     deleteProject: deleteProjectMutation,
@@ -946,25 +944,90 @@ export const ZenApp: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 flex min-w-0">
-          {/* Sherpa Mode - Convergent Canvas */}
+          {/* Sherpa Mode - Project Overview */}
           {layoutMode === 'sherpa' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center bg-stone-50">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
-                    <p className="text-zinc-500">Loading Sherpa System...</p>
-                  </div>
+            <div className="flex-1 overflow-y-auto bg-stone-50 p-8">
+              <div className="max-w-5xl mx-auto">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-semibold text-zinc-900">Project Overview</h2>
+                  <p className="text-sm text-zinc-500 mt-1">
+                    {projects.length} project{projects.length !== 1 ? 's' : ''} in your workspace
+                  </p>
                 </div>
-              }
-            >
-              <ConvergentCanvas
-                userId={activeProjectId || 'anonymous'}
-                userName={userName}
-                userRole={userRole}
-                industry={industryMode}
-              />
-            </Suspense>
+
+                {projectsLoading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                    <span className="ml-3 text-zinc-500">Loading projects...</span>
+                  </div>
+                ) : projects.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <Folder className="w-12 h-12 text-zinc-300 mb-4" />
+                    <h3 className="text-lg font-medium text-zinc-700">No projects yet</h3>
+                    <p className="text-sm text-zinc-500 mt-1 max-w-sm">
+                      Create your first project to get started with regulatory submissions.
+                    </p>
+                    <button
+                      onClick={() => setNewProjectOpen(true)}
+                      className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      Create Project
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {projects.map(project => (
+                      <button
+                        key={project.id}
+                        onClick={() => {
+                          setActiveProjectId(project.id);
+                          setLayoutMode('assistant');
+                        }}
+                        className={cn(
+                          'text-left p-5 rounded-xl border bg-white shadow-sm',
+                          'hover:shadow-md hover:border-indigo-200 transition-all',
+                          activeProjectId === project.id && 'ring-2 ring-indigo-500 border-indigo-300'
+                        )}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div
+                            className={cn(
+                              'px-2 py-0.5 rounded text-xs font-medium',
+                              `bg-${project.color}-100 text-${project.color}-700`
+                            )}
+                          >
+                            {project.type}
+                          </div>
+                          {project.starred && (
+                            <span className="text-amber-400 text-sm">&#9733;</span>
+                          )}
+                        </div>
+                        <h3 className="font-semibold text-zinc-900 text-sm mb-1 truncate">
+                          {project.name}
+                        </h3>
+                        {project.description && (
+                          <p className="text-xs text-zinc-500 mb-3 line-clamp-2">
+                            {project.description}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-zinc-400 mt-auto pt-2 border-t border-zinc-100">
+                          <span className="flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            {project.conversationCount} conversation{project.conversationCount !== 1 ? 's' : ''}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {project.lastUpdated
+                              ? new Date(project.lastUpdated).toLocaleDateString()
+                              : 'N/A'}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {layoutMode === 'analytics' && (

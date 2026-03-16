@@ -8,6 +8,8 @@
  */
 
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -24,6 +26,7 @@ import {
   FileText,
   Users,
   ArrowUpRight,
+  Loader2,
 } from 'lucide-react';
 import type { MetricCard, ProjectSummary } from '../../core/portalTypes';
 
@@ -301,158 +304,124 @@ const TeamActivity: React.FC<TeamActivityProps> = ({ activities }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ExecutiveDashboard: React.FC = () => {
-  // Mock data - in production, this would come from API
+  // Fetch projects from submission center
+  const { data: projectsData, isLoading: projectsLoading, error: projectsError } = useQuery({
+    queryKey: ['submission-center-projects'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/submission-center/projects');
+      return res.json();
+    },
+  });
+
+  // Fetch tasks from submission center
+  const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useQuery({
+    queryKey: ['submission-center-tasks'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/submission-center/tasks');
+      return res.json();
+    },
+  });
+
+  // Map API projects to ProjectSummary shape
+  const apiProjects = projectsData?.data || [];
+  const projects: ProjectSummary[] = apiProjects.map((p: any, idx: number) => ({
+    id: String(p.id || idx + 1),
+    name: p.name || 'Untitled Project',
+    productName: p.name?.split(' ')[0] || 'Unknown',
+    productType: p.submission_type === '510k' ? 'medical_device' : 'drug',
+    indication: p.description || p.submission_type || 'N/A',
+    phase: p.stage === 'planning' ? 'preclinical' : p.stage === 'authoring' ? 'phase_1' : 'phase_3',
+    status: 'active' as const,
+    targetAgencies: [p.target_agency || 'FDA'],
+    milestones: p.target_date
+      ? [{ id: String(idx), name: `${p.submission_type} Filing`, targetDate: new Date(p.target_date), status: 'in_progress' as const }]
+      : [],
+    teamSize: p.taskMetrics?.total || 0,
+    lastActivity: new Date(p.updated_at || p.created_at || Date.now()),
+    progress: p.completionPercentage || (p.taskMetrics?.total > 0 ? Math.round((p.taskMetrics.completed / p.taskMetrics.total) * 100) : 0),
+  }));
+
+  // Derive submissions from projects that have target dates
+  const submissions = apiProjects
+    .filter((p: any) => p.target_date)
+    .map((p: any, idx: number) => ({
+      id: String(p.id || idx + 1),
+      name: p.name || 'Untitled',
+      type: p.submission_type || 'IND',
+      agency: p.target_agency || 'FDA',
+      targetDate: new Date(p.target_date),
+      status: (p.stage === 'submission' ? 'on_track' : p.stage === 'review' ? 'at_risk' : 'on_track') as 'on_track' | 'at_risk' | 'delayed',
+    }));
+
+  // Derive activities from recent tasks
+  const apiTasks = tasksData?.data || [];
+  const activities = apiTasks.slice(0, 8).map((t: any, idx: number) => ({
+    id: String(t.id || idx + 1),
+    user: t.assigned_to || 'System',
+    action: t.status === 'completed' ? 'completed' : t.status === 'in-progress' ? 'is working on' : 'created',
+    target: t.title || 'Task',
+    timestamp: new Date(t.updated_at || t.created_at || Date.now()),
+  }));
+
+  // Compute metrics from real data
+  const completedTasks = apiTasks.filter((t: any) => t.status === 'completed').length;
+  const totalTasks = apiTasks.length;
   const metrics: MetricCard[] = [
     {
       id: '1',
       label: 'Active Programs',
-      value: 12,
-      change: 8,
-      trend: 'up',
-      changeLabel: 'vs last quarter',
+      value: apiProjects.length || 0,
+      change: 0,
+      trend: 'up' as const,
+      changeLabel: 'total projects',
     },
     {
       id: '2',
-      label: 'Submissions This Year',
-      value: 7,
-      change: 40,
-      trend: 'up',
-      changeLabel: 'vs last year',
+      label: 'Total Tasks',
+      value: totalTasks,
+      change: 0,
+      trend: 'up' as const,
+      changeLabel: 'across all projects',
     },
     {
       id: '3',
-      label: 'Approval Rate',
-      value: '92%',
-      change: 5,
-      trend: 'up',
-      changeLabel: 'vs target',
+      label: 'Completion Rate',
+      value: totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : '0%',
+      change: 0,
+      trend: 'up' as const,
+      changeLabel: 'tasks completed',
     },
     {
       id: '4',
-      label: 'At-Risk Milestones',
-      value: 3,
-      change: -25,
-      trend: 'down',
-      changeLabel: 'vs last month',
+      label: 'Pending Tasks',
+      value: apiTasks.filter((t: any) => t.status === 'pending').length,
+      change: 0,
+      trend: 'down' as const,
+      changeLabel: 'awaiting action',
     },
   ];
 
-  const projects: ProjectSummary[] = [
-    {
-      id: '1',
-      name: 'BTX-331 IND Preparation',
-      productName: 'BTX-331',
-      productType: 'biologic',
-      indication: 'Solid Tumors',
-      phase: 'phase_1',
-      status: 'active',
-      targetAgencies: ['FDA'],
-      milestones: [
-        { id: '1', name: 'IND Filing', targetDate: new Date('2026-03-15'), status: 'in_progress' },
-      ],
-      teamSize: 12,
-      lastActivity: new Date(),
-      progress: 68,
-    },
-    {
-      id: '2',
-      name: 'MX-201 Phase 3 CSR',
-      productName: 'MX-201',
-      productType: 'drug',
-      indication: 'Type 2 Diabetes',
-      phase: 'phase_3',
-      status: 'active',
-      targetAgencies: ['FDA', 'EMA'],
-      milestones: [
-        { id: '2', name: 'CSR Completion', targetDate: new Date('2026-02-28'), status: 'at_risk' },
-      ],
-      teamSize: 24,
-      lastActivity: new Date(),
-      progress: 85,
-    },
-    {
-      id: '3',
-      name: 'DVX-450 510(k) Submission',
-      productName: 'DVX-450',
-      productType: 'medical_device',
-      indication: 'Diagnostic',
-      phase: 'preclinical',
-      status: 'active',
-      targetAgencies: ['FDA'],
-      milestones: [
-        { id: '3', name: '510(k) Filing', targetDate: new Date('2026-04-01'), status: 'pending' },
-      ],
-      teamSize: 8,
-      lastActivity: new Date(),
-      progress: 45,
-    },
-  ];
+  const isLoading = projectsLoading || tasksLoading;
+  const hasError = projectsError || tasksError;
 
-  const submissions = [
-    {
-      id: '1',
-      name: 'BTX-331 IND',
-      type: 'IND',
-      agency: 'FDA',
-      targetDate: new Date('2026-03-15'),
-      status: 'on_track' as const,
-    },
-    {
-      id: '2',
-      name: 'MX-201 NDA',
-      type: 'NDA',
-      agency: 'FDA',
-      targetDate: new Date('2026-06-30'),
-      status: 'at_risk' as const,
-    },
-    {
-      id: '3',
-      name: 'DVX-450 510(k)',
-      type: '510(k)',
-      agency: 'FDA',
-      targetDate: new Date('2026-04-01'),
-      status: 'on_track' as const,
-    },
-    {
-      id: '4',
-      name: 'MX-201 MAA',
-      type: 'MAA',
-      agency: 'EMA',
-      targetDate: new Date('2026-07-15'),
-      status: 'on_track' as const,
-    },
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-muted-foreground">Loading dashboard data...</span>
+      </div>
+    );
+  }
 
-  const activities = [
-    {
-      id: '1',
-      user: 'Sarah Johnson',
-      action: 'approved',
-      target: 'Protocol Amendment v3.2',
-      timestamp: new Date(Date.now() - 3600000),
-    },
-    {
-      id: '2',
-      user: 'Michael Chen',
-      action: 'uploaded',
-      target: 'CMC Module 3.2.P',
-      timestamp: new Date(Date.now() - 7200000),
-    },
-    {
-      id: '3',
-      user: 'Emily Davis',
-      action: 'completed review of',
-      target: 'CSR Draft Section 14',
-      timestamp: new Date(Date.now() - 14400000),
-    },
-    {
-      id: '4',
-      user: 'Robert Wilson',
-      action: 'submitted',
-      target: 'Safety Update Report Q4',
-      timestamp: new Date(Date.now() - 28800000),
-    },
-  ];
+  if (hasError) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+        <p className="text-red-700 font-medium">Failed to load dashboard data</p>
+        <p className="text-red-600 text-sm mt-1">Please try refreshing the page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
