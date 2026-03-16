@@ -712,3 +712,153 @@ export interface ReadinessProfile {
   complianceIntegrity: number;
   timelineConfidence: number;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SNOW GLOBE — Cross-platform prediction & intelligence service
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Scenarios — user-created what-if models against a program
+ */
+export const snowglobeScenarios = pgTable('snowglobe_scenarios', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull(),
+  programId: integer('program_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  baselineFlag: boolean('baseline_flag').notNull().default(false),
+  createdBy: integer('created_by').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+  index('idx_sg_scenarios_program').on(t.programId),
+]);
+
+/**
+ * Scenario assumptions — key-value pairs defining scenario parameters
+ */
+export const snowglobeScenarioAssumptions = pgTable('snowglobe_scenario_assumptions', {
+  id: serial('id').primaryKey(),
+  scenarioId: integer('scenario_id').notNull(),
+  assumptionKey: text('assumption_key').notNull(),
+  assumptionValue: jsonb('assumption_value').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * Prediction runs — async job executions (pre-agency scan, stress test, etc.)
+ */
+export const snowglobePredictionRuns = pgTable('snowglobe_prediction_runs', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull(),
+  programId: integer('program_id').notNull(),
+  scenarioId: integer('scenario_id'),
+  runType: text('run_type').notNull(), // pre_agency, reviewer_attack, audit_exposure, route_timing, evidence_sufficiency, collaboration_fragility, full_stress_test
+  status: text('status').notNull().default('queued'), // queued, running, completed, failed
+  requestedBy: integer('requested_by').notNull(),
+  snapshotRef: text('snapshot_ref'),
+  confidenceEnvelope: jsonb('confidence_envelope'),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('idx_sg_runs_program').on(t.programId, t.createdAt),
+]);
+
+/**
+ * Prediction results — per-engine output from a run
+ */
+export const snowglobePredictionResults = pgTable('snowglobe_prediction_results', {
+  id: serial('id').primaryKey(),
+  predictionRunId: integer('prediction_run_id').notNull(),
+  engineName: text('engine_name').notNull(), // agency_screen, reviewer_attack, audit_inspection, route_timing, evidence_sufficiency, collaboration_fragility
+  resultJson: jsonb('result_json').notNull(),
+  summaryText: text('summary_text'),
+  confidenceScore: real('confidence_score'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * Finding clusters — grouped findings by chamber and severity
+ */
+export const snowglobeFindingClusters = pgTable('snowglobe_finding_clusters', {
+  id: serial('id').primaryKey(),
+  predictionRunId: integer('prediction_run_id').notNull(),
+  chamberName: text('chamber_name').notNull(),
+  findingType: text('finding_type').notNull(),
+  severity: text('severity').notNull(), // low, medium, high, critical
+  confidence: real('confidence'),
+  summary: text('summary').notNull(),
+  detailJson: jsonb('detail_json'),
+  blastRadiusJson: jsonb('blast_radius_json'),
+  remediationPriority: integer('remediation_priority'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('idx_sg_findings_run').on(t.predictionRunId, t.severity),
+]);
+
+/**
+ * Score snapshots — point-in-time scores for any platform object
+ */
+export const snowglobeScoreSnapshots = pgTable('snowglobe_score_snapshots', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull(),
+  objectType: text('object_type').notNull(), // program, destination, artifact, dossier_node
+  objectId: integer('object_id').notNull(),
+  scoreType: text('score_type').notNull(), // submission_survival, reviewer_friction, audit_exposure, claim_defensibility, etc.
+  scoreValue: real('score_value').notNull(),
+  severityBand: text('severity_band'), // low_risk, medium_risk, high_risk, critical_risk
+  explanation: text('explanation'),
+  sourceRunId: integer('source_run_id'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('idx_sg_scores_object').on(t.objectType, t.objectId, t.createdAt),
+]);
+
+/**
+ * Remediation plans — prioritized fix sequences from prediction runs
+ */
+export const snowglobeRemediationPlans = pgTable('snowglobe_remediation_plans', {
+  id: serial('id').primaryKey(),
+  predictionRunId: integer('prediction_run_id').notNull(),
+  objectType: text('object_type').notNull(),
+  objectId: integer('object_id').notNull(),
+  planJson: jsonb('plan_json').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * Historical prior features — predictive features from CSR/CTD/CER corpus
+ */
+export const snowglobeHistoricalPriorFeatures = pgTable('snowglobe_historical_prior_features', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id'),
+  featureFamily: text('feature_family').notNull(), // ctd_density, evidence_norm, deficiency_theme, route_bottleneck
+  segmentType: text('segment_type'), // biotech, pharma, cro, med_device, diagnostics
+  productType: text('product_type'),
+  modality: text('modality'),
+  indicationOrUse: text('indication_or_use'),
+  regionCode: text('region_code'),
+  destinationType: text('destination_type'),
+  artifactType: text('artifact_type'),
+  sectionRef: text('section_ref'),
+  featureKey: text('feature_key').notNull(),
+  featureValue: jsonb('feature_value').notNull(),
+  sourceCount: integer('source_count').default(0),
+  confidence: real('confidence'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+  index('idx_sg_priors_lookup').on(t.segmentType, t.productType, t.regionCode, t.destinationType, t.artifactType),
+]);
+
+// Snow Globe type exports
+export type SnowglobeScenario = typeof snowglobeScenarios.$inferSelect;
+export type InsertSnowglobeScenario = typeof snowglobeScenarios.$inferInsert;
+export type SnowglobePredictionRun = typeof snowglobePredictionRuns.$inferSelect;
+export type InsertSnowglobePredictionRun = typeof snowglobePredictionRuns.$inferInsert;
+export type SnowglobePredictionResult = typeof snowglobePredictionResults.$inferSelect;
+export type SnowglobeFindingCluster = typeof snowglobeFindingClusters.$inferSelect;
+export type SnowglobeScoreSnapshot = typeof snowglobeScoreSnapshots.$inferSelect;
+export type SnowglobeRemediationPlan = typeof snowglobeRemediationPlans.$inferSelect;
+export type SnowglobeHistoricalPriorFeature = typeof snowglobeHistoricalPriorFeatures.$inferSelect;

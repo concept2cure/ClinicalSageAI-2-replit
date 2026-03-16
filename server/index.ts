@@ -5472,6 +5472,10 @@ async function startServer() {
     const missionControlRoutes = await import('./routes/mission-control.ts');
     app.use('/api/mission-control', missionControlRoutes.default);
     console.log('✅ Mission Control routes mounted at /api/mission-control');
+
+    const snowglobeRoutes = await import('./routes/snowglobe.ts');
+    app.use('/api/snowglobe', snowglobeRoutes.default);
+    console.log('✅ Snow Globe routes mounted at /api/snowglobe');
   } catch (error) {
     console.error('❌ Failed to mount Mission Control routes:', error);
   }

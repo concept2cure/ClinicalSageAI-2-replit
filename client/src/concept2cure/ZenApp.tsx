@@ -84,6 +84,7 @@ import {
   Fingerprint,
   Bell,
   MessageSquare,
+  Snowflake,
 } from 'lucide-react';
 
 // ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
@@ -127,6 +128,26 @@ const NotificationCenter = lazy(() =>
 );
 const CollaborationHub = lazy(() =>
   import('./pages/MissionControl/CollaborationHub')
+);
+const ProgramWizard = lazy(() =>
+  import('./pages/MissionControl/ProgramWizard')
+);
+const TaskBoard = lazy(() =>
+  import('./pages/MissionControl/TaskBoard')
+);
+const TeamWorkspace = lazy(() =>
+  import('./pages/MissionControl/TeamWorkspace')
+);
+const ProgramAnalytics = lazy(() =>
+  import('./pages/MissionControl/ProgramAnalytics')
+);
+
+// Snow Globe — Cross-platform prediction & intelligence
+const SnowGlobeHome = lazy(() =>
+  import('./pages/SnowGlobe/SnowGlobeHome')
+);
+const SnowGlobeChambers = lazy(() =>
+  import('./pages/SnowGlobe/SnowGlobeChambers')
 );
 
 // Lazy load IND Workspace (eCTD filing hub)
@@ -184,7 +205,12 @@ type LayoutMode =
   | 'authority-tracker'
   | 'provenance-trail'
   | 'notifications'
-  | 'collaboration-hub';
+  | 'collaboration-hub'
+  | 'program-wizard'
+  | 'task-board'
+  | 'team-workspace'
+  | 'program-analytics'
+  | 'snowglobe';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -494,7 +520,21 @@ export const ZenApp: React.FC = () => {
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+
+    // Listen for Mission Control inter-page navigation events
+    const handleMcNavigate = (e: Event) => {
+      const mode = (e as CustomEvent).detail?.mode as LayoutMode;
+      if (mode) {
+        setLayoutMode(mode);
+        setActiveToolPanel(null);
+      }
+    };
+    window.addEventListener('mc-navigate', handleMcNavigate);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mc-navigate', handleMcNavigate);
+    };
   }, [activeToolPanel, commandPaletteOpen, settingsOpen, handleNewChat]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -742,6 +782,10 @@ export const ZenApp: React.FC = () => {
     { id: 'provenance-trail' as LayoutMode, label: 'Provenance', icon: Fingerprint },
     { id: 'notifications' as LayoutMode, label: 'Notifications', icon: Bell },
     { id: 'collaboration-hub' as LayoutMode, label: 'Collaboration', icon: MessageSquare },
+    { id: 'task-board' as LayoutMode, label: 'Task Board', icon: LayoutGrid },
+    { id: 'team-workspace' as LayoutMode, label: 'Team', icon: Users },
+    { id: 'program-analytics' as LayoutMode, label: 'Analytics', icon: BarChart3 },
+    { id: 'snowglobe' as LayoutMode, label: 'Snow Globe', icon: Snowflake },
   ];
 
   // Filter layout modes by license — only show modes the org has access to
@@ -1566,6 +1610,41 @@ export const ZenApp: React.FC = () => {
           {layoutMode === 'collaboration-hub' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
               <CollaborationHub programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Program Wizard */}
+          {layoutMode === 'program-wizard' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <ProgramWizard onComplete={() => setLayoutMode('mission-control')} onCancel={() => setLayoutMode('mission-control')} />
+            </Suspense>
+          )}
+
+          {/* Task Board */}
+          {layoutMode === 'task-board' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-amber-500" /></div>}>
+              <TaskBoard programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Team Workspace */}
+          {layoutMode === 'team-workspace' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>}>
+              <TeamWorkspace programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Program Analytics */}
+          {layoutMode === 'program-analytics' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <ProgramAnalytics programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Snow Globe — Prediction & Intelligence Engine */}
+          {layoutMode === 'snowglobe' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-cyan-500" /></div>}>
+              <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
             </Suspense>
           )}
 

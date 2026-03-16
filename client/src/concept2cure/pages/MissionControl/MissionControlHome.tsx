@@ -37,6 +37,13 @@ import {
   ChevronRight,
   Beaker,
   FlaskConical,
+  FolderOpen,
+  Scale,
+  Building2,
+  Fingerprint,
+  Bell,
+  MessageSquare,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   usePrograms,
@@ -611,6 +618,77 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Quick Access — Mission Control Modules ──────────────────────── */}
+        <div className="mt-6">
+          <h2 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-violet-600" />
+            Quick Access
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+            {([
+              { id: 'artifact-graph', label: 'Artifact Graph', icon: GitBranch, color: 'blue', desc: 'Dependencies & lifecycle' },
+              { id: 'review-center', label: 'Review Center', icon: Eye, color: 'violet', desc: 'Approvals & feedback' },
+              { id: 'dossier-view', label: 'Dossier View', icon: FolderOpen, color: 'emerald', desc: 'eCTD structure' },
+              { id: 'risk-cockpit', label: 'Risk Cockpit', icon: Shield, color: 'red', desc: 'Risk signals' },
+              { id: 'route-planner', label: 'Route Planner', icon: Compass, color: 'indigo', desc: 'Pathway planning' },
+              { id: 'evidence-manager', label: 'Evidence', icon: FlaskConical, color: 'teal', desc: 'Sources & linking' },
+              { id: 'decision-log', label: 'Decisions', icon: Scale, color: 'violet', desc: 'Rationale tracking' },
+              { id: 'authority-tracker', label: 'Authority', icon: Building2, color: 'blue', desc: 'Meetings & RFIs' },
+              { id: 'provenance-trail', label: 'Provenance', icon: Fingerprint, color: 'zinc', desc: 'Audit trail' },
+              { id: 'task-board', label: 'Task Board', icon: LayoutGrid, color: 'amber', desc: 'Kanban & sprints' },
+              { id: 'team-workspace', label: 'Team', icon: Users, color: 'emerald', desc: 'Members & roles' },
+              { id: 'program-analytics', label: 'Analytics', icon: BarChart3, color: 'blue', desc: 'Trends & metrics' },
+            ] as const).map(item => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    // Navigate via parent ZenApp's layoutMode — dispatch custom event
+                    window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: item.id } }));
+                  }}
+                  className={cn(
+                    'group flex flex-col items-center gap-1.5 p-3 rounded-xl border border-zinc-200 bg-white',
+                    'hover:shadow-sm hover:border-zinc-300 transition-all text-center'
+                  )}
+                >
+                  <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', `bg-${item.color}-50`)}>
+                    <Icon className={cn('w-4 h-4', `text-${item.color}-600`)} />
+                  </div>
+                  <span className="text-xs font-medium text-zinc-800 leading-tight">{item.label}</span>
+                  <span className="text-[10px] text-zinc-400 leading-tight">{item.desc}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Collaboration & Notifications Quick Links ──────────────────── */}
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: 'notifications' } }))}
+            className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-white hover:shadow-sm hover:border-zinc-300 transition-all"
+          >
+            <Bell className="w-4 h-4 text-amber-600" />
+            <div className="text-left">
+              <span className="text-xs font-medium text-zinc-800">Notifications</span>
+              <span className="text-[10px] text-zinc-400 block">Alerts & action items</span>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-300 ml-auto" />
+          </button>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: 'collaboration-hub' } }))}
+            className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-white hover:shadow-sm hover:border-zinc-300 transition-all"
+          >
+            <MessageSquare className="w-4 h-4 text-blue-600" />
+            <div className="text-left">
+              <span className="text-xs font-medium text-zinc-800">Collaboration Hub</span>
+              <span className="text-[10px] text-zinc-400 block">Threads & discussions</span>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-300 ml-auto" />
+          </button>
         </div>
       </div>
     </div>
