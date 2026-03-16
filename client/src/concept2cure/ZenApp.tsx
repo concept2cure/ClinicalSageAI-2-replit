@@ -988,7 +988,7 @@ export const ZenApp: React.FC = () => {
             ))}
             <div className="ml-auto flex items-center gap-1 text-xs text-zinc-500">
               {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-              <span>{isConnected ? 'Lumen connected' : 'Lumen offline'}</span>
+              <span>{isConnected ? 'AnA connected' : 'AnA offline'}</span>
             </div>
           </div>
         </div>

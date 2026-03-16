@@ -87,8 +87,19 @@ interface ZenChatProps {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TYPING INDICATOR
+// THINKING INDICATOR - Claude-style pulsing "Thinking..." state
 // ═══════════════════════════════════════════════════════════════════════════════
+
+const ThinkingIndicator: React.FC = () => (
+  <div className="flex items-center gap-2 py-1">
+    <div className="relative flex items-center gap-1">
+      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+    </div>
+    <span className="text-sm text-violet-600 font-medium animate-pulse">Thinking...</span>
+  </div>
+);
 
 const TypingIndicator: React.FC = () => (
   <div className="flex items-center gap-1.5 py-1">
@@ -311,16 +322,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* Name */}
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-semibold text-zinc-900">
-                {isUser ? 'You' : 'Lumen'}
+                {isUser ? 'You' : 'AnA'}
               </span>
             </div>
 
             {/* Message content */}
             <div className="prose prose-zinc prose-sm max-w-none">
-              {message.isStreaming ? (
-                <div className="flex items-center gap-2">
+              {message.isStreaming && !message.content ? (
+                <ThinkingIndicator />
+              ) : message.isStreaming && message.content ? (
+                <>
+                  <p className="text-zinc-700 leading-relaxed whitespace-pre-wrap">
+                    {message.content}
+                  </p>
                   <TypingIndicator />
-                </div>
+                </>
               ) : (
                 <p className="text-zinc-700 leading-relaxed whitespace-pre-wrap">
                   {message.content}
@@ -583,7 +599,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
   onStop,
   isGenerating = false,
-  placeholder = 'Message Lumen...',
+  placeholder = 'Message AnA...',
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -670,7 +686,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-zinc-400 mt-2">
-          Lumen can make mistakes. Verify important regulatory information.
+          AnA can make mistakes. Verify important regulatory information.
         </p>
       </div>
     </div>
@@ -765,11 +781,26 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     artifacts: m.metadata?.artifacts,
   }));
 
-  // Add streaming indicator if active
-  const displayMessages =
-    isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
-      ? messages.map((m, i) => (i === messages.length - 1 ? { ...m, isStreaming: true } : m))
-      : messages;
+  // Add streaming/thinking indicator if active
+  const displayMessages = useMemo(() => {
+    if (isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
+      return messages.map((m, i) => (i === messages.length - 1 ? { ...m, isStreaming: true } : m));
+    }
+    // Show thinking bubble when loading but no assistant message yet
+    if ((isLoading || isStreaming) && messages.length > 0 && messages[messages.length - 1]?.role === 'user') {
+      return [
+        ...messages,
+        {
+          id: 'thinking-placeholder',
+          role: 'assistant' as const,
+          content: '',
+          timestamp: new Date(),
+          isStreaming: true,
+        },
+      ];
+    }
+    return messages;
+  }, [messages, isStreaming, isLoading]);
 
   // Refs
   const messagesContainerRef = useRef<HTMLDivElement>(null);

@@ -94,7 +94,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   {
     id: 'new-chat',
     title: 'New Chat',
-    subtitle: 'Start a new conversation with Lumen',
+    subtitle: 'Start a new conversation with AnA',
     icon: <MessageSquare className="w-4 h-4" />,
     shortcut: '⌘N',
     category: 'recent',

@@ -191,7 +191,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
             <AlertDialogTitle>Remove document?</AlertDialogTitle>
             <AlertDialogDescription>
               This will remove "{document.name}" from the project knowledge.
-              Lumen will no longer have access to this document's content.
+              AnA will no longer have access to this document's content.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -334,7 +334,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({
             </SheetTitle>
             <SheetDescription>
               Upload documents and configure custom instructions for this project.
-              Lumen will use this context when assisting you.
+              AnA will use this context when assisting you.
             </SheetDescription>
           </SheetHeader>
 

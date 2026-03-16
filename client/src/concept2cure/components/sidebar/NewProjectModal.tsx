@@ -268,9 +268,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
               </h4>
               <ul className="text-xs text-gray-600 space-y-1 ml-6">
                 <li>• Your project workspace will be created</li>
-                <li>• You can start chatting with Lumen immediately</li>
+                <li>• You can start chatting with AnA immediately</li>
                 <li>• Upload documents to build project knowledge</li>
-                <li>• Lumen will remember everything across conversations</li>
+                <li>• AnA will remember everything across conversations</li>
               </ul>
             </div>
           </div>

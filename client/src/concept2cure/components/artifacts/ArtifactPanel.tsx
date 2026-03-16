@@ -256,7 +256,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
           <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
           <p className="text-sm">No artifact selected</p>
           <p className="text-xs mt-1">
-            Artifacts will appear here when Lumen creates them
+            Artifacts will appear here when AnA creates them
           </p>
         </div>
       </div>

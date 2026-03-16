@@ -203,7 +203,7 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
             <div className="flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
               <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
               <span>
-                Custom instructions tell Lumen how to behave for this specific project.
+                Custom instructions tell AnA how to behave for this specific project.
                 These apply to all conversations within this project.
               </span>
             </div>
@@ -227,7 +227,7 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
                 ref={textareaRef}
                 value={localValue}
                 onChange={(e) => setLocalValue(e.target.value)}
-                placeholder={`Tell Lumen how to assist with this project...
+                placeholder={`Tell AnA how to assist with this project...
 
 Example:
 - "Always reference predicate K123456 for SE arguments"

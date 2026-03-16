@@ -321,7 +321,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900">Lumen</h3>
+            <h3 className="text-sm font-semibold text-zinc-900">AnA</h3>
             {projectContext && (
               <p className="text-xs text-zinc-500">
                 Working on {projectContext.name}

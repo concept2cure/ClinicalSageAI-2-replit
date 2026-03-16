@@ -129,7 +129,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             {/* Header */}
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm font-medium text-gray-900">
-                {isUser ? 'You' : 'Lumen'}
+                {isUser ? 'You' : 'AnA'}
               </span>
               <span className="text-xs text-gray-400">{formatTime(message.timestamp)}</span>
               {message.edited && (
@@ -567,7 +567,7 @@ export const ChatPanel: React.FC = () => {
         </h2>
         <p className="text-gray-500 max-w-md">
           Choose a project from the sidebar or create a new one to start
-          working with Lumen.
+          working with AnA.
         </p>
       </div>
     );
