@@ -1017,6 +1017,29 @@ export const ZenApp: React.FC = () => {
 
   const activeProject = projects.find(p => p.id === activeProjectId);
 
+  const contextMetrics = useMemo(() => {
+    if (!activeProject || !taskSummary) {
+      return {
+        deadlineDays: '—',
+        complianceScore: 0,
+        riskCount: 0,
+        lastActivity: 'No project selected',
+        auditStatus: 'Audit trail active',
+      };
+    }
+    const targetDateStr = activeProject.metadata?.targetSubmissionDate || (activeProject as any).targetEndDate;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
+    const deadlineDays = targetDate
+      ? Math.max(0, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : '—';
+    const complianceScore = taskSummary.healthScore / 100;
+    const riskCount = taskSummary.overdue + (taskSummary.byStatus?.blocked || 0);
+    const lastActivity = taskSummary.total > 0
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
+    return { deadlineDays, complianceScore, riskCount, lastActivity, auditStatus: 'Audit trail active' };
+  }, [activeProject, taskSummary]);
+
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
     const subType = activeProject?.type?.toUpperCase();
