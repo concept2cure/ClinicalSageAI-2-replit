@@ -22,7 +22,7 @@
  * - FDA 21 CFR Part 11 (audit trail)
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Beaker,
@@ -347,6 +347,26 @@ export const CMCHub: React.FC<CMCHubProps> = ({
     storageConditions: '',
   });
 
+  // Load existing CMC data from project metadata
+  useEffect(() => {
+    if (!projectId) return;
+    const token = sessionStorage.getItem('concept2cure_token') || localStorage.getItem('concept2cure_token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    fetch(`/api/concept2cure/projects/${projectId}/cmc`, { headers })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.cmcDrugSubstance) {
+          setDsForm(prev => ({ ...prev, ...data.cmcDrugSubstance }));
+        }
+        if (data?.cmcDrugProduct) {
+          setDpForm(prev => ({ ...prev, ...data.cmcDrugProduct }));
+        }
+      })
+      .catch(() => {});
+  }, [projectId]);
+
   const updateDsField = useCallback((field: keyof DrugSubstanceForm, value: string) => {
     setDsForm(prev => ({ ...prev, [field]: value }));
   }, []);
@@ -399,7 +419,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
     }
   }, []);
 
-  // Save form data to API
+  // Save form data to unified project CMC endpoint
   const handleSave = useCallback(async () => {
     if (!projectId) return;
     setIsSaving(true);
@@ -409,50 +429,16 @@ export const CMCHub: React.FC<CMCHubProps> = ({
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Save drug substance
-      if (dsForm.substanceName) {
-        await fetch('/api/cmc/projects/drug-substances', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            projectId,
-            substanceName: dsForm.substanceName,
-            cas: dsForm.cas,
-            molecularFormula: dsForm.molecularFormula,
-            molecularWeight: dsForm.molecularWeight ? parseFloat(dsForm.molecularWeight) : undefined,
-            manufacturingRoute: dsForm.manufacturingRoute,
-            specifications: JSON.stringify({
-              inn: dsForm.inn,
-              polymorph: dsForm.polymorph,
-              solubility: dsForm.solubility,
-              meltingPoint: dsForm.meltingPoint,
-              hygroscopicity: dsForm.hygroscopicity,
-              structureDescription: dsForm.structureDescription,
-            }),
-          }),
-        });
-      }
+      const res = await fetch(`/api/concept2cure/projects/${projectId}/cmc`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          cmcDrugSubstance: dsForm,
+          cmcDrugProduct: dpForm,
+        }),
+      });
 
-      // Save drug product
-      if (dpForm.productName) {
-        await fetch('/api/cmc/projects/drug-products', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            projectId,
-            productName: dpForm.productName,
-            dosageForm: dpForm.dosageForm,
-            routeOfAdministration: dpForm.routeOfAdmin,
-            strength: dpForm.strength,
-            containerClosure: dpForm.containerClosure,
-            composition: dpForm.composition,
-            excipients: dpForm.excipients,
-            overages: dpForm.overages,
-            proposedShelfLife: dpForm.shelfLife,
-            storageConditions: dpForm.storageConditions,
-          }),
-        });
-      }
+      if (!res.ok) throw new Error('Save failed');
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);

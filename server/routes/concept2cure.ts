@@ -2861,4 +2861,285 @@ router.get('/submission-milestones', (_req: Request, res: Response) => {
   return sendSuccess(res, types);
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// CMC DATA ENDPOINTS — Unified with concept2cure projects
+// Stores CMC data (Drug Substance, Drug Product) in project.metadata
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const cmcDataSchema = z.object({
+  drugSubstance: z.object({
+    substanceName: z.string().optional(),
+    inn: z.string().optional(),
+    cas: z.string().optional(),
+    molecularFormula: z.string().optional(),
+    molecularWeight: z.string().optional(),
+    manufacturingRoute: z.string().optional(),
+    structureDescription: z.string().optional(),
+    polymorph: z.string().optional(),
+    solubility: z.string().optional(),
+    meltingPoint: z.string().optional(),
+    hygroscopicity: z.string().optional(),
+  }).optional(),
+  drugProduct: z.object({
+    productName: z.string().optional(),
+    dosageForm: z.string().optional(),
+    routeOfAdmin: z.string().optional(),
+    strength: z.string().optional(),
+    containerClosure: z.string().optional(),
+    composition: z.string().optional(),
+    excipients: z.string().optional(),
+    overages: z.string().optional(),
+    shelfLife: z.string().optional(),
+    storageConditions: z.string().optional(),
+  }).optional(),
+  specifications: z.array(z.any()).optional(),
+  stabilityStudies: z.array(z.any()).optional(),
+  impurities: z.array(z.any()).optional(),
+});
+
+// GET CMC data for a project
+router.get('/projects/:projectId/cmc', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    const metadata = (project.metadata as Record<string, any>) || {};
+    return sendSuccess(res, {
+      drugSubstance: metadata.cmcDrugSubstance || null,
+      drugProduct: metadata.cmcDrugProduct || null,
+      specifications: metadata.cmcSpecifications || [],
+      stabilityStudies: metadata.cmcStabilityStudies || [],
+      impurities: metadata.cmcImpurities || [],
+      lastUpdated: metadata.cmcLastUpdated || null,
+    });
+  } catch (error) {
+    logger.error('Failed to get CMC data', { error });
+    return sendError(res, 'Failed to get CMC data', 500);
+  }
+});
+
+// SAVE CMC data for a project
+router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const parsed = cmcDataSchema.safeParse(req.body);
+    if (!parsed.success) return sendError(res, `Invalid CMC data: ${parsed.error.message}`, 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    const existingMetadata = (project.metadata as Record<string, any>) || {};
+    const updatedMetadata = {
+      ...existingMetadata,
+      cmcDrugSubstance: parsed.data.drugSubstance || existingMetadata.cmcDrugSubstance,
+      cmcDrugProduct: parsed.data.drugProduct || existingMetadata.cmcDrugProduct,
+      cmcSpecifications: parsed.data.specifications || existingMetadata.cmcSpecifications || [],
+      cmcStabilityStudies: parsed.data.stabilityStudies || existingMetadata.cmcStabilityStudies || [],
+      cmcImpurities: parsed.data.impurities || existingMetadata.cmcImpurities || [],
+      cmcLastUpdated: new Date().toISOString(),
+    };
+
+    await db.update(projects).set({ metadata: updatedMetadata }).where(eq(projects.id, projectId));
+
+    return sendSuccess(res, { saved: true, lastUpdated: updatedMetadata.cmcLastUpdated });
+  } catch (error) {
+    logger.error('Failed to save CMC data', { error });
+    return sendError(res, 'Failed to save CMC data', 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT CONTEXT ENDPOINT — Full context for AnA/Cortex AI
+// Returns project details + tasks + CMC data + knowledge for AI context injection
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/projects/:projectId/context', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    // Fetch tasks
+    const tasks = await db.select().from(projectTasks)
+      .where(eq(projectTasks.projectId, projectId))
+      .orderBy(desc(projectTasks.createdAt));
+
+    // Build task summary
+    const taskSummary = {
+      total: tasks.length,
+      completed: tasks.filter(t => (t as any).status === 'done').length,
+      inProgress: tasks.filter(t => (t as any).status === 'in-progress').length,
+      blocked: tasks.filter(t => (t as any).status === 'blocked').length,
+      overdue: tasks.filter(t => {
+        const dueDate = (t as any).dueDate;
+        return dueDate && new Date(dueDate) < new Date() && (t as any).status !== 'done';
+      }).length,
+    };
+
+    // Extract CMC data from metadata
+    const metadata = (project.metadata as Record<string, any>) || {};
+    const settings = (project.settings as Record<string, any>) || {};
+
+    // Extract knowledge/custom instructions
+    const knowledge = settings.knowledge || {};
+
+    return sendSuccess(res, {
+      project: {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        type: project.type,
+        status: project.status,
+        priority: project.priority,
+        progress: project.progress,
+        startDate: project.startDate,
+        targetEndDate: project.targetEndDate,
+        riskLevel: project.riskLevel,
+        tags: project.tags,
+      },
+      tasks: {
+        summary: taskSummary,
+        recent: tasks.slice(0, 10).map(t => ({
+          id: (t as any).id,
+          name: (t as any).name,
+          status: (t as any).status,
+          priority: (t as any).priority,
+          dueDate: (t as any).dueDate,
+        })),
+      },
+      cmc: {
+        drugSubstance: metadata.cmcDrugSubstance || null,
+        drugProduct: metadata.cmcDrugProduct || null,
+        hasSpecifications: (metadata.cmcSpecifications || []).length > 0,
+        hasStabilityStudies: (metadata.cmcStabilityStudies || []).length > 0,
+        hasImpurities: (metadata.cmcImpurities || []).length > 0,
+      },
+      knowledge: {
+        customInstructions: knowledge.customInstructions || null,
+        documentCount: (knowledge.documents || []).length,
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to get project context', { error });
+    return sendError(res, 'Failed to get project context', 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI TASK ASSESSMENT — AnA-powered task evaluation
+// Analyzes project tasks and returns AI recommendations
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    const tasks = await db.select().from(projectTasks)
+      .where(eq(projectTasks.projectId, projectId))
+      .orderBy(desc(projectTasks.createdAt));
+
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => (t as any).status === 'done').length;
+    const blockedTasks = tasks.filter(t => (t as any).status === 'blocked').length;
+    const overdueTasks = tasks.filter(t => {
+      const dueDate = (t as any).dueDate;
+      return dueDate && new Date(dueDate) < new Date() && (t as any).status !== 'done';
+    }).length;
+    const inProgressTasks = tasks.filter(t => (t as any).status === 'in-progress').length;
+
+    // Compute health score (0-100)
+    let healthScore = 100;
+    if (totalTasks > 0) {
+      const completionRate = (completedTasks / totalTasks) * 100;
+      const overdueRate = (overdueTasks / totalTasks) * 100;
+      const blockedRate = (blockedTasks / totalTasks) * 100;
+      healthScore = Math.max(0, Math.min(100, Math.round(
+        completionRate * 0.4 + (100 - overdueRate * 3) * 0.3 + (100 - blockedRate * 5) * 0.3
+      )));
+    }
+
+    // Generate risk assessment
+    const risks: string[] = [];
+    if (overdueTasks > 0) risks.push(`${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue — review deadlines`);
+    if (blockedTasks > 0) risks.push(`${blockedTasks} task${blockedTasks > 1 ? 's' : ''} blocked — resolve dependencies`);
+    if (totalTasks > 0 && inProgressTasks === 0 && completedTasks < totalTasks) {
+      risks.push('No tasks in progress — workflow may be stalled');
+    }
+    if (totalTasks === 0) risks.push('No tasks defined — generate milestones for this submission type');
+
+    // Generate next recommended actions
+    const nextActions: Array<{ action: string; priority: string; reason: string }> = [];
+
+    if (totalTasks === 0) {
+      nextActions.push({
+        action: `Generate ${project.type || 'submission'} milestones`,
+        priority: 'high',
+        reason: 'No tasks exist yet. Auto-generate milestone-based tasks for your submission type.',
+      });
+    }
+
+    if (overdueTasks > 0) {
+      nextActions.push({
+        action: 'Review overdue tasks',
+        priority: 'urgent',
+        reason: `${overdueTasks} task${overdueTasks > 1 ? 's have' : ' has'} passed ${overdueTasks > 1 ? 'their' : 'its'} due date.`,
+      });
+    }
+
+    if (blockedTasks > 0) {
+      nextActions.push({
+        action: 'Resolve blocked tasks',
+        priority: 'high',
+        reason: `${blockedTasks} task${blockedTasks > 1 ? 's are' : ' is'} blocked and preventing progress.`,
+      });
+    }
+
+    // Check CMC readiness
+    const metadata = (project.metadata as Record<string, any>) || {};
+    if (!metadata.cmcDrugSubstance?.substanceName) {
+      nextActions.push({
+        action: 'Enter Drug Substance data (CMC Module 3)',
+        priority: 'medium',
+        reason: 'Drug Substance information is required for Module 3 documentation.',
+      });
+    }
+    if (!metadata.cmcDrugProduct?.productName) {
+      nextActions.push({
+        action: 'Enter Drug Product data (CMC Module 3)',
+        priority: 'medium',
+        reason: 'Drug Product information is required for Module 3 documentation.',
+      });
+    }
+
+    return sendSuccess(res, {
+      healthScore,
+      summary: {
+        total: totalTasks,
+        completed: completedTasks,
+        inProgress: inProgressTasks,
+        blocked: blockedTasks,
+        overdue: overdueTasks,
+        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      },
+      risks,
+      nextActions: nextActions.slice(0, 5),
+      assessedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to assess tasks', { error });
+    return sendError(res, 'Failed to assess tasks', 500);
+  }
+});
+
 export default router;
