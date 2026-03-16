@@ -1,5 +1,5 @@
 /**
- * Chat API Routes - Lumen Cortex AI Chat Interface
+ * Chat API Routes - AnA AI Chat Interface
  *
  * Provides Claude-like conversational AI for regulatory guidance.
  * Connects to OpenAI GPT-4 with context-aware regulatory knowledge.
@@ -27,7 +27,7 @@ function ensureGateway() {
     try {
       gateway = getGateway();
     } catch (e) {
-      console.warn('[Lumen Cortex] AI Gateway initialization failed, using demo mode');
+      console.warn('[AnA] AI Gateway initialization failed, using demo mode');
     }
   }
   return gateway;
@@ -36,7 +36,7 @@ function ensureGateway() {
 const isDev = process.env.NODE_ENV !== 'production';
 
 // System prompt for regulatory AI assistant
-const REGULATORY_SYSTEM_PROMPT = `You are Lumen Cortex, an expert AI assistant for regulatory affairs in the life sciences industry. You specialize in:
+const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), an expert RI Co-pilot for regulatory affairs in the life sciences industry. You specialize in:
 
 - FDA 510(k) medical device submissions
 - IND (Investigational New Drug) applications
@@ -234,9 +234,9 @@ Would you like specific guidance on implementing any of these controls?`;
   }
 
   // Default comprehensive response
-  return `## Lumen Cortex Regulatory Intelligence
+  return `## AnA v1.0 — RI Co-pilot
 
-Thank you for your query. I'm Lumen Cortex, your AI-powered regulatory affairs assistant. I can help with:
+Thank you for your query. I'm AnA (Audit & Narrative Assistant), your RI Co-pilot for regulatory affairs. I can help with:
 
 ### My Capabilities
 
@@ -295,7 +295,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
     const previousMessages = await getThreadMessages(threadId);
 
     let assistantMessage: string;
-    let model = 'lumen-cortex-demo';
+    let model = 'ana-demo';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
     // Route through AI Gateway — falls back to demo responses
@@ -313,14 +313,14 @@ router.post('/send-message', async (req: Request, res: Response) => {
           { role: 'user' as const, content: message },
         ];
 
-        console.log('[Lumen Cortex] Sending message through AI Gateway...');
+        console.log('[AnA] Sending message through AI Gateway...');
 
         const gwResponse: GatewayResponse = await gw.route({
           taskType: 'chat',
           messages: gwMessages,
           temperature: 0.7,
           maxTokens: 2000,
-          callerModule: 'lumen-cortex-chat',
+          callerModule: 'ana-chat',
           organizationId: (req as any).tenantId || (req as any).tenantContext?.organizationId,
           userId: (req as any).userId,
         });
@@ -336,15 +336,15 @@ router.post('/send-message', async (req: Request, res: Response) => {
         };
 
         console.log(
-          `[Lumen Cortex] AI Gateway response via ${model} (${gwResponse.latencyMs}ms, req=${gwResponse.requestId})`
+          `[AnA] AI Gateway response via ${model} (${gwResponse.latencyMs}ms, req=${gwResponse.requestId})`
         );
       } catch (gwError: any) {
-        console.warn('[Lumen Cortex] AI Gateway call failed, using demo mode:', gwError.message);
+        console.warn('[AnA] AI Gateway call failed, using demo mode:', gwError.message);
         assistantMessage = generateDemoResponse(message);
-        model = 'lumen-cortex-demo';
+        model = 'ana-demo';
       }
     } else {
-      console.log('[Lumen Cortex] Using demo mode (no AI providers available)');
+      console.log('[AnA] Using demo mode (no AI providers available)');
       assistantMessage = generateDemoResponse(message);
     }
 
@@ -359,7 +359,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
       model,
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Chat error:', error);
+    console.error('[AnA] Chat error:', error);
 
     res.status(500).json({
       error: 'Failed to process message',
@@ -398,7 +398,7 @@ router.post('/upload', async (req: Request, res: Response) => {
       fileName,
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Upload error:', error);
+    console.error('[AnA] Upload error:', error);
     res.status(500).json({
       error: 'Failed to upload file',
       message: error.message,
@@ -432,7 +432,7 @@ router.get('/thread/:threadId', async (req: Request, res: Response) => {
       created_at: threadResult.rows[0].created_at,
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Thread retrieval error:', error);
+    console.error('[AnA] Thread retrieval error:', error);
     res.status(500).json({
       error: 'Failed to retrieve thread',
       message: error.message,
@@ -455,7 +455,7 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
       message: deleted ? 'Thread deleted' : 'Thread not found',
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Thread deletion error:', error);
+    console.error('[AnA] Thread deletion error:', error);
     res.status(500).json({
       error: 'Failed to delete thread',
       message: error.message,
@@ -480,7 +480,7 @@ router.get('/health', async (req: Request, res: Response) => {
 
   res.json({
     status: hasApiKey ? 'healthy' : 'degraded',
-    service: 'Lumen Cortex Chat',
+    service: 'AnA Chat',
     openai_configured: hasApiKey,
     active_threads: threadCount,
     persistence: 'postgresql',

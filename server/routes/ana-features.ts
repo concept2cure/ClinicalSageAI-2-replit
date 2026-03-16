@@ -1,179 +1,366 @@
 /**
- * AnA Feature API Routes
+ * AnA Features Routes
  *
- * Endpoints for the four core Concept2Cure intelligence features:
+ * Provides API endpoints for AnA (Analytical Navigator Assistant) features:
  * 1. Regulatory Intelligence Feed
  * 2. Submission Gap Analysis
- * 3. Document Change Impact
- * 4. AnA Memory (per-project persistence)
+ * 3. Document Change Impact Analysis
+ * 4. AnA Memory (per-project contextual memory)
  */
-
 import { Router, Request, Response } from 'express';
 
 const router = Router();
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 1. REGULATORY INTELLIGENCE FEED
-// ═══════════════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------------
+// In-memory stores
+// ---------------------------------------------------------------------------
 
-interface FeedItem {
+interface Memory {
   id: string;
-  type: 'guidance' | 'alert' | 'approval' | 'warning_letter';
-  title: string;
-  summary: string;
-  agency: string;
-  date: string;
-  impactLevel: 'critical' | 'high' | 'medium' | 'low';
-  therapeuticArea: string;
-  url: string;
-  tags: string[];
+  type: 'preference' | 'fact' | 'decision' | 'context';
+  content: string;
+  createdAt: string;
 }
 
-const FEED_ITEMS: FeedItem[] = [
+interface ProjectMemoryStore {
+  memories: Memory[];
+  projectContext: {
+    therapeuticArea: string;
+    submissionType: string;
+    targetAgency: string;
+    drugProduct: string;
+  };
+}
+
+const memoryStore: Record<string, ProjectMemoryStore> = {};
+
+let memoryIdCounter = 1000;
+
+// ---------------------------------------------------------------------------
+// 1. Regulatory Intelligence Feed — Mock Data
+// ---------------------------------------------------------------------------
+
+const intelligenceFeedItems = [
   {
-    id: 'fi-001', type: 'guidance', title: 'FDA Releases Updated Guidance on AI/ML-Based Software as Medical Device (SaMD)',
-    summary: 'The FDA has published final guidance on the predetermined change control plan for ML-enabled devices, establishing a framework for modifications that do not require new 510(k) submissions.',
-    agency: 'FDA', date: '2026-03-15', impactLevel: 'critical', therapeuticArea: 'Medical Devices',
-    url: '#', tags: ['AI/ML', 'SaMD', '510(k)', 'PCCP']
+    id: 'reg-001',
+    type: 'guidance' as const,
+    title: 'FDA Draft Guidance: Artificial Intelligence/Machine Learning-Based Software as a Medical Device',
+    summary: 'FDA issues updated draft guidance on the predetermined change control plan for AI/ML-enabled devices, expanding requirements for continuous learning algorithms and real-world performance monitoring.',
+    agency: 'FDA',
+    date: '2026-03-10',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'Digital Health',
+    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/aiml-samd-2026',
+    tags: ['AI/ML', 'SaMD', 'Predetermined Change Control', 'Digital Health'],
   },
   {
-    id: 'fi-002', type: 'alert', title: 'EMA Mandates Electronic Submission of PSUR via EVCTM by Q3 2026',
-    summary: 'Starting September 2026, all PSURs must be submitted electronically through the EudraVigilance Clinical Trial Module. Paper submissions will no longer be accepted.',
-    agency: 'EMA', date: '2026-03-14', impactLevel: 'high', therapeuticArea: 'Pharmacovigilance',
-    url: '#', tags: ['PSUR', 'EudraVigilance', 'Electronic Submission']
+    id: 'reg-002',
+    type: 'approval' as const,
+    title: 'FDA Approves First Gene Therapy for Duchenne Muscular Dystrophy in Patients Under 4',
+    summary: 'Breakthrough therapy designation leads to accelerated approval of AAV-based micro-dystrophin gene therapy. Post-market confirmatory trial required within 5 years.',
+    agency: 'FDA',
+    date: '2026-03-08',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Rare Disease',
+    url: 'https://www.fda.gov/news-events/press-announcements/dmd-gene-therapy-2026',
+    tags: ['Gene Therapy', 'Rare Disease', 'Accelerated Approval', 'Pediatric'],
   },
   {
-    id: 'fi-003', type: 'approval', title: 'FDA Approves First Gene Therapy for Sickle Cell Disease (Priority Review)',
-    summary: 'Vertex Pharmaceuticals receives BLA approval for exa-cel (CASGEVY) for treatment of sickle cell disease in patients 12+ years, using CRISPR/Cas9 gene-editing technology.',
-    agency: 'FDA', date: '2026-03-13', impactLevel: 'high', therapeuticArea: 'Gene Therapy',
-    url: '#', tags: ['BLA', 'Priority Review', 'CRISPR', 'Gene Therapy']
+    id: 'reg-003',
+    type: 'alert' as const,
+    title: 'EMA CHMP Recommends New Conditional Marketing Authorization for KRAS G12C Inhibitor',
+    summary: 'The Committee for Medicinal Products for Human Use adopts positive opinion for sotorasib combination therapy in first-line NSCLC with KRAS G12C mutation, requiring additional Phase III data.',
+    agency: 'EMA',
+    date: '2026-03-05',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Oncology',
+    url: 'https://www.ema.europa.eu/en/news/chmp-kras-g12c-2026',
+    tags: ['Oncology', 'KRAS', 'Conditional Approval', 'NSCLC'],
   },
   {
-    id: 'fi-004', type: 'warning_letter', title: 'FDA Issues Warning Letter to Contract Manufacturer for GMP Violations',
-    summary: 'Warning letter issued for failure to adequately investigate out-of-specification results, inadequate cleaning validation, and lack of environmental monitoring in sterile manufacturing.',
-    agency: 'FDA', date: '2026-03-12', impactLevel: 'medium', therapeuticArea: 'Manufacturing',
-    url: '#', tags: ['GMP', 'Warning Letter', 'Sterile Manufacturing']
+    id: 'reg-004',
+    type: 'guidance' as const,
+    title: 'FDA Final Guidance: Diversity Action Plans for Clinical Trials',
+    summary: 'Finalized guidance mandates sponsors submit Race and Ethnicity Diversity Plans for all Phase III and pivotal trials. Applies to INDs submitted after July 1, 2026.',
+    agency: 'FDA',
+    date: '2026-02-28',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'General',
+    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/diversity-plans-2026',
+    tags: ['Diversity', 'Clinical Trials', 'Phase III', 'Health Equity'],
   },
   {
-    id: 'fi-005', type: 'guidance', title: 'ICH E6(R3) Implementation Timeline Finalized — GCP Modernization',
-    summary: 'ICH has finalized the step-by-step implementation timeline for E6(R3), introducing risk-proportionate approaches to clinical trial quality management. Full compliance required by December 2027.',
-    agency: 'ICH', date: '2026-03-11', impactLevel: 'critical', therapeuticArea: 'Clinical Trials',
-    url: '#', tags: ['ICH', 'GCP', 'E6(R3)', 'Quality Management']
+    id: 'reg-005',
+    type: 'warning_letter' as const,
+    title: 'FDA Warning Letter to Major CMO for GMP Violations in Sterile Injectable Manufacturing',
+    summary: 'Significant deviations in aseptic processing, environmental monitoring, and data integrity identified during routine inspection. Product impact assessment required for 47 affected drug products.',
+    agency: 'FDA',
+    date: '2026-02-25',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'Manufacturing',
+    url: 'https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/sterile-cmo-2026',
+    tags: ['GMP', 'Warning Letter', 'Sterile Manufacturing', 'Data Integrity'],
   },
   {
-    id: 'fi-006', type: 'guidance', title: 'FDA Draft Guidance: Clinical Pharmacology Considerations for ADCs',
-    summary: 'New draft guidance addressing PK/PD characterization, immunogenicity assessment, and dose optimization strategies specific to antibody-drug conjugates.',
-    agency: 'FDA', date: '2026-03-10', impactLevel: 'medium', therapeuticArea: 'Oncology',
-    url: '#', tags: ['ADC', 'Clinical Pharmacology', 'PK/PD', 'Draft Guidance']
+    id: 'reg-006',
+    type: 'guidance' as const,
+    title: 'PMDA Notification: Revised Requirements for Electronic Common Technical Document (eCTD) v4.0 Submissions',
+    summary: 'Japan PMDA announces mandatory eCTD v4.0 format for all new drug applications effective January 2027, with transition support and validation tool updates.',
+    agency: 'PMDA',
+    date: '2026-02-20',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'General',
+    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/ectd-v4-2026.html',
+    tags: ['eCTD', 'Japan', 'Submission Format', 'Regulatory'],
   },
   {
-    id: 'fi-007', type: 'alert', title: 'PMDA Updates Electronic CTD Specifications for Japan NDA Submissions',
-    summary: 'Japan PMDA has released updated eCTD v4.0 technical specifications effective January 2027, including new requirements for Japanese-specific Module 1 documents.',
-    agency: 'PMDA', date: '2026-03-09', impactLevel: 'high', therapeuticArea: 'Regulatory Operations',
-    url: '#', tags: ['eCTD', 'Japan', 'NDA', 'PMDA']
+    id: 'reg-007',
+    type: 'alert' as const,
+    title: 'ICH E6(R3) Good Clinical Practice Guideline Step 4 Adoption',
+    summary: 'ICH finalizes E6(R3) GCP guideline with risk-based quality management, technology-enabled approaches for decentralized trials, and updated informed consent provisions. Implementation timeline: 2 years.',
+    agency: 'FDA',
+    date: '2026-02-15',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'General',
+    url: 'https://www.ich.org/page/efficacy-guidelines-e6r3',
+    tags: ['ICH', 'GCP', 'Decentralized Trials', 'Risk-Based Quality'],
   },
   {
-    id: 'fi-008', type: 'approval', title: 'EMA Grants Conditional Marketing Authorization for Novel mRNA Vaccine',
-    summary: 'Conditional MAA approval granted for a next-generation mRNA vaccine platform targeting multiple respiratory pathogens, using a novel lipid nanoparticle delivery system.',
-    agency: 'EMA', date: '2026-03-08', impactLevel: 'medium', therapeuticArea: 'Vaccines',
-    url: '#', tags: ['MAA', 'mRNA', 'Conditional Approval', 'Vaccines']
+    id: 'reg-008',
+    type: 'approval' as const,
+    title: 'EMA Grants Marketing Authorization for Bispecific T-Cell Engager in Relapsed/Refractory DLBCL',
+    summary: 'First-in-class CD20xCD3 bispecific antibody approved as third-line treatment for diffuse large B-cell lymphoma, with REMS-like risk management plan for cytokine release syndrome.',
+    agency: 'EMA',
+    date: '2026-02-12',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Oncology',
+    url: 'https://www.ema.europa.eu/en/medicines/human/EPAR/bispecific-dlbcl-2026',
+    tags: ['Bispecific Antibody', 'Oncology', 'DLBCL', 'Immunotherapy'],
   },
   {
-    id: 'fi-009', type: 'guidance', title: 'FDA Final Rule: Diversity Action Plans for Clinical Studies',
-    summary: 'The FDA has finalized requirements for sponsors to submit diversity action plans for Phase 3 and pivotal trials, with specific enrollment targets based on disease epidemiology.',
-    agency: 'FDA', date: '2026-03-07', impactLevel: 'high', therapeuticArea: 'Clinical Trials',
-    url: '#', tags: ['Diversity', 'Clinical Trials', 'Phase 3', 'Enrollment']
+    id: 'reg-009',
+    type: 'guidance' as const,
+    title: 'FDA Guidance: Clinical Pharmacology Considerations for Antibody-Drug Conjugates',
+    summary: 'New guidance addresses PK/PD characterization, drug-antibody ratio stability, payload release kinetics, and immunogenicity assessment specific to ADC development programs.',
+    agency: 'FDA',
+    date: '2026-02-08',
+    impactLevel: 'medium' as const,
+    therapeuticArea: 'Oncology',
+    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adc-clinical-pharm-2026',
+    tags: ['ADC', 'Clinical Pharmacology', 'PK/PD', 'Immunogenicity'],
   },
   {
-    id: 'fi-010', type: 'warning_letter', title: 'EMA Publishes Inspection Findings on Data Integrity at CRO',
-    summary: 'Major findings include systematic data manipulation in bioequivalence studies, inadequate audit trails, and failure to report protocol deviations in pharmacokinetic analyses.',
-    agency: 'EMA', date: '2026-03-06', impactLevel: 'critical', therapeuticArea: 'Data Integrity',
-    url: '#', tags: ['CRO', 'Data Integrity', 'Bioequivalence', 'Inspection']
+    id: 'reg-010',
+    type: 'warning_letter' as const,
+    title: 'EMA Referral Procedure for Safety Signal in GLP-1 Receptor Agonist Class',
+    summary: 'Article 31 referral initiated following post-marketing reports of medullary thyroid carcinoma. Sponsors required to submit cumulative safety analyses within 60 days.',
+    agency: 'EMA',
+    date: '2026-02-05',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'Endocrinology',
+    url: 'https://www.ema.europa.eu/en/medicines/human/referrals/glp1-ra-thyroid-2026',
+    tags: ['Safety Signal', 'GLP-1', 'Pharmacovigilance', 'Thyroid'],
   },
   {
-    id: 'fi-011', type: 'guidance', title: 'FDA Guidance: Decentralized Clinical Trials — Remote Monitoring Considerations',
-    summary: 'Comprehensive guidance on implementing DCTs including remote consent, wearable data collection, direct-to-patient drug shipment, and telemedicine visit requirements.',
-    agency: 'FDA', date: '2026-03-05', impactLevel: 'medium', therapeuticArea: 'Clinical Trials',
-    url: '#', tags: ['DCT', 'Remote Monitoring', 'Telemedicine', 'Wearables']
+    id: 'reg-011',
+    type: 'guidance' as const,
+    title: 'PMDA Guidelines for Evaluation of Cell and Gene Therapy Products: Quality and Non-Clinical',
+    summary: 'Updated requirements for potency assays, viral vector characterization, biodistribution studies, and tumorigenicity assessment for cell and gene therapy products submitted in Japan.',
+    agency: 'PMDA',
+    date: '2026-01-30',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Cell & Gene Therapy',
+    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/cgt-quality-2026.html',
+    tags: ['Cell Therapy', 'Gene Therapy', 'Quality', 'Non-Clinical', 'Japan'],
   },
   {
-    id: 'fi-012', type: 'alert', title: 'Health Canada Adopts ICH M4 (R4) for CTD Organization',
-    summary: 'Health Canada announces adoption of the revised ICH M4 guideline for CTD module organization, with a 24-month transition period for existing submissions.',
-    agency: 'Health Canada', date: '2026-03-04', impactLevel: 'medium', therapeuticArea: 'Regulatory Operations',
-    url: '#', tags: ['CTD', 'ICH M4', 'Health Canada']
+    id: 'reg-012',
+    type: 'alert' as const,
+    title: 'FDA Updates Breakthrough Therapy Designation Criteria for Rare Diseases',
+    summary: 'Revised policy allows preliminary clinical evidence including natural history data, biomarker endpoints, and real-world evidence to support BTD requests for ultra-rare diseases (<1:100,000).',
+    agency: 'FDA',
+    date: '2026-01-25',
+    impactLevel: 'medium' as const,
+    therapeuticArea: 'Rare Disease',
+    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/btd-rare-disease-2026',
+    tags: ['Breakthrough Therapy', 'Rare Disease', 'Biomarker', 'Real-World Evidence'],
   },
   {
-    id: 'fi-013', type: 'guidance', title: 'FDA Revised Guidance on Postmarketing Safety Reporting for Combination Products',
-    summary: 'Updated reporting requirements for combination products clarifying which constituent part adverse events should be reported to CDER vs. CDRH, with new timelines.',
-    agency: 'FDA', date: '2026-03-03', impactLevel: 'high', therapeuticArea: 'Pharmacovigilance',
-    url: '#', tags: ['Combination Products', 'Safety Reporting', 'CDER', 'CDRH']
+    id: 'reg-013',
+    type: 'approval' as const,
+    title: "PMDA Approves Novel Tau-Targeting Antibody for Early Alzheimer's Disease",
+    summary: 'First anti-tau immunotherapy approved under SAKIGAKE designation. Conditional approval based on Phase II surrogate endpoint data with required post-market Phase III confirmatory trial.',
+    agency: 'PMDA',
+    date: '2026-01-20',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Neurology',
+    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/tau-alzheimers-2026.html',
+    tags: ["Alzheimer's", 'Tau', 'SAKIGAKE', 'Neurology', 'Conditional Approval'],
   },
   {
-    id: 'fi-014', type: 'approval', title: 'FDA Grants De Novo Classification for AI-Powered Diagnostic Device',
-    summary: 'First-of-kind AI diagnostic tool for early detection of pancreatic cancer from routine blood work receives De Novo classification with special controls.',
-    agency: 'FDA', date: '2026-03-02', impactLevel: 'medium', therapeuticArea: 'Diagnostics',
-    url: '#', tags: ['De Novo', 'AI Diagnostics', 'Special Controls']
+    id: 'reg-014',
+    type: 'guidance' as const,
+    title: 'FDA Draft Guidance: Real-World Data Considerations for Regulatory Decision-Making in Oncology',
+    summary: 'Framework for using electronic health records, claims data, and patient registries as external control arms in single-arm oncology trials. Includes data quality standards and statistical methodology.',
+    agency: 'FDA',
+    date: '2026-01-15',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Oncology',
+    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/rwd-oncology-2026',
+    tags: ['Real-World Data', 'Oncology', 'External Control', 'EHR'],
   },
   {
-    id: 'fi-015', type: 'guidance', title: 'EMA Reflection Paper on Use of Real-World Evidence in Regulatory Decision-Making',
-    summary: 'EMA outlines acceptable methodologies for incorporating RWE into benefit-risk assessments, including pragmatic trial designs, registry studies, and electronic health record analyses.',
-    agency: 'EMA', date: '2026-03-01', impactLevel: 'high', therapeuticArea: 'Real-World Evidence',
-    url: '#', tags: ['RWE', 'Registries', 'EHR', 'Benefit-Risk']
+    id: 'reg-015',
+    type: 'alert' as const,
+    title: 'EMA Publishes Revised Guideline on Bioequivalence for Modified-Release Formulations',
+    summary: 'Significant changes to fed/fasted bioequivalence study requirements, multiple-unit vs. single-unit dosage form testing, and acceptance criteria for highly variable drugs.',
+    agency: 'EMA',
+    date: '2026-01-10',
+    impactLevel: 'medium' as const,
+    therapeuticArea: 'General',
+    url: 'https://www.ema.europa.eu/en/bioequivalence-mr-2026',
+    tags: ['Bioequivalence', 'Modified Release', 'Generic', 'Pharmacokinetics'],
   },
   {
-    id: 'fi-016', type: 'alert', title: 'PDUFA Date: BLA Review for Bispecific Antibody in NSCLC — April 15, 2026',
-    summary: 'FDA target action date for the BLA review of a novel bispecific T-cell engager targeting PD-L1 and CTLA-4 for first-line treatment of non-small cell lung cancer.',
-    agency: 'FDA', date: '2026-02-28', impactLevel: 'medium', therapeuticArea: 'Oncology',
-    url: '#', tags: ['PDUFA', 'BLA', 'Bispecific', 'NSCLC']
+    id: 'reg-016',
+    type: 'guidance' as const,
+    title: 'FDA Guidance: Considerations for the Development of Radiopharmaceutical Therapies',
+    summary: 'Comprehensive guidance covering dosimetry requirements, radiation safety, manufacturing quality considerations, and clinical trial design for targeted radiopharmaceutical therapeutics.',
+    agency: 'FDA',
+    date: '2025-12-18',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Oncology',
+    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/radiopharm-therapy-2025',
+    tags: ['Radiopharmaceutical', 'Dosimetry', 'Oncology', 'Nuclear Medicine'],
   },
   {
-    id: 'fi-017', type: 'guidance', title: 'FDA Guidance on CMC Postapproval Manufacturing Changes for Biological Products',
-    summary: 'Clarifies reporting categories for manufacturing changes to biological products, including when prior approval supplements vs. annual reports are required.',
-    agency: 'FDA', date: '2026-02-25', impactLevel: 'high', therapeuticArea: 'CMC',
-    url: '#', tags: ['CMC', 'Biologics', 'Manufacturing Changes', 'PAS']
+    id: 'reg-017',
+    type: 'warning_letter' as const,
+    title: 'FDA Issues Complete Response Letters for Three Accelerated Approval Conversions',
+    summary: 'Post-marketing confirmatory trials failed to verify clinical benefit for three oncology products granted accelerated approval. Withdrawal proceedings may be initiated under FDORA provisions.',
+    agency: 'FDA',
+    date: '2025-12-10',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'Oncology',
+    url: 'https://www.fda.gov/drugs/resources-information-approved-drugs/accelerated-approval-withdrawal-2025',
+    tags: ['Accelerated Approval', 'FDORA', 'Withdrawal', 'Confirmatory Trial'],
   },
   {
-    id: 'fi-018', type: 'warning_letter', title: 'FDA 483 Observations at Major API Manufacturer in India',
-    summary: 'Significant observations include cross-contamination risks between penicillin and non-penicillin manufacturing areas, incomplete batch records, and inadequate CAPA implementation.',
-    agency: 'FDA', date: '2026-02-22', impactLevel: 'high', therapeuticArea: 'Manufacturing',
-    url: '#', tags: ['483', 'API', 'Cross-Contamination', 'CAPA']
+    id: 'reg-018',
+    type: 'approval' as const,
+    title: 'FDA Approves First CRISPR-Based In Vivo Gene Editing Therapy for Hereditary Angioedema',
+    summary: 'Single-dose liver-targeted lipid nanoparticle delivering CRISPR-Cas9 achieves durable kallikrein gene knockout. Priority Review and Breakthrough Therapy designation. 5-year follow-up required.',
+    agency: 'FDA',
+    date: '2025-12-05',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'Rare Disease',
+    url: 'https://www.fda.gov/news-events/press-announcements/crispr-hae-2025',
+    tags: ['CRISPR', 'Gene Editing', 'Rare Disease', 'In Vivo', 'LNP'],
   },
   {
-    id: 'fi-019', type: 'guidance', title: 'ICH Q14 Finalized: Analytical Procedure Development and Revision',
-    summary: 'Final ICH Q14 guideline establishes a harmonized framework for analytical procedure lifecycle management, including enhanced approaches using analytical QbD principles.',
-    agency: 'ICH', date: '2026-02-20', impactLevel: 'medium', therapeuticArea: 'CMC',
-    url: '#', tags: ['ICH Q14', 'Analytical', 'QbD', 'Lifecycle']
+    id: 'reg-019',
+    type: 'guidance' as const,
+    title: 'EMA Reflection Paper on Use of Organoids and Microphysiological Systems in Drug Development',
+    summary: 'First regulatory position paper on qualifying organ-on-chip and organoid data for toxicology and efficacy assessment, including criteria for regulatory acceptance as supplementary evidence.',
+    agency: 'EMA',
+    date: '2025-11-28',
+    impactLevel: 'medium' as const,
+    therapeuticArea: 'General',
+    url: 'https://www.ema.europa.eu/en/documents/scientific-guideline/organoids-mps-2025',
+    tags: ['Organoids', 'Organ-on-Chip', 'Non-Clinical', 'New Approach Methods'],
   },
   {
-    id: 'fi-020', type: 'approval', title: 'TGA Approves Biosimilar Adalimumab with Interchangeability Designation',
-    summary: 'Australia TGA grants interchangeability designation for biosimilar adalimumab, first such designation under new Australian biosimilar guidelines.',
-    agency: 'TGA', date: '2026-02-18', impactLevel: 'low', therapeuticArea: 'Biosimilars',
-    url: '#', tags: ['Biosimilar', 'Interchangeability', 'TGA']
+    id: 'reg-020',
+    type: 'alert' as const,
+    title: 'PMDA Announces Expedited Review Pathway for Pandemic Preparedness Countermeasures',
+    summary: 'New regulatory framework enables conditional approval within 30 days for vaccines and therapeutics during declared public health emergencies, with rolling submission and adaptive trial designs.',
+    agency: 'PMDA',
+    date: '2025-11-20',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'Infectious Disease',
+    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/pandemic-pathway-2025.html',
+    tags: ['Pandemic Preparedness', 'Expedited Review', 'Japan', 'Vaccines'],
+  },
+  {
+    id: 'reg-021',
+    type: 'guidance' as const,
+    title: 'FDA Guidance: Decentralized Clinical Trials — Design, Conduct, and Oversight',
+    summary: 'Finalizes recommendations for remote consent, direct-to-patient drug shipment, telemedicine visits, wearable/digital endpoint collection, and oversight of third-party technology vendors in DCTs.',
+    agency: 'FDA',
+    date: '2025-11-15',
+    impactLevel: 'high' as const,
+    therapeuticArea: 'General',
+    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/dct-guidance-2025',
+    tags: ['Decentralized Trials', 'Digital Health', 'Telemedicine', 'Remote Monitoring'],
+  },
+  {
+    id: 'reg-022',
+    type: 'approval' as const,
+    title: 'EMA Recommends Approval of mRNA-Based Personalized Cancer Vaccine for Melanoma',
+    summary: 'Individualized neoantigen therapy in combination with anti-PD-1 receives conditional marketing authorization for adjuvant treatment of resected stage III/IV melanoma based on relapse-free survival data.',
+    agency: 'EMA',
+    date: '2025-11-08',
+    impactLevel: 'critical' as const,
+    therapeuticArea: 'Oncology',
+    url: 'https://www.ema.europa.eu/en/medicines/human/EPAR/mrna-melanoma-vaccine-2025',
+    tags: ['mRNA', 'Cancer Vaccine', 'Personalized Medicine', 'Melanoma', 'Immunotherapy'],
   },
 ];
 
+// ---------------------------------------------------------------------------
+// 1. GET /api/ana/intelligence-feed
+// ---------------------------------------------------------------------------
+
 router.get('/intelligence-feed', (req: Request, res: Response) => {
-  const { therapeuticArea, agencies, limit = '20', offset = '0' } = req.query;
+  try {
+    const {
+      therapeuticArea,
+      agencies,
+      limit = '20',
+      offset = '0',
+    } = req.query as Record<string, string | undefined>;
 
-  let items = [...FEED_ITEMS];
+    let items = [...intelligenceFeedItems];
 
-  if (therapeuticArea && typeof therapeuticArea === 'string') {
-    items = items.filter(i => i.therapeuticArea.toLowerCase().includes(therapeuticArea.toLowerCase()));
+    // Filter by therapeutic area
+    if (therapeuticArea) {
+      items = items.filter(
+        (item) => item.therapeuticArea.toLowerCase() === therapeuticArea.toLowerCase()
+      );
+    }
+
+    // Filter by agencies (comma-separated)
+    if (agencies) {
+      const agencyList = agencies.split(',').map((a) => a.trim().toUpperCase());
+      items = items.filter((item) => agencyList.includes(item.agency.toUpperCase()));
+    }
+
+    const total = items.length;
+    const parsedOffset = Math.max(0, parseInt(offset || '0', 10));
+    const parsedLimit = Math.min(50, Math.max(1, parseInt(limit || '20', 10)));
+
+    items = items.slice(parsedOffset, parsedOffset + parsedLimit);
+
+    res.json({
+      items,
+      pagination: {
+        total,
+        limit: parsedLimit,
+        offset: parsedOffset,
+        hasMore: parsedOffset + parsedLimit < total,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to retrieve intelligence feed',
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
-  if (agencies && typeof agencies === 'string') {
-    const agencyList = agencies.split(',').map(a => a.trim().toLowerCase());
-    items = items.filter(i => agencyList.includes(i.agency.toLowerCase()));
-  }
-
-  const total = items.length;
-  const sliced = items.slice(Number(offset), Number(offset) + Number(limit));
-
-  res.json({ items: sliced, total, offset: Number(offset), limit: Number(limit) });
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 2. SUBMISSION GAP ANALYSIS
-// ═══════════════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------------
+// 2. POST /api/ana/gap-analysis — Submission requirements by type
+// ---------------------------------------------------------------------------
 
 interface GapItem {
   section: string;
@@ -185,145 +372,256 @@ interface GapItem {
   description: string;
 }
 
-const ECTD_REQUIREMENTS: Record<string, GapItem[]> = {
+const ectdRequirements: Record<string, GapItem[]> = {
   IND: [
-    { section: 'm1.1.1', module: 'Module 1', requirement: 'Form FDA 1571', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'IND application form with sponsor information, investigator details, and submission contents' },
-    { section: 'm1.1.2', module: 'Module 1', requirement: 'Form FDA 1572', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'Statement of Investigator form for each clinical investigator' },
-    { section: 'm1.2', module: 'Module 1', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Cover letter describing the IND submission and its contents' },
-    { section: 'm1.3.1', module: 'Module 1', requirement: 'US Agent Authorization', status: 'missing', priority: 'medium', estimatedEffortDays: 1, description: 'Authorization letter for US agent (foreign sponsors)' },
-    { section: 'm2.2', module: 'Module 2', requirement: 'Introduction to Quality Overall Summary', status: 'missing', priority: 'high', estimatedEffortDays: 3, description: 'Overview of drug substance and drug product quality' },
-    { section: 'm2.3', module: 'Module 2', requirement: 'Quality Overall Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Comprehensive summary of CMC data for drug substance and drug product' },
-    { section: 'm2.4', module: 'Module 2', requirement: 'Nonclinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 7, description: 'Integrated overview of pharmacology, pharmacokinetics, and toxicology studies' },
-    { section: 'm2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Critical assessment of clinical data supporting the proposed investigation' },
-    { section: 'm2.6', module: 'Module 2', requirement: 'Nonclinical Written Summaries', status: 'missing', priority: 'high', estimatedEffortDays: 14, description: 'Detailed summaries of pharmacology, PK, and toxicology studies' },
-    { section: 'm2.7', module: 'Module 2', requirement: 'Clinical Summary', status: 'missing', priority: 'high', estimatedEffortDays: 14, description: 'Detailed summary of clinical pharmacology, efficacy, and safety' },
-    { section: 'm3.2.S', module: 'Module 3', requirement: 'Drug Substance', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Complete CMC characterization of the active pharmaceutical ingredient' },
-    { section: 'm3.2.P', module: 'Module 3', requirement: 'Drug Product', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Formulation, manufacturing process, specifications, and stability of the drug product' },
-    { section: 'm3.2.A', module: 'Module 3', requirement: 'Appendices (Facilities & Equipment)', status: 'missing', priority: 'medium', estimatedEffortDays: 5, description: 'Manufacturing facilities, equipment, and adventitious agents safety' },
-    { section: 'm4.2.1', module: 'Module 4', requirement: 'Pharmacology Studies', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'Primary and secondary pharmacodynamic studies, safety pharmacology' },
-    { section: 'm4.2.2', module: 'Module 4', requirement: 'Pharmacokinetics Studies', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'ADME studies, PK modeling, and species comparison data' },
-    { section: 'm4.2.3', module: 'Module 4', requirement: 'Toxicology Studies', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Acute, repeat-dose, genotoxicity, and reproductive toxicology studies' },
-    { section: 'm5.3.1', module: 'Module 5', requirement: 'Clinical Pharmacology Reports', status: 'missing', priority: 'high', estimatedEffortDays: 7, description: 'BA/BE, PK, PD, and drug interaction study reports' },
-    { section: 'm5.3.3', module: 'Module 5', requirement: 'Clinical Efficacy Reports', status: 'missing', priority: 'medium', estimatedEffortDays: 3, description: 'Reports of controlled and uncontrolled clinical studies' },
-    { section: 'm5.3.5', module: 'Module 5', requirement: 'Clinical Study Reports', status: 'missing', priority: 'high', estimatedEffortDays: 15, description: 'Full clinical study reports per ICH E3 format' },
-    { section: 'm5.3.6', module: 'Module 5', requirement: 'Investigator Brochure', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Complete IB with preclinical and clinical safety/efficacy data' },
-  ],
-  '510K': [
-    { section: 'cover', module: 'Administrative', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Cover letter identifying the submission and device' },
-    { section: 'eSTAR', module: 'Administrative', requirement: 'eSTAR Submission Form', status: 'missing', priority: 'critical', estimatedEffortDays: 2, description: 'Electronic Submission Template and Resource for 510(k)' },
-    { section: 'indications', module: 'Device Description', requirement: 'Indications for Use', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'FDA Form 3881 — Indications for Use Statement' },
-    { section: 'predicate', module: 'Substantial Equivalence', requirement: 'Predicate Device Comparison', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Detailed comparison table with predicate device(s)' },
-    { section: 'desc', module: 'Device Description', requirement: 'Device Description', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Comprehensive device description including principles of operation' },
-    { section: 'perf', module: 'Performance Testing', requirement: 'Performance Testing — Bench', status: 'missing', priority: 'high', estimatedEffortDays: 15, description: 'Bench testing per applicable standards (IEC, ISO)' },
-    { section: 'biocompat', module: 'Biocompatibility', requirement: 'Biocompatibility Testing', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Biocompatibility evaluation per ISO 10993' },
-    { section: 'software', module: 'Software', requirement: 'Software Documentation', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Software level of concern, hazard analysis, V&V' },
-    { section: 'steril', module: 'Sterilization', requirement: 'Sterilization Validation', status: 'missing', priority: 'medium', estimatedEffortDays: 5, description: 'Sterilization method validation and shelf life' },
-    { section: 'emcemc', module: 'Electrical Safety', requirement: 'EMC/Electrical Safety', status: 'missing', priority: 'medium', estimatedEffortDays: 5, description: 'IEC 60601-1 and EMC testing per IEC 60601-1-2' },
-    { section: 'labeling', module: 'Labeling', requirement: 'Proposed Labeling', status: 'missing', priority: 'critical', estimatedEffortDays: 3, description: 'Device labeling, instructions for use, and package insert' },
-    { section: 'clinical', module: 'Clinical', requirement: 'Clinical Data', status: 'missing', priority: 'medium', estimatedEffortDays: 10, description: 'Clinical study data or literature review supporting safety/effectiveness' },
+    { section: '1.1', module: 'Module 1', requirement: 'FDA Form 1571', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'Investigational New Drug Application cover form with sponsor information, IND number, and serial number.' },
+    { section: '1.2', module: 'Module 1', requirement: 'FDA Form 1572', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'Statement of Investigator form for each participating clinical investigator.' },
+    { section: '1.3', module: 'Module 1', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Cover letter describing submission contents, cross-references, and any special requests.' },
+    { section: '1.4', module: 'Module 1', requirement: 'Introductory Statement and General Investigational Plan', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Brief introductory statement, name and structure of drug, formulation, pharmacological class, and general investigational plan for the coming year.' },
+    { section: '1.5', module: 'Module 1', requirement: "Investigator's Brochure", status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Comprehensive document summarizing clinical and non-clinical data relevant to the study of the investigational product in human subjects.' },
+    { section: '1.6', module: 'Module 1', requirement: 'Clinical Protocol', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Detailed protocol for each planned study, including objectives, design, methodology, statistical considerations, and organization.' },
+    { section: '1.7', module: 'Module 1', requirement: 'Informed Consent Documents', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Template informed consent forms meeting 21 CFR 50 requirements for each study site.' },
+    { section: '2.4', module: 'Module 2', requirement: 'Nonclinical Overview', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Integrated overview of the nonclinical evaluation strategy, pharmacology, pharmacokinetics, and toxicology data.' },
+    { section: '2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Critical assessment of clinical data, biopharmaceutics, clinical pharmacology, efficacy, and safety.' },
+    { section: '2.6', module: 'Module 2', requirement: 'Nonclinical Written Summaries', status: 'missing', priority: 'high', estimatedEffortDays: 8, description: 'Detailed written summaries of pharmacology, PK, and toxicology study results.' },
+    { section: '2.7', module: 'Module 2', requirement: 'Clinical Summary', status: 'missing', priority: 'high', estimatedEffortDays: 8, description: 'Factual summary of clinical information including biopharmaceutics, clinical pharmacology, efficacy, and safety.' },
+    { section: '3.2.S', module: 'Module 3', requirement: 'Drug Substance Information', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'CMC information for drug substance: manufacture, characterization, controls, reference standards, container closure, and stability.' },
+    { section: '3.2.P', module: 'Module 3', requirement: 'Drug Product Information', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'CMC information for drug product: formulation, manufacture, controls, excipients, container closure, and stability.' },
+    { section: '3.2.A', module: 'Module 3', requirement: 'Appendices (Facilities & Equipment)', status: 'missing', priority: 'medium', estimatedEffortDays: 5, description: 'Facilities and equipment descriptions, adventitious agents safety evaluation for biological products.' },
+    { section: '4.2', module: 'Module 4', requirement: 'Pharmacology Studies', status: 'missing', priority: 'high', estimatedEffortDays: 3, description: 'Primary and secondary pharmacodynamic studies, safety pharmacology, and pharmacodynamic drug interaction studies.' },
+    { section: '4.3', module: 'Module 4', requirement: 'Pharmacokinetics Studies', status: 'missing', priority: 'high', estimatedEffortDays: 3, description: 'Analytical methods, absorption, distribution, metabolism, excretion, and PK drug interaction studies.' },
+    { section: '4.4', module: 'Module 4', requirement: 'Toxicology Studies', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Single-dose, repeat-dose, genotoxicity, carcinogenicity, reproductive toxicity, and local tolerance study reports.' },
+    { section: '5.3', module: 'Module 5', requirement: 'Clinical Study Reports', status: 'missing', priority: 'high', estimatedEffortDays: 3, description: 'Reports of any previous human experience, bioavailability/bioequivalence, PK, PD, efficacy, and safety studies.' },
   ],
   NDA: [
-    { section: 'm1.2', module: 'Module 1', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'NDA cover letter with submission summary' },
-    { section: 'm1.3', module: 'Module 1', requirement: 'Administrative Information', status: 'missing', priority: 'high', estimatedEffortDays: 3, description: 'Application form, field copy certification, debarment certification' },
-    { section: 'm1.14', module: 'Module 1', requirement: 'Labeling', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Proposed prescribing information, medication guide, patient labeling' },
-    { section: 'm2.2', module: 'Module 2', requirement: 'Quality Overall Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Comprehensive CMC quality overview' },
-    { section: 'm2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Integrated overview of all clinical data supporting approval' },
-    { section: 'm2.7.1', module: 'Module 2', requirement: 'Summary of Biopharmaceutic Studies', status: 'missing', priority: 'high', estimatedEffortDays: 7, description: 'Summary of BA/BE and dissolution data' },
-    { section: 'm2.7.2', module: 'Module 2', requirement: 'Summary of Clinical Pharmacology', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'PK, PD, exposure-response analysis summaries' },
-    { section: 'm2.7.3', module: 'Module 2', requirement: 'Summary of Clinical Efficacy', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Integrated summary of efficacy from all controlled trials' },
-    { section: 'm2.7.4', module: 'Module 2', requirement: 'Summary of Clinical Safety', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Integrated summary of safety including all AE data' },
-    { section: 'm3.2.S', module: 'Module 3', requirement: 'Drug Substance (Full)', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Complete drug substance CMC package with commercial process' },
-    { section: 'm3.2.P', module: 'Module 3', requirement: 'Drug Product (Full)', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Complete drug product CMC with commercial manufacturing' },
-    { section: 'm5.3.5', module: 'Module 5', requirement: 'Clinical Study Reports (All Pivotal)', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Full CSRs for all pivotal efficacy and safety trials' },
+    { section: '1.2', module: 'Module 1', requirement: 'FDA Form 356h', status: 'missing', priority: 'critical', estimatedEffortDays: 2, description: 'Application to Market a New Drug for Human Use cover form.' },
+    { section: '1.3', module: 'Module 1', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Cover letter with submission description, priority review request justification if applicable.' },
+    { section: '1.4', module: 'Module 1', requirement: 'Field Copy Certification', status: 'missing', priority: 'medium', estimatedEffortDays: 1, description: 'Certification that a field copy has been provided to the appropriate FDA district office.' },
+    { section: '1.5', module: 'Module 1', requirement: 'Patent Information (FDA Form 3542a)', status: 'missing', priority: 'high', estimatedEffortDays: 3, description: 'Patent information for listed drug patents, patent certifications, and exclusivity claims.' },
+    { section: '1.6', module: 'Module 1', requirement: 'Exclusivity Request', status: 'missing', priority: 'medium', estimatedEffortDays: 2, description: 'Request for marketing exclusivity period with supporting justification.' },
+    { section: '1.7', module: 'Module 1', requirement: 'Debarment Certification', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'Certification that no debarred persons were involved in the application per 21 USC 335a.' },
+    { section: '1.8', module: 'Module 1', requirement: 'Financial Disclosure', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'Financial certification/disclosure forms (FDA Form 3454/3455) for all clinical investigators.' },
+    { section: '1.9', module: 'Module 1', requirement: 'Proposed Labeling', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Draft prescribing information, patient labeling, and carton/container labels per PLR format.' },
+    { section: '1.10', module: 'Module 1', requirement: 'REMS (if required)', status: 'missing', priority: 'high', estimatedEffortDays: 20, description: 'Risk Evaluation and Mitigation Strategy proposal with medication guide, communication plan, or ETASU.' },
+    { section: '1.11', module: 'Module 1', requirement: 'Pediatric Study Plans', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Initial Pediatric Study Plan or agreed-upon PSP, or waiver/deferral request.' },
+    { section: '2.2', module: 'Module 2', requirement: 'Quality Overall Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Summary of CMC information covering drug substance, drug product, appendices, and regional information.' },
+    { section: '2.3', module: 'Module 2', requirement: 'Quality Overall Summary — Introduction', status: 'missing', priority: 'high', estimatedEffortDays: 3, description: 'Introduction to the quality overall summary with drug product description and formulation rationale.' },
+    { section: '2.4', module: 'Module 2', requirement: 'Nonclinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Integrated overview and assessment of all nonclinical pharmacology, PK, and toxicology data.' },
+    { section: '2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Critical analysis of clinical data including benefit-risk assessment, biopharmaceutics, efficacy, and safety.' },
+    { section: '2.6', module: 'Module 2', requirement: 'Nonclinical Written and Tabulated Summaries', status: 'missing', priority: 'high', estimatedEffortDays: 15, description: 'Detailed summaries with tabulated data for pharmacology, PK, and toxicology studies.' },
+    { section: '2.7', module: 'Module 2', requirement: 'Clinical Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Detailed factual clinical summary covering biopharmaceutics, clinical pharmacology, efficacy, and safety.' },
+    { section: '3.2.S', module: 'Module 3', requirement: 'Drug Substance — Complete CMC', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Full drug substance CMC: general properties, manufacture, characterization, control, reference standards, container closure, stability.' },
+    { section: '3.2.P', module: 'Module 3', requirement: 'Drug Product — Complete CMC', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Full drug product CMC: description, composition, development, manufacture, control, reference standards, container closure, stability.' },
+    { section: '3.2.R', module: 'Module 3', requirement: 'Regional Information', status: 'missing', priority: 'medium', estimatedEffortDays: 5, description: 'Region-specific CMC information required for the US market.' },
+    { section: '4.2', module: 'Module 4', requirement: 'Complete Nonclinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Full study reports for all pharmacology, PK, and toxicology studies with GLP compliance.' },
+    { section: '5.2', module: 'Module 5', requirement: 'Tabular Listing of Clinical Studies', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'Comprehensive tabular listing of all clinical studies in the development program.' },
+    { section: '5.3', module: 'Module 5', requirement: 'Complete Clinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Full ICH E3 compliant CSRs for all biopharmaceutic, PK, PD, efficacy, and safety studies.' },
+    { section: '5.4', module: 'Module 5', requirement: 'Literature References', status: 'missing', priority: 'low', estimatedEffortDays: 5, description: 'Published literature references supporting clinical data and analyses.' },
+  ],
+  '510K': [
+    { section: '1', module: 'Administrative', requirement: 'CDRH Premarket Review Submission Cover Sheet (FDA Form 3514)', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'Cover sheet identifying device, applicant, submission type, and contact information.' },
+    { section: '2', module: 'Administrative', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Letter identifying submission contents, product code, device name, and 510(k) type.' },
+    { section: '3', module: 'Administrative', requirement: 'Indications for Use Statement (FDA Form 3881)', status: 'missing', priority: 'critical', estimatedEffortDays: 2, description: 'Precise statement of indications for use, prescription/OTC status, and patient population.' },
+    { section: '4', module: 'Administrative', requirement: 'Truthful and Accuracy Statement', status: 'missing', priority: 'critical', estimatedEffortDays: 1, description: 'Signed statement certifying all information is truthful and accurate per 21 CFR 807.87(k).' },
+    { section: '5', module: 'Administrative', requirement: 'Class III Summary/Certification', status: 'missing', priority: 'medium', estimatedEffortDays: 1, description: '510(k) Summary per 21 CFR 807.92 or 510(k) Statement per 21 CFR 807.93.' },
+    { section: '6', module: 'Device Description', requirement: 'Device Description', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Comprehensive description of device including materials, design, principles of operation, and specifications.' },
+    { section: '7', module: 'Predicate Comparison', requirement: 'Substantial Equivalence Comparison', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Detailed comparison table with predicate device(s) covering intended use, technological characteristics, and performance.' },
+    { section: '8', module: 'Standards', requirement: 'Voluntary Standards and Declarations of Conformity', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'List of recognized consensus standards met, with declarations of conformity or test reports.' },
+    { section: '9', module: 'Performance Testing', requirement: 'Performance Testing — Bench', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Bench testing data demonstrating device performance characteristics, including test protocols and results.' },
+    { section: '10', module: 'Performance Testing', requirement: 'Performance Testing — Animal (if applicable)', status: 'missing', priority: 'medium', estimatedEffortDays: 10, description: 'Preclinical animal testing data if required to demonstrate safety and effectiveness.' },
+    { section: '11', module: 'Performance Testing', requirement: 'Performance Testing — Clinical (if applicable)', status: 'missing', priority: 'high', estimatedEffortDays: 20, description: 'Clinical performance data from US clinical studies, if required for substantial equivalence.' },
+    { section: '12', module: 'Biocompatibility', requirement: 'Biocompatibility Evaluation', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Biocompatibility assessment per ISO 10993-1, including test reports or rationale for testing exemptions.' },
+    { section: '13', module: 'Sterilization', requirement: 'Sterilization and Shelf Life', status: 'missing', priority: 'high', estimatedEffortDays: 8, description: 'Sterilization validation, sterility assurance level, packaging integrity, and accelerated aging/real-time shelf life data.' },
+    { section: '14', module: 'Software', requirement: 'Software Documentation (if applicable)', status: 'missing', priority: 'high', estimatedEffortDays: 15, description: 'Software level of concern, description, hazard analysis, V&V, revision history, cybersecurity documentation.' },
+    { section: '15', module: 'EMC/Electrical', requirement: 'Electromagnetic Compatibility & Electrical Safety', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'EMC testing per IEC 60601-1-2, electrical safety per IEC 60601-1, if applicable to powered devices.' },
+    { section: '16', module: 'Labeling', requirement: 'Proposed Labeling', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Complete device labeling including package label, IFU, and any patient-facing materials.' },
   ],
   BLA: [
-    { section: 'm1.2', module: 'Module 1', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'BLA cover letter' },
-    { section: 'm2.3', module: 'Module 2', requirement: 'Quality Overall Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Biologics-specific CMC quality overview' },
-    { section: 'm2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Integrated clinical overview for biologics' },
-    { section: 'm3.2.S', module: 'Module 3', requirement: 'Drug Substance (Biologics)', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Biological substance characterization, cell line, fermentation' },
-    { section: 'm3.2.P', module: 'Module 3', requirement: 'Drug Product (Biologics)', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Biologics formulation, fill/finish, stability' },
-    { section: 'm3.2.A.2', module: 'Module 3', requirement: 'Adventitious Agents Safety', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Viral safety, TSE risk assessment, mycoplasma testing' },
-    { section: 'm4.2.3', module: 'Module 4', requirement: 'Toxicology (Biologics)', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Species-relevant toxicology studies for biologics' },
-    { section: 'm5.3.5', module: 'Module 5', requirement: 'Clinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Full CSRs for pivotal trials including immunogenicity' },
+    { section: '1.1', module: 'Module 1', requirement: 'FDA Form 356h', status: 'missing', priority: 'critical', estimatedEffortDays: 2, description: 'Application to Market a New Biologic for Human Use.' },
+    { section: '1.2', module: 'Module 1', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Cover letter with application summary, priority review request, and rolling submission information.' },
+    { section: '1.3', module: 'Module 1', requirement: 'Proposed Labeling', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Draft USPI, patient information/medication guide, and container labels per PLR format.' },
+    { section: '1.4', module: 'Module 1', requirement: 'Environmental Assessment or Categorical Exclusion', status: 'missing', priority: 'medium', estimatedEffortDays: 3, description: 'Environmental assessment per 21 CFR 25 or claim of categorical exclusion.' },
+    { section: '1.5', module: 'Module 1', requirement: 'Debarment/Financial Disclosure', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'Debarment certification and financial disclosure forms for all clinical investigators.' },
+    { section: '1.6', module: 'Module 1', requirement: 'Pediatric Study Plans', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Agreed-upon Pediatric Study Plan or request for waiver/deferral per BPCA/PREA.' },
+    { section: '2.2', module: 'Module 2', requirement: 'Quality Overall Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Comprehensive summary of drug substance and drug product quality data for biological product.' },
+    { section: '2.4', module: 'Module 2', requirement: 'Nonclinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Integrated assessment of pharmacology, PK, and toxicology including species selection justification.' },
+    { section: '2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Critical analysis of clinical development program, benefit-risk, immunogenicity, and comparative analyses.' },
+    { section: '2.7', module: 'Module 2', requirement: 'Clinical Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Detailed clinical summary with integrated safety and efficacy analyses, immunogenicity data.' },
+    { section: '3.2.S', module: 'Module 3', requirement: 'Drug Substance (Biologic)', status: 'missing', priority: 'critical', estimatedEffortDays: 40, description: 'Complete characterization: cell bank system, fermentation/purification, analytical methods, specifications, stability, viral safety.' },
+    { section: '3.2.P', module: 'Module 3', requirement: 'Drug Product (Biologic)', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Formulation, manufacturing process validation, container closure, fill-finish, stability, and comparability data.' },
+    { section: '3.2.A', module: 'Module 3', requirement: 'Adventitious Agents Safety', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Comprehensive viral safety evaluation: cell substrate, raw materials, manufacturing process viral clearance studies.' },
+    { section: '4.2', module: 'Module 4', requirement: 'Nonclinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Complete nonclinical study reports including tissue cross-reactivity, reproductive toxicology, and immunotoxicology.' },
+    { section: '5.3', module: 'Module 5', requirement: 'Clinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Full CSRs for all clinical studies, integrated summaries of safety and efficacy, immunogenicity analyses.' },
   ],
   MAA: [
-    { section: 'm1.0', module: 'Module 1', requirement: 'EU Application Form', status: 'missing', priority: 'critical', estimatedEffortDays: 3, description: 'EU-specific Module 1 application form' },
-    { section: 'm1.3', module: 'Module 1', requirement: 'Product Information (SmPC, PIL, Label)', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Summary of Product Characteristics, Package Leaflet, and Labeling' },
-    { section: 'm1.5', module: 'Module 1', requirement: 'Risk Management Plan', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'EU RMP per GVP Module V requirements' },
-    { section: 'm1.8', module: 'Module 1', requirement: 'Pediatric Investigation Plan', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'PIP or waiver documentation' },
-    { section: 'm2.3', module: 'Module 2', requirement: 'Quality Overall Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'EU CTD quality summary' },
-    { section: 'm2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'EU clinical overview with benefit-risk assessment' },
-    { section: 'm3.2.S', module: 'Module 3', requirement: 'Drug Substance', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Drug substance quality data' },
-    { section: 'm3.2.P', module: 'Module 3', requirement: 'Drug Product', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Drug product quality data' },
-    { section: 'm5.3.5', module: 'Module 5', requirement: 'Clinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Pivotal CSRs' },
+    { section: '1.0', module: 'Module 1 (EU)', requirement: 'Application Form', status: 'missing', priority: 'critical', estimatedEffortDays: 3, description: 'EMA e-Application Form with product information, legal basis, and procedural information.' },
+    { section: '1.1', module: 'Module 1 (EU)', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Cover letter with summary of application, regulatory procedure, and legal basis (Article 8(3), 10, etc.).' },
+    { section: '1.2', module: 'Module 1 (EU)', requirement: 'SmPC, Labeling, and Package Leaflet', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Draft Summary of Product Characteristics, labeling text, and PIL in QRD template format.' },
+    { section: '1.3', module: 'Module 1 (EU)', requirement: 'Expert Statements and CVs', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'Signed quality, nonclinical, and clinical expert statements with CVs per Directive 2001/83/EC.' },
+    { section: '1.4', module: 'Module 1 (EU)', requirement: 'Environmental Risk Assessment', status: 'missing', priority: 'high', estimatedEffortDays: 10, description: 'Environmental risk assessment per CHMP/SWP/4447/00 guideline — Phase I/II ERA.' },
+    { section: '1.5', module: 'Module 1 (EU)', requirement: 'Risk Management Plan', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'EU Risk Management Plan per GVP Module V: safety specification, pharmacovigilance plan, risk minimisation measures.' },
+    { section: '1.6', module: 'Module 1 (EU)', requirement: 'Pharmacovigilance System Master File', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'PSMF summary and reference with QPPV details per Directive 2001/83/EC Article 8(3)(ia).' },
+    { section: '2.2', module: 'Module 2', requirement: 'Quality Overall Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'ICH M4Q-compliant Quality Overall Summary.' },
+    { section: '2.4', module: 'Module 2', requirement: 'Nonclinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Integrated nonclinical overview per ICH M4S.' },
+    { section: '2.5', module: 'Module 2', requirement: 'Clinical Overview', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Critical analysis per ICH M4E with benefit-risk conclusion.' },
+    { section: '2.7', module: 'Module 2', requirement: 'Clinical Summary', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'ICH E3-based clinical summary with integrated safety/efficacy.' },
+    { section: '3.2.S', module: 'Module 3', requirement: 'Drug Substance CMC', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Complete drug substance quality documentation per ICH M4Q.' },
+    { section: '3.2.P', module: 'Module 3', requirement: 'Drug Product CMC', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Complete drug product quality documentation per ICH M4Q.' },
+    { section: '4', module: 'Module 4', requirement: 'Nonclinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Full nonclinical study reports per ICH M4S organization.' },
+    { section: '5', module: 'Module 5', requirement: 'Clinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Complete clinical study reports per ICH M4E/E3 organization.' },
   ],
   PMA: [
-    { section: 'cover', module: 'Administrative', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'PMA cover letter' },
-    { section: 'summary', module: 'Summary', requirement: 'Summary of Safety and Effectiveness', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'SSED summarizing all safety and effectiveness data' },
-    { section: 'desc', module: 'Device Description', requirement: 'Device Description', status: 'missing', priority: 'critical', estimatedEffortDays: 7, description: 'Complete device description with engineering drawings' },
-    { section: 'nonclinical', module: 'Nonclinical', requirement: 'Nonclinical Laboratory Studies', status: 'missing', priority: 'high', estimatedEffortDays: 15, description: 'Bench, animal, and biocompatibility testing' },
-    { section: 'clinical', module: 'Clinical', requirement: 'Clinical Investigation', status: 'missing', priority: 'critical', estimatedEffortDays: 25, description: 'Full IDE clinical study data and analysis' },
-    { section: 'manufacturing', module: 'Manufacturing', requirement: 'Manufacturing Information', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Manufacturing processes, quality system, and facility information' },
-    { section: 'labeling', module: 'Labeling', requirement: 'Proposed Labeling', status: 'missing', priority: 'critical', estimatedEffortDays: 5, description: 'Complete proposed labeling and IFU' },
+    { section: '1', module: 'Administrative', requirement: 'PMA Application Form (FDA Form 3601)', status: 'missing', priority: 'critical', estimatedEffortDays: 2, description: 'Premarket Approval Application form with device identification and applicant information.' },
+    { section: '2', module: 'Administrative', requirement: 'Cover Letter', status: 'missing', priority: 'high', estimatedEffortDays: 1, description: 'Cover letter summarizing application contents and any special considerations.' },
+    { section: '3', module: 'Administrative', requirement: 'Table of Contents', status: 'missing', priority: 'medium', estimatedEffortDays: 1, description: 'Detailed table of contents with volume and page references.' },
+    { section: '4', module: 'Summary', requirement: 'Summary of Safety and Effectiveness Data (SSED)', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Comprehensive summary of safety and effectiveness evidence supporting device approval.' },
+    { section: '5', module: 'Device Description', requirement: 'Complete Device Description', status: 'missing', priority: 'critical', estimatedEffortDays: 10, description: 'Detailed device description including design, materials, components, principles of operation, and accessories.' },
+    { section: '6', module: 'Device Description', requirement: 'Manufacturing Information', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Manufacturing process, quality system procedures, sterilization methods, and facility information.' },
+    { section: '7', module: 'Reference Standards', requirement: 'Performance Standards', status: 'missing', priority: 'high', estimatedEffortDays: 5, description: 'Applicable performance standards, consensus standards, and declarations of conformity.' },
+    { section: '8', module: 'Non-Clinical Testing', requirement: 'Bench Performance Testing', status: 'missing', priority: 'critical', estimatedEffortDays: 20, description: 'Complete bench testing data including protocols, results, and statistical analyses.' },
+    { section: '9', module: 'Non-Clinical Testing', requirement: 'Biocompatibility', status: 'missing', priority: 'critical', estimatedEffortDays: 15, description: 'Comprehensive biocompatibility evaluation per ISO 10993-1 with full test reports.' },
+    { section: '10', module: 'Non-Clinical Testing', requirement: 'Animal Studies', status: 'missing', priority: 'high', estimatedEffortDays: 15, description: 'Preclinical animal study reports demonstrating device safety and performance.' },
+    { section: '11', module: 'Clinical', requirement: 'Clinical Study Reports', status: 'missing', priority: 'critical', estimatedEffortDays: 30, description: 'Complete clinical investigation reports per IDE requirements with statistical analyses.' },
+    { section: '12', module: 'Labeling', requirement: 'Proposed Labeling', status: 'missing', priority: 'critical', estimatedEffortDays: 8, description: 'Complete device labeling: package insert, IFU, patient information, and all labels.' },
+    { section: '13', module: 'Software', requirement: 'Software Documentation', status: 'missing', priority: 'high', estimatedEffortDays: 20, description: 'Software level of concern, requirements, architecture, V&V, hazard analysis, cybersecurity.' },
+    { section: '14', module: 'Post-Market', requirement: 'Post-Approval Study Protocol (if required)', status: 'missing', priority: 'medium', estimatedEffortDays: 10, description: 'Post-approval study protocol for long-term safety and effectiveness monitoring.' },
   ],
 };
 
 router.post('/gap-analysis', (req: Request, res: Response) => {
-  const { submissionType, uploadedDocuments = [] } = req.body;
+  try {
+    const { submissionType, uploadedDocuments = [] } = req.body as {
+      submissionType: string;
+      uploadedDocuments: string[];
+    };
 
-  if (!submissionType || !ECTD_REQUIREMENTS[submissionType]) {
-    return res.status(400).json({ error: `Invalid submissionType. Supported: ${Object.keys(ECTD_REQUIREMENTS).join(', ')}` });
-  }
+    if (!submissionType) {
+      return res.status(400).json({ error: 'submissionType is required' });
+    }
 
-  const requirements = ECTD_REQUIREMENTS[submissionType].map(req => {
-    const isUploaded = (uploadedDocuments as string[]).some(
-      doc => doc.toLowerCase().includes(req.requirement.toLowerCase().split('(')[0].trim().toLowerCase().substring(0, 10))
+    const normalizedType = submissionType.toUpperCase().replace('-', '');
+    const requirements = ectdRequirements[normalizedType];
+
+    if (!requirements) {
+      return res.status(400).json({
+        error: `Unsupported submission type: ${submissionType}. Supported types: ${Object.keys(ectdRequirements).join(', ')}`,
+      });
+    }
+
+    // Clone requirements and mark status based on uploaded documents
+    const gaps: GapItem[] = requirements.map((r) => {
+      const uploaded = uploadedDocuments.map((d) => d.toLowerCase());
+      const reqLower = r.requirement.toLowerCase();
+      const sectionLower = r.section.toLowerCase();
+
+      // Check if any uploaded document matches the requirement
+      const exactMatch = uploaded.some(
+        (doc) =>
+          reqLower.includes(doc) ||
+          doc.includes(reqLower) ||
+          doc.includes(sectionLower)
+      );
+
+      const partialMatch = uploaded.some((doc) => {
+        const keywords = reqLower.split(/\s+/).filter((w) => w.length > 4);
+        return keywords.some((kw) => doc.includes(kw));
+      });
+
+      let status: 'complete' | 'partial' | 'missing' = 'missing';
+      if (exactMatch) status = 'complete';
+      else if (partialMatch) status = 'partial';
+
+      return { ...r, status };
+    });
+
+    const completed = gaps.filter((g) => g.status === 'complete').length;
+    const partial = gaps.filter((g) => g.status === 'partial').length;
+    const totalRequired = gaps.length;
+
+    // Readiness score: complete = 100%, partial = 50%, missing = 0%
+    const overallReadiness = Math.round(
+      ((completed * 100 + partial * 50) / totalRequired)
     );
-    return { ...req, status: isUploaded ? 'complete' as const : req.status };
-  });
 
-  const completed = requirements.filter(r => r.status === 'complete').length;
-  const partial = requirements.filter(r => r.status === 'partial').length;
-  const missing = requirements.filter(r => r.status === 'missing').length;
-  const overallReadiness = Math.round((completed / requirements.length) * 100);
+    // Generate recommendations based on gaps
+    const recommendations: string[] = [];
 
-  const criticalGaps = requirements.filter(r => r.status === 'missing' && r.priority === 'critical');
-  const totalEffortDays = requirements.filter(r => r.status !== 'complete').reduce((sum, r) => sum + r.estimatedEffortDays, 0);
+    const criticalMissing = gaps.filter(
+      (g) => g.status === 'missing' && g.priority === 'critical'
+    );
+    if (criticalMissing.length > 0) {
+      recommendations.push(
+        `${criticalMissing.length} critical documents are missing. Prioritize: ${criticalMissing
+          .slice(0, 3)
+          .map((g) => g.requirement)
+          .join(', ')}.`
+      );
+    }
 
-  const recommendations = [
-    criticalGaps.length > 0
-      ? `Prioritize ${criticalGaps.length} critical gaps: ${criticalGaps.slice(0, 3).map(g => g.requirement).join(', ')}`
-      : 'All critical sections are addressed.',
-    `Estimated ${totalEffortDays} total work days remaining across ${missing + partial} incomplete sections.`,
-    `Consider parallel workstreams for Module 2 summaries and Module 3 CMC data to accelerate timeline.`,
-    overallReadiness < 50
-      ? 'Current readiness is below 50%. Focus on completing critical-priority sections before addressing medium/low items.'
-      : 'Good progress. Focus on closing remaining high-priority gaps to reach submission readiness.',
-    'Schedule internal review milestones every 2 weeks to track completion velocity.',
-  ];
+    const highEffort = gaps
+      .filter((g) => g.status !== 'complete')
+      .sort((a, b) => b.estimatedEffortDays - a.estimatedEffortDays);
+    if (highEffort.length > 0) {
+      recommendations.push(
+        `Longest lead-time items: ${highEffort
+          .slice(0, 3)
+          .map((g) => `${g.requirement} (~${g.estimatedEffortDays} days)`)
+          .join(', ')}. Begin these immediately.`
+      );
+    }
 
-  res.json({
-    overallReadiness,
-    totalRequired: requirements.length,
-    completed,
-    partial,
-    missing,
-    gaps: requirements.sort((a, b) => {
-      const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    }),
-    recommendations,
-    estimatedWeeksToCompletion: Math.ceil(totalEffortDays / 5),
-  });
+    if (partial > 0) {
+      recommendations.push(
+        `${partial} documents are partially complete. Review and finalize these for quick readiness gains.`
+      );
+    }
+
+    const totalEffort = gaps
+      .filter((g) => g.status !== 'complete')
+      .reduce(
+        (sum, g) =>
+          sum + (g.status === 'partial' ? Math.ceil(g.estimatedEffortDays * 0.5) : g.estimatedEffortDays),
+        0
+      );
+    recommendations.push(
+      `Estimated total remaining effort: ~${totalEffort} person-days. Consider parallel workstreams for Module 3 (CMC) and Module 5 (Clinical).`
+    );
+
+    if (normalizedType === 'NDA' || normalizedType === 'BLA') {
+      recommendations.push(
+        'Schedule a Pre-NDA/Pre-BLA meeting (Type B) with FDA at least 3 months before planned submission to align on content expectations.'
+      );
+    }
+
+    if (normalizedType === 'MAA') {
+      recommendations.push(
+        'Engage a Rapporteur pre-submission meeting with the target CHMP Rapporteur Member State to discuss the application dossier and any scientific concerns.'
+      );
+    }
+
+    res.json({
+      overallReadiness,
+      totalRequired,
+      completed,
+      gaps,
+      recommendations,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to perform gap analysis',
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 3. DOCUMENT CHANGE IMPACT
-// ═══════════════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------------
+// 3. POST /api/ana/change-impact — Document Change Impact Analysis
+// ---------------------------------------------------------------------------
 
-interface ChangeImpactResult {
+interface GuidanceChange {
   guidanceTitle: string;
   changeDate: string;
+  submissionTypes: string[];
   affectedSections: Array<{
     section: string;
     module: string;
@@ -332,148 +630,168 @@ interface ChangeImpactResult {
     requiredAction: string;
     estimatedReworkDays: number;
   }>;
-  totalImpactDays: number;
   riskLevel: string;
   recommendations: string[];
 }
 
-const CHANGE_SCENARIOS: Record<string, ChangeImpactResult> = {
-  'fda-ai-samd-2026': {
-    guidanceTitle: 'FDA Updated Guidance on AI/ML-Based SaMD',
-    changeDate: '2026-03-15',
+const guidanceChanges: Record<string, GuidanceChange> = {
+  'FDA-2026-D-0142': {
+    guidanceTitle: 'Diversity Action Plans for Clinical Trials of Drugs and Biological Products',
+    changeDate: '2026-02-28',
+    submissionTypes: ['IND', 'NDA', 'BLA'],
     affectedSections: [
-      { section: 'Software Documentation', module: 'Software', currentStatus: 'In Progress', impactLevel: 'critical', requiredAction: 'Add predetermined change control plan (PCCP) for ML algorithm updates', estimatedReworkDays: 15 },
-      { section: 'Performance Testing', module: 'Performance', currentStatus: 'Complete', impactLevel: 'high', requiredAction: 'Include algorithm performance monitoring plan and retraining triggers', estimatedReworkDays: 10 },
-      { section: 'Labeling', module: 'Labeling', currentStatus: 'Draft', impactLevel: 'high', requiredAction: 'Update labeling to include ML model version, training data description, and performance metrics', estimatedReworkDays: 5 },
-      { section: 'Risk Analysis', module: 'Risk Management', currentStatus: 'Complete', impactLevel: 'medium', requiredAction: 'Add algorithm bias risk assessment and data drift mitigation controls', estimatedReworkDays: 7 },
-      { section: 'Clinical Validation', module: 'Clinical', currentStatus: 'In Progress', impactLevel: 'medium', requiredAction: 'Ensure clinical validation includes demographic subgroup performance analysis', estimatedReworkDays: 8 },
+      { section: '1.6', module: 'Module 1', currentStatus: 'Previously not required', impactLevel: 'critical', requiredAction: 'Develop and include Race and Ethnicity Diversity Plan per new guidance. Include enrollment targets, outreach strategies, and monitoring metrics.', estimatedReworkDays: 15 },
+      { section: '5.3', module: 'Module 5', currentStatus: 'Protocol amendments may be needed', impactLevel: 'high', requiredAction: 'Review and amend clinical protocols to include diversity enrollment targets, site selection criteria ensuring demographic representation, and community engagement plans.', estimatedReworkDays: 10 },
+      { section: '2.5', module: 'Module 2', currentStatus: 'Clinical overview may need updating', impactLevel: 'medium', requiredAction: 'Update clinical overview to address population representativeness and subgroup analysis plans by race, ethnicity, age, and sex.', estimatedReworkDays: 5 },
+      { section: '1.7', module: 'Module 1', currentStatus: 'Informed consent needs revision', impactLevel: 'medium', requiredAction: 'Ensure informed consent documents are culturally appropriate, available in relevant languages, and at appropriate literacy levels.', estimatedReworkDays: 3 },
     ],
-    totalImpactDays: 45,
-    riskLevel: 'High',
+    riskLevel: 'high',
     recommendations: [
-      'Engage with FDA through Pre-Submission meeting to discuss PCCP scope before finalizing documentation.',
-      'Prioritize the predetermined change control plan — this is the most significant new requirement.',
-      'Allocate 2-3 weeks for the algorithm monitoring plan, as this requires input from both engineering and clinical teams.',
-      'Review training data demographic representation against the new diversity requirements.',
-      'Consider requesting a De Novo if PCCP significantly changes the regulatory classification strategy.',
+      'Submit Diversity Action Plan as part of the IND or as a standalone submission at least 120 days before the start of Phase III.',
+      'Engage community advisory boards in the target therapeutic area to inform enrollment strategies.',
+      'Implement site feasibility assessments that include demographic analysis of catchment areas.',
+      'Consider decentralized trial elements (telemedicine, mobile units) to improve access for underrepresented populations.',
     ],
   },
-  'ich-e6r3-2026': {
-    guidanceTitle: 'ICH E6(R3) GCP Modernization',
-    changeDate: '2026-03-11',
+  'FDA-2026-D-0089': {
+    guidanceTitle: 'Artificial Intelligence/Machine Learning-Based Software as a Medical Device: Predetermined Change Control Plan',
+    changeDate: '2026-03-10',
+    submissionTypes: ['510K', 'PMA'],
     affectedSections: [
-      { section: 'Clinical Study Protocol', module: 'Module 5', currentStatus: 'Final', impactLevel: 'critical', requiredAction: 'Incorporate risk-proportionate quality management framework per E6(R3) Annex 1', estimatedReworkDays: 12 },
-      { section: 'Quality Management Plan', module: 'Module 5', currentStatus: 'Not Started', impactLevel: 'critical', requiredAction: 'Develop standalone quality management plan with critical-to-quality factors', estimatedReworkDays: 10 },
-      { section: 'Monitoring Plan', module: 'Module 5', currentStatus: 'Draft', impactLevel: 'high', requiredAction: 'Revise to risk-based monitoring approach with centralized monitoring strategy', estimatedReworkDays: 8 },
-      { section: 'Data Management Plan', module: 'Module 5', currentStatus: 'Complete', impactLevel: 'high', requiredAction: 'Add data governance framework and technology platform validation sections', estimatedReworkDays: 6 },
-      { section: 'Informed Consent', module: 'Module 5', currentStatus: 'Template', impactLevel: 'medium', requiredAction: 'Update consent templates to address electronic consent and remote participation', estimatedReworkDays: 3 },
-      { section: 'Investigator Site Selection', module: 'Module 5', currentStatus: 'In Progress', impactLevel: 'medium', requiredAction: 'Include site capability assessment for technology-enabled trial conduct', estimatedReworkDays: 4 },
+      { section: '14', module: 'Software', currentStatus: 'Existing SaMD documentation', impactLevel: 'critical', requiredAction: 'Develop Predetermined Change Control Plan (PCCP) specifying: (1) SaMD Pre-Specifications describing planned modifications, (2) Algorithm Change Protocol with validation methodology, (3) transparency and reporting commitments.', estimatedReworkDays: 25 },
+      { section: '6', module: 'Device Description', currentStatus: 'May need expansion', impactLevel: 'high', requiredAction: 'Expand device description to include AI/ML architecture, training data characteristics, intended population, and performance boundaries.', estimatedReworkDays: 8 },
+      { section: '9', module: 'Performance Testing', currentStatus: 'Testing protocols need revision', impactLevel: 'critical', requiredAction: 'Include real-world performance monitoring plan, algorithmic bias testing across demographic subgroups, and continuous learning validation protocol.', estimatedReworkDays: 20 },
+      { section: '16', module: 'Labeling', currentStatus: 'Labeling expansion needed', impactLevel: 'high', requiredAction: 'Update labeling to include AI/ML transparency information: training data description, known limitations, performance by subgroup, and update mechanism disclosure.', estimatedReworkDays: 5 },
+      { section: '8', module: 'Standards', currentStatus: 'New standards applicable', impactLevel: 'medium', requiredAction: 'Address AAMI CR34971 (AI/ML-based medical devices application of risk management) and ISO/IEC 23894 (AI risk management).', estimatedReworkDays: 5 },
     ],
-    totalImpactDays: 43,
-    riskLevel: 'High',
+    riskLevel: 'critical',
     recommendations: [
-      'The quality management plan is mandatory under E6(R3) — begin development immediately as it impacts all other clinical documents.',
-      'Identify Critical-to-Quality (CtQ) factors early; they drive the entire risk-based approach.',
-      'Train clinical operations team on E6(R3) principles before protocol revision to ensure consistent implementation.',
-      'Consider engaging a GCP consultant with E6(R3) expertise for the quality management framework.',
-      'Timeline extension of 6-8 weeks recommended to properly incorporate these changes without rushing.',
+      'Engage FDA Pre-Submission program (Q-Sub) to discuss PCCP scope and validation methodology before formal submission.',
+      'Establish a Clinical Governance Committee for ongoing algorithm oversight and change management.',
+      'Implement Good Machine Learning Practice (GMLP) principles throughout the software development lifecycle.',
+      'Develop a real-world monitoring dashboard tracking performance metrics, demographic equity, and drift detection.',
+      'Plan for Total Product Lifecycle (TPLC) approach with periodic reporting to FDA on algorithm changes and performance.',
     ],
   },
-  'fda-diversity-2026': {
-    guidanceTitle: 'FDA Final Rule on Diversity Action Plans',
-    changeDate: '2026-03-07',
+  'FDA-2025-D-4521': {
+    guidanceTitle: 'Decentralized Clinical Trials — Design, Conduct, and Oversight',
+    changeDate: '2025-11-15',
+    submissionTypes: ['IND', 'NDA', 'BLA'],
     affectedSections: [
-      { section: 'Diversity Action Plan', module: 'Module 1', currentStatus: 'Not Started', impactLevel: 'critical', requiredAction: 'Develop and submit diversity action plan with enrollment targets based on disease epidemiology', estimatedReworkDays: 10 },
-      { section: 'Clinical Protocol', module: 'Module 5', currentStatus: 'Draft', impactLevel: 'high', requiredAction: 'Add demographic enrollment goals, community engagement plan, and site diversity criteria', estimatedReworkDays: 5 },
-      { section: 'Statistical Analysis Plan', module: 'Module 5', currentStatus: 'Draft', impactLevel: 'medium', requiredAction: 'Include pre-specified subgroup analyses for demographic populations', estimatedReworkDays: 4 },
-      { section: 'Site Selection Strategy', module: 'Operations', currentStatus: 'In Progress', impactLevel: 'high', requiredAction: 'Expand site selection to include community health centers and underserved areas', estimatedReworkDays: 6 },
+      { section: '1.6', module: 'Module 1', currentStatus: 'Protocol design changes needed', impactLevel: 'high', requiredAction: 'Update clinical protocols to incorporate DCT elements: remote consent procedures, telemedicine visit schedules, direct-to-patient drug shipment logistics, and home health professional visit protocols.', estimatedReworkDays: 12 },
+      { section: '1.7', module: 'Module 1', currentStatus: 'Consent process revisions', impactLevel: 'high', requiredAction: 'Develop eConsent procedures compliant with 21 CFR Part 11, including identity verification, audit trail requirements, and re-consent procedures for protocol amendments.', estimatedReworkDays: 8 },
+      { section: '5.3', module: 'Module 5', currentStatus: 'Data collection changes', impactLevel: 'critical', requiredAction: 'Implement validated digital endpoint collection (wearables, eCOA/ePRO), ensure data provenance and audit trail for remotely collected data, address missing data strategies for DCT-specific scenarios.', estimatedReworkDays: 15 },
+      { section: '2.5', module: 'Module 2', currentStatus: 'Clinical overview revisions', impactLevel: 'medium', requiredAction: 'Address DCT methodology in clinical overview, including comparability of remote vs. site-based assessments, and sensitivity analyses.', estimatedReworkDays: 5 },
     ],
-    totalImpactDays: 25,
-    riskLevel: 'Medium',
+    riskLevel: 'high',
     recommendations: [
-      'Submit Diversity Action Plan concurrent with IND — delays can trigger FDA requests and slow review.',
-      'Engage patient advocacy organizations early to inform recruitment strategy.',
-      'Map disease prevalence by demographic group to set evidence-based enrollment targets.',
-      'Consider decentralized trial elements to improve access for underrepresented populations.',
+      'Conduct a feasibility assessment for DCT elements, considering investigator capabilities, patient technology access, and regulatory acceptance by country.',
+      'Implement qualified third-party technology vendor oversight per guidance recommendations.',
+      'Develop a hybrid trial design where critical safety assessments remain site-based while routine visits transition to remote.',
+      'Ensure HIPAA and GDPR compliance for all remote data collection and telemedicine platforms.',
+    ],
+  },
+  'ICH-E6R3-2026': {
+    guidanceTitle: 'ICH E6(R3) Good Clinical Practice — Principles and Annex 1/Annex 2',
+    changeDate: '2026-02-15',
+    submissionTypes: ['IND', 'NDA', 'BLA', 'MAA'],
+    affectedSections: [
+      { section: '1.6', module: 'Module 1', currentStatus: 'Protocol QMS integration needed', impactLevel: 'critical', requiredAction: 'Integrate risk-based quality management system (RBQM) into all clinical protocols. Define Critical to Quality (CtQ) factors, risk indicators, and risk thresholds for each study.', estimatedReworkDays: 20 },
+      { section: '1.5', module: 'Module 1', currentStatus: 'IB updates needed', impactLevel: 'high', requiredAction: 'Update Investigator Brochure format and content per E6(R3) requirements, including risk communication and benefit-risk characterization.', estimatedReworkDays: 8 },
+      { section: '1.7', module: 'Module 1', currentStatus: 'Consent modernization', impactLevel: 'high', requiredAction: 'Modernize informed consent to support technology-enabled approaches, ongoing consent, and layered/tiered information disclosure per E6(R3) Annex 2.', estimatedReworkDays: 6 },
+      { section: '5.3', module: 'Module 5', currentStatus: 'CSR amendments needed', impactLevel: 'high', requiredAction: 'Ensure CSRs document RBQM implementation, including quality tolerance limits, centralized monitoring findings, and risk management decisions.', estimatedReworkDays: 10 },
+      { section: '2.5', module: 'Module 2', currentStatus: 'Methodology narrative updates', impactLevel: 'medium', requiredAction: 'Update clinical overview to describe RBQM approach, risk-proportionate monitoring strategy, and impact on data quality.', estimatedReworkDays: 4 },
+    ],
+    riskLevel: 'high',
+    recommendations: [
+      'Begin training all clinical operations staff on E6(R3) principles within 6 months of Step 4 adoption.',
+      'Implement centralized statistical monitoring tools for key risk indicators across all active studies.',
+      'Audit existing SOPs and update to align with E6(R3) risk-based approach within the 2-year implementation window.',
+      'Establish CtQ factor identification as a standard step in all new protocol development.',
+      'Consider engaging a qualified external auditor to perform a gap assessment of current GCP compliance vs. E6(R3) requirements.',
+    ],
+  },
+  'EMA-2026-GLP1-REFERRAL': {
+    guidanceTitle: 'Article 31 Referral: GLP-1 Receptor Agonist Class — Medullary Thyroid Carcinoma Signal',
+    changeDate: '2026-02-05',
+    submissionTypes: ['NDA', 'BLA', 'MAA'],
+    affectedSections: [
+      { section: '2.5', module: 'Module 2', currentStatus: 'Safety narrative requires update', impactLevel: 'critical', requiredAction: 'Update clinical overview with cumulative thyroid safety analysis, including MTC incidence rates, calcitonin monitoring data, and comparative risk assessment vs. background rates.', estimatedReworkDays: 15 },
+      { section: '2.7', module: 'Module 2', currentStatus: 'Safety summary update', impactLevel: 'critical', requiredAction: 'Revise clinical summary to include comprehensive thyroid malignancy analysis across all clinical studies, post-marketing data, and epidemiological studies.', estimatedReworkDays: 12 },
+      { section: '1.9', module: 'Module 1', currentStatus: 'Labeling revision needed', impactLevel: 'high', requiredAction: 'Strengthen boxed warning/contraindication for MTC risk, update calcitonin monitoring recommendations, and revise patient counseling information.', estimatedReworkDays: 8 },
+      { section: '5.3', module: 'Module 5', currentStatus: 'Additional analyses required', impactLevel: 'high', requiredAction: 'Prepare integrated safety analysis focused on thyroid neoplasms, with time-to-event analysis, dose-response evaluation, and mechanistic assessment.', estimatedReworkDays: 20 },
+      { section: '1.10', module: 'Module 1', currentStatus: 'REMS modification may be needed', impactLevel: 'medium', requiredAction: 'Evaluate whether REMS modification is required to include thyroid monitoring components or healthcare provider communication plan.', estimatedReworkDays: 10 },
+    ],
+    riskLevel: 'critical',
+    recommendations: [
+      'Submit cumulative safety analysis to EMA within 60-day deadline specified in the referral notice.',
+      'Proactively engage FDA to discuss parallel US labeling updates and any required REMS modifications.',
+      'Commission an independent epidemiological study to characterize background MTC rates in the target population.',
+      'Implement enhanced pharmacovigilance: targeted follow-up questionnaire for all reported thyroid neoplasm cases.',
+      'Prepare company core safety information (CCSI) update for global harmonization of thyroid safety messaging.',
     ],
   },
 };
 
 router.post('/change-impact', (req: Request, res: Response) => {
-  const { guidanceId, submissionType } = req.body;
+  try {
+    const { guidanceId, submissionType } = req.body as {
+      guidanceId: string;
+      submissionType: string;
+    };
 
-  if (!guidanceId) {
-    return res.status(400).json({ error: 'guidanceId is required' });
-  }
+    if (!guidanceId) {
+      return res.status(400).json({ error: 'guidanceId is required' });
+    }
 
-  const scenario = CHANGE_SCENARIOS[guidanceId];
-  if (!scenario) {
-    // Return a generic low-impact result for unknown guidance
-    return res.json({
-      guidanceTitle: 'Unknown Guidance Document',
-      changeDate: new Date().toISOString().split('T')[0],
-      affectedSections: [],
-      totalImpactDays: 0,
-      riskLevel: 'Low',
-      recommendations: ['No specific impact analysis available for this guidance document. Please check back later.'],
+    const guidance = guidanceChanges[guidanceId];
+
+    if (!guidance) {
+      return res.status(404).json({
+        error: `Guidance document not found: ${guidanceId}`,
+        availableGuidanceIds: Object.keys(guidanceChanges),
+      });
+    }
+
+    // Filter sections relevant to the requested submission type (if provided)
+    let affectedSections = guidance.affectedSections;
+    if (submissionType) {
+      const normalizedType = submissionType.toUpperCase().replace('-', '');
+      if (!guidance.submissionTypes.includes(normalizedType)) {
+        return res.status(400).json({
+          error: `This guidance does not apply to submission type: ${submissionType}. Applicable types: ${guidance.submissionTypes.join(', ')}`,
+        });
+      }
+    }
+
+    const totalImpactDays = affectedSections.reduce(
+      (sum, s) => sum + s.estimatedReworkDays,
+      0
+    );
+
+    res.json({
+      guidanceTitle: guidance.guidanceTitle,
+      changeDate: guidance.changeDate,
+      affectedSections,
+      totalImpactDays,
+      riskLevel: guidance.riskLevel,
+      recommendations: guidance.recommendations,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to analyze change impact',
+      details: error instanceof Error ? error.message : String(error),
     });
   }
-
-  res.json(scenario);
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 4. ANA MEMORY (Per-Project Persistence)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------------------
+// 4. AnA Memory — Per-project contextual memory
+// ---------------------------------------------------------------------------
 
-interface Memory {
-  id: string;
-  type: 'preference' | 'fact' | 'decision' | 'context';
-  content: string;
-  createdAt: string;
-}
-
-interface ProjectMemory {
-  projectId: string;
-  memories: Memory[];
-  projectContext: {
-    therapeuticArea: string;
-    submissionType: string;
-    targetAgency: string;
-    drugProduct: string;
-  };
-}
-
-// In-memory store (would be PostgreSQL in production)
-const memoryStore: Record<string, ProjectMemory> = {
-  'default-project': {
-    projectId: 'default-project',
-    memories: [
-      { id: 'mem-001', type: 'context', content: 'Target indication is moderate-to-severe plaque psoriasis in adults who are candidates for systemic therapy.', createdAt: '2026-03-10T14:30:00Z' },
-      { id: 'mem-002', type: 'preference', content: 'User prefers concise executive summaries over detailed technical write-ups for Module 2 documents.', createdAt: '2026-03-09T10:15:00Z' },
-      { id: 'mem-003', type: 'decision', content: 'Team decided to pursue Fast IND pathway based on unmet medical need and orphan drug designation eligibility.', createdAt: '2026-03-08T16:45:00Z' },
-      { id: 'mem-004', type: 'fact', content: 'Drug substance is a fully humanized IgG4 monoclonal antibody targeting IL-23p19 with half-life of approximately 25 days.', createdAt: '2026-03-07T09:20:00Z' },
-      { id: 'mem-005', type: 'preference', content: 'CMC documentation should follow QbD approach with design space defined for critical process parameters.', createdAt: '2026-03-06T11:30:00Z' },
-      { id: 'mem-006', type: 'fact', content: 'Phase 1 study (Protocol C2C-001) enrolled 48 healthy volunteers. No dose-limiting toxicities observed.', createdAt: '2026-03-05T14:00:00Z' },
-      { id: 'mem-007', type: 'decision', content: 'Stability studies will use ICH Q1A(R2) conditions: 25°C/60%RH and 40°C/75%RH accelerated.', createdAt: '2026-03-04T08:45:00Z' },
-      { id: 'mem-008', type: 'context', content: 'Primary comparator for Phase 3 is adalimumab. Non-inferiority design with PASI 90 as primary endpoint.', createdAt: '2026-03-03T13:10:00Z' },
-    ],
-    projectContext: {
-      therapeuticArea: 'Dermatology — Plaque Psoriasis',
-      submissionType: 'IND (Investigational New Drug)',
-      targetAgency: 'FDA (CDER)',
-      drugProduct: 'C2C-1042 (Anti-IL-23p19 mAb)',
-    },
-  },
-};
-
-router.get('/memory/:projectId', (req: Request, res: Response) => {
-  const { projectId } = req.params;
-  const project = memoryStore[projectId];
-
-  if (!project) {
-    return res.json({
-      projectId,
+function getOrCreateProjectMemory(projectId: string): ProjectMemoryStore {
+  if (!memoryStore[projectId]) {
+    memoryStore[projectId] = {
       memories: [],
       projectContext: {
         therapeuticArea: '',
@@ -481,74 +799,118 @@ router.get('/memory/:projectId', (req: Request, res: Response) => {
         targetAgency: '',
         drugProduct: '',
       },
+    };
+  }
+  return memoryStore[projectId];
+}
+
+// GET /api/ana/memory/:projectId — Retrieve memories
+router.get('/memory/:projectId', (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const store = getOrCreateProjectMemory(projectId);
+
+    res.json({
+      projectId,
+      memories: store.memories,
+      projectContext: store.projectContext,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to retrieve memories',
+      details: error instanceof Error ? error.message : String(error),
     });
   }
-
-  res.json(project);
 });
 
+// POST /api/ana/memory/:projectId — Save a new memory
 router.post('/memory/:projectId', (req: Request, res: Response) => {
-  const { projectId } = req.params;
-  const { type, content } = req.body;
-
-  if (!type || !content) {
-    return res.status(400).json({ error: 'type and content are required' });
-  }
-
-  if (!memoryStore[projectId]) {
-    memoryStore[projectId] = {
-      projectId,
-      memories: [],
-      projectContext: { therapeuticArea: '', submissionType: '', targetAgency: '', drugProduct: '' },
+  try {
+    const { projectId } = req.params;
+    const { type, content } = req.body as {
+      type: 'preference' | 'fact' | 'decision' | 'context';
+      content: string;
     };
+
+    if (!type || !content) {
+      return res.status(400).json({ error: 'type and content are required' });
+    }
+
+    const validTypes = ['preference', 'fact', 'decision', 'context'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({
+        error: `Invalid type. Must be one of: ${validTypes.join(', ')}`,
+      });
+    }
+
+    const store = getOrCreateProjectMemory(projectId);
+    memoryIdCounter += 1;
+
+    const memory: Memory = {
+      id: `mem-${memoryIdCounter}`,
+      type,
+      content,
+      createdAt: new Date().toISOString(),
+    };
+
+    store.memories.push(memory);
+
+    // If it is a context-type memory, try to auto-populate project context
+    if (type === 'context') {
+      const lower = content.toLowerCase();
+      if (lower.includes('therapeutic area:') || lower.includes('indication:')) {
+        const match = content.match(/(?:therapeutic area|indication):\s*(.+)/i);
+        if (match) store.projectContext.therapeuticArea = match[1].trim();
+      }
+      if (lower.includes('submission type:') || lower.includes('submission:')) {
+        const match = content.match(/(?:submission type|submission):\s*(.+)/i);
+        if (match) store.projectContext.submissionType = match[1].trim();
+      }
+      if (lower.includes('agency:') || lower.includes('target agency:')) {
+        const match = content.match(/(?:target )?agency:\s*(.+)/i);
+        if (match) store.projectContext.targetAgency = match[1].trim();
+      }
+      if (lower.includes('drug product:') || lower.includes('product:')) {
+        const match = content.match(/(?:drug )?product:\s*(.+)/i);
+        if (match) store.projectContext.drugProduct = match[1].trim();
+      }
+    }
+
+    res.status(201).json({
+      message: 'Memory saved successfully',
+      memory,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to save memory',
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
-
-  const newMemory: Memory = {
-    id: `mem-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-    type,
-    content,
-    createdAt: new Date().toISOString(),
-  };
-
-  memoryStore[projectId].memories.unshift(newMemory);
-  res.status(201).json(newMemory);
 });
 
+// DELETE /api/ana/memory/:projectId/:memoryId — Delete a memory
 router.delete('/memory/:projectId/:memoryId', (req: Request, res: Response) => {
-  const { projectId, memoryId } = req.params;
-  const project = memoryStore[projectId];
+  try {
+    const { projectId, memoryId } = req.params;
+    const store = getOrCreateProjectMemory(projectId);
 
-  if (!project) {
-    return res.status(404).json({ error: 'Project not found' });
+    const index = store.memories.findIndex((m) => m.id === memoryId);
+    if (index === -1) {
+      return res.status(404).json({ error: `Memory not found: ${memoryId}` });
+    }
+
+    const deleted = store.memories.splice(index, 1)[0];
+
+    res.json({
+      message: 'Memory deleted successfully',
+      deleted,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to delete memory',
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
-
-  const idx = project.memories.findIndex(m => m.id === memoryId);
-  if (idx === -1) {
-    return res.status(404).json({ error: 'Memory not found' });
-  }
-
-  project.memories.splice(idx, 1);
-  res.json({ success: true });
-});
-
-router.patch('/memory/:projectId/context', (req: Request, res: Response) => {
-  const { projectId } = req.params;
-  const updates = req.body;
-
-  if (!memoryStore[projectId]) {
-    memoryStore[projectId] = {
-      projectId,
-      memories: [],
-      projectContext: { therapeuticArea: '', submissionType: '', targetAgency: '', drugProduct: '' },
-    };
-  }
-
-  memoryStore[projectId].projectContext = {
-    ...memoryStore[projectId].projectContext,
-    ...updates,
-  };
-
-  res.json(memoryStore[projectId].projectContext);
 });
 
 export default router;

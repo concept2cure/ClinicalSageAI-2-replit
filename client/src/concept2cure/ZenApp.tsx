@@ -472,6 +472,15 @@ export const ZenApp: React.FC = () => {
     (actionId: string) => {
       console.log('Command action:', actionId);
 
+      // Handle direct navigation (AnA features)
+      if (actionId.startsWith('nav-')) {
+        const mode = actionId.replace('nav-', '') as LayoutMode;
+        setLayoutMode(mode);
+        setActiveToolPanel(null);
+        setCommandPaletteOpen(false);
+        return;
+      }
+
       // Handle tool panel opens
       if (actionId.startsWith('tool-')) {
         const panel = actionId.replace('tool-', '') as ToolPanel;
