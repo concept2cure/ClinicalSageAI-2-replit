@@ -70,16 +70,18 @@ export function useProjectTasks(projectId: string | number | null) {
     staleTime: 30_000,
   });
 
+  const DEFAULT_TASK_SUMMARY: TaskSummary = { total: 0, completed: 0, overdue: 0, byStatus: {}, byPriority: {}, healthScore: 100, completionRate: 0 };
+
   const summaryQuery = useQuery({
     queryKey: ['project-tasks-summary', pid],
     queryFn: async (): Promise<TaskSummary> => {
-      if (!pid) return { total: 0, completed: 0, overdue: 0, byStatus: {}, byPriority: {}, healthScore: 100, completionRate: 0 };
+      if (!pid) return DEFAULT_TASK_SUMMARY;
       const res = await fetch(`/api/concept2cure/projects/${pid}/tasks/summary`, {
         headers: getAuthHeaders(),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload?.error?.message || 'Failed to fetch summary');
-      return payload?.data ?? { total: 0, completed: 0, overdue: 0, byStatus: {}, byPriority: {}, healthScore: 100, completionRate: 0 };
+      return payload?.data ?? DEFAULT_TASK_SUMMARY;
     },
     enabled: !!pid,
     staleTime: 30_000,

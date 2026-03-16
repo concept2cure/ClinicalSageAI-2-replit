@@ -16,6 +16,7 @@ import { Router, Request, Response } from 'express';
 import archiver from 'archiver';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
+import * as nodePath from 'path';
 import { stylePacks } from '../export/stylePacks/config';
 import {
   renderPdfBuffersFor510k,
@@ -217,7 +218,13 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 
     // Validate attachment filenames for path traversal
     for (const att of attachments) {
-      if (att.filename.includes('..') || att.filename.includes('~') || att.filename.startsWith('/')) {
+      const normalized = nodePath.normalize(att.filename);
+      if (
+        normalized.includes('..') ||
+        att.filename.includes('~') ||
+        nodePath.isAbsolute(normalized) ||
+        !/^[\w\-. ]+$/.test(att.filename)
+      ) {
         return res.status(400).json({ error: `Invalid attachment filename: ${att.filename}` });
       }
     }
