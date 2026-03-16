@@ -78,6 +78,12 @@ import {
   Shield,
   FolderOpen,
   Eye,
+  FlaskConical,
+  Scale,
+  Building2,
+  Fingerprint,
+  Bell,
+  MessageSquare,
 } from 'lucide-react';
 
 // ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
@@ -103,6 +109,24 @@ const RiskCockpit = lazy(() =>
 );
 const RoutePlanner = lazy(() =>
   import('./pages/MissionControl/RoutePlanner')
+);
+const EvidenceManager = lazy(() =>
+  import('./pages/MissionControl/EvidenceManager')
+);
+const DecisionLog = lazy(() =>
+  import('./pages/MissionControl/DecisionLog')
+);
+const AuthorityTracker = lazy(() =>
+  import('./pages/MissionControl/AuthorityTracker')
+);
+const ProvenanceViewer = lazy(() =>
+  import('./pages/MissionControl/ProvenanceViewer')
+);
+const NotificationCenter = lazy(() =>
+  import('./pages/MissionControl/NotificationCenter')
+);
+const CollaborationHub = lazy(() =>
+  import('./pages/MissionControl/CollaborationHub')
 );
 
 // Lazy load IND Workspace (eCTD filing hub)
@@ -154,7 +178,13 @@ type LayoutMode =
   | 'review-center'
   | 'dossier-view'
   | 'risk-cockpit'
-  | 'route-planner';
+  | 'route-planner'
+  | 'evidence-manager'
+  | 'decision-log'
+  | 'authority-tracker'
+  | 'provenance-trail'
+  | 'notifications'
+  | 'collaboration-hub';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -706,6 +736,12 @@ export const ZenApp: React.FC = () => {
     { id: 'dossier-view' as LayoutMode, label: 'Dossier View', icon: FolderOpen },
     { id: 'risk-cockpit' as LayoutMode, label: 'Risk Cockpit', icon: Shield },
     { id: 'route-planner' as LayoutMode, label: 'Route Planner', icon: Compass },
+    { id: 'evidence-manager' as LayoutMode, label: 'Evidence', icon: FlaskConical },
+    { id: 'decision-log' as LayoutMode, label: 'Decisions', icon: Scale },
+    { id: 'authority-tracker' as LayoutMode, label: 'Authority', icon: Building2 },
+    { id: 'provenance-trail' as LayoutMode, label: 'Provenance', icon: Fingerprint },
+    { id: 'notifications' as LayoutMode, label: 'Notifications', icon: Bell },
+    { id: 'collaboration-hub' as LayoutMode, label: 'Collaboration', icon: MessageSquare },
   ];
 
   // Filter layout modes by license — only show modes the org has access to
@@ -1488,6 +1524,48 @@ export const ZenApp: React.FC = () => {
           {layoutMode === 'route-planner' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>}>
               <RoutePlanner programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Evidence Manager */}
+          {layoutMode === 'evidence-manager' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-teal-500" /></div>}>
+              <EvidenceManager programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Decision Log */}
+          {layoutMode === 'decision-log' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>}>
+              <DecisionLog programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Authority Tracker */}
+          {layoutMode === 'authority-tracker' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <AuthorityTracker programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Provenance Trail */}
+          {layoutMode === 'provenance-trail' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-zinc-500" /></div>}>
+              <ProvenanceViewer programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Notification Center */}
+          {layoutMode === 'notifications' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-amber-500" /></div>}>
+              <NotificationCenter />
+            </Suspense>
+          )}
+
+          {/* Collaboration Hub */}
+          {layoutMode === 'collaboration-hub' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <CollaborationHub programId={activeProjectId ? Number(activeProjectId) : null} />
             </Suspense>
           )}
 

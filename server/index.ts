@@ -5466,6 +5466,17 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // MISSION CONTROL — Program OS (PM ecosystem)
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const missionControlRoutes = await import('./routes/mission-control.ts');
+    app.use('/api/mission-control', missionControlRoutes.default);
+    console.log('✅ Mission Control routes mounted at /api/mission-control');
+  } catch (error) {
+    console.error('❌ Failed to mount Mission Control routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // CATCH-ALL FOR UNMATCHED API ROUTES - MUST RETURN JSON, NOT HTML
   // ──────────────────────────────────────────────────────────────────────────
   app.all('/api/*', (req, res) => {
