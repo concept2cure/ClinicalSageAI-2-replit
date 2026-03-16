@@ -361,9 +361,9 @@ export default function SubmissionGapAnalysis() {
       }
 
       const data: GapAnalysisResult = await response.json();
-      // Sort gaps by priority
-      data.gaps.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
-      setResult(data);
+      // Sort gaps by priority (avoid mutating response directly)
+      const sortedGaps = [...data.gaps].sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
+      setResult({ ...data, gaps: sortedGaps });
 
       // Scroll to results after a short delay
       setTimeout(() => {

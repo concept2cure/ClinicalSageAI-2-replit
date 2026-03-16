@@ -122,7 +122,15 @@ export default function AnAMemory() {
       const response = await fetch('/api/ana/memory/default-project');
       if (!response.ok) throw new Error(`Failed to load (${response.status})`);
       const data = await response.json();
-      setMemories(data.memories || []);
+      // Map server 'type' field to client 'category'
+      const typeToCategory: Record<string, MemoryEntry['category']> = {
+        preference: 'Preferences', fact: 'Facts', decision: 'Decisions', context: 'Context',
+      };
+      const mapped = (data.memories || []).map((m: any) => ({
+        ...m,
+        category: m.type ? typeToCategory[m.type] || m.category : m.category,
+      }));
+      setMemories(mapped);
       if (data.projectContext) {
         setProjectContext(data.projectContext);
       }
@@ -151,7 +159,7 @@ export default function AnAMemory() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newMemory.trim(),
-          category: newMemoryCategory,
+          type: newMemoryCategory.toLowerCase() as 'preference' | 'fact' | 'decision' | 'context',
         }),
       });
 
