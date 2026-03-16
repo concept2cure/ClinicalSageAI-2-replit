@@ -2265,4 +2265,39 @@ router.get('/templates/:id', (req: Request, res: Response) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCX EXPORT FOR CHAT ARTIFACTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/artifacts/export-docx
+ * Generate a DOCX file from title + content and return as a download.
+ * Used by the Copilot to export AI-generated documents.
+ */
+router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({
+      title: z.string().min(1).max(500),
+      content: z.string().min(1).max(1000000),
+    });
+    const { title, content } = schema.parse(req.body);
+
+    // Dynamic import to avoid circular dependency issues
+    const { generateDocxBuffer } = await import('../services/docxGenerator');
+    const buffer = await generateDocxBuffer(title, content);
+
+    const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
+    res.setHeader('Content-Length', buffer.length);
+    return res.send(buffer);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to export DOCX', { error: error.message });
+    return sendError(res, 500, 'Failed to export DOCX');
+  }
+});
+
 export default router;

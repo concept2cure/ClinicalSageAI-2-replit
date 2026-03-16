@@ -38,8 +38,13 @@ import {
   AlertCircle,
   WifiOff,
   ExternalLink,
+  Save,
+  Download,
+  PenTool,
+  Loader2,
 } from 'lucide-react';
 import { useCortexChat, useCortexHealth } from '../../hooks/useCortex';
+import { useDocumentActions } from '../../hooks/useDocumentActions';
 import type { CortexArtifact } from '../../services/cortexService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -97,12 +102,88 @@ const TypingIndicator: React.FC = () => (
 // MESSAGE COMPONENT - Clean, readable, actionable
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ARTIFACT ACTION BUTTONS - Save to Vault, Export DOCX, Open in Editor
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface ArtifactActionsProps {
+  artifact: CortexArtifact;
+  onSave: (artifact: CortexArtifact) => void;
+  onExport: (artifact: CortexArtifact) => void;
+  onOpenEditor: (artifact: CortexArtifact) => void;
+  savingId: string | null;
+  savedIds: Set<string>;
+}
+
+const ArtifactActions: React.FC<ArtifactActionsProps> = ({
+  artifact,
+  onSave,
+  onExport,
+  onOpenEditor,
+  savingId,
+  savedIds,
+}) => {
+  const isSaving = savingId === artifact.id;
+  const isSaved = savedIds.has(artifact.id);
+
+  return (
+    <div className="mt-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+      <div className="flex items-center gap-2 mb-2">
+        <FileText className="w-4 h-4 text-violet-500" />
+        <span className="text-sm font-medium text-zinc-800 truncate">
+          {artifact.title}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onSave(artifact)}
+          disabled={isSaving || isSaved}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+            isSaved
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
+          )}
+        >
+          {isSaving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : isSaved ? (
+            <Check className="w-3.5 h-3.5" />
+          ) : (
+            <Save className="w-3.5 h-3.5" />
+          )}
+          {isSaved ? 'Saved' : 'Save to Vault'}
+        </button>
+        <button
+          onClick={() => onExport(artifact)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Export DOCX
+        </button>
+        <button
+          onClick={() => onOpenEditor(artifact)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+        >
+          <PenTool className="w-3.5 h-3.5" />
+          Open in Editor
+        </button>
+      </div>
+    </div>
+  );
+};
+
 interface MessageBubbleProps {
   message: Message;
   onCopy: () => void;
   onRegenerate?: () => void;
   onFeedback?: (positive: boolean) => void;
   onNavigate?: (href: string) => void;
+  onSaveArtifact?: (artifact: CortexArtifact) => void;
+  onExportArtifact?: (artifact: CortexArtifact) => void;
+  onOpenEditorArtifact?: (artifact: CortexArtifact) => void;
+  savingArtifactId?: string | null;
+  savedArtifactIds?: Set<string>;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -111,6 +192,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onRegenerate,
   onFeedback,
   onNavigate,
+  onSaveArtifact,
+  onExportArtifact,
+  onOpenEditorArtifact,
+  savingArtifactId,
+  savedArtifactIds,
 }) => {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
@@ -216,6 +302,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 ))}
               </div>
             )}
+
+            {/* Artifact document actions - Save to Vault, Export, Edit */}
+            {!message.isStreaming &&
+              !isUser &&
+              message.artifacts &&
+              message.artifacts.length > 0 &&
+              onSaveArtifact && (
+                <div className="mt-3 space-y-2">
+                  {message.artifacts.map(artifact => (
+                    <ArtifactActions
+                      key={artifact.id}
+                      artifact={artifact}
+                      onSave={onSaveArtifact}
+                      onExport={onExportArtifact || (() => {})}
+                      onOpenEditor={onOpenEditorArtifact || (() => {})}
+                      savingId={savingArtifactId || null}
+                      savedIds={savedArtifactIds || new Set()}
+                    />
+                  ))}
+                </div>
+              )}
 
             {/* Actions - appear on hover */}
             {!message.isStreaming && actionLinks.length > 0 && !isUser && (
@@ -558,6 +665,19 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   nextTask,
 }) => {
   const [, setLocation] = useLocation();
+
+  // Document actions for persisting artifacts
+  const {
+    saveArtifact,
+    isSaving,
+    exportDocx,
+    openInEditor,
+  } = useDocumentActions();
+
+  // Track saving state per artifact
+  const [savingArtifactId, setSavingArtifactId] = useState<string | null>(null);
+  const [savedArtifactIds, setSavedArtifactIds] = useState<Set<string>>(new Set());
+
   // Cortex integration
   const {
     messages: cortexMessages,
@@ -664,6 +784,39 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     setLocation(href);
   };
 
+  // Handle artifact actions
+  const handleSaveArtifact = useCallback(async (artifact: CortexArtifact) => {
+    if (!projectId) return;
+    setSavingArtifactId(artifact.id);
+    try {
+      await saveArtifact({
+        projectId,
+        title: artifact.title,
+        content: artifact.content,
+        type: artifact.format || 'markdown',
+        category: 'document',
+      });
+      setSavedArtifactIds(prev => new Set(prev).add(artifact.id));
+    } catch (err) {
+      console.error('Failed to save artifact:', err);
+    } finally {
+      setSavingArtifactId(null);
+    }
+  }, [projectId, saveArtifact]);
+
+  const handleExportArtifact = useCallback(async (artifact: CortexArtifact) => {
+    try {
+      await exportDocx(artifact.title, artifact.content);
+    } catch (err) {
+      console.error('Failed to export DOCX:', err);
+    }
+  }, [exportDocx]);
+
+  const handleOpenEditorArtifact = useCallback((artifact: CortexArtifact) => {
+    // If the artifact was saved and has an ID, open it in the editor
+    openInEditor(artifact.id);
+  }, [openInEditor]);
+
   // Handle suggestion click
   const handleSuggestionClick = (text: string) => {
     setInput(text);
@@ -724,6 +877,11 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                   console.log('Feedback:', positive ? 'positive' : 'negative')
                 }
                 onNavigate={handleNavigate}
+                onSaveArtifact={handleSaveArtifact}
+                onExportArtifact={handleExportArtifact}
+                onOpenEditorArtifact={handleOpenEditorArtifact}
+                savingArtifactId={savingArtifactId}
+                savedArtifactIds={savedArtifactIds}
               />
             ))}
             <div ref={messagesEndRef} />

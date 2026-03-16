@@ -7,7 +7,7 @@
  * @version 2.0.0
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,6 +60,8 @@ import type {
   CTDModule,
 } from '../../core/portalTypes';
 import { usePortal, usePermission } from '../../core/portalContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -239,6 +241,7 @@ interface DocumentListItemProps {
   viewMode: ViewMode;
   onView: (doc: VaultDocument) => void;
   onEdit: (doc: VaultDocument) => void;
+  onDownload: (doc: VaultDocument) => void;
   onToggleFavorite: (doc: VaultDocument) => void;
 }
 
@@ -247,6 +250,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
   viewMode,
   onView,
   onEdit,
+  onDownload,
   onToggleFavorite,
 }) => {
   const statusConfig = STATUS_CONFIG[document.status];
@@ -294,7 +298,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
                   <Pencil className="h-4 w-4 mr-2" /> Edit
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDownload(document)}>
                 <Download className="h-4 w-4 mr-2" /> Download
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -380,7 +384,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
                 <Pencil className="h-4 w-4 mr-2" /> Edit
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDownload(document)}>
               <Download className="h-4 w-4 mr-2" /> Download
             </DropdownMenuItem>
             <DropdownMenuItem>
@@ -415,6 +419,9 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
 export const DocumentVault: React.FC = () => {
   const { can } = usePortal();
   const canUpload = can('documents:write');
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -423,149 +430,140 @@ export const DocumentVault: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all');
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
-  // Mock data - in production, this would come from API
+  // Fetch documents from API
+  const { data: vaultDocuments = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['vault-documents', searchQuery, statusFilter],
+    queryFn: async () => {
+      const url = searchQuery
+        ? `/api/vault/search/${encodeURIComponent(searchQuery)}`
+        : '/api/vault/';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to load documents');
+      const data = await res.json();
+      return (data.documents || data || []).map((doc: any) => ({
+        id: String(doc.id),
+        name: doc.title || doc.fileName || 'Untitled',
+        category: doc.category || 'regulatory',
+        ctdModule: doc.metadata?.ctdModule,
+        status: doc.status || 'draft',
+        version: doc.version || '1.0',
+        author: doc.uploadedBy || doc.createdBy || 'Unknown',
+        createdAt: new Date(doc.createdAt),
+        updatedAt: new Date(doc.updatedAt || doc.createdAt),
+        size: doc.fileSize || 0,
+        fileType: doc.fileType || (doc.fileName?.split('.').pop()) || 'pdf',
+        tags: doc.tags || [],
+        isFavorite: false,
+        isLocked: doc.status === 'approved' || doc.status === 'effective',
+        lockOwner: doc.status === 'approved' ? doc.uploadedBy : undefined,
+        ctdSection: doc.metadata?.ctdSection,
+      })) as VaultDocument[];
+    },
+    staleTime: 30000,
+  });
+
+  // Upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch('/api/vault/', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vault-documents'] });
+    },
+  });
+
+  // Upload handler
+  const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', file.name);
+    uploadMutation.mutate(formData);
+    // Reset the file input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [uploadMutation]);
+
+  // Download handler
+  const handleDownload = useCallback((doc: VaultDocument) => {
+    const link = document.createElement('a');
+    link.href = `/api/vault/documents/${doc.id}/download`;
+    link.download = doc.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, []);
+
+  // Navigation handlers
+  const handleView = useCallback((doc: VaultDocument) => {
+    setLocation(`/client-portal/vault/view/${doc.id}`);
+  }, [setLocation]);
+
+  const handleEdit = useCallback((doc: VaultDocument) => {
+    setLocation(`/coauthor/${doc.id}`);
+  }, [setLocation]);
+
+  // Compute document counts for folders dynamically
+  const getDocCountForFolder = useCallback((folderId: string): number => {
+    if (folderId === 'ctd') {
+      return vaultDocuments.filter(d => d.ctdModule?.startsWith('m')).length;
+    }
+    if (folderId.startsWith('m')) {
+      return vaultDocuments.filter(d => d.ctdModule === folderId).length;
+    }
+    const folderCategoryMap: Record<string, DocumentCategory> = {
+      protocols: 'protocol',
+      ibs: 'investigator_brochure',
+      csrs: 'csr',
+      correspondence: 'correspondence',
+    };
+    const category = folderCategoryMap[folderId];
+    if (category) return vaultDocuments.filter(d => d.category === category).length;
+    return 0;
+  }, [vaultDocuments]);
+
+  // Static folder structure with dynamic counts
   const [folders, setFolders] = useState<VaultFolder[]>([
     {
       id: 'ctd',
       name: 'CTD Modules',
       parentId: null,
-      documentCount: 156,
+      documentCount: 0,
       isExpanded: true,
       children: [
-        { id: 'm1', name: 'Module 1 - Administrative', parentId: 'ctd', documentCount: 24 },
-        { id: 'm2', name: 'Module 2 - CTD Summaries', parentId: 'ctd', documentCount: 18 },
-        { id: 'm3', name: 'Module 3 - Quality', parentId: 'ctd', documentCount: 45 },
-        { id: 'm4', name: 'Module 4 - Nonclinical', parentId: 'ctd', documentCount: 32 },
-        { id: 'm5', name: 'Module 5 - Clinical', parentId: 'ctd', documentCount: 37 },
+        { id: 'm1', name: 'Module 1 - Administrative', parentId: 'ctd', documentCount: 0 },
+        { id: 'm2', name: 'Module 2 - CTD Summaries', parentId: 'ctd', documentCount: 0 },
+        { id: 'm3', name: 'Module 3 - Quality', parentId: 'ctd', documentCount: 0 },
+        { id: 'm4', name: 'Module 4 - Nonclinical', parentId: 'ctd', documentCount: 0 },
+        { id: 'm5', name: 'Module 5 - Clinical', parentId: 'ctd', documentCount: 0 },
       ],
     },
-    { id: 'protocols', name: 'Protocols', parentId: null, documentCount: 12 },
-    { id: 'ibs', name: 'Investigator Brochures', parentId: null, documentCount: 8 },
-    { id: 'csrs', name: 'Clinical Study Reports', parentId: null, documentCount: 15 },
+    { id: 'protocols', name: 'Protocols', parentId: null, documentCount: 0 },
+    { id: 'ibs', name: 'Investigator Brochures', parentId: null, documentCount: 0 },
+    { id: 'csrs', name: 'Clinical Study Reports', parentId: null, documentCount: 0 },
     {
       id: 'correspondence',
       name: 'Agency Correspondence',
       parentId: null,
-      documentCount: 42,
+      documentCount: 0,
       isLocked: true,
     },
   ]);
 
-  const [documents, setDocuments] = useState<VaultDocument[]>([
-    {
-      id: '1',
-      name: 'Clinical Overview v2.3.docx',
-      category: 'clinical',
-      ctdModule: 'm2',
-      status: 'pending_approval',
-      version: '2.3',
-      author: 'Sarah Johnson',
-      createdAt: new Date('2025-12-15'),
-      updatedAt: new Date('2026-01-20'),
-      size: 2400000,
-      fileType: 'docx',
-      tags: ['M2', 'Clinical'],
-      isFavorite: true,
-    },
-    {
-      id: '2',
-      name: 'Protocol BTX-331-001 v3.0.pdf',
-      category: 'protocol',
-      status: 'effective',
-      version: '3.0',
-      author: 'Michael Chen',
-      createdAt: new Date('2025-10-01'),
-      updatedAt: new Date('2026-01-15'),
-      size: 1800000,
-      fileType: 'pdf',
-      tags: ['Protocol', 'Phase 1'],
-      isFavorite: true,
-    },
-    {
-      id: '3',
-      name: 'Quality Overall Summary.docx',
-      category: 'cmc',
-      ctdModule: 'm2',
-      status: 'in_review',
-      version: '1.2',
-      author: 'Emily Davis',
-      createdAt: new Date('2025-11-20'),
-      updatedAt: new Date('2026-01-18'),
-      size: 3200000,
-      fileType: 'docx',
-      tags: ['M2', 'QOS'],
-    },
-    {
-      id: '4',
-      name: 'Investigator Brochure v5.0.pdf',
-      category: 'investigator_brochure',
-      status: 'approved',
-      version: '5.0',
-      author: 'Robert Wilson',
-      createdAt: new Date('2025-08-10'),
-      updatedAt: new Date('2026-01-10'),
-      size: 4500000,
-      fileType: 'pdf',
-      tags: ['IB'],
-      isLocked: true,
-      lockOwner: 'R. Wilson',
-    },
-    {
-      id: '5',
-      name: 'CMC Module 3.2.P.pdf',
-      category: 'cmc',
-      ctdModule: 'm3',
-      status: 'draft',
-      version: '0.9',
-      author: 'Amanda Kumar',
-      createdAt: new Date('2026-01-05'),
-      updatedAt: new Date('2026-01-22'),
-      size: 8900000,
-      fileType: 'pdf',
-      tags: ['M3', 'Drug Product'],
-    },
-    {
-      id: '6',
-      name: 'Nonclinical Overview.docx',
-      category: 'nonclinical',
-      ctdModule: 'm2',
-      status: 'approved',
-      version: '1.0',
-      author: 'David Lee',
-      createdAt: new Date('2025-09-15'),
-      updatedAt: new Date('2025-12-20'),
-      size: 1200000,
-      fileType: 'docx',
-      tags: ['M2', 'Nonclinical'],
-    },
-    {
-      id: '7',
-      name: 'Statistical Analysis Plan.docx',
-      category: 'clinical',
-      status: 'effective',
-      version: '2.1',
-      author: 'Jennifer Park',
-      createdAt: new Date('2025-11-01'),
-      updatedAt: new Date('2026-01-08'),
-      size: 980000,
-      fileType: 'docx',
-      tags: ['SAP', 'Statistics'],
-    },
-    {
-      id: '8',
-      name: 'FDA Type B Meeting Request.pdf',
-      category: 'correspondence',
-      status: 'approved',
-      version: '1.0',
-      author: 'Sarah Johnson',
-      createdAt: new Date('2026-01-15'),
-      updatedAt: new Date('2026-01-15'),
-      size: 420000,
-      fileType: 'pdf',
-      tags: ['FDA', 'Meeting'],
-    },
-  ]);
+  // Update folder counts when documents change
+  const foldersWithCounts = useMemo(() => {
+    const updateCounts = (folders: VaultFolder[]): VaultFolder[] =>
+      folders.map(folder => ({
+        ...folder,
+        documentCount: getDocCountForFolder(folder.id),
+        children: folder.children ? updateCounts(folder.children) : undefined,
+      }));
+    return updateCounts(folders);
+  }, [folders, getDocCountForFolder]);
 
   // Toggle folder expansion
   const toggleFolderExpand = useCallback((id: string) => {
@@ -585,29 +583,33 @@ export const DocumentVault: React.FC = () => {
     });
   }, []);
 
-  // Toggle favorite
+  // Toggle favorite (client-side only)
   const toggleFavorite = useCallback((doc: VaultDocument) => {
-    setDocuments(prev =>
-      prev.map(d => (d.id === doc.id ? { ...d, isFavorite: !d.isFavorite } : d))
-    );
+    setFavoriteIds(prev => {
+      const next = new Set(prev);
+      if (next.has(doc.id)) {
+        next.delete(doc.id);
+      } else {
+        next.add(doc.id);
+      }
+      return next;
+    });
   }, []);
+
+  // Apply favorites to documents
+  const documentsWithFavorites = useMemo(() =>
+    vaultDocuments.map(doc => ({
+      ...doc,
+      isFavorite: favoriteIds.has(doc.id),
+    })),
+    [vaultDocuments, favoriteIds]
+  );
 
   // Filter and sort documents
   const filteredDocuments = useMemo(() => {
-    let result = [...documents];
+    let result = [...documentsWithFavorites];
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        doc =>
-          doc.name.toLowerCase().includes(query) ||
-          doc.author.toLowerCase().includes(query) ||
-          doc.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
-
-    // Status filter
+    // Status filter (search is already handled by the API query)
     if (statusFilter !== 'all') {
       result = result.filter(doc => doc.status === statusFilter);
     }
@@ -652,7 +654,7 @@ export const DocumentVault: React.FC = () => {
     });
 
     return result;
-  }, [documents, searchQuery, statusFilter, selectedFolderId, sortField, sortOrder]);
+  }, [documentsWithFavorites, statusFilter, selectedFolderId, sortField, sortOrder]);
 
   return (
     <div className="h-full flex flex-col">
@@ -667,10 +669,22 @@ export const DocumentVault: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           {canUpload && (
-            <Button>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload
-            </Button>
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleUpload}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt,.csv"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadMutation.isPending}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
+              </Button>
+            </>
           )}
           <Button variant="outline">
             <Plus className="h-4 w-4 mr-2" />
@@ -689,7 +703,7 @@ export const DocumentVault: React.FC = () => {
             </CardHeader>
             <CardContent className="pt-0">
               <FolderTree
-                folders={folders}
+                folders={foldersWithCounts}
                 selectedFolderId={selectedFolderId}
                 onSelectFolder={setSelectedFolderId}
                 onToggleExpand={toggleFolderExpand}
@@ -769,7 +783,21 @@ export const DocumentVault: React.FC = () => {
 
           {/* Document Grid/List */}
           <div className="flex-1 overflow-auto">
-            {filteredDocuments.length === 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                <div className="h-8 w-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+                <p className="text-sm">Loading documents...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                <AlertTriangle className="h-12 w-12 mb-4 text-red-400" />
+                <p className="text-lg font-medium">Failed to load documents</p>
+                <p className="text-sm mb-4">{(error as Error).message}</p>
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Try Again
+                </Button>
+              </div>
+            ) : filteredDocuments.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
                 <FileText className="h-12 w-12 mb-4 opacity-50" />
                 <p className="text-lg font-medium">No documents found</p>
@@ -782,8 +810,9 @@ export const DocumentVault: React.FC = () => {
                     key={doc.id}
                     document={doc}
                     viewMode={viewMode}
-                    onView={() => {}}
-                    onEdit={() => {}}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDownload={handleDownload}
                     onToggleFavorite={toggleFavorite}
                   />
                 ))}
@@ -795,8 +824,9 @@ export const DocumentVault: React.FC = () => {
                     key={doc.id}
                     document={doc}
                     viewMode={viewMode}
-                    onView={() => {}}
-                    onEdit={() => {}}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    onDownload={handleDownload}
                     onToggleFavorite={toggleFavorite}
                   />
                 ))}

@@ -191,9 +191,20 @@ const getStatusConfig = (status?: DocumentStatus['status']) => {
 };
 
 const getProgressForModule = (moduleId: string, dossier: SubmissionDossier): { complete: number; total: number } => {
-  // This would calculate based on actual section status
-  // Simplified for demo
-  return { complete: 3, total: 10 };
+  // Calculate from actual dossier section statuses
+  const moduleSections = (dossier.sections || []).filter(
+    (s: any) => s.ectdPath?.startsWith(`${moduleId}.`) || s.moduleId === moduleId
+  );
+  if (moduleSections.length === 0) {
+    // Fall back to counting subsections in the static structure
+    const mod = ECTD_STRUCTURE[moduleId];
+    const total = mod?.children ? Object.keys(mod.children).length : 0;
+    return { complete: 0, total: Math.max(total, 1) };
+  }
+  const complete = moduleSections.filter(
+    (s: any) => s.status === 'final' || s.status === 'published' || s.status === 'qc'
+  ).length;
+  return { complete, total: moduleSections.length };
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -416,10 +427,21 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
     });
   };
   
-  // Calculate overall progress
+  // Calculate overall progress from actual dossier sections
   const overallProgress = useMemo(() => {
-    // Would calculate from actual dossier status
-    return { complete: 34, total: 89, percent: 38 };
+    const sections = dossier.sections || [];
+    if (sections.length === 0) {
+      // Sum subsections from static structure
+      const total = Object.values(ECTD_STRUCTURE).reduce((sum, mod) => {
+        return sum + (mod.children ? Object.keys(mod.children).length : 0);
+      }, 0);
+      return { complete: 0, total, percent: 0 };
+    }
+    const complete = sections.filter(
+      (s: any) => s.status === 'final' || s.status === 'published' || s.status === 'qc'
+    ).length;
+    const total = sections.length;
+    return { complete, total, percent: total > 0 ? Math.round((complete / total) * 100) : 0 };
   }, [dossier]);
   
   return (
@@ -528,7 +550,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                             name: typeof section === 'string' ? section : section.name,
                             ectdPath: sectionId,
                             type: 'section',
-                            status: 'drafting', // Would come from dossier data
+                            status: (dossier.sections || []).find((s: any) => s.ectdPath === sectionId || s.id === sectionId)?.status || 'not_started',
                             children: hasSubsections ? [] : undefined,
                           }}
                           level={0}
@@ -552,7 +574,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                   name: subName as string,
                                   ectdPath: subId,
                                   type: 'subsection',
-                                  status: 'not_started',
+                                  status: (dossier.sections || []).find((s: any) => s.ectdPath === subId || s.id === subId)?.status || 'not_started',
                                 }}
                                 level={1}
                                 isExpanded={false}
