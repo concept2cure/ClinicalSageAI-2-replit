@@ -73,6 +73,7 @@ import {
   ListTodo,
   Calendar,
   TrendingUp,
+  Beaker,
 } from 'lucide-react';
 
 // ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
@@ -96,6 +97,9 @@ const SubmissionGapAnalysis = lazy(() => import('./pages/SubmissionGapAnalysis')
 const DocumentChangeImpact = lazy(() => import('./pages/DocumentChangeImpact'));
 const AnAMemory = lazy(() => import('./pages/AnAMemory'));
 
+// Lazy load CMC Module 3 Hub
+const CMCHub = lazy(() => import('./components/cmc/CMCHub'));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -118,6 +122,7 @@ type LayoutMode =
   | 'timeline'
   | 'audit'
   | 'ctd'
+  | 'cmc'
   | 'mission-control'
   | 'rules'
   | 'ind-workspace'
@@ -652,6 +657,7 @@ export const ZenApp: React.FC = () => {
     { id: 'gap-analysis' as LayoutMode, label: 'Gap Analysis', icon: ClipboardCheck },
     { id: 'change-impact' as LayoutMode, label: 'Change Impact', icon: AlertTriangle },
     { id: 'ana-memory' as LayoutMode, label: 'AnA Memory', icon: Zap },
+    { id: 'cmc' as LayoutMode, label: 'CMC Module 3', icon: Beaker },
   ];
 
   // Filter layout modes by license — only show modes the org has access to
@@ -1472,6 +1478,21 @@ export const ZenApp: React.FC = () => {
           {layoutMode === 'ana-memory' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
               <div className="flex-1 overflow-y-auto"><AnAMemory /></div>
+            </Suspense>
+          )}
+
+          {/* CMC Module 3 Hub */}
+          {layoutMode === 'cmc' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>}>
+              <CMCHub
+                projectId={activeProjectId}
+                projectName={activeProject?.name}
+                submissionType={activeProject?.type}
+                onDraftWithAI={(sectionCode, sectionTitle) => {
+                  setPendingDraftSection({ code: sectionCode, title: sectionTitle });
+                  setLayoutMode('assistant');
+                }}
+              />
             </Suspense>
           )}
 
