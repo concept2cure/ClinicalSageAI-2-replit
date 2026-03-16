@@ -33,36 +33,26 @@ const DocumentTreePanel = ({ isOpen, onClose, documentId }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
-  // Simple hardcoded document structure for the file tree
+  // Document tree — show expected folder structure with empty state
+  // Files will appear here as the user uploads and generates documents
   const vaultFiles = [
     {
       id: 'folder-1',
       name: '510(k) Submission',
       type: 'folder',
-      children: [
-        { id: 'doc-1-1', name: 'Device Description.pdf', type: 'document', format: 'pdf' },
-        { id: 'doc-1-2', name: 'Intended Use.docx', type: 'document', format: 'docx' },
-        { id: 'doc-1-3', name: 'Test Results.pdf', type: 'document', format: 'pdf' },
-      ],
+      children: [],
     },
     {
       id: 'folder-2',
       name: 'Predicate Devices',
       type: 'folder',
-      children: [
-        { id: 'doc-2-1', name: 'Predicate A.pdf', type: 'document', format: 'pdf' },
-        { id: 'doc-2-2', name: 'Predicate B.pdf', type: 'document', format: 'pdf' },
-        { id: 'doc-2-3', name: 'Comparison Table.xlsx', type: 'document', format: 'xlsx' },
-      ],
+      children: [],
     },
     {
       id: 'folder-3',
       name: 'Regulatory Documents',
       type: 'folder',
-      children: [
-        { id: 'doc-3-1', name: 'FDA Guidelines.pdf', type: 'document', format: 'pdf' },
-        { id: 'doc-3-2', name: 'Submission Checklist.docx', type: 'document', format: 'docx' },
-      ],
+      children: [],
     },
   ];
 

@@ -22,12 +22,14 @@ import {
   FileText,
   ShieldCheck,
   Bell,
+  Sparkles,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ManualDataForm from './ManualDataForm';
 import FDAFormsPanel from './FDAFormsPanel';
 import SAMLSettingsPanel from './SAMLSettingsPanel';
 import AlertPreferencesPanel from './AlertPreferencesPanel';
+import { ProjectKnowledgePanel } from './ProjectKnowledgePanel';
 
 /**
  * INDAutomationPanel Component
@@ -162,7 +164,7 @@ export function INDAutomationPanel() {
           )}
 
           <Tabs defaultValue="benchling" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="benchling">
                 <Database className="h-4 w-4 mr-2" />
                 From Benchling
@@ -182,6 +184,10 @@ export function INDAutomationPanel() {
               <TabsTrigger value="alert-preferences">
                 <Bell className="h-4 w-4 mr-2" />
                 Alert Preferences
+              </TabsTrigger>
+              <TabsTrigger value="knowledge-base">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Knowledge Base
               </TabsTrigger>
             </TabsList>
 
@@ -268,6 +274,10 @@ export function INDAutomationPanel() {
 
             <TabsContent value="alert-preferences">
               <AlertPreferencesPanel />
+            </TabsContent>
+
+            <TabsContent value="knowledge-base">
+              <ProjectKnowledgePanel />
             </TabsContent>
           </Tabs>
         </div>

@@ -84,6 +84,7 @@ export const MODULE_IDS = {
   CMC: 'cmc-module',
   MED_DEVICE: 'med-device',
   VAULT: 'vault',
+  IVDR: 'ivdr-module',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -140,6 +141,7 @@ export function useModules() {
     [canAccessModule]
   );
   const isVaultEnabled = useMemo(() => canAccessModule(MODULE_IDS.VAULT), [canAccessModule]);
+  const isIvdrEnabled = useMemo(() => canAccessModule(MODULE_IDS.IVDR), [canAccessModule]);
 
   return {
     isLoading,
@@ -156,6 +158,7 @@ export function useModules() {
     isCmcEnabled,
     isMedDeviceEnabled,
     isVaultEnabled,
+    isIvdrEnabled,
 
     // Generic access check
     canAccess: canAccessModule,

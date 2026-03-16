@@ -1,14 +1,14 @@
 /**
  * Concept2Cure - Study Protocol Designer
- * 
+ *
  * AI-powered clinical protocol design tool supporting:
  * - Multiple study design types (RCT, crossover, adaptive, dose-escalation, etc.)
  * - Endpoints selection and powering
  * - Comparator protocol benchmarking
  * - Regulatory-ready protocol templates
- * 
+ *
  * Powered by Lumen Cortex AI with study design expertise
- * 
+ *
  * @module concept2cure/components/clinical/StudyProtocolDesigner
  * @version 1.0.0
  */
@@ -23,7 +23,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -41,12 +40,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Beaker,
   Users,
@@ -87,7 +81,14 @@ type StudyDesignType =
   | 'n_of_1'
   | 'observational';
 
-type StudyPhase = 'phase_1' | 'phase_1b' | 'phase_2' | 'phase_2b' | 'phase_3' | 'phase_4' | 'pivotal';
+type StudyPhase =
+  | 'phase_1'
+  | 'phase_1b'
+  | 'phase_2'
+  | 'phase_2b'
+  | 'phase_3'
+  | 'phase_4'
+  | 'pivotal';
 
 interface StudyDesign {
   id: string;
@@ -152,7 +153,11 @@ const STUDY_DESIGNS: StudyDesign[] = [
     description: 'Subjects randomized to treatment or control, followed concurrently',
     icon: Users,
     bestFor: ['Phase 2/3 efficacy trials', 'Confirmatory studies', 'Registration studies'],
-    considerations: ['Larger sample size needed', 'Period effects not an issue', 'Standard regulatory acceptance'],
+    considerations: [
+      'Larger sample size needed',
+      'Period effects not an issue',
+      'Standard regulatory acceptance',
+    ],
   },
   {
     id: 'crossover',
@@ -170,7 +175,11 @@ const STUDY_DESIGNS: StudyDesign[] = [
     description: 'Pre-planned modifications based on interim data',
     icon: GitBranch,
     bestFor: ['Uncertain dose selection', 'Rare diseases', 'Resource optimization'],
-    considerations: ['Complex statistical methods', 'Regulatory pre-alignment', 'Type I error control'],
+    considerations: [
+      'Complex statistical methods',
+      'Regulatory pre-alignment',
+      'Type I error control',
+    ],
   },
   {
     id: 'dose_escalation',
@@ -179,7 +188,11 @@ const STUDY_DESIGNS: StudyDesign[] = [
     description: 'Cohorts of 3 patients at increasing doses to find MTD',
     icon: Layers,
     bestFor: ['Phase 1 oncology', 'First-in-human', 'Cytotoxic agents'],
-    considerations: ['Limited PK/PD data', 'MTD may not be optimal', 'Consider BOIN/CRM alternatives'],
+    considerations: [
+      'Limited PK/PD data',
+      'MTD may not be optimal',
+      'Consider BOIN/CRM alternatives',
+    ],
   },
   {
     id: 'group_sequential',
@@ -188,7 +201,7 @@ const STUDY_DESIGNS: StudyDesign[] = [
     description: 'Planned interim analyses with early stopping rules',
     icon: BarChart3,
     bestFor: ['Large confirmatory trials', 'Ethical considerations', 'Resource management'],
-    considerations: ['Alpha spending function', 'O\'Brien-Fleming or Pocock', 'Unblinding risk'],
+    considerations: ['Alpha spending function', "O'Brien-Fleming or Pocock", 'Unblinding risk'],
   },
   {
     id: 'basket',
@@ -215,7 +228,11 @@ const STUDY_DESIGNS: StudyDesign[] = [
     description: 'Single patient crossover for individual treatment decisions',
     icon: Zap,
     bestFor: ['Individualized medicine', 'Chronic symptomatic conditions', 'Rare diseases'],
-    considerations: ['Limited generalizability', 'Multiple crossovers needed', 'Patient commitment'],
+    considerations: [
+      'Limited generalizability',
+      'Multiple crossovers needed',
+      'Patient commitment',
+    ],
   },
 ];
 
@@ -244,13 +261,55 @@ const PROTOCOL_SECTIONS: ProtocolSection[] = [
 ];
 
 const COMMON_ENDPOINTS: Endpoint[] = [
-  { id: 'orr', name: 'Objective Response Rate (ORR)', type: 'primary', measureType: 'binary', description: 'Proportion achieving CR or PR per RECIST' },
-  { id: 'pfs', name: 'Progression-Free Survival (PFS)', type: 'primary', measureType: 'time_to_event', description: 'Time from randomization to progression or death' },
-  { id: 'os', name: 'Overall Survival (OS)', type: 'primary', measureType: 'time_to_event', description: 'Time from randomization to death from any cause' },
-  { id: 'dor', name: 'Duration of Response (DoR)', type: 'secondary', measureType: 'time_to_event', description: 'Time from first response to progression' },
-  { id: 'dcr', name: 'Disease Control Rate (DCR)', type: 'secondary', measureType: 'binary', description: 'Proportion achieving CR, PR, or SD' },
-  { id: 'qol', name: 'Quality of Life (HRQoL)', type: 'secondary', measureType: 'continuous', description: 'Change from baseline in validated PRO instrument' },
-  { id: 'safety', name: 'Safety/Tolerability', type: 'secondary', measureType: 'binary', description: 'Incidence of TEAEs, SAEs, discontinuations' },
+  {
+    id: 'orr',
+    name: 'Objective Response Rate (ORR)',
+    type: 'primary',
+    measureType: 'binary',
+    description: 'Proportion achieving CR or PR per RECIST',
+  },
+  {
+    id: 'pfs',
+    name: 'Progression-Free Survival (PFS)',
+    type: 'primary',
+    measureType: 'time_to_event',
+    description: 'Time from randomization to progression or death',
+  },
+  {
+    id: 'os',
+    name: 'Overall Survival (OS)',
+    type: 'primary',
+    measureType: 'time_to_event',
+    description: 'Time from randomization to death from any cause',
+  },
+  {
+    id: 'dor',
+    name: 'Duration of Response (DoR)',
+    type: 'secondary',
+    measureType: 'time_to_event',
+    description: 'Time from first response to progression',
+  },
+  {
+    id: 'dcr',
+    name: 'Disease Control Rate (DCR)',
+    type: 'secondary',
+    measureType: 'binary',
+    description: 'Proportion achieving CR, PR, or SD',
+  },
+  {
+    id: 'qol',
+    name: 'Quality of Life (HRQoL)',
+    type: 'secondary',
+    measureType: 'continuous',
+    description: 'Change from baseline in validated PRO instrument',
+  },
+  {
+    id: 'safety',
+    name: 'Safety/Tolerability',
+    type: 'secondary',
+    measureType: 'binary',
+    description: 'Incidence of TEAEs, SAEs, discontinuations',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -277,8 +336,7 @@ const calculateSampleSize = (
     const p2 = p1 + effectSize;
     const pBar = (p1 + p2) / 2;
     perArm = Math.ceil(
-      (2 * pBar * (1 - pBar) * Math.pow(zAlpha + zBeta, 2)) /
-      Math.pow(effectSize, 2)
+      (2 * pBar * (1 - pBar) * Math.pow(zAlpha + zBeta, 2)) / Math.pow(effectSize, 2)
     );
     assumptions.push(`Control rate: ${(p1 * 100).toFixed(0)}%`);
     assumptions.push(`Treatment rate: ${(p2 * 100).toFixed(0)}%`);
@@ -286,17 +344,13 @@ const calculateSampleSize = (
     // Continuous endpoint
     const sd = 1; // Standardized
     perArm = Math.ceil(
-      (2 * Math.pow(sd, 2) * Math.pow(zAlpha + zBeta, 2)) /
-      Math.pow(effectSize, 2)
+      (2 * Math.pow(sd, 2) * Math.pow(zAlpha + zBeta, 2)) / Math.pow(effectSize, 2)
     );
     assumptions.push(`Effect size: ${effectSize.toFixed(2)} SD`);
   } else {
     // Time-to-event
     const hr = 1 - effectSize;
-    const events = Math.ceil(
-      (4 * Math.pow(zAlpha + zBeta, 2)) /
-      Math.pow(Math.log(hr), 2)
-    );
+    const events = Math.ceil((4 * Math.pow(zAlpha + zBeta, 2)) / Math.pow(Math.log(hr), 2));
     perArm = Math.ceil(events / (2 * 0.7)); // Assuming 70% event rate
     assumptions.push(`Hazard ratio: ${hr.toFixed(2)}`);
     assumptions.push(`Events needed: ${events}`);
@@ -324,41 +378,43 @@ interface DesignSelectorProps {
 const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelect }) => {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {STUDY_DESIGNS.map((design) => {
+      {STUDY_DESIGNS.map(design => {
         const Icon = design.icon;
         const isSelected = selectedDesign === design.type;
 
         return (
-          <Card
+          <div
             key={design.id}
             className={cn(
-              'cursor-pointer transition-all hover:shadow-md',
+              'border border-border/40 rounded-sm bg-background cursor-pointer transition-all',
               isSelected && 'ring-2 ring-blue-500 bg-blue-50'
             )}
             onClick={() => onSelect(design.type)}
           >
-            <CardContent className="p-4">
+            <div className="px-3 py-2 p-4">
               <div className="flex items-start gap-3">
-                <div className={cn(
-                  'w-10 h-10 rounded-lg flex items-center justify-center',
-                  isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
-                )}>
+                <div
+                  className={cn(
+                    'w-10 h-10 rounded-lg flex items-center justify-center',
+                    isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+                  )}
+                >
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={cn(
-                    'font-medium text-sm',
-                    isSelected ? 'text-blue-900' : 'text-gray-900'
-                  )}>
+                  <h3
+                    className={cn(
+                      'font-medium text-sm',
+                      isSelected ? 'text-blue-900' : 'text-gray-900'
+                    )}
+                  >
                     {design.name}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                    {design.description}
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{design.description}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         );
       })}
     </div>
@@ -384,7 +440,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
 }) => {
   return (
     <div className="space-y-3">
-      {COMMON_ENDPOINTS.map((endpoint) => {
+      {COMMON_ENDPOINTS.map(endpoint => {
         const isSelected = selectedEndpoints.some(e => e.id === endpoint.id);
         const isPrimary = primaryEndpoint?.id === endpoint.id;
 
@@ -393,7 +449,9 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
             key={endpoint.id}
             className={cn(
               'flex items-center gap-3 p-3 rounded-lg border transition-colors',
-              isSelected ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 hover:border-gray-300'
+              isSelected
+                ? 'bg-blue-50 border-blue-200'
+                : 'bg-white border-gray-200 hover:border-gray-300'
             )}
           >
             <input
@@ -405,9 +463,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900">{endpoint.name}</span>
-                {isPrimary && (
-                  <Badge className="bg-blue-600 text-white text-[10px]">Primary</Badge>
-                )}
+                {isPrimary && <Badge className="bg-blue-600 text-white text-[10px]">Primary</Badge>}
                 <Badge variant="outline" className="text-[10px]">
                   {endpoint.measureType.replace('_', ' ')}
                 </Badge>
@@ -490,7 +546,9 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
         <div className="flex items-center justify-between">
           <Label className="text-sm">Expected Effect Size</Label>
           <span className="text-sm font-medium text-blue-600">
-            {endpoint.measureType === 'binary' ? `${(effectSize * 100).toFixed(0)}%` : effectSize.toFixed(2)}
+            {endpoint.measureType === 'binary'
+              ? `${(effectSize * 100).toFixed(0)}%`
+              : effectSize.toFixed(2)}
           </span>
         </div>
         <Slider
@@ -501,7 +559,9 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
           onValueChange={([v]) => onEffectChange(v / 100)}
         />
         <p className="text-xs text-gray-500">
-          {endpoint.measureType === 'binary' ? 'Absolute difference in rates' : 'Standardized difference'}
+          {endpoint.measureType === 'binary'
+            ? 'Absolute difference in rates'
+            : 'Standardized difference'}
         </p>
       </div>
 
@@ -522,14 +582,14 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
 
       {/* Results */}
       {result && (
-        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
+        <div className="border border-border/40 rounded-sm bg-background bg-gradient-to-br from-blue-50 to-white border-blue-200">
+          <div className="px-3 py-2 border-b border-border/30 pb-2">
+            <h3 className="text-sm font-semibold text-base flex items-center gap-2">
               <Calculator className="h-4 w-4 text-blue-600" />
               Sample Size Estimate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
+          <div className="px-3 py-2">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <p className="text-2xl font-bold text-blue-700">{result.perArm}</p>
@@ -555,8 +615,8 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
                 ))}
               </ul>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -606,19 +666,22 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
   // Protocol sections state
   const [protocolSections, setProtocolSections] = useState(PROTOCOL_SECTIONS);
 
-  const handleToggleEndpoint = useCallback((endpoint: Endpoint) => {
-    setSelectedEndpoints(prev => {
-      const exists = prev.some(e => e.id === endpoint.id);
-      if (exists) {
-        // If removing primary, clear it
-        if (primaryEndpoint?.id === endpoint.id) {
-          setPrimaryEndpoint(null);
+  const handleToggleEndpoint = useCallback(
+    (endpoint: Endpoint) => {
+      setSelectedEndpoints(prev => {
+        const exists = prev.some(e => e.id === endpoint.id);
+        if (exists) {
+          // If removing primary, clear it
+          if (primaryEndpoint?.id === endpoint.id) {
+            setPrimaryEndpoint(null);
+          }
+          return prev.filter(e => e.id !== endpoint.id);
         }
-        return prev.filter(e => e.id !== endpoint.id);
-      }
-      return [...prev, endpoint];
-    });
-  }, [primaryEndpoint]);
+        return [...prev, endpoint];
+      });
+    },
+    [primaryEndpoint]
+  );
 
   const handleSetPrimary = useCallback((endpoint: Endpoint) => {
     setPrimaryEndpoint(endpoint);
@@ -633,9 +696,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
 
   const handleGenerateAIDraft = async (sectionId: string) => {
     setProtocolSections(prev =>
-      prev.map(s =>
-        s.id === sectionId ? { ...s, status: 'ai_draft' } : s
-      )
+      prev.map(s => (s.id === sectionId ? { ...s, status: 'ai_draft' } : s))
     );
     // Would call Lumen Cortex API here
   };
@@ -652,7 +713,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">Study Protocol Designer</h1>
-            <p className="text-xs text-gray-500">AI-powered clinical protocol development</p>
+            <p className="text-xs text-gray-500">RI-powered clinical protocol development</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -708,13 +769,13 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                 <Label>Indication / Disease Area</Label>
                 <Input
                   value={indication}
-                  onChange={(e) => setIndication(e.target.value)}
+                  onChange={e => setIndication(e.target.value)}
                   placeholder="e.g., Non-Small Cell Lung Cancer"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Study Phase</Label>
-                <Select value={phase} onValueChange={(v) => setPhase(v as StudyPhase)}>
+                <Select value={phase} onValueChange={v => setPhase(v as StudyPhase)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -738,8 +799,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
             </div>
 
             {selectedDesign && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
+              <div className="border border-border/40 rounded-sm bg-background bg-blue-50 border-blue-200">
+                <div className="px-3 py-2 p-4">
                   <div className="flex items-start gap-3">
                     <selectedDesign.icon className="h-6 w-6 text-blue-600 mt-1" />
                     <div>
@@ -771,14 +832,17 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Treatment Arms</Label>
-                <Select value={treatmentArms.toString()} onValueChange={(v) => setTreatmentArms(parseInt(v))}>
+                <Select
+                  value={treatmentArms.toString()}
+                  onValueChange={v => setTreatmentArms(parseInt(v))}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -791,7 +855,10 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
               </div>
               <div className="space-y-2">
                 <Label>Control Type</Label>
-                <Select value={controlType} onValueChange={(v) => setControlType(v as typeof controlType)}>
+                <Select
+                  value={controlType}
+                  onValueChange={v => setControlType(v as typeof controlType)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -819,11 +886,11 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
             </div>
 
             {selectedEndpoints.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Selected Endpoints Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 border-b border-border/30 pb-2">
+                  <h3 className="text-sm font-semibold text-base">Selected Endpoints Summary</h3>
+                </div>
+                <div className="px-3 py-2">
                   <div className="space-y-2">
                     {primaryEndpoint && (
                       <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
@@ -831,15 +898,20 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                         <span className="text-sm font-medium">{primaryEndpoint.name}</span>
                       </div>
                     )}
-                    {selectedEndpoints.filter(e => e.id !== primaryEndpoint?.id).map(endpoint => (
-                      <div key={endpoint.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                        <Badge variant="outline">Secondary</Badge>
-                        <span className="text-sm">{endpoint.name}</span>
-                      </div>
-                    ))}
+                    {selectedEndpoints
+                      .filter(e => e.id !== primaryEndpoint?.id)
+                      .map(endpoint => (
+                        <div
+                          key={endpoint.id}
+                          className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                        >
+                          <Badge variant="outline">Secondary</Badge>
+                          <span className="text-sm">{endpoint.name}</span>
+                        </div>
+                      ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </TabsContent>
 
@@ -863,8 +935,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
           {/* Protocol Tab */}
           <TabsContent value="protocol" className="m-0 space-y-4">
             {protocolSections.map((section, idx) => (
-              <Card key={section.id}>
-                <CardContent className="p-4 flex items-center justify-between">
+              <div key={section.id} className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-medium flex items-center justify-center">
                       {idx + 1}
@@ -893,15 +965,15 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                         onClick={() => handleGenerateAIDraft(section.id)}
                       >
                         <Sparkles className="h-3 w-3 mr-1" />
-                        AI Draft
+                        RI Draft
                       </Button>
                     )}
                     <Button size="sm" variant="ghost">
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </TabsContent>
         </ScrollArea>

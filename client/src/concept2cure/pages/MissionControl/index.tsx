@@ -711,7 +711,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
               <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-red-600" />
-                  AI Sentinel — Active Findings
+                  RI Sentinel — Active Findings
                 </h2>
                 <div className="flex items-center gap-3">
                   {/* Severity breakdown mini badges */}

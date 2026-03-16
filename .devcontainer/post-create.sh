@@ -3,15 +3,31 @@
 # C2C Codespace Post-Create Setup
 # Runs once when the container is first created
 # ═══════════════════════════════════════════════════════════════════════════════
-set -e
+# Do NOT use set -e — a single failed optional step must not trigger recovery mode
+set +e
 
 echo "🚀 C2C Codespace Post-Create Setup..."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 0. Install PostgreSQL server + pgvector (permanent for this container)
+# ─────────────────────────────────────────────────────────────────────────────
+if ! command -v pg_lsclusters &>/dev/null; then
+  echo "🗄️  Installing PostgreSQL 15 server..."
+  sudo -n apt-get update -y && sudo -n apt-get install -y postgresql-15 postgresql-server-dev-15 2>/dev/null || true
+fi
+
+# Install pgvector from source if not already present
+if [ ! -f /usr/share/postgresql/15/extension/vector.control ] 2>/dev/null; then
+  echo "🧩 Installing pgvector extension..."
+  sudo -n apt-get install -y postgresql-server-dev-15 2>/dev/null || true
+  (cd /tmp && rm -rf pgvector && git clone --branch v0.7.0 --depth 1 https://github.com/pgvector/pgvector.git && cd pgvector && make -j"$(nproc)" && sudo -n make install && rm -rf /tmp/pgvector) || echo "⚠️  pgvector build failed (non-fatal)"
+fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Install Node dependencies
 # ─────────────────────────────────────────────────────────────────────────────
 echo "📦 Installing Node.js dependencies..."
-npm install
+npm install --ignore-scripts
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. Install Python agent dependencies

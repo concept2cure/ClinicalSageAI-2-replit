@@ -2111,7 +2111,7 @@ router.get('/oot-surveillance', async (req, res) => {
       JOIN stab_timepoints tp ON r.tp_id = tp.tp_id
       JOIN stab_conditions c ON r.cond_id = c.cond_id
       JOIN stab_tests t ON r.test_id = t.test_id
-      WHERE r.value ~ '^[0-9.-]+$'
+      WHERE r.value IS NOT NULL
     `;
 
     const params: any[] = [];

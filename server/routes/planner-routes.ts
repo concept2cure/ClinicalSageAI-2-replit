@@ -15,7 +15,7 @@ if (!fs.existsSync(EXPORTS_DIR)) {
 /**
  * Generate an IND summary based on protocol
  */
-router.post('/api/planner/generate-ind', async (req: Request, res: Response) => {
+router.post('/generate-ind', async (req: Request, res: Response) => {
   try {
     const { protocol, sessionId, csrContext } = req.body;
 
@@ -44,7 +44,7 @@ router.post('/api/planner/generate-ind', async (req: Request, res: Response) => 
       'the statistical approach';
 
     // Create prompt for generating IND summary with CSR context if available
-    let prompt = `You are an expert clinical regulatory writer with experience drafting Investigational New Drug (IND) application summaries. 
+    let prompt = `You are an expert clinical regulatory writer with experience drafting Investigational New Drug (IND) application summaries.
 Based on the following protocol information, generate a comprehensive IND summary that follows regulatory expectations and includes:
 
 1. Introduction and objectives
@@ -69,9 +69,41 @@ ${protocol}`;
     // Generate summary using OpenAI
     const systemPrompt =
       'You are an expert IND regulatory document writer. Create a comprehensive and well-structured IND summary based on protocol information.';
-    const content = await analyzeText(prompt, systemPrompt);
+    let content: string;
+    try {
+      content = await analyzeText(prompt, systemPrompt);
+    } catch (aiError: any) {
+      // Fallback demo content when OpenAI is unavailable
+      console.warn(
+        '[Planner] OpenAI unavailable, returning demo IND summary:',
+        aiError?.message?.substring(0, 100)
+      );
+      content = `## IND Application Summary — Demo Mode
 
-    // Return the generated content
+**Note:** This is a demo-generated summary. Connect a valid OpenAI API key for AI-powered generation.
+
+### 1. Introduction and Objectives
+This Investigational New Drug (IND) application covers the clinical investigation of ${molecule} for its intended therapeutic indication.
+
+### 2. Investigational Product Overview
+- **Product:** ${molecule}
+- **Mechanism:** ${moa}
+- **Development Stage:** Phase I/II
+
+### 3. Clinical Trial Design
+- **Primary Endpoint:** ${primaryEndpoint}
+- **Design Rationale:** ${designRationale}
+- **Statistical Model:** ${statisticalModel}
+
+### 4. Safety Monitoring
+A Data Safety Monitoring Board (DSMB) will oversee the trial with predefined stopping rules per ICH E6 guidelines.
+
+### 5. Risk-Benefit Assessment
+The clinical benefit is anticipated to outweigh the risks based on preclinical data and the unmet medical need in the target population.
+
+*This document was generated in demo mode. Please configure a valid OpenAI API key for full AI-powered regulatory document generation.*`;
+    }
+
     return res.json({
       success: true,
       content,
@@ -88,7 +120,7 @@ ${protocol}`;
 /**
  * Generate a SAP (Statistical Analysis Plan) based on protocol
  */
-router.post('/api/planner/generate-sap', async (req: Request, res: Response) => {
+router.post('/generate-sap', async (req: Request, res: Response) => {
   try {
     const { protocol, sessionId, csrContext } = req.body;
 
@@ -100,7 +132,7 @@ router.post('/api/planner/generate-sap', async (req: Request, res: Response) => 
     }
 
     // Create prompt for generating SAP
-    let prompt = `You are an expert biostatistician with experience drafting Statistical Analysis Plans (SAPs) for clinical trials. 
+    let prompt = `You are an expert biostatistician with experience drafting Statistical Analysis Plans (SAPs) for clinical trials.
 Based on the following protocol information, generate a comprehensive SAP that includes:
 
 1. Introduction and objectives
@@ -133,9 +165,13 @@ ${protocol}`;
     // Generate SAP using OpenAI
     const systemPrompt =
       'You are an expert biostatistician specializing in clinical trial statistical analysis plans. Create a comprehensive and technically sound SAP based on protocol information.';
-    const content = await analyzeText(prompt, systemPrompt);
-
-    // Return the generated content
+    let content: string;
+    try {
+      content = await analyzeText(prompt, systemPrompt);
+    } catch (aiError: any) {
+      console.warn('[Planner] OpenAI unavailable for SAP, returning demo content');
+      content = `## Statistical Analysis Plan (SAP) — Demo Mode\n\n**Note:** This is a demo-generated SAP. Connect a valid OpenAI API key for AI-powered generation.\n\n### 1. Study Design\nA randomized, double-blind, placebo-controlled trial with 1:1 allocation ratio.\n\n### 2. Primary Endpoint Analysis\n- **Primary Endpoint:** As specified in the protocol\n- **Analysis Method:** Mixed-effects model for repeated measures (MMRM)\n- **Significance Level:** α = 0.05 (two-sided)\n\n### 3. Sample Size\nPower: 90%, assuming a clinically meaningful treatment difference.\n\n### 4. Missing Data\nMultiple imputation per ICH E9(R1) guidance.\n\n*Demo mode — configure OpenAI API key for full AI generation.*`;
+    }
     return res.json({
       success: true,
       content,
@@ -152,7 +188,7 @@ ${protocol}`;
 /**
  * Generate a protocol summary based on protocol
  */
-router.post('/api/planner/generate-summary', async (req: Request, res: Response) => {
+router.post('/generate-summary', async (req: Request, res: Response) => {
   try {
     const { protocol, sessionId, csrContext } = req.body;
 
@@ -164,7 +200,7 @@ router.post('/api/planner/generate-summary', async (req: Request, res: Response)
     }
 
     // Create prompt for generating protocol summary
-    let prompt = `You are an expert clinical researcher with experience creating protocol summaries. 
+    let prompt = `You are an expert clinical researcher with experience creating protocol summaries.
 Based on the following protocol information, generate a concise but comprehensive summary that includes:
 
 1. Study title and identifier
@@ -188,9 +224,13 @@ ${protocol}`;
     // Generate summary using OpenAI
     const systemPrompt =
       'You are an expert clinical researcher specializing in protocol development and review. Create a comprehensive and well-structured protocol summary.';
-    const content = await analyzeText(prompt, systemPrompt);
-
-    // Return the generated content
+    let content: string;
+    try {
+      content = await analyzeText(prompt, systemPrompt);
+    } catch (aiError: any) {
+      console.warn('[Planner] OpenAI unavailable for summary, returning demo content');
+      content = `## Protocol Summary — Demo Mode\n\n**Note:** This is a demo-generated summary. Connect a valid OpenAI API key for AI-powered generation.\n\n### Study Overview\nThis study investigates a therapeutic intervention in a defined patient population.\n\n### Design\nRandomized, double-blind, placebo-controlled, parallel-group study.\n\n### Key Endpoints\n- **Primary:** Efficacy measure at predefined timepoint\n- **Secondary:** Safety, tolerability, and exploratory biomarkers\n\n*Demo mode — configure OpenAI API key for full AI generation.*`;
+    }
     return res.json({
       success: true,
       content,
@@ -207,15 +247,15 @@ ${protocol}`;
 /**
  * Export generated document to PDF
  */
-router.post('/api/planner/export-sap', async (req: Request, res: Response) => {
+router.post('/export-sap', async (req: Request, res: Response) => {
   await exportToPDF(req, res, 'SAP');
 });
 
-router.post('/api/planner/export-ind', async (req: Request, res: Response) => {
+router.post('/export-ind', async (req: Request, res: Response) => {
   await exportToPDF(req, res, 'IND');
 });
 
-router.post('/api/planner/export-summary', async (req: Request, res: Response) => {
+router.post('/export-summary', async (req: Request, res: Response) => {
   await exportToPDF(req, res, 'Protocol-Summary');
 });
 

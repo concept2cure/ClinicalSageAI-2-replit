@@ -90,7 +90,7 @@ const ACTION_TYPES = [
   { value: 'block_transition', label: 'Block Transition' },
   { value: 'escalate', label: 'Escalate' },
   { value: 'update_field', label: 'Update Field' },
-  { value: 'trigger_ai_analysis', label: 'Trigger AI Analysis' },
+  { value: 'trigger_ai_analysis', label: 'Trigger RI Analysis' },
   { value: 'advance_stage', label: 'Advance Stage' },
   { value: 'create_child_project', label: 'Create Child Project' },
 ] as const;

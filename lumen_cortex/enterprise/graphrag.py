@@ -68,6 +68,9 @@ class EntityType(Enum):
     BIOMARKER = "biomarker"
     DOCUMENT = "document"
     SECTION = "section"
+    PREDICATE_DEVICE = "predicate_device"
+    CLEARANCE_DECISION = "clearance_decision"
+    REGULATORY_STRATEGY = "regulatory_strategy"
 
 
 class RelationshipType(Enum):
@@ -88,6 +91,11 @@ class RelationshipType(Enum):
     CONTRADICTS = "contradicts"
     SUPPORTS = "supports"
     SUPERSEDES = "supersedes"
+    TESTED_WITH = "tested_with"
+    CLEARED_UNDER = "cleared_under"
+    FAILED_DUE_TO = "failed_due_to"
+    SIMILAR_TO = "similar_to"
+    PREDICATE_OF = "predicate_of"
 
 
 class CommunityLevel(Enum):

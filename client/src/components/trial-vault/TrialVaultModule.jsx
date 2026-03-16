@@ -177,7 +177,7 @@ const TrialVaultModule = () => {
   return (
     <div className="flex flex-col">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">TrialSage Vault™</h1>
+        <h1 className="text-2xl font-bold mb-2">Document Vault</h1>
         <p className="text-gray-600">
           Secure document storage with blockchain verification for regulatory submissions
         </p>

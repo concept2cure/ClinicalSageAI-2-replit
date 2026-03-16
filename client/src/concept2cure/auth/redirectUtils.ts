@@ -37,7 +37,10 @@ export const computeRedirect = (
   }
 
   const curUser = userArg ?? (userGetter ? userGetter() : undefined);
-  if (curUser?.organizationId) return '/client-portal';
-  if (curUser?.roles?.includes('client_admin') || curUser?.roles?.includes('client_user')) return '/client-portal';
+  // Only redirect to /client-portal for explicit client-portal role holders.
+  // Admin/editor users also have an organizationId — do NOT send them to the client portal.
+  if (curUser?.roles?.includes('client_admin') || curUser?.roles?.includes('client_user')) {
+    return '/client-portal';
+  }
   return '/concept2cure';
 };

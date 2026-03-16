@@ -101,7 +101,7 @@ const AppSidebar = () => {
             <Link href="/vault">
               <a className={getLinkClass('/vault')}>
                 <Database className="mr-3 flex-shrink-0 h-5 w-5" />
-                {!collapsed && <span>TrialSage Vault</span>}
+                {!collapsed && <span>Document Vault</span>}
               </a>
             </Link>
 
@@ -251,13 +251,13 @@ const AppSidebar = () => {
                 <Bookmark className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Resources</span>
               </a>
-              
+
               <div className="px-3 py-2">
-                <HelpButton 
-                  position="inline" 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full justify-start text-gray-700 hover:bg-gray-100" 
+                <HelpButton
+                  position="inline"
+                  size="sm"
+                  variant="outline"
+                  className="w-full justify-start text-gray-700 hover:bg-gray-100"
                 />
               </div>
             </div>

@@ -15,7 +15,9 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import OpenAI from 'openai';
 import { createScopedLogger } from '../utils/logger';
+import { requireAuth } from '../middleware/auth.js';
 import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
@@ -24,6 +26,10 @@ import {
   getThreadMessages,
   saveChatMessage,
 } from '../services/chat-thread-helpers.js';
+import { pool } from '../db.js';
+import jwt from 'jsonwebtoken';
+import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
+import '../services/tools/index'; // ensure tools are registered
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -95,7 +101,7 @@ router.use(extractTenantContext);
 
 router.get('/health', (_req: Request, res: Response) => {
   res.json({
-    status: 'ok',
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'cortex-unified-api',
     version: '2.0.0',
@@ -170,7 +176,7 @@ function ensureChatGateway() {
  * Context-aware chat endpoint for Lumen Cortex.
  * Accepts project_id and automatically injects project context into the system prompt.
  */
-router.post('/chat', async (req: Request, res: Response) => {
+router.post('/chat', requireAuth, async (req: Request, res: Response) => {
   try {
     const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code } =
       req.body || {};
@@ -206,6 +212,214 @@ router.post('/chat', async (req: Request, res: Response) => {
     const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
     const previousMessages = await getThreadMessages(threadId);
 
+    // Shared message array for both paths
+    const aiMessages = [
+      { role: 'system' as const, content: systemPrompt },
+      ...previousMessages.map((m: any) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+      { role: 'user' as const, content: message },
+    ];
+
+    // ── STREAMING PATH (SSE) ────────────────────────────────────────────────
+    if (stream === true) {
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders();
+
+      let fullContent = '';
+      let streamModel = 'lumen-cortex-demo';
+      const toolArtifacts: Array<{
+        type: string;
+        id: string;
+        title: string;
+        status: string;
+        data?: unknown;
+      }> = [];
+
+      try {
+        const openaiKey = process.env.OPENAI_API_KEY;
+        if (!openaiKey) throw new Error('OPENAI_API_KEY not set');
+        const openai = new OpenAI({ apiKey: openaiKey });
+        const openaiTools = toOpenAITools();
+
+        // ── Phase 1: Non-streaming call with tool schemas ──────────────────
+        const initialCompletion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: aiMessages as any,
+          tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
+          tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
+          max_tokens: 4000,
+          temperature: 0.7,
+        });
+        streamModel = 'openai/gpt-4o-mini';
+
+        const firstChoice = initialCompletion.choices[0].message;
+
+        // ── Phase 2: Execute tool calls if any ─────────────────────────────
+        if (firstChoice.tool_calls && firstChoice.tool_calls.length > 0) {
+          const MAX_TOOL_CALLS = 3;
+          const toolCalls = firstChoice.tool_calls.slice(0, MAX_TOOL_CALLS);
+
+          // Loop detection: reject if LLM requests the same tool twice
+          const seenTools = new Set<string>();
+          const dedupedCalls = toolCalls.filter(tc => {
+            const name = fromOpenAIName(tc.function.name);
+            if (seenTools.has(name)) {
+              logger.warn(
+                `[Chat] Loop detected: LLM requested "${name}" twice — skipping duplicate`
+              );
+              return false;
+            }
+            seenTools.add(name);
+            return true;
+          });
+
+          // Notify client that tools are being executed
+          res.write(
+            `data: ${JSON.stringify({ type: 'status', text: `Running ${dedupedCalls.length} tool(s)...` })}\n\n`
+          );
+
+          // Push the assistant message with tool_calls
+          aiMessages.push(firstChoice as any);
+
+          for (const toolCall of dedupedCalls) {
+            const toolName = fromOpenAIName(toolCall.function.name);
+            let toolArgs: Record<string, string>;
+            try {
+              toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+            } catch {
+              toolArgs = {};
+            }
+
+            const t0 = Date.now();
+            const tool = getTool(toolName);
+            if (!tool) {
+              logger.warn(`[Chat] LLM requested unknown tool: ${toolName}`);
+              aiMessages.push({
+                role: 'tool' as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ error: `Tool "${toolName}" not found` }),
+              });
+              logToolRun({
+                threadId,
+                projectId: numericProjectId,
+                userId,
+                organizationId,
+                toolName,
+                arguments: toolArgs,
+                result: {},
+                status: 'not_found',
+                errorMessage: `Tool "${toolName}" not found`,
+                latencyMs: Date.now() - t0,
+              });
+              continue;
+            }
+
+            try {
+              const result = await tool.execute(toolArgs, {
+                organizationId: String(organizationId),
+                userId: userId ? String(userId) : null,
+                projectId: numericProjectId ? `proj_${numericProjectId}` : null,
+              });
+              const latencyMs = Date.now() - t0;
+
+              // Collect artifacts for the response
+              if (result.artifact) {
+                toolArtifacts.push(result.artifact);
+              }
+
+              const resultPayload = result.artifact || { message: result.message.content };
+              aiMessages.push({
+                role: 'tool' as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(resultPayload),
+              });
+
+              logger.info(`[Chat] Tool "${toolName}" executed in ${latencyMs}ms`);
+              logToolRun({
+                threadId,
+                projectId: numericProjectId,
+                userId,
+                organizationId,
+                toolName,
+                arguments: toolArgs,
+                result: resultPayload as Record<string, unknown>,
+                status: 'success',
+                latencyMs,
+              });
+            } catch (toolErr: any) {
+              const latencyMs = Date.now() - t0;
+              logger.error(
+                `[Chat] Tool "${toolName}" failed in ${latencyMs}ms: ${toolErr.message}`
+              );
+              aiMessages.push({
+                role: 'tool' as const,
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ error: toolErr.message }),
+              });
+              logToolRun({
+                threadId,
+                projectId: numericProjectId,
+                userId,
+                organizationId,
+                toolName,
+                arguments: toolArgs,
+                result: {},
+                status: 'error',
+                errorMessage: toolErr.message,
+                latencyMs,
+              });
+            }
+          }
+
+          // ── Phase 3: Stream the final LLM response with tool results ───
+          const finalCompletion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: aiMessages as any,
+            stream: true,
+            max_tokens: 4000,
+            temperature: 0.4,
+          });
+
+          for await (const chunk of finalCompletion) {
+            const text = chunk.choices[0]?.delta?.content || '';
+            if (text) {
+              fullContent += text;
+              res.write(`data: ${JSON.stringify({ type: 'chunk', text })}\n\n`);
+            }
+          }
+        } else {
+          // ── No tool calls — stream the content directly ──────────────────
+          // The initial response is the final response
+          fullContent = firstChoice.content || '';
+          // Send the full text as a single chunk (was non-streaming phase 1)
+          if (fullContent) {
+            res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
+          }
+        }
+      } catch (streamErr: any) {
+        logger.warn(`[Chat] OpenAI stream failed, using demo response: ${streamErr.message}`);
+        fullContent = generateContextAwareDemoResponse(message, context);
+        res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
+      }
+
+      // Persist both messages after stream completes
+      await saveChatMessage(threadId, 'user', message, streamModel);
+      await saveChatMessage(threadId, 'assistant', fullContent, streamModel, 0);
+
+      // Include artifacts in the done event so the client can display them
+      res.write(
+        `data: ${JSON.stringify({ type: 'done', thread_id: threadId, artifacts: toolArtifacts.length > 0 ? toolArtifacts : undefined })}\n\n`
+      );
+      res.end();
+      return;
+    }
+
+    // ── NON-STREAMING PATH (JSON) ───────────────────────────────────────────
     let assistantMessage: string;
     let model = 'lumen-cortex-demo';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -214,22 +428,13 @@ router.post('/chat', async (req: Request, res: Response) => {
     const gw = ensureChatGateway();
     if (gw && gw.getEnabledProviders().length > 0) {
       try {
-        const gwMessages = [
-          { role: 'system' as const, content: systemPrompt },
-          ...previousMessages.map((m: any) => ({
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-          })),
-          { role: 'user' as const, content: message },
-        ];
-
         logger.info(
           `[Chat] Sending context-aware message (project=${numericProjectId || 'none'}, sub=${context.project?.submissionType || 'none'}, section=${section_code || 'none'})`
         );
 
         const gwResponse: GatewayResponse = await gw.route({
           taskType: 'chat',
-          messages: gwMessages,
+          messages: aiMessages,
           temperature: 0.7,
           maxTokens: 4000,
           callerModule: 'lumen-cortex-chat',
@@ -515,6 +720,166 @@ async function mountSubRouters() {
     logger.error('Failed to mount foresight core routes:', error);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// THREAD MANAGEMENT — list, get, create, delete conversation threads
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function extractUserId(req: Request): number | null {
+  try {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    if (!token) return null;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'trialsage-codespace-jwt-secret-2026'
+    ) as any;
+    return decoded?.userId ? Number(decoded.userId) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** GET /api/cortex/threads — list threads for the current user */
+router.get('/threads', async (req: Request, res: Response) => {
+  try {
+    const userId = extractUserId(req);
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const offset = Number(req.query.offset) || 0;
+    const projectId = req.query.project_id as string | undefined;
+
+    let query = `
+      SELECT ct.id, ct.title, ct.metadata, ct.created_at, ct.updated_at,
+             COUNT(cm.id)::int AS message_count
+      FROM chat_threads ct
+      LEFT JOIN chat_messages cm ON cm.thread_id = ct.id
+      WHERE ct.user_id = $1
+    `;
+    const params: any[] = [userId];
+
+    if (projectId) {
+      params.push(projectId);
+      query += ` AND ct.metadata->>'projectId' = $${params.length}`;
+    }
+
+    query += ` GROUP BY ct.id ORDER BY ct.updated_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+
+    const threads = result.rows.map(r => ({
+      id: r.id,
+      title: r.title || 'Untitled conversation',
+      projectId: r.metadata?.projectId || null,
+      submissionType: r.metadata?.submissionType || null,
+      messageCount: r.message_count,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      metadata: r.metadata,
+    }));
+
+    res.json({ success: true, threads, total: threads.length });
+  } catch (err: any) {
+    logger.error('GET /threads error:', err.message);
+    res.json({ success: true, threads: [] }); // fail-open so UI doesn't break
+  }
+});
+
+/** GET /api/cortex/threads/:threadId — get a single thread with messages */
+router.get('/threads/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const threadResult = await pool.query('SELECT * FROM chat_threads WHERE id = $1', [threadId]);
+    if (!threadResult.rows.length) {
+      return res.status(404).json({ success: false, error: 'Thread not found' });
+    }
+    const thread = threadResult.rows[0];
+    const msgResult = await pool.query(
+      'SELECT id, role, content, model, tokens_used, created_at FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
+      [threadId]
+    );
+    res.json({
+      success: true,
+      id: thread.id,
+      title: thread.title || 'Untitled conversation',
+      projectId: thread.metadata?.projectId || null,
+      submissionType: thread.metadata?.submissionType || null,
+      messages: msgResult.rows.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        createdAt: m.created_at,
+        metadata: { model: m.model, tokenUsage: m.tokens_used },
+      })),
+      createdAt: thread.created_at,
+      updatedAt: thread.updated_at,
+      metadata: thread.metadata,
+    });
+  } catch (err: any) {
+    logger.error('GET /threads/:threadId error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to retrieve thread' });
+  }
+});
+
+/** POST /api/cortex/threads — create a new thread */
+router.post('/threads', async (req: Request, res: Response) => {
+  try {
+    const userId = extractUserId(req);
+    const { title, projectId, submissionType, systemPrompt } = req.body || {};
+    const newId = `cortex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const metadata = { projectId: projectId || null, submissionType: submissionType || null };
+
+    await pool.query(
+      'INSERT INTO chat_threads (id, user_id, title, system_prompt, metadata, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,NOW(),NOW())',
+      [newId, userId, title || 'New conversation', systemPrompt || null, JSON.stringify(metadata)]
+    );
+
+    res.status(201).json({
+      success: true,
+      id: newId,
+      title: title || 'New conversation',
+      projectId: projectId || null,
+      messages: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  } catch (err: any) {
+    logger.error('POST /threads error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to create thread' });
+  }
+});
+
+/** PATCH /api/cortex/threads/:threadId — update thread title */
+router.patch('/threads/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const { title } = req.body || {};
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ success: false, error: 'title is required' });
+    }
+    const trimmed = title.trim().slice(0, 200);
+    await pool.query('UPDATE chat_threads SET title = $1, updated_at = NOW() WHERE id = $2', [
+      trimmed,
+      threadId,
+    ]);
+    res.json({ success: true, title: trimmed });
+  } catch (err: any) {
+    logger.error('PATCH /threads/:threadId error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to update thread title' });
+  }
+});
+
+/** DELETE /api/cortex/threads/:threadId — delete a thread */
+router.delete('/threads/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    await pool.query('DELETE FROM chat_messages WHERE thread_id = $1', [threadId]);
+    await pool.query('DELETE FROM chat_threads WHERE id = $1', [threadId]);
+    res.json({ success: true });
+  } catch (err: any) {
+    logger.error('DELETE /threads/:threadId error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to delete thread' });
+  }
+});
 
 // Initialize sub-routers
 mountSubRouters().catch(error => {

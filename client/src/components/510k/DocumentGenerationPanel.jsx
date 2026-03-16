@@ -4,22 +4,25 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  FileText, 
-  Download, 
-  Lock, 
-  Unlock, 
-  RefreshCw, 
+import {
+  FileText,
+  Download,
+  Lock,
+  Unlock,
+  RefreshCw,
   CheckCircle,
   AlertCircle,
   Loader2,
   FileCheck,
   Send,
-  Copy
+  Copy,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTenantContext } from '@/contexts/TenantContext';
 
 const DocumentGenerationPanel = ({ projectId, projectData }) => {
+  const { currentOrganization } = useTenantContext();
+  const orgId = String(currentOrganization?.id || '1');
   const [loading, setLoading] = useState(false);
   const [documents, setDocuments] = useState([]);
   const [mainDocument, setMainDocument] = useState(null);
@@ -38,20 +41,20 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
     try {
       const response = await fetch(`/api/510k/${projectId}/documents`, {
         headers: {
-          'x-organization-id': localStorage.getItem('organizationId') || '1',
-          'x-user-id': localStorage.getItem('userId') || '1'
-        }
+          'x-organization-id': orgId,
+          'x-user-id': localStorage.getItem('userId') || '1',
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.documents) {
           setDocuments(data.documents);
-          
+
           // Separate main document from forms
           const main = data.documents.find(d => d.documentType === '510k-main');
           const fdaForms = data.documents.filter(d => d.documentType === 'fda-form');
-          
+
           setMainDocument(main);
           setForms(fdaForms);
         }
@@ -65,26 +68,26 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
   const handleGenerateDocuments = async () => {
     setLoading(true);
     setGenerationStatus('generating');
-    
+
     try {
       const response = await fetch(`/api/510k/${projectId}/generate-documents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': localStorage.getItem('organizationId') || '1',
-          'x-user-id': localStorage.getItem('userId') || '1'
-        }
+          'x-organization-id': orgId,
+          'x-user-id': localStorage.getItem('userId') || '1',
+        },
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
-          title: "Documents Generated Successfully",
-          description: "All 510(k) documents and FDA forms have been generated.",
-          variant: "success"
+          title: 'Documents Generated Successfully',
+          description: 'All 510(k) documents and FDA forms have been generated.',
+          variant: 'success',
         });
-        
+
         setGenerationStatus('success');
         await fetchDocuments();
       } else {
@@ -93,9 +96,9 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
     } catch (error) {
       console.error('Error generating documents:', error);
       toast({
-        title: "Generation Failed",
-        description: error.message || "Failed to generate documents. Please try again.",
-        variant: "destructive"
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate documents. Please try again.',
+        variant: 'destructive',
       });
       setGenerationStatus('error');
     } finally {
@@ -104,24 +107,24 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
   };
 
   // Lock a document for regulatory compliance
-  const handleLockDocument = async (documentId) => {
+  const handleLockDocument = async documentId => {
     try {
       const response = await fetch(`/api/510k/documents/${documentId}/lock`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': localStorage.getItem('organizationId') || '1',
-          'x-user-id': localStorage.getItem('userId') || '1'
-        }
+          'x-organization-id': orgId,
+          'x-user-id': localStorage.getItem('userId') || '1',
+        },
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
-          title: "Document Locked",
-          description: "Document has been locked for regulatory compliance.",
-          variant: "success"
+          title: 'Document Locked',
+          description: 'Document has been locked for regulatory compliance.',
+          variant: 'success',
         });
         await fetchDocuments();
       } else {
@@ -130,32 +133,32 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
     } catch (error) {
       console.error('Error locking document:', error);
       toast({
-        title: "Lock Failed",
-        description: error.message || "Failed to lock document.",
-        variant: "destructive"
+        title: 'Lock Failed',
+        description: error.message || 'Failed to lock document.',
+        variant: 'destructive',
       });
     }
   };
 
   // Create a new version of a document
-  const handleCreateVersion = async (documentId) => {
+  const handleCreateVersion = async documentId => {
     try {
       const response = await fetch(`/api/510k/documents/${documentId}/version`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': localStorage.getItem('organizationId') || '1',
-          'x-user-id': localStorage.getItem('userId') || '1'
-        }
+          'x-organization-id': orgId,
+          'x-user-id': localStorage.getItem('userId') || '1',
+        },
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
-          title: "New Version Created",
+          title: 'New Version Created',
           description: `Version ${data.document.version} has been created.`,
-          variant: "success"
+          variant: 'success',
         });
         await fetchDocuments();
       } else {
@@ -164,9 +167,9 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
     } catch (error) {
       console.error('Error creating version:', error);
       toast({
-        title: "Version Creation Failed",
-        description: error.message || "Failed to create new version.",
-        variant: "destructive"
+        title: 'Version Creation Failed',
+        description: error.message || 'Failed to create new version.',
+        variant: 'destructive',
       });
     }
   };
@@ -176,11 +179,11 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
     try {
       const response = await fetch(`/api/510k/documents/${documentId}/pdf/${formType}`, {
         headers: {
-          'x-organization-id': localStorage.getItem('organizationId') || 'default',
-          'x-user-id': localStorage.getItem('userId') || 'system'
-        }
+          'x-organization-id': orgId,
+          'x-user-id': localStorage.getItem('userId') || 'system',
+        },
       });
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -191,11 +194,11 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         toast({
-          title: "Download Started",
+          title: 'Download Started',
           description: `FDA Form ${formType} is downloading.`,
-          variant: "success"
+          variant: 'success',
         });
       } else {
         throw new Error('Failed to download PDF');
@@ -203,32 +206,35 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
-        title: "Download Failed",
-        description: "Failed to download PDF. Please try again.",
-        variant: "destructive"
+        title: 'Download Failed',
+        description: 'Failed to download PDF. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
   // Get status badge color
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'draft': return 'secondary';
-      case 'in_review': return 'warning';
-      case 'locked': return 'info';
-      case 'submitted': return 'success';
-      default: return 'default';
+      case 'draft':
+        return 'secondary';
+      case 'in_review':
+        return 'warning';
+      case 'locked':
+        return 'info';
+      case 'submitted':
+        return 'success';
+      default:
+        return 'default';
     }
   };
 
   // Render document card
-  const renderDocumentCard = (doc) => {
-    const metadata = typeof doc.metadata === 'string' 
-      ? JSON.parse(doc.metadata) 
-      : doc.metadata;
-    
+  const renderDocumentCard = doc => {
+    const metadata = typeof doc.metadata === 'string' ? JSON.parse(doc.metadata) : doc.metadata;
+
     const formType = metadata?.formType;
-    
+
     return (
       <Card key={doc.documentId} className="mb-4">
         <CardHeader>
@@ -254,16 +260,12 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
             <div className="text-sm text-muted-foreground">
               <p>Type: {doc.documentType}</p>
               <p>Created: {new Date(doc.createdAt).toLocaleDateString()}</p>
-              {doc.lockedAt && (
-                <p>Locked: {new Date(doc.lockedAt).toLocaleDateString()}</p>
-              )}
+              {doc.lockedAt && <p>Locked: {new Date(doc.lockedAt).toLocaleDateString()}</p>}
               {doc.finalHash && (
-                <p className="font-mono text-xs">
-                  Hash: {doc.finalHash.substring(0, 16)}...
-                </p>
+                <p className="font-mono text-xs">Hash: {doc.finalHash.substring(0, 16)}...</p>
               )}
             </div>
-            
+
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
               {/* PDF Download for forms */}
@@ -278,7 +280,7 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
                   Download PDF
                 </Button>
               )}
-              
+
               {/* Lock/Unlock */}
               {doc.status === 'draft' && (
                 <Button
@@ -291,7 +293,7 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
                   Lock Document
                 </Button>
               )}
-              
+
               {/* Create Version */}
               {doc.status !== 'submitted' && (
                 <Button
@@ -344,12 +346,21 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
 
       {/* Generation status */}
       {generationStatus && (
-        <Alert className={generationStatus === 'success' ? 'border-green-500' : generationStatus === 'error' ? 'border-red-500' : ''}>
+        <Alert
+          className={
+            generationStatus === 'success'
+              ? 'border-green-500'
+              : generationStatus === 'error'
+                ? 'border-red-500'
+                : ''
+          }
+        >
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {generationStatus === 'generating' && 'Generating documents from workflow data...'}
             {generationStatus === 'success' && 'All documents have been successfully generated!'}
-            {generationStatus === 'error' && 'Document generation failed. Please check your workflow data and try again.'}
+            {generationStatus === 'error' &&
+              'Document generation failed. Please check your workflow data and try again.'}
           </AlertDescription>
         </Alert>
       )}
@@ -361,7 +372,7 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
             <TabsTrigger value="main">Main Document</TabsTrigger>
             <TabsTrigger value="forms">FDA Forms ({forms.length})</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="main" className="mt-4">
             {mainDocument ? (
               renderDocumentCard(mainDocument)
@@ -375,12 +386,10 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
               </Card>
             )}
           </TabsContent>
-          
+
           <TabsContent value="forms" className="mt-4">
             {forms.length > 0 ? (
-              <div className="space-y-4">
-                {forms.map(form => renderDocumentCard(form))}
-              </div>
+              <div className="space-y-4">{forms.map(form => renderDocumentCard(form))}</div>
             ) : (
               <Card>
                 <CardContent className="pt-6">

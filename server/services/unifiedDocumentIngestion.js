@@ -30,10 +30,159 @@ import OpenAI from 'openai';
 import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PYTHON PDF EXTRACTOR BRIDGE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Extract text from PDF using the Python multi-strategy extractor.
+ * Cascades through: PyMuPDF → PyPDF2 → pdfminer.six → OCR → Enhanced OCR
+ *
+ * @param {Buffer} pdfBuffer - PDF file as buffer
+ * @param {Object} options - Extraction options
+ * @param {string[]} options.strategies - Which strategies to use
+ * @param {number} options.minChars - Minimum characters for success (default 50)
+ * @param {boolean} options.forceOcr - Skip text extraction, use OCR directly
+ * @returns {Promise<{text: string, strategy: string, pageCount: number, charCount: number, success: boolean, warnings: string[], metadata: object}>}
+ */
+async function extractPdfWithPython(pdfBuffer, options = {}) {
+  const { strategies, minChars = 50, forceOcr = false } = options;
+
+  // First try: call FastAPI endpoint if analytics-engine is running
+  const analyticsPort = process.env.ANALYTICS_PORT || 8001;
+  const analyticsUrl = `http://localhost:${analyticsPort}/extract-pdf`;
+
+  try {
+    const response = await fetch(analyticsUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_base64: pdfBuffer.toString('base64'),
+        strategies: strategies || null,
+        min_chars: minChars,
+        force_ocr: forceOcr,
+      }),
+      signal: AbortSignal.timeout(120000), // 2 minute timeout for OCR
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`[PDF EXTRACTOR] FastAPI extraction succeeded: ${result.strategy}, ${result.char_count} chars`);
+      return {
+        text: result.text,
+        strategy: result.strategy,
+        pageCount: result.page_count,
+        charCount: result.char_count,
+        success: result.success,
+        warnings: result.warnings,
+        metadata: result.metadata,
+      };
+    }
+    console.warn(`[PDF EXTRACTOR] FastAPI returned ${response.status}, falling back to direct Python call`);
+  } catch (err) {
+    console.warn(`[PDF EXTRACTOR] FastAPI not available (${err.message}), falling back to direct Python call`);
+  }
+
+  // Fallback: call Python script directly
+  return new Promise((resolve, reject) => {
+    const pythonPath = process.env.PYTHON_PATH || path.join(process.cwd(), '.venv/bin/python3');
+    const scriptPath = path.join(process.cwd(), 'ingestion/pdf_extractor.py');
+
+    // Write buffer to temp file
+    const tempFile = `/tmp/pdf_extract_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`;
+    fs.writeFileSync(tempFile, pdfBuffer);
+
+    const args = [
+      '-c',
+      `
+import sys
+import json
+sys.path.insert(0, '${process.cwd()}')
+from ingestion.pdf_extractor import extract_pdf_text
+result = extract_pdf_text(
+    '${tempFile}',
+    strategies=${strategies ? JSON.stringify(strategies) : 'None'},
+    min_chars=${minChars},
+    force_ocr=${forceOcr ? 'True' : 'False'}
+)
+print(json.dumps(result))
+      `.trim(),
+    ];
+
+    const python = spawn(pythonPath, args, {
+      env: { ...process.env, PYTHONPATH: process.cwd() },
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    python.stdout.on('data', (data) => { stdout += data.toString(); });
+    python.stderr.on('data', (data) => { stderr += data.toString(); });
+
+    python.on('close', (code) => {
+      // Cleanup temp file
+      try { fs.unlinkSync(tempFile); } catch {}
+
+      if (code !== 0) {
+        console.error(`[PDF EXTRACTOR] Python script failed: ${stderr}`);
+        resolve({
+          text: '',
+          strategy: 'none',
+          pageCount: 0,
+          charCount: 0,
+          success: false,
+          warnings: [`Python extraction failed: ${stderr}`],
+          metadata: {},
+        });
+        return;
+      }
+
+      try {
+        const result = JSON.parse(stdout.trim());
+        console.log(`[PDF EXTRACTOR] Direct Python extraction succeeded: ${result.strategy}, ${result.char_count} chars`);
+        resolve({
+          text: result.text,
+          strategy: result.strategy,
+          pageCount: result.page_count,
+          charCount: result.char_count,
+          success: result.success,
+          warnings: result.warnings,
+          metadata: result.metadata,
+        });
+      } catch (parseErr) {
+        console.error(`[PDF EXTRACTOR] Failed to parse Python output: ${parseErr}`);
+        resolve({
+          text: '',
+          strategy: 'none',
+          pageCount: 0,
+          charCount: 0,
+          success: false,
+          warnings: [`Failed to parse extraction result: ${parseErr.message}`],
+          metadata: {},
+        });
+      }
+    });
+
+    python.on('error', (err) => {
+      try { fs.unlinkSync(tempFile); } catch {}
+      console.error(`[PDF EXTRACTOR] Python spawn error: ${err}`);
+      resolve({
+        text: '',
+        strategy: 'none',
+        pageCount: 0,
+        charCount: 0,
+        success: false,
+        warnings: [`Python spawn error: ${err.message}`],
+        metadata: {},
+      });
+    });
+  });
+}
 
 // Performance optimization constants
 const LARGE_DOCUMENT_THRESHOLD = 10 * 1024 * 1024; // 10MB
@@ -380,15 +529,27 @@ export class UnifiedDocumentIngestion {
       switch (mimeType) {
         case 'application/pdf':
           const pdfBuffer = fileBuffer || fs.readFileSync(filePath);
-          const pdfData = await PDFParser(pdfBuffer);
-          text = pdfData.text;
-          metadata = { pages: pdfData.numpages, info: pdfData.info };
 
-          // If PDF has little or no text, try OCR (scanned document)
-          if (text.trim().length < 50) {
-            console.log(`[UNIFIED INGESTION] PDF appears to be scanned, using OCR`);
-            const ocrText = await this.processWithOCR(pdfBuffer, 'pdf');
-            text = ocrText.length > text.length ? ocrText : text;
+          // Use Python multi-strategy extractor (PyMuPDF → PyPDF2 → pdfminer → OCR)
+          const pdfResult = await extractPdfWithPython(pdfBuffer);
+          text = pdfResult.text;
+          metadata = {
+            pages: pdfResult.pageCount,
+            strategy: pdfResult.strategy,
+            charCount: pdfResult.charCount,
+            warnings: pdfResult.warnings,
+            ...pdfResult.metadata,
+          };
+
+          // Log extraction result
+          if (pdfResult.success) {
+            console.log(`[UNIFIED INGESTION] PDF extracted via ${pdfResult.strategy}: ${pdfResult.charCount} chars from ${pdfResult.pageCount} pages`);
+          } else {
+            console.warn(`[UNIFIED INGESTION] PDF extraction failed: ${pdfResult.warnings.join(', ')}`);
+          }
+
+          // Track if OCR was used
+          if (pdfResult.strategy === 'ocr' || pdfResult.strategy === 'ocr_enhanced') {
             metadata.ocrProcessed = true;
           }
           break;
@@ -1493,3 +1654,5 @@ export const unifiedUpload = multer({
 
 // Export singleton instance
 export const unifiedDocumentIngestion = new UnifiedDocumentIngestion();
+
+export { extractPdfWithPython };

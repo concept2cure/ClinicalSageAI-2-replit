@@ -16,22 +16,15 @@ import { pool as db } from '../utils/database.js';
  */
 async function getLicenseForOrganization(organizationId) {
   try {
+    // Primary: direct lookup by organization_id
     const result = await db.query(
-      `SELECT l.*
-       FROM licenses l
-       JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
-       WHERE cw.organization_id = $1 AND l.status = 'active'
-       LIMIT 1`,
+      `SELECT * FROM licenses WHERE organization_id = $1 AND status = 'active' LIMIT 1`,
       [organizationId]
     );
 
     if (result.rows.length === 0) {
-      // No license found - check if there's a direct license by client_id match
-      const directResult = await db.query(
-        `SELECT * FROM licenses WHERE client_id = $1 AND status = 'active' LIMIT 1`,
-        [String(organizationId)]
-      );
-      return directResult.rows[0] || null;
+      // No active license found
+      return null;
     }
 
     return result.rows[0];
@@ -75,8 +68,7 @@ async function getProjectCount(licenseId) {
     const result = await db.query(
       `SELECT COUNT(DISTINCT p.id) as count
        FROM projects p
-       JOIN client_workspaces cw ON p.organization_id = cw.organization_id
-       JOIN licenses l ON CAST(l.client_id AS INTEGER) = cw.id
+       JOIN licenses l ON l.organization_id = p.organization_id
        WHERE l.id = $1 AND p.status != 'deleted'`,
       [licenseId]
     );

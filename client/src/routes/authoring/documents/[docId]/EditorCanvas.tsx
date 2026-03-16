@@ -7,7 +7,7 @@ import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Mention } from '@tiptap/extension-mention';
 import CharacterCount from '@tiptap/extension-character-count';
-import { BubbleMenu, FloatingMenu } from '@tiptap/react';
+import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import {
   Bold,
   Italic,
@@ -371,7 +371,7 @@ function getInitialTemplate(region: string): string {
     <div data-section="3.2.P.1">
       <h2>3.2.P.1 Description and Composition</h2>
       <p>{{DRUG_PRODUCT_NAME}} is a {{DOSAGE_FORM}} containing {{API_NAME}} as the active pharmaceutical ingredient.</p>
-      
+
       <h3>Composition</h3>
       <p>Each {{DOSAGE_UNIT}} contains:</p>
       <ul>
@@ -383,7 +383,7 @@ function getInitialTemplate(region: string): string {
     <div data-section="3.2.P.2">
       <h2>3.2.P.2 Pharmaceutical Development</h2>
       <p>The pharmaceutical development of {{DRUG_PRODUCT_NAME}} followed systematic approaches in accordance with ${region === 'FDA' ? 'FDA' : 'ICH'} guidelines.</p>
-      
+
       <h3>Formulation Development</h3>
       <p>The formulation was developed to ensure:</p>
       <ul>

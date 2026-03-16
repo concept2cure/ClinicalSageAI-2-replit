@@ -1,0 +1,28 @@
+{
+  "organizationId": 9,
+  "projectId": 12,
+  "artifactId": "art_e2e_1773445938755",
+  "numericArtifactId": 1,
+  "users": {
+    "admin": {
+      "id": 3,
+      "email": "e2e-admin@trialsage.test",
+      "password": "Admin123!test"
+    },
+    "author": {
+      "id": 4,
+      "email": "e2e-author@trialsage.test",
+      "password": "Author123!test"
+    },
+    "reviewer": {
+      "id": 5,
+      "email": "e2e-reviewer@trialsage.test",
+      "password": "Reviewer123!test"
+    },
+    "viewer": {
+      "id": 6,
+      "email": "e2e-viewer@trialsage.test",
+      "password": "Viewer123!test"
+    }
+  }
+}
