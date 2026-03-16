@@ -22,6 +22,7 @@ import productAuditRoutes from './product-audit';
 import workflowRoutes from './workflow';
 import cmcDashboardRoutes from './cmc-dashboard';
 import anaFeaturesRoutes from './ana-features';
+import regulatoryPathwayIntelligenceRoutes from './regulatory-pathway-intelligence';
 import { authMiddleware } from '../auth';
 
 const router = Router();
@@ -66,6 +67,9 @@ router.use('/cmc', cmcDashboardRoutes);
 
 // AnA Intelligence Features (Feed, Gap Analysis, Change Impact, Memory)
 router.use('/ana', anaFeaturesRoutes);
+
+// Regulatory Pathway Intelligence Engine (30+ agencies, 65+ ICH guidelines, document matrix)
+router.use('/regulatory-intelligence-engine', regulatoryPathwayIntelligenceRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {
