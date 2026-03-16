@@ -23,11 +23,11 @@ const router = Router();
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function getOrgId(req: Request): number {
-  return (req as any).organizationId || (req as any).user?.organizationId || 1;
+  return (req as any).tenantContext?.organizationId || (req as any).tenantId || (req as any).organizationId || (req as any).user?.organizationId || 1;
 }
 
 function getUserId(req: Request): number {
-  return (req as any).userId || (req as any).user?.id || 1;
+  return (req as any).userId || (req as any).tenantContext?.userId || (req as any).user?.id || 1;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

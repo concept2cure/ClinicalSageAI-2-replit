@@ -39,6 +39,7 @@ import {
   Trash2,
   XCircle,
   Zap,
+  BarChart3,
 } from 'lucide-react';
 import {
   useProjectRules,
@@ -511,7 +512,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
   const handleSaveEdit = useCallback(
     (data: RuleFormData) => {
       if (!selectedRuleId) return;
-      updateRule.mutate({ id: selectedRuleId, data }, { onSuccess: () => setViewMode('detail') });
+      updateRule.mutate({ id: selectedRuleId, data: data as unknown as Partial<ProjectRule> }, { onSuccess: () => setViewMode('detail') });
     },
     [selectedRuleId, updateRule]
   );

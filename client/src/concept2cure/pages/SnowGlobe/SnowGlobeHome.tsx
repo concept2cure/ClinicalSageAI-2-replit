@@ -1098,7 +1098,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
               <ScenarioComparison
                 programId={programId}
                 baselineId={null}
-                alternateId={selectedScenarioId}
+                alternateId={selectedScenarioId ? Number(selectedScenarioId) : null}
                 onClose={() => setShowComparison(false)}
               />
             </Suspense>
