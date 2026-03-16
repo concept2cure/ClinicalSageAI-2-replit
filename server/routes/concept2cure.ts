@@ -61,6 +61,9 @@ import {
   projectActivities,
   c2cProjectWorkItems,
   concept2cureNotifications,
+  projectTasks,
+  projectWorkflowStages,
+  projectMilestones,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 
@@ -9187,6 +9190,335 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
     logConcept2cureError('escalation process', error);
     return sendError(res, 500, 'Failed to process escalations');
   }
+});
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT TASK MANAGEMENT
+// Regulatory-aware task management connected to submission workflows
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SUBMISSION_MILESTONES: Record<string, Array<{ name: string; category: string; order: number }>> = {
+  IND: [
+    { name: 'Pre-IND Meeting Request', category: 'regulatory', order: 1 },
+    { name: 'Pre-IND Briefing Document', category: 'document-prep', order: 2 },
+    { name: 'Pre-IND Meeting', category: 'meeting', order: 3 },
+    { name: 'Module 1 Administrative', category: 'document-prep', order: 4 },
+    { name: 'Module 2 Summaries', category: 'document-prep', order: 5 },
+    { name: 'Module 3 Quality (CMC)', category: 'document-prep', order: 6 },
+    { name: 'Module 4 Nonclinical', category: 'document-prep', order: 7 },
+    { name: 'Module 5 Clinical', category: 'document-prep', order: 8 },
+    { name: 'IND Compilation & QC', category: 'quality', order: 9 },
+    { name: 'IND Submission to FDA', category: 'submission', order: 10 },
+    { name: '30-Day Safety Review', category: 'regulatory', order: 11 },
+    { name: 'Study May Proceed', category: 'milestone', order: 12 },
+  ],
+  NDA: [
+    { name: 'Pre-NDA Meeting', category: 'meeting', order: 1 },
+    { name: 'Module 1 Administrative', category: 'document-prep', order: 2 },
+    { name: 'Module 2.5 Clinical Overview', category: 'document-prep', order: 3 },
+    { name: 'Module 2.7 Clinical Summary', category: 'document-prep', order: 4 },
+    { name: 'Module 3 Quality', category: 'document-prep', order: 5 },
+    { name: 'Module 4 Nonclinical Reports', category: 'document-prep', order: 6 },
+    { name: 'Module 5 Clinical Study Reports', category: 'document-prep', order: 7 },
+    { name: 'NDA Compilation & Publishing', category: 'quality', order: 8 },
+    { name: 'NDA Submission', category: 'submission', order: 9 },
+    { name: 'Filing Review (60 days)', category: 'regulatory', order: 10 },
+    { name: 'Mid-Cycle Review', category: 'regulatory', order: 11 },
+    { name: 'Advisory Committee', category: 'meeting', order: 12 },
+    { name: 'PDUFA Date / Action', category: 'milestone', order: 13 },
+  ],
+  BLA: [
+    { name: 'Pre-BLA Meeting', category: 'meeting', order: 1 },
+    { name: 'Module 1 Administrative', category: 'document-prep', order: 2 },
+    { name: 'Module 2 CTD Summaries', category: 'document-prep', order: 3 },
+    { name: 'Module 3 Quality (CMC)', category: 'document-prep', order: 4 },
+    { name: 'Module 4 Nonclinical', category: 'document-prep', order: 5 },
+    { name: 'Module 5 Clinical', category: 'document-prep', order: 6 },
+    { name: 'BLA Compilation & Publishing', category: 'quality', order: 7 },
+    { name: 'BLA Submission', category: 'submission', order: 8 },
+    { name: 'PDUFA Date / Action', category: 'milestone', order: 9 },
+  ],
+  '510K': [
+    { name: 'Device Classification & Pathway', category: 'regulatory', order: 1 },
+    { name: 'Predicate Device Selection', category: 'analysis', order: 2 },
+    { name: 'Pre-Submission Meeting (Q-Sub)', category: 'meeting', order: 3 },
+    { name: 'SE Comparison & Testing Plan', category: 'document-prep', order: 4 },
+    { name: 'Bench Testing & Biocompatibility', category: 'testing', order: 5 },
+    { name: 'Software Documentation (if applicable)', category: 'document-prep', order: 6 },
+    { name: 'Sterilization Validation', category: 'testing', order: 7 },
+    { name: 'Clinical Data / Literature Review', category: 'analysis', order: 8 },
+    { name: '510(k) Summary / Statement', category: 'document-prep', order: 9 },
+    { name: 'Labeling & IFU', category: 'document-prep', order: 10 },
+    { name: 'eSTAR Submission Assembly', category: 'submission', order: 11 },
+    { name: '510(k) Submission to FDA', category: 'submission', order: 12 },
+    { name: 'FDA Review (90-day target)', category: 'regulatory', order: 13 },
+    { name: 'Clearance Decision', category: 'milestone', order: 14 },
+  ],
+  PMA: [
+    { name: 'Pre-Submission Meeting', category: 'meeting', order: 1 },
+    { name: 'Device Description & IFU', category: 'document-prep', order: 2 },
+    { name: 'Manufacturing & Quality System', category: 'document-prep', order: 3 },
+    { name: 'Nonclinical Testing', category: 'testing', order: 4 },
+    { name: 'Clinical Study Design & Protocol', category: 'document-prep', order: 5 },
+    { name: 'Clinical Data & Analysis', category: 'analysis', order: 6 },
+    { name: 'PMA Assembly & QC', category: 'quality', order: 7 },
+    { name: 'PMA Submission', category: 'submission', order: 8 },
+    { name: 'FDA Panel Meeting', category: 'meeting', order: 9 },
+    { name: 'Approval Decision', category: 'milestone', order: 10 },
+  ],
+  CER: [
+    { name: 'Define Scope & Device Description', category: 'document-prep', order: 1 },
+    { name: 'Literature Search Strategy', category: 'analysis', order: 2 },
+    { name: 'Equivalence Assessment', category: 'analysis', order: 3 },
+    { name: 'Clinical Data Appraisal', category: 'analysis', order: 4 },
+    { name: 'Clinical Evaluation Report Draft', category: 'document-prep', order: 5 },
+    { name: 'CER Internal Review', category: 'quality', order: 6 },
+    { name: 'PMCF Plan', category: 'document-prep', order: 7 },
+    { name: 'SSCP Preparation', category: 'document-prep', order: 8 },
+    { name: 'Notified Body Review', category: 'regulatory', order: 9 },
+    { name: 'CE Mark Decision', category: 'milestone', order: 10 },
+  ],
+  DE_NOVO: [
+    { name: 'Risk-Based Classification', category: 'analysis', order: 1 },
+    { name: 'Pre-Submission Meeting', category: 'meeting', order: 2 },
+    { name: 'Performance Testing', category: 'testing', order: 3 },
+    { name: 'Clinical Evidence', category: 'analysis', order: 4 },
+    { name: 'De Novo Request Assembly', category: 'document-prep', order: 5 },
+    { name: 'De Novo Submission', category: 'submission', order: 6 },
+    { name: 'FDA Review & Classification', category: 'regulatory', order: 7 },
+  ],
+};
+
+// GET /api/concept2cure/projects/:projectId/tasks
+router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const { status, priority, category } = req.query;
+
+    let query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+
+    const tasks = await query.orderBy(projectTasks.dueDate);
+
+    // Filter in application layer for optional params
+    let filtered = tasks;
+    if (status) filtered = filtered.filter((t: any) => t.status === status);
+    if (priority) filtered = filtered.filter((t: any) => t.priority === priority);
+    if (category) filtered = filtered.filter((t: any) => t.moduleType === category);
+
+    return sendSuccess(res, filtered, { total: filtered.length });
+  } catch (error: any) {
+    logger.error('Failed to fetch project tasks', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch tasks');
+  }
+});
+
+// POST /api/concept2cure/projects/:projectId/tasks
+router.post('/projects/:projectId/tasks', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const taskSchema = z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      status: z.enum(['todo', 'in-progress', 'review', 'done', 'blocked']).default('todo'),
+      priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+      moduleType: z.string().optional(),
+      dueDate: z.string().optional(),
+      assigneeId: z.number().optional(),
+      parentTaskId: z.number().optional(),
+      estimatedHours: z.number().optional(),
+      dependsOn: z.array(z.string()).optional(),
+      metadata: z.any().optional(),
+    });
+
+    const data = taskSchema.parse(req.body);
+
+    // Resolve organizationId from the project
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+    if (!project) return sendError(res, 404, 'Project not found');
+
+    const [task] = await db.insert(projectTasks).values({
+      organizationId: project.organizationId,
+      projectId,
+      name: data.name,
+      description: data.description || null,
+      status: data.status,
+      priority: data.priority,
+      moduleType: data.moduleType || null,
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
+      assigneeId: data.assigneeId || null,
+      parentTaskId: data.parentTaskId || null,
+      estimatedHours: data.estimatedHours || null,
+      dependsOn: data.dependsOn || null,
+      metadata: data.metadata || null,
+    }).returning();
+
+    return sendSuccess(res, task);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) return sendError(res, 400, 'Validation error', error.errors);
+    logger.error('Failed to create task', { error: error.message });
+    return sendError(res, 500, 'Failed to create task');
+  }
+});
+
+// PUT /api/concept2cure/projects/:projectId/tasks/:taskId
+router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
+
+    const updates = req.body;
+    if (updates.dueDate) updates.dueDate = new Date(updates.dueDate);
+    updates.updatedAt = new Date();
+
+    const [updated] = await db.update(projectTasks)
+      .set(updates)
+      .where(eq(projectTasks.id, taskId))
+      .returning();
+
+    if (!updated) return sendError(res, 404, 'Task not found');
+    return sendSuccess(res, updated);
+  } catch (error: any) {
+    logger.error('Failed to update task', { error: error.message });
+    return sendError(res, 500, 'Failed to update task');
+  }
+});
+
+// DELETE /api/concept2cure/projects/:projectId/tasks/:taskId
+router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
+
+    const [deleted] = await db.delete(projectTasks).where(eq(projectTasks.id, taskId)).returning();
+    if (!deleted) return sendError(res, 404, 'Task not found');
+    return sendSuccess(res, { deleted: true });
+  } catch (error: any) {
+    logger.error('Failed to delete task', { error: error.message });
+    return sendError(res, 500, 'Failed to delete task');
+  }
+});
+
+// POST /api/concept2cure/projects/:projectId/tasks/bulk
+// AI-powered bulk task generation from submission type milestones
+router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const { submissionType, targetDate } = req.body;
+    const milestones = SUBMISSION_MILESTONES[submissionType?.toUpperCase()];
+    if (!milestones) {
+      return sendError(res, 400, `Unknown submission type: ${submissionType}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+    }
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+    if (!project) return sendError(res, 404, 'Project not found');
+
+    const target = targetDate ? new Date(targetDate) : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 6 months default
+    const totalMilestones = milestones.length;
+
+    // Distribute milestones evenly between now and target date
+    const now = new Date();
+    const timeSpan = target.getTime() - now.getTime();
+
+    const taskValues = milestones.map((m, i) => {
+      const dueDate = new Date(now.getTime() + (timeSpan * (i + 1)) / totalMilestones);
+      return {
+        organizationId: project.organizationId,
+        projectId,
+        name: m.name,
+        description: `${submissionType.toUpperCase()} milestone: ${m.name}`,
+        status: 'todo' as const,
+        priority: m.category === 'submission' || m.category === 'milestone' ? ('high' as const) : ('medium' as const),
+        moduleType: m.category,
+        dueDate,
+        metadata: { submissionType, milestoneOrder: m.order, category: m.category, autoGenerated: true },
+      };
+    });
+
+    const created = await db.insert(projectTasks).values(taskValues).returning();
+
+    return sendSuccess(res, created, {
+      total: created.length,
+      submissionType,
+      targetDate: target.toISOString(),
+    });
+  } catch (error: any) {
+    logger.error('Failed to bulk create tasks', { error: error.message });
+    return sendError(res, 500, 'Failed to generate submission tasks');
+  }
+});
+
+// GET /api/concept2cure/projects/:projectId/tasks/summary
+// Task summary with counts by status, overdue count, health score
+router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const tasks = await db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+
+    const now = new Date();
+    const byStatus: Record<string, number> = {};
+    const byPriority: Record<string, number> = {};
+    let overdue = 0;
+    let completed = 0;
+    let total = tasks.length;
+
+    for (const task of tasks) {
+      const s = (task as any).status || 'todo';
+      const p = (task as any).priority || 'medium';
+      byStatus[s] = (byStatus[s] || 0) + 1;
+      byPriority[p] = (byPriority[p] || 0) + 1;
+      if (s === 'done') completed++;
+      if ((task as any).dueDate && new Date((task as any).dueDate) < now && s !== 'done') overdue++;
+    }
+
+    // Health score: 100 if all done, penalized by overdue and blocked tasks
+    const completionRate = total > 0 ? (completed / total) * 100 : 100;
+    const overdueRate = total > 0 ? (overdue / total) * 100 : 0;
+    const blockedCount = byStatus['blocked'] || 0;
+    const healthScore = Math.max(0, Math.round(completionRate - overdueRate * 1.5 - blockedCount * 5));
+
+    return sendSuccess(res, {
+      total,
+      completed,
+      overdue,
+      byStatus,
+      byPriority,
+      healthScore,
+      completionRate: Math.round(completionRate),
+    });
+  } catch (error: any) {
+    logger.error('Failed to compute task summary', { error: error.message });
+    return sendError(res, 500, 'Failed to compute task summary');
+  }
+});
+
+// GET /api/concept2cure/submission-milestones/:type
+// Get available milestones for a submission type
+router.get('/submission-milestones/:type', (req: Request, res: Response) => {
+  const type = req.params.type.toUpperCase();
+  const milestones = SUBMISSION_MILESTONES[type];
+  if (!milestones) {
+    return sendError(res, 404, `No milestones for type: ${type}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+  }
+  return sendSuccess(res, milestones);
+});
+
+// GET /api/concept2cure/submission-milestones
+// Get all available submission types
+router.get('/submission-milestones', (_req: Request, res: Response) => {
+  const types = Object.keys(SUBMISSION_MILESTONES).map(type => ({
+    type,
+    milestoneCount: SUBMISSION_MILESTONES[type].length,
+  }));
+  return sendSuccess(res, types);
 });
 
 export default router;

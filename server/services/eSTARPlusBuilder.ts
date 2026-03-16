@@ -146,15 +146,20 @@ export class DigitalSigner {
 }
 
 /**
- * Mock ESG client for FDA Electronic Submissions Gateway
+ * ESG Client for FDA Electronic Submissions Gateway
+ *
+ * Production mode: Requires FDA_ESG_API_KEY environment variable.
+ * Simulation mode: When no API key is configured, returns a simulation
+ * result with `mode: 'simulation'` so callers can clearly distinguish
+ * real submissions from test runs.
  */
 export class ESGClient {
   /**
    * Upload a package to FDA ESG
-   * 
+   *
    * @param filePath Path to the ZIP package file
    * @param options Upload options including API key and metadata
-   * @returns Upload status response
+   * @returns Upload status response with mode indicator
    */
   static async uploadToESG(filePath: string, options: {
     apiKey?: string;
@@ -168,35 +173,52 @@ export class ESGClient {
     trackingId?: string;
     error?: string;
     submissionDate?: string;
+    mode: 'production' | 'simulation';
+    message?: string;
   }> {
-    // This is a mock implementation
-    // In a real implementation, this would use FDA ESG API
-    
-    if (!options.apiKey && !process.env.FDA_ESG_API_KEY) {
-      return {
-        success: false,
-        error: 'FDA ESG API key is required for submission'
-      };
-    }
-    
+    const apiKey = options.apiKey || process.env.FDA_ESG_API_KEY;
+
     // Check if file exists
     if (!fs.existsSync(filePath)) {
       return {
         success: false,
-        error: `Package file not found: ${filePath}`
+        error: `Package file not found: ${filePath}`,
+        mode: apiKey ? 'production' : 'simulation',
       };
     }
-    
-    // Simulate a successful upload
+
+    // ── Production mode: real ESG submission ──────────────────────────
+    if (apiKey) {
+      // FDA ESG API integration point
+      // When FDA ESG API credentials are configured, this is where the
+      // real HTTP call to the FDA Electronic Submissions Gateway would go.
+      // The ESG API uses WebDAV-based file upload with OAuth2 authentication.
+      //
+      // For now, we validate the package and return a clear production status.
+      // Replace the block below with actual ESG API call when ready.
+      console.log(`[ESGClient] PRODUCTION submission for: ${options.metadata.deviceName} (${options.metadata.sequence})`);
+      console.warn('[ESGClient] FDA ESG API integration pending — API key is configured but real ESG HTTP client is not yet implemented.');
+
+      return {
+        success: false,
+        error: 'FDA ESG API integration is configured but the HTTP client is not yet implemented. Package has been validated and is ready for manual upload to FDA ESG portal.',
+        mode: 'production',
+        message: 'Upload your validated package at: https://www.fda.gov/industry/electronic-submissions-gateway',
+      };
+    }
+
+    // ── Simulation mode: no API key ──────────────────────────────────
     const submissionDate = new Date().toISOString();
-    const trackingId = `ESG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    
-    console.log(`Simulated ESG upload: ${options.metadata.deviceName} (${options.metadata.sequence})`);
-    
+    const trackingId = `SIM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    console.warn(`[ESGClient] SIMULATION mode — no FDA_ESG_API_KEY configured. Device: ${options.metadata.deviceName}`);
+
     return {
       success: true,
       trackingId,
-      submissionDate
+      submissionDate,
+      mode: 'simulation',
+      message: 'This is a SIMULATION — no data was sent to FDA. To enable real submissions, configure the FDA_ESG_API_KEY environment variable.',
     };
   }
 }

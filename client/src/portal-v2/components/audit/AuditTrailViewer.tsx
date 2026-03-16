@@ -9,7 +9,10 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { auditLogger } from '../../utils/logger';
+import { Loader2 } from 'lucide-react';
 import {
   History,
   Search,
@@ -44,148 +47,64 @@ import type { AuditLogEntry, AuditEventType } from '../../core/securityTypes';
 import { AUDIT_EVENT_CONFIG } from '../../core/securityTypes';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA
+// API DATA MAPPING
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
-  {
-    id: 'audit_001',
-    timestamp: '2025-01-24T10:15:32.000Z',
-    eventType: 'document_approved',
-    userId: 'user_001',
-    userEmail: 'john.smith@pharma.com',
-    userName: 'John Smith',
+/** Map proof audit entries from the backend to AuditLogEntry shape */
+function mapProofAuditEntry(entry: any, idx: number): AuditLogEntry {
+  // Map backend event types to the uppercase AuditEventType
+  const eventTypeMap: Record<string, AuditEventType> = {
+    'proof_view': 'DOCUMENT_VIEWED',
+    'proof_verification': 'DOCUMENT_APPROVED',
+    'certificate_generated': 'DOCUMENT_EXPORTED',
+    'ui_proof_view': 'DOCUMENT_VIEWED',
+    'ui_verification_request': 'DOCUMENT_APPROVED',
+  };
+  return {
+    id: entry.id || `audit_${idx}`,
+    timestamp: new Date(entry.timestamp || Date.now()),
+    eventType: eventTypeMap[entry.eventType] || 'DOCUMENT_VIEWED',
+    severity: 'info',
+    userId: entry.actorId || entry.userId || 'system',
+    userEmail: entry.actorEmail || '',
+    userName: entry.actorName || entry.actorId || 'System',
+    organizationId: entry.organizationId || 'org_001',
+    resourceType: 'workflows',
+    resourceId: entry.workflowRunId || entry.resourceId || '',
+    resourceName: entry.resourceName || entry.workflowRunId || '',
+    action: entry.action || entry.eventType || 'view',
+    description: entry.reason || entry.details || entry.eventType || '',
+    previousValue: entry.previousValue,
+    newValue: entry.newValue,
+    ipAddress: entry.ipAddress || '',
+    userAgent: entry.userAgent || '',
+    sessionId: entry.sessionId || '',
+    metadata: entry.metadata || {},
+  };
+}
+
+/** Map submission-center tasks into audit-like entries as a fallback */
+function mapTaskToAuditEntry(task: any, idx: number): AuditLogEntry {
+  return {
+    id: `task_audit_${task.id || idx}`,
+    timestamp: new Date(task.updated_at || task.created_at || Date.now()),
+    eventType: task.status === 'completed' ? 'DOCUMENT_APPROVED' : 'DOCUMENT_UPDATED',
+    severity: 'info',
+    userId: 'system',
+    userEmail: task.assigned_email || '',
+    userName: task.assigned_to || 'System',
     organizationId: 'org_001',
-    resourceType: 'document',
-    resourceId: 'doc_csr_001',
-    resourceName: 'Clinical Study Report v2.1',
-    action: 'approve',
-    previousValue: { status: 'pending_approval' },
-    newValue: { status: 'approved', approvedBy: 'user_001' },
-    reason: 'Approved after QA review',
-    ipAddress: '192.168.1.100',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
-    sessionId: 'sess_abc123',
-    signatureId: 'sig_xyz789',
-    hashValue: 'a1b2c3d4e5f6g7h8i9j0',
-    previousHash: 'z9y8x7w6v5u4t3s2r1q0',
-    metadata: {
-      documentVersion: '2.1',
-      workflowStep: 'QA_Approval',
-    },
-  },
-  {
-    id: 'audit_002',
-    timestamp: '2025-01-24T09:45:18.000Z',
-    eventType: 'user_login',
-    userId: 'user_002',
-    userEmail: 'sarah.johnson@pharma.com',
-    userName: 'Sarah Johnson',
-    organizationId: 'org_001',
-    resourceType: 'session',
-    resourceId: 'sess_def456',
-    action: 'create',
-    newValue: { loginMethod: 'password_mfa', mfaType: 'totp' },
-    ipAddress: '192.168.1.105',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15',
-    sessionId: 'sess_def456',
-    hashValue: 'b2c3d4e5f6g7h8i9j0k1',
-    previousHash: 'a1b2c3d4e5f6g7h8i9j0',
-  },
-  {
-    id: 'audit_003',
-    timestamp: '2025-01-24T09:30:00.000Z',
-    eventType: 'record_modified',
-    userId: 'user_003',
-    userEmail: 'michael.chen@pharma.com',
-    userName: 'Michael Chen',
-    organizationId: 'org_001',
-    resourceType: 'protocol',
-    resourceId: 'prot_001',
-    resourceName: 'Protocol ABC-123',
-    action: 'update',
-    previousValue: { version: '1.2', status: 'draft' },
-    newValue: { version: '1.3', status: 'draft' },
-    reason: 'Updated inclusion criteria per sponsor feedback',
-    ipAddress: '192.168.1.110',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
-    sessionId: 'sess_ghi789',
-    hashValue: 'c3d4e5f6g7h8i9j0k1l2',
-    previousHash: 'b2c3d4e5f6g7h8i9j0k1',
-    fieldChanges: [
-      { field: 'inclusionCriteria', oldValue: 'Age 18-65', newValue: 'Age 18-75' },
-      { field: 'version', oldValue: '1.2', newValue: '1.3' },
-    ],
-  },
-  {
-    id: 'audit_004',
-    timestamp: '2025-01-24T08:15:00.000Z',
-    eventType: 'signature_applied',
-    userId: 'user_001',
-    userEmail: 'john.smith@pharma.com',
-    userName: 'John Smith',
-    organizationId: 'org_001',
-    resourceType: 'document',
-    resourceId: 'doc_ind_001',
-    resourceName: 'IND Application Module 2',
-    action: 'sign',
-    newValue: { signatureMeaning: 'approval', signatureHash: 'sig_hash_123' },
-    ipAddress: '192.168.1.100',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
-    sessionId: 'sess_abc123',
-    signatureId: 'sig_abc001',
-    hashValue: 'd4e5f6g7h8i9j0k1l2m3',
-    previousHash: 'c3d4e5f6g7h8i9j0k1l2',
-    metadata: {
-      mfaVerified: true,
-      biometricVerified: false,
-    },
-  },
-  {
-    id: 'audit_005',
-    timestamp: '2025-01-23T16:45:00.000Z',
-    eventType: 'role_changed',
-    userId: 'user_001',
-    userEmail: 'john.smith@pharma.com',
-    userName: 'John Smith (acting as admin)',
-    organizationId: 'org_001',
-    resourceType: 'user',
-    resourceId: 'user_004',
-    resourceName: 'Emily Davis',
-    action: 'update',
-    previousValue: { roles: ['viewer'] },
-    newValue: { roles: ['external_partner', 'viewer'] },
-    reason: 'Added external partner role for vendor access',
-    ipAddress: '192.168.1.100',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
-    sessionId: 'sess_abc123',
-    signatureId: 'sig_role_001',
-    hashValue: 'e5f6g7h8i9j0k1l2m3n4',
-    previousHash: 'd4e5f6g7h8i9j0k1l2m3',
-  },
-  {
-    id: 'audit_006',
-    timestamp: '2025-01-23T14:20:00.000Z',
-    eventType: 'permission_denied',
-    userId: 'user_004',
-    userEmail: 'emily.davis@partner.com',
-    userName: 'Emily Davis',
-    organizationId: 'org_001',
-    resourceType: 'document',
-    resourceId: 'doc_confidential_001',
-    resourceName: 'Confidential Safety Report',
-    action: 'read',
-    ipAddress: '10.0.0.50',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/120.0.0.0',
-    sessionId: 'sess_ext001',
-    hashValue: 'f6g7h8i9j0k1l2m3n4o5',
-    previousHash: 'e5f6g7h8i9j0k1l2m3n4',
-    metadata: {
-      deniedReason: 'insufficient_permissions',
-      requiredRole: 'safety_officer',
-    },
-  },
-];
+    resourceType: 'projects',
+    resourceId: String(task.id || idx),
+    resourceName: task.title || 'Task',
+    action: task.status === 'completed' ? 'complete' : 'update',
+    description: task.description || '',
+    ipAddress: '',
+    userAgent: '',
+    sessionId: '',
+    metadata: { module: task.module_type, category: task.category },
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -209,7 +128,38 @@ interface FilterState {
 
 export function AuditTrailViewer() {
   const { can, organization, complianceConfig } = useSecurityContext();
-  const [logs, setLogs] = useState(MOCK_AUDIT_LOGS);
+
+  // Fetch audit entries from proof audit endpoint
+  const { data: auditData, isLoading: auditLoading, error: auditError } = useQuery({
+    queryKey: ['audit-trail-proof-entries'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/workflow/proofs/audit?limit=100');
+      return res.json();
+    },
+    retry: 1,
+  });
+
+  // Fallback: fetch tasks as audit-like entries
+  const { data: tasksData, isLoading: tasksLoading } = useQuery({
+    queryKey: ['audit-trail-tasks-fallback'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/submission-center/tasks');
+      return res.json();
+    },
+  });
+
+  // Combine audit entries from both sources
+  const logs: AuditLogEntry[] = useMemo(() => {
+    const proofEntries: AuditLogEntry[] = (auditData?.data?.entries || []).map(mapProofAuditEntry);
+    const taskEntries: AuditLogEntry[] = (tasksData?.data || []).slice(0, 20).map(mapTaskToAuditEntry);
+    const combined = [...proofEntries, ...taskEntries];
+    // Sort by timestamp descending
+    combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return combined;
+  }, [auditData, tasksData]);
+
+  const isLoading = auditLoading && tasksLoading;
+
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showExportSignature, setShowExportSignature] = useState(false);
@@ -338,6 +288,15 @@ export function AuditTrailViewer() {
     }),
     [filteredLogs]
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-muted-foreground">Loading audit records...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -43,6 +43,7 @@ import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact'
 import { CustomInstructions } from './components/knowledge/CustomInstructions';
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjects } from './hooks/useProjects';
+import { useProjectTasks, type ProjectTask, type TaskSummary } from './hooks/useProjectTasks';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
@@ -82,6 +83,16 @@ import {
   Layers,
   Download,
   Brain,
+  ArrowLeft,
+  CircleDot,
+  Play,
+  Pause,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  ListTodo,
+  Calendar,
+  TrendingUp,
 } from 'lucide-react';
 
 // Utility: instantly redirect dead layout modes to regulatory-workspace
@@ -440,6 +451,7 @@ export const ZenApp: React.FC = () => {
   // Projects from database
   const {
     projects: rawProjects,
+    isLoading: projectsLoading,
     createProject: createProjectMutation,
     updateProject: updateProjectMutation,
     deleteProject: deleteProjectMutation,
@@ -590,6 +602,21 @@ export const ZenApp: React.FC = () => {
     },
     [activeProjectId]
   );
+  // Sherpa project detail view state
+  const [sherpaDetailProjectId, setSherpaDetailProjectId] = useState<string | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [taskFilter, setTaskFilter] = useState<string>('all');
+
+  // Task management for the selected project in sherpa mode
+  const {
+    tasks: projectTasks,
+    isLoadingTasks,
+    summary: taskSummary,
+    createTask,
+    updateTask,
+    generateMilestones,
+    isGenerating: isGeneratingMilestones,
+  } = useProjectTasks(sherpaDetailProjectId || activeProjectId);
 
   // Pending draft request from IND Workspace → passed to ZenChat when switching to assistant mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
