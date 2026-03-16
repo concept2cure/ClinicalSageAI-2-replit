@@ -899,6 +899,16 @@ try {
   console.error('❌ Failed to mount Evidence routes:', error);
 }
 
+// Mount Evidence Search API routes (semantic + artifact search for Evidence Search UI)
+try {
+  const evidenceSearchModule = await import('./routes/evidence-search.js');
+  const evidenceSearchRoutes = evidenceSearchModule.default;
+  app.use('/api/evidence-search', evidenceSearchRoutes);
+  console.log('✅ Evidence Search API routes mounted successfully (semantic + artifact search)');
+} catch (error) {
+  console.error('❌ Failed to mount Evidence Search routes:', error);
+}
+
 try {
   const contentPlanModule = await import('./routes/content-plan.js');
   const contentPlanRoutes = contentPlanModule.default;
