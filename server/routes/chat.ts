@@ -403,7 +403,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
     const gw = ensureGateway();
     if (!gw || gw.getEnabledProviders().length === 0) {
       return res.status(503).json({
-        error: 'No AI providers available. Configure OPENAI_API_KEY or another provider.',
+        error: 'No AI providers available. Configure ANTHROPIC_API_KEY or OPENAI_API_KEY.',
         code: 'AI_PROVIDER_UNAVAILABLE',
       });
     }
@@ -780,7 +780,7 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
  * Health check for chat service
  */
 router.get('/health', async (req: Request, res: Response) => {
-  const hasApiKey = !!process.env.OPENAI_API_KEY;
+  const hasApiKey = !!process.env.ANTHROPIC_API_KEY || !!process.env.OPENAI_API_KEY;
 
   let threadCount = 0;
   try {
@@ -793,7 +793,8 @@ router.get('/health', async (req: Request, res: Response) => {
   res.json({
     status: hasApiKey ? 'healthy' : 'degraded',
     service: 'AnA Chat',
-    openai_configured: hasApiKey,
+    ai_configured: hasApiKey,
+    primary_provider: process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai',
     active_threads: threadCount,
     persistence: 'postgresql',
     timestamp: new Date().toISOString(),
