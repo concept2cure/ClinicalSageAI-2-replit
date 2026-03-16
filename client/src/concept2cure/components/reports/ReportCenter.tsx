@@ -61,9 +61,11 @@ const REPORT_TYPES = [
 export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) => {
   const { reports, isLoading, generateReport, isGenerating } = useReports(projectId);
   const [generatingType, setGeneratingType] = useState<string | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const handleGenerate = async (type: typeof REPORT_TYPES[0]) => {
     setGeneratingType(type.type);
+    setGenerateError(null);
     try {
       await generateReport({
         type: type.type,
@@ -71,7 +73,7 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
         projectId,
       });
     } catch (err) {
-      console.error('Failed to generate report:', err);
+      setGenerateError(err instanceof Error ? err.message : 'Failed to generate report');
     } finally {
       setGeneratingType(null);
     }
@@ -85,6 +87,15 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
           Generate readiness briefs, exception summaries, sponsor handoffs, and transmittals from your current submission state.
         </p>
       </div>
+
+      {/* Error Display */}
+      {generateError && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span>{generateError}</span>
+          <button onClick={() => setGenerateError(null)} className="ml-auto text-red-400 hover:text-red-600">&times;</button>
+        </div>
+      )}
 
       {/* Generate New Report */}
       <div className="mb-8">

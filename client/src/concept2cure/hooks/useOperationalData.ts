@@ -49,7 +49,7 @@ export function useOperationalData(organizationId?: number) {
           const json = await tasksRes.json();
           const rawTasks = json.data || json.tasks || json || [];
           tasks = rawTasks.map((t: any) => ({
-            id: t.taskId || t.id || String(Math.random()),
+            id: t.taskId || t.id || `task-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
             title: t.title || t.name || 'Untitled Task',
             description: t.description,
             status: t.status || 'pending',
@@ -61,8 +61,8 @@ export function useOperationalData(organizationId?: number) {
             isOverdue: t.dueDate ? new Date(t.dueDate) < new Date() && t.status !== 'completed' : false,
           }));
         }
-      } catch (err) {
-        console.warn('Could not fetch tasks, using empty state:', err);
+      } catch {
+        // Task endpoint unavailable — continue with empty task list
       }
 
       // Try to fetch artifact counts for metrics

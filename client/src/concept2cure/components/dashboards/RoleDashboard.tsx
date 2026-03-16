@@ -359,6 +359,23 @@ interface MetricCardProps {
   colorClass: string;
 }
 
+// Static Tailwind color maps to prevent CSS purge issues
+const COLOR_BG_100: Record<string, string> = {
+  blue: 'bg-blue-100', indigo: 'bg-indigo-100', green: 'bg-green-100', purple: 'bg-purple-100',
+  violet: 'bg-violet-100', amber: 'bg-amber-100', teal: 'bg-teal-100', cyan: 'bg-cyan-100',
+  rose: 'bg-rose-100', slate: 'bg-slate-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
+};
+const COLOR_TEXT_600: Record<string, string> = {
+  blue: 'text-blue-600', indigo: 'text-indigo-600', green: 'text-green-600', purple: 'text-purple-600',
+  violet: 'text-violet-600', amber: 'text-amber-600', teal: 'text-teal-600', cyan: 'text-cyan-600',
+  rose: 'text-rose-600', slate: 'text-slate-600', sky: 'text-sky-600', orange: 'text-orange-600',
+};
+const COLOR_TEXT_700: Record<string, string> = {
+  blue: 'text-blue-700', indigo: 'text-indigo-700', green: 'text-green-700', purple: 'text-purple-700',
+  violet: 'text-violet-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
+  rose: 'text-rose-700', slate: 'text-slate-700', sky: 'text-sky-700', orange: 'text-orange-700',
+};
+
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
   return (
     <Card>
@@ -366,7 +383,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-gray-500 font-medium">{metric.label}</p>
-            <p className={cn('text-2xl font-bold mt-1', `text-${colorClass}-700`)}>
+            <p className={cn('text-2xl font-bold mt-1', COLOR_TEXT_700[colorClass] || 'text-gray-700')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
@@ -570,7 +587,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
-          Ask Lumen Cortex
+          Ask Concept2Cure AI
         </CardTitle>
         <CardDescription className="text-xs">
           AI-powered assistance for {roleConfig.shortTitle} workflows
@@ -731,8 +748,8 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', `bg-${roleConfig.color}-100`)}>
-            <RoleIcon className={cn('h-5 w-5', `text-${roleConfig.color}-600`)} />
+          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', COLOR_BG_100[roleConfig.color] || 'bg-gray-100')}>
+            <RoleIcon className={cn('h-5 w-5', COLOR_TEXT_600[roleConfig.color] || 'text-gray-600')} />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">{roleConfig.title}</h1>

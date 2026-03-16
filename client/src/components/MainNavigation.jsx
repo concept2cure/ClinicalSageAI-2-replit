@@ -312,12 +312,12 @@ export default function MainNavigation({ showLabels = true }) {
         <div className="p-4 border-b flex items-center justify-between">
           <div className={cn('flex items-center', !isExpanded && 'justify-center w-full')}>
             {isExpanded ? (
-              <div className="font-bold text-lg flex items-center">
-                <span className="text-primary">Trial</span>
-                <span>Sage™</span>
+              <div className="font-bold text-lg flex items-center gap-2">
+                <img src="/src/assets/concept2cure-icon.svg" alt="C2C" className="h-7 w-7 rounded-lg" />
+                <span>Concept2Cure</span>
               </div>
             ) : (
-              <span className="font-bold text-lg text-primary">TS</span>
+              <img src="/src/assets/concept2cure-icon.svg" alt="C2C" className="h-7 w-7 rounded-lg" />
             )}
           </div>
           <Button

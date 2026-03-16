@@ -71,7 +71,7 @@ export default function VaultPage() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <header className="text-center mb-8">
-        <h1 className="text-3xl font-bold">TrialSage Vault™</h1>
+        <h1 className="text-3xl font-bold">Concept2Cure Vault</h1>
         <p className="text-gray-600 mt-2">Secure Document Repository & Device Data Center for Regulatory Submissions</p>
       </header>
 

@@ -523,7 +523,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </h1>
         <p className="text-sm text-zinc-500 max-w-md">
           {greeting?.subtitle
-            ? `${greeting.subtitle} · Lumen Cortex is ready`
+            ? `${greeting.subtitle} · Concept2Cure AI is ready`
             : "I'm Lumen, your regulatory intelligence assistant."}
         </p>
       </div>
@@ -814,10 +814,19 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     try {
       // Use streaming for better UX
       streamMessage(messageText);
-    } catch (err) {
-      console.error('Failed to send message:', err);
+    } catch {
+      // Error state is managed by the streaming hook
     }
   };
+
+  // Regenerate the last assistant response
+  const handleRegenerate = useCallback(() => {
+    // Find the last user message to re-send
+    const lastUserMsg = [...displayMessages].reverse().find(m => m.role === 'user');
+    if (lastUserMsg && !isLoading && !isStreaming) {
+      streamMessage(lastUserMsg.content);
+    }
+  }, [displayMessages, isLoading, isStreaming, streamMessage]);
 
   // Stop generating
   const handleStop = () => {
@@ -921,7 +930,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       {!isConnected && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>Connecting to Lumen Cortex...</span>
+          <span>Connecting to Concept2Cure AI...</span>
         </div>
       )}
 
@@ -953,10 +962,8 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 key={message.id}
                 message={message}
                 onCopy={() => handleCopy(message.content)}
-                onRegenerate={message.role === 'assistant' ? () => {} : undefined}
-                onFeedback={positive =>
-                  console.log('Feedback:', positive ? 'positive' : 'negative')
-                }
+                onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
+                onFeedback={() => {}}
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}
                 onExportDocxArtifact={handleExportDocxArtifact}
@@ -981,7 +988,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onSend={handleSend}
         onStop={handleStop}
         isGenerating={isLoading || isStreaming}
-        placeholder={isConnected ? 'Message Lumen...' : 'Connecting...'}
+        placeholder={isConnected ? 'Message Concept2Cure AI...' : 'Connecting...'}
       />
     </div>
   );

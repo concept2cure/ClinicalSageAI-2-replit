@@ -103,12 +103,12 @@ interface LogoProps {
   collapsed?: boolean;
 }
 
-// Concept2Cure Logo path
-const C2C_LOGO = '/src/assets/concept2cure-logo.jpg';
+// Concept2Cure Logo
+import concept2cureIcon from '@/assets/concept2cure-icon.svg';
 
 const Logo: React.FC<LogoProps> = memo(({ collapsed }) => (
   <div className="flex items-center gap-3 px-4 py-5">
-    <img src={C2C_LOGO} alt="Concept2Cure" className="w-9 h-9 rounded-xl object-cover shadow-lg" />
+    <img src={concept2cureIcon} alt="Concept2Cure" className="w-9 h-9 rounded-xl object-cover shadow-lg" />
     <AnimatePresence>
       {!collapsed && (
         <motion.div
@@ -122,7 +122,7 @@ const Logo: React.FC<LogoProps> = memo(({ collapsed }) => (
             <span className="text-lg font-bold text-neutral-900 whitespace-nowrap">
               Concept2Cure
             </span>
-            <span className="text-[10px] text-neutral-500 -mt-1">TrialSage Platform</span>
+            <span className="text-[10px] text-neutral-500 -mt-1">Regulatory Intelligence Platform</span>
           </div>
         </motion.div>
       )}

@@ -839,7 +839,7 @@ export const ZenApp: React.FC = () => {
       {!isConnected && (
         <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 bg-amber-50 border-b border-amber-200 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>Connecting to Lumen Cortex...</span>
+          <span>Connecting to Concept2Cure AI...</span>
         </div>
       )}
 

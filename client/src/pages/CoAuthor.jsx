@@ -6597,7 +6597,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
           <div className="flex items-center justify-between">
             {/* Left: Logo & Title */}
             <div className="flex items-center space-x-3">
-              <img src="https://www.trialsage.com/logo.svg" alt="TrialSage" className="h-7" />
+              <img src="/src/assets/concept2cure-icon.svg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-semibold text-slate-800">eCTD Co-Author</h1>
                 <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
@@ -9879,7 +9879,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                 Google Docs - {selectedDocument?.title || 'Module 2.5 Clinical Overview'}
               </DialogTitle>
               <DialogDescription>
-                Edit your document with Google Docs, embedded directly in TrialSage.
+                Edit your document with Google Docs, embedded directly in Concept2Cure.
                 {!isGoogleAuthenticated && (
                   <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
                     <p className="text-amber-700 text-sm">
@@ -12858,7 +12858,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                           <div className="flex items-center mb-2 pb-1 border-b border-slate-100">
                             <Bot className="h-4 w-4 mr-1 text-blue-600" />
                             <span className="text-xs font-medium text-blue-600">
-                              TrialSage Assistant
+                              Concept2Cure Assistant
                             </span>
                           </div>
                         )}

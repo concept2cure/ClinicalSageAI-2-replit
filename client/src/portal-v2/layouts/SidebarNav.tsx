@@ -377,11 +377,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
+            <img src="/src/assets/concept2cure-icon.svg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
             <div>
-              <div className="text-sm font-bold text-gray-900">TrialSage</div>
+              <div className="text-sm font-bold text-gray-900">Concept2Cure</div>
               <div className="text-xs text-muted-foreground">Client Portal</div>
             </div>
           </div>

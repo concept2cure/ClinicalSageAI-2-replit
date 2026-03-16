@@ -684,7 +684,7 @@ export const ZenSignup: React.FC = () => {
             <span>FDA 21 CFR Part 11 Compliant</span>
           </div>
           <p className="text-center text-xs text-zinc-400">
-            © {new Date().getFullYear()} TrialSage. All rights reserved.
+            © {new Date().getFullYear()} Concept2Cure. All rights reserved.
           </p>
         </div>
       </footer>

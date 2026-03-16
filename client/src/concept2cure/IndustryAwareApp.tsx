@@ -238,7 +238,7 @@ const Sidebar: React.FC<{
         <div className="p-4 border-t border-zinc-200">
           <button className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-violet-500 to-blue-500 text-white rounded-lg hover:opacity-90 transition-opacity">
             <MessageSquare className="w-5 h-5" />
-            <span className="text-sm font-medium">Ask Lumen</span>
+            <span className="text-sm font-medium">Ask Concept2Cure AI</span>
           </button>
         </div>
       )}

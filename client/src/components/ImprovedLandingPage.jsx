@@ -15,15 +15,11 @@ export default function ImprovedLandingPage() {
             <Link to="/">
               <div className="flex items-center space-x-2">
                 <img
-                  src="/assets/trialsage-logo.svg"
-                  alt="TrialSage"
+                  src="/src/assets/concept2cure-logo.svg"
+                  alt="Concept2Cure"
                   className="h-10 w-auto"
-                  onError={e => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://placeholder.pics/svg/180x60/DEDEDE/555555/TrialSage';
-                  }}
                 />
-                <span className="text-sm text-gray-500">by Concept2Cures.AI</span>
+                <span className="text-sm text-gray-500">Regulatory Intelligence Platform</span>
               </div>
             </Link>
           </div>

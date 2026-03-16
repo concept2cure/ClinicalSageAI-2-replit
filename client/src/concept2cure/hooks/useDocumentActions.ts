@@ -208,7 +208,7 @@ export function useDocumentActions(): DocumentActionsResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          artifactId: (artifact as any)?.id || (artifact as any)?.artifactId,
+          artifactId: (artifact as { id?: string; artifactId?: string })?.id || (artifact as { id?: string; artifactId?: string })?.artifactId,
           projectId: params.projectId,
           title: params.title,
           ctdSection: params.ctdSection,
@@ -217,7 +217,7 @@ export function useDocumentActions(): DocumentActionsResult {
       });
     } catch (err) {
       // Vault registration is best-effort; artifact save is the critical path
-      console.warn('Vault registration failed (artifact was saved):', err);
+      // Vault registration is best-effort; artifact was already saved successfully
     }
 
     return artifact;

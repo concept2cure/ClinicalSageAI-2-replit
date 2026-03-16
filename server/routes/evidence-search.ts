@@ -24,8 +24,17 @@ router.get('/search', async (req: Request, res: Response) => {
       });
     }
 
-    // Try semantic search first
-    let results: any[] = [];
+    let results: Array<{
+      id: string;
+      title: string;
+      type: string;
+      source: string;
+      content?: string;
+      ctdSection?: string | null;
+      status?: string | null;
+      relevanceScore: number;
+      createdAt?: Date | null;
+    }> = [];
 
     try {
       // Use the semantic search service if available
@@ -41,8 +50,8 @@ router.get('/search', async (req: Request, res: Response) => {
           relevanceScore: r.score || 0,
         }));
       }
-    } catch (err) {
-      console.warn('Semantic search unavailable, using basic search:', err);
+    } catch {
+      // Semantic search unavailable, will fall back to basic search
     }
 
     // If semantic search returned nothing, try basic text search on vault documents
@@ -50,7 +59,6 @@ router.get('/search', async (req: Request, res: Response) => {
       try {
         const { db } = await import('../db');
         if (db) {
-          // Basic text search on artifacts
           const { concept2cureArtifacts } = await import('../../shared/schema');
           const { ilike, or } = await import('drizzle-orm');
 
@@ -84,8 +92,8 @@ router.get('/search', async (req: Request, res: Response) => {
             createdAt: a.createdAt,
           }));
         }
-      } catch (dbErr) {
-        console.warn('Database search failed:', dbErr);
+      } catch {
+        // Database search failed, return empty results
       }
     }
 
@@ -95,11 +103,10 @@ router.get('/search', async (req: Request, res: Response) => {
         query,
         results,
         total: results.length,
-        searchType: results.length > 0 ? 'semantic' : 'basic',
+        searchType: results[0]?.source === 'semantic_search' ? 'semantic' : 'basic',
       },
     });
-  } catch (error: any) {
-    console.error('Evidence search failed:', error);
+  } catch {
     return res.status(500).json({ success: false, error: 'Search failed' });
   }
 });
@@ -117,16 +124,15 @@ router.get('/gather/:productId', async (req: Request, res: Response) => {
     try {
       const { gatherEvidence } = await import('../src/services/reg/evidence');
       evidence = await gatherEvidence(productId, sectionCode);
-    } catch (err) {
-      console.warn('Evidence gathering service unavailable:', err);
+    } catch {
+      // Evidence gathering service unavailable
     }
 
     return res.json({
       success: true,
       data: { productId, sectionCode, evidence, count: evidence.length },
     });
-  } catch (error: any) {
-    console.error('Evidence gathering failed:', error);
+  } catch {
     return res.status(500).json({ success: false, error: 'Failed to gather evidence' });
   }
 });

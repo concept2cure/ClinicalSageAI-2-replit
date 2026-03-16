@@ -2611,7 +2611,7 @@ async function buildDocx(
     );
 
     const doc = new Document({
-      creator: 'TrialSage Platform - 21 CFR Part 11 Compliant',
+      creator: 'Concept2Cure Platform - 21 CFR Part 11 Compliant',
       title: docMeta.title || 'Module 3 Document',
       description: 'FDA 21 CFR Part 11 Compliant Electronic Document',
       sections: [
