@@ -1,9 +1,14 @@
+/// <reference types="jest" />
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+// @ts-ignore - JSX module without type declarations
 import SubmissionTimeline from '../components/510k/SubmissionTimeline';
+// @ts-ignore - JSX module without type declarations
 import WorkflowPanel from '../components/510k/WorkflowPanel';
+// @ts-ignore - JSX module without type declarations
 import SmartWorkflowsInterface from '../components/cmc/SmartWorkflowsInterface';
 import { WorkflowTimeline as ConceptWorkflowTimeline } from '../concept2cure/components/workflow/WorkflowTimeline';
+// @ts-ignore - JSX module without type declarations
 import { WorkflowTimeline as CoauthorWorkflowTimeline } from '../components/coauthor/WorkflowTimeline';
 import { DocumentWorkspace } from '../concept2cure/components/intelligentDocs/DocumentWorkspace';
 import { DocumentSherpa } from '../concept2cure/components/intelligentDocs/DocumentSherpa';
