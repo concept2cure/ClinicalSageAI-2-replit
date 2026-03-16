@@ -562,9 +562,9 @@ function RootCausePanel({
         <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
           <Sparkles className="w-5 h-5 text-purple-600" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-purple-800">RI Analysis</p>
+            <p className="text-sm font-medium text-purple-800">AnA Analysis</p>
             <p className="text-xs text-purple-600">
-              Analyze similar CAPAs and suggest potential root causes based on historical data
+              Let AnA analyze similar CAPAs and suggest potential root causes based on historical data
             </p>
           </div>
           <Button variant="outline" size="sm">
@@ -1228,7 +1228,7 @@ export function CAPAManagement() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">RI CAPA Insights</h3>
+              <h3 className="font-semibold text-purple-900">AnA CAPA Intelligence</h3>
               <p className="text-sm text-purple-700">
                 Analyze CAPA trends, identify recurring issues, and get RI-powered recommendations
                 for root cause analysis and preventive actions.

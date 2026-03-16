@@ -90,7 +90,7 @@ export default function PredictiveVaultBrowser() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">Document Vault</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-2">Concept2Cure Vault</h1>
       <p className="text-md text-gray-600 mb-6">Live Document Repository</p>
       <div className="bg-white p-4 rounded-lg shadow-md">{renderContent()}</div>
     </div>

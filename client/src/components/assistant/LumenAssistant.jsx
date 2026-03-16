@@ -13,11 +13,11 @@ export function LumenAssistantButton({ variant = 'default', size = 'default', to
       variant={variant}
       size={size}
       onClick={() => setIsAssistantOpen(true)}
-      aria-label="Ask Lumen AI Assistant"
+      aria-label="Ask AnA — RI Co-pilot"
       className="relative"
     >
       <MessageSquare className={size === 'icon' ? 'h-4 w-4' : 'h-4 w-4 mr-2'} />
-      {size !== 'icon' && 'Ask LUMEN'}
+      {size !== 'icon' && 'Ask AnA'}
       {tooltip && (
         <div className="absolute bottom-full mb-2 hidden group-hover:block bg-foreground text-background text-xs px-2 py-1 rounded pointer-events-none">
           {tooltip}
@@ -32,7 +32,7 @@ const mockMessages = [
     id: 1,
     role: 'system',
     content:
-      "Hello! I'm ASK LUMEN, your regulatory intelligence and document preparation assistant. How can I help with your IND submission today?",
+      "Hello! I'm AnA, your Audit & Narrative Assistant. How can I help with your IND submission today?",
     timestamp: new Date().toISOString(),
   },
 ];
@@ -120,7 +120,7 @@ export default function LumenAssistant() {
       <div className="flex items-center justify-between bg-primary/10 p-3 border-b">
         <div className="flex items-center">
           <MessageSquare className="h-5 w-5 text-primary mr-2" />
-          <h3 className="font-semibold">ASK LUMEN AI Assistant</h3>
+          <h3 className="font-semibold">AnA v1.0 — RI Co-pilot</h3>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setIsAssistantOpen(false)}>
           <X className="h-4 w-4" />

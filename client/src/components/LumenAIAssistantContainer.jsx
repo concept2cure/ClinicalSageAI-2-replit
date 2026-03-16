@@ -111,7 +111,7 @@ const LumenAIAssistantContainer = () => {
               color: '#0B6E4F',
             }}
           >
-            💬 Lumen AI Assistant
+            AnA v1.0 — RI Co-pilot
           </h2>
           <p
             style={{

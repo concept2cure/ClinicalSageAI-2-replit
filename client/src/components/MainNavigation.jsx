@@ -76,7 +76,7 @@ const CrossModuleFeatures = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <MessageSquare className="mr-2 h-4 w-4" />
-          <span>Ask LUMEN AI Assistant</span>
+          <span>Ask AnA — RI Co-pilot</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -312,12 +312,12 @@ export default function MainNavigation({ showLabels = true }) {
         <div className="p-4 border-b flex items-center justify-between">
           <div className={cn('flex items-center', !isExpanded && 'justify-center w-full')}>
             {isExpanded ? (
-              <div className="font-bold text-lg flex items-center">
-                <span className="text-primary">Trial</span>
-                <span>Sage™</span>
+              <div className="font-bold text-lg flex items-center gap-2">
+                <img src="/src/assets/concept2cure-icon.svg" alt="C2C" className="h-7 w-7 rounded-lg" />
+                <span>Concept2Cure</span>
               </div>
             ) : (
-              <span className="font-bold text-lg text-primary">TS</span>
+              <img src="/src/assets/concept2cure-icon.svg" alt="C2C" className="h-7 w-7 rounded-lg" />
             )}
           </div>
           <Button
@@ -429,7 +429,7 @@ export default function MainNavigation({ showLabels = true }) {
                   <LumenAssistantButton
                     variant="outline"
                     size="icon"
-                    tooltip="Ask LUMEN AI Assistant"
+                    tooltip="Ask AnA — RI Co-pilot"
                   />
                 </div>
               </div>
@@ -438,7 +438,7 @@ export default function MainNavigation({ showLabels = true }) {
             <div className="space-y-4 flex flex-col items-center">
               <UserMenu />
               <CrossModuleFeatures />
-              <LumenAssistantButton variant="outline" size="icon" tooltip="Ask LUMEN AI" />
+              <LumenAssistantButton variant="outline" size="icon" tooltip="Ask AnA" />
             </div>
           )}
         </div>

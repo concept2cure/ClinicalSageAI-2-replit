@@ -1,0 +1,432 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-16",
+    "description": "Concept2Cure proprietary Regulatory Document Requirements Matrix — maps every document type to its required CTD sections, regional variations, and submission format requirements.",
+    "copyright": "Concept2Cure Inc. Proprietary and Confidential."
+  },
+  "ctdModuleStructure": {
+    "Module1": {
+      "title": "Administrative Information and Prescribing Information",
+      "harmonized": false,
+      "sections": {
+        "1.0": "Cover Letter",
+        "1.1": "Table of Contents (for paper CTD; auto-generated for eCTD)",
+        "1.2": "Application Form",
+        "1.3": "Product Information (Labeling)",
+        "1.4": "Information about Experts",
+        "1.5": "Specific Requirements (region-specific)",
+        "1.6": "Environmental Assessment (FDA only)",
+        "1.7": "Establishment Registration and Drug Listing (FDA only)",
+        "1.8": "Patent Information (where applicable)",
+        "1.9": "Exclusivity Claim (where applicable)",
+        "1.10": "Pediatric Provisions (PIP/PSP)",
+        "1.11": "Risk Management Plan (EMA)",
+        "1.12": "Conditional Approval / Orphan Drug Data",
+        "1.13": "JP-specific documents (PMDA only)",
+        "1.14": "Letters of Authorization (DMF/ASMF references)"
+      },
+      "regionalVariations": {
+        "FDA": {
+          "applicationForms": ["Form FDA 356h (NDA/BLA)", "Form FDA 1571 (IND)", "Form FDA 1572 (Statement of Investigator)", "Form FDA 3674 (FDAAA 801)", "Form FDA 3500A (MedWatch)"],
+          "uniqueSections": ["1.6 Environmental Assessment", "1.7 Drug Listing", "1.14.1 Letters of Authorization"],
+          "prescribingInfo": "USPI (United States Prescribing Information) + Medication Guide + Patient Package Insert"
+        },
+        "EMA": {
+          "applicationForms": ["eAF (Electronic Application Form)"],
+          "uniqueSections": ["1.5.1 QP Declaration", "1.5.2 Site Master File (SMF)", "1.5.3 TSE/BSE Compliance", "1.8 Pharmacovigilance System Master File", "1.11 Risk Management Plan"],
+          "prescribingInfo": "SmPC + Package Leaflet + Labelling (all 24 EU languages)"
+        },
+        "PMDA": {
+          "applicationForms": ["Application Form (shinsei-sho)", "Certificate of Foreign Government"],
+          "uniqueSections": ["1.2 JP-specific Admin", "1.5 JP-CTD specific docs", "1.13 JP Annex"],
+          "prescribingInfo": "Japanese Package Insert (添付文書)"
+        },
+        "HealthCanada": {
+          "applicationForms": ["HC form for NDS"],
+          "prescribingInfo": "Product Monograph (English + French)"
+        }
+      }
+    },
+    "Module2": {
+      "title": "Common Technical Document Summaries",
+      "harmonized": true,
+      "sections": {
+        "2.1": "CTD Table of Contents",
+        "2.2": "CTD Introduction",
+        "2.3": "Quality Overall Summary (QOS)",
+        "2.4": "Nonclinical Overview",
+        "2.5": "Clinical Overview",
+        "2.6": {
+          "title": "Nonclinical Written and Tabulated Summaries",
+          "subsections": {
+            "2.6.1": "Introduction",
+            "2.6.2": "Pharmacology Written Summary",
+            "2.6.3": "Pharmacology Tabulated Summary",
+            "2.6.4": "Pharmacokinetics Written Summary",
+            "2.6.5": "Pharmacokinetics Tabulated Summary",
+            "2.6.6": "Toxicology Written Summary",
+            "2.6.7": "Toxicology Tabulated Summary"
+          }
+        },
+        "2.7": {
+          "title": "Clinical Summary",
+          "subsections": {
+            "2.7.1": "Summary of Biopharmaceutic Studies and Associated Analytical Methods",
+            "2.7.2": "Summary of Clinical Pharmacology Studies",
+            "2.7.3": "Summary of Clinical Efficacy",
+            "2.7.4": "Summary of Clinical Safety",
+            "2.7.5": "Literature References",
+            "2.7.6": "Synopses of Individual Studies"
+          }
+        }
+      },
+      "pageGuidance": {
+        "2.3_QOS": "40 pages maximum recommended",
+        "2.4_NonclinicalOverview": "25-30 pages recommended",
+        "2.5_ClinicalOverview": "30 pages recommended",
+        "2.7.3_Efficacy": "No formal limit; proportionate to program"
+      }
+    },
+    "Module3": {
+      "title": "Quality",
+      "harmonized": true,
+      "sections": {
+        "3.2.S": {
+          "title": "Drug Substance",
+          "subsections": {
+            "3.2.S.1": "General Information (nomenclature, structure, general properties)",
+            "3.2.S.2": "Manufacture (manufacturer, process description, controls, process validation)",
+            "3.2.S.3": "Characterisation (elucidation of structure, impurities)",
+            "3.2.S.4": "Control of Drug Substance (specifications, analytical procedures, validation, batch analyses, justification)",
+            "3.2.S.5": "Reference Standards",
+            "3.2.S.6": "Container Closure System",
+            "3.2.S.7": "Stability (strategy, protocol, data, post-approval commitment)"
+          }
+        },
+        "3.2.P": {
+          "title": "Drug Product",
+          "subsections": {
+            "3.2.P.1": "Description and Composition",
+            "3.2.P.2": "Pharmaceutical Development",
+            "3.2.P.3": "Manufacture (batch formula, process description, process controls, process validation)",
+            "3.2.P.4": "Control of Excipients (specifications, analytical procedures)",
+            "3.2.P.5": "Control of Drug Product (specifications, analytical procedures, validation, batch analyses, characterization of impurities, justification)",
+            "3.2.P.6": "Reference Standards",
+            "3.2.P.7": "Container Closure System",
+            "3.2.P.8": "Stability (strategy, protocol, data, post-approval commitment)"
+          }
+        },
+        "3.2.A": {
+          "title": "Appendices",
+          "subsections": {
+            "3.2.A.1": "Facilities and Equipment (for biotech/biologics)",
+            "3.2.A.2": "Adventitious Agents Safety Evaluation (viral safety, TSE/BSE)",
+            "3.2.A.3": "Novel Excipients"
+          }
+        },
+        "3.2.R": "Regional Information (e.g., DMF/ASMF references, executed batch records)"
+      }
+    },
+    "Module4": {
+      "title": "Nonclinical Study Reports",
+      "harmonized": true,
+      "sections": {
+        "4.2.1": {
+          "title": "Pharmacology",
+          "subsections": {
+            "4.2.1.1": "Primary Pharmacodynamics",
+            "4.2.1.2": "Secondary Pharmacodynamics",
+            "4.2.1.3": "Safety Pharmacology (core battery: CV, CNS, respiratory)",
+            "4.2.1.4": "Pharmacodynamic Drug Interactions"
+          }
+        },
+        "4.2.2": {
+          "title": "Pharmacokinetics",
+          "subsections": {
+            "4.2.2.1": "Analytical Methods / Validation Reports",
+            "4.2.2.2": "Absorption",
+            "4.2.2.3": "Distribution",
+            "4.2.2.4": "Metabolism",
+            "4.2.2.5": "Excretion",
+            "4.2.2.6": "PK Drug Interactions (in vitro)",
+            "4.2.2.7": "Other PK Studies"
+          }
+        },
+        "4.2.3": {
+          "title": "Toxicology",
+          "subsections": {
+            "4.2.3.1": "Single-Dose Toxicity",
+            "4.2.3.2": "Repeat-Dose Toxicity",
+            "4.2.3.3": "Genotoxicity (in vitro + in vivo)",
+            "4.2.3.4": "Carcinogenicity (2-year bioassay / transgenic model)",
+            "4.2.3.5": "Reproductive and Developmental Toxicity (Segments I, II, III)",
+            "4.2.3.6": "Local Tolerance",
+            "4.2.3.7": "Other Toxicity Studies (phototoxicity, immunotoxicity, juvenile, dependence)"
+          }
+        }
+      }
+    },
+    "Module5": {
+      "title": "Clinical Study Reports",
+      "harmonized": true,
+      "sections": {
+        "5.3.1": "Biopharmaceutic Studies (BA, BE, in vitro dissolution, food-effect)",
+        "5.3.2": "PK Using Human Biomaterials (plasma protein binding, hepatocyte metabolism)",
+        "5.3.3": "PK and PD Studies in Healthy Volunteers and Patients",
+        "5.3.4": "Pharmacokinetic Drug Interaction Studies (clinical DDI)",
+        "5.3.5": {
+          "title": "Efficacy and Safety",
+          "subsections": {
+            "5.3.5.1": "Controlled Clinical Studies Pertinent to Claimed Indication",
+            "5.3.5.2": "Uncontrolled Clinical Studies",
+            "5.3.5.3": "Reports of Analyses of Data from More than One Study (ISS/ISE)",
+            "5.3.5.4": "Other Study Reports (e.g., compassionate use)"
+          }
+        },
+        "5.3.6": "Post-Marketing Experience Reports",
+        "5.3.7": "Case Report Forms and Individual Patient Listings"
+      }
+    }
+  },
+
+  "submissionTypeDocumentRequirements": {
+    "IND_FDA": {
+      "submissionType": "IND (Investigational New Drug Application)",
+      "agency": "FDA",
+      "requiredDocuments": {
+        "Module1": ["Cover Letter", "Form FDA 1571", "Form FDA 1572 (per site)", "Introductory Statement", "General Investigational Plan", "Investigator's Brochure"],
+        "Module2": ["2.4 Nonclinical Overview (summary)", "2.5 Clinical Overview (if prior human data)", "2.6 Nonclinical Summaries"],
+        "Module3": ["3.2.S.1-S.7 (Drug Substance — may be abbreviated for Phase I)", "3.2.P.1-P.8 (Drug Product — may be abbreviated for Phase I)"],
+        "Module4": ["4.2.1.3 Safety Pharmacology (core battery)", "4.2.3.1 Single-Dose Toxicity", "4.2.3.2 Repeat-Dose Toxicity (≥ clinical duration)", "4.2.3.3.1 Ames Test", "4.2.3.3.2 In vitro chromosomal aberration or micronucleus"],
+        "Module5": ["Prior clinical data if available (5.3.5)"]
+      },
+      "phaseSpecificEscalation": {
+        "Phase1": "GLP tox (rodent + non-rodent, ≥ duration of trial), genotoxicity (Ames + in vitro), safety pharmacology core battery",
+        "Phase2": "Repeat-dose tox ≥ duration, repro tox (Segment II if WOCBP), genotoxicity battery complete",
+        "Phase3": "Chronic tox (6mo rodent, 9mo non-rodent), carcinogenicity (if ≥6mo treatment), full repro tox (Segments I-III)"
+      }
+    },
+    "NDA_FDA": {
+      "submissionType": "NDA (New Drug Application)",
+      "agency": "FDA",
+      "requiredDocuments": {
+        "Module1": ["Cover Letter", "Form FDA 356h", "Comprehensive TOC", "USPI (Prescribing Information)", "Medication Guide (if applicable)", "Patent Information (Form FDA 3542a)", "Patent Certification (if applicable)", "Debarment Certification", "Field Copy Certification", "Financial Disclosure (Form FDA 3454/3455)", "Environmental Assessment or Categorical Exclusion"],
+        "Module2": ["2.2 Introduction", "2.3 Quality Overall Summary", "2.4 Nonclinical Overview", "2.5 Clinical Overview", "2.6 Nonclinical Written and Tabulated Summaries (all)", "2.7 Clinical Summary (all subsections)"],
+        "Module3": ["Complete 3.2.S Drug Substance package", "Complete 3.2.P Drug Product package", "3.2.A Appendices (if applicable)", "3.2.R Regional Information"],
+        "Module4": ["Complete nonclinical package: pharmacology, PK, all toxicology studies"],
+        "Module5": ["Complete clinical package: BA/BE, PK/PD, DDI, all pivotal and supportive studies", "ISS (Integrated Summary of Safety)", "ISE (Integrated Summary of Effectiveness)", "Individual patient listings"]
+      },
+      "feeCategory": "PDUFA VII",
+      "reviewClock": "10-month standard, 6-month priority"
+    },
+    "BLA_FDA": {
+      "submissionType": "BLA (Biologics License Application)",
+      "agency": "FDA",
+      "requiredDocuments": {
+        "Module1": ["Same as NDA + Product/Establishment License information"],
+        "Module2": ["Same as NDA"],
+        "Module3": ["Full 3.2.S (characterization of biologic substance)", "Full 3.2.P", "3.2.A.1 Facilities and Equipment", "3.2.A.2 Adventitious Agents (viral safety, TSE/BSE)"],
+        "Module4": ["Same as NDA + tissue cross-reactivity (for mAbs)"],
+        "Module5": ["Same as NDA"]
+      },
+      "additionalRequirements": ["Lot release testing", "Process validation for biologics manufacturing", "Comparability data for any process changes during development"]
+    },
+    "510k_FDA": {
+      "submissionType": "510(k) Premarket Notification",
+      "agency": "FDA",
+      "requiredDocuments": {
+        "Administrative": ["Cover Letter", "CDRH Premarket Review Submission Cover Sheet (Form FDA 3514)", "Truthful and Accuracy Statement", "510(k) Summary or Statement (21 CFR 807.92/93)", "Class III Summary and Certification (if applicable)"],
+        "Technical": ["Device Description", "Intended Use / Indications for Use (Form FDA 3881)", "Substantial Equivalence Comparison", "Predicate Device Comparison Table", "Standards / Guidance Conformance", "Performance Testing (bench, biocompatibility, electrical safety, EMC)", "Biocompatibility (ISO 10993 series)", "Software Documentation (IEC 62304 — if SW device)", "Cybersecurity (if connected device)", "Sterility (if applicable)", "Shelf Life / Packaging Validation", "Labeling (proposed labels, IFU)"]
+      },
+      "eSTAR": {
+        "required": true,
+        "since": "October 2023",
+        "format": "eSTAR template (interactive PDF + attachments)"
+      }
+    },
+    "MAA_EMA": {
+      "submissionType": "MAA (Marketing Authorisation Application)",
+      "agency": "EMA",
+      "requiredDocuments": {
+        "Module1": ["Electronic Application Form (eAF)", "Cover Letter (to EMA/CHMP)", "SmPC (Summary of Product Characteristics)", "Package Leaflet", "Labelling (Mock-ups)", "QP Declaration", "GMP Certificates", "TSE/BSE Certificate", "Pharmacovigilance System Master File Summary", "Risk Management Plan (RMP)", "PIP/Waiver Decision", "Orphan Designation (if applicable)", "Environmental Risk Assessment"],
+        "Module2": ["Complete as per ICH CTD M4"],
+        "Module3": ["Complete as per ICH CTD M4", "CEP (Certificate of Suitability) for Ph.Eur. monograph drug substances", "ASMF (Active Substance Master File) or EU DMF"],
+        "Module4": ["Complete as per ICH CTD M4"],
+        "Module5": ["Complete as per ICH CTD M4"]
+      },
+      "languageRequirements": {
+        "Modules2to5": "English (accepted by all member states for centralised procedure)",
+        "Module1": "English for centralised; RMS language for decentralised/MRP",
+        "ProductInformation": "All 24 official EU languages at time of opinion",
+        "translationTimeline": "Translations required during Day 181-210 clock stop"
+      }
+    },
+    "CTA_EU": {
+      "submissionType": "CTA (Clinical Trial Application — EU CTR 536/2014)",
+      "agency": "EMA / National Competent Authorities",
+      "portal": "CTIS (Clinical Trials Information System)",
+      "requiredDocuments": {
+        "PartI_ScientificAssessment": ["Cover Letter", "EU Application Form", "Protocol (and amendments)", "Investigator's Brochure", "IMPD (Investigational Medicinal Product Dossier)", "GMP Documentation", "Scientific Advice (if any)", "PIP Decision (if applicable)"],
+        "PartII_NationalAssessment": ["Informed Consent Documents", "Suitability of Investigator (CV)", "Suitability of Sites", "Insurance/Indemnity", "Financial Arrangements", "Compliance with Data Protection"],
+        "IMPD_Contents": {
+          "QualityData": "Drug substance + drug product (abbreviated CTD Module 3)",
+          "NonclinicalData": "Summary of pharmacology and toxicology",
+          "ClinicalData": "Summary of clinical pharmacology, efficacy, safety",
+          "OverallRiskBenefit": "Benefit-risk assessment for the clinical trial"
+        }
+      }
+    },
+    "JNDA_PMDA": {
+      "submissionType": "JNDA (Japanese New Drug Application)",
+      "agency": "PMDA",
+      "requiredDocuments": {
+        "Module1_JP": ["Application Form (shinsei-sho)", "Certificate of Foreign Government (for imported drugs)", "GMP Certificate", "Japanese Package Insert (draft)", "JP-specific administrative documents"],
+        "Module2": ["Complete CTD summaries", "2.5/2.7 with Japanese patient data discussion"],
+        "Module3": ["Complete quality package", "3.2.R Regional Information (JP-specific)", "Japanese Pharmacopoeia compliance demonstration"],
+        "Module4": ["Complete nonclinical package"],
+        "Module5": ["Complete clinical package", "Bridging study data (if foreign clinical data used, per ICH E5)", "Japanese patient PK/PD data"]
+      },
+      "uniqueRequirements": {
+        "bridgingStudy": "Required when foreign clinical data extrapolation to Japanese population is not self-evident",
+        "japaneseEthnicData": "PK/PD in Japanese subjects + ethnic sensitivity discussion",
+        "JP_Module1_13": "Japan-specific annex documents"
+      }
+    },
+    "DMF_FDA": {
+      "submissionType": "DMF (Drug Master File)",
+      "agency": "FDA",
+      "types": {
+        "TypeII_DrugSubstance": {
+          "requiredDocuments": [
+            "Transmittal Letter",
+            "Administrative Information (holder name, authorized contacts)",
+            "Drug Substance information (3.2.S sections)",
+            "Statement of Commitment (GMP compliance)",
+            "Environmental Assessment or Categorical Exclusion",
+            "Letter(s) of Authorization for cross-referencing"
+          ]
+        },
+        "TypeIII_Packaging": {
+          "requiredDocuments": [
+            "Container/closure component description",
+            "Composition and specifications",
+            "Extractables/leachables data",
+            "Toxicological evaluation"
+          ]
+        },
+        "TypeIV_Excipient": {
+          "requiredDocuments": [
+            "Excipient characterization",
+            "Manufacturing process",
+            "Specifications and test methods",
+            "Stability data"
+          ]
+        },
+        "TypeV_FDAAccepted": {
+          "scope": "Reference information not fitting Types I-IV"
+        }
+      }
+    },
+    "Biosimilar_351k_FDA": {
+      "submissionType": "Biosimilar Application (351(k))",
+      "agency": "FDA",
+      "requiredDocuments": {
+        "Analytical": ["Extensive physicochemical and functional characterization", "Side-by-side comparison with reference product", "Lot-to-lot variability analysis"],
+        "Nonclinical": ["In vitro functional assays", "Animal PK/PD (may be waived if analytical similarity high)", "Animal toxicity (may be waived if analytical similarity high)"],
+        "Clinical": ["PK similarity study (equivalence design)", "PD study (if relevant PD marker)", "Clinical immunogenicity study", "At least one adequate and well-controlled clinical study (may be waived for highly similar)"],
+        "Interchangeability": ["Switching studies (3-way crossover minimum)", "Required for interchangeability designation"]
+      }
+    },
+    "REMS_FDA": {
+      "submissionType": "REMS (Risk Evaluation and Mitigation Strategy)",
+      "agency": "FDA",
+      "requiredDocuments": [
+        "REMS Document (goals, elements, timetable for assessments)",
+        "Medication Guide and/or Communication Plan",
+        "Elements to Assure Safe Use (ETASU) — if required",
+        "Implementation System",
+        "REMS Assessment Plan and Timeline"
+      ],
+      "triggerCriteria": "Required when FDA determines a REMS is necessary to ensure benefits outweigh risks"
+    },
+    "OrphanDrug_FDA": {
+      "submissionType": "Orphan Drug Designation Request",
+      "agency": "FDA",
+      "requiredDocuments": [
+        "Administrative information (sponsor, drug description)",
+        "Disease or condition description",
+        "Prevalence documentation (<200,000 in US) or cost recovery justification",
+        "Scientific rationale (medically plausible basis)",
+        "Regulatory history"
+      ],
+      "benefits": ["7-year market exclusivity", "Tax credits for clinical research", "PDUFA fee waiver", "Eligible for Orphan Products Grants"]
+    },
+    "PediatricStudyPlan_FDA": {
+      "submissionType": "Pediatric Study Plan (PSP) / Initial PSP",
+      "agency": "FDA",
+      "requiredDocuments": [
+        "Age-appropriate formulation development plan",
+        "Proposed pediatric studies (or extrapolation rationale)",
+        "Developmental growth and maturation considerations",
+        "Ethical considerations",
+        "Request for waiver/deferral (if applicable)"
+      ],
+      "regulation": "PREA (Pediatric Research Equity Act)"
+    }
+  },
+
+  "crossAgencyComparisonMatrix": {
+    "IND_equivalent": {
+      "FDA": "IND",
+      "EMA": "CTA (via CTIS)",
+      "PMDA": "CTN (Clinical Trial Notification)",
+      "HealthCanada": "CTA",
+      "TGA": "CTN/CTX",
+      "MHRA": "CTA",
+      "NMPA": "IND",
+      "MFDS": "IND",
+      "CDSCO": "CTA (Clinical Trial Permission)",
+      "Swissmedic": "CTA",
+      "ANVISA": "CEDP"
+    },
+    "NDA_equivalent": {
+      "FDA": "NDA",
+      "EMA": "MAA",
+      "PMDA": "JNDA (Shonin)",
+      "HealthCanada": "NDS",
+      "TGA": "Category 1 Registration",
+      "MHRA": "MAA (National)",
+      "NMPA": "NDA (注册申请)",
+      "MFDS": "NDA (품목허가)",
+      "CDSCO": "NDA",
+      "Swissmedic": "MAA",
+      "ANVISA": "Registro de Medicamento Novo"
+    },
+    "GenericApplication_equivalent": {
+      "FDA": "ANDA",
+      "EMA": "MAA (Art.10.1 — Generic)",
+      "PMDA": "Kohatsu (Generic Application)",
+      "HealthCanada": "ANDS",
+      "TGA": "Category 3",
+      "MHRA": "MAA (Generic — Abridged)",
+      "NMPA": "ANDA",
+      "MFDS": "Generic Approval",
+      "CDSCO": "ANDA",
+      "Swissmedic": "MHFA",
+      "ANVISA": "Registro Genérico"
+    },
+    "reviewTimelines_months": {
+      "FDA_NDA": { "standard": 10, "priority": 6 },
+      "EMA_MAA": { "standard": 12, "accelerated": 8 },
+      "PMDA_JNDA": { "standard": 12, "priority": 9, "SAKIGAKE": 6 },
+      "HealthCanada_NDS": { "standard": 10, "priority": 6 },
+      "TGA_Cat1": { "standard": 11 },
+      "MHRA_MAA": { "standard": 10, "ILAP": 8 },
+      "NMPA_NDA": { "standard": 10, "priority": 6 },
+      "MFDS_NDA": { "standard": 6, "priority": 5 },
+      "HSA_NDA": { "full": 9, "abridged": 6, "verification": 2 },
+      "Swissmedic_MAA": { "standard": 11, "fastTrack": 5 }
+    }
+  }
+}

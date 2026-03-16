@@ -51,7 +51,7 @@ export default function EditorPage() {
         const mockDoc: Document = {
           id: docId,
           title: 'Module 3.2.P - Drug Product',
-          productName: 'TrialSage-01',
+          productName: 'C2C-01',
           region: 'FDA',
           locale: 'en-US',
           status: 'draft',

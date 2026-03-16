@@ -62,7 +62,7 @@ export default function CMCModule() {
   const { toast } = useToast();
 
   useEffect(() => {
-    document.title = 'TrialSage | CMC Module';
+    document.title = 'Concept2Cure | CMC Module';
     loadCMCData();
   }, []);
 

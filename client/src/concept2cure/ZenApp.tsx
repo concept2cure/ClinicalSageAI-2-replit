@@ -73,6 +73,25 @@ import {
   Loader2,
   FileText,
   Plus,
+  ArrowLeft,
+  CircleDot,
+  Play,
+  Pause,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  ListTodo,
+  Calendar,
+  TrendingUp,
+  Beaker,
+  GitBranch,
+  Shield,
+  Eye,
+  FlaskConical,
+  Scale,
+  Building2,
+  Fingerprint,
+  Bell,
   Star,
   MessageSquare,
   FolderOpen,
@@ -82,6 +101,7 @@ import {
   Layers,
   Download,
   Brain,
+  Snowflake,
 } from 'lucide-react';
 
 // Utility: instantly redirect dead layout modes to regulatory-workspace
@@ -95,6 +115,14 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 // Lazy load the Convergent Canvas for the Sherpa System
 const ConvergentCanvas = lazy(() =>
   import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
+);
+
+// Snow Globe — Cross-platform prediction & intelligence
+const SnowGlobeHome = lazy(() =>
+  import('./pages/SnowGlobe/SnowGlobeHome')
+);
+const SnowGlobeChambers = lazy(() =>
+  import('./pages/SnowGlobe/SnowGlobeChambers')
 );
 
 // Lazy load Phase 7 Mission Control components
@@ -212,6 +240,25 @@ type LayoutMode =
   | 'rules'
   | 'ind-workspace'
   | 'submission-workspace'
+  | 'intelligence-feed'
+  | 'gap-analysis'
+  | 'change-impact'
+  | 'ana-memory'
+  | 'artifact-graph'
+  | 'review-center'
+  | 'dossier-view'
+  | 'risk-cockpit'
+  | 'route-planner'
+  | 'evidence-manager'
+  | 'decision-log'
+  | 'authority-tracker'
+  | 'provenance-trail'
+  | 'notifications'
+  | 'collaboration-hub'
+  | 'program-wizard'
+  | 'task-board'
+  | 'team-workspace'
+  | 'program-analytics'
   | 'medtech-dashboard'
   | 'ectd-coauthor'
   | 'cmc'
@@ -219,7 +266,9 @@ type LayoutMode =
   | 'precedent-intelligence'
   | 'regulatory-workspace'
   | 'document-vault'
-  | 'clinical-trial';
+  | 'clinical-trial'
+  | 'snowglobe'
+  | 'snowglobe-chambers';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -542,6 +591,22 @@ export const ZenApp: React.FC = () => {
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
+  // Sherpa project detail view state
+  const [sherpaDetailProjectId, setSherpaDetailProjectId] = useState<string | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [taskFilter, setTaskFilter] = useState<string>('all');
+
+  // Task management for the selected project in sherpa mode
+  const {
+    tasks: projectTasks,
+    isLoadingTasks,
+    summary: taskSummary,
+    createTask,
+    updateTask,
+    generateMilestones,
+    isGenerating: isGeneratingMilestones,
+  } = useProjectTasks(sherpaDetailProjectId || activeProjectId);
+
   // Run log — lightweight action execution transparency
   // NOTE: declared after activeProjectId to avoid TDZ in deps arrays
   const [runLog, setRunLog] = useState<
@@ -758,7 +823,21 @@ export const ZenApp: React.FC = () => {
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+
+    // Listen for Mission Control inter-page navigation events
+    const handleMcNavigate = (e: Event) => {
+      const mode = (e as CustomEvent).detail?.mode as LayoutMode;
+      if (mode) {
+        setLayoutMode(mode);
+        setActiveToolPanel(null);
+      }
+    };
+    window.addEventListener('mc-navigate', handleMcNavigate);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mc-navigate', handleMcNavigate);
+    };
   }, [
     activeToolPanel,
     commandPaletteOpen,
@@ -1141,6 +1220,8 @@ export const ZenApp: React.FC = () => {
               'document-vault': 'document-vault',
               'clinical-trial': 'clinical-trial',
               'submission-workspace': 'submission-workspace',
+              snowglobe: 'snowglobe',
+              'snowglobe-chambers': 'snowglobe',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1406,6 +1487,24 @@ export const ZenApp: React.FC = () => {
                   <MissionControl />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Snow Globe — Prediction & Intelligence Engine */}
+          {!embeddedModule && layoutMode === 'snowglobe' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+                <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* Snow Globe — Chamber Detail View */}
+          {!embeddedModule && layoutMode === 'snowglobe-chambers' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe-chambers">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+                <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
+              </Suspense>
             </div>
           )}
 

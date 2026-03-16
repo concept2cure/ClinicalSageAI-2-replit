@@ -343,8 +343,8 @@ export const MODULE_REGISTRY: Record<ModuleId, PortalModule> = {
   },
   ask_lumen: {
     id: 'ask_lumen',
-    name: 'Ask Lumen',
-    description: 'AI regulatory assistant',
+    name: 'Ask AnA',
+    description: 'RI Co-pilot — Audit & Narrative Assistant v1.0',
     icon: 'message-circle',
     route: '/portal/ask-lumen',
     category: 'intelligence',
@@ -529,7 +529,7 @@ function buildNavigation(enabledModules: ModuleId[]): NavSection[] {
   if (enabledModules.includes('ask_lumen')) {
     intelligenceItems.push({
       id: 'ask_lumen',
-      label: 'Ask Lumen',
+      label: 'Ask AnA',
       icon: 'message-circle',
       route: '/portal/ask-lumen',
     });
@@ -735,8 +735,8 @@ function buildQuickActions(enabledModules: ModuleId[], productType?: ProductType
   if (enabledModules.includes('ask_lumen')) {
     actions.push({
       id: 'ask_lumen',
-      label: 'Ask Lumen AI',
-      description: 'Get regulatory guidance',
+      label: 'Ask AnA',
+      description: 'RI Co-pilot — regulatory intelligence guidance',
       icon: 'message-circle',
       route: '/portal/ask-lumen',
       priority: priority++,

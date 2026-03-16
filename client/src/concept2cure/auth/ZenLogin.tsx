@@ -32,7 +32,7 @@ import {
 import { computeRedirect } from './redirectUtils';
 
 // Brand logo
-import concept2cureLogo from '@/assets/concept2cure-logo.jpg';
+import concept2cureLogo from '@/assets/concept2cure-logo.svg';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -51,7 +51,11 @@ interface AuthError {
 
 // Logo rendered from actual brand asset
 const BrandLogo = () => (
-  <img src={concept2cureLogo} alt="Concept2Cure" className="h-14 w-auto object-contain" />
+  <img
+    src={concept2cureLogo}
+    alt="Concept2Cure"
+    className="h-16 w-auto object-contain drop-shadow-lg"
+  />
 );
 
 const MicrosoftIcon = () => (

@@ -681,7 +681,7 @@ export const DashboardV3: React.FC<{ className?: string }> = ({ className }) => 
             <div>
               <h3 className="font-semibold text-lg">Need help with your submissions?</h3>
               <p className="text-white/80 text-sm mt-0.5">
-                Ask Concept2Cure AI to analyze documents, check compliance, or draft content
+                Ask AnA to analyze documents, check compliance, or draft content
               </p>
             </div>
           </div>

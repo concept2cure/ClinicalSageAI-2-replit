@@ -221,7 +221,7 @@ const AUDIT_SECTIONS: AuditSection[] = [
 
 const STORAGE_KEY = 'c2c-audit-responses';
 
-export default function ProductAuditQuestionnaire() {
+export default function ProductAuditQuestionnaire({ projectId }: { projectId?: string } = {}) {
   const [responses, setResponses] = useState<Record<string, AuditResponse>>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);

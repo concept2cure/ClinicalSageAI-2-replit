@@ -176,11 +176,11 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             </div>
             <div className="pt-5 mt-5 border-t border-slate-200">
               <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Lumen Bio
+                Concept2Cure
               </h3>
               <div className="space-y-1">
                 <NavItem href="/lumen-bio/dashboard" icon={<Microscope />}>
-                  Lumen Bio Dashboard
+                  Concept2Cure Dashboard
                 </NavItem>
               </div>
             </div>
@@ -267,11 +267,11 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             </div>
             <div className="pt-5 mt-5 border-t border-slate-200">
               <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Lumen Bio
+                Concept2Cure
               </h3>
               <div className="space-y-1">
                 <NavItem href="/lumen-bio/dashboard" icon={<Microscope />}>
-                  Lumen Bio Dashboard
+                  Concept2Cure Dashboard
                 </NavItem>
               </div>
             </div>

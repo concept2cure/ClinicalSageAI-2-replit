@@ -153,7 +153,7 @@ const GOVERNANCE_TRACKS = [
 
 const WORKFLOW_STAGES = [
   { id: 'ingest', label: 'Data Ingestion', detail: 'Protocol, SAP, CSR, and source data' },
-  { id: 'draft', label: 'AI Drafting', detail: 'Lumen Cortex + Kimi AI generation' },
+  { id: 'draft', label: 'AI Drafting', detail: 'AnA RI Co-pilot + AI generation' },
   { id: 'review', label: 'Medical Review', detail: 'SME + statistics validation' },
   { id: 'mlr', label: 'MLR Approval', detail: 'Compliance, legal, regulatory signoff' },
   { id: 'publish', label: 'Submission Ready', detail: 'eCTD package + publishing' },

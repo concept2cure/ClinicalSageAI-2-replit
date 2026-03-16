@@ -123,7 +123,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
           <div className="flex-1 min-w-0">
             {/* Header */}
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium text-gray-900">{isUser ? 'You' : 'RI'}</span>
+              <span className="text-sm font-medium text-gray-900">
+                {isUser ? 'You' : 'AnA'}
+              </span>
               <span className="text-xs text-gray-400">{formatTime(message.timestamp)}</span>
               {message.edited && <span className="text-xs text-gray-400 italic">(edited)</span>}
             </div>
@@ -280,7 +282,7 @@ interface ChatInputProps {
 const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
   disabled = false,
-  placeholder = 'Ask RI to draft documents, analyze risks, or answer regulatory questions...',
+  placeholder = 'Ask AnA to draft documents, analyze risks, or answer regulatory questions...',
 }) => {
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -414,7 +416,9 @@ const EmptyState: React.FC = () => {
       <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
         <Sparkles className="h-8 w-8 text-purple-600" />
       </div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">Hello! I'm your RI Copilot</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        Hello! I'm AnA
+      </h2>
       <p className="text-gray-500 max-w-md mb-8">
         Your RI regulatory intelligence assistant. I can help you draft documents, analyze risks,
         navigate FDA requirements, and more.
@@ -553,7 +557,8 @@ export const ChatPanel: React.FC = () => {
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Select a Project</h2>
         <p className="text-gray-500 max-w-md">
-          Choose a project from the sidebar or create a new one to start working with Lumen.
+          Choose a project from the sidebar or create a new one to start
+          working with AnA.
         </p>
       </div>
     );

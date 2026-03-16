@@ -519,7 +519,7 @@ const AdminHomePage: React.FC = () => (
     <div>
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       <p className="text-gray-500">
-        Welcome to the TrialSage Admin Portal. Manage users, security, and compliance.
+        Welcome to the Concept2Cure Admin Portal. Manage users, security, and compliance.
       </p>
     </div>
 

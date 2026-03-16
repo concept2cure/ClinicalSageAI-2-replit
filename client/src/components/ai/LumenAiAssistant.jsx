@@ -39,7 +39,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
     {
       role: 'assistant',
       content:
-        "Hello! I'm Lumen, your Regulatory Affairs AI Expert and Medical Writing Specialist. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
+        "Hello! I'm AnA, your RI Co-pilot for Regulatory Affairs and Medical Writing. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
@@ -134,7 +134,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
       {
         role: 'assistant',
         content:
-          "Hello! I'm Lumen, your Regulatory Affairs AI Expert and Medical Writing Specialist. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
+          "Hello! I'm AnA, your RI Co-pilot for Regulatory Affairs and Medical Writing. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
         timestamp: new Date().toLocaleTimeString(),
       },
     ]);
@@ -186,7 +186,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
-                <SheetTitle>Lumen Regulatory Affairs AI</SheetTitle>
+                <SheetTitle>AnA v1.0 — RI Co-pilot</SheetTitle>
                 <SheetDescription>
                   Regulatory compliance, medical writing, and FDA submissions
                 </SheetDescription>
@@ -302,7 +302,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
                   </div>
                   <div>
                     <p className="text-xs font-medium mb-1">
-                      {message.role === 'user' ? 'You' : 'Lumen AI'}
+                      {message.role === 'user' ? 'You' : 'AnA'}
                     </p>
                     <p className="text-sm xl:text-sm 2xl:text-base whitespace-pre-line leading-relaxed">
                       {message.content}

@@ -608,7 +608,7 @@ const CRODashboard = () => {
           }}
         >
           <h3 style={{ margin: '0 0 1rem 0' }}>Recent Activity</h3>
-          <div style={{ space: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
             <div
               style={{
                 display: 'flex',
@@ -688,7 +688,7 @@ const CRODashboard = () => {
           }}
         >
           <h3 style={{ margin: '0 0 1rem 0' }}>Upcoming Deadlines</h3>
-          <div style={{ space: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
             <div
               style={{
                 display: 'flex',

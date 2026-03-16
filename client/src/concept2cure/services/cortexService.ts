@@ -38,6 +38,8 @@ export interface CortexArtifact {
   content: string;
   format?: 'markdown' | 'json' | 'html' | 'xml';
   metadata?: Record<string, unknown>;
+  ctdSection?: string;
+  documentFamily?: string;
 }
 
 export interface CortexCitation {
@@ -307,6 +309,16 @@ export class CortexService {
     systemPrompt?: string;
     sectionCode?: string;
     stream?: boolean;
+    /** Rich project context for AI reasoning */
+    projectContext?: {
+      name?: string;
+      description?: string;
+      status?: string;
+      taskSummary?: { total: number; completed: number; overdue: number; blocked: number };
+      cmcDrugSubstance?: Record<string, string>;
+      cmcDrugProduct?: Record<string, string>;
+      customInstructions?: string;
+    };
   }): Promise<{
     response: string;
     threadId: string;
@@ -328,6 +340,7 @@ export class CortexService {
           system_prompt: params.systemPrompt,
           section_code: params.sectionCode,
           stream: params.stream ?? false,
+          project_context: params.projectContext || undefined,
         }),
         signal: this.abortController.signal,
       });
@@ -389,6 +402,16 @@ export class CortexService {
     submissionType?: string;
     systemPrompt?: string;
     sectionCode?: string;
+    /** Rich project context for AI reasoning */
+    projectContext?: {
+      name?: string;
+      description?: string;
+      status?: string;
+      taskSummary?: { total: number; completed: number; overdue: number; blocked: number };
+      cmcDrugSubstance?: Record<string, string>;
+      cmcDrugProduct?: Record<string, string>;
+      customInstructions?: string;
+    };
     onChunk: (chunk: string) => void;
     onComplete: (response: { threadId: string; artifacts?: CortexArtifact[] }) => void;
     onError: (error: Error) => void;
@@ -407,6 +430,7 @@ export class CortexService {
           system_prompt: params.systemPrompt,
           section_code: params.sectionCode,
           stream: true,
+          project_context: params.projectContext || undefined,
         }),
         signal: this.abortController.signal,
       });

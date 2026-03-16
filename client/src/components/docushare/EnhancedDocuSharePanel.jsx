@@ -1,4 +1,4 @@
-// --- TrialSage Enterprise DocuShare (Fully Integrated, Optimized, Tailored for Replit) ---
+// --- Concept2Cure Enterprise DocuShare (Fully Integrated Document Sharing) ---
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';

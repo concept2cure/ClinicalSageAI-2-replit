@@ -325,7 +325,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900">Lumen</h3>
+            <h3 className="text-sm font-semibold text-zinc-900">AnA</h3>
             {projectContext && (
               <p className="text-xs text-zinc-500">Working on {projectContext.name}</p>
             )}
@@ -351,7 +351,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-6 h-6 text-violet-600" />
             </div>
-            <h4 className="text-sm font-medium text-zinc-900 mb-1">Hi, I'm Lumen!</h4>
+            <h4 className="text-sm font-medium text-zinc-900 mb-1">Hi, I'm AnA!</h4>
             <p className="text-xs text-zinc-500 max-w-xs mx-auto">
               {projectContext
                 ? `I can help you with ${projectContext.name}. Ask me anything or pick a quick action below.`
@@ -494,7 +494,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask RI anything..."
+            placeholder="Ask AnA anything..."
             rows={1}
             className={cn(
               'flex-1 bg-transparent resize-none text-sm',

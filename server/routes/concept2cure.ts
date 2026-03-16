@@ -50,6 +50,9 @@ import {
   concept2cureArtifacts,
   concept2cureArtifactVersions,
   concept2cureSignatures,
+  projectTasks,
+  projectWorkflowStages,
+  projectMilestones,
   concept2cureProvenanceEvents,
   concept2cureReviewComments,
   concept2cureReviewAssignments,
@@ -592,6 +595,7 @@ const createArtifactSchema = z.object({
   content: z.string().max(1000000, 'Content too large'), // 1MB max
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
+  ctdSection: z.string().max(50).optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -645,6 +649,7 @@ interface Artifact {
   category: 'document' | 'interactive' | 'visualization' | 'compliance';
   title: string;
   content: string;
+  ctdSection?: string | null;
   version: number;
   versions: Array<{ version: number; content: string; createdAt: Date }>;
   metadata?: Record<string, unknown>;
@@ -1838,6 +1843,33 @@ router.post(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * GET /api/concept2cure/projects/all/artifacts-summary
+ * Returns artifact count summary across all projects for the organization.
+ */
+router.get('/projects/all/artifacts-summary', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+
+    const allArtifacts = await db
+      .select({
+        status: concept2cureArtifacts.status,
+      })
+      .from(concept2cureArtifacts)
+      .where(eq(concept2cureArtifacts.organizationId, organizationId));
+
+    const total = allArtifacts.length;
+    const draft = allArtifacts.filter(a => a.status === 'draft').length;
+    const review = allArtifacts.filter(a => a.status === 'review').length;
+    const approved = allArtifacts.filter(a => a.status === 'approved' || a.status === 'locked').length;
+
+    return sendSuccess(res, { total, draft, review, approved });
+  } catch (error: any) {
+    logger.error('Failed to fetch artifacts summary', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch artifacts summary');
+  }
+});
+
+/**
  * GET /api/concept2cure/projects/:projectId/artifacts
  * List all artifacts for a project (database-backed).
  */
@@ -1916,6 +1948,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
         contentHash,
         version: 1,
         metadata: data.metadata || {},
+        ctdSection: data.ctdSection || null,
         createdById: userId,
         ...(ctdSection ? { ctdSection } : {}),
       })
@@ -1939,6 +1972,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
       category: data.category,
       title: sanitizedTitle,
       content: sanitizedContent,
+      ctdSection: data.ctdSection || null,
       version: 1,
       versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
       metadata: data.metadata,
@@ -2006,7 +2040,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       return sendError(res, 404, 'Project not found');
     }
 
-    const { content, title } = req.body;
+    const { content, title, ctdSection } = req.body;
 
     // Find artifact in database
     const [dbArtifact] = await db
@@ -2089,6 +2123,9 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       newTitle = sanitizedTitle;
     }
 
+    // Update ctdSection if provided
+    const newCtdSection = ctdSection !== undefined ? ctdSection : dbArtifact.ctdSection;
+
     // Update artifact record
     const [updatedArtifact] = await db
       .update(concept2cureArtifacts)
@@ -2097,6 +2134,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         content: newContent,
         contentHash: newContentHash,
         version: newVersion,
+        ctdSection: newCtdSection,
         updatedAt: new Date(),
       })
       .where(eq(concept2cureArtifacts.id, dbArtifact.id))
@@ -2117,6 +2155,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       category: updatedArtifact.category as Artifact['category'],
       title: updatedArtifact.title,
       content: updatedArtifact.content,
+      ctdSection: updatedArtifact.ctdSection || null,
       version: updatedArtifact.version,
       versions: versions.map(v => ({
         version: v.version,
@@ -2171,6 +2210,36 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
   } catch (error: any) {
     logConcept2cureError('update artifact', error, { artifactId: req.params.artifactId });
     return sendError(res, 500, 'Failed to update artifact');
+  }
+});
+
+/**
+ * POST /api/concept2cure/vault/register-artifact
+ * Register an artifact in the vault for governed document management.
+ */
+router.post('/vault/register-artifact', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const { artifactId, projectId, title, ctdSection, documentType } = req.body;
+
+    if (!artifactId || !title) {
+      return sendError(res, 400, 'artifactId and title are required');
+    }
+
+    // Log the vault registration for audit trail
+    await logAuditEntry(req, 'CREATE', 'vault_registration', artifactId, null, {
+      projectId,
+      title,
+      ctdSection,
+      documentType,
+      registeredFrom: 'concept2cure_copilot',
+    });
+
+    logger.info('Registered artifact in vault', { artifactId, projectId, ctdSection });
+    return sendSuccess(res, { registered: true, artifactId, ctdSection });
+  } catch (error: any) {
+    logger.error('Failed to register artifact in vault', { error: error.message });
+    return sendError(res, 500, 'Failed to register artifact in vault');
   }
 });
 
@@ -5425,6 +5494,205 @@ router.get('/templates/:id', (req: Request, res: Response) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCX EXPORT FOR CHAT ARTIFACTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/artifacts/export-docx
+ * Generate a DOCX file from title + content and return as a download.
+ * Used by the Copilot to export AI-generated documents.
+ */
+router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({
+      title: z.string().min(1).max(500),
+      content: z.string().min(1).max(1000000),
+    });
+    const { title, content } = schema.parse(req.body);
+
+    // Dynamic import to avoid circular dependency issues
+    const { generateDocxBuffer } = await import('../services/docxGenerator');
+    const buffer = await generateDocxBuffer(title, content);
+
+    const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
+    res.setHeader('Content-Length', buffer.length);
+    return res.send(buffer);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to export DOCX', { error: error.message });
+    return sendError(res, 500, 'Failed to export DOCX');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PDF EXPORT FOR CHAT ARTIFACTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/artifacts/export-pdf
+ * Generate a PDF from artifact content
+ */
+router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
+  // Validate input
+  const { title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: 'title and content are required' });
+  }
+
+  try {
+    // Use pdf-lib to create a PDF from the content
+    const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+
+    const pdfDoc = await PDFDocument.create();
+    const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+
+    const fontSize = 11;
+    const titleFontSize = 18;
+    const headingFontSize = 14;
+    const margin = 72; // 1 inch
+    const pageWidth = 612; // Letter size
+    const pageHeight = 792;
+    const maxWidth = pageWidth - 2 * margin;
+
+    let page = pdfDoc.addPage([pageWidth, pageHeight]);
+    let y = pageHeight - margin;
+
+    // Title
+    page.drawText(title, {
+      x: margin,
+      y: y,
+      size: titleFontSize,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    y -= titleFontSize + 20;
+
+    // Date line
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    page.drawText(dateStr, {
+      x: margin,
+      y: y,
+      size: 9,
+      font: timesRoman,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+    y -= 30;
+
+    // Draw a separator line
+    page.drawLine({
+      start: { x: margin, y: y },
+      end: { x: pageWidth - margin, y: y },
+      thickness: 0.5,
+      color: rgb(0.8, 0.8, 0.8),
+    });
+    y -= 20;
+
+    // Content - split by lines, handle headings and paragraphs
+    const lines = content.split('\n');
+    for (const line of lines) {
+      // Check if we need a new page
+      if (y < margin + 40) {
+        // Add page number to current page
+        const pageNum = pdfDoc.getPageCount();
+        page.drawText(`Page ${pageNum}`, {
+          x: pageWidth / 2 - 20,
+          y: margin / 2,
+          size: 9,
+          font: timesRoman,
+          color: rgb(0.5, 0.5, 0.5),
+        });
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        y = pageHeight - margin;
+      }
+
+      if (line.startsWith('# ')) {
+        y -= 10;
+        const text = line.slice(2);
+        page.drawText(text, { x: margin, y, size: titleFontSize, font: timesBold, color: rgb(0.1, 0.1, 0.1) });
+        y -= titleFontSize + 8;
+      } else if (line.startsWith('## ')) {
+        y -= 8;
+        const text = line.slice(3);
+        page.drawText(text, { x: margin, y, size: headingFontSize, font: timesBold, color: rgb(0.15, 0.15, 0.15) });
+        y -= headingFontSize + 6;
+      } else if (line.startsWith('### ')) {
+        y -= 6;
+        const text = line.slice(4);
+        page.drawText(text, { x: margin, y, size: 12, font: timesBold, color: rgb(0.2, 0.2, 0.2) });
+        y -= 18;
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        const text = '  \u2022 ' + line.slice(2);
+        // Word wrap
+        const words = text.split(' ');
+        let currentLine = '';
+        for (const word of words) {
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const width = timesRoman.widthOfTextAtSize(testLine, fontSize);
+          if (width > maxWidth - 20) {
+            page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            y -= fontSize + 4;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          y -= fontSize + 4;
+        }
+      } else if (line.trim() === '') {
+        y -= 8;
+      } else {
+        // Regular paragraph with word wrap
+        const cleanText = line.replace(/\*\*/g, '');
+        const words = cleanText.split(' ');
+        let currentLine = '';
+        for (const word of words) {
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const width = timesRoman.widthOfTextAtSize(testLine, fontSize);
+          if (width > maxWidth) {
+            if (y < margin + 40) {
+              const pageNum = pdfDoc.getPageCount();
+              page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+              page = pdfDoc.addPage([pageWidth, pageHeight]);
+              y = pageHeight - margin;
+            }
+            page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            y -= fontSize + 4;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          y -= fontSize + 4;
+        }
+      }
+    }
+
+    // Add page number to last page
+    const pageNum = pdfDoc.getPageCount();
+    page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+
+    const pdfBytes = await pdfDoc.save();
+    const safeTitle = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
+    res.send(Buffer.from(pdfBytes));
+  } catch (error: any) {
+    logger.error('Failed to export PDF', { error: error.message });
+    return sendError(res, 500, 'Failed to generate PDF');
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DOCX DOWNLOAD
 // GET /api/concept2cure/documents/download/:filename
@@ -6136,6 +6404,505 @@ router.get('/projects/:projectId/change-impact', async (req: Request, res: Respo
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT TASK MANAGEMENT
+// Regulatory-aware task management connected to submission workflows
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SUBMISSION_MILESTONES: Record<string, Array<{ name: string; category: string; order: number }>> = {
+  IND: [
+    { name: 'Pre-IND Meeting Request', category: 'regulatory', order: 1 },
+    { name: 'Pre-IND Briefing Document', category: 'document-prep', order: 2 },
+    { name: 'Pre-IND Meeting', category: 'meeting', order: 3 },
+    { name: 'Module 1 Administrative', category: 'document-prep', order: 4 },
+    { name: 'Module 2 Summaries', category: 'document-prep', order: 5 },
+    { name: 'Module 3 Quality (CMC)', category: 'document-prep', order: 6 },
+    { name: 'Module 4 Nonclinical', category: 'document-prep', order: 7 },
+    { name: 'Module 5 Clinical', category: 'document-prep', order: 8 },
+    { name: 'IND Compilation & QC', category: 'quality', order: 9 },
+    { name: 'IND Submission to FDA', category: 'submission', order: 10 },
+    { name: '30-Day Safety Review', category: 'regulatory', order: 11 },
+    { name: 'Study May Proceed', category: 'milestone', order: 12 },
+  ],
+  NDA: [
+    { name: 'Pre-NDA Meeting', category: 'meeting', order: 1 },
+    { name: 'Module 1 Administrative', category: 'document-prep', order: 2 },
+    { name: 'Module 2.5 Clinical Overview', category: 'document-prep', order: 3 },
+    { name: 'Module 2.7 Clinical Summary', category: 'document-prep', order: 4 },
+    { name: 'Module 3 Quality', category: 'document-prep', order: 5 },
+    { name: 'Module 4 Nonclinical Reports', category: 'document-prep', order: 6 },
+    { name: 'Module 5 Clinical Study Reports', category: 'document-prep', order: 7 },
+    { name: 'NDA Compilation & Publishing', category: 'quality', order: 8 },
+    { name: 'NDA Submission', category: 'submission', order: 9 },
+    { name: 'Filing Review (60 days)', category: 'regulatory', order: 10 },
+    { name: 'Mid-Cycle Review', category: 'regulatory', order: 11 },
+    { name: 'Advisory Committee', category: 'meeting', order: 12 },
+    { name: 'PDUFA Date / Action', category: 'milestone', order: 13 },
+  ],
+  BLA: [
+    { name: 'Pre-BLA Meeting', category: 'meeting', order: 1 },
+    { name: 'Module 1 Administrative', category: 'document-prep', order: 2 },
+    { name: 'Module 2 CTD Summaries', category: 'document-prep', order: 3 },
+    { name: 'Module 3 Quality (CMC)', category: 'document-prep', order: 4 },
+    { name: 'Module 4 Nonclinical', category: 'document-prep', order: 5 },
+    { name: 'Module 5 Clinical', category: 'document-prep', order: 6 },
+    { name: 'BLA Compilation & Publishing', category: 'quality', order: 7 },
+    { name: 'BLA Submission', category: 'submission', order: 8 },
+    { name: 'PDUFA Date / Action', category: 'milestone', order: 9 },
+  ],
+  '510K': [
+    { name: 'Device Classification & Pathway', category: 'regulatory', order: 1 },
+    { name: 'Predicate Device Selection', category: 'analysis', order: 2 },
+    { name: 'Pre-Submission Meeting (Q-Sub)', category: 'meeting', order: 3 },
+    { name: 'SE Comparison & Testing Plan', category: 'document-prep', order: 4 },
+    { name: 'Bench Testing & Biocompatibility', category: 'testing', order: 5 },
+    { name: 'Software Documentation (if applicable)', category: 'document-prep', order: 6 },
+    { name: 'Sterilization Validation', category: 'testing', order: 7 },
+    { name: 'Clinical Data / Literature Review', category: 'analysis', order: 8 },
+    { name: '510(k) Summary / Statement', category: 'document-prep', order: 9 },
+    { name: 'Labeling & IFU', category: 'document-prep', order: 10 },
+    { name: 'eSTAR Submission Assembly', category: 'submission', order: 11 },
+    { name: '510(k) Submission to FDA', category: 'submission', order: 12 },
+    { name: 'FDA Review (90-day target)', category: 'regulatory', order: 13 },
+    { name: 'Clearance Decision', category: 'milestone', order: 14 },
+  ],
+  PMA: [
+    { name: 'Pre-Submission Meeting', category: 'meeting', order: 1 },
+    { name: 'Device Description & IFU', category: 'document-prep', order: 2 },
+    { name: 'Manufacturing & Quality System', category: 'document-prep', order: 3 },
+    { name: 'Nonclinical Testing', category: 'testing', order: 4 },
+    { name: 'Clinical Study Design & Protocol', category: 'document-prep', order: 5 },
+    { name: 'Clinical Data & Analysis', category: 'analysis', order: 6 },
+    { name: 'PMA Assembly & QC', category: 'quality', order: 7 },
+    { name: 'PMA Submission', category: 'submission', order: 8 },
+    { name: 'FDA Panel Meeting', category: 'meeting', order: 9 },
+    { name: 'Approval Decision', category: 'milestone', order: 10 },
+  ],
+  CER: [
+    { name: 'Define Scope & Device Description', category: 'document-prep', order: 1 },
+    { name: 'Literature Search Strategy', category: 'analysis', order: 2 },
+    { name: 'Equivalence Assessment', category: 'analysis', order: 3 },
+    { name: 'Clinical Data Appraisal', category: 'analysis', order: 4 },
+    { name: 'Clinical Evaluation Report Draft', category: 'document-prep', order: 5 },
+    { name: 'CER Internal Review', category: 'quality', order: 6 },
+    { name: 'PMCF Plan', category: 'document-prep', order: 7 },
+    { name: 'SSCP Preparation', category: 'document-prep', order: 8 },
+    { name: 'Notified Body Review', category: 'regulatory', order: 9 },
+    { name: 'CE Mark Decision', category: 'milestone', order: 10 },
+  ],
+  DE_NOVO: [
+    { name: 'Risk-Based Classification', category: 'analysis', order: 1 },
+    { name: 'Pre-Submission Meeting', category: 'meeting', order: 2 },
+    { name: 'Performance Testing', category: 'testing', order: 3 },
+    { name: 'Clinical Evidence', category: 'analysis', order: 4 },
+    { name: 'De Novo Request Assembly', category: 'document-prep', order: 5 },
+    { name: 'De Novo Submission', category: 'submission', order: 6 },
+    { name: 'FDA Review & Classification', category: 'regulatory', order: 7 },
+  ],
+};
+
+// GET /api/concept2cure/projects/:projectId/tasks
+router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const { status, priority, category } = req.query;
+
+    let query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+
+    const tasks = await query.orderBy(projectTasks.dueDate);
+
+    // Filter in application layer for optional params
+    let filtered = tasks;
+    if (status) filtered = filtered.filter((t: any) => t.status === status);
+    if (priority) filtered = filtered.filter((t: any) => t.priority === priority);
+    if (category) filtered = filtered.filter((t: any) => t.moduleType === category);
+
+    return sendSuccess(res, filtered, { total: filtered.length });
+  } catch (error: any) {
+    logger.error('Failed to fetch project tasks', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch tasks');
+  }
+});
+
+// POST /api/concept2cure/projects/:projectId/tasks
+router.post('/projects/:projectId/tasks', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const taskSchema = z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      status: z.enum(['todo', 'in-progress', 'review', 'done', 'blocked']).default('todo'),
+      priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+      moduleType: z.string().optional(),
+      dueDate: z.string().optional(),
+      assigneeId: z.number().optional(),
+      parentTaskId: z.number().optional(),
+      estimatedHours: z.number().optional(),
+      dependsOn: z.array(z.string()).optional(),
+      metadata: z.any().optional(),
+    });
+
+    const data = taskSchema.parse(req.body);
+
+    // Resolve organizationId from the project
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+    if (!project) return sendError(res, 404, 'Project not found');
+
+    const [task] = await db.insert(projectTasks).values({
+      organizationId: project.organizationId,
+      projectId,
+      name: data.name,
+      description: data.description || null,
+      status: data.status,
+      priority: data.priority,
+      moduleType: data.moduleType || null,
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
+      assigneeId: data.assigneeId || null,
+      parentTaskId: data.parentTaskId || null,
+      estimatedHours: data.estimatedHours || null,
+      dependsOn: data.dependsOn || null,
+      metadata: data.metadata || null,
+    }).returning();
+
+    return sendSuccess(res, task);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) return sendError(res, 400, 'Validation error', error.errors);
+    logger.error('Failed to create task', { error: error.message });
+    return sendError(res, 500, 'Failed to create task');
+  }
+});
+
+// PUT /api/concept2cure/projects/:projectId/tasks/:taskId
+router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
+
+    const updates = req.body;
+    if (updates.dueDate) updates.dueDate = new Date(updates.dueDate);
+    updates.updatedAt = new Date();
+
+    const [updated] = await db.update(projectTasks)
+      .set(updates)
+      .where(eq(projectTasks.id, taskId))
+      .returning();
+
+    if (!updated) return sendError(res, 404, 'Task not found');
+    return sendSuccess(res, updated);
+  } catch (error: any) {
+    logger.error('Failed to update task', { error: error.message });
+    return sendError(res, 500, 'Failed to update task');
+  }
+});
+
+// DELETE /api/concept2cure/projects/:projectId/tasks/:taskId
+router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId)) return sendError(res, 400, 'Invalid task ID');
+
+    const [deleted] = await db.delete(projectTasks).where(eq(projectTasks.id, taskId)).returning();
+    if (!deleted) return sendError(res, 404, 'Task not found');
+    return sendSuccess(res, { deleted: true });
+  } catch (error: any) {
+    logger.error('Failed to delete task', { error: error.message });
+    return sendError(res, 500, 'Failed to delete task');
+  }
+});
+
+// POST /api/concept2cure/projects/:projectId/tasks/bulk
+// AI-powered bulk task generation from submission type milestones
+router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const { submissionType, targetDate } = req.body;
+    const milestones = SUBMISSION_MILESTONES[submissionType?.toUpperCase()];
+    if (!milestones) {
+      return sendError(res, 400, `Unknown submission type: ${submissionType}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+    }
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+    if (!project) return sendError(res, 404, 'Project not found');
+
+    const target = targetDate ? new Date(targetDate) : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 6 months default
+    const totalMilestones = milestones.length;
+
+    // Distribute milestones evenly between now and target date
+    const now = new Date();
+    const timeSpan = target.getTime() - now.getTime();
+
+    const taskValues = milestones.map((m, i) => {
+      const dueDate = new Date(now.getTime() + (timeSpan * (i + 1)) / totalMilestones);
+      return {
+        organizationId: project.organizationId,
+        projectId,
+        name: m.name,
+        description: `${submissionType.toUpperCase()} milestone: ${m.name}`,
+        status: 'todo' as const,
+        priority: m.category === 'submission' || m.category === 'milestone' ? ('high' as const) : ('medium' as const),
+        moduleType: m.category,
+        dueDate,
+        metadata: { submissionType, milestoneOrder: m.order, category: m.category, autoGenerated: true },
+      };
+    });
+
+    const created = await db.insert(projectTasks).values(taskValues).returning();
+
+    return sendSuccess(res, created, {
+      total: created.length,
+      submissionType,
+      targetDate: target.toISOString(),
+    });
+  } catch (error: any) {
+    logger.error('Failed to bulk create tasks', { error: error.message });
+    return sendError(res, 500, 'Failed to generate submission tasks');
+  }
+});
+
+// GET /api/concept2cure/projects/:projectId/tasks/summary
+// Task summary with counts by status, overdue count, health score
+router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
+
+    const tasks = await db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+
+    const now = new Date();
+    const byStatus: Record<string, number> = {};
+    const byPriority: Record<string, number> = {};
+    let overdue = 0;
+    let completed = 0;
+    let total = tasks.length;
+
+    for (const task of tasks) {
+      const s = (task as any).status || 'todo';
+      const p = (task as any).priority || 'medium';
+      byStatus[s] = (byStatus[s] || 0) + 1;
+      byPriority[p] = (byPriority[p] || 0) + 1;
+      if (s === 'done') completed++;
+      if ((task as any).dueDate && new Date((task as any).dueDate) < now && s !== 'done') overdue++;
+    }
+
+    // Health score: 100 if all done, penalized by overdue and blocked tasks
+    const completionRate = total > 0 ? (completed / total) * 100 : 100;
+    const overdueRate = total > 0 ? (overdue / total) * 100 : 0;
+    const blockedCount = byStatus['blocked'] || 0;
+    const healthScore = Math.max(0, Math.round(completionRate - overdueRate * 1.5 - blockedCount * 5));
+
+    return sendSuccess(res, {
+      total,
+      completed,
+      overdue,
+      byStatus,
+      byPriority,
+      healthScore,
+      completionRate: Math.round(completionRate),
+    });
+  } catch (error: any) {
+    logger.error('Failed to compute task summary', { error: error.message });
+    return sendError(res, 500, 'Failed to compute task summary');
+  }
+});
+
+// GET /api/concept2cure/submission-milestones/:type
+// Get available milestones for a submission type
+router.get('/submission-milestones/:type', (req: Request, res: Response) => {
+  const type = req.params.type.toUpperCase();
+  const milestones = SUBMISSION_MILESTONES[type];
+  if (!milestones) {
+    return sendError(res, 404, `No milestones for type: ${type}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+  }
+  return sendSuccess(res, milestones);
+});
+
+// GET /api/concept2cure/submission-milestones
+// Get all available submission types
+router.get('/submission-milestones', (_req: Request, res: Response) => {
+  const types = Object.keys(SUBMISSION_MILESTONES).map(type => ({
+    type,
+    milestoneCount: SUBMISSION_MILESTONES[type].length,
+  }));
+  return sendSuccess(res, types);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CMC DATA ENDPOINTS — Unified with concept2cure projects
+// Stores CMC data (Drug Substance, Drug Product) in project.metadata
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const cmcDataSchema = z.object({
+  drugSubstance: z.object({
+    substanceName: z.string().optional(),
+    inn: z.string().optional(),
+    cas: z.string().optional(),
+    molecularFormula: z.string().optional(),
+    molecularWeight: z.string().optional(),
+    manufacturingRoute: z.string().optional(),
+    structureDescription: z.string().optional(),
+    polymorph: z.string().optional(),
+    solubility: z.string().optional(),
+    meltingPoint: z.string().optional(),
+    hygroscopicity: z.string().optional(),
+  }).optional(),
+  drugProduct: z.object({
+    productName: z.string().optional(),
+    dosageForm: z.string().optional(),
+    routeOfAdmin: z.string().optional(),
+    strength: z.string().optional(),
+    containerClosure: z.string().optional(),
+    composition: z.string().optional(),
+    excipients: z.string().optional(),
+    overages: z.string().optional(),
+    shelfLife: z.string().optional(),
+    storageConditions: z.string().optional(),
+  }).optional(),
+  specifications: z.array(z.any()).optional(),
+  stabilityStudies: z.array(z.any()).optional(),
+  impurities: z.array(z.any()).optional(),
+});
+
+// GET CMC data for a project
+router.get('/projects/:projectId/cmc', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    const metadata = (project.metadata as Record<string, any>) || {};
+    return sendSuccess(res, {
+      drugSubstance: metadata.cmcDrugSubstance || null,
+      drugProduct: metadata.cmcDrugProduct || null,
+      specifications: metadata.cmcSpecifications || [],
+      stabilityStudies: metadata.cmcStabilityStudies || [],
+      impurities: metadata.cmcImpurities || [],
+      lastUpdated: metadata.cmcLastUpdated || null,
+    });
+  } catch (error) {
+    logger.error('Failed to get CMC data', { error });
+    return sendError(res, 'Failed to get CMC data', 500);
+  }
+});
+
+// SAVE CMC data for a project
+router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const parsed = cmcDataSchema.safeParse(req.body);
+    if (!parsed.success) return sendError(res, `Invalid CMC data: ${parsed.error.message}`, 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    const existingMetadata = (project.metadata as Record<string, any>) || {};
+    const updatedMetadata = {
+      ...existingMetadata,
+      cmcDrugSubstance: parsed.data.drugSubstance || existingMetadata.cmcDrugSubstance,
+      cmcDrugProduct: parsed.data.drugProduct || existingMetadata.cmcDrugProduct,
+      cmcSpecifications: parsed.data.specifications || existingMetadata.cmcSpecifications || [],
+      cmcStabilityStudies: parsed.data.stabilityStudies || existingMetadata.cmcStabilityStudies || [],
+      cmcImpurities: parsed.data.impurities || existingMetadata.cmcImpurities || [],
+      cmcLastUpdated: new Date().toISOString(),
+    };
+
+    await db.update(projects).set({ metadata: updatedMetadata }).where(eq(projects.id, projectId));
+
+    return sendSuccess(res, { saved: true, lastUpdated: updatedMetadata.cmcLastUpdated });
+  } catch (error) {
+    logger.error('Failed to save CMC data', { error });
+    return sendError(res, 'Failed to save CMC data', 500);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT CONTEXT ENDPOINT — Full context for AnA/Cortex AI
+// Returns project details + tasks + CMC data + knowledge for AI context injection
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/projects/:projectId/context', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    // Fetch tasks
+    const tasks = await db.select().from(projectTasks)
+      .where(eq(projectTasks.projectId, projectId))
+      .orderBy(desc(projectTasks.createdAt));
+
+    // Build task summary
+    const taskSummary = {
+      total: tasks.length,
+      completed: tasks.filter(t => (t as any).status === 'done').length,
+      inProgress: tasks.filter(t => (t as any).status === 'in-progress').length,
+      blocked: tasks.filter(t => (t as any).status === 'blocked').length,
+      overdue: tasks.filter(t => {
+        const dueDate = (t as any).dueDate;
+        return dueDate && new Date(dueDate) < new Date() && (t as any).status !== 'done';
+      }).length,
+    };
+
+    // Extract CMC data from metadata
+    const metadata = (project.metadata as Record<string, any>) || {};
+    const settings = (project.settings as Record<string, any>) || {};
+
+    // Extract knowledge/custom instructions
+    const knowledge = settings.knowledge || {};
+
+    return sendSuccess(res, {
+      project: {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        type: project.type,
+        status: project.status,
+        priority: project.priority,
+        progress: project.progress,
+        startDate: project.startDate,
+        targetEndDate: project.targetEndDate,
+        riskLevel: project.riskLevel,
+        tags: project.tags,
+      },
+      tasks: {
+        summary: taskSummary,
+        recent: tasks.slice(0, 10).map(t => ({
+          id: (t as any).id,
+          name: (t as any).name,
+          status: (t as any).status,
+          priority: (t as any).priority,
+          dueDate: (t as any).dueDate,
+        })),
+      },
+      cmc: {
+        drugSubstance: metadata.cmcDrugSubstance || null,
+        drugProduct: metadata.cmcDrugProduct || null,
+        hasSpecifications: (metadata.cmcSpecifications || []).length > 0,
+        hasStabilityStudies: (metadata.cmcStabilityStudies || []).length > 0,
+        hasImpurities: (metadata.cmcImpurities || []).length > 0,
+      },
+      knowledge: {
+        customInstructions: knowledge.customInstructions || null,
+        documentCount: (knowledge.documents || []).length,
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to get project context', { error });
+    return sendError(res, 'Failed to get project context', 500);
+  }
+});
+
 /**
  * GET /api/concept2cure/projects/:projectId/transform-context
  * Returns the context needed for the Regulatory Transform Canvas:
@@ -6226,6 +6993,116 @@ router.get('/projects/:projectId/transform-context', async (req: Request, res: R
   } catch (error: any) {
     logConcept2cureError('transform-context', error, { projectId: req.params.projectId });
     return sendError(res, 500, 'Failed to load transform context');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI TASK ASSESSMENT — AnA-powered task evaluation
+// Analyzes project tasks and returns AI recommendations
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) return sendError(res, 'Invalid project ID', 400);
+
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) return sendError(res, 'Project not found', 404);
+
+    const tasks = await db.select().from(projectTasks)
+      .where(eq(projectTasks.projectId, projectId))
+      .orderBy(desc(projectTasks.createdAt));
+
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => (t as any).status === 'done').length;
+    const blockedTasks = tasks.filter(t => (t as any).status === 'blocked').length;
+    const overdueTasks = tasks.filter(t => {
+      const dueDate = (t as any).dueDate;
+      return dueDate && new Date(dueDate) < new Date() && (t as any).status !== 'done';
+    }).length;
+    const inProgressTasks = tasks.filter(t => (t as any).status === 'in-progress').length;
+
+    // Compute health score (0-100)
+    let healthScore = 100;
+    if (totalTasks > 0) {
+      const completionRate = (completedTasks / totalTasks) * 100;
+      const overdueRate = (overdueTasks / totalTasks) * 100;
+      const blockedRate = (blockedTasks / totalTasks) * 100;
+      healthScore = Math.max(0, Math.min(100, Math.round(
+        completionRate * 0.4 + (100 - overdueRate * 3) * 0.3 + (100 - blockedRate * 5) * 0.3
+      )));
+    }
+
+    // Generate risk assessment
+    const risks: string[] = [];
+    if (overdueTasks > 0) risks.push(`${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue — review deadlines`);
+    if (blockedTasks > 0) risks.push(`${blockedTasks} task${blockedTasks > 1 ? 's' : ''} blocked — resolve dependencies`);
+    if (totalTasks > 0 && inProgressTasks === 0 && completedTasks < totalTasks) {
+      risks.push('No tasks in progress — workflow may be stalled');
+    }
+    if (totalTasks === 0) risks.push('No tasks defined — generate milestones for this submission type');
+
+    // Generate next recommended actions
+    const nextActions: Array<{ action: string; priority: string; reason: string }> = [];
+
+    if (totalTasks === 0) {
+      nextActions.push({
+        action: `Generate ${project.type || 'submission'} milestones`,
+        priority: 'high',
+        reason: 'No tasks exist yet. Auto-generate milestone-based tasks for your submission type.',
+      });
+    }
+
+    if (overdueTasks > 0) {
+      nextActions.push({
+        action: 'Review overdue tasks',
+        priority: 'urgent',
+        reason: `${overdueTasks} task${overdueTasks > 1 ? 's have' : ' has'} passed ${overdueTasks > 1 ? 'their' : 'its'} due date.`,
+      });
+    }
+
+    if (blockedTasks > 0) {
+      nextActions.push({
+        action: 'Resolve blocked tasks',
+        priority: 'high',
+        reason: `${blockedTasks} task${blockedTasks > 1 ? 's are' : ' is'} blocked and preventing progress.`,
+      });
+    }
+
+    // Check CMC readiness
+    const metadata = (project.metadata as Record<string, any>) || {};
+    if (!metadata.cmcDrugSubstance?.substanceName) {
+      nextActions.push({
+        action: 'Enter Drug Substance data (CMC Module 3)',
+        priority: 'medium',
+        reason: 'Drug Substance information is required for Module 3 documentation.',
+      });
+    }
+    if (!metadata.cmcDrugProduct?.productName) {
+      nextActions.push({
+        action: 'Enter Drug Product data (CMC Module 3)',
+        priority: 'medium',
+        reason: 'Drug Product information is required for Module 3 documentation.',
+      });
+    }
+
+    return sendSuccess(res, {
+      healthScore,
+      summary: {
+        total: totalTasks,
+        completed: completedTasks,
+        inProgress: inProgressTasks,
+        blocked: blockedTasks,
+        overdue: overdueTasks,
+        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      },
+      risks,
+      nextActions: nextActions.slice(0, 5),
+      assessedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to assess tasks', { error });
+    return sendError(res, 'Failed to assess tasks', 500);
   }
 });
 

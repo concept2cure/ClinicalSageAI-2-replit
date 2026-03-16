@@ -182,7 +182,7 @@ export default function AskLumenCopilot({ readinessData, playbook }) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Ask Lumen AI</h2>
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Ask AnA — RI Co-pilot</h2>
 
       <div className="bg-white border border-gray-200 rounded-lg mb-4">
         {/* Chat Mode Selector */}

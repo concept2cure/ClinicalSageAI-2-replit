@@ -15,7 +15,7 @@ export function generateQAChecklistPDF() {
   // Add title
   doc.setFontSize(20);
   doc.setTextColor(0, 51, 153); // Corporate blue
-  doc.text('TrialSage CER Generator - QA Checklist', 20, 20);
+  doc.text('Concept2Cure CER Generator - QA Checklist', 20, 20);
 
   // Add subtitle
   doc.setFontSize(12);
@@ -126,14 +126,14 @@ export function generateQAChecklistPDF() {
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150); // Light gray
   doc.text(
-    `TrialSage™ by Concept2Cures, Inc. - Confidential Internal Document`,
+    `Concept2Cure™ by Concept2Cures, Inc. - Confidential Internal Document`,
     pageWidth / 2,
     285,
     { align: 'center' }
   );
 
   // Save the PDF
-  doc.save('TrialSage-CER-QA-Checklist.pdf');
+  doc.save('Concept2Cure-CER-QA-Checklist.pdf');
 
   return true;
 }

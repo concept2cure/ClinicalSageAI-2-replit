@@ -25,11 +25,7 @@ import { ForesightKnowledgeGraph } from './foresight-knowledge-graph';
 
 // Initialize OpenAI with GPT-5 capabilities
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'not-needed-for-replit-ai-integrations',
-  baseURL: 'https://agent-stack.replit.app/v1',
-  defaultHeaders: {
-    'X-Replit-AI-Provider': 'openai'
-  }
+  apiKey: process.env.OPENAI_API_KEY || '',
 });
 
 // Advanced model selection for different tasks

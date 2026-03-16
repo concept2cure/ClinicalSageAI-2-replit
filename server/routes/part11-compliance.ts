@@ -552,7 +552,7 @@ router.get('/validation', (_req: Request, res: Response) => {
   const records: ValidationRecord[] = [
     {
       id: uuidv4(),
-      systemName: 'TrialSage Concept2Cure Platform',
+      systemName: 'Concept2Cure Platform',
       validationType: 'IQ',
       status: 'completed',
       protocol: 'TSG-IQ-001',
@@ -567,7 +567,7 @@ router.get('/validation', (_req: Request, res: Response) => {
     },
     {
       id: uuidv4(),
-      systemName: 'TrialSage Concept2Cure Platform',
+      systemName: 'Concept2Cure Platform',
       validationType: 'OQ',
       status: 'completed',
       protocol: 'TSG-OQ-001',
@@ -591,7 +591,7 @@ router.get('/validation', (_req: Request, res: Response) => {
     },
     {
       id: uuidv4(),
-      systemName: 'TrialSage Concept2Cure Platform',
+      systemName: 'Concept2Cure Platform',
       validationType: 'PQ',
       status: 'completed',
       protocol: 'TSG-PQ-001',
