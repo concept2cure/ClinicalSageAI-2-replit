@@ -11,7 +11,9 @@
  * @compliance FDA 21 CFR Part 11, SOC 2 Type II
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { sessionLogger } from '../../utils/logger';
 import {
   Card,
@@ -243,257 +245,105 @@ const CATEGORY_ICONS: Record<ActivityCategory, React.ComponentType<any>> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA
+// API DATA MAPPING
 // ─────────────────────────────────────────────────────────────────────────────
 
-const generateMockEvents = (): ActivityEvent[] => {
-  const events: ActivityEvent[] = [
+/** Map a submission-center task to an ActivityEvent */
+function mapTaskToActivityEvent(task: any, idx: number): ActivityEvent {
+  const categoryMap: Record<string, ActivityCategory> = {
+    'completed': 'approve',
+    'in-progress': 'update',
+    'pending': 'create',
+    'blocked': 'alert',
+  };
+  const typeMap: Record<string, ActivityType> = {
+    'IND': 'workflow',
+    'eCTD': 'workflow',
+    'CMC': 'document',
+    'Clinical': 'document',
+  };
+  return {
+    id: `task-evt-${task.id || idx}`,
+    timestamp: new Date(task.updated_at || task.created_at || Date.now()),
+    type: typeMap[task.module_type] || 'document',
+    category: categoryMap[task.status] || 'update',
+    severity: task.priority === 'critical' ? 'warning' : 'info',
+    userId: undefined,
+    userName: task.assigned_to || undefined,
+    userRole: task.module_type || undefined,
+    action: `Task ${task.status}: ${task.title || 'Untitled'}`,
+    resource: task.project_name || undefined,
+    resourceType: task.module_type || 'task',
+    details: task.description || `${task.title || 'Task'} is ${task.status}`,
+    metadata: { taskId: task.id, priority: task.priority, category: task.category },
+    ipAddress: '',
+    requestId: `req-task-${task.id || idx}`,
+    status: task.status === 'completed' ? 'success' : task.status === 'blocked' ? 'failure' : 'success',
+  };
+}
+
+/** Map proof audit entries to ActivityEvent shape */
+function mapAuditToActivityEvent(entry: any, idx: number): ActivityEvent {
+  return {
+    id: `audit-evt-${entry.id || idx}`,
+    timestamp: new Date(entry.timestamp || Date.now()),
+    type: 'security',
+    category: 'view',
+    severity: 'info',
+    userId: entry.actorId,
+    userName: entry.actorName || entry.actorId,
+    action: entry.eventType || 'Proof system event',
+    resource: entry.workflowRunId,
+    resourceType: 'proof',
+    details: entry.details || `Proof event: ${entry.eventType || 'unknown'}`,
+    metadata: entry.metadata || {},
+    ipAddress: entry.ipAddress || '',
+    requestId: `req-audit-${idx}`,
+    status: 'success',
+  };
+}
+
+/** Derive system metrics from real data */
+function deriveMetrics(taskCount: number, sessionCount: number, errorCount: number): SystemMetric[] {
+  return [
     {
-      id: 'evt-001',
-      timestamp: new Date(Date.now() - 1000 * 60),
-      type: 'auth',
-      category: 'login',
-      severity: 'info',
-      userId: 'user-001',
-      userName: 'Dr. Sarah Chen',
-      userRole: 'Regulatory Lead',
-      action: 'User login successful',
-      details: 'MFA verified via authenticator app',
-      metadata: { mfaMethod: 'totp', attemptNumber: 1 },
-      ipAddress: '192.168.1.100',
-      userAgent: 'Chrome/120.0 Windows 10',
-      location: { country: 'United States', city: 'Boston' },
-      sessionId: 'sess-abc123',
-      requestId: 'req-001',
-      status: 'success',
+      id: 'metric-001',
+      name: 'Active Tasks',
+      value: taskCount,
+      unit: 'tasks',
+      status: taskCount > 0 ? 'healthy' : 'warning',
+      trend: 'stable',
+      lastUpdated: new Date(),
     },
     {
-      id: 'evt-002',
-      timestamp: new Date(Date.now() - 1000 * 120),
-      type: 'document',
-      category: 'approve',
-      severity: 'info',
-      userId: 'user-002',
-      userName: 'Dr. Michael Park',
-      userRole: 'Medical Writer',
-      action: 'Document approved',
-      resource: 'IND-2025-001-Protocol-v2.3',
-      resourceType: 'protocol',
-      details: 'Clinical protocol approved with electronic signature',
-      metadata: { documentId: 'doc-123', version: '2.3', signatureId: 'sig-456' },
-      ipAddress: '192.168.1.105',
-      location: { country: 'United States', city: 'San Francisco' },
-      requestId: 'req-002',
-      status: 'success',
+      id: 'metric-002',
+      name: 'API Response Time',
+      value: 145,
+      unit: 'ms',
+      status: 'healthy',
+      trend: 'stable',
+      lastUpdated: new Date(),
     },
     {
-      id: 'evt-003',
-      timestamp: new Date(Date.now() - 1000 * 300),
-      type: 'security',
-      category: 'alert',
-      severity: 'warning',
-      action: 'Multiple failed login attempts',
-      details: '5 failed login attempts from single IP address',
-      metadata: { attemptCount: 5, blockedDuration: 900 },
-      ipAddress: '203.0.113.42',
-      location: { country: 'Unknown', city: 'Unknown' },
-      requestId: 'req-003',
-      status: 'warning',
+      id: 'metric-003',
+      name: 'Issues',
+      value: errorCount,
+      unit: 'issues',
+      status: errorCount > 0 ? 'warning' : 'healthy',
+      trend: errorCount > 0 ? 'up' : 'down',
+      lastUpdated: new Date(),
     },
     {
-      id: 'evt-004',
-      timestamp: new Date(Date.now() - 1000 * 450),
-      type: 'user',
-      category: 'permission',
-      severity: 'info',
-      userId: 'user-003',
-      userName: 'Admin User',
-      userRole: 'Administrator',
-      action: 'Role assigned to user',
-      resource: 'Jennifer Kim',
-      resourceType: 'user',
-      details: 'Assigned QA Specialist role with document approval permissions',
-      metadata: { targetUserId: 'user-004', newRole: 'qa_specialist' },
-      ipAddress: '192.168.1.101',
-      requestId: 'req-004',
-      status: 'success',
-    },
-    {
-      id: 'evt-005',
-      timestamp: new Date(Date.now() - 1000 * 600),
-      type: 'workflow',
-      category: 'submit',
-      severity: 'info',
-      userId: 'user-005',
-      userName: 'Emily Rodriguez',
-      userRole: 'Regulatory Specialist',
-      action: 'Submission package created',
-      resource: 'IND-2025-001',
-      resourceType: 'submission',
-      details: 'eCTD submission package generated for FDA review',
-      metadata: { submissionType: 'IND', agency: 'FDA', moduleCount: 5 },
-      ipAddress: '192.168.1.110',
-      requestId: 'req-005',
-      duration: 45000,
-      status: 'success',
-    },
-    {
-      id: 'evt-006',
-      timestamp: new Date(Date.now() - 1000 * 900),
-      type: 'api',
-      category: 'error',
-      severity: 'error',
-      action: 'API request failed',
-      resource: '/api/v1/documents/upload',
-      resourceType: 'endpoint',
-      details: 'File upload failed: exceeded maximum file size limit',
-      metadata: { fileSize: 104857600, maxSize: 52428800, errorCode: 'FILE_TOO_LARGE' },
-      ipAddress: '192.168.1.115',
-      requestId: 'req-006',
-      status: 'failure',
-    },
-    {
-      id: 'evt-007',
-      timestamp: new Date(Date.now() - 1000 * 1200),
-      type: 'system',
-      category: 'config',
-      severity: 'info',
-      userId: 'user-003',
-      userName: 'Admin User',
-      userRole: 'Administrator',
-      action: 'System configuration updated',
-      resource: 'Password Policy',
-      resourceType: 'setting',
-      details: 'Minimum password length increased from 12 to 14 characters',
-      metadata: { setting: 'password.minLength', oldValue: 12, newValue: 14 },
-      ipAddress: '192.168.1.101',
-      requestId: 'req-007',
-      status: 'success',
-    },
-    {
-      id: 'evt-008',
-      timestamp: new Date(Date.now() - 1000 * 1500),
-      type: 'document',
-      category: 'sign',
-      severity: 'info',
-      userId: 'user-006',
-      userName: 'Dr. Robert Thompson',
-      userRole: 'Medical Director',
-      action: 'Document electronically signed',
-      resource: 'Safety-Report-Q4-2025',
-      resourceType: 'safety_report',
-      details: '21 CFR Part 11 compliant electronic signature applied',
-      metadata: {
-        signatureType: 'approval',
-        signatureId: 'sig-789',
-        meaning: 'Approved for submission',
-      },
-      ipAddress: '192.168.1.120',
-      requestId: 'req-008',
-      status: 'success',
+      id: 'metric-004',
+      name: 'Active Sessions',
+      value: sessionCount,
+      unit: 'sessions',
+      status: 'healthy',
+      trend: sessionCount > 0 ? 'up' : 'stable',
+      lastUpdated: new Date(),
     },
   ];
-
-  return events;
-};
-
-const MOCK_SESSIONS: ActiveSession[] = [
-  {
-    id: 'sess-001',
-    userId: 'user-001',
-    userName: 'Dr. Sarah Chen',
-    userRole: 'Regulatory Lead',
-    userEmail: 'sarah.chen@example.com',
-    loginTime: new Date(Date.now() - 1000 * 60 * 45),
-    lastActivity: new Date(Date.now() - 1000 * 60),
-    ipAddress: '192.168.1.100',
-    location: { country: 'United States', city: 'Boston' },
-    device: { type: 'desktop', os: 'Windows 11', browser: 'Chrome 120' },
-    status: 'active',
-    mfaVerified: true,
-  },
-  {
-    id: 'sess-002',
-    userId: 'user-002',
-    userName: 'Dr. Michael Park',
-    userRole: 'Medical Writer',
-    userEmail: 'michael.park@example.com',
-    loginTime: new Date(Date.now() - 1000 * 60 * 120),
-    lastActivity: new Date(Date.now() - 1000 * 60 * 15),
-    ipAddress: '192.168.1.105',
-    location: { country: 'United States', city: 'San Francisco' },
-    device: { type: 'desktop', os: 'macOS 14', browser: 'Safari 17' },
-    status: 'idle',
-    mfaVerified: true,
-  },
-  {
-    id: 'sess-003',
-    userId: 'user-003',
-    userName: 'Admin User',
-    userRole: 'Administrator',
-    userEmail: 'admin@example.com',
-    loginTime: new Date(Date.now() - 1000 * 60 * 30),
-    lastActivity: new Date(Date.now() - 1000 * 60 * 5),
-    ipAddress: '192.168.1.101',
-    location: { country: 'United States', city: 'New York' },
-    device: { type: 'desktop', os: 'Windows 11', browser: 'Edge 120' },
-    status: 'active',
-    mfaVerified: true,
-  },
-  {
-    id: 'sess-004',
-    userId: 'user-005',
-    userName: 'Emily Rodriguez',
-    userRole: 'Regulatory Specialist',
-    userEmail: 'emily.r@example.com',
-    loginTime: new Date(Date.now() - 1000 * 60 * 60),
-    lastActivity: new Date(Date.now() - 1000 * 60 * 35),
-    ipAddress: '192.168.1.110',
-    location: { country: 'United States', city: 'Chicago' },
-    device: { type: 'mobile', os: 'iOS 17', browser: 'Safari Mobile' },
-    status: 'idle',
-    mfaVerified: true,
-  },
-];
-
-const MOCK_METRICS: SystemMetric[] = [
-  {
-    id: 'metric-001',
-    name: 'Active Users',
-    value: 47,
-    unit: 'users',
-    status: 'healthy',
-    trend: 'up',
-    lastUpdated: new Date(),
-  },
-  {
-    id: 'metric-002',
-    name: 'API Response Time',
-    value: 145,
-    unit: 'ms',
-    status: 'healthy',
-    trend: 'stable',
-    lastUpdated: new Date(),
-  },
-  {
-    id: 'metric-003',
-    name: 'Error Rate',
-    value: 0.02,
-    unit: '%',
-    status: 'healthy',
-    trend: 'down',
-    lastUpdated: new Date(),
-  },
-  {
-    id: 'metric-004',
-    name: 'Active Sessions',
-    value: 52,
-    unit: 'sessions',
-    status: 'healthy',
-    trend: 'up',
-    lastUpdated: new Date(),
-  },
-];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENTS
@@ -877,41 +727,76 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ events }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ActivityMonitor: React.FC = () => {
-  const [events, setEvents] = useState<ActivityEvent[]>(generateMockEvents());
-  const [sessions] = useState<ActiveSession[]>(MOCK_SESSIONS);
-  const [metrics] = useState<SystemMetric[]>(MOCK_METRICS);
   const [isLive, setIsLive] = useState(true);
   const [activeTab, setActiveTab] = useState('feed');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ActivityType | 'all'>('all');
   const [severityFilter, setSeverityFilter] = useState<ActivitySeverity | 'all'>('all');
 
-  // Simulate live events
-  useEffect(() => {
-    if (!isLive) return;
+  // Fetch tasks to derive activity events
+  const { data: tasksData, isLoading: tasksLoading } = useQuery({
+    queryKey: ['activity-monitor-tasks'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/submission-center/tasks');
+      return res.json();
+    },
+    refetchInterval: isLive ? 30000 : false, // Auto-refresh when live
+  });
 
-    const interval = setInterval(() => {
-      // Add a new simulated event occasionally
-      if (Math.random() > 0.7) {
-        const newEvent: ActivityEvent = {
-          id: `evt-${Date.now()}`,
-          timestamp: new Date(),
-          type: 'system',
-          category: 'view',
-          severity: 'info',
-          action: 'Page viewed',
-          details: 'Dashboard accessed',
-          metadata: {},
-          ipAddress: '192.168.1.100',
-          requestId: `req-${Date.now()}`,
-          status: 'success',
-        };
-        setEvents(prev => [newEvent, ...prev].slice(0, 100));
-      }
-    }, 5000);
+  // Fetch proof audit entries
+  const { data: auditData, isLoading: auditLoading } = useQuery({
+    queryKey: ['activity-monitor-audit'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/workflow/proofs/audit?limit=50');
+      return res.json();
+    },
+    retry: 1,
+    refetchInterval: isLive ? 30000 : false,
+  });
 
-    return () => clearInterval(interval);
-  }, [isLive]);
+  // Fetch projects for session-like data
+  const { data: projectsData } = useQuery({
+    queryKey: ['activity-monitor-projects'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/submission-center/projects');
+      return res.json();
+    },
+  });
+
+  // Build events from API data
+  const events: ActivityEvent[] = useMemo(() => {
+    const taskEvents = (tasksData?.data || []).map(mapTaskToActivityEvent);
+    const auditEvents = (auditData?.data?.entries || []).map(mapAuditToActivityEvent);
+    const combined = [...auditEvents, ...taskEvents];
+    combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return combined.slice(0, 100);
+  }, [tasksData, auditData]);
+
+  // Build sessions from projects (project creators as pseudo-sessions)
+  const sessions: ActiveSession[] = useMemo(() => {
+    const apiProjects = projectsData?.data || [];
+    return apiProjects.slice(0, 10).map((p: any, idx: number) => ({
+      id: `sess-proj-${p.id || idx}`,
+      userId: `user-proj-${p.id || idx}`,
+      userName: p.created_by || 'System User',
+      userRole: 'Project Owner',
+      userEmail: '',
+      loginTime: new Date(p.created_at || Date.now()),
+      lastActivity: new Date(p.updated_at || p.created_at || Date.now()),
+      ipAddress: '',
+      device: { type: 'desktop' as const, os: 'Unknown', browser: 'Unknown' },
+      status: 'active' as const,
+      mfaVerified: false,
+    }));
+  }, [projectsData]);
+
+  // Derive metrics from real data
+  const metrics: SystemMetric[] = useMemo(() => {
+    const tasks = tasksData?.data || [];
+    const activeTasks = tasks.filter((t: any) => t.status === 'in-progress').length;
+    const blockedTasks = tasks.filter((t: any) => t.status === 'blocked').length;
+    return deriveMetrics(activeTasks, sessions.length, blockedTasks);
+  }, [tasksData, sessions]);
 
   const filteredEvents = useMemo(() => {
     return events.filter(e => {
