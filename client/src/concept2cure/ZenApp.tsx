@@ -233,11 +233,11 @@ const INDUSTRY_MODES: IndustryMode[] = [
 
 const normalizeIndustryMode = (value?: string): IndustryMode => {
   if (!value) {
-    return 'medtech';
+    return 'biotech';
   }
 
   const normalized = value.toLowerCase().trim() as IndustryMode;
-  return INDUSTRY_MODES.includes(normalized) ? normalized : 'medtech';
+  return INDUSTRY_MODES.includes(normalized) ? normalized : 'biotech';
 };
 
 interface UserProfile {

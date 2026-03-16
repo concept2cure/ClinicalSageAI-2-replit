@@ -857,6 +857,8 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
   );
 };
 
+// Capitalized alias — esbuild/Vite treats lowercase JSX tags as native HTML elements
+export const ECTDCoAuthor = eCTDCoAuthor;
 export default eCTDCoAuthor;
 
 // ── Auth helper ─────────────────────────────────────────────────────────────
@@ -1025,7 +1027,7 @@ export const ECTDCoAuthorStandalone: React.FC<{
   );
 
   return (
-    <eCTDCoAuthor
+    <ECTDCoAuthor
       document={docState}
       onOpenInEditor={onOpenInEditor}
       onDraftSection={handleDraftSection}

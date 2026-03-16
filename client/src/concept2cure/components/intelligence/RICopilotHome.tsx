@@ -147,17 +147,23 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
   const [artifactApproved, setArtifactApproved] = useState(0);
 
   // ── Live data from real APIs ───────────────────────────────────────────────
+  // Use indication (project description) or fall back to projectName/submissionType
+  const csrQueryText = indication || projectName || submissionType || '';
   const { data: csrResults = [], isLoading: csrLoading } = useCSRSearch(
-    indication ? { query_text: indication, limit: 50 } : null
+    csrQueryText ? { query_text: csrQueryText, limit: 50 } : null
   );
   const { data: precedents = [], isLoading: precedentLoading } = usePrecedentSearch(
-    submissionType ? { submissionType, indication } : null
+    submissionType ? { submissionType, indication: indication || projectName } : null
   );
   const { data: riskData, isLoading: riskLoading } = usePrecedentRisk(
-    submissionType ? { submissionType, indication, deviceName: projectName } : null
+    submissionType
+      ? { submissionType, indication: indication || projectName, deviceName: projectName }
+      : null
   );
   const { data: strategyData, isLoading: strategyLoading } = usePrecedentStrategy(
-    submissionType ? { submissionType, indication, deviceName: projectName } : null
+    submissionType
+      ? { submissionType, indication: indication || projectName, deviceName: projectName }
+      : null
   );
 
   // ── Load project artifacts for governance rail ─────────────────────────────

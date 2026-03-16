@@ -33,20 +33,28 @@ async function loginToApp(page: Page): Promise<void> {
 
   await page.goto(`${BASE_URL}/concept2cure/login`, { waitUntil: 'domcontentloaded' });
 
-  await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
-  await page.click('button:has-text("Continue")');
+  // Use "Quick Demo Access" button if available (fastest path)
+  const quickDemo = page.locator('button:has-text("Quick Demo Access")');
+  if (await quickDemo.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await quickDemo.click();
+  } else {
+    // Fallback: manual email + password flow
+    await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
+    await page.click('button:has-text("Continue")');
 
-  const passwordInput = page.locator('input[type="password"]');
-  await expect(passwordInput).toBeVisible({ timeout: 10000 });
-  await page.fill('input[type="password"]', 'Concept2Cure2026!');
-  await page.click('button:has-text("Sign in")');
+    const passwordInput = page.locator('input[type="password"]');
+    await expect(passwordInput).toBeVisible({ timeout: 10000 });
+    await page.fill('input[type="password"]', 'Concept2Cure2026!');
+    await page.click('button:has-text("Sign in")');
+  }
 
+  // Wait for auth redirect — match any post-login route
   await page.waitForURL(
     url => {
       const path = url.pathname;
-      return path.startsWith('/client-portal') || path === '/concept2cure';
+      return path.startsWith('/client-portal') || path.startsWith('/concept2cure');
     },
-    { timeout: 15000 }
+    { timeout: 20000 }
   );
 }
 

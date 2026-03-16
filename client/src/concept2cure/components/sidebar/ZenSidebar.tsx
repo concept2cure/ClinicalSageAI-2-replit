@@ -227,7 +227,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   userName,
   userEmail,
   activeNavId,
-  industryMode = 'medtech',
+  industryMode = 'biotech',
 }) => {
   const displayName = userName || 'My Account';
   const avatarInitial = displayName[0].toUpperCase();

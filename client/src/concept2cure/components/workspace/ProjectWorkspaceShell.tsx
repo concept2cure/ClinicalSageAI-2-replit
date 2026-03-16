@@ -472,7 +472,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setPlacementLoading(false);
       }
     },
-    [projectId, loadArtifacts]
+    [projectId, loadArtifacts, pushShellToast]
   );
 
   // ── Open placement dialog from dossier tree ──────────────────────────────
@@ -573,7 +573,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // ── Handle governed status change from panel ────────────────────────────
   const handleGovernedStatusChange = useCallback(
-    (newStatus: string) => {
+    (_newStatus: string) => {
       // Refresh artifacts and metrics after status change
       loadArtifacts();
       loadDossierMetrics();
@@ -1389,6 +1389,31 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           loading={placementLoading}
         />
       )}
+
+      {/* ── Toast notifications ── */}
+      {shellToasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+          {shellToasts.map(t => (
+            <div
+              key={t.id}
+              className={cn(
+                'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium',
+                t.type === 'success' && 'bg-emerald-600 text-white',
+                t.type === 'error' && 'bg-red-600 text-white',
+                t.type === 'info' && 'bg-zinc-700 text-white'
+              )}
+            >
+              {t.message}
+              <button
+                onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
+                className="ml-1 opacity-60 hover:opacity-100"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -1578,31 +1603,6 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           </div>
         )}
       </div>
-
-      {/* ── Toast notifications ── */}
-      {shellToasts.length > 0 && (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-          {shellToasts.map(t => (
-            <div
-              key={t.id}
-              className={cn(
-                'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium',
-                t.type === 'success' && 'bg-emerald-600 text-white',
-                t.type === 'error' && 'bg-red-600 text-white',
-                t.type === 'info' && 'bg-zinc-700 text-white'
-              )}
-            >
-              {t.message}
-              <button
-                onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
-                className="ml-1 opacity-60 hover:opacity-100"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
