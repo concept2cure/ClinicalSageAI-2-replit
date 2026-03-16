@@ -24,11 +24,13 @@ class CERV2SectionService {
   getHeaders() {
     // Get organization from localStorage (set by TenantContext)
     const storedOrgId = localStorage.getItem('currentOrganizationId');
-    const defaultOrgId = '7'; // Fallback organization
-    
+    const orgId = this.organizationId || storedOrgId;
+    if (!orgId) {
+      console.warn('[CERV2SectionService] No organization ID set — API calls may fail');
+    }
     return {
       'Content-Type': 'application/json',
-      'x-organization-id': this.organizationId || storedOrgId || defaultOrgId,
+      'x-organization-id': orgId || '1',
     };
   }
 

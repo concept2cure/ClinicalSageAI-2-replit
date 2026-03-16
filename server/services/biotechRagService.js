@@ -4,13 +4,12 @@
  */
 
 import { db } from '../db';
-// Using direct table references until schema is updated
-const ragTables = {
-  ragDocuments: 'rag_documents',
-  ragChunks: 'rag_chunks',
-  ragQueries: 'rag_queries',
-  ragKnowledgeGraph: 'rag_knowledge_graph'
-};
+import {
+  ragDocuments,
+  ragChunks,
+  ragQueries,
+  ragKnowledgeGraph
+} from '@shared/schema';
 import { eq, and, sql, desc, inArray, like, ilike, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';

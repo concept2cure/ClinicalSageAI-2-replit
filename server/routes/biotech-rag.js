@@ -8,22 +8,13 @@ import { z } from 'zod';
 import ragService from '../services/biotechRagService.js';
 import { db } from '../db';
 import crypto from 'crypto';
-// Import from shared schema - temporarily commented out due to missing module
-// TODO: Fix this import to point to the correct schema location
-// import { 
-//   ragDocuments, 
-//   ragChunks, 
-//   ragQueries, 
-//   ragKnowledgeGraph,
-//   ragIngestionJobs 
-// } from '@shared/schema';
-
-// Temporary placeholders to prevent errors
-const ragDocuments = {};
-const ragChunks = {};
-const ragQueries = {};
-const ragKnowledgeGraph = {};
-const ragIngestionJobs = {};
+import {
+  ragDocuments,
+  ragChunks,
+  ragQueries,
+  ragKnowledgeGraph,
+  ragIngestionJobs
+} from '@shared/schema';
 import { eq, desc, and, sql, gte } from 'drizzle-orm';
 import multer from 'multer';
 

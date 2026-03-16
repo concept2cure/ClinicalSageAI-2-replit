@@ -21,6 +21,12 @@ const SecuritySettings = lazy(() => import('./components/settings/SecuritySettin
 const ActivityMonitor = lazy(() => import('./components/monitoring/ActivityMonitor'));
 const ComplianceDashboard = lazy(() => import('./components/compliance/ComplianceDashboard'));
 
+// Lazy load actual module page components (connected to real implementations)
+const CERV2Page = lazy(() => import('../pages/CERV2Page'));
+const AnalyticsDashboard = lazy(() => import('../modules/AnalyticsDashboard'));
+const CmcWizard = lazy(() => import('../modules/CmcWizard'));
+const FulleCTDCoAuthor = lazy(() => import('../pages/FulleCTDCoAuthor'));
+
 // Loading fallback component
 const ModuleLoading: React.FC = () => (
   <div className="flex h-64 items-center justify-center">
@@ -138,12 +144,7 @@ export const ClientPortalV2: React.FC = () => {
 
             {/* CMC Platform */}
             <Route path="/client-portal/cmc-wizard">
-              <ModulePage
-                title="CMC Platform"
-                description="Chemistry, Manufacturing & Controls documentation wizard"
-                icon="🧪"
-                status="beta"
-              />
+              <CmcWizard />
             </Route>
 
             {/* Study Architect / Clinical Trials */}
@@ -158,30 +159,33 @@ export const ClientPortalV2: React.FC = () => {
 
             {/* Analytics */}
             <Route path="/client-portal/analytics">
-              <ModulePage
-                title="Analytics Dashboard"
-                description="Real-time submission metrics, pipeline analytics and KPI tracking"
-                icon="📈"
-              />
+              <AnalyticsDashboard />
             </Route>
 
-            {/* IND Automation */}
+            {/* IND Automation → redirect to eCTD Co-Author */}
             <Route path="/client-portal/ind-wizard">
-              <ModulePage
-                title="IND Automation Wizard"
-                description="Investigational New Drug application assembly and validation"
-                icon="💊"
-                status="beta"
-              />
+              <FulleCTDCoAuthor />
             </Route>
 
-            {/* CER Generator */}
+            {/* eCTD Co-Author */}
+            <Route path="/client-portal/ectd-coauthor">
+              <FulleCTDCoAuthor />
+            </Route>
+
+            {/* CER Generator — Medical Device & Diagnostic Module */}
             <Route path="/client-portal/cer-generator">
-              <ModulePage
-                title="CER Generator"
-                description="Clinical Evaluation Report generation with EU MDR compliance"
-                icon="📝"
-              />
+              <CERV2Page />
+            </Route>
+
+            {/* 510(k) Builder — integrated in CERV2Page */}
+            <Route path="/client-portal/510k-builder">
+              <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+            </Route>
+            <Route path="/client-portal/510k">
+              <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
+            </Route>
+            <Route path="/client-portal/510k-dashboard">
+              <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
             </Route>
 
             {/* Protocol Designer */}

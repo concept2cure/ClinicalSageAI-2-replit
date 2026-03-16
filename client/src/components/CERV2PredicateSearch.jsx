@@ -69,6 +69,9 @@ export default function CERV2PredicateSearch({ onSelectPredicate, visible, onTog
     const controller = new AbortController();
     abortRef.current = controller;
 
+    // 10-second timeout for FDA API
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const encoded = encodeURIComponent(query.trim());
       const url = `${FDA_API}?search=device_name:"${encoded}"+OR+applicant:"${encoded}"&limit=10`;
@@ -77,15 +80,32 @@ export default function CERV2PredicateSearch({ onSelectPredicate, visible, onTog
         headers: { Accept: 'application/json' },
       });
 
+      clearTimeout(timeoutId);
+
       if (!res.ok) throw new Error(`FDA API returned ${res.status}`);
 
       const data = await res.json();
-      setResults(data.results || []);
+      const results = data.results || [];
+      if (results.length === 0) {
+        setError('No matching devices found on FDA.gov. Try different search terms.');
+      }
+      setResults(results);
     } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.warn('[CERV2PredicateSearch] FDA API error, using mock data:', err.message);
-      setError('FDA API unavailable — showing sample data.');
-      // Filter mock results by query
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        // Distinguish user abort from timeout
+        if (!abortRef.current || controller === abortRef.current) {
+          setError('FDA API request timed out (10s). Showing sample data — these are NOT real FDA records.');
+          const q = query.toLowerCase();
+          const filtered = MOCK_RESULTS.filter(
+            r => r.device_name.toLowerCase().includes(q) || r.applicant.toLowerCase().includes(q)
+          );
+          setResults(filtered.length > 0 ? filtered : MOCK_RESULTS);
+        }
+        return;
+      }
+      console.warn('[CERV2PredicateSearch] FDA API error:', err.message);
+      setError('FDA API unavailable. Showing sample data — these are NOT real FDA records.');
       const q = query.toLowerCase();
       const filtered = MOCK_RESULTS.filter(
         r => r.device_name.toLowerCase().includes(q) || r.applicant.toLowerCase().includes(q)
