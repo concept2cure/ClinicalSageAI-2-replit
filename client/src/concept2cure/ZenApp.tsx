@@ -74,6 +74,10 @@ import {
   Calendar,
   TrendingUp,
   Beaker,
+  GitBranch,
+  Shield,
+  FolderOpen,
+  Eye,
 } from 'lucide-react';
 
 // ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
@@ -84,6 +88,21 @@ const MissionControlHome = lazy(() =>
 );
 const RulesManager = lazy(() =>
   import('./pages/MissionControl/RulesManager').then(m => ({ default: m.RulesManager }))
+);
+const ArtifactGraph = lazy(() =>
+  import('./pages/MissionControl/ArtifactGraph')
+);
+const ReviewCommandCenter = lazy(() =>
+  import('./pages/MissionControl/ReviewCommandCenter')
+);
+const DossierView = lazy(() =>
+  import('./pages/MissionControl/DossierView')
+);
+const RiskCockpit = lazy(() =>
+  import('./pages/MissionControl/RiskCockpit')
+);
+const RoutePlanner = lazy(() =>
+  import('./pages/MissionControl/RoutePlanner')
 );
 
 // Lazy load IND Workspace (eCTD filing hub)
@@ -130,7 +149,12 @@ type LayoutMode =
   | 'intelligence-feed'
   | 'gap-analysis'
   | 'change-impact'
-  | 'ana-memory';
+  | 'ana-memory'
+  | 'artifact-graph'
+  | 'review-center'
+  | 'dossier-view'
+  | 'risk-cockpit'
+  | 'route-planner';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -677,6 +701,11 @@ export const ZenApp: React.FC = () => {
     { id: 'change-impact' as LayoutMode, label: 'Change Impact', icon: AlertTriangle },
     { id: 'ana-memory' as LayoutMode, label: 'AnA Memory', icon: Zap },
     { id: 'cmc' as LayoutMode, label: 'CMC Module 3', icon: Beaker },
+    { id: 'artifact-graph' as LayoutMode, label: 'Artifact Graph', icon: GitBranch },
+    { id: 'review-center' as LayoutMode, label: 'Review Center', icon: Eye },
+    { id: 'dossier-view' as LayoutMode, label: 'Dossier View', icon: FolderOpen },
+    { id: 'risk-cockpit' as LayoutMode, label: 'Risk Cockpit', icon: Shield },
+    { id: 'route-planner' as LayoutMode, label: 'Route Planner', icon: Compass },
   ];
 
   // Filter layout modes by license — only show modes the org has access to
@@ -1424,6 +1453,41 @@ export const ZenApp: React.FC = () => {
               }
             >
               <MissionControlHome projectId={activeProjectId} projectName={activeProject?.name} submissionType={activeProject?.type} />
+            </Suspense>
+          )}
+
+          {/* Artifact Graph */}
+          {layoutMode === 'artifact-graph' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>}>
+              <ArtifactGraph programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Review Command Center */}
+          {layoutMode === 'review-center' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <ReviewCommandCenter programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Dossier View */}
+          {layoutMode === 'dossier-view' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>}>
+              <DossierView programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Risk Cockpit */}
+          {layoutMode === 'risk-cockpit' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-red-500" /></div>}>
+              <RiskCockpit programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Route Planner */}
+          {layoutMode === 'route-planner' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>}>
+              <RoutePlanner programId={activeProjectId ? Number(activeProjectId) : null} />
             </Suspense>
           )}
 
