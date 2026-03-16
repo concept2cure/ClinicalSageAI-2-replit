@@ -74,7 +74,7 @@ const Vault = () => {
         <header className="flex flex-col gap-6 rounded-2xl bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-3">
             <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              TrialSage Vault™
+              Concept2Cure Vault™
             </span>
             <h1 className="text-3xl font-semibold text-slate-900">
               Field-ready document control with enterprise-grade compliance

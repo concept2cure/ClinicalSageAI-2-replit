@@ -149,7 +149,7 @@ export function DashboardOverview() {
                 <QuickActionCard
                   title="Ask AnA"
                   description="Get regulatory guidance"
-                  href="/ask-lumen"
+                  href="/ask-ana"
                   icon="message-circle"
                 />
               </div>

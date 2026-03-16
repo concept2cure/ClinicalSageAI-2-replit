@@ -186,7 +186,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
-                <SheetTitle>Lumen Regulatory Affairs AI</SheetTitle>
+                <SheetTitle>AnA v1.0 — RI Co-pilot</SheetTitle>
                 <SheetDescription>
                   Regulatory compliance, medical writing, and FDA submissions
                 </SheetDescription>

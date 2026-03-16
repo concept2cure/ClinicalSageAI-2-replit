@@ -76,7 +76,7 @@ const CrossModuleFeatures = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <MessageSquare className="mr-2 h-4 w-4" />
-          <span>Ask LUMEN AI Assistant</span>
+          <span>Ask AnA — RI Co-pilot</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -429,7 +429,7 @@ export default function MainNavigation({ showLabels = true }) {
                   <LumenAssistantButton
                     variant="outline"
                     size="icon"
-                    tooltip="Ask LUMEN AI Assistant"
+                    tooltip="Ask AnA — RI Co-pilot"
                   />
                 </div>
               </div>
@@ -438,7 +438,7 @@ export default function MainNavigation({ showLabels = true }) {
             <div className="space-y-4 flex flex-col items-center">
               <UserMenu />
               <CrossModuleFeatures />
-              <LumenAssistantButton variant="outline" size="icon" tooltip="Ask LUMEN AI" />
+              <LumenAssistantButton variant="outline" size="icon" tooltip="Ask AnA" />
             </div>
           )}
         </div>

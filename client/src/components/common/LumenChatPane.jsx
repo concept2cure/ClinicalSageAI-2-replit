@@ -105,7 +105,7 @@ export default function LumenChatPane({ contextId }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center">
           <Bot className="h-5 w-5 mr-2 text-primary" />
-          Lumen AI Assistant
+          AnA v1.0 — RI Co-pilot
         </CardTitle>
         <CardDescription>Ask me about regulatory guidance or document requirements</CardDescription>
       </CardHeader>

@@ -42,7 +42,7 @@ export default function LandingPage() {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-lg sm:text-xl max-w-3xl mx-auto mb-10"
           >
-            TrialSage powers AI-driven IND automation, live CSR analytics, automated CER creation,
+            Concept2Cure powers AI-driven IND automation, live CSR analytics, automated CER creation,
             and predictive risk modeling in one ultra-modern platform.
           </motion.p>
           <motion.div

@@ -230,7 +230,7 @@ export default function AppPackagesBanner({ currentPath }) {
                   <div className="flex items-center justify-center w-10 h-10 rounded-md bg-blue-600 text-white font-bold text-xl mr-3">
                     TS
                   </div>
-                  <span className="font-bold text-xl text-gray-900">TrialSage</span>
+                  <span className="font-bold text-xl text-gray-900">Concept2Cure</span>
                   <span className="ml-2 text-sm text-gray-500">by Concept2Cures.AI</span>
                 </div>
               </Link>
@@ -432,7 +432,7 @@ export default function AppPackagesBanner({ currentPath }) {
                   INTRODUCING
                 </div>
                 <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-6">
-                  The TrialSage<span className="text-blue-600">™</span> Platform
+                  The Concept2Cure<span className="text-blue-600">™</span> Platform
                 </h2>
                 <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                   Our flagship AI-driven platform transforms regulatory workflows with unprecedented

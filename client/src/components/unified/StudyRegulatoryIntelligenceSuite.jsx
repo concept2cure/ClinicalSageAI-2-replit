@@ -482,7 +482,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {lumenPanelOpen ? 'Hide' : 'Show'} Lumen AI Assistant
+                  {lumenPanelOpen ? 'Hide' : 'Show'} AnA Assistant
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

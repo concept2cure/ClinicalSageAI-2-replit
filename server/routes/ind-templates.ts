@@ -749,7 +749,7 @@ async function ensureTemplateFiles() {
   const sampleTemplateContent = `
 # IND Template Document
 
-This is a professional IND template document created by TrialSage™.
+This is a professional IND template document created by Concept2Cure™.
 
 ## Contents:
 - FDA-compliant formatting
@@ -1030,7 +1030,7 @@ ${template.modules.map(module => `- ${module}`).join('\n')}
 1. Extract all files to your working directory
 2. Customize templates with your specific data
 3. Follow FDA guidance for submission requirements
-4. Use TrialSage™ platform for submission management
+4. Use Concept2Cure™ platform for submission management
 
 Generated: ${new Date().toISOString()}
 Template Package ID: ${templateId}
@@ -1084,7 +1084,7 @@ ${module.description}
 1. Extract all files to your working directory
 2. Customize templates with your specific data
 3. Follow FDA guidance for submission requirements
-4. Use TrialSage™ platform for submission management
+4. Use Concept2Cure™ platform for submission management
 
 Generated: ${new Date().toISOString()}
 Module Package ID: ${moduleId}
