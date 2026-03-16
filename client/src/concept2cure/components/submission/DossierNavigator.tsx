@@ -56,6 +56,12 @@ interface DossierNavigatorProps {
   onDocumentUpload?: (sectionId: string) => void;
   onSectionEdit?: (sectionId: string) => void;
   className?: string;
+  /** Real artifacts mapped to sections from useSubmissionArtifacts */
+  sectionArtifacts?: Record<string, Array<{ id: string; title: string; status: string; version: number }>>;
+  /** Callback when user wants to create a new artifact for a section */
+  onCreateArtifact?: (sectionId: string, sectionName: string) => void;
+  /** Callback when user wants to open an existing artifact */
+  onOpenArtifact?: (artifactId: string) => void;
 }
 
 interface TreeNode {
@@ -190,7 +196,26 @@ const getStatusConfig = (status?: DocumentStatus['status']) => {
   }
 };
 
-const getProgressForModule = (moduleId: string, dossier: SubmissionDossier): { complete: number; total: number } => {
+const getProgressForModule = (
+  moduleId: string,
+  dossier: SubmissionDossier,
+  sectionArtifacts?: Record<string, Array<{ id: string; title: string; status: string; version: number }>>
+): { complete: number; total: number } => {
+  // If we have real artifact data, compute progress from it
+  if (sectionArtifacts) {
+    let total = 0;
+    let complete = 0;
+    for (const [section, arts] of Object.entries(sectionArtifacts)) {
+      if (section.startsWith(`${moduleId}.`) || section.startsWith(`m${moduleId}`)) {
+        total++;
+        if (arts.some(a => a.status === 'approved' || a.status === 'locked' || a.status === 'review' || a.status === 'final' || a.status === 'qc')) {
+          complete++;
+        }
+      }
+    }
+    if (total > 0) return { complete, total };
+  }
+
   // Calculate from actual dossier section statuses
   const moduleSections = (dossier.sections || []).filter(
     (s: any) => s.ectdPath?.startsWith(`${moduleId}.`) || s.moduleId === moduleId
@@ -218,6 +243,8 @@ interface TreeNodeItemProps {
   onToggle: () => void;
   onSelect: () => void;
   onUpload?: () => void;
+  onCreateArtifact?: (sectionId: string, sectionName: string) => void;
+  onOpenArtifact?: (artifactId: string) => void;
   isSelected?: boolean;
 }
 
@@ -228,6 +255,8 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   onToggle,
   onSelect,
   onUpload,
+  onCreateArtifact,
+  onOpenArtifact,
   isSelected,
 }) => {
   const hasChildren = node.children && node.children.length > 0;
@@ -294,6 +323,15 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
       
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {node.type === 'subsection' && onCreateArtifact && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCreateArtifact(node.id, node.name); }}
+            className="p-1 hover:bg-blue-100 rounded"
+            title="Create draft with AI"
+          >
+            <Plus className="w-3.5 h-3.5 text-blue-500" />
+          </button>
+        )}
         {node.type === 'subsection' && onUpload && (
           <button
             onClick={(e) => { e.stopPropagation(); onUpload(); }}
@@ -394,6 +432,9 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
   onDocumentUpload,
   onSectionEdit,
   className,
+  sectionArtifacts,
+  onCreateArtifact,
+  onOpenArtifact,
 }) => {
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(['2']));
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -523,7 +564,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {Object.entries(ECTD_STRUCTURE).map(([moduleId, module]) => {
           const isExpanded = expandedModules.has(moduleId);
-          const progress = getProgressForModule(moduleId, dossier);
+          const progress = getProgressForModule(moduleId, dossier, sectionArtifacts);
           
           return (
             <div key={moduleId}>
@@ -550,7 +591,17 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                             name: typeof section === 'string' ? section : section.name,
                             ectdPath: sectionId,
                             type: 'section',
-                            status: (dossier.sections || []).find((s: any) => s.ectdPath === sectionId || s.id === sectionId)?.status || 'not_started',
+                            status: (() => {
+                              // Prefer real artifact data
+                              const arts = sectionArtifacts?.[sectionId];
+                              if (arts && arts.length > 0) {
+                                if (arts.some(a => a.status === 'approved' || a.status === 'locked')) return 'final';
+                                if (arts.some(a => a.status === 'review')) return 'review';
+                                return 'drafting';
+                              }
+                              // Fallback to dossier sections
+                              return (dossier.sections || []).find((s: any) => s.ectdPath === sectionId || s.id === sectionId)?.status || 'not_started';
+                            })(),
                             children: hasSubsections ? [] : undefined,
                           }}
                           level={0}
@@ -560,6 +611,8 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                             setSelectedSection(sectionId);
                             onDocumentSelect?.(sectionId);
                           }}
+                          onCreateArtifact={onCreateArtifact}
+                          onOpenArtifact={onOpenArtifact}
                           isSelected={selectedSection === sectionId}
                         />
                         
@@ -567,25 +620,58 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                         {sectionExpanded && hasSubsections && (section as any).children && (
                           <div className="ml-4">
                             {Object.entries((section as any).children).map(([subId, subName]) => (
-                              <TreeNodeItem
-                                key={subId}
-                                node={{
-                                  id: subId,
-                                  name: subName as string,
-                                  ectdPath: subId,
-                                  type: 'subsection',
-                                  status: (dossier.sections || []).find((s: any) => s.ectdPath === subId || s.id === subId)?.status || 'not_started',
-                                }}
-                                level={1}
-                                isExpanded={false}
-                                onToggle={() => {}}
-                                onSelect={() => {
-                                  setSelectedSection(subId);
-                                  onDocumentSelect?.(subId);
-                                }}
-                                onUpload={() => onDocumentUpload?.(subId)}
-                                isSelected={selectedSection === subId}
-                              />
+                              <React.Fragment key={subId}>
+                                <TreeNodeItem
+                                  node={{
+                                    id: subId,
+                                    name: subName as string,
+                                    ectdPath: subId,
+                                    type: 'subsection',
+                                    status: (() => {
+                                      // Prefer real artifact data
+                                      const arts = sectionArtifacts?.[subId];
+                                      if (arts && arts.length > 0) {
+                                        if (arts.some(a => a.status === 'approved' || a.status === 'locked')) return 'final';
+                                        if (arts.some(a => a.status === 'review')) return 'review';
+                                        return 'drafting';
+                                      }
+                                      // Fallback to dossier sections
+                                      return (dossier.sections || []).find((s: any) => s.ectdPath === subId || s.id === subId)?.status || 'not_started';
+                                    })(),
+                                  }}
+                                  level={1}
+                                  isExpanded={false}
+                                  onToggle={() => {}}
+                                  onSelect={() => {
+                                    setSelectedSection(subId);
+                                    onDocumentSelect?.(subId);
+                                  }}
+                                  onUpload={() => onDocumentUpload?.(subId)}
+                                  onCreateArtifact={onCreateArtifact}
+                                  onOpenArtifact={onOpenArtifact}
+                                  isSelected={selectedSection === subId}
+                                />
+                                {/* Show artifacts for this section */}
+                                {sectionArtifacts?.[subId]?.map(art => (
+                                  <div
+                                    key={art.id}
+                                    onClick={() => onOpenArtifact?.(art.id)}
+                                    className="ml-12 flex items-center gap-2 py-1 px-2 text-xs text-zinc-600 hover:bg-blue-50 rounded cursor-pointer group"
+                                  >
+                                    <FileText className="w-3 h-3 text-blue-400" />
+                                    <span className="truncate flex-1">{art.title}</span>
+                                    <span className={cn(
+                                      'px-1.5 py-0.5 rounded text-[10px] font-medium',
+                                      art.status === 'draft' && 'bg-blue-50 text-blue-600',
+                                      art.status === 'review' && 'bg-amber-50 text-amber-600',
+                                      (art.status === 'approved' || art.status === 'locked') && 'bg-emerald-50 text-emerald-600',
+                                    )}>
+                                      {art.status}
+                                    </span>
+                                    <span className="text-[10px] text-zinc-400">v{art.version}</span>
+                                  </div>
+                                ))}
+                              </React.Fragment>
                             ))}
                           </div>
                         )}

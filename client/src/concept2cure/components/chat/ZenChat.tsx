@@ -848,10 +848,12 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         content: artifact.content,
         type: artifact.format || 'markdown',
         category: 'document',
+        ctdSection: artifact.ctdSection || undefined,
         metadata: {
           submissionType: submissionType || 'general',
           generatedFrom: 'copilot',
           wordCount: artifact.content?.split(/\s+/).length || 0,
+          documentFamily: artifact.documentFamily || undefined,
         },
       });
       setSavedArtifactIds(prev => new Set(prev).add(artifact.id));

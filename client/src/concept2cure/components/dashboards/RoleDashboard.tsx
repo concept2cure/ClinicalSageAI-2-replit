@@ -43,7 +43,9 @@ import {
   ClipboardList,
   Building2,
   Globe2,
+  Loader2,
 } from 'lucide-react';
+import { useOperationalData } from '../../hooks/useOperationalData';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROLE DEFINITIONS
@@ -614,8 +616,41 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
 
   const roleConfig = ROLE_CONFIGS[currentRole];
-  const tasks = useMemo(() => generateMockTasks(currentRole), [currentRole]);
-  const metrics = useMemo(() => generateMockMetrics(currentRole), [currentRole]);
+
+  // Real operational data from backend
+  const { data: operationalData, isLoading: isLoadingOps } = useOperationalData();
+
+  // Use real data when available, fall back to empty arrays
+  const tasks = useMemo(() => {
+    if (operationalData?.tasks?.length) {
+      return operationalData.tasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        project: t.moduleType || 'General',
+        submissionType: '510K' as SubmissionType,
+        dueDate: t.dueDate ? new Date(t.dueDate) : new Date(),
+        priority: t.priority as 'critical' | 'high' | 'medium' | 'low',
+        status: (t.status === 'in-progress' ? 'in_progress' : t.status) as 'pending' | 'in_progress' | 'review' | 'blocked',
+        assignee: t.assigneeName || undefined,
+      }));
+    }
+    // Fall back to empty state
+    return [];
+  }, [operationalData]);
+
+  const metrics = useMemo(() => {
+    if (operationalData?.metrics?.length) {
+      return operationalData.metrics.map((m, i) => ({
+        id: `metric-${i}`,
+        label: m.label,
+        value: m.value,
+        change: m.change,
+        trend: undefined as 'up' | 'down' | 'stable' | undefined,
+        target: undefined as number | undefined,
+      }));
+    }
+    return [];
+  }, [operationalData]);
   const activeWorkflowRunId = useMemo(
     () => `demo-${currentRole}-workflow-run`,
     [currentRole]
@@ -745,10 +780,20 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <TaskList tasks={tasks} onTaskClick={onNavigateToTask} />
-                  {tasks.length === 0 && (
-                    <div className="text-center py-6 text-sm text-gray-500">
-                      No pending tasks
+                  {isLoadingOps && (
+                    <div className="flex items-center gap-2 p-4 text-sm text-zinc-500">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading operational data...
+                    </div>
+                  )}
+                  {!isLoadingOps && tasks.length > 0 && (
+                    <TaskList tasks={tasks} onTaskClick={onNavigateToTask} />
+                  )}
+                  {!isLoadingOps && tasks.length === 0 && (
+                    <div className="text-center py-8 text-zinc-500">
+                      <ClipboardList className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                      <p className="text-sm font-medium">No active tasks</p>
+                      <p className="text-xs mt-1">Tasks will appear here as they are created in the system</p>
                     </div>
                   )}
                 </CardContent>

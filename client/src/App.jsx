@@ -8,10 +8,8 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './portal-v2/services/authService';
 import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
-import { LumenAiAssistantProvider } from './contexts/LumenAiAssistantContext';
 import { FileProvider } from './contexts/FileContext.jsx';
 import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
-import { LumenAiAssistantContainer } from '@/components/ai/LumenAiAssistantContainer';
 import { memoryOptimizer } from './utils/memoryOptimizer';
 
 // Initialize memory optimization
@@ -54,14 +52,12 @@ const VaultPage = lazy(() => import('./pages/VaultPage'));
 
 // CMC Platform
 const CmcWizard = lazy(() => import('./modules/CmcWizard'));
-const CMCBlueprintGenerator = lazy(() => import('./components/cmc/CMCBlueprintGenerator'));
 
 // Docx Factory
 const DocxFactory = lazy(() => import('./pages/DocxFactory'));
 
 // Reports
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
-const ReportsDashboard = lazy(() => import('./pages/ReportsDashboard'));
 
 // Clinical / CSR
 const CSRPage = lazy(() => import('./pages/CSRPage'));
@@ -74,9 +70,6 @@ const StudyRegulatoryIntelligenceSuite = lazy(
 
 // Analytics
 const AnalyticsDashboard = lazy(() => import('./modules/AnalyticsDashboard'));
-
-// Quality
-const QualityDashboard = lazy(() => import('./pages/QualityDashboard'));
 
 // Admin & Settings
 const AdminPage = lazy(() => import('./pages/AdminPage'));
@@ -102,8 +95,6 @@ const TimelinePage = lazy(() => import('./pages/TimelinePage'));
 // New Project Wizard
 const NewProjectWizard = lazy(() => import('./pages/NewProjectWizard'));
 
-// Lumen Cortex (AI Assistant standalone page)
-const LumenCortex = lazy(() => import('./pages/LumenCortex'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUSPENSE WRAPPER — reduces boilerplate
@@ -111,6 +102,24 @@ const LumenCortex = lazy(() => import('./pages/LumenCortex'));
 
 const Lazy = ({ children }) => (
   <Suspense fallback={<LoadingPage />}>{children}</Suspense>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMING SOON PAGE — placeholder for modules pending beta activation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ComingSoonPage = ({ title }) => (
+  <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+    <div className="text-center max-w-md">
+      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-100 flex items-center justify-center">
+        <svg className="w-8 h-8 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
+      <p className="text-gray-500 text-sm">This module is being activated for the beta release. Check back soon.</p>
+    </div>
+  </div>
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -304,7 +313,7 @@ function MainApp() {
             <Route path="/client-portal/cmc-wizard">{() => <Lazy><CmcWizard /></Lazy>}</Route>
             <Route path="/cmc-wizard">{() => <Lazy><CmcWizard /></Lazy>}</Route>
             <Route path="/cmc">{() => <Redirect to="/client-portal/cmc-wizard" />}</Route>
-            <Route path="/cmc-blueprint">{() => <Lazy><CMCBlueprintGenerator /></Lazy>}</Route>
+            <Route path="/cmc-blueprint">{() => <Redirect to="/client-portal/cmc-wizard" />}</Route>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* DOCX FACTORY — template-driven formal document generation     */}
@@ -315,7 +324,7 @@ function MainApp() {
             {/* REPORTS & COMMUNICATION CENTER                                */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <Route path="/reports">{() => <Lazy><ReportsPage /></Lazy>}</Route>
-            <Route path="/reports-dashboard">{() => <Lazy><ReportsDashboard /></Lazy>}</Route>
+            <Route path="/reports-dashboard">{() => <Redirect to="/reports" />}</Route>
             <Route path="/cer-reports">{() => <Lazy><ReportsPage /></Lazy>}</Route>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
@@ -335,18 +344,18 @@ function MainApp() {
             <Route path="/regulatory-intelligence-hub">{() => <Redirect to="/unified-suite" />}</Route>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* AI ASSISTANT — standalone page                                */}
+            {/* AI ASSISTANT — consolidated into Concept2Cure ZenChat          */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <Route path="/lumen-cortex">{() => <Lazy><LumenCortex /></Lazy>}</Route>
-            <Route path="/client-portal/ai-assistant">{() => <Lazy><LumenCortex /></Lazy>}</Route>
-            <Route path="/client-portal/lumen-cortex">{() => <Lazy><LumenCortex /></Lazy>}</Route>
+            <Route path="/lumen-cortex">{() => <Redirect to="/concept2cure" />}</Route>
+            <Route path="/client-portal/ai-assistant">{() => <Redirect to="/concept2cure" />}</Route>
+            <Route path="/client-portal/lumen-cortex">{() => <Redirect to="/concept2cure" />}</Route>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* ANALYTICS & QUALITY                                           */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <Route path="/analytics">{() => <Lazy><AnalyticsDashboard /></Lazy>}</Route>
             <Route path="/client-portal/analytics">{() => <Lazy><AnalyticsDashboard /></Lazy>}</Route>
-            <Route path="/client-portal/quality">{() => <Lazy><QualityDashboard /></Lazy>}</Route>
+            <Route path="/client-portal/quality">{() => <ComingSoonPage title="Quality Management" />}</Route>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* EDITORS & TOOLS                                               */}
@@ -416,9 +425,9 @@ function MainApp() {
             <Route path="/client-portal/study-architect">{() => <Redirect to="/unified-suite" />}</Route>
             <Route path="/client-portal/csr-analyzer">{() => <Redirect to="/unified-suite" />}</Route>
             <Route path="/client-portal/protocol">{() => <Redirect to="/unified-suite" />}</Route>
-            <Route path="/client-portal/safety">{() => <Redirect to="/client-portal" />}</Route>
-            <Route path="/client-portal/training">{() => <Redirect to="/client-portal" />}</Route>
-            <Route path="/client-portal/project-hub">{() => <Redirect to="/client-portal" />}</Route>
+            <Route path="/client-portal/safety">{() => <ComingSoonPage title="Safety Reporting" />}</Route>
+            <Route path="/client-portal/training">{() => <ComingSoonPage title="Training Center" />}</Route>
+            <Route path="/client-portal/project-hub">{() => <ComingSoonPage title="Project Hub" />}</Route>
             <Route path="/client-portal/predictive-vault">{() => <Redirect to="/client-portal/vault" />}</Route>
             <Route path="/regulatory-risk-dashboard">{() => <Redirect to="/unified-suite" />}</Route>
             <Route path="/regulatory-ai-test">{() => <Redirect to="/unified-suite" />}</Route>
@@ -475,14 +484,11 @@ function App() {
           <AuthProvider>
             <TenantProvider>
               <EvidenceGraphProvider>
-                <LumenAiAssistantProvider>
                   <Switch>
                     <Route path="/sign-in">{() => <Redirect to="/concept2cure/login" />}</Route>
                     <Route path="/auth">{() => <Redirect to="/concept2cure/login" />}</Route>
                     <Route>{() => <AppContent />}</Route>
                   </Switch>
-                  <LumenAiAssistantContainer />
-                </LumenAiAssistantProvider>
               </EvidenceGraphProvider>
             </TenantProvider>
           </AuthProvider>

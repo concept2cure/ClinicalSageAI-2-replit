@@ -24,6 +24,7 @@ interface SaveArtifactParams {
   category?: 'document' | 'interactive' | 'visualization';
   conversationId?: string;
   metadata?: Record<string, unknown>;
+  ctdSection?: string;
 }
 
 interface CreateDocumentParams {
@@ -37,6 +38,9 @@ interface DocumentActionsResult {
   saveArtifact: (params: SaveArtifactParams) => Promise<unknown>;
   isSaving: boolean;
   saveError: Error | null;
+
+  /** Save artifact and also register in vault for governed storage */
+  saveAndRegisterInVault: (params: SaveArtifactParams) => Promise<unknown>;
 
   /** Export content as a DOCX download */
   exportDocx: (title: string, content: string) => Promise<void>;
@@ -76,6 +80,7 @@ export function useDocumentActions(): DocumentActionsResult {
             category: params.category || 'document',
             conversationId: params.conversationId,
             metadata: params.metadata,
+            ctdSection: params.ctdSection,
           }),
         }
       );
@@ -190,6 +195,34 @@ export function useDocumentActions(): DocumentActionsResult {
     }
   }, []);
 
+  // ─── Save and Register in Vault ────────────────────────────────────────────
+
+  /** Save artifact and also register in vault for governed document management */
+  const saveAndRegisterInVault = useCallback(async (params: SaveArtifactParams) => {
+    // First save as concept2cure artifact
+    const artifact = await saveArtifactMutation.mutateAsync(params);
+
+    // Then register in vault for governed document management
+    try {
+      await fetch('/api/concept2cure/vault/register-artifact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          artifactId: (artifact as any)?.id || (artifact as any)?.artifactId,
+          projectId: params.projectId,
+          title: params.title,
+          ctdSection: params.ctdSection,
+          documentType: params.category || 'document',
+        }),
+      });
+    } catch (err) {
+      // Vault registration is best-effort; artifact save is the critical path
+      console.warn('Vault registration failed (artifact was saved):', err);
+    }
+
+    return artifact;
+  }, [saveArtifactMutation]);
+
   // ─── Open in Editor ─────────────────────────────────────────────────────────
 
   const openInEditor = useCallback(
@@ -203,6 +236,8 @@ export function useDocumentActions(): DocumentActionsResult {
     saveArtifact: saveArtifactMutation.mutateAsync,
     isSaving: saveArtifactMutation.isPending,
     saveError: saveArtifactMutation.error,
+
+    saveAndRegisterInVault,
 
     exportDocx,
     isExporting,

@@ -466,6 +466,7 @@ const createArtifactSchema = z.object({
   title: z.string().min(1, 'Title required').max(200),
   content: z.string().max(1000000, 'Content too large'), // 1MB max
   metadata: z.record(z.any()).optional(),
+  ctdSection: z.string().max(50).optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -519,6 +520,7 @@ interface Artifact {
   category: 'document' | 'interactive' | 'visualization';
   title: string;
   content: string;
+  ctdSection?: string | null;
   version: number;
   versions: Array<{ version: number; content: string; createdAt: Date }>;
   metadata?: Record<string, unknown>;
@@ -1627,6 +1629,33 @@ router.post(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * GET /api/concept2cure/projects/all/artifacts-summary
+ * Returns artifact count summary across all projects for the organization.
+ */
+router.get('/projects/all/artifacts-summary', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+
+    const allArtifacts = await db
+      .select({
+        status: concept2cureArtifacts.status,
+      })
+      .from(concept2cureArtifacts)
+      .where(eq(concept2cureArtifacts.organizationId, organizationId));
+
+    const total = allArtifacts.length;
+    const draft = allArtifacts.filter(a => a.status === 'draft').length;
+    const review = allArtifacts.filter(a => a.status === 'review').length;
+    const approved = allArtifacts.filter(a => a.status === 'approved' || a.status === 'locked').length;
+
+    return sendSuccess(res, { total, draft, review, approved });
+  } catch (error: any) {
+    logger.error('Failed to fetch artifacts summary', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch artifacts summary');
+  }
+});
+
+/**
  * GET /api/concept2cure/projects/:projectId/artifacts
  * List all artifacts for a project (database-backed).
  */
@@ -1702,6 +1731,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
         contentHash,
         version: 1,
         metadata: data.metadata || {},
+        ctdSection: data.ctdSection || null,
         createdById: userId,
       })
       .returning();
@@ -1724,6 +1754,7 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
       category: data.category,
       title: sanitizedTitle,
       content: sanitizedContent,
+      ctdSection: data.ctdSection || null,
       version: 1,
       versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
       metadata: data.metadata,
@@ -1765,7 +1796,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       return sendError(res, 404, 'Project not found');
     }
 
-    const { content, title } = req.body;
+    const { content, title, ctdSection } = req.body;
 
     // Find artifact in database
     const [dbArtifact] = await db
@@ -1821,6 +1852,9 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       newTitle = sanitizedTitle;
     }
 
+    // Update ctdSection if provided
+    const newCtdSection = ctdSection !== undefined ? ctdSection : dbArtifact.ctdSection;
+
     // Update artifact record
     const [updatedArtifact] = await db
       .update(concept2cureArtifacts)
@@ -1829,6 +1863,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         content: newContent,
         contentHash: newContentHash,
         version: newVersion,
+        ctdSection: newCtdSection,
         updatedAt: new Date(),
       })
       .where(eq(concept2cureArtifacts.id, dbArtifact.id))
@@ -1849,6 +1884,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       category: updatedArtifact.category as Artifact['category'],
       title: updatedArtifact.title,
       content: updatedArtifact.content,
+      ctdSection: updatedArtifact.ctdSection || null,
       version: updatedArtifact.version,
       versions: versions.map(v => ({
         version: v.version,
@@ -1876,6 +1912,36 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
   } catch (error: any) {
     logConcept2cureError('update artifact', error, { artifactId: req.params.artifactId });
     return sendError(res, 500, 'Failed to update artifact');
+  }
+});
+
+/**
+ * POST /api/concept2cure/vault/register-artifact
+ * Register an artifact in the vault for governed document management.
+ */
+router.post('/vault/register-artifact', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const { artifactId, projectId, title, ctdSection, documentType } = req.body;
+
+    if (!artifactId || !title) {
+      return sendError(res, 400, 'artifactId and title are required');
+    }
+
+    // Log the vault registration for audit trail
+    await logAuditEntry(req, 'CREATE', 'vault_registration', artifactId, null, {
+      projectId,
+      title,
+      ctdSection,
+      documentType,
+      registeredFrom: 'concept2cure_copilot',
+    });
+
+    logger.info('Registered artifact in vault', { artifactId, projectId, ctdSection });
+    return sendSuccess(res, { registered: true, artifactId, ctdSection });
+  } catch (error: any) {
+    logger.error('Failed to register artifact in vault', { error: error.message });
+    return sendError(res, 500, 'Failed to register artifact in vault');
   }
 });
 

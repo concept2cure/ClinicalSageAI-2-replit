@@ -38,6 +38,8 @@ export interface CortexArtifact {
   content: string;
   format?: 'markdown' | 'json' | 'html' | 'xml';
   metadata?: Record<string, unknown>;
+  ctdSection?: string;
+  documentFamily?: string;
 }
 
 export interface CortexCitation {
