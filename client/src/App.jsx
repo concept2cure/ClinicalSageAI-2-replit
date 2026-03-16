@@ -94,6 +94,7 @@ const ModuleSettingsPage = lazy(() => import('./pages/ModuleSettingsPage'));
 
 // Editor
 const ModuleSectionEditorPage = lazy(() => import('./pages/ModuleSectionEditorPage'));
+const UnifiedDocumentEditor = lazy(() => import('./concept2cure/components/editor/UnifiedDocumentEditor'));
 
 // Timeline
 const TimelinePage = lazy(() => import('./pages/TimelinePage'));
@@ -156,6 +157,54 @@ function AppContent() {
     <ProtectedRoute>
       <MainApp />
     </ProtectedRoute>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENT EDITOR ROUTE — loads a document by ID into UnifiedDocumentEditor
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function DocumentEditorRoute({ docId }) {
+  const [doc, setDoc] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    fetch(`/api/document-authoring/documents/${docId}`, { credentials: 'include' })
+      .then(r => { if (!r.ok) throw new Error('Document not found'); return r.json(); })
+      .then(data => { setDoc(data.data || data); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, [docId]);
+
+  if (loading) return <LoadingPage />;
+  if (error) return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <p className="text-red-600 font-medium">Could not load document: {error}</p>
+      <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={() => setLocation('/client-portal/vault')}>Back to Vault</button>
+    </div>
+  );
+
+  const handleSave = async (content, metadata) => {
+    const response = await fetch(`/api/document-authoring/documents/${docId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ content, ...metadata }),
+    });
+    if (!response.ok) throw new Error('Failed to save document');
+  };
+
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <UnifiedDocumentEditor
+        documentId={docId}
+        initialContent={doc?.content || ''}
+        documentTitle={doc?.title || 'Untitled Document'}
+        documentType={doc?.documentType || 'regulatory'}
+        onSave={handleSave}
+      />
+    </Suspense>
   );
 }
 
@@ -321,6 +370,9 @@ function MainApp() {
                   </Lazy>
                 );
               }}
+            </Route>
+            <Route path="/editor/:docId">
+              {(params) => <Lazy><DocumentEditorRoute docId={params.docId} /></Lazy>}
             </Route>
             <Route path="/module-editor">{() => <Lazy><ModuleSectionEditorPage /></Lazy>}</Route>
             <Route path="/timeline">{() => <Lazy><TimelinePage /></Lazy>}</Route>

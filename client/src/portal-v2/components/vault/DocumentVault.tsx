@@ -476,35 +476,48 @@ export const DocumentVault: React.FC = () => {
     },
   });
 
-  // Upload handler
+  // Upload handler — field name must match server's multer config ('document')
   const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('document', file); // Server expects 'document', not 'file'
     formData.append('title', file.name);
+    formData.append('category', 'regulatory');
     uploadMutation.mutate(formData);
-    // Reset the file input so the same file can be re-selected
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [uploadMutation]);
 
-  // Download handler
-  const handleDownload = useCallback((doc: VaultDocument) => {
-    const link = document.createElement('a');
-    link.href = `/api/vault/documents/${doc.id}/download`;
-    link.download = doc.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Download handler — use fetch with credentials instead of anchor tag
+  const handleDownload = useCallback(async (doc: VaultDocument) => {
+    try {
+      const res = await fetch(`/api/vault/documents/${doc.id}/download`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+    }
   }, []);
 
-  // Navigation handlers
+  // View handler — show document in a detail panel (sets selected doc state)
+  const [viewingDoc, setViewingDoc] = useState<VaultDocument | null>(null);
   const handleView = useCallback((doc: VaultDocument) => {
-    setLocation(`/client-portal/vault/view/${doc.id}`);
-  }, [setLocation]);
+    setViewingDoc(doc);
+  }, []);
 
+  // Edit handler — navigate to document editor with the ID preserved
   const handleEdit = useCallback((doc: VaultDocument) => {
-    setLocation(`/coauthor/${doc.id}`);
+    setLocation(`/editor/${doc.id}`);
   }, [setLocation]);
 
   // Compute document counts for folders dynamically
@@ -930,6 +943,64 @@ export const DocumentVault: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Document Detail Panel — slides in when viewing a document */}
+        {viewingDoc && (
+          <div className="w-96 flex-shrink-0 border-l bg-white overflow-y-auto">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-semibold text-sm truncate">{viewingDoc.name}</h3>
+              <Button variant="ghost" size="sm" onClick={() => setViewingDoc(null)} className="h-7 w-7 p-0">
+                <span className="sr-only">Close</span>×
+              </Button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Status</p>
+                <Badge className={STATUS_CONFIG[viewingDoc.status]?.color}>
+                  {STATUS_CONFIG[viewingDoc.status]?.label}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Version</p>
+                <p className="text-sm">v{viewingDoc.version}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Author</p>
+                <p className="text-sm">{viewingDoc.author}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Category</p>
+                <Badge className={CATEGORY_CONFIG[viewingDoc.category]?.color}>
+                  {CATEGORY_CONFIG[viewingDoc.category]?.label}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Last Updated</p>
+                <p className="text-sm">{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(viewingDoc.updatedAt))}</p>
+              </div>
+              {viewingDoc.tags.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Tags</p>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingDoc.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="pt-3 space-y-2 border-t">
+                <Button className="w-full" size="sm" onClick={() => handleEdit(viewingDoc)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Open in Editor
+                </Button>
+                <Button variant="outline" className="w-full" size="sm" onClick={() => handleDownload(viewingDoc)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -194,7 +194,7 @@ export function useDocumentActions(): DocumentActionsResult {
 
   const openInEditor = useCallback(
     (documentId: string) => {
-      setLocation(`/coauthor/${documentId}`);
+      setLocation(`/editor/${documentId}`);
     },
     [setLocation]
   );
