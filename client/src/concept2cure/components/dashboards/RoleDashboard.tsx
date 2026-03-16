@@ -1,12 +1,12 @@
 /**
  * Concept2Cure - Role-Based Dashboard System
- *
+ * 
  * Intelligent workflow dashboards tailored to each role across the
  * regulatory lifecycle. Supports personas from small biotech to large pharma.
- *
+ * 
  * Roles: RA Lead, RA Associate, QA Manager, Clinical Lead, CMC Lead,
  * Medical Writer, Project Manager, Biostatistician, Executive, etc.
- *
+ * 
  * @module concept2cure/components/dashboards/RoleDashboard
  * @version 1.0.0
  */
@@ -18,6 +18,7 @@ import { NextActionsPanel, StepCard } from '@/concept2cure/components/workflow';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -42,7 +43,9 @@ import {
   ClipboardList,
   Building2,
   Globe2,
+  Loader2,
 } from 'lucide-react';
+import { useOperationalData } from '../../hooks/useOperationalData';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROLE DEFINITIONS
@@ -356,21 +359,35 @@ interface MetricCardProps {
   colorClass: string;
 }
 
+// Static Tailwind color maps to prevent CSS purge issues
+const COLOR_BG_100: Record<string, string> = {
+  blue: 'bg-blue-100', indigo: 'bg-indigo-100', green: 'bg-green-100', purple: 'bg-purple-100',
+  violet: 'bg-violet-100', amber: 'bg-amber-100', teal: 'bg-teal-100', cyan: 'bg-cyan-100',
+  rose: 'bg-rose-100', slate: 'bg-slate-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
+};
+const COLOR_TEXT_600: Record<string, string> = {
+  blue: 'text-blue-600', indigo: 'text-indigo-600', green: 'text-green-600', purple: 'text-purple-600',
+  violet: 'text-violet-600', amber: 'text-amber-600', teal: 'text-teal-600', cyan: 'text-cyan-600',
+  rose: 'text-rose-600', slate: 'text-slate-600', sky: 'text-sky-600', orange: 'text-orange-600',
+};
+const COLOR_TEXT_700: Record<string, string> = {
+  blue: 'text-blue-700', indigo: 'text-indigo-700', green: 'text-green-700', purple: 'text-purple-700',
+  violet: 'text-violet-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
+  rose: 'text-rose-700', slate: 'text-slate-700', sky: 'text-sky-700', orange: 'text-orange-700',
+};
+
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
   return (
-    <div className="border border-zinc-200 rounded-md">
-      <div className="p-3">
+    <Card>
+      <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-gray-500 font-medium">{metric.label}</p>
-            <p className={cn('text-2xl font-bold mt-1', `text-${colorClass}-700`)}>
+            <p className={cn('text-2xl font-bold mt-1', COLOR_TEXT_700[colorClass] || 'text-gray-700')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
-              {metric.label.includes('%') ||
-              metric.label.includes('Rate') ||
-              metric.label.includes('Compliance') ||
-              metric.label.includes('Score')
+              {metric.label.includes('%') || metric.label.includes('Rate') || metric.label.includes('Compliance') || metric.label.includes('Score')
                 ? '%'
                 : ''}
             </p>
@@ -401,11 +418,14 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
               <span>Target: {metric.target}</span>
               <span>{Math.round((metric.value / metric.target) * 100)}%</span>
             </div>
-            <Progress value={(metric.value / metric.target) * 100} className="h-1.5" />
+            <Progress
+              value={(metric.value / metric.target) * 100}
+              className="h-1.5"
+            />
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -437,7 +457,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
     const now = new Date();
     const diff = date.getTime() - now.getTime();
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-
+    
     if (days < 0) return `${Math.abs(days)}d overdue`;
     if (days === 0) return 'Due today';
     if (days === 1) return 'Due tomorrow';
@@ -446,7 +466,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
 
   return (
     <div className="space-y-2">
-      {tasks.map(task => (
+      {tasks.map((task) => (
         <div
           key={task.id}
           onClick={() => onTaskClick?.(task.id)}
@@ -458,11 +478,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 truncate">{task.title}</span>
-                <Badge
-                  variant="outline"
-                  className={cn('text-[10px] shrink-0', priorityColors[task.priority])}
-                >
+                <span className="text-sm font-medium text-gray-900 truncate">
+                  {task.title}
+                </span>
+                <Badge variant="outline" className={cn('text-[10px] shrink-0', priorityColors[task.priority])}>
                   {task.priority}
                 </Badge>
               </div>
@@ -475,9 +494,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
                 className={cn(
                   'text-xs font-medium',
                   task.dueDate.getTime() < Date.now() && 'text-red-600',
-                  task.dueDate.getTime() > Date.now() &&
-                    task.dueDate.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000 &&
-                    'text-amber-600'
+                  task.dueDate.getTime() > Date.now() && task.dueDate.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000 && 'text-amber-600'
                 )}
               >
                 {formatDueDate(task.dueDate)}
@@ -501,7 +518,7 @@ interface AIAssistantPanelProps {
 
 const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen }) => {
   const roleConfig = ROLE_CONFIGS[role];
-
+  
   const suggestions: Record<UserRole, string[]> = {
     ra_lead: [
       'What are the key differences between our device and the predicate?',
@@ -566,17 +583,17 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
   };
 
   return (
-    <div className="border border-blue-200 rounded-md bg-gradient-to-br from-blue-50 to-white">
-      <div className="px-4 py-3 pb-2">
-        <h3 className="text-base font-semibold flex items-center gap-2">
+    <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
-          Ask RI
-        </h3>
-        <p className="text-xs text-zinc-500">
-          RI-powered assistance for {roleConfig.shortTitle} workflows
-        </p>
-      </div>
-      <div className="px-4 pb-4">
+          RI Co-pilot
+        </CardTitle>
+        <CardDescription className="text-xs">
+          AI-powered assistance for {roleConfig.shortTitle} workflows
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <div className="space-y-2">
           {suggestions[role]?.slice(0, 3).map((suggestion, idx) => (
             <button
@@ -588,8 +605,8 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
             </button>
           ))}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -616,9 +633,45 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
 
   const roleConfig = ROLE_CONFIGS[currentRole];
-  const tasks = useMemo(() => generateMockTasks(currentRole), [currentRole]);
-  const metrics = useMemo(() => generateMockMetrics(currentRole), [currentRole]);
-  const activeWorkflowRunId = useMemo(() => `demo-${currentRole}-workflow-run`, [currentRole]);
+
+  // Real operational data from backend
+  const { data: operationalData, isLoading: isLoadingOps } = useOperationalData();
+
+  // Use real data when available, fall back to empty arrays
+  const tasks = useMemo(() => {
+    if (operationalData?.tasks?.length) {
+      return operationalData.tasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        project: t.moduleType || 'General',
+        submissionType: '510K' as SubmissionType,
+        dueDate: t.dueDate ? new Date(t.dueDate) : new Date(),
+        priority: t.priority as 'critical' | 'high' | 'medium' | 'low',
+        status: (t.status === 'in-progress' ? 'in_progress' : t.status) as 'pending' | 'in_progress' | 'review' | 'blocked',
+        assignee: t.assigneeName || undefined,
+      }));
+    }
+    // Fall back to empty state
+    return [];
+  }, [operationalData]);
+
+  const metrics = useMemo(() => {
+    if (operationalData?.metrics?.length) {
+      return operationalData.metrics.map((m, i) => ({
+        id: `metric-${i}`,
+        label: m.label,
+        value: m.value,
+        change: m.change,
+        trend: undefined as 'up' | 'down' | 'stable' | undefined,
+        target: undefined as number | undefined,
+      }));
+    }
+    return [];
+  }, [operationalData]);
+  const activeWorkflowRunId = useMemo(
+    () => `demo-${currentRole}-workflow-run`,
+    [currentRole]
+  );
   const activeWorkflowSteps = useMemo(
     () => [
       {
@@ -695,25 +748,20 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'w-10 h-10 rounded-lg flex items-center justify-center',
-              `bg-${roleConfig.color}-100`
-            )}
-          >
-            <RoleIcon className={cn('h-5 w-5', `text-${roleConfig.color}-600`)} />
+          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', COLOR_BG_100[roleConfig.color] || 'bg-gray-100')}>
+            <RoleIcon className={cn('h-5 w-5', COLOR_TEXT_600[roleConfig.color] || 'text-gray-600')} />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">{roleConfig.title}</h1>
             <p className="text-xs text-gray-500">{roleConfig.description}</p>
           </div>
         </div>
-        <Select value={currentRole} onValueChange={v => handleRoleChange(v as UserRole)}>
+        <Select value={currentRole} onValueChange={(v) => handleRoleChange(v as UserRole)}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(ROLE_CONFIGS).map(config => (
+            {Object.values(ROLE_CONFIGS).map((config) => (
               <SelectItem key={config.id} value={config.id}>
                 <div className="flex items-center gap-2">
                   <config.icon className="h-4 w-4" />
@@ -732,7 +780,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           <div>
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Key Metrics</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {metrics.map(metric => (
+              {metrics.map((metric) => (
                 <MetricCard key={metric.id} metric={metric} colorClass={roleConfig.color} />
               ))}
             </div>
@@ -741,41 +789,56 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Tasks */}
             <div className="lg:col-span-2">
-              <div className="border border-zinc-200 rounded-md">
-                <div className="px-4 py-3 pb-2 border-b border-zinc-100">
-                  <h3 className="text-base font-semibold flex items-center gap-2">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
                     <ClipboardList className="h-4 w-4" />
                     My Tasks
-                  </h3>
-                </div>
-                <div className="px-4 py-3">
-                  <TaskList tasks={tasks} onTaskClick={onNavigateToTask} />
-                  {tasks.length === 0 && (
-                    <div className="text-center py-6 text-sm text-gray-500">No pending tasks</div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingOps && (
+                    <div className="flex items-center gap-2 p-4 text-sm text-zinc-500">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading operational data...
+                    </div>
                   )}
-                </div>
-              </div>
+                  {!isLoadingOps && tasks.length > 0 && (
+                    <TaskList tasks={tasks} onTaskClick={onNavigateToTask} />
+                  )}
+                  {!isLoadingOps && tasks.length === 0 && (
+                    <div className="text-center py-8 text-zinc-500">
+                      <ClipboardList className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                      <p className="text-sm font-medium">No active tasks</p>
+                      <p className="text-xs mt-1">Tasks will appear here as they are created in the system</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
-            {/* RI Assistant */}
+            {/* AI Assistant */}
             <div>
-              <AIAssistantPanel role={currentRole} onAskLumen={onAskLumen || (() => {})} />
+              <AIAssistantPanel
+                role={currentRole}
+                onAskLumen={onAskLumen || (() => {})}
+              />
             </div>
           </div>
 
           {/* Workflow Snapshot */}
-          <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
-              <h3 className="text-base font-semibold flex items-center gap-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
                 Active Workflow Steps
-              </h3>
-              <p className="text-xs text-zinc-500">
+              </CardTitle>
+              <CardDescription className="text-xs">
                 Proof-backed execution trail for the current workflow run
-              </p>
-            </div>
-            <div className="px-4 py-3 space-y-3">
-              {activeWorkflowSteps.map(step => (
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {activeWorkflowSteps.map((step) => (
                 <StepCard
                   key={step.id}
                   step={step}
@@ -786,8 +849,8 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                   }
                 />
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Next Actions */}
           <div>
@@ -795,26 +858,26 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           </div>
 
           {/* Relevant Submissions */}
-          <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
-              <h3 className="text-base font-semibold flex items-center gap-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
                 <Globe2 className="h-4 w-4" />
                 Relevant Submission Types
-              </h3>
-              <p className="text-xs text-zinc-500">
+              </CardTitle>
+              <CardDescription className="text-xs">
                 Submission types most relevant to your role
-              </p>
-            </div>
-            <div className="px-4 py-3">
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="flex flex-wrap gap-2">
-                {roleConfig.relevantSubmissions.map(type => (
+                {roleConfig.relevantSubmissions.map((type) => (
                   <Badge key={type} variant="outline" className="text-xs">
                     {type.replace('_', ' ')}
                   </Badge>
                 ))}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </ScrollArea>
     </div>

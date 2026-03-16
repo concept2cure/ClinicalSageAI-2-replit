@@ -25,37 +25,20 @@
  * - WCAG 2.1 AA: Accessible throughout
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useLocation, useRoute } from 'wouter';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 import { ZenSettings } from './components/settings/ZenSettings';
-import {
-  ProjectSwitcher,
-  NewProjectModal,
-  EditProjectModal,
-} from './components/projects/ProjectSwitcher';
-import { WorkflowTimeline } from './components/workflow';
-import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
-import { CustomInstructions } from './components/knowledge/CustomInstructions';
-import { useProjectKnowledge } from './hooks/useProjectKnowledge';
+import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
+import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { useProjects } from './hooks/useProjects';
+import { useProjectTasks, type ProjectTask, type TaskSummary } from './hooks/useProjectTasks';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
-import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
-
-import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
-import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
-import { isFeatureEnabled } from '@/flags/featureFlags';
-
-// Lazy-load CERV2Page for embedded module rendering inside the shell
-const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 import {
   X,
   ChevronLeft,
@@ -68,34 +51,31 @@ import {
   CheckSquare,
   Globe,
   Folder,
+  CalendarClock,
   ShieldCheck,
+  Clock,
+  Wifi,
   WifiOff,
+  Users,
+  ClipboardCheck,
+  Compass,
   Loader2,
+  Target,
   FileText,
   Plus,
-  Star,
-  MessageSquare,
-  FolderOpen,
-  Upload,
-  Sparkles,
-  PenLine,
-  Layers,
-  Download,
-  Brain,
+  ArrowLeft,
+  CircleDot,
+  Play,
+  Pause,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  ListTodo,
+  Calendar,
+  TrendingUp,
 } from 'lucide-react';
 
-// Utility: instantly redirect dead layout modes to regulatory-workspace
-const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect }) => {
-  React.useEffect(() => {
-    onRedirect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  return null;
-};
-
-// Lazy load the Convergent Canvas for the Sherpa System
-const ConvergentCanvas = lazy(() =>
-  import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
-);
+// ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
 
 // Lazy load Phase 7 Mission Control components
 const MissionControl = lazy(() =>
@@ -110,77 +90,11 @@ const INDWorkspace = lazy(() =>
   import('./pages/INDWorkspace').then(m => ({ default: m.INDWorkspace }))
 );
 
-// IND Workspace Right Rail (section-specific CTD context)
-const INDRightRail = lazy(() =>
-  import('./components/workspace/INDRightRail').then(m => ({ default: m.INDRightRail }))
-);
-
-// Lazy load Phase 15 Submission Operations Command Center
-const SubmissionOpsCommandCenter = lazy(() =>
-  import('./pages/SubmissionOpsCommandCenter').then(m => ({
-    default: m.SubmissionOpsCommandCenter,
-  }))
-);
-
-// ─── Regulatory module standalones ────────────────────────────────────────────
-// Document Editor panel (bridge to UnifiedDocumentEditor + live APIs)
-const EditorPanel = lazy(() =>
-  import('./components/editor/EditorPanel').then(m => ({ default: m.default }))
-);
-// eCTD Co-Author (IND / NDA / BLA / 510k document authoring)
-const ECTDCoAuthorStandalone = lazy(() =>
-  import('./components/coauthor/eCTDCoAuthor').then(m => ({ default: m.ECTDCoAuthorStandalone }))
-);
-
-// RI Copilot Intelligence Home (evidence-first landing surface)
-const RICopilotHome = lazy(() =>
-  import('./components/intelligence/RICopilotHome').then(m => ({
-    default: m.RICopilotHome,
-  }))
-);
-
-// DocumentAppHub removed — absorbed into workspace flow (Wave 2)
-// ProjectLauncher removed — all project routes go directly to regulatory-workspace
-
-// ─── Regulatory module lazy-loads for tool panels ─────────────────────────────
-const CAPAManagementPanel = lazy(() =>
-  import('./components/regulatory/CAPAManagement').then(m => ({ default: m.default }))
-);
-const PostMarketSurveillancePanel = lazy(() =>
-  import('./components/regulatory/PostMarketSurveillance').then(m => ({ default: m.default }))
-);
-const InspectionReadinessPanel = lazy(() =>
-  import('./components/regulatory/InspectionReadiness').then(m => ({ default: m.default }))
-);
-const ECTDNavigatorPanel = lazy(() =>
-  import('./components/regulatory/ECTDNavigator').then(m => ({ default: m.default }))
-);
-const RegulatoryIntelligenceFullPanel = lazy(() =>
-  import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
-);
-
-// ─── Biotech module standalones (in-shell rendering) ─────────────────────────
-// Canonical CMC: ComprehensiveCMCPlatformClean (25k LOC, 102 API endpoints)
-// Replaces the thin CMCModule wrapper (735 LOC, 3 API calls) – regression fix
-const CMCModuleStandalone = lazy(() => import('@/components/cmc/ComprehensiveCMCPlatformClean'));
-const VaultPageStandalone = lazy(() =>
-  import('@/pages/vault/VaultPage').then(m => ({ default: m.default }))
-);
-const StudyArchitectModuleStandalone = lazy(() =>
-  import('@/components/studyArchitect/StudyArchitectModule').then(m => ({
-    default: m.default,
-  }))
-);
-
-// Map panel keys to lazy components
-const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
-  capa: CAPAManagementPanel,
-  pms: PostMarketSurveillancePanel,
-  inspection: InspectionReadinessPanel,
-  ectd: ECTDNavigatorPanel,
-  intelligence: RegulatoryIntelligenceFullPanel,
-  'doc-editor': EditorPanel,
-};
+// Lazy load AnA Intelligence Features
+const RegulatoryIntelligenceFeed = lazy(() => import('./pages/RegulatoryIntelligenceFeed'));
+const SubmissionGapAnalysis = lazy(() => import('./pages/SubmissionGapAnalysis'));
+const DocumentChangeImpact = lazy(() => import('./pages/DocumentChangeImpact'));
+const AnAMemory = lazy(() => import('./pages/AnAMemory'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -194,13 +108,9 @@ type ToolPanel =
   | 'pms'
   | 'inspection'
   | 'intelligence'
-  | 'vault'
-  | 'doc-editor'
   | null;
 
 type LayoutMode =
-  | 'projects'
-  | 'workspace'
   | 'assistant'
   | 'sherpa'
   | 'editor'
@@ -212,14 +122,10 @@ type LayoutMode =
   | 'rules'
   | 'ind-workspace'
   | 'submission-workspace'
-  | 'medtech-dashboard'
-  | 'ectd-coauthor'
-  | 'cmc'
-  | 'dossier'
-  | 'precedent-intelligence'
-  | 'regulatory-workspace'
-  | 'document-vault'
-  | 'clinical-trial';
+  | 'intelligence-feed'
+  | 'gap-analysis'
+  | 'change-impact'
+  | 'ana-memory';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -233,11 +139,11 @@ const INDUSTRY_MODES: IndustryMode[] = [
 
 const normalizeIndustryMode = (value?: string): IndustryMode => {
   if (!value) {
-    return 'biotech';
+    return 'medtech';
   }
 
   const normalized = value.toLowerCase().trim() as IndustryMode;
-  return INDUSTRY_MODES.includes(normalized) ? normalized : 'biotech';
+  return INDUSTRY_MODES.includes(normalized) ? normalized : 'medtech';
 };
 
 interface UserProfile {
@@ -274,16 +180,6 @@ const TOOL_PANELS: Record<
     title: 'Regulatory Intelligence',
     icon: Globe,
     component: 'RegulatoryIntelligence',
-  },
-  vault: {
-    title: 'Document Vault',
-    icon: FileText,
-    component: 'VaultBrowser',
-  },
-  'doc-editor': {
-    title: 'Document Editor',
-    icon: PenLine,
-    component: 'EditorPanel',
   },
 };
 
@@ -328,7 +224,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
     <div
       className={cn(
         'flex flex-col h-full bg-white border-l border-zinc-200 transition-all duration-200',
-        isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
+        isFullscreen ? 'w-full' : 'w-[600px]'
       )}
     >
       {/* Header */}
@@ -364,32 +260,19 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto zen-scroll">
-        <ErrorBoundary>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-              </div>
-            }
-          >
-            {PANEL_COMPONENTS[panel] ? (
-              (() => {
-                const PanelComponent = PANEL_COMPONENTS[panel];
-                return <PanelComponent />;
-              })()
-            ) : (
-              <div className="flex items-center justify-center h-full text-center p-8">
-                <div>
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
-                    <Icon className="w-8 h-8 text-zinc-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
-                  <p className="text-sm text-zinc-500 max-w-sm">{config.title} module loading...</p>
-                </div>
-              </div>
-            )}
-          </Suspense>
-        </ErrorBoundary>
+        {/* Placeholder - in production, lazy-load the actual component */}
+        <div className="flex items-center justify-center h-full text-center p-8">
+          <div>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
+              <Icon className="w-8 h-8 text-zinc-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
+            <p className="text-sm text-zinc-500 max-w-sm">
+              This module is ready. The {config.component} component will render here with full
+              functionality.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -401,23 +284,6 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 
 export const ZenApp: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
-  // URL-DRIVEN PROJECT IDENTITY
-  // ─────────────────────────────────────────────────────────────────────────────
-  const [, navigate] = useLocation();
-  const [, routeParams] = useRoute('/concept2cure/project/:projectId/:rest*');
-  const [, routeParamsExact] = useRoute('/concept2cure/project/:projectId');
-  const urlProjectId = routeParams?.projectId ?? routeParamsExact?.projectId ?? null;
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // EMBEDDED MODULE DETECTION
-  // When EMBED_MODULES_IN_SHELL is enabled and URL has /project/:id/510k,
-  // render CERV2Page inside the shell frame instead of as a standalone page.
-  // ─────────────────────────────────────────────────────────────────────────────
-  const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k'
-  const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
-  const embeddedModule = embedModulesEnabled && urlModuleSegment === '510k' ? '510k' : null;
-
-  // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -427,6 +293,8 @@ export const ZenApp: React.FC = () => {
 
   // License gating + user intelligence (personalized context)
   const {
+    canAccessLayoutMode,
+    tier: orgTier,
     industryMode: orgIndustryMode,
     greeting: platformGreeting,
     intelligence: userIntelligence,
@@ -434,47 +302,23 @@ export const ZenApp: React.FC = () => {
     nextTask,
   } = usePlatformContext();
 
-  // Workspace summary — real counts, org, recent activity, next actions
-  const { data: workspaceSummary, isLoading: summaryLoading } = useWorkspaceSummary();
-
   // Projects from database
   const {
     projects: rawProjects,
+    isLoading: projectsLoading,
     createProject: createProjectMutation,
     updateProject: updateProjectMutation,
     deleteProject: deleteProjectMutation,
   } = useProjects();
-
-  // Map DB submission type strings to the UI SubmissionType enum
-  function mapSubmissionType(raw: string): string {
-    const map: Record<string, string> = {
-      clinical_trial: 'IND',
-      regulatory_submission: 'NDA',
-      medical_device: '510K',
-      literature_review: 'NDA',
-      ind: 'IND',
-      nda: 'NDA',
-      bla: 'BLA',
-      pma: 'PMA',
-      maa: 'MAA',
-      eua: 'EUA',
-      de_novo: 'DE_NOVO',
-    };
-    if (['510K', 'IND', 'NDA', 'BLA', 'PMA', 'MAA', 'DE_NOVO', 'EUA'].includes(raw)) return raw;
-    return map[raw?.toLowerCase()] || 'IND';
-  }
 
   // Transform projects for UI
   const projects = useMemo(() => {
     return rawProjects.map(p => ({
       id: p.id,
       name: p.name,
-      type: mapSubmissionType(p.submissionType),
+      type: p.submissionType,
       color: getProjectColor(p.submissionType),
       description: p.description,
-      sponsor: p.sponsor,
-      product: p.product,
-      region: p.region,
       lastUpdated: p.updatedAt,
       conversationCount: p.conversations?.length ?? 0,
       starred: p.starred ?? false,
@@ -486,10 +330,8 @@ export const ZenApp: React.FC = () => {
   // LOCAL STATE
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // Sidebar — auto-collapse on small screens
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768
-  );
+  // Sidebar
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -498,126 +340,40 @@ export const ZenApp: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
-  const [editProjectOpen, setEditProjectOpen] = useState(false);
 
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
   const [toolPanelFullscreen, setToolPanelFullscreen] = useState(false);
 
-  // Layout mode — initialize from URL when deep-linked into a project
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>(
-    urlProjectId ? 'regulatory-workspace' : 'projects'
-  );
+  // Layout mode (polymorphic layout states)
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('assistant');
 
-  // Guard: prevents URL-sync from reverting a navigation that's in-flight
-  const navInProgressRef = useRef(false);
-
-  // Right panel tab in workspace mode
-  const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs' | 'instructions'>(
-    'files'
-  );
-  const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
-
-  const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
-
-  // Pending editor content — when a module wants to open the editor with pre-populated content
-  const [pendingEditorContent, setPendingEditorContent] = useState<{
-    title: string;
-    content: string;
-    ctdSection?: string;
-  } | null>(null);
-
-  // Direct artifact open — when a module has already saved an artifact and wants to open it
-  const [openArtifactId, setOpenArtifactId] = useState<string | undefined>();
-
-  // RI Copilot view: 'intelligence' = evidence-first home, 'editor' = document editing
-  const [riViewMode, setRiViewMode] = useState<'intelligence' | 'editor'>(
-    urlProjectId ? 'editor' : 'intelligence'
-  );
-
-  // Active selection — URL projectId takes precedence
-  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
-    urlProjectId ?? projects[0]?.id
-  );
+  // Active selection
+  const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
-  // Run log — lightweight action execution transparency
-  // NOTE: declared after activeProjectId to avoid TDZ in deps arrays
-  const [runLog, setRunLog] = useState<
-    Array<{
-      id: string;
-      intent: string;
-      label: string;
-      status: 'running' | 'done' | 'failed';
-      ts: number;
-    }>
-  >([]);
+  // Sherpa project detail view state
+  const [sherpaDetailProjectId, setSherpaDetailProjectId] = useState<string | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [taskFilter, setTaskFilter] = useState<string>('all');
 
-  // Load persisted run log from sessionStorage when the active project changes
-  useEffect(() => {
-    if (!activeProjectId) return;
-    try {
-      const stored = sessionStorage.getItem(`runlog:${activeProjectId}`);
-      setRunLog(stored ? JSON.parse(stored) : []);
-    } catch {
-      setRunLog([]);
-    }
-  }, [activeProjectId]);
-
-  const handleActionRun = useCallback(
-    (entry: {
-      id: string;
-      intent: string;
-      label: string;
-      status: 'running' | 'done' | 'failed';
-      ts: number;
-    }) => {
-      setRunLog(prev => {
-        const idx = prev.findIndex(e => e.id === entry.id);
-        const next =
-          idx === -1 ? [entry, ...prev].slice(0, 20) : prev.map((e, i) => (i === idx ? entry : e));
-        // Persist immediately in the updater so we always save the final value
-        if (activeProjectId) {
-          try {
-            sessionStorage.setItem(`runlog:${activeProjectId}`, JSON.stringify(next));
-          } catch {
-            /* quota exceeded */
-          }
-        }
-        return next;
-      });
-    },
-    [activeProjectId]
-  );
+  // Task management for the selected project in sherpa mode
+  const {
+    tasks: projectTasks,
+    isLoadingTasks,
+    summary: taskSummary,
+    createTask,
+    updateTask,
+    generateMilestones,
+    isGenerating: isGeneratingMilestones,
+  } = useProjectTasks(sherpaDetailProjectId || activeProjectId);
 
   // Pending draft request from IND Workspace → passed to ZenChat when switching to assistant mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
     code: string;
     title: string;
   } | null>(null);
-
-  // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
-  const { data: projectArtifacts = [] } = useQuery({
-    queryKey: ['project-artifacts', activeProjectId],
-    queryFn: async () => {
-      if (!activeProjectId) return [];
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
-    },
-    enabled: !!activeProjectId,
-    staleTime: 30_000,
-  });
-
-  // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
-  const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
 
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
@@ -634,86 +390,18 @@ export const ZenApp: React.FC = () => {
     }));
   }, [threads, activeProjectId]);
 
-  // Set active project when projects load (prefer summary's last-touched project)
+  // Set active project when projects load
   useEffect(() => {
-    if (!activeProjectId) {
-      const summaryProject = workspaceSummary?.active?.projectId;
-      if (summaryProject) {
-        setActiveProjectId(summaryProject);
-      } else if (projects.length > 0) {
-        setActiveProjectId(projects[0].id);
-      }
+    if (projects.length > 0 && !activeProjectId) {
+      setActiveProjectId(projects[0].id);
     }
-  }, [projects, activeProjectId, workspaceSummary]);
-
-  // Open a tool panel from the ?panel= URL query param on first load
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const panelParam = params.get('panel') as ToolPanel | null;
-      if (panelParam && panelParam in TOOL_PANELS) {
-        setActiveToolPanel(panelParam);
-        // Strip the query param so a refresh doesn't re-open it
-        const url = new URL(window.location.href);
-        url.searchParams.delete('panel');
-        window.history.replaceState({}, '', url.toString());
-      }
-    } catch (_) {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Deep-link: if URL has /project/:projectId, set active project + go to workspace
-  useEffect(() => {
-    if (urlProjectId && urlProjectId !== activeProjectId) {
-      setActiveProjectId(urlProjectId);
-      setRiViewMode('editor');
-      setLayoutMode('regulatory-workspace');
-    }
-    // Also support legacy ?projectId= query param for backwards compat
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const qp = params.get('projectId');
-      if (qp && !urlProjectId) {
-        setActiveProjectId(qp);
-        setRiViewMode('editor');
-        setLayoutMode('regulatory-workspace');
-        // Upgrade to path-based URL
-        navigate(`/concept2cure/project/${qp}`);
-      }
-    } catch (_) {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlProjectId]);
-
-  // Sync URL path when active project or layout changes
-  useEffect(() => {
-    if ((layoutMode === 'workspace' || layoutMode === 'regulatory-workspace') && activeProjectId) {
-      // Only update URL if not already on the right project path
-      const expected = `/concept2cure/project/${activeProjectId}`;
-      if (!window.location.pathname.startsWith(expected)) {
-        window.history.replaceState({}, '', expected);
-      }
-      navInProgressRef.current = false;
-    } else if (layoutMode === 'projects' && !embeddedModule) {
-      // Back to project hub — clear project from URL
-      // Skip if a navigation is in-flight (state updates still batching)
-      if (navInProgressRef.current) return;
-      if (window.location.pathname.includes('/project/')) {
-        window.history.replaceState({}, '', '/concept2cure');
-      }
-    }
-  }, [layoutMode, activeProjectId, embeddedModule]);
+  }, [projects, activeProjectId]);
 
   const handleNewChat = useCallback(() => {
-    // Clear active conversation/thread and enter workspace/assistant
+    // Clear active conversation/thread to start fresh
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
-    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'assistant');
-    setActiveToolPanel(null);
-  }, [activeProjectId]);
+  }, []);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS
@@ -739,17 +427,6 @@ export const ZenApp: React.FC = () => {
         setSettingsOpen(true);
       }
 
-      // Edit project: ⌘E or Ctrl+E (workspace mode only)
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === 'e' &&
-        layoutMode === 'workspace' &&
-        activeProjectId
-      ) {
-        e.preventDefault();
-        setEditProjectOpen(true);
-      }
-
       // Close tool panel: Escape
       if (e.key === 'Escape' && activeToolPanel && !commandPaletteOpen && !settingsOpen) {
         setActiveToolPanel(null);
@@ -759,14 +436,7 @@ export const ZenApp: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [
-    activeToolPanel,
-    commandPaletteOpen,
-    settingsOpen,
-    handleNewChat,
-    layoutMode,
-    activeProjectId,
-  ]);
+  }, [activeToolPanel, commandPaletteOpen, settingsOpen, handleNewChat]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
@@ -801,6 +471,15 @@ export const ZenApp: React.FC = () => {
   const handleCommandAction = useCallback(
     (actionId: string) => {
       console.log('Command action:', actionId);
+
+      // Handle direct navigation (AnA features)
+      if (actionId.startsWith('nav-')) {
+        const mode = actionId.replace('nav-', '') as LayoutMode;
+        setLayoutMode(mode);
+        setActiveToolPanel(null);
+        setCommandPaletteOpen(false);
+        return;
+      }
 
       // Handle tool panel opens
       if (actionId.startsWith('tool-')) {
@@ -840,25 +519,42 @@ export const ZenApp: React.FC = () => {
     [handleNewChat]
   );
 
+  const handleLayoutModeChange = useCallback(
+    (mode: LayoutMode) => {
+      setLayoutMode(mode);
+
+      if (mode === 'assistant' || mode === 'sherpa') {
+        setActiveToolPanel(null);
+        setToolPanelFullscreen(false);
+        return;
+      }
+
+      if (mode === 'ctd') {
+        setActiveToolPanel('ectd');
+        setToolPanelFullscreen(false);
+        return;
+      }
+
+      if (mode === 'editor') {
+        setActiveToolPanel(activeToolPanel || 'protocol');
+        setToolPanelFullscreen(false);
+        return;
+      }
+
+      // Analytics, timeline, audit modes are full-width content (hide tool panel)
+      setActiveToolPanel(null);
+      setToolPanelFullscreen(false);
+    },
+    [activeToolPanel]
+  );
+
   const handleCreateProject = useCallback(
-    async (data: {
-      name: string;
-      type: string;
-      description?: string;
-      sponsor?: string;
-      product?: string;
-      region?: string;
-      goal?: string;
-    }) => {
+    async (data: { name: string; type: string; description?: string }) => {
       try {
         await createProjectMutation({
           name: data.name,
           submissionType: data.type as any,
           description: data.description,
-          sponsor: data.sponsor,
-          product: data.product,
-          region: data.region,
-          goal: data.goal,
           conversations: [],
         });
         setNewProjectOpen(false);
@@ -905,38 +601,19 @@ export const ZenApp: React.FC = () => {
     [rawProjects, updateProjectMutation]
   );
 
-  const handleEditProject = useCallback(
-    async (data: {
-      name: string;
-      description?: string;
-      sponsor?: string;
-      product?: string;
-      region?: string;
-    }) => {
-      const project = rawProjects.find(p => p.id === activeProjectId);
-      if (project) {
-        try {
-          await updateProjectMutation({
-            ...project,
-            name: data.name,
-            description: data.description,
-            sponsor: data.sponsor,
-            product: data.product,
-            region: data.region,
-          });
-        } catch (error) {
-          console.error('Failed to update project:', error);
-        }
-      }
-    },
-    [activeProjectId, rawProjects, updateProjectMutation]
-  );
-
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
 
   const activeProject = projects.find(p => p.id === activeProjectId);
+
+  const contextMetrics = {
+    deadlineDays: 47,
+    complianceScore: 0.87,
+    riskCount: 3,
+    lastActivity: 'FDA response received 2h ago',
+    auditStatus: 'Audit trail active',
+  };
 
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
@@ -956,6 +633,32 @@ export const ZenApp: React.FC = () => {
         return 'IND Filing';
     }
   }, [activeProject?.type]);
+
+  const allLayoutModes: {
+    id: LayoutMode;
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { id: 'assistant', label: 'Assistant' },
+    { id: 'sherpa', label: 'Sherpa', icon: Compass },
+    { id: 'editor', label: 'Editor' },
+    { id: 'analytics', label: 'Analytics' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'audit', label: 'Audit' },
+    { id: 'ctd', label: 'CTD' },
+    { id: 'mission-control' as LayoutMode, label: 'Mission Control', icon: Target },
+    { id: 'ind-workspace' as LayoutMode, label: submissionWorkspaceLabel, icon: FileText },
+    { id: 'intelligence-feed' as LayoutMode, label: 'RI Feed', icon: Globe },
+    { id: 'gap-analysis' as LayoutMode, label: 'Gap Analysis', icon: ClipboardCheck },
+    { id: 'change-impact' as LayoutMode, label: 'Change Impact', icon: AlertTriangle },
+    { id: 'ana-memory' as LayoutMode, label: 'AnA Memory', icon: Zap },
+  ];
+
+  // Filter layout modes by license — only show modes the org has access to
+  const layoutModes = useMemo(
+    () => allLayoutModes.filter(mode => canAccessLayoutMode(mode.id)),
+    [allLayoutModes, canAccessLayoutMode]
+  );
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
   const timelineSteps = useMemo(
@@ -1016,17 +719,86 @@ export const ZenApp: React.FC = () => {
     []
   );
 
+  const primaryObjective = userProfile?.objectives?.[0] || 'Submission readiness';
   const userRole = userProfile?.role || 'Regulatory Lead';
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
-    typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
+    typeof rawIndustry === 'string' ? rawIndustry : undefined
   );
   const rawDisplayName = userProfile?.preferences?.displayName;
-  const userName =
-    (typeof rawDisplayName === 'string' && rawDisplayName) ||
-    userIntelligence?.identity?.name ||
-    'User';
-  const userEmail = userIntelligence?.identity?.email ?? undefined;
+  const userName = typeof rawDisplayName === 'string' ? rawDisplayName : 'User';
+
+  const agentRoster = useMemo(
+    () => [
+      {
+        id: 'agent-compliance',
+        name: `${userRole} Agent`,
+        status: 'Active',
+        focus: primaryObjective,
+      },
+      {
+        id: 'agent-evidence',
+        name: 'Evidence Agent',
+        status: 'Reviewing',
+        focus: userProfile?.criteria?.[0] || 'Clinical evidence map',
+      },
+      {
+        id: 'agent-quality',
+        name: 'Quality Agent',
+        status: 'Queued',
+        focus: userProfile?.criteria?.[1] || 'Section audit checks',
+      },
+    ],
+    [primaryObjective, userProfile, userRole]
+  );
+
+  const nextActions = useMemo(
+    () => [
+      {
+        id: 'action-compile-section',
+        name: `Advance ${primaryObjective.toLowerCase()}`,
+        description: `Progress ${primaryObjective.toLowerCase()} with evidence alignment.`,
+        stepType: 'TASK' as const,
+        status: 'READY' as const,
+        workflowName: 'Priority Objectives',
+        workflowId: 'workflow-reg-prep-01',
+        workflowRunId,
+        slaDueAt: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        assigneeRole: userRole,
+        order: 1,
+        priority: 'HIGH' as const,
+      },
+      {
+        id: 'action-review-claims',
+        name: userProfile?.criteria?.[0] || 'Review efficacy claims',
+        description: 'Validate claims against source evidence.',
+        stepType: 'REVIEW' as const,
+        status: 'IN_PROGRESS' as const,
+        workflowName: 'Evidence Validation',
+        workflowId: 'workflow-evd-02',
+        workflowRunId,
+        slaDueAt: new Date(Date.now() + 10 * 60 * 60 * 1000),
+        assigneeRole: userRole,
+        order: 2,
+        priority: 'MEDIUM' as const,
+      },
+      {
+        id: 'action-approval-qa',
+        name: userProfile?.criteria?.[1] || 'QA sign-off checklist',
+        description: 'Approve final quality checklist for submission.',
+        stepType: 'APPROVAL' as const,
+        status: 'AWAITING_APPROVAL' as const,
+        workflowName: 'Quality Governance',
+        workflowId: 'workflow-qa-03',
+        workflowRunId,
+        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        assigneeRole: userRole,
+        order: 3,
+        priority: 'LOW' as const,
+      },
+    ],
+    [primaryObjective, userProfile, userRole, workflowRunId]
+  );
 
   useEffect(() => {
     const loadProfile = () => {
@@ -1053,37 +825,8 @@ export const ZenApp: React.FC = () => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // ── Workspace header — shared nav bar for non-chat modules ─────────────────
-  const WorkspaceHeader = ({
-    title,
-    subtitle,
-    icon,
-    onBack,
-    backLabel,
-  }: {
-    title: string;
-    subtitle?: string;
-    icon?: React.ReactNode;
-    onBack: () => void;
-    backLabel?: string;
-  }) => (
-    <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        <span>{backLabel || 'Back'}</span>
-      </button>
-      <div className="w-px h-4 bg-zinc-200" />
-      {icon && <span className="text-zinc-400">{icon}</span>}
-      <span className="text-sm font-medium text-zinc-900">{title}</span>
-      {subtitle && <span className="text-xs text-zinc-400 ml-1 hidden sm:inline">{subtitle}</span>}
-    </div>
-  );
-
   return (
-    <div className="zen flex h-screen w-full overflow-hidden bg-white">
+    <div className="zen flex h-screen w-screen overflow-hidden bg-stone-50">
       {/* CSS Variables */}
       <style>{`
         .zen {
@@ -1115,11 +858,11 @@ export const ZenApp: React.FC = () => {
         }
       `}</style>
 
-      {/* Connection Status - only show if confirmed offline after health check loaded */}
-      {cortexHealth && !isConnected && (
+      {/* Connection Status */}
+      {!isConnected && (
         <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 bg-amber-50 border-b border-amber-200 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>RI running in offline mode — chat still available</span>
+          <span>Connecting to AnA...</span>
         </div>
       )}
 
@@ -1131,19 +874,6 @@ export const ZenApp: React.FC = () => {
         projects={projects}
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
-        activeNavId={
-          (
-            {
-              'regulatory-workspace': 'ai-copilot',
-              'ind-workspace': 'ind-workspace',
-              'ectd-coauthor': 'ectd-coauthor',
-              cmc: 'cmc',
-              'document-vault': 'document-vault',
-              'clinical-trial': 'clinical-trial',
-              'submission-workspace': 'submission-workspace',
-            } as Record<string, string>
-          )[layoutMode] ?? undefined
-        }
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
@@ -1155,14 +885,13 @@ export const ZenApp: React.FC = () => {
         onDeleteConversation={handleDeleteConversation}
         onToggleStar={handleToggleConversationStar}
         onTogglePin={handleToggleConversationPin}
-        industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
             case 'home':
-              setLayoutMode('projects');
+              setLayoutMode('assistant');
               break;
             case 'projects':
-              setLayoutMode('projects');
+              setProjectSwitcherOpen(true);
               break;
             case 'tools':
               setActiveToolPanel('intelligence');
@@ -1179,193 +908,483 @@ export const ZenApp: React.FC = () => {
             case 'analytics':
               setLayoutMode('analytics');
               break;
-            // ── Product routes ──────────────────────────────────
-            case 'ai-copilot':
-              setRiViewMode('intelligence');
-              setLayoutMode('regulatory-workspace');
-              break;
-            case '510k-workspace':
-              if (embeddedModule !== null || !isFeatureEnabled('EMBED_MODULES_IN_SHELL')) {
-                window.location.href = '/cerv2';
-              } else if (activeProjectId) {
-                navigate(`/concept2cure/project/${activeProjectId}/510k`);
-              } else {
-                // No project selected — go to projects list
-                setLayoutMode('projects');
-              }
-              break;
-            case 'cer-generator':
-              window.location.href = '/cerv2?mode=cer';
-              break;
-            case 'document-vault':
-              setLayoutMode('document-vault');
-              break;
-            case 'evidence-search':
-              setCommandPaletteOpen(true);
-              break;
-            case 'ectd-coauthor':
-              setLayoutMode('ectd-coauthor');
-              break;
-            case 'ind-workspace':
-              setLayoutMode('ind-workspace');
-              break;
-            case 'cmc':
-              setLayoutMode('cmc');
-              break;
-            case 'clinical-trial':
-              setLayoutMode('clinical-trial');
-              break;
-            case 'regulatory-workspace':
-              setLayoutMode('regulatory-workspace');
-              break;
-            case 'mission-control':
-              setLayoutMode('mission-control');
-              break;
-            case 'submission-workspace':
-              setLayoutMode('submission-workspace');
-              break;
             default:
               break;
           }
         }}
-        userName={userName}
-        userEmail={userEmail}
       />
 
-      {/* Main area — no top bar, exactly like Claude.ai */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Content Area */}
-        <div className="flex-1 flex min-w-0 min-h-0">
-          {/* ── Embedded Module Host ── */}
-          {embeddedModule === '510k' && urlProjectId && (
-            <>
-              {/* Module content area */}
-              <div
+      {/* Main area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Ambient Context Bar */}
+        <div className="border-b border-zinc-100 bg-white/80 backdrop-blur-sm transition-colors duration-normal ease-standard">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-2 text-xs text-zinc-600">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="font-medium text-zinc-800">
+                {activeProject?.name || 'Select a project'}
+              </span>
+              {activeProject?.type && (
+                <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                  {activeProject.type}
+                </span>
+              )}
+            </div>
+
+            <div className="h-4 w-px bg-zinc-200" />
+
+            <div className="flex items-center gap-1.5">
+              <CalendarClock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Target: {contextMetrics.deadlineDays} days</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Compliance {Math.round(contextMetrics.complianceScore * 100)}%</span>
+            </div>
+
+            <a
+              href={`/concept2cure/proofs/${workflowRunId}`}
+              className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700 hover:bg-emerald-100"
+            >
+              <ShieldCheck className="w-3 h-3" />
+              <span>Proofs</span>
+            </a>
+
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+              <span>{contextMetrics.riskCount} risks detected</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{contextMetrics.lastActivity}</span>
+            </div>
+
+            <div className="ml-auto flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-emerald-700">{contextMetrics.auditStatus}</span>
+            </div>
+          </div>
+
+          {/* Layout Mode Switcher */}
+          <div className="flex items-center gap-2 px-4 pb-2">
+            {layoutModes.map(mode => (
+              <button
+                key={mode.id}
+                onClick={() => handleLayoutModeChange(mode.id)}
                 className={cn(
-                  'flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-200',
-                  moduleAssistantOpen && 'mr-0'
+                  'px-3 py-1 text-xs rounded-full border transition-colors duration-normal ease-standard flex items-center gap-1.5',
+                  layoutMode === mode.id
+                    ? mode.id === 'sherpa'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
                 )}
               >
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading 510(k) Module...</p>
+                {mode.icon && <mode.icon className="w-3.5 h-3.5" />}
+                {mode.label}
+              </button>
+            ))}
+            <div className="ml-auto flex items-center gap-1 text-xs text-zinc-500">
+              {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+              <span>{isConnected ? 'Lumen connected' : 'Lumen offline'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 flex min-w-0">
+          {/* Sherpa Mode - Project Management Hub */}
+          {layoutMode === 'sherpa' && (
+            <div className="flex-1 overflow-y-auto bg-stone-50 p-8">
+              <div className="max-w-6xl mx-auto">
+
+                {/* ── Project Detail View ─────────────────────────────────────── */}
+                {sherpaDetailProjectId ? (() => {
+                  const detailProject = projects.find(p => p.id === sherpaDetailProjectId);
+                  if (!detailProject) return null;
+
+                  const filteredTasks = taskFilter === 'all'
+                    ? projectTasks
+                    : projectTasks.filter(t => t.status === taskFilter);
+
+                  const statusIcon = (status: string) => {
+                    switch (status) {
+                      case 'done': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+                      case 'in-progress': return <Play className="w-4 h-4 text-blue-500" />;
+                      case 'review': return <CircleDot className="w-4 h-4 text-amber-500" />;
+                      case 'blocked': return <AlertCircle className="w-4 h-4 text-red-500" />;
+                      default: return <Pause className="w-4 h-4 text-zinc-400" />;
+                    }
+                  };
+
+                  const priorityColor = (p: string) => {
+                    switch (p) {
+                      case 'urgent': return 'bg-red-100 text-red-700';
+                      case 'high': return 'bg-orange-100 text-orange-700';
+                      case 'medium': return 'bg-blue-100 text-blue-700';
+                      default: return 'bg-zinc-100 text-zinc-600';
+                    }
+                  };
+
+                  return (
+                    <div>
+                      {/* Header with back navigation */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <button
+                          onClick={() => setSherpaDetailProjectId(null)}
+                          className="p-2 rounded-lg hover:bg-white border border-transparent hover:border-zinc-200 transition-colors"
+                        >
+                          <ArrowLeft className="w-4 h-4 text-zinc-600" />
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-xl font-semibold text-zinc-900">{detailProject.name}</h2>
+                            <span className={cn('px-2 py-0.5 rounded text-xs font-medium', `bg-${detailProject.color || 'indigo'}-100 text-${detailProject.color || 'indigo'}-700`)}>
+                              {detailProject.type || detailProject.submissionType}
+                            </span>
+                          </div>
+                          {detailProject.description && (
+                            <p className="text-sm text-zinc-500 mt-0.5">{detailProject.description}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setActiveProjectId(sherpaDetailProjectId);
+                            setLayoutMode('assistant');
+                          }}
+                          className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          Open in Copilot
+                        </button>
+                      </div>
+
+                      {/* Health Dashboard */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            <span className="text-xs text-zinc-500 font-medium">Health Score</span>
+                          </div>
+                          <div className="text-2xl font-bold text-zinc-900">
+                            {taskSummary?.healthScore ?? '—'}
+                            <span className="text-sm font-normal text-zinc-400">/100</span>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <ListTodo className="w-4 h-4 text-blue-500" />
+                            <span className="text-xs text-zinc-500 font-medium">Tasks</span>
+                          </div>
+                          <div className="text-2xl font-bold text-zinc-900">
+                            {taskSummary?.completed ?? 0}
+                            <span className="text-sm font-normal text-zinc-400">/{taskSummary?.total ?? 0}</span>
+                          </div>
+                          {taskSummary && taskSummary.total > 0 && (
+                            <div className="mt-2 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${taskSummary.completionRate}%` }} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                            <span className="text-xs text-zinc-500 font-medium">Overdue</span>
+                          </div>
+                          <div className={cn('text-2xl font-bold', (taskSummary?.overdue ?? 0) > 0 ? 'text-red-600' : 'text-zinc-900')}>
+                            {taskSummary?.overdue ?? 0}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="w-4 h-4 text-indigo-500" />
+                            <span className="text-xs text-zinc-500 font-medium">In Progress</span>
+                          </div>
+                          <div className="text-2xl font-bold text-zinc-900">
+                            {taskSummary?.byStatus?.['in-progress'] ?? 0}
+                          </div>
                         </div>
                       </div>
-                    }
-                  >
-                    <EmbeddedCERV2Page
-                      embedded={true}
-                      projectId={urlProjectId}
-                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
 
-              {/* Assistant toggle button (fixed right edge) */}
-              {!moduleAssistantOpen && (
-                <button
-                  onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
-                  title="Open AI Assistant"
-                  data-testid="module-assistant-toggle"
-                >
-                  <MessageSquare className="w-4 h-4 text-zinc-500" />
-                  <span
-                    className="text-[10px] text-zinc-400 writing-mode-vertical"
-                    style={{ writingMode: 'vertical-rl' }}
-                  >
-                    Assistant
-                  </span>
-                </button>
-              )}
-
-              {/* Collapsible assistant drawer */}
-              {moduleAssistantOpen && (
-                <div
-                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
-                  data-testid="module-assistant-panel"
-                >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
-                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
-                    <button
-                      onClick={() => setModuleAssistantOpen(false)}
-                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <ZenChat
-                      projectId={activeProjectId || urlProjectId}
-                      projectName={activeProject?.name}
-                      submissionType={activeProject?.type || '510K'}
-                      threadId={activeThreadId}
-                      greeting="How can I help with your 510(k) submission?"
-                      onNavigate={() => {}}
-                      onNewProject={() => {}}
-                      onThreadChange={handleThreadChange}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Sherpa Mode - Convergent Canvas */}
-          {!embeddedModule && layoutMode === 'sherpa' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-sherpa"
-            >
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Sherpa System...</p>
+                      {/* Task Actions Bar */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-zinc-700">Tasks & Milestones</h3>
+                          <div className="flex gap-1 ml-2">
+                            {['all', 'todo', 'in-progress', 'review', 'done', 'blocked'].map(f => (
+                              <button
+                                key={f}
+                                onClick={() => setTaskFilter(f)}
+                                className={cn(
+                                  'px-2 py-0.5 text-xs rounded-full border transition-colors capitalize',
+                                  taskFilter === f ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                                )}
+                              >
+                                {f === 'all' ? `All (${taskSummary?.total ?? 0})` : f}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {projectTasks.length === 0 && (
+                            <button
+                              onClick={async () => {
+                                const subType = detailProject.type || detailProject.submissionType || 'IND';
+                                try {
+                                  await generateMilestones({ submissionType: subType });
+                                } catch (e) {
+                                  console.error('Failed to generate milestones:', e);
+                                }
+                              }}
+                              disabled={isGeneratingMilestones}
+                              className="px-3 py-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              {isGeneratingMilestones ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                              Auto-Generate {detailProject.type || detailProject.submissionType} Milestones
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setNewTaskOpen(!newTaskOpen)}
+                            className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Add Task
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Inline New Task Form */}
+                      {newTaskOpen && (
+                        <form
+                          className="bg-white rounded-xl border p-4 mb-4"
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            const form = e.target as HTMLFormElement;
+                            const formData = new FormData(form);
+                            try {
+                              await createTask({
+                                name: formData.get('name') as string,
+                                description: formData.get('description') as string || undefined,
+                                priority: (formData.get('priority') as any) || 'medium',
+                                moduleType: (formData.get('category') as string) || undefined,
+                                dueDate: (formData.get('dueDate') as string) || undefined,
+                              });
+                              setNewTaskOpen(false);
+                              form.reset();
+                            } catch (err) {
+                              console.error('Failed to create task:', err);
+                            }
+                          }}
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input name="name" required placeholder="Task name..." className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+                            <input name="description" placeholder="Description (optional)" className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+                            <select name="priority" className="px-3 py-2 border rounded-lg text-sm bg-white">
+                              <option value="low">Low Priority</option>
+                              <option value="medium" selected>Medium Priority</option>
+                              <option value="high">High Priority</option>
+                              <option value="urgent">Urgent</option>
+                            </select>
+                            <select name="category" className="px-3 py-2 border rounded-lg text-sm bg-white">
+                              <option value="">Category...</option>
+                              <option value="document-prep">Document Preparation</option>
+                              <option value="review">Review & QC</option>
+                              <option value="regulatory">Regulatory</option>
+                              <option value="submission">Submission</option>
+                              <option value="meeting">Meeting</option>
+                              <option value="testing">Testing</option>
+                              <option value="analysis">Analysis</option>
+                              <option value="quality">Quality</option>
+                              <option value="milestone">Milestone</option>
+                            </select>
+                            <input name="dueDate" type="date" className="px-3 py-2 border rounded-lg text-sm" />
+                            <div className="flex gap-2">
+                              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Create</button>
+                              <button type="button" onClick={() => setNewTaskOpen(false)} className="px-4 py-2 border text-sm rounded-lg hover:bg-zinc-50">Cancel</button>
+                            </div>
+                          </div>
+                        </form>
+                      )}
+
+                      {/* Task List */}
+                      {isLoadingTasks ? (
+                        <div className="flex items-center justify-center py-12">
+                          <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                        </div>
+                      ) : filteredTasks.length === 0 ? (
+                        <div className="bg-white rounded-xl border p-8 text-center">
+                          <ListTodo className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+                          <p className="text-sm text-zinc-500">
+                            {projectTasks.length === 0
+                              ? 'No tasks yet. Add tasks manually or auto-generate submission milestones.'
+                              : `No ${taskFilter} tasks.`}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {filteredTasks.map(task => (
+                            <div
+                              key={task.id}
+                              className={cn(
+                                'bg-white rounded-lg border p-3 flex items-center gap-3 hover:shadow-sm transition-shadow group',
+                                task.status === 'done' && 'opacity-60'
+                              )}
+                            >
+                              <button
+                                onClick={async () => {
+                                  const nextStatus = task.status === 'done' ? 'todo' : task.status === 'todo' ? 'in-progress' : task.status === 'in-progress' ? 'review' : 'done';
+                                  await updateTask({ taskId: task.id, updates: { status: nextStatus, ...(nextStatus === 'done' ? { completedAt: new Date().toISOString() } : {}) } });
+                                }}
+                                className="flex-shrink-0"
+                                title={`Status: ${task.status} (click to advance)`}
+                              >
+                                {statusIcon(task.status)}
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className={cn('text-sm font-medium', task.status === 'done' ? 'line-through text-zinc-400' : 'text-zinc-800')}>
+                                    {task.name}
+                                  </span>
+                                  <span className={cn('px-1.5 py-0.5 text-[10px] rounded font-medium', priorityColor(task.priority))}>
+                                    {task.priority}
+                                  </span>
+                                  {task.moduleType && (
+                                    <span className="px-1.5 py-0.5 text-[10px] rounded bg-slate-100 text-slate-600 font-medium capitalize">
+                                      {task.moduleType}
+                                    </span>
+                                  )}
+                                </div>
+                                {task.description && (
+                                  <p className="text-xs text-zinc-400 mt-0.5 truncate">{task.description}</p>
+                                )}
+                              </div>
+                              {task.dueDate && (
+                                <span className={cn(
+                                  'text-xs flex-shrink-0',
+                                  new Date(task.dueDate) < new Date() && task.status !== 'done' ? 'text-red-500 font-medium' : 'text-zinc-400'
+                                )}>
+                                  {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  }
-                >
-                  <ConvergentCanvas
-                    userId={activeProjectId || 'anonymous'}
-                    userName={userName}
-                    userRole={userRole}
-                    industry={industryMode}
-                  />
-                </Suspense>
-              </ErrorBoundary>
+                  );
+                })() : (
+                  /* ── Project Grid View ──────────────────────────────────────── */
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-semibold text-zinc-900">Project Management</h2>
+                        <p className="text-sm text-zinc-500 mt-1">
+                          {projects.length} project{projects.length !== 1 ? 's' : ''} in your workspace
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setNewProjectOpen(true)}
+                        className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        New Project
+                      </button>
+                    </div>
+
+                    {projectsLoading ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                        <span className="ml-3 text-zinc-500">Loading projects...</span>
+                      </div>
+                    ) : projects.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <Folder className="w-12 h-12 text-zinc-300 mb-4" />
+                        <h3 className="text-lg font-medium text-zinc-700">No projects yet</h3>
+                        <p className="text-sm text-zinc-500 mt-1 max-w-sm">
+                          Create your first regulatory submission project to get started.
+                        </p>
+                        <button
+                          onClick={() => setNewProjectOpen(true)}
+                          className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                          Create Project
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {projects.map(project => (
+                          <button
+                            key={project.id}
+                            onClick={() => {
+                              setSherpaDetailProjectId(project.id);
+                              setActiveProjectId(project.id);
+                            }}
+                            className={cn(
+                              'text-left p-5 rounded-xl border bg-white shadow-sm',
+                              'hover:shadow-md hover:border-indigo-200 transition-all',
+                              activeProjectId === project.id && 'ring-2 ring-indigo-500 border-indigo-300'
+                            )}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div
+                                className={cn(
+                                  'px-2 py-0.5 rounded text-xs font-medium',
+                                  `bg-${project.color || 'indigo'}-100 text-${project.color || 'indigo'}-700`
+                                )}
+                              >
+                                {project.type || project.submissionType}
+                              </div>
+                              {project.starred && (
+                                <span className="text-amber-400 text-sm">&#9733;</span>
+                              )}
+                            </div>
+                            <h3 className="font-semibold text-zinc-900 text-sm mb-1 truncate">
+                              {project.name}
+                            </h3>
+                            {project.description && (
+                              <p className="text-xs text-zinc-500 mb-3 line-clamp-2">
+                                {project.description}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between text-xs text-zinc-400 mt-auto pt-2 border-t border-zinc-100">
+                              <span className="flex items-center gap-1">
+                                <FileText className="w-3 h-3" />
+                                {project.conversationCount ?? 0} chats
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {project.lastUpdated || project.updatedAt
+                                  ? new Date(project.lastUpdated || project.updatedAt).toLocaleDateString()
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
 
-          {!embeddedModule && layoutMode === 'analytics' && (
-            <div className="flex-1 overflow-y-auto flex items-center justify-center p-8 bg-white">
+          {layoutMode === 'analytics' && (
+            <div className="flex-1 flex items-center justify-center p-8 bg-white">
               <div className="max-w-md text-center">
                 <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-50 flex items-center justify-center">
                   <BarChart2 className="w-6 h-6 text-amber-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-900">Analytics</h3>
-                <p className="text-sm text-zinc-500 mt-1 mb-6">
-                  Portfolio analytics and risk dashboards are being built. Check back soon.
+                <h3 className="text-lg font-semibold text-zinc-900">Analytics Mode</h3>
+                <p className="text-sm text-zinc-500">
+                  Portfolio analytics and risk trends will render here with full-width dashboards.
                 </p>
-                <button
-                  onClick={() => setLayoutMode('assistant')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back to Chat
-                </button>
               </div>
             </div>
           )}
 
-          {!embeddedModule && layoutMode === 'timeline' && (
+          {layoutMode === 'timeline' && (
             <div className="flex-1 p-8 bg-white overflow-y-auto">
               <div className="max-w-3xl mx-auto">
                 <WorkflowTimeline
@@ -1380,1266 +1399,110 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {!embeddedModule && layoutMode === 'audit' && (
-            <div className="flex-1 overflow-y-auto bg-zinc-50" data-testid="workspace-audit">
+          {layoutMode === 'audit' && (
+            <div className="flex-1 overflow-y-auto bg-zinc-50">
               <ProductAuditQuestionnaire />
             </div>
           )}
 
           {/* Phase 7: Mission Control Dashboard */}
-          {!embeddedModule && layoutMode === 'mission-control' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-mission-control"
+          {layoutMode === 'mission-control' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading Mission Control...</p>
+                  </div>
+                </div>
+              }
             >
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Mission Control...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <MissionControl />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
+              <MissionControl />
+            </Suspense>
           )}
 
-          {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
-          {!embeddedModule && layoutMode === 'ind-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('assistant')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Chat</span>
-                </button>
-                <div className="w-px h-4 bg-zinc-200" />
-                <ShieldCheck className="w-4 h-4 text-violet-500" />
-                <span className="text-sm font-medium text-zinc-900">
-                  {submissionWorkspaceLabel} — Dossier Construction
-                </span>
-                <span className="text-xs text-zinc-400 ml-1 hidden sm:inline">
-                  CTD sections · Status tracking · eCTD compile
-                </span>
-              </div>
-              {/* No-project guard */}
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
-                  <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-50 flex items-center justify-center">
-                      <ShieldCheck className="w-8 h-8 text-violet-600" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">IND Workspace</h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Select a project to open its dossier and begin drafting CTD sections.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-sm"
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Select Project
-                    </button>
+          {/* IND Filing Workspace */}
+          {layoutMode === 'ind-workspace' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-emerald-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading IND Workspace...</p>
                   </div>
                 </div>
-              ) : (
-                <div className="flex-1 flex min-h-0">
-                  {/* Main area: IND section tree */}
-                  <div className="flex-1 overflow-auto">
-                    <ErrorBoundary>
-                      <Suspense
-                        fallback={
-                          <div className="flex-1 flex items-center justify-center bg-white h-full">
-                            <div className="text-center">
-                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                              <p className="text-zinc-500">Loading IND Workspace...</p>
-                            </div>
-                          </div>
-                        }
-                      >
-                        <INDWorkspace
-                          projectId={activeProjectId}
-                          projectName={activeProject?.name || 'Untitled Project'}
-                          submissionType={activeProject?.type || 'IND'}
-                          onOpenSection={sectionCode => {
-                            const ctd = sectionCode.replace(/^m/, '');
-                            setPendingEditorContent({
-                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'IND Application'}.</p>`,
-                              title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
-                              ctdSection: ctd,
-                            });
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          onDraftWithAI={(sectionCode, sectionTitle) => {
-                            const ctd = sectionCode.replace(/^m/, '');
-                            setPendingEditorContent({
-                              content: `<h1>${sectionTitle}</h1>\n<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'IND'})</h2>\n<p><strong>CTD Section:</strong> ${ctd}</p>\n<p><strong>Generated:</strong> ${new Date().toISOString().split('T')[0]}</p>\n<hr/>\n<h2>Section Content</h2>\n<p>[AI-assisted draft for ${sectionTitle}. This section should comply with ICH M4 guidelines and 21 CFR 312.23(a) requirements.]</p>`,
-                              title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
-                              ctdSection: ctd,
-                            });
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                  {/* Right rail: Section context tabs */}
-                  <INDRightRail
-                    projectName={activeProject?.name}
-                    submissionType={activeProject?.type}
-                    indication={activeProject?.description}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Medical Device Dashboard — disabled (consolidated into RI Copilot workspace) */}
-
-          {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
-          {!embeddedModule && layoutMode === 'ectd-coauthor' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ectd-coauthor">
-              <WorkspaceHeader
-                title="eCTD Co-Author"
-                subtitle="IND · NDA · BLA · 510(k) · CTD section-by-section drafting"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
-                  <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
-                      <FolderOpen className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">eCTD Co-Author</h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Select a project to begin authoring CTD sections.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col min-h-0">
-                  <ErrorBoundary>
-                    <Suspense
-                      fallback={
-                        <div className="flex-1 flex items-center justify-center bg-white">
-                          <div className="text-center">
-                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                            <p className="text-zinc-500">Loading eCTD Co-Author...</p>
-                          </div>
-                        </div>
-                      }
-                    >
-                      <ECTDCoAuthorStandalone
-                        onOpenInEditor={section => {
-                          console.log(
-                            `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
-                          );
-                          // Build populated content from the section
-                          const sectionContent =
-                            section.content && section.content.trim()
-                              ? section.content
-                              : `<h1>${section.number} ${section.title}</h1>
-<p>This section covers the regulatory requirements for <strong>${section.title}</strong> as part of the CTD submission.</p>
-<h2>Scope</h2>
-<p>[Section content to be drafted. Use the RI Edit tools above to generate regulatory-compliant language.]</p>
-<h2>References</h2>
-<p>[Cross-references and source citations will be added here.]</p>`;
-                          setPendingEditorContent({
-                            title: `${section.number} ${section.title}`,
-                            content: sectionContent,
-                            ctdSection: section.number,
-                          });
-                          setRiViewMode('editor');
-                          setLayoutMode('regulatory-workspace');
-                        }}
-                      />
-                    </Suspense>
-                  </ErrorBoundary>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── CMC Platform (in-shell) ────────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'cmc' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-cmc">
-              <WorkspaceHeader
-                title="CMC Platform"
-                subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
-                  <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-50 flex items-center justify-center">
-                      <FolderOpen className="w-8 h-8 text-teal-600" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">CMC Platform</h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Select a project to access Chemistry, Manufacturing & Controls modules.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition-colors shadow-sm"
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Module 3 traceability bar */}
-                  <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
-                    <span className="text-xs text-zinc-500 mr-2">Module 3 Actions:</span>
-                    <button
-                      onClick={() => {
-                        setPendingEditorContent({
-                          content: `<h1>Module 3.2.S — Drug Substance</h1>
-<p>CTD Section 3.2.S for ${activeProject?.name || 'Drug Product'}.</p>
-<h2>3.2.S.1 General Information</h2><p></p>
-<h2>3.2.S.2 Manufacture</h2><p></p>
-<h2>3.2.S.3 Characterisation</h2><p></p>
-<h2>3.2.S.4 Control of Drug Substance</h2><p></p>
-<h2>3.2.S.5 Reference Standards</h2><p></p>
-<h2>3.2.S.6 Container Closure System</h2><p></p>
-<h2>3.2.S.7 Stability</h2><p></p>`,
-                          title: `Module 3.2.S — ${activeProject?.name || 'Drug Substance'}`,
-                          ctdSection: '3.2.S',
-                        });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                    >
-                      Draft 3.2.S (Drug Substance)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPendingEditorContent({
-                          content: `<h1>Module 3.2.P — Drug Product</h1>
-<p>CTD Section 3.2.P for ${activeProject?.name || 'Drug Product'}.</p>
-<h2>3.2.P.1 Description and Composition</h2><p></p>
-<h2>3.2.P.2 Pharmaceutical Development</h2><p></p>
-<h2>3.2.P.3 Manufacture</h2><p></p>
-<h2>3.2.P.4 Control of Excipients</h2><p></p>
-<h2>3.2.P.5 Control of Drug Product</h2><p></p>
-<h2>3.2.P.6 Reference Standards</h2><p></p>
-<h2>3.2.P.7 Container Closure System</h2><p></p>
-<h2>3.2.P.8 Stability</h2><p></p>`,
-                          title: `Module 3.2.P — ${activeProject?.name || 'Drug Product'}`,
-                          ctdSection: '3.2.P',
-                        });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                    >
-                      Draft 3.2.P (Drug Product)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPendingEditorContent({
-                          content: `<h1>Module 3.2.A — Appendices</h1>
-<p>CTD Appendices for ${activeProject?.name || 'Drug Product'}.</p>
-<h2>3.2.A.1 Facilities and Equipment</h2><p></p>
-<h2>3.2.A.2 Adventitious Agents Safety Evaluation</h2><p></p>
-<h2>3.2.A.3 Novel Excipients</h2><p></p>`,
-                          title: `Module 3.2.A — ${activeProject?.name || 'Appendices'}`,
-                          ctdSection: '3.2.A',
-                        });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                    >
-                      Draft 3.2.A (Appendices)
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-auto">
-                    <ErrorBoundary>
-                      <Suspense
-                        fallback={
-                          <div className="flex-1 flex items-center justify-center bg-white h-full">
-                            <div className="text-center">
-                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                              <p className="text-zinc-500">Loading CMC Platform...</p>
-                            </div>
-                          </div>
-                        }
-                      >
-                        <CMCModuleStandalone
-                          onDocumentCreated={({ artifactId }: { artifactId: string }) => {
-                            setOpenArtifactId(artifactId);
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* ── Document Vault (in-shell) ──────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'document-vault' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-vault">
-              <WorkspaceHeader
-                title="Document Vault"
-                subtitle="Field-ready document control · Compliance · Audit trails"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading Document Vault...</p>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <VaultPageStandalone />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
-
-          {/* ── Clinical Trial Hub (in-shell) ──────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'clinical-trial' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-clinical-trial">
-              <WorkspaceHeader
-                title="Clinical Trial Hub"
-                subtitle="Study design · Protocol optimization · CSR intelligence · Trial management"
-                onBack={() => setLayoutMode('assistant')}
-              />
-              <div className="flex-1 overflow-auto">
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading Clinical Trial Hub...</p>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <StudyArchitectModuleStandalone />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
-
-          {/* Dossier Navigator — disabled (consolidated into IND Workspace) */}
-
-          {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
-          {!embeddedModule && layoutMode === 'submission-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-ops">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Workspace</span>
-                </button>
-                <span className="text-zinc-200">·</span>
-                <ShieldCheck className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">
-                  {submissionWorkspaceLabel} — Submission Ops
-                </span>
-              </div>
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
-                  <div className="max-w-md text-center">
-                    <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-violet-400" />
-                    <h2 className="text-lg font-semibold text-zinc-900 mb-2">
-                      Submission Operations
-                    </h2>
-                    <p className="text-sm text-zinc-500 mb-4">
-                      Select a project to view its submission readiness and blockers.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
-                    >
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
-                    }
-                  >
-                    <SubmissionOpsCommandCenter
-                      projectId={activeProjectId}
-                      projectName={activeProject?.name}
-                      onNavigateToArtifact={artifactId => {
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              )}
-            </div>
-          )}
-
-          {/* Precedent Intelligence — disabled (consolidated into RI Copilot) */}
-
-          {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier', 'precedent-intelligence'].includes(
-            layoutMode
-          ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
-
-          {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
-          {!embeddedModule &&
-            layoutMode === 'regulatory-workspace' &&
-            (riViewMode === 'intelligence' ? (
-              <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
-                {/* Intelligence mode header */}
-                <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                  <button
-                    onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Projects</span>
-                  </button>
-                  <span className="text-zinc-200">·</span>
-                  <Brain className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-xs font-medium text-zinc-800">RI Copilot</span>
-                  {activeProject && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                      {activeProject.name}
-                    </span>
-                  )}
-                  <div className="ml-auto flex items-center gap-1">
-                    <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
-                      <button
-                        data-testid="view-toggle-intelligence"
-                        onClick={() => setRiViewMode('intelligence')}
-                        className={cn(
-                          'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          'bg-blue-100 text-blue-700'
-                        )}
-                      >
-                        Intelligence
-                      </button>
-                      <button
-                        data-testid="view-toggle-editor"
-                        onClick={() => setRiViewMode('editor')}
-                        className="px-2 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 transition-colors"
-                      >
-                        Documents
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
-                    }
-                  >
-                    <RICopilotHome
-                      projectId={activeProjectId}
-                      projectName={activeProject?.name}
-                      submissionType={activeProject?.type}
-                      indication={activeProject?.description}
-                      onAnalyzeEvidence={() => setRiViewMode('editor')}
-                      onDraftFromPrecedent={(content, title, ctdSection) => {
-                        setPendingEditorContent({ content, title, ctdSection });
-                        setRiViewMode('editor');
-                      }}
-                      onOpenEditor={() => setRiViewMode('editor')}
-                      onSelectProject={() => setProjectSwitcherOpen(true)}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            ) : (
-              <ProjectWorkspaceShell
+              }
+            >
+              <INDWorkspace
                 projectId={activeProjectId}
-                projectName={activeProject?.name}
-                projectType={activeProject?.type}
-                submissionType={activeProject?.type}
-                industryMode={industryMode}
-                onBackToProjects={() => setLayoutMode('projects')}
-                onSelectProject={() => setProjectSwitcherOpen(true)}
-                onSwitchToIntelligence={() => setRiViewMode('intelligence')}
-                initialContent={pendingEditorContent?.content}
-                initialTitle={pendingEditorContent?.title}
-                initialCtdSection={pendingEditorContent?.ctdSection}
-                onInitialContentConsumed={() => setPendingEditorContent(null)}
-                openArtifactId={openArtifactId}
-                onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
+                projectName={activeProject?.name || 'Untitled Project'}
+                submissionType={activeProject?.type || 'IND'}
+                onOpenSection={sectionCode => {
+                  // Navigate to CoAuthor/editor with the section context
+                  // TODO: pass sectionCode to CoAuthor to open the correct document
+                  console.log(`[IND] Opening section ${sectionCode} in editor`);
+                  setLayoutMode('editor');
+                }}
+                onDraftWithAI={(sectionCode, sectionTitle) => {
+                  // Store section context so ZenChat can auto-populate the draft request
+                  setPendingDraftSection({ code: sectionCode, title: sectionTitle });
+                  setLayoutMode('assistant');
+                }}
+                onNavigateToCoAuthor={() => setLayoutMode('editor')}
               />
-            ))}
+            </Suspense>
+          )}
+
+          {/* AnA Intelligence Features */}
+          {layoutMode === 'intelligence-feed' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><RegulatoryIntelligenceFeed /></div>
+            </Suspense>
+          )}
+          {layoutMode === 'gap-analysis' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><SubmissionGapAnalysis /></div>
+            </Suspense>
+          )}
+          {layoutMode === 'change-impact' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><DocumentChangeImpact /></div>
+            </Suspense>
+          )}
+          {layoutMode === 'ana-memory' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><AnAMemory /></div>
+            </Suspense>
+          )}
+
           {/* Rules Engine Manager */}
-          {!embeddedModule && layoutMode === 'rules' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-rules"
+          {layoutMode === 'rules' && (
+            <Suspense
+              fallback={
+                <div className="flex-1 flex items-center justify-center bg-stone-50">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-violet-500 mx-auto mb-4" />
+                    <p className="text-zinc-500">Loading Rules Engine...</p>
+                  </div>
+                </div>
+              }
             >
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Rules Engine...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <RulesManager onBack={() => setLayoutMode('mission-control')} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
+              <RulesManager onBack={() => setLayoutMode('mission-control')} />
+            </Suspense>
           )}
 
-          {/* ── Projects Index ─────────────────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'projects' && (
-            <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
-              <div className="max-w-4xl mx-auto px-6 py-10">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h1 className="text-2xl font-semibold text-zinc-900">
-                      {workspaceSummary?.org?.name || 'Projects'}
-                    </h1>
-                    <p className="text-sm text-zinc-500 mt-1">
-                      {projects.filter(p => !p.archived).length} active project
-                      {projects.filter(p => !p.archived).length !== 1 ? 's' : ''}
-                      {workspaceSummary?.counts?.documents
-                        ? ` · ${workspaceSummary.counts.documents} documents`
-                        : ''}
-                      {workspaceSummary?.counts?.threads
-                        ? ` · ${workspaceSummary.counts.threads} conversations`
-                        : ''}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setNewProjectOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Project
-                  </button>
-                </div>
-
-                {/* Project list */}
-                {projects.filter(p => !p.archived).length > 0 ? (
-                  <div className="border border-zinc-200 rounded-lg overflow-hidden mb-10 bg-white">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-zinc-100 bg-zinc-50/60">
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
-                            Type
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
-                            Project
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">
-                            Chats
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">
-                            Updated
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100">
-                        {projects
-                          .filter(p => !p.archived)
-                          .map(project => {
-                            const dotColor: Record<string, string> = {
-                              '510K': 'bg-blue-500',
-                              IND: 'bg-violet-500',
-                              NDA: 'bg-emerald-500',
-                              BLA: 'bg-teal-500',
-                              PMA: 'bg-orange-500',
-                              CER: 'bg-pink-500',
-                              MAA: 'bg-indigo-500',
-                            };
-                            return (
-                              <tr
-                                key={project.id}
-                                data-testid={`project-row-${project.id}`}
-                                onClick={() => {
-                                  navInProgressRef.current = true;
-                                  setActiveProjectId(project.id);
-                                  setRiViewMode('editor');
-                                  setLayoutMode('regulatory-workspace');
-                                  navigate(`/concept2cure/project/${project.id}`);
-                                }}
-                                className="cursor-pointer hover:bg-zinc-50 transition-colors"
-                              >
-                                <td className="px-4 py-2.5 whitespace-nowrap">
-                                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600">
-                                    <span
-                                      className={cn(
-                                        'w-1.5 h-1.5 rounded-full',
-                                        dotColor[project.type] ?? 'bg-zinc-400'
-                                      )}
-                                    />
-                                    {project.type}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-2.5">
-                                  <span className="font-medium text-zinc-900">{project.name}</span>
-                                  {project.starred && (
-                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
-                                  )}
-                                  {project.description && (
-                                    <span className="block text-xs text-zinc-400 truncate max-w-md">
-                                      {project.description}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-2.5 text-zinc-400 hidden sm:table-cell">
-                                  {project.conversationCount}
-                                </td>
-                                <td className="px-4 py-2.5 text-zinc-400 text-right hidden sm:table-cell">
-                                  {project.lastUpdated
-                                    ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric',
-                                      })
-                                    : '—'}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  /* Empty state */
-                  <div className="border border-dashed border-zinc-300 bg-white px-6 py-8 text-center mb-10 rounded-lg">
-                    <FolderOpen className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
-                    <p className="text-sm text-zinc-600 mb-3">No projects yet</p>
-                    <button
-                      onClick={() => setNewProjectOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Create first project
-                    </button>
-                  </div>
-                )}
-
-                {/* Recent activity row */}
-                {(workspaceSummary?.recent?.artifacts?.length ?? 0) > 0 && (
-                  <div>
-                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                      Recent Artifacts
-                    </h2>
-                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
-                      {workspaceSummary!.recent.artifacts!.slice(0, 4).map((a: any) => (
-                        <div
-                          key={a.id}
-                          className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 transition-colors"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-                          <span className="text-sm font-medium text-zinc-900 truncate flex-1">
-                            {a.title || a.type}
-                          </span>
-                          <span className="text-xs text-zinc-400 flex-shrink-0">
-                            {a.type} · {a.status} ·{' '}
-                            {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recent threads */}
-                {(workspaceSummary?.recent?.threads?.length ?? 0) > 0 && (
-                  <div className="mt-8">
-                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                      Recent Conversations
-                    </h2>
-                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
-                      {workspaceSummary!.recent.threads!.slice(0, 5).map((t: any) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setActiveThreadId(t.id);
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-zinc-50 transition-colors"
-                        >
-                          <MessageSquare className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                          <span className="text-sm text-zinc-700 truncate">{t.title}</span>
-                          <span className="ml-auto text-xs text-zinc-400 flex-shrink-0">
-                            {t.updatedAt
-                              ? new Date(t.updatedAt).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
-                              : ''}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── Project Workspace — entered by clicking a project card ──────── */}
-          {!embeddedModule && layoutMode === 'workspace' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* ── Project Header Strip (two-line) ────────────────────── */}
-              <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-4 py-2">
-                {/* Row 1: nav + name + type + panel toggles */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-zinc-400 hover:text-zinc-700 transition-colors text-xs mr-1 flex-shrink-0"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Projects</span>
-                  </button>
-                  <div className="w-px h-4 bg-zinc-200 flex-shrink-0" />
-
-                  {/* Type badge */}
-                  {activeProject &&
-                    (() => {
-                      const typeColors: Record<string, { bg: string; text: string }> = {
-                        '510K': { bg: 'bg-blue-50', text: 'text-blue-700' },
-                        IND: { bg: 'bg-violet-50', text: 'text-violet-700' },
-                        NDA: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                        BLA: { bg: 'bg-teal-50', text: 'text-teal-700' },
-                        PMA: { bg: 'bg-orange-50', text: 'text-orange-700' },
-                        CER: { bg: 'bg-pink-50', text: 'text-pink-700' },
-                        MAA: { bg: 'bg-indigo-50', text: 'text-indigo-700' },
-                      };
-                      const tc = typeColors[activeProject.type] ?? {
-                        bg: 'bg-zinc-50',
-                        text: 'text-zinc-600',
-                      };
-                      return (
-                        <span
-                          className={cn(
-                            'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide flex-shrink-0',
-                            tc.bg,
-                            tc.text
-                          )}
-                        >
-                          {activeProject.type}
-                        </span>
-                      );
-                    })()}
-
-                  {/* Project name */}
-                  <h2 className="font-semibold text-zinc-900 text-sm truncate min-w-0 flex-1">
-                    {activeProject?.name || 'Untitled Project'}
-                  </h2>
-
-                  {/* Edit project button */}
-                  {activeProject && (
-                    <button
-                      onClick={() => setEditProjectOpen(true)}
-                      title="Edit project metadata"
-                      className="flex-shrink-0 p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-                    >
-                      <PenLine className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-
-                  <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
-                    {(['files', 'outputs', 'instructions'] as const).map(tab => {
-                      const cfg = {
-                        files: { icon: Upload, label: 'Files', active: 'bg-blue-50 text-blue-700' },
-                        outputs: {
-                          icon: Layers,
-                          label: 'Outputs',
-                          active: 'bg-violet-50 text-violet-700',
-                        },
-                        instructions: {
-                          icon: PenLine,
-                          label: 'Instructions',
-                          active: 'bg-amber-50 text-amber-700',
-                        },
-                      }[tab];
-                      const Icon = cfg.icon;
-                      const isActive = workspacePanelOpen && workspacePanelTab === tab;
-                      return (
-                        <button
-                          key={tab}
-                          onClick={() => {
-                            if (isActive) {
-                              setWorkspacePanelOpen(false);
-                            } else {
-                              setWorkspacePanelTab(tab);
-                              setWorkspacePanelOpen(true);
-                            }
-                          }}
-                          className={cn(
-                            'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
-                            isActive
-                              ? cfg.active
-                              : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
-                          )}
-                        >
-                          <Icon className="w-3 h-3" />
-                          <span className="hidden sm:inline">{cfg.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Row 2: sponsor · product · region (only when present) */}
-                {(activeProject?.sponsor || activeProject?.product || activeProject?.region) && (
-                  <div className="flex items-center gap-1.5 mt-0.5 pl-[calc(3.5rem)] text-xs text-zinc-400">
-                    {[activeProject?.sponsor, activeProject?.product]
-                      .filter(Boolean)
-                      .map((v, i) => (
-                        <React.Fragment key={i}>
-                          {i > 0 && <span className="text-zinc-200">·</span>}
-                          <span className="truncate max-w-[140px]">{v}</span>
-                        </React.Fragment>
-                      ))}
-                    {activeProject?.region && (
-                      <span className="ml-0.5 inline-flex items-center px-1.5 py-0 rounded border border-zinc-200 text-zinc-400 bg-zinc-50 text-[10px]">
-                        {activeProject.region}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Workspace body: chat center + right panel ───────────── */}
-              <div className="flex-1 flex min-h-0">
-                {/* Center: ZenChat */}
-                <div className="flex-1 flex flex-col min-h-0 min-w-0">
-                  <ZenChat
-                    projectId={activeProjectId}
-                    projectName={activeProject?.name}
-                    submissionType={activeProject?.type}
-                    threadId={activeThreadId}
-                    greeting={platformGreeting}
-                    lastWork={lastWorkSummary}
-                    nextTask={
-                      nextTask
-                        ? {
-                            taskTitle: nextTask.taskTitle,
-                            taskDescription: nextTask.taskDescription,
-                          }
-                        : null
-                    }
-                    suggestedActions={(() => {
-                      const t = (activeProject?.type || 'IND').toUpperCase();
-                      const base = workspaceSummary?.nextActions ?? [];
-                      if (base.length > 0) return base.slice(0, 4);
-
-                      // Determine project state for smart ordering
-                      const hasFiles = (workspaceKnowledge.knowledge?.documents?.length ?? 0) > 0;
-                      const hasOutputs =
-                        projectArtifacts.length > 0 ||
-                        (workspaceSummary?.recent?.artifacts?.length ?? 0) > 0;
-
-                      const starters: Record<
-                        string,
-                        Array<{ id: string; label: string; intent: string; description: string }>
-                      > = {
-                        '510K': [
-                          {
-                            id: 'upload-device-docs',
-                            label: 'Upload device documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add device specs, test results, and labeling.',
-                          },
-                          {
-                            id: 'find-predicates',
-                            label: 'Find likely predicates',
-                            intent: 'find-likely-510k-predicates',
-                            description: 'Search FDA for substantially equivalent devices.',
-                          },
-                          {
-                            id: 'draft-device-desc',
-                            label: 'Draft device description',
-                            intent: 'draft-510k-device-description',
-                            description: 'Generate Section 3 device description.',
-                          },
-                          {
-                            id: 'check-estar',
-                            label: 'Check eSTAR readiness',
-                            intent: 'check-estar-readiness',
-                            description: 'Review eSTAR template requirements.',
-                          },
-                        ],
-                        IND: [
-                          {
-                            id: 'upload-source',
-                            label: 'Upload source documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add CSRs, CMC data, and preclinical files.',
-                          },
-                          {
-                            id: 'draft-ind-outline',
-                            label: 'Draft IND outline',
-                            intent: 'draft-ind-outline',
-                            description: 'Generate IND outline per 21 CFR 312.23.',
-                          },
-                          {
-                            id: 'missing-sections',
-                            label: 'Identify missing sections',
-                            intent: 'identify-missing-ind-sections',
-                            description: 'Audit your IND for incomplete sections.',
-                          },
-                          {
-                            id: 'gen-cmc-workplan',
-                            label: 'Generate CMC workplan',
-                            intent: 'generate-cmc-workplan',
-                            description: 'Build Module 3 CMC workplan and timeline.',
-                          },
-                        ],
-                        CER: [
-                          {
-                            id: 'upload-evidence',
-                            label: 'Upload evidence & literature',
-                            intent: 'upload-source-documents',
-                            description: 'Add clinical literature and PMS data.',
-                          },
-                          {
-                            id: 'build-cer-outline',
-                            label: 'Build CER outline',
-                            intent: 'build-cer-outline',
-                            description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.',
-                          },
-                          {
-                            id: 'draft-benefit-risk',
-                            label: 'Draft benefit-risk section',
-                            intent: 'draft-cer-benefit-risk',
-                            description: 'Generate the benefit-risk analysis.',
-                          },
-                          {
-                            id: 'review-pms-pmcf',
-                            label: 'Review PMS / PMCF gaps',
-                            intent: 'review-pms-pmcf-gaps',
-                            description: 'Identify post-market surveillance gaps.',
-                          },
-                        ],
-                        NDA: [
-                          {
-                            id: 'upload-source',
-                            label: 'Upload source documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add CSRs, CMC data, and prior filings.',
-                          },
-                          {
-                            id: 'draft-nda-outline',
-                            label: 'Draft NDA outline',
-                            intent: 'draft-nda-outline',
-                            description: 'Generate NDA outline per 21 CFR 314.',
-                          },
-                          {
-                            id: 'nda-missing',
-                            label: 'Identify missing sections',
-                            intent: 'identify-missing-nda-sections',
-                            description: 'Audit NDA for gaps and missing modules.',
-                          },
-                          {
-                            id: 'gen-summary',
-                            label: 'Generate ISS/ISE outline',
-                            intent: 'generate-iss-ise-outline',
-                            description: 'Outline Integrated Summary of Safety/Efficacy.',
-                          },
-                        ],
-                      };
-
-                      const all = starters[t] ?? starters['IND'];
-                      // State-aware ordering: no files → upload first; has files no outputs → generate first
-                      if (!hasFiles) return [all[0], ...all.slice(1, 4)]; // upload first
-                      if (!hasOutputs) return [all[1], all[2], all[3], all[0]].slice(0, 3); // generate first
-                      return all.slice(1, 4); // skip upload, show generate/audit
-                    })()}
-                    onActionRun={handleActionRun}
-                    onNavigate={(path: string) => {
-                      try {
-                        const params = new URLSearchParams(
-                          new URL(path, window.location.origin).search
-                        );
-                        const p = params.get('panel') as ToolPanel | null;
-                        if (p && p in TOOL_PANELS) {
-                          setActiveToolPanel(p);
-                          return;
-                        }
-                      } catch (_) {
-                        /* fallback */
-                      }
-                      setLayoutMode('workspace');
-                    }}
-                    onNewProject={() => setNewProjectOpen(true)}
-                    onThreadChange={tid => {
-                      handleThreadChange(tid);
-                      if (pendingDraftSection) setPendingDraftSection(null);
-                    }}
-                  />
-                </div>
-
-                {/* Right panel: Files / Outputs / Instructions */}
-                {workspacePanelOpen && (
-                  <div className="w-72 xl:w-80 border-l border-zinc-100 bg-zinc-50/30 flex flex-col flex-shrink-0">
-                    {/* Tab bar */}
-                    <div className="flex items-center border-b border-zinc-100 flex-shrink-0 bg-white">
-                      {(['files', 'outputs', 'instructions'] as const).map(tab => {
-                        const cfg = {
-                          files: {
-                            icon: Upload,
-                            label: 'Files',
-                            active: 'border-blue-500 text-blue-700',
-                          },
-                          outputs: {
-                            icon: Layers,
-                            label: 'Outputs',
-                            active: 'border-violet-500 text-violet-700',
-                          },
-                          instructions: {
-                            icon: PenLine,
-                            label: 'Instructions',
-                            active: 'border-amber-500 text-amber-700',
-                          },
-                        }[tab];
-                        const Icon = cfg.icon;
-                        return (
-                          <button
-                            key={tab}
-                            onClick={() => setWorkspacePanelTab(tab)}
-                            className={cn(
-                              'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors border-b-2',
-                              workspacePanelTab === tab
-                                ? cfg.active
-                                : 'border-transparent text-zinc-400 hover:text-zinc-600'
-                            )}
-                          >
-                            <Icon className="w-3 h-3" />
-                            {cfg.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* ── Files tab ── */}
-                    {workspacePanelTab === 'files' && (
-                      <div className="flex-1 flex flex-col min-h-0">
-                        <ProjectFilesCompact projectId={activeProjectId ?? null} />
-                      </div>
-                    )}
-
-                    {/* ── Outputs + Run Log tab ── */}
-                    {workspacePanelTab === 'outputs' && (
-                      <div className="flex-1 overflow-y-auto zen-scroll">
-                        {/* Run log — in-flight and recent actions */}
-                        {runLog.length > 0 && (
-                          <div className="p-3 border-b border-zinc-100">
-                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                              Activity
-                            </p>
-                            <div className="space-y-1.5">
-                              {runLog.slice(0, 8).map(entry => (
-                                <div
-                                  key={entry.id}
-                                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white border border-zinc-100"
-                                >
-                                  {entry.status === 'running' ? (
-                                    <Loader2 className="w-3 h-3 text-blue-500 animate-spin flex-shrink-0" />
-                                  ) : entry.status === 'done' ? (
-                                    <div className="w-3 h-3 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    </div>
-                                  ) : (
-                                    <div className="w-3 h-3 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-medium text-zinc-700 truncate">
-                                      {entry.label}
-                                    </p>
-                                    <p className="text-[10px] text-zinc-400 capitalize">
-                                      {entry.status}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Artifacts */}
-                        {projectArtifacts.length === 0 &&
-                        (workspaceSummary?.recent?.artifacts?.length ?? 0) === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                            <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center mb-3">
-                              <Layers className="w-4 h-4 text-zinc-400" />
-                            </div>
-                            <p className="text-xs font-medium text-zinc-600 mb-1">No outputs yet</p>
-                            <p className="text-[11px] text-zinc-400 max-w-[160px] leading-relaxed">
-                              Run a workflow or ask RI to draft a document.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="p-3 space-y-1.5">
-                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider px-1 mb-2">
-                              Generated
-                            </p>
-                            {[...projectArtifacts, ...(workspaceSummary?.recent?.artifacts ?? [])]
-                              .filter(
-                                (a: any, i: number, arr: any[]) =>
-                                  arr.findIndex((x: any) => x.id === a.id) === i
-                              )
-                              .slice(0, 15)
-                              .map((a: any) => (
-                                <div
-                                  key={a.id}
-                                  className="flex items-start gap-2 p-2.5 rounded-xl border border-zinc-100 bg-white hover:border-zinc-200 transition-all cursor-default"
-                                >
-                                  <div className="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <FileText className="w-3 h-3 text-violet-600" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-medium text-zinc-900 truncate leading-tight">
-                                      {a.title || a.type}
-                                    </p>
-                                    <p className="text-[10px] text-zinc-400 truncate">
-                                      {a.type}
-                                      {a.status ? ` · ${a.status}` : ''}
-                                    </p>
-                                  </div>
-                                  <a
-                                    href={a.downloadUrl || a.url || '#'}
-                                    download={a.title || a.type}
-                                    onClick={e => {
-                                      if (!a.downloadUrl && !a.url) e.preventDefault();
-                                    }}
-                                    className="flex-shrink-0 p-1 rounded text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
-                                    title="Download"
-                                  >
-                                    <Download className="w-3.5 h-3.5" />
-                                  </a>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ── Instructions tab ── */}
-                    {workspacePanelTab === 'instructions' && (
-                      <div className="flex-1 overflow-y-auto zen-scroll">
-                        {workspaceKnowledge.isLoading ? (
-                          <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-5 h-5 text-zinc-300 animate-spin" />
-                          </div>
-                        ) : (
-                          <div className="p-3">
-                            <div className="mb-3">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                <p className="text-xs font-semibold text-zinc-700">
-                                  Project Instructions
-                                </p>
-                              </div>
-                              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                                These instructions guide Regulatory Intelligence for every
-                                conversation in this project.
-                              </p>
-                            </div>
-                            <CustomInstructions
-                              value={workspaceKnowledge.knowledge?.customInstructions || ''}
-                              onChange={workspaceKnowledge.updateCustomInstructions}
-                              projectType={activeProject?.type}
-                              defaultOpen={!!workspaceKnowledge.knowledge?.customInstructions}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          {!embeddedModule && layoutMode === 'editor' && (
-            <div className="flex-1 flex min-w-0 min-h-0" data-testid="workspace-editor">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <EditorPanel
-                    projectId={activeProjectId}
-                    submissionType={activeProject?.type}
-                    initialContent={pendingEditorContent?.content}
-                    initialTitle={pendingEditorContent?.title}
-                    initialCtdSection={pendingEditorContent?.ctdSection}
-                    onInitialContentConsumed={() => setPendingEditorContent(null)}
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-          {!embeddedModule && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
+          {(layoutMode === 'assistant' || layoutMode === 'editor' || layoutMode === 'ctd') && (
             <>
               {/* Chat - Connected to Cortex */}
               <div
                 className={cn(
-                  'flex-1 flex flex-col min-w-0 min-h-0 transition-all duration-200',
+                  'flex-1 min-w-0 transition-all duration-200',
                   activeToolPanel && !toolPanelFullscreen && 'flex-shrink-0'
                 )}
                 style={{
                   display: toolPanelFullscreen ? 'none' : 'flex',
                 }}
               >
-                {/* Workspace Readiness Strip — real counts from backend */}
-                <div className="flex-shrink-0 px-4 sm:px-6 pt-2 pb-0 border-b border-zinc-100/60 bg-zinc-50/40">
-                  <WorkspaceReadinessStrip
-                    counts={workspaceSummary?.counts}
-                    isLoading={summaryLoading}
-                    orgName={workspaceSummary?.org?.name}
-                  />
-                </div>
-
                 <ZenChat
                   projectId={activeProjectId}
                   projectName={activeProject?.name}
@@ -2652,24 +1515,6 @@ export const ZenApp: React.FC = () => {
                       ? { taskTitle: nextTask.taskTitle, taskDescription: nextTask.taskDescription }
                       : null
                   }
-                  suggestedActions={workspaceSummary?.nextActions}
-                  onNavigate={(path: string) => {
-                    // If path opens a panel, do it inline
-                    try {
-                      const params = new URLSearchParams(
-                        new URL(path, window.location.origin).search
-                      );
-                      const p = params.get('panel') as ToolPanel | null;
-                      if (p && p in TOOL_PANELS) {
-                        setActiveToolPanel(p);
-                        return;
-                      }
-                    } catch (_) {
-                      /* fallback */
-                    }
-                    setLayoutMode('assistant');
-                  }}
-                  onNewProject={() => setNewProjectOpen(true)}
                   initialMessage={
                     pendingDraftSection
                       ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
@@ -2683,7 +1528,53 @@ export const ZenApp: React.FC = () => {
                 />
               </div>
 
-              {/* Agent Workspace panel hidden by default - accessible via Tools */}
+              {!activeToolPanel && !toolPanelFullscreen && (
+                <div className="hidden lg:flex w-[360px] flex-col border-l border-zinc-200 bg-white animate-in fade-in slide-in-from-right-4">
+                  <div className="border-b border-zinc-100 px-4 py-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-zinc-800">
+                      <Users className="h-4 w-4 text-zinc-500" />
+                      Agent Workspace
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Active agents and priority actions across projects.
+                    </p>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto zen-scroll p-4 space-y-4">
+                    <section className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        Active Agents
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {agentRoster.map(agent => (
+                          <div
+                            key={agent.id}
+                            className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm"
+                          >
+                            <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-zinc-800 truncate">{agent.name}</p>
+                              <p className="text-xs text-zinc-500 truncate">
+                                {agent.status} • {agent.focus}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section>
+                      <NextActionsPanel
+                        actions={nextActions}
+                        maxItems={3}
+                        showEmpty
+                        className="shadow-none"
+                      />
+                    </section>
+                  </div>
+                </div>
+              )}
 
               {/* Tool panel */}
               {activeToolPanel && (
@@ -2721,9 +1612,6 @@ export const ZenApp: React.FC = () => {
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
-          setRiViewMode('editor');
-          setLayoutMode('regulatory-workspace');
-          navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);
           setActiveThreadId(undefined);
@@ -2742,20 +1630,6 @@ export const ZenApp: React.FC = () => {
         isOpen={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
         onCreate={handleCreateProject}
-      />
-
-      {/* Edit project modal */}
-      <EditProjectModal
-        isOpen={editProjectOpen}
-        onClose={() => setEditProjectOpen(false)}
-        initialData={{
-          name: activeProject?.name ?? '',
-          description: activeProject?.description,
-          sponsor: activeProject?.sponsor,
-          product: activeProject?.product,
-          region: activeProject?.region,
-        }}
-        onSave={handleEditProject}
       />
     </div>
   );

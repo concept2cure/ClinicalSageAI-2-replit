@@ -44,7 +44,7 @@ export default function AdminProfile() {
     name: 'Sarah Johnson, Ph.D.',
     email: 'sarah.johnson@concept2cure.ai',
     role: 'Administrator',
-    company: 'Concept2Cure',
+    company: 'Concept2Cure.AI',
     avatar: '/avatars/admin-avatar.png',
     teams: [
       { id: 1, name: 'Regulatory Affairs', role: 'Admin' },
@@ -77,7 +77,7 @@ export default function AdminProfile() {
       { id: 2, name: 'CSR Intelligence', access: 'Full' },
       { id: 3, name: 'Document Vault', access: 'Full' },
       { id: 4, name: 'CMC Blueprint', access: 'Full' },
-      { id: 5, name: 'Ask RI', access: 'Full' },
+      { id: 5, name: 'Ask AnA', access: 'Full' },
     ],
     clientInfo: {
       companyName: 'MediNova Therapeutics',
@@ -90,7 +90,7 @@ export default function AdminProfile() {
         'CSR Intelligence',
         'Document Vault',
         'CMC Blueprint',
-        'Ask RI',
+        'Ask AnA',
         'Analytics',
       ],
     },
@@ -126,10 +126,10 @@ export default function AdminProfile() {
           <div className="flex flex-col items-start">
             <div className="flex items-center">
               <div className="bg-gradient-to-r from-[#0071e3] to-[#2b8fff] rounded p-1.5 mr-2">
-                <div className="text-white font-bold text-xs tracking-wide">C2C</div>
+                <div className="text-white font-bold text-xs tracking-wide">C2C.AI</div>
               </div>
               <span className="text-lg font-semibold text-[#1d1d1f] tracking-tight">
-                CONCEPT2CURE
+                CONCEPT2CURE.AI
               </span>
             </div>
             <span className="ml-7 text-sm text-[#86868b] mt-0.5">Concept2Cure Platform</span>
@@ -802,9 +802,7 @@ export default function AdminProfile() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Usage Analytics</CardTitle>
-                    <CardDescription>
-                      Track your team's usage of Concept2Cure platform
-                    </CardDescription>
+                    <CardDescription>Track your team's usage of Concept2Cure platform</CardDescription>
                   </CardHeader>
 
                   <CardContent>
@@ -860,7 +858,7 @@ export default function AdminProfile() {
                                 <div className="text-center">
                                   <div className="text-4xl font-bold text-[#06c]">128</div>
                                   <div className="text-sm text-[#86868b] mt-1">
-                                    RI Assistant Queries
+                                    AI Assistant Queries
                                   </div>
                                 </div>
                               </CardContent>
@@ -925,7 +923,7 @@ export default function AdminProfile() {
                                   <div className="flex justify-between">
                                     <div className="flex items-center">
                                       <div className="w-3 h-3 rounded-full bg-[#ff9500] mr-2"></div>
-                                      <span>Ask RI</span>
+                                      <span>Ask AnA</span>
                                     </div>
                                     <span className="font-medium">15%</span>
                                   </div>
@@ -988,7 +986,7 @@ export default function AdminProfile() {
                               <div>
                                 <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
                               </div>
-                              <div>Ask RI</div>
+                              <div>Ask AnA</div>
                               <div>8 documents, 36 queries</div>
                               <div className="text-[#86868b]">Yesterday, 2:30 PM</div>
                             </div>

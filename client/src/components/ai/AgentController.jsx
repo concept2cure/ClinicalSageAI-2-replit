@@ -64,7 +64,7 @@ export const AgentController = () => {
     server: 'Only modify server-side files in server/ directory',
     client: 'Only modify client-side files in client/src/',
     database: 'Only modify schema files and database migrations',
-    general: 'Follow replit.md protocol EXACTLY',
+    general: 'Follow development protocol EXACTLY',
   };
 
   useEffect(() => {
@@ -132,24 +132,24 @@ export const AgentController = () => {
     localStorage.setItem('agentHistory', JSON.stringify(updatedHistory));
 
     const controlledCommand = `
-🔒 REPLIT AGENT - STRICT CONTROL MODE ACTIVE
+AGENT - STRICT CONTROL MODE ACTIVE
 
-📋 COMMAND: ${command}
+COMMAND: ${command}
 
-🎯 MODULE: ${selectedModule.toUpperCase()}
-🚨 PRIORITY: ${priority.toUpperCase()}
+MODULE: ${selectedModule.toUpperCase()}
+PRIORITY: ${priority.toUpperCase()}
 
-⚠️ CONSTRAINTS:
+CONSTRAINTS:
 ${constraints || moduleConstraints[selectedModule]}
 
-📊 CONTEXT:
-${context || 'Standard TrialSage regulatory compliance platform operation'}
+CONTEXT:
+${context || 'Standard Concept2Cure regulatory compliance platform operation'}
 
-✅ APPROVAL STATUS: ${approved ? '✅ APPROVED TO PROCEED' : '⏸️ AWAITING APPROVAL'}
-📅 TIMESTAMP: ${timestamp}
+APPROVAL STATUS: ${approved ? 'APPROVED TO PROCEED' : 'AWAITING APPROVAL'}
+TIMESTAMP: ${timestamp}
 
-🛡️ SAFETY PROTOCOLS:
-- Follow replit.md EXACTLY
+SAFETY PROTOCOLS:
+- Follow development protocol EXACTLY
 - No modifications without explicit approval
 - Maintain existing file structure
 - Preserve data integrity

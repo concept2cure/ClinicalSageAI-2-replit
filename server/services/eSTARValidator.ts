@@ -82,26 +82,6 @@ export class eSTARValidator {
       const attachmentIssues = await this.validateAttachments(projectId, sections);
       issues.push(...attachmentIssues);
 
-      // For demo purposes, add some validation issues if there are none yet
-      if (issues.length === 0) {
-        // Add demo validation issues only in non-strict mode
-        if (!strictMode) {
-          issues.push(
-            {
-              severity: 'warning',
-              section: 'Device Description',
-              message: 'Consider adding more details about materials composition for clarity',
-            },
-            {
-              severity: 'warning',
-              section: 'Indications for Use',
-              message:
-                'FDA typically prefers more specific language about intended patient population',
-            }
-          );
-        }
-      }
-
       // Calculate validity based on presence of errors
       const hasErrors = issues.some(issue => issue.severity === 'error');
       const valid = !hasErrors;
@@ -325,16 +305,24 @@ export class eSTARValidator {
 
       // Check for PDF formatting issues
       const pdfSections = sections.filter(
-        s => s.attachments && s.attachments.some(a => a.endsWith('.pdf'))
+        s => s.attachments && s.attachments.some((a: string) => a.endsWith('.pdf'))
       );
       if (pdfSections.length > 0) {
-        // In a real implementation, you'd validate PDF formatting against FDA requirements
-        // For demo purposes, we'll just add a placeholder warning
-        issues.push({
-          severity: 'warning',
-          message:
-            'PDF attachments should be validated against FDA format requirements (PDF/A compliance)',
-        });
+        // Validate that PDFs use supported extensions (actual PDF/A compliance
+        // checking requires a dedicated library like pdf-lib or verapdf)
+        for (const section of pdfSections) {
+          const pdfs = (section.attachments || []).filter((a: string) => a.endsWith('.pdf'));
+          for (const pdfFile of pdfs) {
+            const filename = pdfFile.split('/').pop() || pdfFile;
+            if (filename.length > 200) {
+              issues.push({
+                severity: 'warning',
+                section: section.title || section.name,
+                message: `PDF filename "${filename.substring(0, 50)}..." exceeds recommended length for FDA submissions`,
+              });
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Error validating against FDA schema:', error);

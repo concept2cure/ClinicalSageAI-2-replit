@@ -12,7 +12,7 @@ const LumenBioPipelineInsights = ({ className }: { className?: string }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Beaker className="h-5 w-5 text-indigo-600" />
-            <CardTitle className="text-lg">Lumen Bio Pipeline Insights</CardTitle>
+            <CardTitle className="text-lg">Concept2Cure Pipeline Insights</CardTitle>
           </div>
           <Badge variant="outline" className="bg-white">
             Client Intelligence
@@ -77,7 +77,7 @@ const LumenBioPipelineInsights = ({ className }: { className?: string }) => {
                 Pipeline Summary
               </h4>
               <p className="text-sm text-slate-700">
-                Lumen Bio is focused on innovative approaches to neurological disorders, respiratory
+                Concept2Cure is focused on innovative approaches to neurological disorders, respiratory
                 conditions, and oncology. Their pipeline includes 84 active clinical trials across
                 multiple therapeutic areas.
               </p>

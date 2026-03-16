@@ -74,7 +74,7 @@ const config = {
 // SECURITY HEADERS (Helmet Configuration)
 // ============================================================================
 
-// In development (Codespaces / Replit), relax headers so the app can render
+// In development, relax headers so the app can render
 // inside VS Code Simple Browser (iframe) and Vite HMR WebSocket can connect.
 export const securityHeaders = config.isDevelopment
   ? helmet({

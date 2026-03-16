@@ -218,6 +218,44 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     keywords: ['guidance', 'news', 'competitive'],
   },
 
+  // AnA Intelligence Features
+  {
+    id: 'tool-ri-feed',
+    title: 'Regulatory Intelligence Feed',
+    subtitle: 'Live FDA/EMA guidance updates & alerts',
+    icon: <Globe className="w-4 h-4 text-blue-600" />,
+    category: 'tools',
+    action: () => onAction('nav-intelligence-feed'),
+    keywords: ['feed', 'guidance', 'alert', 'fda', 'ema', 'news', 'live'],
+  },
+  {
+    id: 'tool-gap-analysis',
+    title: 'Submission Gap Analysis',
+    subtitle: 'eCTD readiness scoring & gap detection',
+    icon: <CheckSquare className="w-4 h-4 text-emerald-600" />,
+    category: 'tools',
+    action: () => onAction('nav-gap-analysis'),
+    keywords: ['gap', 'readiness', 'ectd', 'missing', 'requirements', 'score'],
+  },
+  {
+    id: 'tool-change-impact',
+    title: 'Document Change Impact',
+    subtitle: 'How guidance changes affect your submission',
+    icon: <AlertTriangle className="w-4 h-4 text-amber-600" />,
+    category: 'tools',
+    action: () => onAction('nav-change-impact'),
+    keywords: ['change', 'impact', 'rework', 'guidance', 'revision'],
+  },
+  {
+    id: 'tool-ana-memory',
+    title: 'AnA Memory',
+    subtitle: 'Project context & persistent memory',
+    icon: <Brain className="w-4 h-4 text-violet-600" />,
+    category: 'tools',
+    action: () => onAction('nav-ana-memory'),
+    keywords: ['memory', 'context', 'remember', 'ana', 'project', 'preferences'],
+  },
+
   // AI
   {
     id: 'ai-analyze',

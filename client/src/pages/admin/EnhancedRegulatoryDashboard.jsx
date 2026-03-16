@@ -1,9 +1,9 @@
 // client/src/pages/EnhancedRegulatoryDashboard.jsx
 import { useState, useEffect } from 'react';
-import { getAdvisorReadiness } from '../../lib/advisorService';
-import AdvisorRiskHeatmapV2 from '../../components/advisor/AdvisorRiskHeatmapV2';
-import TimelineSimulator from '../../components/advisor/TimelineSimulator';
-// AskLumenCopilot removed — mock AI, not part of beta (Wave 2)
+import { getAdvisorReadiness } from '../lib/advisorService';
+import AdvisorRiskHeatmapV2 from '../components/advisor/AdvisorRiskHeatmapV2';
+import TimelineSimulator from '../components/advisor/TimelineSimulator';
+import AskLumenCopilot from '../components/advisor/AskLumenCopilot';
 import { AlertTriangle, Clock, DollarSign, BarChart2 } from 'lucide-react';
 
 export default function EnhancedRegulatoryDashboard() {
@@ -405,7 +405,16 @@ export default function EnhancedRegulatoryDashboard() {
           >
             Timeline Simulator
           </button>
-          {/* Ask Lumen AI tab removed — mock AI, not part of beta (Wave 2) */}
+          <button
+            onClick={() => setActiveTab('copilot')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'copilot'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            Ask AnA
+          </button>
         </nav>
       </div>
 
@@ -457,7 +466,9 @@ export default function EnhancedRegulatoryDashboard() {
           />
         )}
 
-        {/* AskLumenCopilot tab content removed — mock AI (Wave 2) */}
+        {activeTab === 'copilot' && (
+          <AskLumenCopilot readinessData={readinessData} playbook={selectedPlaybook} />
+        )}
       </div>
 
       {/* Estimated Submission Path */}
@@ -528,7 +539,7 @@ export default function EnhancedRegulatoryDashboard() {
         <p className="text-xs text-slate-600">
           This intelligent regulatory dashboard combines AI prediction, strategic simulation, and
           real-time risk analysis to provide a comprehensive view of your submission readiness. Use
-          the Timeline Simulator to model different completion scenarios and Ask Lumen AI for
+          the Timeline Simulator to model different completion scenarios and Ask AnA for
           strategic regulatory guidance.
         </p>
       </div>

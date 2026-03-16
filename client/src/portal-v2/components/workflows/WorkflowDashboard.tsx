@@ -8,6 +8,8 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +38,8 @@ import {
   Link,
   History,
   ShieldCheck,
+  Loader2,
+  AlertTriangle as AlertTriangleIcon,
 } from 'lucide-react';
 import type { TaskSummary, Priority } from '../../core/portalTypes';
 import { usePortal, usePermission } from '../../core/portalContext';
@@ -503,187 +507,100 @@ export const WorkflowDashboard: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<Workflow['status'] | 'all'>('all');
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
 
-  // Mock data
-  const workflows: Workflow[] = [
-    {
-      id: '1',
-      name: 'Protocol Review',
-      type: 'document_review',
-      status: 'active',
-      priority: 'high',
-      workflowRunId: 'wf-run-protocol-001',
-      documentName: 'Protocol BTX-331-001 v3.1',
-      documentId: 'doc-001',
-      initiator: 'Sarah Johnson',
-      createdAt: new Date('2026-01-15'),
-      dueDate: new Date('2026-02-01'),
-      currentStep: 1,
-      progress: 40,
-      steps: [
-        {
-          id: 's1',
-          name: 'Medical Review',
-          status: 'completed',
-          assignee: 'Dr. Chen',
-          completedAt: new Date('2026-01-18'),
-        },
-        {
-          id: 's2',
-          name: 'Statistical Review',
-          status: 'in_progress',
-          assignee: 'Jennifer Park',
-          dueDate: new Date('2026-01-28'),
-        },
-        {
-          id: 's3',
-          name: 'Regulatory Review',
-          status: 'pending',
-          assignee: 'Sarah Johnson',
-          dueDate: new Date('2026-01-30'),
-        },
-        {
-          id: 's4',
-          name: 'QA Review',
-          status: 'pending',
-          assignee: 'Emily Davis',
-          dueDate: new Date('2026-02-01'),
-        },
-        {
-          id: 's5',
-          name: 'Final Approval',
-          status: 'pending',
-          assignee: 'Dr. Wilson',
-          dueDate: new Date('2026-02-01'),
-        },
-      ],
+  // Fetch projects from submission center to derive workflows
+  const { data: projectsData, isLoading: projectsLoading, error: projectsError } = useQuery({
+    queryKey: ['workflow-dashboard-projects'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/submission-center/projects');
+      return res.json();
     },
-    {
-      id: '2',
-      name: 'IB Amendment Approval',
-      type: 'approval',
-      status: 'active',
-      priority: 'critical',
-      documentName: 'Investigator Brochure v5.1',
-      documentId: 'doc-002',
-      initiator: 'Michael Chen',
-      createdAt: new Date('2026-01-20'),
-      dueDate: new Date('2026-01-27'),
-      currentStep: 0,
-      progress: 0,
-      steps: [
-        {
-          id: 's1',
-          name: 'Author Review',
-          status: 'in_progress',
-          assignee: 'Michael Chen',
-          dueDate: new Date('2026-01-23'),
-        },
-        {
-          id: 's2',
-          name: 'Medical Director Approval',
-          status: 'pending',
-          assignee: 'Dr. Wilson',
-          dueDate: new Date('2026-01-25'),
-        },
-        {
-          id: 's3',
-          name: 'Regulatory Approval',
-          status: 'pending',
-          assignee: 'Sarah Johnson',
-          dueDate: new Date('2026-01-27'),
-        },
-      ],
-    },
-    {
-      id: '3',
-      name: 'CSR QC Review',
-      type: 'document_review',
-      status: 'on_hold',
-      priority: 'medium',
-      documentName: 'Clinical Study Report MX-201-301',
-      documentId: 'doc-003',
-      initiator: 'Emily Davis',
-      createdAt: new Date('2026-01-10'),
-      dueDate: new Date('2026-02-15'),
-      currentStep: 2,
-      progress: 60,
-      steps: [
-        {
-          id: 's1',
-          name: 'Initial QC',
-          status: 'completed',
-          assignee: 'QC Team',
-          completedAt: new Date('2026-01-12'),
-        },
-        {
-          id: 's2',
-          name: 'Statistical Verification',
-          status: 'completed',
-          assignee: 'Biostatistics',
-          completedAt: new Date('2026-01-18'),
-        },
-        {
-          id: 's3',
-          name: 'Medical Writing Review',
-          status: 'pending',
-          assignee: 'Medical Writing',
-          dueDate: new Date('2026-02-01'),
-        },
-        {
-          id: 's4',
-          name: 'Final QC',
-          status: 'pending',
-          assignee: 'QC Team',
-          dueDate: new Date('2026-02-15'),
-        },
-      ],
-    },
-    {
-      id: '4',
-      name: 'Module 2 Summaries Review',
-      type: 'submission_prep',
-      status: 'completed',
-      priority: 'high',
-      documentName: 'CTD Module 2 Summaries',
-      documentId: 'doc-004',
-      initiator: 'Robert Wilson',
-      createdAt: new Date('2025-12-01'),
-      dueDate: new Date('2026-01-15'),
-      currentStep: 4,
-      progress: 100,
-      steps: [
-        {
-          id: 's1',
-          name: 'Draft Preparation',
-          status: 'completed',
-          assignee: 'Medical Writing',
-          completedAt: new Date('2025-12-15'),
-        },
-        {
-          id: 's2',
-          name: 'Internal Review',
-          status: 'completed',
-          assignee: 'Cross-Functional',
-          completedAt: new Date('2025-12-28'),
-        },
-        {
-          id: 's3',
-          name: 'QC Review',
-          status: 'completed',
-          assignee: 'QC Team',
-          completedAt: new Date('2026-01-05'),
-        },
-        {
-          id: 's4',
-          name: 'Regulatory Sign-off',
-          status: 'completed',
-          assignee: 'Sarah Johnson',
-          completedAt: new Date('2026-01-10'),
-        },
-      ],
-    },
-  ];
+  });
 
+  // Fetch tasks to derive workflow steps
+  const { data: tasksData, isLoading: tasksLoading } = useQuery({
+    queryKey: ['workflow-dashboard-tasks'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/submission-center/tasks');
+      return res.json();
+    },
+  });
+
+  // Fetch workflow status from proof system
+  const { data: workflowStatusData } = useQuery({
+    queryKey: ['workflow-dashboard-status'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/workflow/status');
+      return res.json();
+    },
+    retry: 1,
+  });
+
+  const isLoading = projectsLoading || tasksLoading;
+
+  // Map API projects to Workflow shape
+  const workflows: Workflow[] = useMemo(() => {
+    const apiProjects = projectsData?.data || [];
+    const apiTasks = tasksData?.data || [];
+
+    return apiProjects.map((p: any, idx: number) => {
+      // Get tasks for this project
+      const projectTasks = apiTasks.filter((t: any) => t.project_id === p.id);
+      const completedTasks = projectTasks.filter((t: any) => t.status === 'completed').length;
+      const totalTasks = projectTasks.length || 1;
+      const progress = Math.round((completedTasks / totalTasks) * 100);
+
+      // Derive status from project stage
+      const status: Workflow['status'] = p.stage === 'submission' || p.stage === 'response'
+        ? 'completed'
+        : p.stage === 'review' || p.stage === 'approval'
+          ? 'active'
+          : p.completion_percentage >= 100
+            ? 'completed'
+            : 'active';
+
+      // Map priority
+      const priority: Priority = (p.priority as Priority) || 'medium';
+
+      // Create workflow steps from tasks, or generate defaults from stage
+      const steps: WorkflowStep[] = projectTasks.length > 0
+        ? projectTasks.map((t: any, tIdx: number) => ({
+            id: `s${t.id || tIdx}`,
+            name: t.title || `Step ${tIdx + 1}`,
+            status: t.status === 'completed' ? 'completed' as const
+              : t.status === 'in-progress' ? 'in_progress' as const
+              : 'pending' as const,
+            assignee: t.assigned_to || undefined,
+            completedAt: t.status === 'completed' ? new Date(t.updated_at || Date.now()) : undefined,
+            dueDate: t.due_date ? new Date(t.due_date) : undefined,
+          }))
+        : [
+            { id: `s${idx}_1`, name: 'Planning', status: p.stage === 'planning' ? 'in_progress' as const : 'completed' as const },
+            { id: `s${idx}_2`, name: 'Authoring', status: p.stage === 'authoring' ? 'in_progress' as const : p.stage === 'planning' ? 'pending' as const : 'completed' as const },
+            { id: `s${idx}_3`, name: 'Review', status: p.stage === 'review' ? 'in_progress' as const : ['submission', 'response', 'approval'].includes(p.stage) ? 'completed' as const : 'pending' as const },
+            { id: `s${idx}_4`, name: 'Approval', status: p.stage === 'approval' ? 'in_progress' as const : ['submission', 'response'].includes(p.stage) ? 'completed' as const : 'pending' as const },
+          ];
+
+      const currentStep = steps.findIndex(s => s.status === 'in_progress' || s.status === 'pending');
+
+      return {
+        id: String(p.id || idx + 1),
+        name: p.name || 'Untitled Workflow',
+        type: (p.submission_type === '510k' ? 'submission_prep' : 'document_review') as Workflow['type'],
+        status,
+        priority,
+        documentName: `${p.submission_type || 'Document'} - ${p.name || 'Untitled'}`,
+        documentId: String(p.id),
+        initiator: p.created_by || 'System',
+        createdAt: new Date(p.created_at || Date.now()),
+        dueDate: new Date(p.target_date || Date.now() + 30 * 24 * 60 * 60 * 1000),
+        currentStep: currentStep >= 0 ? currentStep : 0,
+        steps,
+        progress,
+      } as Workflow;
+    });
+  }, [projectsData, tasksData]);
+
+  // Static templates (these are UI configuration, not API data)
   const templates: WorkflowTemplate[] = [
     {
       id: 't1',
@@ -764,6 +681,25 @@ export const WorkflowDashboard: React.FC = () => {
     void workflow;
     void stepId;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-muted-foreground">Loading workflows...</span>
+      </div>
+    );
+  }
+
+  if (projectsError) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <AlertTriangleIcon className="h-8 w-8 text-red-500 mx-auto mb-2" />
+        <p className="text-red-700 font-medium">Failed to load workflow data</p>
+        <p className="text-red-600 text-sm mt-1">Please try refreshing the page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -865,7 +801,6 @@ export const WorkflowDashboard: React.FC = () => {
 
             <TabsContent value="completed" className="flex-1 mt-0">
               <div className="grid gap-4 md:grid-cols-2">
-                  workflowRunId: 'wf-run-ib-2026-annual',
                 {filteredWorkflows.map(workflow => (
                   <WorkflowCard
                     key={workflow.id}
@@ -878,7 +813,6 @@ export const WorkflowDashboard: React.FC = () => {
 
             <TabsContent value="templates" className="flex-1 mt-0">
               <WorkflowTemplates
-                workflowRunId="wf-run-nda-assembly-030"
                 templates={templates}
                 onCreateWorkflow={template => {
                   // TODO: Implement workflow creation from template

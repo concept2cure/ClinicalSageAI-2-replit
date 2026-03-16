@@ -33,12 +33,12 @@ export default function LumenCortex() {
                   <Brain className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-slate-900">Regulatory Intelligence</h1>
-                  <p className="text-xs text-slate-500">Regulatory Intelligence Assistant</p>
+                  <h1 className="text-lg font-semibold text-slate-900">AnA <span className="text-xs font-normal text-slate-400">v1.0</span></h1>
+                  <p className="text-xs text-slate-500">Audit & Narrative Assistant — RI Co-pilot</p>
                 </div>
               </div>
             </div>
-            <div className="text-sm text-slate-500">Powered by Concept2Cure RI</div>
+            <div className="text-sm text-slate-500">Concept2Cure RI Co-pilot</div>
           </div>
         </div>
       </header>
@@ -52,7 +52,7 @@ export default function LumenCortex() {
 
       {/* Footer hint */}
       <footer className="fixed bottom-0 left-0 right-0 py-2 text-center text-xs text-slate-500 bg-white/80 backdrop-blur-sm border-t border-slate-200/60">
-        Concept2Cure RI provides regulatory guidance based on FDA regulations and industry best
+        AnA provides regulatory intelligence guidance based on FDA regulations and industry best
         practices. Always verify critical information with official sources.
       </footer>
     </div>

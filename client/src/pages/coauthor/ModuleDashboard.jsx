@@ -1,7 +1,7 @@
 import React from 'react';
-import UnifiedTopNavV5 from '../../components/navigation/UnifiedTopNavV5';
-import Breadcrumbs from '../../components/navigation/Breadcrumbs';
-import ModuleCard from '../../components/dashboard/ModuleCard';
+import UnifiedTopNavV5 from '../components/navigation/UnifiedTopNavV5';
+import Breadcrumbs from '../components/navigation/Breadcrumbs';
+import ModuleCard from '../components/dashboard/ModuleCard';
 import { Button } from '@/components/ui/button';
 import './ModuleDashboard.css';
 
@@ -42,7 +42,7 @@ export default function ModuleDashboard() {
   const trialsageModules = [
     { id: 'cer', title: 'CER Generator™', to: '/cerv2', progress: 80, risk: 'low' },
     { id: 'ind', title: 'IND Wizard™', to: '/ind-wizard', progress: 65, risk: 'med' },
-    { id: 'vault', title: 'Document Vault', to: '/vault', progress: 90, risk: 'low' },
+    { id: 'vault', title: 'Concept2Cure Vault', to: '/vault', progress: 90, risk: 'low' },
   ];
 
   return (
@@ -99,7 +99,7 @@ export default function ModuleDashboard() {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4 text-zinc-900">Platform Modules</h2>
+        <h2 className="text-lg font-semibold mb-4 text-zinc-900">Concept2Cure Modules</h2>
         <div className="dashboard-grid">
           {trialsageModules.map(mod => (
             <ModuleCard

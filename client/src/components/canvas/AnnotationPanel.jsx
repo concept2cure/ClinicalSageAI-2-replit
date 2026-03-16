@@ -63,7 +63,7 @@ export default function AnnotationPanel({ section, onClose }) {
           disabled={loading}
           className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm mt-1 disabled:opacity-50"
         >
-          {loading ? 'Thinking…' : 'Ask Lumen for Advice'}
+          {loading ? 'Thinking…' : 'Ask AnA for Advice'}
         </button>
         {aiAdvice && (
           <p className="mt-2 text-sm italic text-gray-700 bg-gray-50 p-2 rounded">{aiAdvice}</p>

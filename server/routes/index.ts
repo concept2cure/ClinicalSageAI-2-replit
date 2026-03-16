@@ -23,6 +23,7 @@ import precedentEngineRoutes from './precedent-engine';
 import workflowRoutes from './workflow';
 import cmcDashboardRoutes from './cmc-dashboard';
 import submissionOpsRoutes from './submission-ops';
+import anaFeaturesRoutes from './ana-features';
 import { authMiddleware } from '../auth';
 
 const router = Router();
@@ -70,6 +71,9 @@ router.use('/cmc', cmcDashboardRoutes);
 
 // Phase 15 Submission Operations Command Center
 router.use('/submission-ops', submissionOpsRoutes);
+
+// AnA Intelligence Features (Feed, Gap Analysis, Change Impact, Memory)
+router.use('/ana', anaFeaturesRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {

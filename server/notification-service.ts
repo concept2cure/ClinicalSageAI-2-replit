@@ -167,7 +167,7 @@ export class NotificationService {
     if (recipientEmail) {
       const emailOptions: EmailNotificationOptions = {
         to: recipientEmail,
-        subject: `TrialSage Strategic Report Ready for Review`,
+        subject: `Concept2Cure Strategic Report Ready for Review`,
         text: `Your full strategic intelligence report for protocol [${protocolId}] is ready.
 
 Download here:
@@ -179,7 +179,7 @@ Includes:
 - AI-powered design suggestions
 
 Best,
-TrialSage`,
+Concept2Cure`,
         html: `<p>Your full strategic intelligence report for protocol <strong>${protocolId}</strong> is ready.</p>
 <p><a href="${reportUrl}">Download Report</a></p>
 <p>Includes:</p>
@@ -188,7 +188,7 @@ TrialSage`,
   <li>Endpoint success rates</li>
   <li>AI-powered design suggestions</li>
 </ul>
-<p>Best,<br>TrialSage</p>`,
+<p>Best,<br>Concept2Cure</p>`,
       };
 
       results.email = await this.sendEmailNotification(emailOptions);

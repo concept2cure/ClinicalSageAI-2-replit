@@ -52,6 +52,18 @@ const IMPORTANT_TABLES = [
   'lumen_data_atoms',
   'assembly_docs',
   'assembly_audit_logs',
+  // CERV2 Medical Device module tables
+  'documents',
+  'document_versions',
+  'cerv2_510k_sections',
+  'cerv2_section_versions',
+  'cerv2_document_sessions',
+  // RAG system tables
+  'rag_documents',
+  'rag_chunks',
+  'rag_queries',
+  'rag_knowledge_graph',
+  'rag_ingestion_jobs',
 ];
 
 /**
@@ -183,6 +195,129 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
       }
     }
 
+    // Auto-create missing CERV2 and document tables if they don't exist
+    const autoCreateTables: Record<string, string> = {
+      documents: `CREATE TABLE IF NOT EXISTS documents (
+        id SERIAL PRIMARY KEY,
+        organization_id INTEGER NOT NULL,
+        client_workspace_id INTEGER DEFAULT 1,
+        document_code TEXT,
+        title TEXT NOT NULL DEFAULT 'Untitled',
+        document_type TEXT NOT NULL DEFAULT 'cerv2_510k',
+        category TEXT DEFAULT 'regulatory',
+        status TEXT DEFAULT 'draft',
+        compliance_level TEXT,
+        owner_id INTEGER DEFAULT 1,
+        created_by_id INTEGER DEFAULT 1,
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      document_versions: `CREATE TABLE IF NOT EXISTS document_versions (
+        id SERIAL PRIMARY KEY,
+        document_id INTEGER NOT NULL,
+        version_number TEXT DEFAULT '1.0',
+        version_label TEXT,
+        content TEXT,
+        change_description TEXT,
+        change_type TEXT DEFAULT 'edit',
+        status TEXT DEFAULT 'draft',
+        is_published BOOLEAN DEFAULT FALSE,
+        checksum TEXT,
+        created_by_id INTEGER DEFAULT 1,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      cerv2_510k_sections: `CREATE TABLE IF NOT EXISTS cerv2_510k_sections (
+        id SERIAL PRIMARY KEY,
+        organization_id INTEGER NOT NULL,
+        document_id INTEGER,
+        section_number TEXT,
+        section_title TEXT NOT NULL,
+        section_key TEXT,
+        category TEXT,
+        level INTEGER DEFAULT 1,
+        display_order INTEGER DEFAULT 0,
+        is_required BOOLEAN DEFAULT TRUE,
+        icon TEXT,
+        status TEXT DEFAULT 'todo',
+        content TEXT,
+        assigned_to INTEGER,
+        completion_percentage INTEGER DEFAULT 0,
+        validation_status TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      cerv2_section_versions: `CREATE TABLE IF NOT EXISTS cerv2_section_versions (
+        id SERIAL PRIMARY KEY,
+        section_id INTEGER NOT NULL,
+        organization_id INTEGER NOT NULL,
+        version_number INTEGER DEFAULT 1,
+        change_type TEXT DEFAULT 'edit',
+        content TEXT,
+        field_data JSONB,
+        changed_by INTEGER,
+        changed_at TIMESTAMPTZ DEFAULT NOW(),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      cerv2_document_sessions: `CREATE TABLE IF NOT EXISTS cerv2_document_sessions (
+        id SERIAL PRIMARY KEY,
+        organization_id INTEGER NOT NULL,
+        document_id INTEGER,
+        user_id INTEGER,
+        open_sections JSONB,
+        active_section_id INTEGER,
+        is_dirty BOOLEAN DEFAULT FALSE,
+        last_activity TIMESTAMPTZ DEFAULT NOW(),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      rag_documents: `CREATE TABLE IF NOT EXISTS rag_documents (
+        id SERIAL PRIMARY KEY,
+        organization_id INTEGER NOT NULL,
+        document_id TEXT,
+        title TEXT,
+        document_type TEXT,
+        status TEXT DEFAULT 'pending',
+        therapeutic_area TEXT,
+        compound TEXT,
+        embed_model TEXT DEFAULT 'text-embedding-3-small',
+        chunk_count INTEGER DEFAULT 0,
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      rag_chunks: `CREATE TABLE IF NOT EXISTS rag_chunks (
+        id SERIAL PRIMARY KEY,
+        document_id INTEGER NOT NULL,
+        chunk_id TEXT,
+        chunk_index INTEGER DEFAULT 0,
+        content TEXT NOT NULL,
+        entities JSONB,
+        keywords JSONB,
+        metadata JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+    };
+
+    const createdTables: string[] = [];
+    for (const [tableName, createSql] of Object.entries(autoCreateTables)) {
+      if (!existingTables.has(tableName)) {
+        try {
+          await pool.query(createSql);
+          createdTables.push(tableName);
+          existingTables.add(tableName);
+          // Remove from missing lists since we just created it
+          result.missingImportant = result.missingImportant.filter(t => t !== tableName);
+        } catch (createErr) {
+          const msg = createErr instanceof Error ? createErr.message : String(createErr);
+          console.warn(`[ensureCoreTables] Could not auto-create ${tableName}: ${msg}`);
+        }
+      }
+    }
+    if (createdTables.length > 0) {
+      console.log(`[ensureCoreTables] ✅ Auto-created tables: ${createdTables.join(', ')}`);
+    }
+
+    result.existingTables = Array.from(existingTables);
     result.duration = Date.now() - startTime;
 
     // Success if no critical tables are missing

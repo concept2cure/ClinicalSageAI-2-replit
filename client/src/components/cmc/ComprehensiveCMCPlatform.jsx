@@ -150,55 +150,29 @@ const ComprehensiveCMCPlatform = () => {
     }
   };
 
-  const loadAdvancedCMCData = () => {
-    // Initialize advanced CMC features data
-    setAuditData([
-      {
-        id: 1,
-        timestamp: '2025-08-15 14:30:22',
-        user: 'Dr. Sarah Johnson',
-        action: 'Method Validation Completed',
-        entity: 'AM-2024-015',
-        details: 'HPLC method validation completed with all ICH Q2 parameters met',
-        impact: 'High',
-        category: 'Method Development',
-      },
-      {
-        id: 2,
-        timestamp: '2025-08-15 11:15:45',
-        user: 'Mark Chen',
-        action: 'Batch Release Approved',
-        entity: 'BT-2024-089',
-        details: 'All QC tests passed, batch approved for commercial release',
-        impact: 'Critical',
-        category: 'Quality Control',
-      },
-    ]);
-
-    setRiskAssessments([
-      {
-        id: 1,
-        category: 'Supply Chain',
-        risk: 'Single Source Supplier for Critical API',
-        probability: 25,
-        impact: 90,
-        riskScore: 22.5,
-        level: 'High',
-        owner: 'Supply Chain Manager',
-        status: 'Active',
-      },
-    ]);
-
-    setSubmissionData([
-      { id: 'IND-2024-001', type: 'IND', agency: 'FDA', status: 'Under Review', progress: 75 },
-      {
-        id: 'MA-2024-002',
-        type: 'Marketing Authorization',
-        agency: 'EMA',
-        status: 'Data Review',
-        progress: 60,
-      },
-    ]);
+  const loadAdvancedCMCData = async () => {
+    // Fetch audit trail, risk assessments, and submission data from backend
+    try {
+      const [auditRes, riskRes, submissionRes] = await Promise.all([
+        fetch(`/api/cmc/audit-trail?organizationId=${organizationId}`)
+          .then(r => r.json()).catch(() => ({ data: [] })),
+        fetch(`/api/cmc/risk-assessments?organizationId=${organizationId}`)
+          .then(r => r.json()).catch(() => ({ data: [] })),
+        fetch(`/api/submission-center/projects`)
+          .then(r => r.json()).catch(() => ({ data: [] })),
+      ]);
+      setAuditData(auditRes.data || []);
+      setRiskAssessments(riskRes.data || []);
+      setSubmissionData((submissionRes.data || []).map(p => ({
+        id: p.id || p.projectId,
+        type: p.submissionType || p.type || 'IND',
+        agency: p.agency || 'FDA',
+        status: p.status || 'Draft',
+        progress: p.completionPercentage || p.progress || 0,
+      })));
+    } catch (error) {
+      console.warn('[CMC] Could not load advanced data:', error);
+    }
   };
 
   const openModal = (type, item = null) => {

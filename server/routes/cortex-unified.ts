@@ -605,7 +605,7 @@ What specific module or section would you like help with?`;
   if (lower.includes('help') || lower.includes('what can') || lower.includes('how')) {
     return `## How I Can Help with ${projectName}
 
-I'm Lumen Cortex, your AI regulatory intelligence engine. For your **${subType}** submission, I can:
+I'm AnA, your AI regulatory intelligence engine. For your **${subType}** submission, I can:
 
 1. **Draft Documents** — Generate eCTD-compliant sections for any CTD module
 2. **Review Content** — Check documents against regulatory requirements and flag gaps

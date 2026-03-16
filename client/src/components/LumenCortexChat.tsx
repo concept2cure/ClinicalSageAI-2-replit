@@ -372,8 +372,8 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">Lumen Cortex</h2>
-            <p className="text-xs text-gray-500">Regulatory Intelligence Assistant</p>
+            <h2 className="font-semibold text-gray-900">AnA <span className="text-xs font-normal text-gray-400">v1.0</span></h2>
+            <p className="text-xs text-gray-500">Audit & Narrative Assistant — RI Co-pilot</p>
           </div>
           {/* Model selector — shown when fine-tuned models are available */}
           {models.length > 0 && (
@@ -449,9 +449,9 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6">
               <Sparkles className="w-10 h-10 text-indigo-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome to Lumen Cortex</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Meet AnA v1.0 — Your RI Co-pilot</h3>
             <p className="text-gray-500 mb-8 max-w-md">
-              Your AI-powered regulatory intelligence assistant. Ask me about FDA submissions,
+              Your Audit & Narrative Assistant. Ask me about FDA submissions,
               clinical trials, compliance requirements, and more.
             </p>
 
@@ -662,7 +662,7 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
           </Button>
         </div>
         <p className="text-xs text-gray-400 mt-2 text-center">
-          Lumen Cortex provides regulatory guidance. Always verify with official FDA sources.
+          AnA provides regulatory intelligence guidance. Always verify with official FDA sources.
         </p>
       </div>
     </div>

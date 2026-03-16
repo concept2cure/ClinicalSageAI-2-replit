@@ -144,7 +144,7 @@ export default function ChatPanel({
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
-      content: `Hello! I'm your Concept2Cure AI assistant. How can I help you with your regulatory and clinical documentation today?`,
+      content: `Hello! I'm AnA, your Audit & Narrative Assistant. How can I help you with your regulatory and clinical documentation today?`,
       isUser: false,
       timestamp: new Date().toISOString(),
     },

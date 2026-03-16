@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Lazy-load the Concept2Cure Report Center
+const ReportCenter = lazy(() => import('@/concept2cure/components/reports/ReportCenter'));
 import {
   Select,
   SelectContent,
@@ -662,6 +665,19 @@ const ReportsPage = () => {
 
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
+      <Tabs defaultValue="report-center" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="report-center">Report Center</TabsTrigger>
+          <TabsTrigger value="cer-reports">CER Reports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="report-center">
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400"></div></div>}>
+            <ReportCenter />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="cer-reports">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center">
@@ -789,6 +805,8 @@ const ReportsPage = () => {
 
         {renderReportContent()}
       </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

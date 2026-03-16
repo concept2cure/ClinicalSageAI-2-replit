@@ -23,7 +23,7 @@ export default function StudyDesignAssistant() {
     {
       role: 'assistant',
       content:
-        "👋 Hello! I'm the TrialSage Study Design Agent. I can help you design clinical trials based on insights from successful historical CSRs. What questions do you have about your trial design?",
+        "👋 Hello! I'm the AnA Study Design Agent. I can help you design clinical trials based on insights from successful historical CSRs. What questions do you have about your trial design?",
     },
   ]);
   const [threadId, setThreadId] = useState(null);

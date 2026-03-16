@@ -380,7 +380,7 @@ export default function DraftEditor({ content = '', onChange }) {
             <div className="rounded-xl border bg-white p-4">
               <h3 className="text-sm font-semibold">Scientific Defensibility</h3>
               <p className="text-xs text-muted-foreground">
-                Lumen Cortex checks for reviewer-ready evidence.
+                AnA checks for reviewer-ready evidence.
               </p>
               <div className="mt-3 space-y-2 text-sm">
                 {SCIENTIFIC_CHECKS.map(check => (

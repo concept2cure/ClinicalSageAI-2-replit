@@ -58,12 +58,12 @@ export default function TopNav() {
           Demo
         </Link>
         <button
-          aria-label="Ask Lumen AI Assistant"
+          aria-label="Ask AnA — RI Co-pilot"
           onClick={toggleAssistant}
           className="flex items-center px-3 py-1.5 mr-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring focus-visible:ring-indigo-400"
         >
           <Bot size={16} className="mr-1.5" />
-          <span>Ask Lumen</span>
+          <span>Ask AnA</span>
         </button>
         <button
           aria-label="Toggle dark mode"

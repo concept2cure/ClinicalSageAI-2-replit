@@ -38,7 +38,7 @@ class DocuShareConfig {
       throw new Error('DOCUSHARE_ENCRYPTION_KEY must be exactly 32 characters');
     }
 
-    // Warn if credentials appear to be hardcoded (not from Replit Secrets)
+    // Warn if credentials appear to be hardcoded (not from environment variables)
     if (
       process.env.DOCUSHARE_API_KEY.includes('test') ||
       process.env.DOCUSHARE_API_KEY.includes('demo')

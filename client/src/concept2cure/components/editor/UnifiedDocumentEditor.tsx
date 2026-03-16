@@ -1,9 +1,9 @@
 /**
  * Unified Document Editor
- *
+ * 
  * Phase 5: Intelligent Document System
  * A Google Docs-style editor built on TipTap for regulatory document authoring.
- *
+ * 
  * Features:
  * - Rich text editing with regulatory formatting
  * - Traceability linking (highlight → link to source)
@@ -14,7 +14,8 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { BubbleMenu } from '@tiptap/react/menus';
+import { BubbleMenu } from '@tiptap/extension-bubble-menu';
+import { FloatingMenu } from '@tiptap/extension-floating-menu';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -119,8 +120,6 @@ export interface UnifiedDocumentEditorProps {
   complianceScore?: number;
   versions?: DocumentVersion[];
   className?: string;
-  /** Live content callback for outline sync */
-  onLiveContentChange?: (html: string) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -128,11 +127,10 @@ export interface UnifiedDocumentEditorProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Mark, mergeAttributes } from '@tiptap/core';
-import Heading from '@tiptap/extension-heading';
 
 const TraceabilityMark = Mark.create({
   name: 'traceability',
-
+  
   addAttributes() {
     return {
       sourceId: {
@@ -146,7 +144,7 @@ const TraceabilityMark = Mark.create({
       },
     };
   },
-
+  
   parseHTML() {
     return [
       {
@@ -154,40 +152,16 @@ const TraceabilityMark = Mark.create({
       },
     ];
   },
-
+  
   renderHTML({ HTMLAttributes }) {
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
         'data-traceability': 'true',
-        class:
-          'traceability-link bg-blue-100 dark:bg-blue-900/30 border-b-2 border-blue-500 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/40',
+        class: 'traceability-link bg-blue-100 dark:bg-blue-900/30 border-b-2 border-blue-500 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/40',
       }),
       0,
     ];
-  },
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Heading extension with auto-generated IDs for outline navigation
-// ─────────────────────────────────────────────────────────────────────────────
-
-function slugify(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 60) || 'heading'
-  );
-}
-
-const HeadingWithId = Heading.extend({
-  renderHTML({ node, HTMLAttributes }) {
-    const level = node.attrs.level;
-    const text = node.textContent || '';
-    const id = `outline-${slugify(text)}`;
-    return [`h${level}`, mergeAttributes(HTMLAttributes, { id, 'data-outline-id': id }), 0];
   },
 });
 
@@ -228,18 +202,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
   return (
     <div className="flex items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-wrap">
       {/* History */}
-      <ToolButton
-        onClick={() => editor.chain().focus().undo().run()}
-        disabled={!editor.can().undo()}
-        title="Undo"
-      >
+      <ToolButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo">
         <Undo className="w-4 h-4" />
       </ToolButton>
-      <ToolButton
-        onClick={() => editor.chain().focus().redo().run()}
-        disabled={!editor.can().redo()}
-        title="Redo"
-      >
+      <ToolButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo">
         <Redo className="w-4 h-4" />
       </ToolButton>
 
@@ -297,9 +263,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         isActive={editor.isActive('highlight')}
         title="Highlight"
       >
-        <span className="w-4 h-4 bg-yellow-300 rounded text-xs flex items-center justify-center font-bold">
-          H
-        </span>
+        <span className="w-4 h-4 bg-yellow-300 rounded text-xs flex items-center justify-center font-bold">H</span>
       </ToolButton>
 
       <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1" />
@@ -345,9 +309,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         <Code className="w-4 h-4" />
       </ToolButton>
       <ToolButton
-        onClick={() =>
-          editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-        }
+        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
         title="Insert Table"
       >
         <TableIcon className="w-4 h-4" />
@@ -357,11 +319,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
 
       {/* Lock / Save */}
       <ToolButton onClick={onToggleLock} title={isLocked ? 'Unlock Document' : 'Lock Document'}>
-        {isLocked ? (
-          <Lock className="w-4 h-4 text-red-500" />
-        ) : (
-          <Unlock className="w-4 h-4 text-green-500" />
-        )}
+        {isLocked ? <Lock className="w-4 h-4 text-red-500" /> : <Unlock className="w-4 h-4 text-green-500" />}
       </ToolButton>
       <button
         onClick={onSave}
@@ -401,9 +359,7 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
       {/* Score Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            Compliance Score
-          </span>
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Compliance Score</span>
           <span className={`text-2xl font-bold ${getScoreColor(score)}`}>{score}%</span>
         </div>
         <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
@@ -444,8 +400,8 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
                   issue.type === 'error'
                     ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30'
                     : issue.type === 'warning'
-                      ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
-                      : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                    ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
+                    : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30'
                 }`}
               >
                 <div className="flex items-start gap-2">
@@ -457,9 +413,7 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
                     <FileText className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {issue.rule}
-                    </p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{issue.rule}</p>
                     <p className="text-sm text-slate-700 dark:text-slate-300">{issue.message}</p>
                     {issue.suggestion && (
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
@@ -488,12 +442,7 @@ interface TraceabilityPanelProps {
   onRemoveLink?: (linkId: string) => void;
 }
 
-const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({
-  links,
-  sources,
-  onLinkClick,
-  onRemoveLink,
-}) => {
+const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({ links, sources, onLinkClick, onRemoveLink }) => {
   const getSourceById = (sourceId: string) => sources.find(s => s.id === sourceId);
 
   return (
@@ -585,7 +534,9 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
     if (!search.trim()) return sources;
     const query = search.toLowerCase();
     return sources.filter(
-      s => s.title.toLowerCase().includes(query) || s.documentType.toLowerCase().includes(query)
+      s =>
+        s.title.toLowerCase().includes(query) ||
+        s.documentType.toLowerCase().includes(query)
     );
   }, [sources, search]);
 
@@ -598,10 +549,7 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-800 dark:text-slate-200">Link to Source</h3>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
-            >
+            <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -628,7 +576,9 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
         {/* Sources List */}
         <div className="flex-1 overflow-y-auto p-2">
           {filteredSources.length === 0 ? (
-            <div className="p-4 text-center text-slate-500">No sources found</div>
+            <div className="p-4 text-center text-slate-500">
+              No sources found
+            </div>
           ) : (
             <div className="space-y-2">
               {filteredSources.map(source => (
@@ -640,9 +590,7 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
                   <div className="flex items-start gap-3">
                     <FileText className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-800 dark:text-slate-200">
-                        {source.title}
-                      </p>
+                      <p className="font-medium text-slate-800 dark:text-slate-200">{source.title}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                         <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-600 rounded">
                           {source.documentType}
@@ -688,7 +636,6 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   complianceScore = 100,
   versions = [],
   className = '',
-  onLiveContentChange,
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(isReadOnly);
@@ -701,8 +648,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: false }),
-      HeadingWithId,
+      StarterKit,
       Highlight.configure({ multicolor: true }),
       TextStyle,
       Color,
@@ -721,7 +667,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     content: initialContent,
     editable: !isLocked,
     onUpdate: ({ editor }) => {
-      onLiveContentChange?.(editor.getHTML());
+      // Could trigger auto-save or compliance check here
     },
   });
 
@@ -734,13 +680,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
   const handleSave = useCallback(async () => {
     if (!editor || !onSave) return;
-
+    
     setIsSaving(true);
     try {
       const content = editor.getHTML();
       const wordCount = editor.storage.characterCount.words();
       const charCount = editor.storage.characterCount.characters();
-
+      
       await onSave(content, {
         documentId,
         documentTitle,
@@ -759,10 +705,10 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
   const handleLinkToSource = useCallback(() => {
     if (!editor) return;
-
+    
     const { from, to } = editor.state.selection;
     const selectedText = editor.state.doc.textBetween(from, to, ' ');
-
+    
     if (selectedText.trim()) {
       setSelectedTextForLink(selectedText);
       setSelectedRange({ from, to });
@@ -822,9 +768,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           <div>
             <h1 className="font-semibold text-slate-800 dark:text-slate-200">{documentTitle}</h1>
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">
-                {documentType}
-              </span>
+              <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">{documentType}</span>
               {submissionType && (
                 <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
                   {submissionType}
@@ -862,6 +806,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               <FileCheck className="w-5 h-5" />
             </button>
           )}
+          <button
+            onClick={() => {}}
+            className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
+            title="Version History"
+          >
+            <History className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -879,43 +830,41 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         {/* Editor */}
         <div className="flex-1 overflow-y-auto">
           {/* Bubble Menu for Selection Actions */}
-          {editor && (
-            <BubbleMenu
-              editor={editor}
-              tippyOptions={{ duration: 100 }}
-              className="bg-slate-800 rounded-lg shadow-lg px-2 py-1 flex items-center gap-1"
+          <BubbleMenu
+            editor={editor}
+            tippyOptions={{ duration: 100 }}
+            className="bg-slate-800 rounded-lg shadow-lg px-2 py-1 flex items-center gap-1"
+          >
+            <button
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
             >
-              <button
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
-              >
-                <Bold className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
-              >
-                <Italic className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => editor.chain().focus().toggleHighlight().run()}
-                className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
-              >
-                <span className="w-4 h-4 bg-yellow-400 rounded text-xs flex items-center justify-center font-bold text-black">
-                  H
-                </span>
-              </button>
-              <div className="w-px h-4 bg-slate-600 mx-1" />
-              <button
-                onClick={handleLinkToSource}
-                className="p-1.5 rounded hover:bg-slate-700 text-white flex items-center gap-1"
-                title="Link to Source"
-              >
-                <Link className="w-4 h-4" />
-                <span className="text-xs">Link</span>
-              </button>
-            </BubbleMenu>
-          )}
+              <Bold className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
+            >
+              <Italic className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHighlight().run()}
+              className={`p-1.5 rounded hover:bg-slate-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
+            >
+              <span className="w-4 h-4 bg-yellow-400 rounded text-xs flex items-center justify-center font-bold text-black">
+                H
+              </span>
+            </button>
+            <div className="w-px h-4 bg-slate-600 mx-1" />
+            <button
+              onClick={handleLinkToSource}
+              className="p-1.5 rounded hover:bg-slate-700 text-white flex items-center gap-1"
+              title="Link to Source"
+            >
+              <Link className="w-4 h-4" />
+              <span className="text-xs">Link</span>
+            </button>
+          </BubbleMenu>
 
           {/* Editor Content */}
           <div className="p-8 max-w-4xl mx-auto">
@@ -928,11 +877,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
         {/* Side Panels */}
         {activePanel === 'compliance' && (
-          <CompliancePanel
-            score={complianceScore}
-            issues={complianceIssues}
-            onIssueClick={handleIssueClick}
-          />
+          <CompliancePanel score={complianceScore} issues={complianceIssues} onIssueClick={handleIssueClick} />
         )}
         {activePanel === 'traceability' && (
           <TraceabilityPanel

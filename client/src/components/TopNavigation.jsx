@@ -10,13 +10,9 @@ export default function TopNavigation() {
         <div className="flex items-center space-x-2 mb-2 md:mb-0">
           <Link to="/">
             <img
-              src="/assets/trialsage-logo.svg"
+              src="/src/assets/concept2cure-logo.svg"
               alt="Concept2Cure"
               className="h-10 w-auto"
-              onError={e => {
-                e.target.onerror = null;
-                e.target.src = 'https://placeholder.pics/svg/200x80/DEDEDE/555555/Concept2Cure';
-              }}
             />
           </Link>
         </div>

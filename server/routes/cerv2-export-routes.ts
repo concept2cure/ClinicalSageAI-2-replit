@@ -15,6 +15,7 @@
 import { Router, Request, Response } from 'express';
 import archiver from 'archiver';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { stylePacks } from '../export/stylePacks/config';
 import {
   renderPdfBuffersFor510k,
@@ -28,6 +29,22 @@ import { authMiddleware } from '../auth';
 
 const router = Router();
 
+// ── Rate limiting for export endpoints ──────────────────────────────────────
+const exportRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 10, // 10 exports per minute per user
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many export requests — please wait before trying again.' },
+  keyGenerator: (req: any) => {
+    const userId = req.userId || req.user?.id || 'anon';
+    const orgId = req.header('x-organization-id') || 'unknown';
+    return `cerv2-export:${orgId}:${userId}`;
+  },
+});
+
+router.use(['/pdf', '/docx', '/zip'], exportRateLimiter);
+
 // ── Auth guard ─────────────────────────────────────────────────────────────────
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
 const requireEditorAccess = (req: any, res: any, next: () => void) => {
@@ -35,6 +52,15 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
   if (!role || !allowedRoles.has(role)) {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
+  // Verify organization context exists (prevents cross-org access)
+  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
+  const tenantOrg = req.tenantContext?.organizationId;
+  const userOrg = req.user?.organizationId || req.tenantId;
+  const orgId = headerOrg || tenantOrg || userOrg;
+  if (!orgId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+  req.resolvedOrganizationId = Number(orgId);
   return next();
 };
 
@@ -82,7 +108,29 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const { docType, content, meta } = validation.data;
-    const pdfBuffer = await renderCombinedPdf(docType, content);
+
+    // Validate content has substantive nodes (not just empty paragraphs)
+    const substantiveNodes = content.content.filter(
+      (n: any) => n.type !== 'paragraph' || (n.content && n.content.length > 0)
+    );
+    if (substantiveNodes.length === 0) {
+      return res.status(400).json({ error: 'Document has no content to export' });
+    }
+
+    let pdfBuffer: Buffer;
+    try {
+      pdfBuffer = await renderCombinedPdf(docType, content);
+    } catch (renderErr: any) {
+      console.error('[CERV2 Export] PDF render failed:', renderErr);
+      return res.status(500).json({
+        error: 'PDF rendering failed',
+        message: renderErr.message || 'The document could not be converted to PDF',
+      });
+    }
+
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      return res.status(500).json({ error: 'PDF rendering produced empty output' });
+    }
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.pdf';
     res.setHeader('Content-Type', 'application/pdf');
@@ -90,7 +138,9 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     res.send(pdfBuffer);
   } catch (err: any) {
     console.error('[CERV2 Export] PDF error:', err);
-    res.status(500).json({ error: 'PDF generation failed', message: err.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'PDF generation failed', message: err.message });
+    }
   }
 });
 
@@ -105,7 +155,29 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const { docType, content, meta } = validation.data;
-    const docxBuffer = await renderCombinedDocx(docType, content);
+
+    // Validate content has substantive nodes
+    const substantiveNodes = content.content.filter(
+      (n: any) => n.type !== 'paragraph' || (n.content && n.content.length > 0)
+    );
+    if (substantiveNodes.length === 0) {
+      return res.status(400).json({ error: 'Document has no content to export' });
+    }
+
+    let docxBuffer: Buffer;
+    try {
+      docxBuffer = await renderCombinedDocx(docType, content);
+    } catch (renderErr: any) {
+      console.error('[CERV2 Export] DOCX render failed:', renderErr);
+      return res.status(500).json({
+        error: 'DOCX rendering failed',
+        message: renderErr.message || 'The document could not be converted to DOCX',
+      });
+    }
+
+    if (!docxBuffer || docxBuffer.length === 0) {
+      return res.status(500).json({ error: 'DOCX rendering produced empty output' });
+    }
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.docx';
     res.setHeader(
@@ -116,7 +188,9 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     res.send(docxBuffer);
   } catch (err: any) {
     console.error('[CERV2 Export] DOCX error:', err);
-    res.status(500).json({ error: 'DOCX generation failed', message: err.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'DOCX generation failed', message: err.message });
+    }
   }
 });
 
@@ -132,6 +206,21 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 
     const { docType, content, meta, attachments = [] } = validation.data;
     const title = sanitizeFilename(meta?.title || meta?.id || docType);
+
+    // Validate content has substantive nodes before starting ZIP stream
+    const substantiveNodes = content.content.filter(
+      (n: any) => n.type !== 'paragraph' || (n.content && n.content.length > 0)
+    );
+    if (substantiveNodes.length === 0) {
+      return res.status(400).json({ error: 'Document has no content to export' });
+    }
+
+    // Validate attachment filenames for path traversal
+    for (const att of attachments) {
+      if (att.filename.includes('..') || att.filename.includes('~') || att.filename.startsWith('/')) {
+        return res.status(400).json({ error: `Invalid attachment filename: ${att.filename}` });
+      }
+    }
 
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${title}_export.zip"`);

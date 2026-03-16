@@ -1457,7 +1457,7 @@ export default function INDFullSolution() {
                     CRO Baseline
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
-                    TrialSage Automated
+                    Concept2Cure Automated
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-slate-700 border-b border-slate-200/60">
                     Δ

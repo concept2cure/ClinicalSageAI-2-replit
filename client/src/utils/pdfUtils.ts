@@ -71,6 +71,6 @@ EXCLUSION CRITERIA:
 - Type 1 diabetes or uncontrolled Type 2 diabetes (HbA1c >9.0%)
 - Significant renal or hepatic impairment
 
-This protocol is part of Lumen Bio's development program for LMN-0801, a novel leptin analog being developed for weight management in adults with obesity.
+This protocol is part of Concept2Cure's development program for LMN-0801, a novel leptin analog being developed for weight management in adults with obesity.
   `;
 }

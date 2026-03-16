@@ -116,7 +116,7 @@ const ICHWizSidebar = ({ activeItem, onItemClick }) => {
                 <div className="mt-4 text-sm text-gray-500">
                   <p className="mt-2">Version: 1.0.0</p>
                   <p>Last Updated: April 2025</p>
-                  <p className="mt-4">© 2025 Lumen Biosciences. All rights reserved.</p>
+                  <p className="mt-4">© 2025 Concept2Cure. All rights reserved.</p>
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
