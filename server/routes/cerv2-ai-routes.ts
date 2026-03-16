@@ -12,6 +12,18 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authMiddleware } from '../auth';
+import OpenAI from 'openai';
+import ragService from '../services/biotechRagService.js';
+
+// Initialize OpenAI for real AI generation
+let openai: OpenAI | null = null;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+} catch {
+  console.log('[CERV2 AI] OpenAI not available, using template fallback');
+}
 
 const router = Router();
 
@@ -152,9 +164,71 @@ const sectionTemplates: Record<string, Record<string, string>> = {
   },
 };
 
+// ── Helper: RAG-augmented AI generation ──────────────────────────────────────
+async function generateWithRAG(
+  prompt: string,
+  ragQuery: string,
+  systemPrompt: string
+): Promise<{ text: string; source: string; ragSources: any[] }> {
+  // Step 1: Retrieve relevant context from RAG
+  let ragContext = '';
+  let ragSources: any[] = [];
+  try {
+    const searchResults = await ragService.search({
+      query: ragQuery,
+      topK: 5,
+      minScore: 0.5,
+      searchMode: 'hybrid',
+    });
+    if (searchResults?.results?.length > 0) {
+      ragSources = searchResults.results.map((r: any) => ({
+        title: r.documentTitle || r.sectionTitle || 'Document',
+        score: r.score,
+        snippet: (r.content || '').substring(0, 200),
+      }));
+      ragContext = searchResults.results
+        .map((r: any) => r.content)
+        .join('\n\n---\n\n');
+    }
+  } catch (ragErr) {
+    console.warn('[CERV2 AI] RAG retrieval failed, continuing without context:', ragErr);
+  }
+
+  // Step 2: Generate with LLM if available
+  if (openai) {
+    try {
+      const messages: any[] = [
+        { role: 'system', content: systemPrompt },
+      ];
+      if (ragContext) {
+        messages.push({
+          role: 'system',
+          content: `Relevant regulatory and clinical context from the knowledge base:\n\n${ragContext}`,
+        });
+      }
+      messages.push({ role: 'user', content: prompt });
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages,
+        temperature: 0.3,
+        max_tokens: 2000,
+      });
+      const text = completion.choices[0]?.message?.content || '';
+      if (text.length > 50) {
+        return { text, source: ragContext ? 'rag+ai' : 'ai', ragSources };
+      }
+    } catch (aiErr) {
+      console.warn('[CERV2 AI] OpenAI generation failed, falling back to template:', aiErr);
+    }
+  }
+
+  // Step 3: Fallback — return empty to let caller use template
+  return { text: '', source: 'template', ragSources };
+}
+
 // ── POST /suggest ──────────────────────────────────────────────────────────────
-// Returns a GPT-style suggestion for a specific section/field.
-// Currently returns template text; will be wired to OpenAI in a future phase.
+// RAG-augmented AI suggestions for section content. Falls back to templates.
 router.post(
   '/suggest',
   authMiddleware,
@@ -169,30 +243,50 @@ router.post(
       }
 
       const { docType, sectionId, fieldId, context } = validation.data;
-      const templates = sectionTemplates[docType] || {};
 
-      // Look for a template matching fieldId or sectionId
-      let suggestion = templates[fieldId] || templates[sectionId] || '';
+      // Build a meaningful query for RAG retrieval
+      const deviceInfo = context?.deviceName || 'medical device';
+      const ragQuery = `${docType === 'cerv2_510k' ? '510(k)' : docType === 'cerv2_pma' ? 'PMA' : 'CER'} ${sectionId} ${fieldId} ${deviceInfo} ${context?.predicateDevice || ''} ${context?.indication || ''}`.trim();
 
-      // Replace placeholders with context if provided
-      if (context?.deviceName) {
-        suggestion = suggestion.replace(/\[DEVICE NAME\]/g, context.deviceName);
-      }
-      if (context?.predicateDevice) {
-        suggestion = suggestion.replace(/\[PREDICATE DEVICE\]/g, context.predicateDevice);
-        suggestion = suggestion.replace(/\[PREDICATE K\]/g, context.predicateDevice);
-        suggestion = suggestion.replace(/\[PREDICATE K-NUMBER\]/g, context.predicateDevice);
-      }
-      if (context?.indication) {
-        suggestion = suggestion.replace(/\[INTENDED USE\]/g, context.indication);
-        suggestion = suggestion.replace(/\[INDICATION\]/g, context.indication);
-        suggestion = suggestion.replace(/\[INTENDED PURPOSE\]/g, context.indication);
+      const systemPrompt = `You are a regulatory affairs expert specializing in FDA and EU MDR medical device submissions. Generate professional, regulatory-compliant content for a ${docType === 'cerv2_510k' ? '510(k) premarket notification' : docType === 'cerv2_pma' ? 'PMA application' : 'EU MDR Clinical Evaluation Report'}. Section: ${sectionId}/${fieldId}. Be specific, use proper regulatory language, and cite applicable standards where appropriate.`;
+
+      const userPrompt = `Generate content for the "${fieldId}" field in section "${sectionId}" of a ${docType} submission.${context?.deviceName ? ` Device: ${context.deviceName}.` : ''}${context?.predicateDevice ? ` Predicate: ${context.predicateDevice}.` : ''}${context?.indication ? ` Intended use: ${context.indication}.` : ''}${context?.existingContent ? `\n\nExisting content to improve:\n${context.existingContent}` : ''}`;
+
+      const { text: aiText, source, ragSources } = await generateWithRAG(
+        userPrompt,
+        ragQuery,
+        systemPrompt
+      );
+
+      // If AI generated content, use it; otherwise fall back to template
+      let suggestion = aiText;
+      let finalSource = source;
+
+      if (!suggestion) {
+        const templates = sectionTemplates[docType] || {};
+        suggestion = templates[fieldId] || templates[sectionId] || '';
+        finalSource = 'template';
+
+        // Replace placeholders with context
+        if (context?.deviceName) {
+          suggestion = suggestion.replace(/\[DEVICE NAME\]/g, context.deviceName);
+        }
+        if (context?.predicateDevice) {
+          suggestion = suggestion.replace(/\[PREDICATE DEVICE\]/g, context.predicateDevice);
+          suggestion = suggestion.replace(/\[PREDICATE K\]/g, context.predicateDevice);
+          suggestion = suggestion.replace(/\[PREDICATE K-NUMBER\]/g, context.predicateDevice);
+        }
+        if (context?.indication) {
+          suggestion = suggestion.replace(/\[INTENDED USE\]/g, context.indication);
+          suggestion = suggestion.replace(/\[INDICATION\]/g, context.indication);
+          suggestion = suggestion.replace(/\[INTENDED PURPOSE\]/g, context.indication);
+        }
       }
 
       return res.json({
         suggestion,
-        source: 'template',
-        note: 'Template-based suggestion. Full GPT integration available in Phase 8.',
+        source: finalSource,
+        ragSources,
         docType,
         sectionId,
         fieldId,
@@ -515,24 +609,43 @@ router.post(
           .json({ error: 'Invalid request', details: validation.error.flatten() });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { docType, sectionId, content: _content, deviceContext } = validation.data;
+      const { docType, sectionId, content: existingContent, deviceContext } = validation.data;
       const ctx = deviceContext || {};
 
-      // Try enhanced mock content first, fall back to base templates
+      // Try RAG + AI generation first
+      const docLabel = docType === 'cerv2_510k' ? '510(k)' : docType === 'cerv2_pma' ? 'PMA' : 'EU MDR CER';
+      const ragQuery = `${docLabel} ${sectionId} ${ctx.deviceName || 'medical device'} ${ctx.predicateDevice || ''} ${ctx.intendedUse || ''}`.trim();
+      const systemPrompt = `You are an expert regulatory writer. Generate detailed, professional content for section "${sectionId}" of a ${docLabel} submission. Use proper regulatory language, cite applicable standards (ISO, IEC, FDA guidance), and produce publication-ready text. Format with markdown headings and bullet points where appropriate.`;
+      const userPrompt = `Write the "${sectionId}" section for a ${docLabel} submission.${ctx.deviceName ? ` Device: ${ctx.deviceName}.` : ''}${ctx.manufacturer ? ` Manufacturer: ${ctx.manufacturer}.` : ''}${ctx.predicateDevice ? ` Predicate: ${ctx.predicateDevice}${ctx.predicateK ? ` (${ctx.predicateK})` : ''}.` : ''}${ctx.intendedUse ? ` Intended use: ${ctx.intendedUse}.` : ''}${ctx.deviceClass ? ` Class: ${ctx.deviceClass}.` : ''}${existingContent ? `\n\nExisting draft to enhance:\n${existingContent}` : ''}`;
+
+      const { text: aiText, source, ragSources } = await generateWithRAG(
+        userPrompt,
+        ragQuery,
+        systemPrompt
+      );
+
+      if (aiText) {
+        return res.json({
+          suggestion: aiText,
+          source,
+          ragSources,
+          sectionId,
+          docType,
+        });
+      }
+
+      // Fallback: enhanced mock content, then base templates
       const enhancedFn = enhancedMockContent[docType]?.[sectionId];
       let suggestion: string;
 
       if (enhancedFn) {
         suggestion = enhancedFn(ctx);
       } else {
-        // Fall back to section templates
         const templates = sectionTemplates[docType] || {};
         suggestion =
           templates[sectionId] ||
-          `No enhanced content available for section "${sectionId}" in ${docType}.`;
+          `No content available for section "${sectionId}" in ${docType}.`;
 
-        // Basic placeholder replacement
         if (ctx.deviceName) suggestion = suggestion.replace(/\[DEVICE NAME\]/g, ctx.deviceName);
         if (ctx.predicateDevice) {
           suggestion = suggestion.replace(/\[PREDICATE DEVICE\]/g, ctx.predicateDevice);
@@ -546,10 +659,10 @@ router.post(
 
       return res.json({
         suggestion,
-        source: enhancedFn ? 'enhanced-mock' : 'template',
+        source: enhancedFn ? 'enhanced-template' : 'template',
+        ragSources: [],
         sectionId,
         docType,
-        note: 'Phase 7.3 enhanced mock analysis. Full GPT integration in Phase 8.',
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Analyze-section error:', err);
