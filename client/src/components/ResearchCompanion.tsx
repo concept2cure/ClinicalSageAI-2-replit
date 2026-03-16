@@ -63,7 +63,7 @@ export default function ResearchCompanion({
         {
           id: 'system-1',
           content:
-            "I'm your Research Companion for LumenTrialGuide.AI. I can help with clinical study reports, protocol design, and regulatory guidance. What can I assist you with today?",
+            "I'm AnA, your Research Companion. I can help with clinical study reports, protocol design, and regulatory guidance. What can I assist you with today?",
           role: 'system',
           timestamp: new Date(),
           context: contextInfo,

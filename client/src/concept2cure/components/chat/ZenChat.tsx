@@ -524,7 +524,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <p className="text-sm text-zinc-500 max-w-md">
           {greeting?.subtitle
             ? `${greeting.subtitle} · AnA is ready`
-            : "I'm Lumen, your regulatory intelligence assistant."}
+            : "I'm AnA, your regulatory intelligence assistant."}
         </p>
       </div>
 

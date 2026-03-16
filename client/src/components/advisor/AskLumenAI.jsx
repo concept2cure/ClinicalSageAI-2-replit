@@ -8,7 +8,7 @@ export default function AskLumenAI() {
     {
       role: 'assistant',
       content:
-        "Hello, I'm Lumen, your regulatory intelligence advisor. How can I help you with your regulatory strategy today?",
+        "Hello, I'm AnA, your RI Co-pilot. How can I help you with your regulatory strategy today?",
     },
   ]);
   const [input, setInput] = useState('');

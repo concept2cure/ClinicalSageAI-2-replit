@@ -39,7 +39,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
     {
       role: 'assistant',
       content:
-        "Hello! I'm Lumen, your Regulatory Affairs AI Expert and Medical Writing Specialist. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
+        "Hello! I'm AnA, your RI Co-pilot for Regulatory Affairs and Medical Writing. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
@@ -134,7 +134,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
       {
         role: 'assistant',
         content:
-          "Hello! I'm Lumen, your Regulatory Affairs AI Expert and Medical Writing Specialist. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
+          "Hello! I'm AnA, your RI Co-pilot for Regulatory Affairs and Medical Writing. I can help you with FDA submissions, clinical documentation, regulatory compliance, medical device protocols, and pharmaceutical submissions. How can I assist you today?",
         timestamp: new Date().toLocaleTimeString(),
       },
     ]);
