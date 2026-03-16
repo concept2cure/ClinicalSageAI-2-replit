@@ -15,6 +15,20 @@ import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { users, organizations, userOrganizations } from '../../shared/schema';
+import {
+  validatePasswordPolicy,
+  isAccountLocked,
+  recordFailedLogin,
+  resetFailedLogins,
+  verifyMFACode,
+  generateMFASecret,
+  enableMFA,
+  disableMFA,
+  isMFAEnabled,
+  isPasswordExpired,
+  createElectronicSignature,
+  verifySignatureIntegrity,
+} from '../services/auth-security-service';
 
 const router = Router();
 
@@ -98,8 +112,8 @@ router.post('/check-email', async (req: Request, res: Response) => {
     res.json({
       exists: true,
       authFlow: 'password',
-      mfaRequired: false, // MFA can be enabled later
-      passwordSet: true,
+      mfaRequired: user.mfaEnabled === true,
+      passwordSet: !!user.passwordHash,
       email: normalizedEmail,
     });
   } catch (error: any) {
@@ -189,15 +203,78 @@ router.post('/verify-password', async (req: Request, res: Response) => {
 
     const user = userResult[0];
 
-    // In a real implementation, you'd verify the password hash
-    // For now, accept any password in dev/demo
+    // Check account lockout
+    const lockStatus = await isAccountLocked(user.id);
+    if (lockStatus.locked) {
+      return res.status(423).json({
+        error: 'ACCOUNT_LOCKED',
+        message: `Account is temporarily locked. Try again after ${lockStatus.lockedUntil?.toISOString()}`,
+        lockedUntil: lockStatus.lockedUntil,
+      });
+    }
 
-    // Generate JWT token
+    // Verify password using bcrypt
+    const bcrypt = await import('bcryptjs');
+    const passwordValid = user.passwordHash
+      ? await bcrypt.compare(password, user.passwordHash)
+      : false;
+
+    if (!passwordValid) {
+      // Record failed attempt
+      const failResult = await recordFailedLogin(user.id);
+      return res.status(401).json({
+        error: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password',
+        remainingAttempts: failResult.remainingAttempts,
+        accountLocked: failResult.locked,
+      });
+    }
+
+    // Reset failed login counter on success
+    await resetFailedLogins(user.id);
+
+    // Check if password has expired
+    const passwordExpired = await isPasswordExpired(user.id);
+
+    // Check if MFA is required
+    const mfaRequired = user.mfaEnabled === true;
+
+    if (mfaRequired) {
+      // Don't issue full token yet — require MFA step
+      const partialToken = jwt.sign(
+        {
+          userId: user.id.toString(),
+          email: user.email,
+          organizationId: (user.defaultOrganizationId || 2).toString(),
+          role: 'pending_mfa', // Restricted token — only valid for MFA verification
+          mfaPending: true,
+        },
+        JWT_SECRET,
+        { expiresIn: '5m' } // Short-lived — only valid for MFA step
+      );
+
+      return res.json({
+        success: true,
+        requiresMfa: true,
+        requiresOrgSelection: false,
+        partialToken,
+        passwordExpired,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.name?.split(' ')[0] || 'User',
+          lastName: user.name?.split(' ').slice(1).join(' ') || '',
+          displayName: user.name || user.email,
+        },
+      });
+    }
+
+    // No MFA required — issue full token
     const token = jwt.sign(
       {
         userId: user.id.toString(),
         email: user.email,
-        organizationId: '2',
+        organizationId: (user.defaultOrganizationId || 2).toString(),
         role: 'admin',
       },
       JWT_SECRET,
@@ -208,15 +285,16 @@ router.post('/verify-password', async (req: Request, res: Response) => {
       success: true,
       requiresMfa: false,
       requiresOrgSelection: false,
+      passwordExpired,
       token,
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName || 'User',
-        lastName: user.lastName || '',
-        displayName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        firstName: user.name?.split(' ')[0] || 'User',
+        lastName: user.name?.split(' ').slice(1).join(' ') || '',
+        displayName: user.name || user.email,
         role: 'admin',
-        organizationId: '2',
+        organizationId: (user.defaultOrganizationId || 2).toString(),
         organizationName: 'Concept2Cure',
       },
     });
@@ -258,37 +336,260 @@ router.post('/verify-password', async (req: Request, res: Response) => {
 
 /**
  * POST /verify-mfa
- * Step 3: Verify MFA code (if enabled)
+ * Step 3: Verify MFA code (TOTP or backup code)
  */
 router.post('/verify-mfa', async (req: Request, res: Response) => {
-  const { email, code, method } = req.body;
+  try {
+    const { email, code, partialToken } = req.body;
 
-  // In dev mode, always succeed
-  if (isDev) {
-    const token = jwt.sign({ userId: '1', email, organizationId: '2', role: 'admin' }, JWT_SECRET, {
-      expiresIn: '24h',
-    });
+    if (!code) {
+      return res.status(400).json({
+        error: 'MFA_CODE_REQUIRED',
+        message: 'MFA verification code is required',
+      });
+    }
 
-    return res.json({
+    // In dev mode, always succeed
+    if (isDev) {
+      const token = jwt.sign(
+        { userId: '1', email, organizationId: '2', role: 'admin' },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      return res.json({
+        success: true,
+        token,
+        user: {
+          id: 1,
+          email,
+          firstName: 'Dev',
+          lastName: 'User',
+          displayName: 'Dev User',
+          role: 'admin',
+          organizationId: '2',
+          organizationName: 'Concept2Cure',
+        },
+      });
+    }
+
+    // Verify the partial token to get user identity
+    let decoded: any;
+    try {
+      decoded = jwt.verify(partialToken, JWT_SECRET) as any;
+    } catch {
+      return res.status(401).json({
+        error: 'TOKEN_EXPIRED',
+        message: 'MFA session expired. Please re-enter your password.',
+      });
+    }
+
+    if (!decoded.mfaPending) {
+      return res.status(400).json({
+        error: 'INVALID_TOKEN',
+        message: 'Token is not a valid MFA partial token',
+      });
+    }
+
+    // Verify the MFA code using speakeasy
+    const userId = parseInt(decoded.userId);
+    const mfaResult = await verifyMFACode(userId, code);
+
+    if (!mfaResult.valid) {
+      return res.status(401).json({
+        error: 'INVALID_MFA_CODE',
+        message: 'Invalid verification code. Please try again.',
+      });
+    }
+
+    // MFA verified — issue full token
+    const token = jwt.sign(
+      {
+        userId: decoded.userId,
+        email: decoded.email,
+        organizationId: decoded.organizationId,
+        role: 'admin',
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Look up user details
+    const userResult = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const user = userResult[0];
+
+    res.json({
       success: true,
+      mfaMethod: mfaResult.method,
       token,
       user: {
-        id: 1,
-        email,
-        firstName: 'Dev',
-        lastName: 'User',
-        displayName: 'Dev User',
+        id: user?.id || userId,
+        email: user?.email || decoded.email,
+        firstName: user?.name?.split(' ')[0] || 'User',
+        lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+        displayName: user?.name || decoded.email,
         role: 'admin',
-        organizationId: '2',
+        organizationId: decoded.organizationId,
         organizationName: 'Concept2Cure',
       },
     });
+  } catch (error: any) {
+    console.error('[Enterprise Auth] verify-mfa error:', error);
+    res.status(500).json({
+      error: 'INTERNAL_ERROR',
+      message: 'MFA verification failed',
+    });
   }
+});
 
-  res.json({
-    success: true,
-    message: 'MFA verified',
-  });
+/**
+ * POST /mfa/setup
+ * Generate MFA secret and QR code for initial setup
+ */
+router.post('/mfa/setup', async (req: Request, res: Response) => {
+  try {
+    const { userId, email } = req.body;
+
+    if (!userId || !email) {
+      return res.status(400).json({ error: 'userId and email are required' });
+    }
+
+    const result = await generateMFASecret(parseInt(userId), email);
+
+    res.json({
+      success: true,
+      qrCodeDataUrl: result.qrCodeDataUrl,
+      secret: result.secret, // For manual entry
+      backupCodes: result.backupCodes, // Show ONCE
+    });
+  } catch (error) {
+    console.error('[Enterprise Auth] mfa/setup error:', error);
+    res.status(500).json({ error: 'Failed to setup MFA' });
+  }
+});
+
+/**
+ * POST /mfa/enable
+ * Enable MFA after user verifies their first TOTP code
+ */
+router.post('/mfa/enable', async (req: Request, res: Response) => {
+  try {
+    const { userId, code } = req.body;
+
+    if (!userId || !code) {
+      return res.status(400).json({ error: 'userId and code are required' });
+    }
+
+    const success = await enableMFA(parseInt(userId), code);
+
+    if (!success) {
+      return res.status(400).json({
+        error: 'INVALID_CODE',
+        message: 'Invalid verification code. MFA not enabled.',
+      });
+    }
+
+    res.json({ success: true, message: 'MFA enabled successfully' });
+  } catch (error) {
+    console.error('[Enterprise Auth] mfa/enable error:', error);
+    res.status(500).json({ error: 'Failed to enable MFA' });
+  }
+});
+
+/**
+ * POST /mfa/disable
+ * Disable MFA (requires password re-authentication)
+ */
+router.post('/mfa/disable', async (req: Request, res: Response) => {
+  try {
+    const { userId, password } = req.body;
+
+    if (!userId || !password) {
+      return res.status(400).json({ error: 'userId and password are required' });
+    }
+
+    // Re-authenticate before disabling MFA
+    const userResult = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, parseInt(userId)))
+      .limit(1);
+
+    if (!userResult.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const bcrypt = await import('bcryptjs');
+    const valid = await bcrypt.compare(password, userResult[0].passwordHash || '');
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    await disableMFA(parseInt(userId));
+    res.json({ success: true, message: 'MFA disabled' });
+  } catch (error) {
+    console.error('[Enterprise Auth] mfa/disable error:', error);
+    res.status(500).json({ error: 'Failed to disable MFA' });
+  }
+});
+
+/**
+ * POST /electronic-signature
+ * Create a 21 CFR Part 11 compliant electronic signature
+ */
+router.post('/electronic-signature', async (req: Request, res: Response) => {
+  try {
+    const result = await createElectronicSignature({
+      documentId: req.body.documentId,
+      versionId: req.body.versionId,
+      signerId: req.body.signerId,
+      signerName: req.body.signerName,
+      signerTitle: req.body.signerTitle,
+      signerEmail: req.body.signerEmail,
+      signatureType: req.body.signatureType,
+      signaturePurpose: req.body.signaturePurpose,
+      signatureMeaning: req.body.signatureMeaning,
+      password: req.body.password,
+      mfaCode: req.body.mfaCode,
+      ipAddress: req.ip || req.headers['x-forwarded-for'] as string,
+      deviceInfo: {
+        userAgent: req.headers['user-agent'],
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      signatureId: result.signatureId,
+      message: 'Electronic signature created successfully (21 CFR Part 11 compliant)',
+    });
+  } catch (error) {
+    console.error('[Enterprise Auth] electronic-signature error:', error);
+    res.status(500).json({ error: 'Failed to create electronic signature' });
+  }
+});
+
+/**
+ * GET /electronic-signature/:id/verify
+ * Verify the integrity of an electronic signature
+ */
+router.get('/electronic-signature/:id/verify', async (req: Request, res: Response) => {
+  try {
+    const result = await verifySignatureIntegrity(parseInt(req.params.id));
+    res.json(result);
+  } catch (error) {
+    console.error('[Enterprise Auth] signature verification error:', error);
+    res.status(500).json({ error: 'Failed to verify signature' });
+  }
 });
 
 /**

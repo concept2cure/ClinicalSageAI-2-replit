@@ -2222,6 +2222,20 @@ export const users = pgTable('users', {
   lastLogin: timestamp('last_login'),
   defaultOrganizationId: integer('default_organization_id').references(() => organizations.id),
   preferences: json('preferences'),
+  // MFA fields
+  mfaEnabled: boolean('mfa_enabled').default(false),
+  mfaSecret: text('mfa_secret'), // encrypted TOTP secret
+  mfaBackupCodes: json('mfa_backup_codes'), // encrypted backup codes array
+  mfaMethod: text('mfa_method').default('totp'), // totp, sms, email
+  mfaVerifiedAt: timestamp('mfa_verified_at'),
+  // Account lockout fields
+  failedLoginAttempts: integer('failed_login_attempts').default(0),
+  lockedUntil: timestamp('locked_until'),
+  lastFailedLogin: timestamp('last_failed_login'),
+  // Password policy fields
+  passwordChangedAt: timestamp('password_changed_at'),
+  passwordHistory: json('password_history'), // array of previous password hashes
+  mustChangePassword: boolean('must_change_password').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
