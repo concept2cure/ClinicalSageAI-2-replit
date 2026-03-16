@@ -4689,6 +4689,9 @@ export const concept2cureArtifacts = pgTable(
     ctdSection: text('ctd_section'), // eCTD section reference
     templateId: text('template_id'), // Reference to source template
     status: text('status').default('draft').notNull(), // draft, review, approved, locked
+    approvedVersionId: integer('approved_version_id'), // version when last approved
+    publishedVersionId: integer('published_version_id'), // version when locked/published
+    publishedAt: timestamp('published_at'), // when last locked for submission
     lockedAt: timestamp('locked_at'), // When content was locked for submission
     lockedById: integer('locked_by_id').references(() => users.id),
     createdById: integer('created_by_id').references(() => users.id),
@@ -4782,6 +4785,112 @@ export const concept2cureSignatures = pgTable(
   })
 );
 
+/**
+ * Concept2Cure Provenance Events Table
+ *
+ * Tracks the full lineage of every artifact: what source inputs fed it,
+ * how it was generated, what transformations were applied, and where it
+ * was placed in the dossier. Append-only for regulatory integrity.
+ */
+export const concept2cureProvenanceEvents = pgTable(
+  'concept2cure_provenance_events',
+  {
+    id: serial('id').primaryKey(),
+    eventId: text('event_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    artifactVersionId: integer('artifact_version_id').references(
+      () => concept2cureArtifactVersions.id
+    ),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // Event classification
+    eventType: text('event_type').notNull(), // source_input, generation, transformation, edit, approval, export, placement
+    eventAction: text('event_action').notNull(), // ai_generate, human_edit, template_apply, docx_export, cmc_data_load, file_upload, etc.
+    // Actor
+    actorId: integer('actor_id').references(() => users.id),
+    actorName: text('actor_name'),
+    actorEmail: text('actor_email'),
+    // Structured details — flexible JSON for type-specific data
+    details: json('details').$type<Record<string, unknown>>().default({}),
+    // Source tracking
+    sourceArtifactId: integer('source_artifact_id').references(() => concept2cureArtifacts.id),
+    sourceDescription: text('source_description'), // Human-readable: "CMC Project: Nexavar-2", "Template: Module 3 scaffold"
+    // Backend provenance
+    backendRoute: text('backend_route'), // e.g. POST /api/knowledge-base/generate-module3-docx
+    backendService: text('backend_service'), // e.g. "knowledge-base", "shadow-service", "concept2cure"
+    // Network context
+    ipAddress: varchar('ip_address', { length: 45 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_prov_artifact_idx').on(table.artifactId),
+    eventTypeIdx: index('c2c_prov_event_type_idx').on(table.eventType),
+    orgIdx: index('c2c_prov_org_idx').on(table.organizationId),
+    createdAtIdx: index('c2c_prov_created_at_idx').on(table.createdAt),
+  })
+);
+
+/**
+ * Concept2Cure Submission Snapshots Table
+ *
+ * Immutable point-in-time records created when an artifact is published,
+ * exported, or submitted. Each snapshot captures the exact state of the
+ * document at the time of the action — version, hashes, placement,
+ * provenance, and actor attribution — so the org can prove what was
+ * released or submitted and by whom.
+ * Append-only by policy.
+ */
+export const concept2cureSubmissionSnapshots = pgTable(
+  'concept2cure_submission_snapshots',
+  {
+    id: serial('id').primaryKey(),
+    snapshotId: text('snapshot_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // Version state at time of action
+    versionId: integer('version_id').notNull(),
+    approvedVersionId: integer('approved_version_id'),
+    publishedVersionId: integer('published_version_id'),
+    // Integrity hashes
+    contentHash: text('content_hash').notNull(),
+    exportHash: text('export_hash'),
+    // Document identity at time of snapshot
+    title: text('title').notNull(),
+    ctdSection: text('ctd_section'),
+    templateId: text('template_id'),
+    // File details (for export snapshots)
+    filename: text('filename'),
+    fileSize: integer('file_size'),
+    // Action classification
+    actionType: text('action_type').notNull(), // publish, export-docx, export-pdf, submission-snapshot
+    // Actor attribution
+    actorId: integer('actor_id').references(() => users.id),
+    actorName: text('actor_name').notNull(),
+    actorEmail: text('actor_email'),
+    actorRole: text('actor_role'),
+    // Attestation (for publish/approve actions)
+    attestationText: text('attestation_text'),
+    signatureMeaning: text('signature_meaning'),
+    // Immutable metadata payload
+    metadata: json('metadata').$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    snapshotIdIdx: index('c2c_snap_id_idx').on(table.snapshotId),
+    artifactIdx: index('c2c_snap_artifact_idx').on(table.artifactId),
+    actionTypeIdx: index('c2c_snap_action_type_idx').on(table.actionType),
+    orgIdx: index('c2c_snap_org_idx').on(table.organizationId),
+    createdAtIdx: index('c2c_snap_created_at_idx').on(table.createdAt),
+  })
+);
+
 // Insert Schemas
 export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
   concept2cureConversations,
@@ -4833,6 +4942,870 @@ export type InsertConcept2cureArtifactVersion = z.infer<
 
 export type Concept2cureSignature = InferSelectModel<typeof concept2cureSignatures>;
 export type InsertConcept2cureSignature = z.infer<typeof insertConcept2cureSignatureSchema>;
+
+export const insertConcept2cureSubmissionSnapshotSchema = createInsertSchemaOmit(
+  concept2cureSubmissionSnapshots,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
+
+export type Concept2cureSubmissionSnapshot = InferSelectModel<
+  typeof concept2cureSubmissionSnapshots
+>;
+export type InsertConcept2cureSubmissionSnapshot = z.infer<
+  typeof insertConcept2cureSubmissionSnapshotSchema
+>;
+
+export const insertConcept2cureProvenanceEventSchema = createInsertSchemaOmit(
+  concept2cureProvenanceEvents,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
+
+export type Concept2cureProvenanceEvent = InferSelectModel<typeof concept2cureProvenanceEvents>;
+export type InsertConcept2cureProvenanceEvent = z.infer<
+  typeof insertConcept2cureProvenanceEventSchema
+>;
+
+/**
+ * Concept2Cure Review Comments Table
+ *
+ * Review comments on artifacts during the review workflow.
+ * Supports open/resolved status for tracking.
+ */
+export const concept2cureReviewComments = pgTable(
+  'concept2cure_review_comments',
+  {
+    id: serial('id').primaryKey(),
+    commentId: text('comment_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    version: integer('version').notNull(),
+    status: text('status').default('open').notNull(),
+    comment: text('comment').notNull(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    userName: text('user_name').notNull(),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    resolvedAt: timestamp('resolved_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_review_comment_artifact_idx').on(table.artifactId),
+    orgIdx: index('c2c_review_comment_org_idx').on(table.organizationId),
+  })
+);
+
+export const insertConcept2cureReviewCommentSchema = createInsertSchemaOmit(
+  concept2cureReviewComments,
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
+
+export type Concept2cureReviewComment = InferSelectModel<typeof concept2cureReviewComments>;
+export type InsertConcept2cureReviewComment = z.infer<typeof insertConcept2cureReviewCommentSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 12: Multi-User Review Assignments & Decisions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Review Assignments — tracks which reviewers are assigned to each artifact review round.
+ */
+export const concept2cureReviewAssignments = pgTable(
+  'concept2cure_review_assignments',
+  {
+    id: serial('id').primaryKey(),
+    assignmentId: text('assignment_id').notNull().unique(),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    reviewerId: integer('reviewer_id')
+      .notNull()
+      .references(() => users.id),
+    assignedById: integer('assigned_by_id')
+      .notNull()
+      .references(() => users.id),
+    reviewRound: integer('review_round').notNull().default(1),
+    status: text('status').notNull().default('pending'),
+    dueDate: timestamp('due_date', { withTimezone: true }),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_review_assign_artifact_idx').on(table.artifactId),
+    reviewerIdx: index('c2c_review_assign_reviewer_idx').on(table.reviewerId, table.status),
+    orgIdx: index('c2c_review_assign_org_idx').on(table.organizationId),
+  })
+);
+
+export type Concept2cureReviewAssignment = InferSelectModel<typeof concept2cureReviewAssignments>;
+
+/**
+ * Review Decisions — each reviewer's formal review decision per round.
+ */
+export const concept2cureReviewDecisions = pgTable(
+  'concept2cure_review_decisions',
+  {
+    id: serial('id').primaryKey(),
+    decisionId: text('decision_id').notNull().unique(),
+    assignmentId: integer('assignment_id')
+      .notNull()
+      .references(() => concept2cureReviewAssignments.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    reviewerId: integer('reviewer_id')
+      .notNull()
+      .references(() => users.id),
+    reviewRound: integer('review_round').notNull(),
+    decision: text('decision').notNull(),
+    comment: text('comment'),
+    versionReviewed: integer('version_reviewed').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_review_decision_artifact_idx').on(table.artifactId, table.reviewRound),
+    assignmentIdx: index('c2c_review_decision_assignment_idx').on(table.assignmentId),
+    reviewerIdx: index('c2c_review_decision_reviewer_idx').on(table.reviewerId),
+    orgIdx: index('c2c_review_decision_org_idx').on(table.organizationId),
+  })
+);
+
+export type Concept2cureReviewDecision = InferSelectModel<typeof concept2cureReviewDecisions>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 13: Review Threads, Comments & Tasks
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Review Threads — top-level discussion tied to an artifact, optionally version and anchor.
+ */
+export const concept2cureReviewThreads = pgTable(
+  'concept2cure_review_threads',
+  {
+    id: serial('id').primaryKey(),
+    threadId: text('thread_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    versionId: integer('version_id'),
+    createdById: integer('created_by_id')
+      .notNull()
+      .references(() => users.id),
+    createdByName: text('created_by_name').notNull(),
+    createdByRole: text('created_by_role'),
+    title: text('title'),
+    anchorType: text('anchor_type'), // 'section' | 'heading' | 'range' | 'general'
+    anchorKey: text('anchor_key'), // section id, heading id, etc.
+    anchorLabel: text('anchor_label'), // human-readable label
+    status: text('status').notNull().default('open'), // 'open' | 'resolved'
+    priority: text('priority'), // 'low' | 'medium' | 'high'
+    assigneeId: integer('assignee_id').references(() => users.id),
+    assigneeName: text('assignee_name'),
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    resolvedByName: text('resolved_by_name'),
+  },
+  table => ({
+    artifactIdx: index('c2c_thread_artifact_idx').on(table.artifactId),
+    versionIdx: index('c2c_thread_version_idx').on(table.versionId),
+    statusIdx: index('c2c_thread_status_idx').on(table.status),
+    assigneeIdx: index('c2c_thread_assignee_idx').on(table.assigneeId),
+    orgProjectIdx: index('c2c_thread_org_project_idx').on(table.orgId, table.projectId),
+    createdAtIdx: index('c2c_thread_created_at_idx').on(table.createdAt),
+    dueAtIdx: index('c2c_thread_due_at_idx').on(table.dueAt),
+  })
+);
+
+export type Concept2cureReviewThread = InferSelectModel<typeof concept2cureReviewThreads>;
+
+/**
+ * Thread Comments — messages inside a review thread.
+ */
+export const concept2cureThreadComments = pgTable(
+  'concept2cure_thread_comments',
+  {
+    id: serial('id').primaryKey(),
+    commentId: text('comment_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    threadId: integer('thread_id')
+      .notNull()
+      .references(() => concept2cureReviewThreads.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    versionId: integer('version_id'),
+    parentCommentId: integer('parent_comment_id'),
+    authorId: integer('author_id')
+      .notNull()
+      .references(() => users.id),
+    authorName: text('author_name').notNull(),
+    authorRole: text('author_role'),
+    body: text('body').notNull(),
+    kind: text('kind').notNull().default('comment'), // 'comment' | 'request_changes' | 'system'
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    editedAt: timestamp('edited_at', { withTimezone: true }),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    threadIdx: index('c2c_tcomment_thread_idx').on(table.threadId),
+    artifactIdx: index('c2c_tcomment_artifact_idx').on(table.artifactId),
+    authorIdx: index('c2c_tcomment_author_idx').on(table.authorId),
+    orgIdx: index('c2c_tcomment_org_idx').on(table.orgId),
+    createdAtIdx: index('c2c_tcomment_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type Concept2cureThreadComment = InferSelectModel<typeof concept2cureThreadComments>;
+
+/**
+ * Review Tasks — structured actionable items linked to threads or artifacts.
+ */
+export const concept2cureReviewTasks = pgTable(
+  'concept2cure_review_tasks',
+  {
+    id: serial('id').primaryKey(),
+    taskId: text('task_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    versionId: integer('version_id'),
+    threadId: integer('thread_id').references(() => concept2cureReviewThreads.id, {
+      onDelete: 'set null',
+    }),
+    createdById: integer('created_by_id')
+      .notNull()
+      .references(() => users.id),
+    createdByName: text('created_by_name').notNull(),
+    assignedToId: integer('assigned_to_id').references(() => users.id),
+    assignedToName: text('assigned_to_name'),
+    title: text('title').notNull(),
+    description: text('description'),
+    taskType: text('task_type').notNull().default('review_task'), // 'change_request' | 'follow_up' | 'review_task' | 'approval_task'
+    status: text('status').notNull().default('open'), // 'open' | 'in_progress' | 'resolved' | 'closed'
+    priority: text('priority'), // 'low' | 'medium' | 'high'
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    resolvedByName: text('resolved_by_name'),
+  },
+  table => ({
+    artifactIdx: index('c2c_task_artifact_idx').on(table.artifactId),
+    assignedToIdx: index('c2c_task_assigned_to_idx').on(table.assignedToId),
+    statusIdx: index('c2c_task_status_idx').on(table.status),
+    orgProjectIdx: index('c2c_task_org_project_idx').on(table.orgId, table.projectId),
+    threadIdx: index('c2c_task_thread_idx').on(table.threadId),
+    createdAtIdx: index('c2c_task_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type Concept2cureReviewTask = InferSelectModel<typeof concept2cureReviewTasks>;
+
+/**
+ * PM Work Items — document-derived work projected into the PM layer.
+ * Every item points back to its source review object.
+ */
+export const c2cProjectWorkItems = pgTable(
+  'c2c_project_work_items',
+  {
+    id: serial('id').primaryKey(),
+    workItemId: text('work_item_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    sourceType: text('source_type').notNull(), // 'review_thread' | 'review_task' | 'approval_blocker' | 'requested_changes'
+    sourceId: integer('source_id').notNull(),
+    artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id, {
+      onDelete: 'cascade',
+    }),
+    versionId: integer('version_id'),
+    ctdSection: text('ctd_section'),
+    ownerId: integer('owner_id').references(() => users.id),
+    ownerName: text('owner_name'),
+    title: text('title').notNull(),
+    status: text('status').notNull().default('open'), // 'open' | 'in_progress' | 'resolved' | 'closed'
+    priority: text('priority'), // 'low' | 'medium' | 'high'
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    blockerType: text('blocker_type'), // 'unresolved_review' | 'approval_pending' | 'requested_changes' | 'overdue_review'
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  },
+  table => ({
+    projectIdx: index('c2c_pwi_project_idx').on(table.projectId),
+    sourceIdx: index('c2c_pwi_source_idx').on(table.sourceType, table.sourceId),
+    artifactIdx: index('c2c_pwi_artifact_idx').on(table.artifactId),
+    ownerIdx: index('c2c_pwi_owner_idx').on(table.ownerId),
+    statusIdx: index('c2c_pwi_status_idx').on(table.status),
+    dueAtIdx: index('c2c_pwi_due_at_idx').on(table.dueAt),
+    orgProjectIdx: index('c2c_pwi_org_project_idx').on(table.orgId, table.projectId),
+  })
+);
+
+export type C2cProjectWorkItem = InferSelectModel<typeof c2cProjectWorkItems>;
+
+/**
+ * C2C Notifications — review-specific notifications with escalation support.
+ */
+export const concept2cureNotifications = pgTable(
+  'concept2cure_notifications',
+  {
+    id: serial('id').primaryKey(),
+    notificationId: text('notification_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+    artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id, {
+      onDelete: 'cascade',
+    }),
+    versionId: integer('version_id'),
+    threadId: integer('thread_id').references(() => concept2cureReviewThreads.id, {
+      onDelete: 'set null',
+    }),
+    reviewTaskId: integer('review_task_id').references(() => concept2cureReviewTasks.id, {
+      onDelete: 'set null',
+    }),
+    projectWorkItemId: integer('project_work_item_id').references(() => c2cProjectWorkItems.id, {
+      onDelete: 'set null',
+    }),
+    recipientUserId: integer('recipient_user_id')
+      .notNull()
+      .references(() => users.id),
+    recipientName: text('recipient_name'),
+    actorUserId: integer('actor_user_id').references(() => users.id),
+    actorName: text('actor_name'),
+    notificationType: text('notification_type').notNull(), // 'assignment' | 'due_soon' | 'overdue' | 'approval_needed' | 'changes_requested' | 'thread_reply' | 'thread_resolved' | 'task_resolved' | 'publish_complete' | 'escalation'
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    severity: text('severity').default('info'), // 'info' | 'warning' | 'critical'
+    status: text('status').notNull().default('unread'), // 'unread' | 'read' | 'dismissed'
+    actionUrl: text('action_url'),
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
+    // Escalation fields
+    escalationLevel: integer('escalation_level').default(0), // 0 | 1 | 2
+    lastNotifiedAt: timestamp('last_notified_at', { withTimezone: true }),
+    nextReminderAt: timestamp('next_reminder_at', { withTimezone: true }),
+    escalatesAt: timestamp('escalates_at', { withTimezone: true }),
+    escalationTargetUserId: integer('escalation_target_user_id').references(() => users.id),
+    escalationTargetRole: text('escalation_target_role'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    recipientIdx: index('c2c_notif_recipient_idx').on(table.recipientUserId),
+    statusIdx: index('c2c_notif_status_idx').on(table.status),
+    typeIdx: index('c2c_notif_type_idx').on(table.notificationType),
+    projectIdx: index('c2c_notif_project_idx').on(table.projectId),
+    threadIdx: index('c2c_notif_thread_idx').on(table.threadId),
+    taskIdx: index('c2c_notif_task_idx').on(table.reviewTaskId),
+    dueAtIdx: index('c2c_notif_due_at_idx').on(table.dueAt),
+    nextReminderIdx: index('c2c_notif_next_reminder_idx').on(table.nextReminderAt),
+    orgProjectIdx: index('c2c_notif_org_project_idx').on(table.orgId, table.projectId),
+    createdAtIdx: index('c2c_notif_created_at_idx').on(table.createdAt),
+    artifactIdx: index('c2c_notif_artifact_idx').on(table.artifactId),
+  })
+);
+
+export type Concept2cureNotification = InferSelectModel<typeof concept2cureNotifications>;
+
+// ============================================================
+// PHASE 15 — SUBMISSION OPERATIONS COMMAND CENTER
+// ============================================================
+
+/**
+ * Submission Packages — package family instances per project
+ */
+export const c2cSubmissionPackages = pgTable(
+  'c2c_submission_packages',
+  {
+    id: serial('id').primaryKey(),
+    packageId: text('package_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    packageFamily: text('package_family').notNull(), // e.g. 'ind', '510k', 'cer', 'ivdr_td'
+    title: text('title').notNull(),
+    description: text('description'),
+    targetDate: timestamp('target_date', { withTimezone: true }),
+    status: text('status').notNull().default('active'), // active, completed, cancelled
+    metadata: json('metadata'),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgProjectIdx: index('c2c_subpkg_org_project_idx').on(table.orgId, table.projectId),
+    familyIdx: index('c2c_subpkg_family_idx').on(table.packageFamily),
+    statusIdx: index('c2c_subpkg_status_idx').on(table.status),
+  })
+);
+export type C2cSubmissionPackage = InferSelectModel<typeof c2cSubmissionPackages>;
+
+/**
+ * Package Sections — dossier/module/section/workstream mapping per package
+ */
+export const c2cPackageSections = pgTable(
+  'c2c_package_sections',
+  {
+    id: serial('id').primaryKey(),
+    sectionId: text('section_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    packageDbId: integer('package_db_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id, { onDelete: 'cascade' }),
+    sectionKey: text('section_key').notNull(), // e.g. 'module3_cmc', 'labeling', 'cer'
+    sectionLabel: text('section_label').notNull(), // display label
+    parentSectionId: integer('parent_section_id'), // for nested sections
+    sortOrder: integer('sort_order').default(0),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('c2c_pkgsec_package_idx').on(table.packageDbId),
+    orgIdx: index('c2c_pkgsec_org_idx').on(table.orgId),
+    sectionKeyIdx: index('c2c_pkgsec_key_idx').on(table.packageDbId, table.sectionKey),
+  })
+);
+export type C2cPackageSection = InferSelectModel<typeof c2cPackageSections>;
+
+/**
+ * Artifact-to-Section mapping — which artifacts belong to which package section
+ */
+export const c2cArtifactSectionMap = pgTable(
+  'c2c_artifact_section_map',
+  {
+    id: serial('id').primaryKey(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    artifactId: integer('artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id, { onDelete: 'cascade' }),
+    sectionDbId: integer('section_db_id')
+      .notNull()
+      .references(() => c2cPackageSections.id, { onDelete: 'cascade' }),
+    documentFamily: text('document_family'), // e.g. 'protocol', 'csr', 'cer', 'labeling'
+    ownerUserId: integer('owner_user_id').references(() => users.id),
+    ownerRole: text('owner_role'), // detailed role label
+    ownerFunction: text('owner_function'), // e.g. 'cmc', 'clinical', 'regulatory'
+    ownershipType: text('ownership_type'), // 'sponsor' | 'cro' | 'vendor'
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    artifactIdx: index('c2c_artsec_artifact_idx').on(table.artifactId),
+    sectionIdx: index('c2c_artsec_section_idx').on(table.sectionDbId),
+    orgIdx: index('c2c_artsec_org_idx').on(table.orgId),
+    ownerIdx: index('c2c_artsec_owner_idx').on(table.ownerUserId),
+    docFamilyIdx: index('c2c_artsec_docfamily_idx').on(table.documentFamily),
+  })
+);
+export type C2cArtifactSectionMap = InferSelectModel<typeof c2cArtifactSectionMap>;
+
+/**
+ * Milestones — regulatory milestones / gates per package
+ */
+export const c2cMilestones = pgTable(
+  'c2c_milestones',
+  {
+    id: serial('id').primaryKey(),
+    milestoneId: text('milestone_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    packageDbId: integer('package_db_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    description: text('description'),
+    targetDate: timestamp('target_date', { withTimezone: true }),
+    gateStatus: text('gate_status').notNull().default('open'), // open, passed, blocked, overridden
+    blockReasons: json('block_reasons'), // array of strings
+    sortOrder: integer('sort_order').default(0),
+    metadata: json('metadata'),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('c2c_milestone_package_idx').on(table.packageDbId),
+    orgIdx: index('c2c_milestone_org_idx').on(table.orgId),
+    gateStatusIdx: index('c2c_milestone_gate_idx').on(table.gateStatus),
+    targetDateIdx: index('c2c_milestone_target_idx').on(table.targetDate),
+  })
+);
+export type C2cMilestone = InferSelectModel<typeof c2cMilestones>;
+
+/**
+ * Milestone-Section links — which sections gate a milestone
+ */
+export const c2cMilestoneSections = pgTable(
+  'c2c_milestone_sections',
+  {
+    id: serial('id').primaryKey(),
+    milestoneDbId: integer('milestone_db_id')
+      .notNull()
+      .references(() => c2cMilestones.id, { onDelete: 'cascade' }),
+    sectionDbId: integer('section_db_id')
+      .notNull()
+      .references(() => c2cPackageSections.id, { onDelete: 'cascade' }),
+    required: boolean('required').default(true),
+  },
+  table => ({
+    milestoneIdx: index('c2c_ms_milestone_idx').on(table.milestoneDbId),
+    sectionIdx: index('c2c_ms_section_idx').on(table.sectionDbId),
+  })
+);
+
+export type C2cMilestoneSection = InferSelectModel<typeof c2cMilestoneSections>;
+
+/**
+ * Submission Policies — deterministic SLA/policy rules per org/package/section/function
+ */
+export const c2cSubmissionPolicies = pgTable(
+  'c2c_submission_policies',
+  {
+    id: serial('id').primaryKey(),
+    policyId: text('policy_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    // Scope selectors (null = applies to all in that dimension)
+    packageFamily: text('package_family'), // null = all families
+    sectionKey: text('section_key'), // null = all sections
+    documentFamily: text('document_family'), // null = all doc types
+    ownerFunction: text('owner_function'), // null = all functions
+    reviewerClass: text('reviewer_class'), // null = all reviewer types
+    ownershipType: text('ownership_type'), // null = both sponsor/cro
+    // Policy behaviors
+    reviewDueHours: integer('review_due_hours'), // target review turnaround
+    dueSoonThresholdHours: integer('due_soon_threshold_hours'),
+    overdueThresholdHours: integer('overdue_threshold_hours'),
+    escalationThresholdHours: integer('escalation_threshold_hours'),
+    fallbackRole: text('fallback_role'),
+    requiredReviewerClasses: json('required_reviewer_classes'), // string[]
+    requiredApprovals: json('required_approvals'), // string[] of functional roles
+    blockOnOpenCritical: boolean('block_on_open_critical').default(true), // block approval if open critical threads/tasks
+    blockPublishOnOpenCritical: boolean('block_publish_on_open_critical').default(true),
+    requireSectionReadyForGate: boolean('require_section_ready_for_gate').default(true),
+    // Display
+    ruleDescription: text('rule_description'), // human-readable
+    priority: integer('priority').default(0), // higher = more specific, wins in conflict
+    enabled: boolean('enabled').default(true),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('c2c_policy_org_idx').on(table.orgId),
+    familyIdx: index('c2c_policy_family_idx').on(table.packageFamily),
+    sectionIdx: index('c2c_policy_section_idx').on(table.sectionKey),
+    docFamilyIdx: index('c2c_policy_docfamily_idx').on(table.documentFamily),
+    enabledIdx: index('c2c_policy_enabled_idx').on(table.enabled),
+  })
+);
+export type C2cSubmissionPolicy = InferSelectModel<typeof c2cSubmissionPolicies>;
+
+/**
+ * Readiness Snapshots — point-in-time readiness state per section
+ */
+export const c2cReadinessSnapshots = pgTable(
+  'c2c_readiness_snapshots',
+  {
+    id: serial('id').primaryKey(),
+    snapshotId: text('snapshot_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    packageDbId: integer('package_db_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id, { onDelete: 'cascade' }),
+    sectionDbId: integer('section_db_id').references(() => c2cPackageSections.id, {
+      onDelete: 'cascade',
+    }),
+    // Readiness metrics
+    totalArtifacts: integer('total_artifacts').default(0),
+    readyArtifacts: integer('ready_artifacts').default(0),
+    readinessPercent: integer('readiness_percent').default(0), // 0-100
+    // Issue counts
+    openThreads: integer('open_threads').default(0),
+    openTasks: integer('open_tasks').default(0),
+    overdueItems: integer('overdue_items').default(0),
+    missingApprovals: integer('missing_approvals').default(0),
+    openCriticalFindings: integer('open_critical_findings').default(0),
+    // State
+    overallState: text('overall_state').notNull().default('on_track'), // on_track, at_risk, blocked
+    maxBlockerSeverity: text('max_blocker_severity'), // none, low, medium, high, critical
+    // Trend
+    previousReadinessPercent: integer('previous_readiness_percent'),
+    trend: text('trend'), // improving, stable, degrading
+    // Computed at
+    computedAt: timestamp('computed_at', { withTimezone: true }).defaultNow().notNull(),
+    automationRunId: integer('automation_run_id'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('c2c_rdsnap_package_idx').on(table.packageDbId),
+    sectionIdx: index('c2c_rdsnap_section_idx').on(table.sectionDbId),
+    orgIdx: index('c2c_rdsnap_org_idx').on(table.orgId),
+    computedAtIdx: index('c2c_rdsnap_computed_at_idx').on(table.computedAt),
+    stateIdx: index('c2c_rdsnap_state_idx').on(table.overallState),
+  })
+);
+export type C2cReadinessSnapshot = InferSelectModel<typeof c2cReadinessSnapshots>;
+
+/**
+ * Blockers — typed, trackable blockers per artifact
+ */
+export const c2cBlockers = pgTable(
+  'c2c_blockers',
+  {
+    id: serial('id').primaryKey(),
+    blockerId: text('blocker_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    packageDbId: integer('package_db_id').references(() => c2cSubmissionPackages.id, {
+      onDelete: 'cascade',
+    }),
+    sectionDbId: integer('section_db_id').references(() => c2cPackageSections.id, {
+      onDelete: 'set null',
+    }),
+    artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id, {
+      onDelete: 'cascade',
+    }),
+    threadId: integer('thread_id').references(() => concept2cureReviewThreads.id, {
+      onDelete: 'set null',
+    }),
+    taskId: integer('task_id').references(() => concept2cureReviewTasks.id, {
+      onDelete: 'set null',
+    }),
+    // Blocker details
+    blockerType: text('blocker_type').notNull(), // from blocker taxonomy
+    documentFamily: text('document_family'),
+    ownerFunction: text('owner_function'),
+    ownerUserId: integer('owner_user_id').references(() => users.id),
+    ownerName: text('owner_name'),
+    ownershipType: text('ownership_type'), // sponsor | cro | vendor
+    severity: text('severity').notNull().default('medium'), // low, medium, high, critical
+    title: text('title').notNull(),
+    description: text('description'),
+    nextAction: text('next_action'),
+    // Policy linkage
+    breachedPolicyId: integer('breached_policy_id').references(() => c2cSubmissionPolicies.id, {
+      onDelete: 'set null',
+    }),
+    // Escalation
+    escalationStatus: text('escalation_status').default('none'), // none, escalated, resolved
+    escalatedAt: timestamp('escalated_at', { withTimezone: true }),
+    // Milestone impact
+    milestoneDbId: integer('milestone_db_id').references(() => c2cMilestones.id, {
+      onDelete: 'set null',
+    }),
+    // Lifecycle
+    status: text('status').notNull().default('open'), // open, resolved, dismissed
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedById: integer('resolved_by_id').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgProjectIdx: index('c2c_blocker_org_project_idx').on(table.orgId, table.projectId),
+    packageIdx: index('c2c_blocker_package_idx').on(table.packageDbId),
+    sectionIdx: index('c2c_blocker_section_idx').on(table.sectionDbId),
+    artifactIdx: index('c2c_blocker_artifact_idx').on(table.artifactId),
+    typeIdx: index('c2c_blocker_type_idx').on(table.blockerType),
+    statusIdx: index('c2c_blocker_status_idx').on(table.status),
+    severityIdx: index('c2c_blocker_severity_idx').on(table.severity),
+    ownerIdx: index('c2c_blocker_owner_idx').on(table.ownerUserId),
+    dueAtIdx: index('c2c_blocker_due_at_idx').on(table.dueAt),
+  })
+);
+export type C2cBlocker = InferSelectModel<typeof c2cBlockers>;
+
+/**
+ * Automation Runs — idempotent automation execution log
+ */
+export const c2cAutomationRuns = pgTable(
+  'c2c_automation_runs',
+  {
+    id: serial('id').primaryKey(),
+    runId: text('run_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    packageDbId: integer('package_db_id').references(() => c2cSubmissionPackages.id, {
+      onDelete: 'cascade',
+    }),
+    runType: text('run_type').notNull(), // 'readiness_scan' | 'policy_check' | 'escalation_sweep' | 'digest_generation'
+    status: text('status').notNull().default('running'), // running, completed, failed
+    // Idempotency
+    idempotencyKey: text('idempotency_key').notNull(), // org_project_package_runType_windowKey
+    // Results
+    actionsCreated: integer('actions_created').default(0),
+    blockersFound: integer('blockers_found').default(0),
+    escalationsTriggered: integer('escalations_triggered').default(0),
+    readinessUpdated: boolean('readiness_updated').default(false),
+    summary: json('summary'), // detailed run output
+    errorMessage: text('error_message'),
+    startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+  },
+  table => ({
+    orgProjectIdx: index('c2c_autorun_org_project_idx').on(table.orgId, table.projectId),
+    runTypeIdx: index('c2c_autorun_type_idx').on(table.runType),
+    idempotencyIdx: index('c2c_autorun_idemp_idx').on(table.idempotencyKey),
+    statusIdx: index('c2c_autorun_status_idx').on(table.status),
+    startedAtIdx: index('c2c_autorun_started_at_idx').on(table.startedAt),
+  })
+);
+export type C2cAutomationRun = InferSelectModel<typeof c2cAutomationRuns>;
+
+/**
+ * Automation Actions — individual actions taken by automation
+ */
+export const c2cAutomationActions = pgTable(
+  'c2c_automation_actions',
+  {
+    id: serial('id').primaryKey(),
+    actionId: text('action_id').notNull().unique(),
+    runId: integer('run_id')
+      .notNull()
+      .references(() => c2cAutomationRuns.id, { onDelete: 'cascade' }),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    actionType: text('action_type').notNull(),
+    // 'approval_task_created' | 'escalation_triggered' | 'reassignment_applied'
+    // | 'readiness_snapshot_updated' | 'digest_generated' | 'milestone_gate_updated'
+    // | 'blocker_created' | 'notification_sent' | 'routing_issue_flagged'
+    targetArtifactId: integer('target_artifact_id').references(() => concept2cureArtifacts.id, {
+      onDelete: 'set null',
+    }),
+    targetUserId: integer('target_user_id').references(() => users.id),
+    description: text('description').notNull(),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    runIdx: index('c2c_autoaction_run_idx').on(table.runId),
+    orgIdx: index('c2c_autoaction_org_idx').on(table.orgId),
+    actionTypeIdx: index('c2c_autoaction_type_idx').on(table.actionType),
+    createdAtIdx: index('c2c_autoaction_created_at_idx').on(table.createdAt),
+  })
+);
+export type C2cAutomationAction = InferSelectModel<typeof c2cAutomationActions>;
+
+/**
+ * Digests — structured exception/summary reports
+ */
+export const c2cDigests = pgTable(
+  'c2c_digests',
+  {
+    id: serial('id').primaryKey(),
+    digestId: text('digest_id').notNull().unique(),
+    orgId: integer('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    packageDbId: integer('package_db_id').references(() => c2cSubmissionPackages.id, {
+      onDelete: 'cascade',
+    }),
+    digestType: text('digest_type').notNull(),
+    // 'daily_review' | 'sponsor_approval' | 'cro_handoff' | 'cmc_exception'
+    // | 'clinical_exception' | 'device_evidence' | 'executive_readiness' | 'package_exception'
+    recipientUserId: integer('recipient_user_id').references(() => users.id),
+    recipientRole: text('recipient_role'),
+    // Content
+    title: text('title').notNull(),
+    sections: json('sections').notNull(), // structured digest content
+    // Metrics
+    waitingOnMe: integer('waiting_on_me').default(0),
+    waitingOnMyFunction: integer('waiting_on_my_function').default(0),
+    newRequestedChanges: integer('new_requested_changes').default(0),
+    openCriticalFindings: integer('open_critical_findings').default(0),
+    overdueItems: integer('overdue_items').default(0),
+    reopenedItems: integer('reopened_items').default(0),
+    blockingReadiness: integer('blocking_readiness').default(0),
+    degradingSections: integer('degrading_sections').default(0),
+    // Status
+    status: text('status').notNull().default('generated'), // generated, sent, read
+    readAt: timestamp('read_at', { withTimezone: true }),
+    generatedAt: timestamp('generated_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgProjectIdx: index('c2c_digest_org_project_idx').on(table.orgId, table.projectId),
+    digestTypeIdx: index('c2c_digest_type_idx').on(table.digestType),
+    recipientIdx: index('c2c_digest_recipient_idx').on(table.recipientUserId),
+    generatedAtIdx: index('c2c_digest_generated_at_idx').on(table.generatedAt),
+  })
+);
+export type C2cDigest = InferSelectModel<typeof c2cDigests>;
+
+// ============================================================
+// END PHASE 15 SCHEMA
+// ============================================================
 
 /**
  * Project Modules Table
@@ -7561,6 +8534,10 @@ export const auditEvents = pgTable(
     // Compliance
     regulatorySignificant: boolean('regulatory_significant').default(false),
     gxpRelevant: boolean('gxp_relevant').default(false),
+    // Hash chain (Part 11 chain integrity)
+    recordHash: text('record_hash'),
+    previousHash: text('previous_hash'),
+    sequenceNumber: integer('sequence_number'),
     // Metadata
     metadata: json('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),

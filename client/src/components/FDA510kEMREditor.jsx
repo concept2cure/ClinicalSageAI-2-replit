@@ -24,7 +24,7 @@ import {
   Wand2,
   ArrowRight,
   ArrowLeft,
-  BarChart3
+  BarChart3,
 } from 'lucide-react';
 
 // FDA 510(k) EMR-style template sections
@@ -40,9 +40,15 @@ const FDA_510K_SECTIONS = [
       { id: 'contact', label: 'Contact Person', type: 'text', required: true },
       { id: 'phone', label: 'Phone', type: 'tel', required: true },
       { id: 'email', label: 'Email', type: 'email', required: true },
-      { id: 'letter_body', label: 'Cover Letter Content', type: 'textarea', required: true,
-        template: 'We are submitting this 510(k) premarket notification for [DEVICE_NAME]. This device is intended for [INTENDED_USE]. We believe this device is substantially equivalent to the predicate device [PREDICATE].' }
-    ]
+      {
+        id: 'letter_body',
+        label: 'Cover Letter Content',
+        type: 'textarea',
+        required: true,
+        template:
+          'We are submitting this 510(k) premarket notification for [DEVICE_NAME]. This device is intended for [INTENDED_USE]. We believe this device is substantially equivalent to the predicate device [PREDICATE].',
+      },
+    ],
   },
   {
     id: 'indications',
@@ -53,8 +59,8 @@ const FDA_510K_SECTIONS = [
       { id: 'intended_use', label: 'Intended Use Statement', type: 'textarea', required: true },
       { id: 'prescription', label: 'Prescription Use', type: 'checkbox' },
       { id: 'otc', label: 'Over-The-Counter Use', type: 'checkbox' },
-      { id: 'indications_detail', label: 'Detailed Indications', type: 'textarea', required: true }
-    ]
+      { id: 'indications_detail', label: 'Detailed Indications', type: 'textarea', required: true },
+    ],
   },
   {
     id: 'summary',
@@ -67,21 +73,27 @@ const FDA_510K_SECTIONS = [
       { id: 'common_name', label: 'Common Name', type: 'text', required: true },
       { id: 'classification', label: 'Classification (21 CFR)', type: 'text', required: true },
       { id: 'product_code', label: 'Product Code', type: 'text', required: true },
-      { id: 'panel', label: 'Review Panel', type: 'text', required: true }
-    ]
+      { id: 'panel', label: 'Review Panel', type: 'text', required: true },
+    ],
   },
   {
     id: 'device-description',
     title: '4. Device Description',
     required: true,
     fields: [
-      { id: 'physical_desc', label: 'Physical Description', type: 'textarea', required: true,
-        template: 'The device consists of [COMPONENTS]. It measures [DIMENSIONS] and weighs [WEIGHT].' },
+      {
+        id: 'physical_desc',
+        label: 'Physical Description',
+        type: 'textarea',
+        required: true,
+        template:
+          'The device consists of [COMPONENTS]. It measures [DIMENSIONS] and weighs [WEIGHT].',
+      },
       { id: 'materials', label: 'Materials', type: 'textarea', required: true },
       { id: 'specifications', label: 'Technical Specifications', type: 'textarea', required: true },
       { id: 'principles', label: 'Principles of Operation', type: 'textarea', required: true },
-      { id: 'software_desc', label: 'Software Description (if applicable)', type: 'textarea' }
-    ]
+      { id: 'software_desc', label: 'Software Description (if applicable)', type: 'textarea' },
+    ],
   },
   {
     id: 'substantial-equivalence',
@@ -91,10 +103,16 @@ const FDA_510K_SECTIONS = [
       { id: 'predicate_k', label: 'Predicate K Number', type: 'text', required: true },
       { id: 'predicate_name', label: 'Predicate Device Name', type: 'text', required: true },
       { id: 'predicate_mfr', label: 'Predicate Manufacturer', type: 'text', required: true },
-      { id: 'comparison', label: 'Comparison Table', type: 'textarea', required: true,
-        template: 'Subject Device vs Predicate:\n• Intended Use: [SAME/SIMILAR]\n• Technology: [COMPARISON]\n• Materials: [COMPARISON]\n• Performance: [COMPARISON]' },
-      { id: 'differences', label: 'Differences Discussion', type: 'textarea', required: true }
-    ]
+      {
+        id: 'comparison',
+        label: 'Comparison Table',
+        type: 'textarea',
+        required: true,
+        template:
+          'Subject Device vs Predicate:\n• Intended Use: [SAME/SIMILAR]\n• Technology: [COMPARISON]\n• Materials: [COMPARISON]\n• Performance: [COMPARISON]',
+      },
+      { id: 'differences', label: 'Differences Discussion', type: 'textarea', required: true },
+    ],
   },
   {
     id: 'performance',
@@ -106,8 +124,8 @@ const FDA_510K_SECTIONS = [
       { id: 'acceptance_criteria', label: 'Acceptance Criteria', type: 'textarea', required: true },
       { id: 'test_results', label: 'Test Results', type: 'textarea', required: true },
       { id: 'electrical_safety', label: 'Electrical Safety (IEC 60601)', type: 'textarea' },
-      { id: 'emc_testing', label: 'EMC Testing (IEC 60601-1-2)', type: 'textarea' }
-    ]
+      { id: 'emc_testing', label: 'EMC Testing (IEC 60601-1-2)', type: 'textarea' },
+    ],
   },
   {
     id: 'biocompatibility',
@@ -115,22 +133,32 @@ const FDA_510K_SECTIONS = [
     required: false,
     fields: [
       { id: 'patient_contact', label: 'Patient Contact Duration', type: 'text' },
-      { id: 'iso_10993', label: 'ISO 10993 Testing', type: 'textarea',
-        template: 'Testing performed per ISO 10993:\n• Part 5: Cytotoxicity\n• Part 10: Irritation\n• Part 11: Systemic toxicity' },
-      { id: 'test_results', label: 'Biocompatibility Results', type: 'textarea' }
-    ]
+      {
+        id: 'iso_10993',
+        label: 'ISO 10993 Testing',
+        type: 'textarea',
+        template:
+          'Testing performed per ISO 10993:\n• Part 5: Cytotoxicity\n• Part 10: Irritation\n• Part 11: Systemic toxicity',
+      },
+      { id: 'test_results', label: 'Biocompatibility Results', type: 'textarea' },
+    ],
   },
   {
     id: 'software',
     title: '8. Software Validation',
     required: false,
     fields: [
-      { id: 'level_of_concern', label: 'Level of Concern', type: 'select', options: ['Minor', 'Moderate', 'Major'] },
+      {
+        id: 'level_of_concern',
+        label: 'Level of Concern',
+        type: 'select',
+        options: ['Minor', 'Moderate', 'Major'],
+      },
       { id: 'software_description', label: 'Software Description', type: 'textarea' },
       { id: 'hazard_analysis', label: 'Hazard Analysis', type: 'textarea' },
       { id: 'v_and_v', label: 'Verification & Validation', type: 'textarea' },
-      { id: 'revision_history', label: 'Revision History', type: 'textarea' }
-    ]
+      { id: 'revision_history', label: 'Revision History', type: 'textarea' },
+    ],
   },
   {
     id: 'sterilization',
@@ -140,8 +168,8 @@ const FDA_510K_SECTIONS = [
       { id: 'method', label: 'Sterilization Method', type: 'text' },
       { id: 'sal', label: 'Sterility Assurance Level', type: 'text' },
       { id: 'validation', label: 'Validation Summary', type: 'textarea' },
-      { id: 'packaging', label: 'Packaging Validation', type: 'textarea' }
-    ]
+      { id: 'packaging', label: 'Packaging Validation', type: 'textarea' },
+    ],
   },
   {
     id: 'labeling',
@@ -151,8 +179,8 @@ const FDA_510K_SECTIONS = [
       { id: 'device_label', label: 'Device Label', type: 'textarea', required: true },
       { id: 'ifu', label: 'Instructions for Use', type: 'textarea', required: true },
       { id: 'package_insert', label: 'Package Insert', type: 'textarea' },
-      { id: 'promotional', label: 'Promotional Materials', type: 'textarea' }
-    ]
+      { id: 'promotional', label: 'Promotional Materials', type: 'textarea' },
+    ],
   },
   {
     id: 'clinical',
@@ -163,16 +191,16 @@ const FDA_510K_SECTIONS = [
       { id: 'study_design', label: 'Study Design', type: 'textarea' },
       { id: 'endpoints', label: 'Primary Endpoints', type: 'textarea' },
       { id: 'results', label: 'Clinical Results Summary', type: 'textarea' },
-      { id: 'adverse_events', label: 'Adverse Events', type: 'textarea' }
-    ]
-  }
+      { id: 'adverse_events', label: 'Adverse Events', type: 'textarea' },
+    ],
+  },
 ];
 
-export default function FDA510kEMREditor({ 
-  deviceProfile = {}, 
-  onSave, 
+export default function FDA510kEMREditor({
+  deviceProfile = {},
+  onSave,
   existingData = {},
-  documentId 
+  documentId,
 }) {
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState('cover-letter');
@@ -188,21 +216,21 @@ export default function FDA510kEMREditor({
     const initialData = {
       'cover-letter': {
         device_name: deviceProfile.deviceName || '',
-        manufacturer: deviceProfile.manufacturer || ''
+        manufacturer: deviceProfile.manufacturer || '',
       },
-      'indications': {
+      indications: {
         device_name: deviceProfile.deviceName || '',
-        intended_use: deviceProfile.intendedUse || ''
+        intended_use: deviceProfile.intendedUse || '',
       },
       'device-description': {
         physical_desc: deviceProfile.description || '',
-        specifications: deviceProfile.technicalSpecifications || ''
+        specifications: deviceProfile.technicalSpecifications || '',
       },
       'substantial-equivalence': {
         predicate_k: deviceProfile.predicateDevice || '',
-        predicate_mfr: deviceProfile.predicateManufacturer || ''
+        predicate_mfr: deviceProfile.predicateManufacturer || '',
       },
-      ...existingData
+      ...existingData,
     };
     setSectionData(initialData);
   }, [deviceProfile]);
@@ -213,7 +241,7 @@ export default function FDA510kEMREditor({
       const timer = setTimeout(() => {
         handleAutoSave();
       }, 5000); // Auto-save after 5 seconds of inactivity
-      
+
       return () => clearTimeout(timer);
     }
   }, [sectionData, isDirty]);
@@ -224,14 +252,14 @@ export default function FDA510kEMREditor({
       ...prev,
       [sectionId]: {
         ...(prev[sectionId] || {}),
-        [fieldId]: value
-      }
+        [fieldId]: value,
+      },
     }));
     setIsDirty(true);
   };
 
   // Check if section is complete
-  const isSectionComplete = (section) => {
+  const isSectionComplete = section => {
     const data = sectionData[section.id] || {};
     return section.fields
       .filter(f => f.required)
@@ -239,14 +267,14 @@ export default function FDA510kEMREditor({
   };
 
   // Mark section as complete
-  const markSectionComplete = (sectionId) => {
+  const markSectionComplete = sectionId => {
     const section = FDA_510K_SECTIONS.find(s => s.id === sectionId);
     if (isSectionComplete(section)) {
       setCompletedSections(prev => new Set([...prev, sectionId]));
       toast({
-        title: "Section Completed",
+        title: 'Section Completed',
         description: `${section.title} has been marked as complete`,
-        duration: 2000
+        duration: 2000,
       });
     }
   };
@@ -267,11 +295,11 @@ export default function FDA510kEMREditor({
     FDA_510K_SECTIONS.forEach(section => {
       const data = sectionData[section.id] || {};
       const isComplete = completedSections.has(section.id);
-      
+
       html += `
         <div style="margin: 30px 0; padding: 20px; background: ${isComplete ? '#f0fff0' : '#fff'}; border-left: 4px solid ${isComplete ? '#10b981' : '#fbbf24'};">
           <h2 style="color: #003366; margin-top: 0;">
-            ${section.title} 
+            ${section.title}
             ${section.required ? '<span style="color: red;">*</span>' : ''}
             ${isComplete ? '<span style="color: #10b981; float: right;">✓ Complete</span>' : ''}
           </h2>
@@ -318,12 +346,12 @@ export default function FDA510kEMREditor({
     setIsSaving(true);
     try {
       const documentContent = generateFullDocument();
-      
-      const response = await fetch('/api/medical-device/documents/save', {
+
+      const response = await fetch('/api/medical-devices/documents/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-Id': localStorage.getItem('organizationId') || 'default'
+          'X-Tenant-Id': localStorage.getItem('organizationId') || 'default',
         },
         body: JSON.stringify({
           documentId: documentId,
@@ -333,19 +361,21 @@ export default function FDA510kEMREditor({
           completedSections: Array.from(completedSections),
           metadata: {
             deviceProfile: deviceProfile,
-            completeness: Math.round((completedSections.size / FDA_510K_SECTIONS.filter(s => s.required).length) * 100)
-          }
-        })
+            completeness: Math.round(
+              (completedSections.size / FDA_510K_SECTIONS.filter(s => s.required).length) * 100
+            ),
+          },
+        }),
       });
 
       if (response.ok) {
         setLastSaved(new Date());
         setIsDirty(false);
         toast({
-          title: "Document Saved",
-          description: "Your 510(k) submission has been saved",
+          title: 'Document Saved',
+          description: 'Your 510(k) submission has been saved',
         });
-        
+
         if (onSave) {
           onSave({ sectionData, completedSections });
         }
@@ -353,9 +383,9 @@ export default function FDA510kEMREditor({
     } catch (error) {
       console.error('Save error:', error);
       toast({
-        title: "Save Failed",
-        description: "Unable to save document",
-        variant: "destructive"
+        title: 'Save Failed',
+        description: 'Unable to save document',
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
@@ -386,7 +416,9 @@ export default function FDA510kEMREditor({
       case 'textarea':
         return (
           <div key={field.id} className="space-y-2">
-            <Label>{field.label} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Label>
+              {field.label} {field.required && <span className="text-red-500">*</span>}
+            </Label>
             {field.template && (
               <Button
                 size="sm"
@@ -400,14 +432,14 @@ export default function FDA510kEMREditor({
             )}
             <Textarea
               value={value}
-              onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
+              onChange={e => handleFieldChange(section.id, field.id, e.target.value)}
               placeholder={field.template || `Enter ${field.label.toLowerCase()}...`}
               className="min-h-[100px]"
               data-testid={`field-${field.id}`}
             />
           </div>
         );
-      
+
       case 'checkbox':
         return (
           <div key={field.id} className="flex items-center space-x-2">
@@ -415,40 +447,46 @@ export default function FDA510kEMREditor({
               type="checkbox"
               id={field.id}
               checked={value === true || value === 'true'}
-              onChange={(e) => handleFieldChange(section.id, field.id, e.target.checked)}
+              onChange={e => handleFieldChange(section.id, field.id, e.target.checked)}
               className="h-4 w-4"
               data-testid={`field-${field.id}`}
             />
             <Label htmlFor={field.id}>{field.label}</Label>
           </div>
         );
-      
+
       case 'select':
         return (
           <div key={field.id} className="space-y-2">
-            <Label>{field.label} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Label>
+              {field.label} {field.required && <span className="text-red-500">*</span>}
+            </Label>
             <select
               value={value}
-              onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
+              onChange={e => handleFieldChange(section.id, field.id, e.target.value)}
               className="w-full border rounded px-3 py-2"
               data-testid={`field-${field.id}`}
             >
               <option value="">Select {field.label}</option>
               {field.options?.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
         );
-      
+
       default:
         return (
           <div key={field.id} className="space-y-2">
-            <Label>{field.label} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Label>
+              {field.label} {field.required && <span className="text-red-500">*</span>}
+            </Label>
             <Input
               type={field.type}
               value={value}
-              onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
+              onChange={e => handleFieldChange(section.id, field.id, e.target.value)}
               placeholder={`Enter ${field.label.toLowerCase()}...`}
               data-testid={`field-${field.id}`}
             />
@@ -458,7 +496,9 @@ export default function FDA510kEMREditor({
   };
 
   const currentSection = FDA_510K_SECTIONS.find(s => s.id === activeSection);
-  const completionPercentage = Math.round((completedSections.size / FDA_510K_SECTIONS.filter(s => s.required).length) * 100);
+  const completionPercentage = Math.round(
+    (completedSections.size / FDA_510K_SECTIONS.filter(s => s.required).length) * 100
+  );
 
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-gray-50">
@@ -468,7 +508,7 @@ export default function FDA510kEMREditor({
           <h3 className="font-bold text-lg">FDA 510(k) Sections</h3>
           <div className="flex items-center gap-2 mt-2">
             <div className="flex-1 bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-green-500 h-2 rounded-full transition-all"
                 style={{ width: `${completionPercentage}%` }}
               />
@@ -479,7 +519,7 @@ export default function FDA510kEMREditor({
 
         <ScrollArea className="flex-1">
           <div className="p-2">
-            {FDA_510K_SECTIONS.map((section) => {
+            {FDA_510K_SECTIONS.map(section => {
               const isComplete = completedSections.has(section.id);
               const isActive = activeSection === section.id;
               const isFilled = isSectionComplete(section);
@@ -503,12 +543,8 @@ export default function FDA510kEMREditor({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">
-                      {section.title}
-                    </div>
-                    {section.required && (
-                      <div className="text-xs text-red-500">Required</div>
-                    )}
+                    <div className="font-medium text-sm">{section.title}</div>
+                    {section.required && <div className="text-xs text-red-500">Required</div>}
                   </div>
                   {isActive && <ChevronRight className="h-4 w-4" />}
                 </button>
@@ -518,8 +554,8 @@ export default function FDA510kEMREditor({
         </ScrollArea>
 
         <div className="p-4 border-t space-y-2">
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             className="w-full"
             disabled={isSaving}
             data-testid="save-button"
@@ -527,9 +563,9 @@ export default function FDA510kEMREditor({
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? 'Saving...' : 'Save Document'}
           </Button>
-          <Button 
-            onClick={handleExport} 
-            variant="outline" 
+          <Button
+            onClick={handleExport}
+            variant="outline"
             className="w-full"
             data-testid="export-button"
           >
@@ -553,7 +589,7 @@ export default function FDA510kEMREditor({
               {isDirty && <Badge variant="outline">Unsaved Changes</Badge>}
               <Button
                 size="sm"
-                variant={completedSections.has(activeSection) ? "default" : "outline"}
+                variant={completedSections.has(activeSection) ? 'default' : 'outline'}
                 onClick={() => markSectionComplete(activeSection)}
                 disabled={!isSectionComplete(currentSection)}
                 data-testid="mark-complete-button"
@@ -589,7 +625,7 @@ export default function FDA510kEMREditor({
         </div>
 
         <ScrollArea className="flex-1">
-          <div 
+          <div
             ref={previewRef}
             className="p-6"
             dangerouslySetInnerHTML={{ __html: generateFullDocument() }}

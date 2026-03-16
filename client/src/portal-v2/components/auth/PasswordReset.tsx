@@ -778,7 +778,7 @@ export const PasswordResetFlow: React.FC<{
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold">TrialSage</span>
+          <span className="text-xl font-bold">Concept2Cure</span>
         </div>
 
         <Card className="shadow-xl">

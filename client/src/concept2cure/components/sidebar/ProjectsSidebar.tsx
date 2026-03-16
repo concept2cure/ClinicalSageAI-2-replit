@@ -1,6 +1,6 @@
 /**
  * Concept2Cure - Projects Sidebar
- * 
+ *
  * Claude.ai-style sidebar with Projects list, conversations, and navigation.
  * This replaces the traditional module-based navigation.
  */
@@ -50,13 +50,13 @@ import { ProjectKnowledge } from '../knowledge';
 
 const submissionTypeColors: Record<SubmissionType, string> = {
   '510K': 'bg-blue-100 text-blue-700 border-blue-200',
-  'IND': 'bg-purple-100 text-purple-700 border-purple-200',
-  'NDA': 'bg-green-100 text-green-700 border-green-200',
-  'BLA': 'bg-orange-100 text-orange-700 border-orange-200',
-  'MAA': 'bg-pink-100 text-pink-700 border-pink-200',
-  'PMA': 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  'DE_NOVO': 'bg-amber-100 text-amber-700 border-amber-200',
-  'EUA': 'bg-red-100 text-red-700 border-red-200',
+  IND: 'bg-purple-100 text-purple-700 border-purple-200',
+  NDA: 'bg-green-100 text-green-700 border-green-200',
+  BLA: 'bg-orange-100 text-orange-700 border-orange-200',
+  MAA: 'bg-pink-100 text-pink-700 border-pink-200',
+  PMA: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  DE_NOVO: 'bg-amber-100 text-amber-700 border-amber-200',
+  EUA: 'bg-red-100 text-red-700 border-red-200',
 };
 
 const SubmissionBadge: React.FC<{ type: SubmissionType }> = ({ type }) => (
@@ -123,18 +123,16 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                 'flex h-10 w-10 items-center justify-center rounded-lg transition-all',
                 isActive
                   ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none'
               )}
             >
-              <span className="text-sm font-semibold">
-                {project.name.charAt(0).toUpperCase()}
-              </span>
+              <span className="text-sm font-semibold">{project.name.charAt(0).toUpperCase()}</span>
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="max-w-[200px]">
             <div className="space-y-1">
               <div className="font-medium">{project.name}</div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
                 <SubmissionBadge type={project.type} />
                 <span>·</span>
                 <span>{project.conversationCount} chats</span>
@@ -150,34 +148,27 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
     <div
       className={cn(
         'group relative rounded-lg transition-all cursor-pointer',
-        isActive
-          ? 'bg-blue-50 ring-1 ring-blue-200'
-          : 'hover:bg-gray-50'
+        isActive ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-zinc-50'
       )}
     >
       <button
         onClick={onClick}
-        className="w-full p-3 text-left"
+        className="w-full p-3 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded-lg"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span
-                className={cn(
-                  'font-medium truncate',
-                  isActive ? 'text-blue-900' : 'text-gray-900'
-                )}
+                className={cn('font-medium truncate', isActive ? 'text-blue-900' : 'text-zinc-900')}
               >
                 {project.name}
               </span>
               <SubmissionBadge type={project.type} />
             </div>
             {project.description && (
-              <p className="mt-0.5 text-xs text-gray-500 truncate">
-                {project.description}
-              </p>
+              <p className="mt-0.5 text-xs text-zinc-500 truncate">{project.description}</p>
             )}
-            <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
+            <div className="mt-2 flex items-center gap-3 text-xs text-zinc-400">
               <span className="flex items-center gap-1">
                 <MessageSquare className="h-3 w-3" />
                 {project.conversationCount}
@@ -200,10 +191,10 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
         <DropdownMenuTrigger asChild>
           <button
             className={cn(
-              'absolute right-2 top-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
-              'hover:bg-gray-200 text-gray-400 hover:text-gray-600'
+              'absolute right-2 top-2 p-1 rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity',
+              'hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus-visible:opacity-100'
             )}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
@@ -218,10 +209,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             Archive
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={onDelete}
-            className="text-red-600 focus:text-red-600"
-          >
+          <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
@@ -256,7 +244,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     const now = new Date();
     const d = new Date(date);
     const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -269,28 +257,26 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     <button
       onClick={onClick}
       className={cn(
-        'w-full px-3 py-2 text-left rounded-md transition-colors',
+        'w-full px-3 py-2 text-left rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         isActive
-          ? 'bg-gray-100 text-gray-900'
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ? 'bg-zinc-100 text-zinc-900'
+          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+            <MessageSquare className="h-3.5 w-3.5 flex-shrink-0 text-zinc-400" />
             <span className="text-sm font-medium truncate">{title}</span>
           </div>
           {lastMessage && (
-            <p className="mt-0.5 text-xs text-gray-400 truncate pl-5">
-              {lastMessage}
-            </p>
+            <p className="mt-0.5 text-xs text-zinc-400 truncate pl-5">{lastMessage}</p>
           )}
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="text-[10px] text-gray-400">{formatTime(updatedAt)}</span>
+          <span className="text-[10px] text-zinc-400">{formatTime(updatedAt)}</span>
           {artifactCount > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
+            <span className="flex items-center gap-0.5 text-[10px] text-zinc-400">
               <FileText className="h-2.5 w-2.5" />
               {artifactCount}
             </span>
@@ -329,7 +315,7 @@ export const ProjectsSidebar: React.FC = () => {
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
     let projects = state.projects.filter(p => p.status === 'active');
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       projects = projects.filter(
@@ -425,7 +411,7 @@ export const ProjectsSidebar: React.FC = () => {
         {/* Access points */}
         <div className="px-2 pb-2">
           <div className="flex flex-col items-center gap-1" role="navigation" aria-label="Primary">
-            {ACCESS_ITEMS.map((item) => {
+            {ACCESS_ITEMS.map(item => {
               const Icon = item.icon;
               return (
                 <TooltipProvider key={item.id}>
@@ -477,10 +463,7 @@ export const ProjectsSidebar: React.FC = () => {
           </TooltipProvider>
         </div>
 
-        <NewProjectModal
-          open={showNewProjectModal}
-          onClose={() => setShowNewProjectModal(false)}
-        />
+        <NewProjectModal open={showNewProjectModal} onClose={() => setShowNewProjectModal(false)} />
       </div>
     );
   }
@@ -508,7 +491,7 @@ export const ProjectsSidebar: React.FC = () => {
       <div className="px-3 pt-3">
         <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Access</h3>
         <div className="space-y-1" role="navigation" aria-label="Primary">
-          {ACCESS_ITEMS.map((item) => {
+          {ACCESS_ITEMS.map(item => {
             const Icon = item.icon;
             return (
               <button
@@ -532,7 +515,7 @@ export const ProjectsSidebar: React.FC = () => {
             type="text"
             placeholder="Search projects..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
           />
         </div>
@@ -554,7 +537,7 @@ export const ProjectsSidebar: React.FC = () => {
       <ScrollArea className="flex-1 px-3">
         <div className="space-y-1 pb-4">
           {filteredProjects.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-500">
+            <div className="py-8 text-center text-sm text-zinc-500">
               {searchQuery ? (
                 <p>No projects found</p>
               ) : (
@@ -577,37 +560,36 @@ export const ProjectsSidebar: React.FC = () => {
                 />
 
                 {/* Expanded conversations list */}
-                {activeProject?.id === project.id &&
-                  expandedProjectId === project.id && (
-                    <div className="mt-1 ml-2 pl-3 border-l-2 border-gray-100 space-y-0.5">
-                      {/* Project Knowledge Panel - Claude.ai parity */}
-                      <div className="py-2">
-                        <ProjectKnowledge project={activeProject} />
-                      </div>
-
-                      {/* New conversation button */}
-                      <button
-                        onClick={handleNewConversation}
-                        className="w-full px-3 py-1.5 text-left text-xs text-blue-600 hover:bg-blue-50 rounded-md flex items-center gap-2"
-                      >
-                        <Plus className="h-3 w-3" />
-                        New conversation
-                      </button>
-
-                      {/* Conversations */}
-                      {projectConversations.map(convo => (
-                        <ConversationItem
-                          key={convo.id}
-                          title={convo.title}
-                          lastMessage={convo.messages[convo.messages.length - 1]?.content}
-                          updatedAt={convo.updatedAt}
-                          isActive={activeConversation?.id === convo.id}
-                          artifactCount={convo.artifacts.length}
-                          onClick={() => setActiveConversation(convo.id)}
-                        />
-                      ))}
+                {activeProject?.id === project.id && expandedProjectId === project.id && (
+                  <div className="mt-1 ml-2 pl-3 border-l-2 border-gray-100 space-y-0.5">
+                    {/* Project Knowledge Panel - Claude.ai parity */}
+                    <div className="py-2">
+                      <ProjectKnowledge project={activeProject} />
                     </div>
-                  )}
+
+                    {/* New conversation button */}
+                    <button
+                      onClick={handleNewConversation}
+                      className="w-full px-3 py-1.5 text-left text-xs text-blue-600 hover:bg-blue-50 rounded-md flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                    >
+                      <Plus className="h-3 w-3" />
+                      New conversation
+                    </button>
+
+                    {/* Conversations */}
+                    {projectConversations.map(convo => (
+                      <ConversationItem
+                        key={convo.id}
+                        title={convo.title}
+                        lastMessage={convo.messages[convo.messages.length - 1]?.content}
+                        updatedAt={convo.updatedAt}
+                        isActive={activeConversation?.id === convo.id}
+                        artifactCount={convo.artifacts.length}
+                        onClick={() => setActiveConversation(convo.id)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -615,24 +597,21 @@ export const ProjectsSidebar: React.FC = () => {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 p-3 space-y-1">
+      <div className="border-t border-zinc-200 p-3 space-y-1">
         <button
           onClick={() => setShowArtifactsCatalog(true)}
-          className="w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-50 rounded-md flex items-center gap-2"
+          className="w-full px-3 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-50 rounded-md flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         >
           <LayoutGrid className="h-4 w-4" />
           Templates Catalog
         </button>
-        <button className="w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-50 rounded-md flex items-center gap-2">
+        <button className="w-full px-3 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-50 rounded-md flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none">
           <Settings className="h-4 w-4" />
           Settings
         </button>
       </div>
 
-      <NewProjectModal
-        open={showNewProjectModal}
-        onClose={() => setShowNewProjectModal(false)}
-      />
+      <NewProjectModal open={showNewProjectModal} onClose={() => setShowNewProjectModal(false)} />
 
       <ArtifactsCatalog
         open={showArtifactsCatalog}

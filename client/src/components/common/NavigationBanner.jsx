@@ -16,14 +16,14 @@ const NavigationBanner = ({ currentModule, currentSection }) => {
     editor: 'Document Editor',
   };
 
-  const currentModuleName = moduleMap[currentModule] || 'TrialSage Platform';
+  const currentModuleName = moduleMap[currentModule] || 'Concept2Cure Platform';
 
   return (
     <Card className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 text-sm">
           <FileText className="h-4 w-4 text-blue-600" />
-          <span className="text-gray-600">TrialSage™</span>
+          <span className="text-gray-600">Concept2Cure</span>
           <ArrowRight className="h-3 w-3 text-gray-400" />
           <Badge variant="outline" className="bg-blue-100 text-blue-700">
             {currentModuleName}

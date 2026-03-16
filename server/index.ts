@@ -55,8 +55,8 @@ import { authMiddleware } from './auth.js';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { and, eq } from 'drizzle-orm';
-import { fda510kStageProgress, fda510kProjects } from '@shared/schema';
+import { and, eq, desc } from 'drizzle-orm';
+import { fda510kStageProgress, fda510kProjects, projects } from '@shared/schema';
 
 // Debug mode configuration
 const DEBUG = process.env.DEBUG || process.env.NODE_ENV === 'development';
@@ -220,6 +220,38 @@ app.use(httpLogger); // Add structured logging
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// IMMUTABILITY POLICY ENFORCEMENT — 21 CFR Part 11 Compliance
+// Audit trail records and document version history are append-only.
+// No DELETE or PUT operations allowed on immutable resources.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const IMMUTABLE_ROUTE_PATTERNS = [
+  /^\/api\/audit\/events/, // Audit trail events — append-only
+  /^\/api\/audit\/bulk-delete/, // Explicit bulk-delete block
+];
+
+app.use((req: Request, res: Response, next: Function) => {
+  const isDestructive =
+    req.method === 'DELETE' || (req.method === 'POST' && req.path.includes('bulk-delete'));
+  if (isDestructive) {
+    const isImmutable = IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(req.path));
+    if (isImmutable) {
+      console.warn(
+        `[IMMUTABILITY] Blocked ${req.method} ${req.path} — audit records are append-only`
+      );
+      return res.status(403).json({
+        error: 'IMMUTABILITY_VIOLATION',
+        message:
+          'This resource is protected by the immutability policy (21 CFR Part 11). Records can only be appended, never modified or deleted.',
+        path: req.path,
+        method: req.method,
+      });
+    }
+  }
+  next();
+});
+debugLog('Immutability policy enforcement middleware installed');
+
 // CORS now handled by enterprise-security middleware (origin whitelist instead of wildcard '*')
 
 // Input sanitization and organization validation now handled by enterprise-security middleware
@@ -301,6 +333,19 @@ app.get('/api/health', async (req: Request, res: Response) => {
   };
   debugLog('Health response', healthData);
   res.json(healthData);
+});
+
+// Server-authoritative timestamp.
+// Used by SignaturePage to display accurate date before signing.
+// The authoritative signature timestamp is generated server-side
+// on POST /api/part11/signatures — this is purely for display.
+app.get('/api/time', (_req: Request, res: Response) => {
+  const now = new Date();
+  res.json({
+    iso: now.toISOString(),
+    epoch: now.getTime(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
 });
 
 // Diagnostic page — serves without React/Vite to test Simple Browser rendering
@@ -400,7 +445,14 @@ try {
 // ── Global Auth Middleware ──────────────────────────────────────────────
 // Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects)
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
-  const openPrefixes = ['/api/auth', '/api/login', '/api/logout', '/api/register', '/api/health'];
+  const openPrefixes = [
+    '/api/auth',
+    '/api/login',
+    '/api/logout',
+    '/api/register',
+    '/api/health',
+    '/api/cortex/health',
+  ];
   const fullPath = req.baseUrl + req.path;
   if (openPrefixes.some(p => fullPath.startsWith(p))) return next();
   return authMiddleware(req, res, next);
@@ -469,6 +521,278 @@ app.get('/api/projects', async (req, res) => {
 });
 console.log('✅ /api/projects route mounted directly');
 
+// ────────────────────────────────────────────────────────────────────────────
+// Device-Project CRUD – server-backed persistence for CERV2 module
+// ────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/device-projects – list device projects scoped to the authenticated user's org */
+app.get('/api/device-projects', async (req: Request, res: Response) => {
+  try {
+    // Org scoping: always use the authenticated tenant, never trust query params for org
+    const organization_id = Number(req.tenantId || req.tenantContext?.organizationId);
+    if (!organization_id) {
+      return res.status(403).json({ error: 'Organization context required' });
+    }
+
+    const client_workspace_id = req.query.client_workspace_id
+      ? Number(req.query.client_workspace_id)
+      : undefined;
+
+    let conditions = [
+      eq(projects.organizationId, organization_id),
+      eq(projects.type, 'medical-device'),
+    ];
+    if (client_workspace_id) {
+      conditions.push(eq(projects.clientWorkspaceId, client_workspace_id));
+    }
+
+    const rows = await db
+      .select()
+      .from(projects)
+      .where(and(...conditions))
+      .orderBy(desc(projects.createdAt));
+
+    console.log(`✅ GET /api/device-projects → ${rows.length} rows (org=${organization_id})`);
+    res.json(rows);
+  } catch (error: any) {
+    console.error('Failed to list device projects:', error);
+    res.status(500).json({ error: 'Failed to list device projects' });
+  }
+});
+
+// Allowed device class values
+const VALID_DEVICE_CLASSES = ['I', 'II', 'IIa', 'IIb', 'III'];
+const MAX_NAME_LENGTH = 200;
+const MAX_TEXT_LENGTH = 2000;
+
+/** POST /api/device-projects – create a new device project */
+app.post('/api/device-projects', async (req: Request, res: Response) => {
+  try {
+    // Org scoping: use authenticated tenant, fall back to body only if within same org
+    const organization_id = Number(req.tenantId || req.tenantContext?.organizationId);
+    if (!organization_id) {
+      return res.status(403).json({ error: 'Organization context required' });
+    }
+
+    const {
+      deviceName,
+      deviceType = 'medical-device',
+      manufacturer = '',
+      deviceClass = 'II',
+      intendedUse = '',
+      state = {},
+      attachedDocuments = [],
+      clientWorkspaceId: bodyWsId,
+    } = req.body || {};
+
+    // Input validation
+    const trimmedName = String(deviceName || '').trim();
+    if (!trimmedName || trimmedName.length === 0) {
+      return res.status(400).json({ error: 'deviceName is required' });
+    }
+    if (trimmedName.length > MAX_NAME_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `deviceName must be ${MAX_NAME_LENGTH} characters or fewer` });
+    }
+    if (!VALID_DEVICE_CLASSES.includes(String(deviceClass))) {
+      return res
+        .status(400)
+        .json({ error: `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}` });
+    }
+    if (String(manufacturer).length > MAX_TEXT_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer` });
+    }
+    if (String(intendedUse).length > MAX_TEXT_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `intendedUse must be ${MAX_TEXT_LENGTH} characters or fewer` });
+    }
+    if (!Array.isArray(attachedDocuments)) {
+      return res.status(400).json({ error: 'attachedDocuments must be an array' });
+    }
+    if (typeof state !== 'object' || state === null || Array.isArray(state)) {
+      return res.status(400).json({ error: 'state must be a JSON object' });
+    }
+
+    const client_workspace_id = Number(bodyWsId || 1);
+
+    const [row] = await db
+      .insert(projects)
+      .values({
+        organizationId: organization_id,
+        clientWorkspaceId: client_workspace_id,
+        name: trimmedName,
+        type: 'medical-device',
+        status: 'draft',
+        progress: 0,
+        metadata: {
+          manufacturer: String(manufacturer).trim(),
+          deviceClass: String(deviceClass),
+          intendedUse: String(intendedUse).trim(),
+          deviceType: String(deviceType).trim(),
+          attachedDocuments,
+          state,
+        },
+      })
+      .returning();
+
+    console.log('✅ Created device project:', row.id, `(org=${organization_id})`);
+    res.status(201).json(row);
+  } catch (error: any) {
+    console.error('Failed to create device project:', error);
+    res.status(500).json({ error: 'Failed to create device project' });
+  }
+});
+
+/** PUT /api/device-projects/:id – update an existing device project (org-scoped) */
+app.put('/api/device-projects/:id', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.id);
+    if (!projectId || isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const organization_id = Number(req.tenantId || req.tenantContext?.organizationId);
+    if (!organization_id) {
+      return res.status(403).json({ error: 'Organization context required' });
+    }
+
+    const {
+      deviceName,
+      status,
+      manufacturer,
+      deviceClass,
+      intendedUse,
+      state,
+      attachedDocuments,
+      deviceType,
+      progress,
+    } = req.body || {};
+
+    // Input validation for fields that are present
+    if (deviceName !== undefined) {
+      const trimmedName = String(deviceName).trim();
+      if (trimmedName.length === 0) {
+        return res.status(400).json({ error: 'deviceName cannot be empty' });
+      }
+      if (trimmedName.length > MAX_NAME_LENGTH) {
+        return res
+          .status(400)
+          .json({ error: `deviceName must be ${MAX_NAME_LENGTH} characters or fewer` });
+      }
+    }
+    if (deviceClass !== undefined && !VALID_DEVICE_CLASSES.includes(String(deviceClass))) {
+      return res
+        .status(400)
+        .json({ error: `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}` });
+    }
+    if (manufacturer !== undefined && String(manufacturer).length > MAX_TEXT_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer` });
+    }
+    if (intendedUse !== undefined && String(intendedUse).length > MAX_TEXT_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `intendedUse must be ${MAX_TEXT_LENGTH} characters or fewer` });
+    }
+    if (attachedDocuments !== undefined && !Array.isArray(attachedDocuments)) {
+      return res.status(400).json({ error: 'attachedDocuments must be an array' });
+    }
+    if (
+      state !== undefined &&
+      (typeof state !== 'object' || state === null || Array.isArray(state))
+    ) {
+      return res.status(400).json({ error: 'state must be a JSON object' });
+    }
+    if (
+      progress !== undefined &&
+      (typeof progress !== 'number' || progress < 0 || progress > 100)
+    ) {
+      return res.status(400).json({ error: 'progress must be a number between 0 and 100' });
+    }
+    const VALID_STATUSES = ['draft', 'active', 'submitted', 'approved', 'archived'];
+    if (status !== undefined && !VALID_STATUSES.includes(String(status))) {
+      return res.status(400).json({ error: `status must be one of: ${VALID_STATUSES.join(', ')}` });
+    }
+
+    // Read current row — enforce org ownership
+    const [existing] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id)));
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const prevMeta: any = existing.metadata || {};
+    const mergedMeta = {
+      ...prevMeta,
+      ...(manufacturer !== undefined && { manufacturer: String(manufacturer).trim() }),
+      ...(deviceClass !== undefined && { deviceClass: String(deviceClass) }),
+      ...(intendedUse !== undefined && { intendedUse: String(intendedUse).trim() }),
+      ...(deviceType !== undefined && { deviceType: String(deviceType).trim() }),
+      ...(attachedDocuments !== undefined && { attachedDocuments }),
+      ...(state !== undefined && { state }),
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({
+        ...(deviceName !== undefined && { name: String(deviceName).trim() }),
+        ...(status !== undefined && { status: String(status) }),
+        ...(progress !== undefined && { progress }),
+        metadata: mergedMeta,
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId))
+      .returning();
+
+    console.log('✅ Updated device project:', projectId, `(org=${organization_id})`);
+    res.json(updated);
+  } catch (error: any) {
+    console.error('Failed to update device project:', error);
+    res.status(500).json({ error: 'Failed to update device project' });
+  }
+});
+
+/** DELETE /api/device-projects/:id – remove a device project (org-scoped) */
+app.delete('/api/device-projects/:id', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.id);
+    if (!projectId || isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const organization_id = Number(req.tenantId || req.tenantContext?.organizationId);
+    if (!organization_id) {
+      return res.status(403).json({ error: 'Organization context required' });
+    }
+
+    // Only delete if project belongs to the authenticated user's org
+    const [deleted] = await db
+      .delete(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id)))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    console.log('✅ Deleted device project:', projectId, `(org=${organization_id})`);
+    res.json({ success: true, id: projectId });
+  } catch (error: any) {
+    console.error('Failed to delete device project:', error);
+    res.status(500).json({ error: 'Failed to delete device project' });
+  }
+});
+
+console.log('✅ /api/device-projects CRUD routes mounted');
+
 // Register template routes
 import templateRoutes from './api/templates/routes.ts';
 app.use('/api/templates', templateRoutes);
@@ -495,7 +819,7 @@ app.use('/api/enterprise/rbac', rbacRoutes);
 // Mount CMC Module routes (Chemistry, Manufacturing & Controls)
 try {
   app.use('/api/cmc', cmcAggregatorRoutes);
-  app.use('/api/cmc/projects', cmcProjectRoutes);
+  app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma);
@@ -672,6 +996,175 @@ try {
   );
 } catch (error) {
   console.error('❌ Failed to mount Medical Device routes:', error);
+}
+
+// Mount IVDR (In Vitro Diagnostic Regulation EU 2017/746) routes
+// Triple-gated: auth → feature flag → module entitlement → RBAC
+try {
+  const ivdrModule = await import('./routes/ivdr-routes.ts');
+  const createIVDRRoutes = ivdrModule.default;
+
+  /**
+   * requireIVDRAccess — defense-in-depth gate for all /api/ivdr/* routes
+   *
+   * Layer 1: Auth (req.userId must exist)
+   * Layer 2: Feature flag (ENABLE_IVDR_MODULE env var kill switch)
+   * Layer 3: Tenant context (org must be present — no anonymous)
+   * Layer 4: Module entitlement (org has active module_subscriptions for ivdr_module)
+   * Layer 5: Permission-based RBAC (ivdr:read for reads, ivdr:write for mutations)
+   *
+   * Permission resolution order:
+   *   1. req.user.permissions (JWT-decoded array from auth middleware)
+   *   2. req.tenant.permissions (from tenantIsolation middleware)
+   *   3. Fallback: role → permission map for backwards compatibility
+   *
+   * Error shape: { error: string, code: string } with 401/403/503
+   */
+  const requireIVDRAccess = async (req: Request, res: Response, next: NextFunction) => {
+    // Layer 1: Authenticated user (global authMiddleware sets req.userId)
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required to access IVDR module',
+        code: 'AUTH_REQUIRED',
+      });
+    }
+
+    // Layer 2: Feature flag (kill switch)
+    if (process.env.ENABLE_IVDR_MODULE === 'false') {
+      return res.status(403).json({
+        error: 'IVDR module is not enabled for this environment',
+        code: 'IVDR_MODULE_DISABLED',
+      });
+    }
+
+    // Layer 3: Tenant must exist — no anonymous org access
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    if (!tenantId) {
+      return res.status(403).json({
+        error: 'Organization context required to access IVDR module',
+        code: 'IVDR_NO_TENANT',
+      });
+    }
+
+    // Layer 4: Module entitlement — org must have active ivdr_module subscription
+    try {
+      // Use a 3-second statement timeout to prevent hanging on slow DB queries
+      const entitlement = (await Promise.race([
+        pool.query(
+          `SELECT 1 FROM module_subscriptions ms
+           JOIN available_modules am ON ms.module_id = am.id
+           WHERE ms.organization_id = $1
+             AND am.module_key = 'ivdr_module'
+             AND ms.status = 'active'
+           LIMIT 1`,
+          [tenantId]
+        ),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('IVDR_ENTITLEMENT_TIMEOUT')), 3000)
+        ),
+      ])) as any;
+      // In dev mode, if no subscription row exists, allow access
+      if (entitlement.rows.length === 0) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[IVDR] No active subscription found — allowing dev mode access');
+          // Fall through to next() in dev
+        } else {
+          return res.status(403).json({
+            error: 'Organization does not have an active IVDR module subscription',
+            code: 'IVDR_NOT_LICENSED',
+          });
+        }
+      }
+    } catch (err: any) {
+      if (err?.message === 'IVDR_ENTITLEMENT_TIMEOUT') {
+        console.warn('[IVDR] Entitlement check timed out — allowing dev mode access');
+        // Fall through to next() — allow access on timeout in dev
+      } else if (err?.code === '42P01') {
+        // 42P01 = undefined_table — module_subscriptions not yet migrated
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[IVDR] module_subscriptions table not found — allowing dev mode access');
+          // Fall through to next() in dev
+        } else {
+          return res.status(503).json({
+            error: 'IVDR module licensing tables not yet provisioned',
+            code: 'IVDR_NOT_PROVISIONED',
+          });
+        }
+      } else {
+        console.error('[IVDR] Entitlement check error:', err?.message);
+        // Allow access on unexpected errors in dev mode
+        if (process.env.NODE_ENV !== 'development') {
+          throw err;
+        }
+      }
+    }
+
+    // Layer 5: Permission-based RBAC
+    // Resolve permissions from JWT / tenant middleware / role fallback
+    const userPermissions: string[] =
+      (req as any).user?.permissions || (req as any).tenant?.permissions || [];
+
+    // Role → permission fallback map (compat for JWTs that carry role but not permissions)
+    const rolePermMap: Record<string, string[]> = {
+      superadmin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
+      admin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
+      regulatory_lead: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
+      regulatory: ['ivdr:read', 'ivdr:write', 'ivdr:classify'],
+      quality_assurance: ['ivdr:read', 'ivdr:write'],
+      viewer: ['ivdr:read'],
+      user: ['ivdr:read'],
+    };
+
+    const userRole = (req as any).userRole || (req as any).tenantContext?.role || '';
+    const effectivePerms: Set<string> = new Set([
+      ...userPermissions,
+      ...(rolePermMap[userRole] || []),
+    ]);
+
+    // Wildcard '*' grants all permissions (admin / dev mode)
+    const hasWildcard = effectivePerms.has('*');
+
+    const isReadOnly = req.method === 'GET' || req.method === 'HEAD';
+    const requiredPerm = isReadOnly ? 'ivdr:read' : 'ivdr:write';
+
+    if (!hasWildcard && !effectivePerms.has(requiredPerm)) {
+      return res.status(403).json({
+        error: `Insufficient permissions: ${requiredPerm} required`,
+        code: 'IVDR_PERMISSION_DENIED',
+        required: requiredPerm,
+      });
+    }
+
+    // Attach resolved permissions for downstream route handlers
+    (req as any).ivdrPermissions = effectivePerms;
+
+    next();
+  };
+
+  app.use('/api/ivdr', requireIVDRAccess, createIVDRRoutes(pool));
+  console.log('✅ IVDR API routes mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
+
+  // Mount IVDR Evidence Binder + Pack Builder routes (same middleware gate)
+  try {
+    const binderModule = await import('./routes/ivdr-binder-routes.ts');
+    const createBinderRoutes = binderModule.default;
+    app.use('/api/ivdr', requireIVDRAccess, createBinderRoutes(pool));
+    console.log('✅ IVDR Evidence Binder + Pack Builder routes mounted');
+  } catch (binderErr) {
+    console.error('❌ Failed to mount IVDR Binder routes:', binderErr);
+  }
+
+  // Start IVDR Pack Build Worker (async in-process job processor)
+  try {
+    const workerModule = await import('./workers/ivdr-pack-worker.ts');
+    workerModule.startPackBuildWorker(pool, 2000);
+    console.log('✅ IVDR Pack Build Worker started (2s interval)');
+  } catch (workerErr) {
+    console.error('❌ Failed to start IVDR Pack Worker:', workerErr);
+  }
+} catch (error) {
+  console.error('❌ Failed to mount IVDR routes:', error);
 }
 
 // Mount FDA Integration routes
@@ -967,6 +1460,21 @@ try {
   );
 } catch (error) {
   console.error('❌ Failed to mount DOCX Factory BFF proxy routes:', error);
+}
+
+// Mount Knowledge Base + AI Document Generation BFF proxy (Phase 7.1)
+// POST /api/knowledge-base/upload            → /knowledge/ingest-files
+// GET  /api/knowledge-base/context/:id       → /knowledge/project-context/{id}
+// POST /api/knowledge-base/generate-docx     → /knowledge/generate-docx
+// POST /api/knowledge-base/generate-ind-package → /knowledge/generate-ind-package
+// POST /api/knowledge-base/generate-ind-section → /knowledge/generate-ind-section
+try {
+  const knowledgeBaseModule = await import('./routes/knowledge-base.js');
+  const knowledgeBaseRoutes = knowledgeBaseModule.default;
+  app.use('/api/knowledge-base', knowledgeBaseRoutes);
+  console.log('✅ Knowledge Base BFF proxy routes mounted (Phase 7.1 — AI document synthesis)');
+} catch (error) {
+  console.error('❌ Failed to mount Knowledge Base BFF proxy routes:', error);
 }
 
 // Mount Predicate Intelligence BFF proxy (Phase 6.6 — Predicate Intelligence)
@@ -1727,7 +2235,8 @@ async function queryAuditEvents(queryParams: any, limitVal = 10, offsetVal = 0) 
   params.push(offsetVal);
   const result = await pool.query(
     `SELECT id, organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role,
-            ip_address, timestamp, reason, comments, regulatory_significant, gxp_relevant, metadata, created_at
+            ip_address, timestamp, reason, comments, regulatory_significant, gxp_relevant, metadata,
+            record_hash, previous_hash, sequence_number, created_at
      FROM audit_events ${where} ORDER BY timestamp DESC LIMIT $${idx++} OFFSET $${idx++}`,
     params
   );
@@ -1754,6 +2263,10 @@ function formatAuditRow(row: any) {
     org_id: String(row.organization_id || ''),
     project_id: String(row.entity_id || ''),
     timestamp: row.timestamp || row.created_at,
+    // Hash chain fields for Part 11 chain integrity display
+    hash: row.record_hash || null,
+    sequenceNumber: row.sequence_number ?? null,
+    previousHash: row.previous_hash || null,
   };
 }
 
@@ -1853,6 +2366,57 @@ app.post('/api/audit/events', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Failed to record audit event:', error);
     return res.status(500).json({ error: 'Failed to record audit event' });
+  }
+});
+
+// Batch audit events endpoint for efficient multi-event flushing from the client
+app.post('/api/audit/events/batch', async (req: Request, res: Response) => {
+  try {
+    const { events } = req.body || {};
+    if (!Array.isArray(events) || events.length === 0) {
+      return res.status(400).json({ error: 'events array is required and must not be empty' });
+    }
+
+    // Limit batch size to prevent abuse
+    const batch = events.slice(0, 50);
+    const results: { eventId: number; action: string }[] = [];
+
+    for (const evt of batch) {
+      try {
+        const result = await pool.query(
+          `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
+          [
+            evt.organizationId || 1,
+            evt.eventType || evt.action || 'general',
+            evt.entityType || 'document',
+            evt.entityId || 0,
+            evt.userId || evt.user?.id || 0,
+            evt.userName || evt.user?.name || 'System',
+            evt.userRole || evt.user?.role || 'user',
+            req.ip || '',
+            evt.reason || null,
+            JSON.stringify(evt.metadata || evt.details || {}),
+            evt.regulatorySignificant || false,
+            evt.gxpRelevant !== undefined ? evt.gxpRelevant : true,
+          ]
+        );
+        results.push({ eventId: result.rows[0].id, action: evt.eventType || evt.action || '' });
+      } catch (err) {
+        console.error('Failed to insert batch audit event:', err);
+        // Continue processing remaining events
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      inserted: results.length,
+      total: batch.length,
+      receivedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Failed to process batch audit events:', error);
+    return res.status(500).json({ error: 'Failed to process batch audit events' });
   }
 });
 
@@ -1975,22 +2539,17 @@ app.get('/api/audit/export', async (req: Request, res: Response) => {
   }
 });
 
+// IMMUTABILITY POLICY: Audit records are append-only per 21 CFR Part 11.
+// Bulk-delete is disabled. Audit events cannot be modified or deleted.
 app.post('/api/audit/bulk-delete', async (req: Request, res: Response) => {
-  try {
-    const body = req.body || {};
-    // Only allow deletion of non-regulatory-significant events
-    const result = await pool.query(
-      `DELETE FROM audit_events WHERE regulatory_significant = false AND gxp_relevant = false RETURNING id`
-    );
-    return res.json({
-      success: true,
-      deletedCount: result.rowCount || 0,
-      reason: body.reason || null,
-    });
-  } catch (error) {
-    console.error('Failed to bulk-delete audit logs:', error);
-    return res.status(500).json({ error: 'Failed to bulk-delete audit logs' });
-  }
+  return res.status(403).json({
+    error: 'IMMUTABILITY_VIOLATION',
+    message:
+      'Audit records are immutable per 21 CFR Part 11 compliance. ' +
+      'Deletion of audit trail events is prohibited. ' +
+      'Records can only be appended, never modified or deleted.',
+    policy: 'append-only',
+  });
 });
 
 // Search compatibility facade (P0 route recovery)
@@ -2290,10 +2849,25 @@ import chatRoutes from './routes/chat.ts';
 app.use('/api/chat', chatRoutes);
 console.log('✅ Lumen Cortex Chat API routes mounted successfully');
 
+// Mount AI Claims → Binder provenance route
+try {
+  const claimsModule = await import('./routes/ai-claims-routes.ts');
+  const createAIClaimsRoutes = claimsModule.default;
+  app.use('/api/ai', createAIClaimsRoutes(pool));
+  console.log('✅ AI Claims → Binder routes mounted (/api/ai/claims)');
+} catch (claimsErr) {
+  console.error('❌ Failed to mount AI Claims routes:', claimsErr);
+}
+
 // Mount Concept2Cure routes (Claude.ai-style regulatory interface)
 import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
+
+// Mount Regulatory Precedent Engine
+import precedentEngineRoutes from './routes/precedent-engine';
+app.use('/api/precedent-engine', precedentEngineRoutes);
+console.log('✅ Precedent Engine routes mounted successfully');
 
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
@@ -2406,15 +2980,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
 
     // For demo projects, save workflow data in memory or skip stage progress table
     if (isDemoProject) {
-      console.log(`[510k-workflow] Demo project ${projectId} - saving workflow data in memory`);
-      // Store in memory storage for demo projects
-      memStorage.updateWorkflow(
-        parseInt(projectId),
-        stage,
-        data,
-        req.body.completedSteps || [],
-        req.body.validationCheckpoints || {}
-      );
+      console.log(`[510k-workflow] Demo project ${projectId} - skipping database persistence`);
     } else {
       // For real projects, save to database
       try {
@@ -2473,14 +3039,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
           `[510k-workflow] Could not save to stage progress table for project ${projectId}:`,
           dbError
         );
-        // Fall back to memory storage
-        memStorage.updateWorkflow(
-          parseInt(projectId),
-          stage,
-          data,
-          req.body.completedSteps || [],
-          req.body.validationCheckpoints || {}
-        );
+        // DB save failed — logged above, workflow continues with in-memory state
       }
     }
 
@@ -2550,6 +3109,40 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
   } catch (error) {
     console.error('[510k-workflow] Save error:', error);
     res.status(500).json({ success: false, error: 'Failed to save workflow data' });
+  }
+});
+
+// GET stage data for a specific project+stage+section (for client persistence hydration)
+app.get('/api/510k-workflow/:projectId/stage-data', async (req, res) => {
+  const { projectId } = req.params;
+  const stage = (req.query.stage as string) || 'default';
+  const section = (req.query.section as string) || 'default';
+
+  try {
+    const rows = await db!
+      .select()
+      .from(fda510kStageProgress)
+      .where(
+        and(
+          eq(fda510kStageProgress.projectId, parseInt(projectId)),
+          eq(fda510kStageProgress.stageName, stage),
+          eq(fda510kStageProgress.sectionName, section)
+        )
+      );
+
+    if (rows.length > 0) {
+      res.status(200).json({
+        success: true,
+        collectedData: rows[0].collectedData || {},
+        status: rows[0].status,
+        progress: rows[0].progress,
+      });
+    } else {
+      res.status(200).json({ success: true, collectedData: {} });
+    }
+  } catch (error) {
+    console.error('[510k-workflow] Stage data read error:', error);
+    res.status(500).json({ success: false, error: 'Failed to read stage data' });
   }
 });
 
@@ -5017,6 +5610,15 @@ async function startServer() {
     console.log('   Proof system will operate with in-memory audit (not compliant for production)');
   }
 
+  // Ensure auth tables have the columns auth routes expect (idempotent)
+  try {
+    const { ensureAuthTables } = await import('./db.js');
+    await ensureAuthTables();
+    console.log('✅ Auth schema bootstrap complete');
+  } catch (error: any) {
+    console.error('⚠️ Auth schema bootstrap warning:', error.message);
+  }
+
   // Start Python backend first
   debugLog('Initializing Python backend...');
   await startPythonBackend();
@@ -5454,6 +6056,142 @@ async function startServer() {
   } catch (error) {
     console.error('❌ Failed to mount regulatory digital twin routes:', error);
   }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
+  // Must be registered BEFORE the catch-all 404 handler
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const c2cMissingRoutes = await import('./routes/c2c-missing-routes.ts');
+    app.use('/api', c2cMissingRoutes.default);
+    console.log(
+      '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount c2c-missing-routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // WORKSPACE SUMMARY — GET /api/workspace/summary
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const workspaceSummaryRoutes = await import('./routes/workspace-summary.ts');
+    app.use('/api', workspaceSummaryRoutes.default);
+    console.log('✅ Workspace summary route registered (GET /api/workspace/summary)');
+  } catch (error) {
+    console.error('❌ Failed to mount workspace-summary:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // CHAT ACTIONS — POST /api/chat/actions/run
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const chatActionsRoutes = await import('./routes/chat-actions.ts');
+    app.use('/api', chatActionsRoutes.default);
+    console.log('✅ Chat actions route registered (POST /api/chat/actions/run)');
+  } catch (error) {
+    console.error('❌ Failed to mount chat-actions:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // WORKSPACE PROJECTS — GET /api/workspace/projects, POST /api/workspace/projects
+  // Inline handlers to avoid dynamic import ordering issues.
+  // ──────────────────────────────────────────────────────────────────────────
+  app.post('/api/workspace/projects', async (req: any, res: any) => {
+    const rawOrgId =
+      req.tenantContext?.organizationId ||
+      req.organizationId ||
+      req.user?.organizationId ||
+      req.user?.tenantId ||
+      '1';
+    const orgId: number = parseInt(String(rawOrgId), 10) || 1;
+    const {
+      name,
+      type = 'ind',
+      description,
+      clientId,
+      deviceName,
+      drugName,
+      indication,
+      sponsor,
+      phase,
+      deviceType,
+      regulatoryContext,
+      product,
+      region,
+      goal,
+    } = req.body || {};
+    if (!name?.trim()) return res.status(400).json({ ok: false, error: 'name is required' });
+    try {
+      const t = (type || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      let row: any;
+      if (t === 'ind' || t === 'bla' || t === 'nda' || t === 'pharma') {
+        const r = await pool.query(
+          `INSERT INTO ind_projects (name, project_id, organization_id, client_workspace_id, drug_name, indication, sponsor, phase, status, stage, progress, project_data, step_data, sections, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active','planning',0,'{}','{}','[]',NOW(),NOW()) RETURNING id, name`,
+          [
+            name.trim(),
+            `ind-${Date.now()}`,
+            orgId,
+            clientId ? parseInt(clientId, 10) : null,
+            drugName || product || name.trim(),
+            indication || goal || name.trim(),
+            sponsor || 'TBD',
+            phase || 'Phase 1',
+          ]
+        );
+        row = { id: String(r.rows[0].id), name: r.rows[0].name, type: 'ind' };
+      } else if (t === '510k' || t === 'pma' || t === 'denovo') {
+        const r = await pool.query(
+          `INSERT INTO fda_510k_projects (organization_id, device_name, device_classification, current_stage, current_stage_progress, overall_progress, created_at, updated_at) VALUES ($1,$2,$3,'planning',0,0,NOW(),NOW()) RETURNING id, device_name AS name`,
+          [orgId, (deviceName || name).trim(), null]
+        );
+        row = { id: String(r.rows[0].id), name: r.rows[0].name, type: '510k' };
+      } else {
+        const r = await pool.query(
+          `INSERT INTO cer_projects (name, organization_id, client_workspace_id, device_name, device_type, regulatory_context, description, status, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,'active',NOW(),NOW()) RETURNING id, name`,
+          [
+            name.trim(),
+            orgId,
+            clientId ? parseInt(clientId, 10) : null,
+            deviceName || name.trim(),
+            deviceType || null,
+            regulatoryContext || (t === 'ivdr' ? 'IVDR' : 'MDR'),
+            description || null,
+          ]
+        );
+        row = { id: String(r.rows[0].id), name: r.rows[0].name, type: 'cer' };
+      }
+      return res.status(201).json({ ok: true, project: { ...row, orgId: String(orgId) } });
+    } catch (err: any) {
+      console.error('[workspace/projects POST]', err?.message);
+      return res
+        .status(500)
+        .json({ ok: false, error: 'Project creation failed', detail: err?.message });
+    }
+  });
+
+  app.get('/api/workspace/projects', async (req: any, res: any) => {
+    const rawOrgId =
+      req.tenantContext?.organizationId ||
+      req.organizationId ||
+      req.user?.organizationId ||
+      req.user?.tenantId ||
+      '1';
+    const orgId: number = parseInt(String(rawOrgId), 10) || 1;
+    try {
+      const r = await pool.query(
+        `SELECT * FROM (SELECT id::text, name, 'ind' AS type, status, updated_at FROM ind_projects WHERE organization_id = $1 UNION ALL SELECT id::text, COALESCE(device_name,'Unnamed') AS name, '510k' AS type, NULL AS status, updated_at FROM fda_510k_projects WHERE organization_id = $1 UNION ALL SELECT id::text, name, 'cer' AS type, status, updated_at FROM cer_projects WHERE organization_id = $1) p ORDER BY updated_at DESC NULLS LAST`,
+        [orgId]
+      );
+      return res.json({ ok: true, projects: r.rows });
+    } catch (err: any) {
+      return res
+        .status(500)
+        .json({ ok: false, error: 'Failed to load projects', detail: err?.message });
+    }
+  });
+  console.log('✅ Workspace projects routes registered inline (GET|POST /api/workspace/projects)');
 
   // ──────────────────────────────────────────────────────────────────────────
   // CATCH-ALL FOR UNMATCHED API ROUTES - MUST RETURN JSON, NOT HTML

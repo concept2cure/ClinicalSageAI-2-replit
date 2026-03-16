@@ -256,6 +256,18 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleConfig> = {
     isNew: true,
     isBeta: true,
   },
+  ivdr_module: {
+    id: 'ivdr_module',
+    label: 'EU IVDR Module',
+    description:
+      'EU In Vitro Diagnostic Regulation — Classification, Performance Evaluation & Technical Documentation',
+    icon: 'Microscope',
+    route: '/portal/ivdr',
+    category: 'submissions',
+    requiredRoles: ['admin', 'regulatory_lead', 'quality_assurance', 'clinical_ops'],
+    badge: 'EU',
+    isNew: true,
+  },
   settings: {
     id: 'settings',
     label: 'Settings',
@@ -428,7 +440,7 @@ export const ROLE_MODULE_PRESETS: Record<UserRole, RoleModulePreset> = {
   regulatory_lead: {
     role: 'regulatory_lead',
     primaryModules: ['dashboard', 'vault', 'ectd_coauthor', 'regulatory_intel'],
-    quickActions: ['cer_generator', '510k_builder', 'timeline_planner'],
+    quickActions: ['cer_generator', '510k_builder', 'timeline_planner', 'ivdr_module'],
     defaultRoute: '/portal/dashboard',
   },
   clinical_ops: {
@@ -452,7 +464,7 @@ export const ROLE_MODULE_PRESETS: Record<UserRole, RoleModulePreset> = {
   quality_assurance: {
     role: 'quality_assurance',
     primaryModules: ['dashboard', 'quality_management', 'document_control', 'vault'],
-    quickActions: ['training', '510k_builder', 'cmc_platform'],
+    quickActions: ['training', '510k_builder', 'cmc_platform', 'ivdr_module'],
     defaultRoute: '/portal/quality-management',
   },
   legal_counsel: {

@@ -625,6 +625,41 @@ You are assisting with a ${subType === 'NDA' ? 'New Drug Application' : 'Biologi
 - Reference ICH E1/E3/E9 for clinical data formatting`);
   }
 
+  // ── Artifact Awareness ────────────────────────────────────────────────────
+  if (context.documents && context.documents.recentDocuments.length > 0) {
+    const artifactList = context.documents.recentDocuments
+      .slice(0, 5)
+      .map(d => `- **${d.title}** (${d.status}${d.sectionCode ? `, ${d.sectionCode}` : ''})`)
+      .join('\n');
+    parts.push(`
+## Available Artifacts
+These artifacts exist in the current project. Reference them when relevant:
+${artifactList}
+
+When a tool generates a new artifact, mention it by name and relate it to existing artifacts.`);
+  }
+
+  // ── Tool Selection Guidance ────────────────────────────────────────────────
+  parts.push(`
+## Tool Usage Guidance
+You have access to tools. Use them proactively when appropriate:
+- **validation.run**: When the user wants to check submission completeness or compliance
+- **workflow.510k.predicate_search**: When the user needs to find predicate devices
+- **workflow.510k.substantialequivalence_analysis**: When comparing a device to a predicate
+- **workflow.cer.classify_device**: When the user needs EU MDR device classification
+- **analysis.protocol.compare**: When comparing protocols or study designs
+- **analysis.protocol.gapanalysis**: When identifying gaps in a protocol
+- **documents.upload / documents.export**: When the user wants to manage documents
+- **workflow.ectd.draft_module5**: When drafting eCTD Module 5 content
+- **workflow.ectd.publish**: When publishing an eCTD sequence
+
+### Tool Rules:
+- Use tools when the user's request maps to a specific regulatory action, not for general questions
+- Never call the same tool twice in one turn
+- Maximum 3 tool calls per turn
+- After tool execution, synthesize the results into a clear, actionable response
+- If a tool returns an error, explain what happened and suggest alternatives`);
+
   // ── Instructions ─────────────────────────────────────────────────────────
   parts.push(`
 ## Context-Aware Instructions
@@ -641,7 +676,29 @@ You are assisting with a ${subType === 'NDA' ? 'New Drug Application' : 'Biologi
 11. **Adapt to expertise**: Match response depth to the user's expertise level and communication preference.
 12. **Handle updates across sections**: When data changes, identify all affected sections and propagate updates.`);
 
-  return parts.join('\n');
+  // ── Context Budget Enforcement ───────────────────────────────────────────
+  // Keep the system prompt under ~3,000 tokens (~12,000 chars) to preserve
+  // reasoning quality. The BASE_SYSTEM_PROMPT (parts[0]) is always included.
+  // Dynamic sections are trimmed from lowest-priority first.
+  const MAX_PROMPT_CHARS = 12_000;
+  let assembled = parts.join('\n');
+  if (assembled.length > MAX_PROMPT_CHARS && parts.length > 1) {
+    // Trim from the end (lowest-priority dynamic sections) until under budget.
+    // parts[0] = base prompt (always kept), last 2 = tool guidance + instructions (kept)
+    const keepHead = parts[0];
+    const keepTail = parts.slice(-2).join('\n');
+    const middle = parts.slice(1, -2);
+    let running = keepHead.length + keepTail.length + 2; // 2 for join newlines
+    const kept: string[] = [];
+    for (const section of middle) {
+      if (running + section.length + 1 > MAX_PROMPT_CHARS) break;
+      kept.push(section);
+      running += section.length + 1;
+    }
+    assembled = [keepHead, ...kept, keepTail].join('\n');
+  }
+
+  return assembled;
 }
 
 /**

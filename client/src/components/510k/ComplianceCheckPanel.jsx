@@ -323,11 +323,25 @@ const ComplianceCheckPanel = ({
     }
 
     try {
-      // For the demo, we'll create a mock report file
-      // In a real implementation, this would generate an actual PDF report
-      const reportBlob = new Blob([JSON.stringify(actualComplianceData, null, 2)], {
-        type: 'application/json',
-      });
+      // Export compliance data as structured JSON — honest about the format
+      const reportBlob = new Blob(
+        [
+          JSON.stringify(
+            {
+              title: `510(k) Compliance Report — ${deviceProfile.deviceName}`,
+              generatedAt: new Date().toISOString(),
+              format: 'json',
+              note: 'Structured compliance data export. PDF report generation is under development.',
+              data: actualComplianceData,
+            },
+            null,
+            2
+          ),
+        ],
+        {
+          type: 'application/json',
+        }
+      );
 
       // Create a File object from the Blob
       const reportFile = new File(

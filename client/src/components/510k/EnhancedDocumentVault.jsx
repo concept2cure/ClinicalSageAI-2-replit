@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useTenantContext } from '@/contexts/TenantContext';
 import {
   ChevronRight,
   ChevronDown,
@@ -37,7 +38,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Enhanced Document Vault - Windows File Explorer Style
- * 
+ *
  * Features:
  * - Real-time database connectivity via React Query
  * - Hierarchical folder tree with FDA 510(k) sections
@@ -47,52 +48,53 @@ import { cn } from '@/lib/utils';
  * - Search functionality across all documents
  * - Real backend CRUD operations
  */
-const EnhancedDocumentVault = ({ 
-  documentType = '510k', 
-  onFileClick, 
+const EnhancedDocumentVault = ({
+  documentType = '510k',
+  onFileClick,
   onUpload,
   projectId,
-  onSectionSelect 
+  onSectionSelect,
 }) => {
   const { toast } = useToast();
+  const { currentOrganization } = useTenantContext();
+  const tenantOrgId = String(currentOrganization?.id || '1');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFolders, setExpandedFolders] = useState({
     'root-regulatory': true,
     'folder-510k': true,
-    'folder-administrative': true
+    'folder-administrative': true,
   });
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
-  
+
   // Windows Explorer selection state
   const [selectedItems, setSelectedItems] = useState([]);
   const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
   const [focusedItem, setFocusedItem] = useState(null);
   const [renamingItem, setRenamingItem] = useState(null);
   const [renameValue, setRenameValue] = useState('');
-  
+
   // View mode state
   const [viewMode, setViewMode] = useState('details'); // 'details' or 'list'
   const [sortColumn, setSortColumn] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-  
+
   // Current folder for main file list view
   const [currentFolder, setCurrentFolder] = useState('folder-510k');
-  
+
   // Properties panel state
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
-  
-  // Initialize service with organization ID
+
+  // Initialize service with organization ID from TenantContext
   React.useEffect(() => {
-    const orgId = localStorage.getItem('currentOrganizationId') || '7';
-    cerv2SectionService.setOrganization(orgId);
-  }, []);
-  
+    cerv2SectionService.setOrganization(tenantOrgId);
+  }, [tenantOrgId]);
+
   // Windows Explorer selection handlers
   const handleItemClick = (item, event, allItems) => {
     const itemIndex = allItems.findIndex(i => i.id === item.id);
-    
+
     if (event.ctrlKey || event.metaKey) {
       // Ctrl+Click: Toggle individual selection
       if (selectedItems.find(i => i.id === item.id)) {
@@ -114,8 +116,8 @@ const EnhancedDocumentVault = ({
     }
     setFocusedItem(item);
   };
-  
-  const handleItemDoubleClick = (item) => {
+
+  const handleItemDoubleClick = item => {
     if (item.type === 'folder') {
       // Navigate into folder
       setCurrentFolder(item.id);
@@ -125,15 +127,16 @@ const EnhancedDocumentVault = ({
       handleDocumentClick(item);
     }
   };
-  
+
   // Keyboard navigation
   const handleKeyDown = (event, allItems) => {
     if (renamingItem) return; // Don't handle keys while renaming
-    
-    const currentIndex = selectedItems.length > 0 
-      ? allItems.findIndex(i => i.id === selectedItems[selectedItems.length - 1].id)
-      : 0;
-      
+
+    const currentIndex =
+      selectedItems.length > 0
+        ? allItems.findIndex(i => i.id === selectedItems[selectedItems.length - 1].id)
+        : 0;
+
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
@@ -148,7 +151,7 @@ const EnhancedDocumentVault = ({
           setFocusedItem(nextItem);
         }
         break;
-        
+
       case 'ArrowUp':
         event.preventDefault();
         if (currentIndex > 0) {
@@ -162,32 +165,32 @@ const EnhancedDocumentVault = ({
           setFocusedItem(prevItem);
         }
         break;
-        
+
       case 'Enter':
         if (selectedItems.length === 1) {
           handleItemDoubleClick(selectedItems[0]);
         }
         break;
-        
+
       case 'Delete':
         if (selectedItems.length > 0 && selectedItems[0].sectionData) {
           handleDeleteSection(selectedItems[0].sectionData.id, selectedItems[0].name);
         }
         break;
-        
+
       case 'F2':
         if (selectedItems.length === 1 && selectedItems[0].sectionData) {
           startRename(selectedItems[0]);
         }
         break;
-        
+
       case 'a':
         if (event.ctrlKey || event.metaKey) {
           event.preventDefault();
           setSelectedItems(allItems.filter(i => i.type !== 'folder'));
         }
         break;
-        
+
       case 'Escape':
         if (renamingItem) {
           setRenamingItem(null);
@@ -196,33 +199,33 @@ const EnhancedDocumentVault = ({
         break;
     }
   };
-  
+
   // Rename functions
-  const startRename = (item) => {
+  const startRename = item => {
     setRenamingItem(item);
     setRenameValue(item.name);
   };
-  
+
   const commitRename = async () => {
     if (!renamingItem || !renamingItem.sectionData || !renameValue.trim()) {
       setRenamingItem(null);
       return;
     }
-    
+
     try {
       const updated = {
         ...renamingItem.sectionData,
         section_title: renameValue.replace(/\.\w+$/, ''), // Remove extension
       };
-      
+
       await cerv2SectionService.updateSection(renamingItem.sectionData.id, updated);
       await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
-      
+
       toast({
         title: 'Renamed Successfully',
         description: `File renamed to "${renameValue}"`,
       });
-      
+
       refetch();
     } catch (error) {
       toast({
@@ -231,14 +234,23 @@ const EnhancedDocumentVault = ({
         variant: 'destructive',
       });
     }
-    
+
     setRenamingItem(null);
     setRenameValue('');
   };
 
-  // Fetch real sections from backend
-  const { data: sectionsData, isLoading, error, refetch } = useQuery({
-    queryKey: ['/api/cerv2-sections'],
+  // Fetch real sections from backend, scoped by project when available
+  const sectionsQueryUrl = projectId
+    ? `/api/cerv2-sections?document_id=${projectId}`
+    : '/api/cerv2-sections';
+  const {
+    data: sectionsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['/api/cerv2-sections', projectId],
+    queryFn: () => fetch(sectionsQueryUrl).then(r => r.json()),
     enabled: true,
     staleTime: 30000, // 30 seconds
   });
@@ -249,7 +261,7 @@ const EnhancedDocumentVault = ({
   }
 
   // Transform database sections into SharePoint-style document tree
-  const buildDocumentTree = (sections) => {
+  const buildDocumentTree = sections => {
     // Create a complete document management structure
     const tree = [
       {
@@ -268,81 +280,97 @@ const EnhancedDocumentVault = ({
                 id: 'folder-administrative',
                 name: 'Administrative Documents',
                 type: 'folder',
-                children: sections?.sections?.filter(s => parseInt(s.section_number) <= 10).map(section => ({
-                  id: `doc-${section.id}`,
-                  name: `${section.section_number} ${section.section_title}.docx`,
-                  type: 'file',
-                  format: 'docx',
-                  size: '245 KB',
-                  modified: section.last_modified || new Date().toISOString(),
-                  status: section.status,
-                  sectionData: section,
-                  owner: 'Regulatory Team'
-                })) || []
+                children:
+                  sections?.sections
+                    ?.filter(s => parseInt(s.section_number) <= 10)
+                    .map(section => ({
+                      id: `doc-${section.id}`,
+                      name: `${section.section_number} ${section.section_title}.docx`,
+                      type: 'file',
+                      format: 'docx',
+                      size: '245 KB',
+                      modified: section.last_modified || new Date().toISOString(),
+                      status: section.status,
+                      sectionData: section,
+                      owner: 'Regulatory Team',
+                    })) || [],
               },
               {
                 id: 'folder-device-description',
                 name: 'Device Description',
                 type: 'folder',
-                children: sections?.sections?.filter(s => parseInt(s.section_number) >= 11 && parseInt(s.section_number) <= 15).map(section => ({
-                  id: `doc-${section.id}`,
-                  name: `${section.section_number} ${section.section_title}.docx`,
-                  type: 'file',
-                  format: 'docx',
-                  size: '312 KB',
-                  modified: section.last_modified || new Date().toISOString(),
-                  status: section.status,
-                  sectionData: section,
-                  owner: 'Engineering Team'
-                })) || []
+                children:
+                  sections?.sections
+                    ?.filter(
+                      s => parseInt(s.section_number) >= 11 && parseInt(s.section_number) <= 15
+                    )
+                    .map(section => ({
+                      id: `doc-${section.id}`,
+                      name: `${section.section_number} ${section.section_title}.docx`,
+                      type: 'file',
+                      format: 'docx',
+                      size: '312 KB',
+                      modified: section.last_modified || new Date().toISOString(),
+                      status: section.status,
+                      sectionData: section,
+                      owner: 'Engineering Team',
+                    })) || [],
               },
               {
                 id: 'folder-performance',
                 name: 'Performance Testing',
                 type: 'folder',
-                children: sections?.sections?.filter(s => parseInt(s.section_number) >= 16 && parseInt(s.section_number) <= 20).map(section => ({
-                  id: `doc-${section.id}`,
-                  name: `${section.section_number} ${section.section_title}.docx`,
-                  type: 'file',
-                  format: 'docx',
-                  size: '458 KB',
-                  modified: section.last_modified || new Date().toISOString(),
-                  status: section.status,
-                  sectionData: section,
-                  owner: 'Quality Team'
-                })) || []
+                children:
+                  sections?.sections
+                    ?.filter(
+                      s => parseInt(s.section_number) >= 16 && parseInt(s.section_number) <= 20
+                    )
+                    .map(section => ({
+                      id: `doc-${section.id}`,
+                      name: `${section.section_number} ${section.section_title}.docx`,
+                      type: 'file',
+                      format: 'docx',
+                      size: '458 KB',
+                      modified: section.last_modified || new Date().toISOString(),
+                      status: section.status,
+                      sectionData: section,
+                      owner: 'Quality Team',
+                    })) || [],
               },
               {
                 id: 'folder-clinical',
                 name: 'Clinical Data',
                 type: 'folder',
-                children: sections?.sections?.filter(s => parseInt(s.section_number) >= 21).map(section => ({
-                  id: `doc-${section.id}`,
-                  name: `${section.section_number} ${section.section_title}.docx`,
-                  type: 'file',
-                  format: 'docx',
-                  size: '892 KB',
-                  modified: section.last_modified || new Date().toISOString(),
-                  status: section.status,
-                  sectionData: section,
-                  owner: 'Clinical Team'
-                })) || []
-              }
-            ]
+                children:
+                  sections?.sections
+                    ?.filter(s => parseInt(s.section_number) >= 21)
+                    .map(section => ({
+                      id: `doc-${section.id}`,
+                      name: `${section.section_number} ${section.section_title}.docx`,
+                      type: 'file',
+                      format: 'docx',
+                      size: '892 KB',
+                      modified: section.last_modified || new Date().toISOString(),
+                      status: section.status,
+                      sectionData: section,
+                      owner: 'Clinical Team',
+                    })) || [],
+              },
+            ],
           },
           {
             id: 'folder-pma',
             name: 'PMA Submission',
             type: 'folder',
-            children: []
+            children: [],
           },
           {
             id: 'folder-denovo',
             name: 'De Novo Classification',
             type: 'folder',
-            children: []
-          }
-        ]
+            children: [],
+          },
+        ],
       },
       {
         id: 'root-quality',
@@ -362,7 +390,7 @@ const EnhancedDocumentVault = ({
                 format: 'pdf',
                 size: '156 KB',
                 modified: '2024-10-15T10:30:00Z',
-                owner: 'Quality Manager'
+                owner: 'Quality Manager',
               },
               {
                 id: 'doc-sop-002',
@@ -371,17 +399,17 @@ const EnhancedDocumentVault = ({
                 format: 'pdf',
                 size: '203 KB',
                 modified: '2024-10-14T14:20:00Z',
-                owner: 'Quality Manager'
-              }
-            ]
+                owner: 'Quality Manager',
+              },
+            ],
           },
           {
             id: 'folder-audits',
             name: 'Internal Audits',
             type: 'folder',
-            children: []
-          }
-        ]
+            children: [],
+          },
+        ],
       },
       {
         id: 'root-working',
@@ -393,7 +421,7 @@ const EnhancedDocumentVault = ({
             id: 'folder-drafts',
             name: 'Drafts',
             type: 'folder',
-            children: []
+            children: [],
           },
           {
             id: 'folder-references',
@@ -407,12 +435,12 @@ const EnhancedDocumentVault = ({
                 format: 'pdf',
                 size: '2.3 MB',
                 modified: '2024-09-01T08:00:00Z',
-                owner: 'FDA'
-              }
-            ]
-          }
-        ]
-      }
+                owner: 'FDA',
+              },
+            ],
+          },
+        ],
+      },
     ];
 
     return tree;
@@ -426,14 +454,14 @@ const EnhancedDocumentVault = ({
         name: 'No sections found',
         type: 'info',
         children: [],
-      }
+      },
     ];
   };
 
   const documentTree = buildDocumentTree(sectionsData);
 
   // Toggle folder expansion
-  const toggleFolder = (folderId) => {
+  const toggleFolder = folderId => {
     setExpandedFolders(prev => ({
       ...prev,
       [folderId]: !prev[folderId],
@@ -441,7 +469,7 @@ const EnhancedDocumentVault = ({
   };
 
   // Handle file/document click - open in editor
-  const handleDocumentClick = (item) => {
+  const handleDocumentClick = item => {
     if (item.type === 'file' && item.sectionData) {
       // Notify parent to open this document in the editor
       if (onSectionSelect) {
@@ -449,7 +477,7 @@ const EnhancedDocumentVault = ({
       } else if (onFileClick) {
         onFileClick(item);
       }
-      
+
       toast({
         title: 'Document Opened',
         description: `Editing ${item.name}`,
@@ -466,11 +494,11 @@ const EnhancedDocumentVault = ({
   const handleContextMenu = (e, item) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
-      item: item
+      item: item,
     });
   };
 
@@ -482,20 +510,20 @@ const EnhancedDocumentVault = ({
   // Context menu actions
   const handleContextAction = async (action, item) => {
     closeContextMenu();
-    
+
     switch (action) {
       case 'open':
         if (item.type === 'file') {
           handleDocumentClick(item);
         }
         break;
-        
+
       case 'delete':
         if (item.sectionData) {
           await handleDeleteSection(item.sectionData.id, item.name);
         }
         break;
-        
+
       case 'download':
         if (item.sectionData && item.sectionData.content) {
           try {
@@ -518,7 +546,7 @@ const EnhancedDocumentVault = ({
   ${item.sectionData.content}
 </body>
 </html>`;
-            
+
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -528,7 +556,7 @@ const EnhancedDocumentVault = ({
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
+
             toast({
               title: 'Download Complete',
               description: `Downloaded ${item.name} as HTML`,
@@ -548,13 +576,13 @@ const EnhancedDocumentVault = ({
           });
         }
         break;
-        
+
       case 'rename':
         // Trigger inline rename mode
         setRenamingItem(item);
         setRenameValue(item.sectionData?.section_title || item.name.replace(/\.\w+$/, ''));
         break;
-        
+
       case 'duplicate':
         if (item.sectionData) {
           try {
@@ -563,16 +591,17 @@ const EnhancedDocumentVault = ({
               section_number: `${item.sectionData.section_number}-copy`,
               section_title: `${item.sectionData.section_title} (Copy)`,
               section_key: `${item.sectionData.section_key}-copy-${Date.now()}`,
+              ...(projectId ? { document_id: Number(projectId) } : {}),
             };
-            
+
             await cerv2SectionService.createSection(duplicateSection);
             await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
-            
+
             toast({
               title: 'Document Duplicated',
               description: `Created a copy of ${item.name}`,
             });
-            
+
             refetch();
           } catch (error) {
             toast({
@@ -583,14 +612,14 @@ const EnhancedDocumentVault = ({
           }
         }
         break;
-        
+
       case 'properties':
         toast({
           title: 'Properties',
           description: `${item.name}\nModified: ${item.modified ? new Date(item.modified).toLocaleString() : 'Unknown'}\nSize: ${item.size || 'Unknown'}`,
         });
         break;
-        
+
       case 'export-to-510k':
         // Export selected document(s) to 510(k) submission
         if (item.sectionData) {
@@ -598,7 +627,7 @@ const EnhancedDocumentVault = ({
             title: 'Exporting to 510(k) Submission',
             description: `Adding ${item.name} to your 510(k) package...`,
           });
-          
+
           // The document is already a section in the 510(k) structure
           // Notify user that it's part of the submission
           setTimeout(() => {
@@ -611,7 +640,8 @@ const EnhancedDocumentVault = ({
         } else {
           toast({
             title: 'Export Not Available',
-            description: 'This document cannot be exported to 510(k). Only submission sections can be exported.',
+            description:
+              'This document cannot be exported to 510(k). Only submission sections can be exported.',
             variant: 'destructive',
           });
         }
@@ -620,7 +650,7 @@ const EnhancedDocumentVault = ({
   };
 
   // Get status badge config
-  const getStatusBadge = (status) => {
+  const getStatusBadge = status => {
     switch (status) {
       case 'completed':
         return {
@@ -648,12 +678,12 @@ const EnhancedDocumentVault = ({
   };
 
   // Filter tree based on search
-  const filterTree = (items) => {
+  const filterTree = items => {
     if (!searchQuery.trim()) return items;
-    
+
     return items.filter(item => {
       const matchesName = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const hasMatchingChildren = item.children?.some(child => 
+      const hasMatchingChildren = item.children?.some(child =>
         child.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
       return matchesName || hasMatchingChildren;
@@ -670,9 +700,9 @@ const EnhancedDocumentVault = ({
         const num = parseFloat(section.section_number);
         return num > max ? num : max;
       }, 22); // Start after the standard 22 sections
-      
+
       const newSectionNumber = `${maxSectionNum + 1}.0`;
-      
+
       const newSection = {
         section_number: newSectionNumber,
         section_title: 'New Custom Section',
@@ -684,18 +714,19 @@ const EnhancedDocumentVault = ({
         icon: 'FileText',
         status: 'todo',
         content: `<h2>${newSectionNumber} New Custom Section</h2><p>Enter your content here...</p>`,
+        ...(projectId ? { document_id: Number(projectId) } : {}),
       };
-      
+
       const created = await cerv2SectionService.createSection(newSection);
-      
+
       // Invalidate cache to refresh the tree
       await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
-      
+
       toast({
         title: 'Document Created',
         description: `${newSectionNumber} New Custom Section has been created successfully.`,
       });
-      
+
       // Refetch to update the tree
       refetch();
     } catch (error) {
@@ -712,22 +743,24 @@ const EnhancedDocumentVault = ({
 
   // Delete section/document
   const handleDeleteSection = async (sectionId, sectionName) => {
-    if (!confirm(`Are you sure you want to delete "${sectionName}"? This action cannot be undone.`)) {
+    if (
+      !confirm(`Are you sure you want to delete "${sectionName}"? This action cannot be undone.`)
+    ) {
       return;
     }
-    
+
     setIsDeleting(true);
     try {
       await cerv2SectionService.deleteSection(sectionId);
-      
+
       // Invalidate cache to refresh the tree
       await queryClient.invalidateQueries({ queryKey: ['/api/cerv2-sections'] });
-      
+
       toast({
         title: 'Document Deleted',
         description: `${sectionName} has been deleted successfully.`,
       });
-      
+
       // Refetch to update the tree
       refetch();
     } catch (error) {
@@ -775,13 +808,13 @@ const EnhancedDocumentVault = ({
         {/* SharePoint-style Row with Columns */}
         <div
           className={cn(
-            "grid grid-cols-12 gap-2 items-center py-2 px-2 hover:bg-blue-50 cursor-pointer transition-colors group",
-            "border-b border-gray-100"
+            'grid grid-cols-12 gap-2 items-center py-2 px-2 hover:bg-blue-50 cursor-pointer transition-colors group',
+            'border-b border-gray-100'
           )}
           style={{ paddingLeft: `${paddingLeft}px` }}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
-          onContextMenu={(e) => handleContextMenu(e, item)}
+          onContextMenu={e => handleContextMenu(e, item)}
           data-testid={isFolder ? `folder-${item.id}` : `file-${item.id}`}
         >
           {/* Name Column (6 cols) */}
@@ -798,7 +831,7 @@ const EnhancedDocumentVault = ({
             )}
 
             {/* Icon */}
-            <div className={cn("mr-2", !isFolder && "ml-6")}>
+            <div className={cn('mr-2', !isFolder && 'ml-6')}>
               {isFolder ? (
                 <Folder className="h-4 w-4 text-yellow-500" data-testid="icon-folder" />
               ) : item.format === 'pdf' ? (
@@ -811,10 +844,12 @@ const EnhancedDocumentVault = ({
             </div>
 
             {/* Name */}
-            <span className={cn(
-              "text-sm truncate",
-              isFolder ? "font-semibold text-gray-900" : "text-gray-700"
-            )}>
+            <span
+              className={cn(
+                'text-sm truncate',
+                isFolder ? 'font-semibold text-gray-900' : 'text-gray-700'
+              )}
+            >
               {item.name}
             </span>
           </div>
@@ -825,9 +860,7 @@ const EnhancedDocumentVault = ({
           </div>
 
           {/* Modified By Column (2 cols) */}
-          <div className="col-span-2 text-xs text-gray-600 truncate">
-            {item.owner || 'System'}
-          </div>
+          <div className="col-span-2 text-xs text-gray-600 truncate">{item.owner || 'System'}</div>
 
           {/* File Size Column (1 col) */}
           <div className="col-span-1 text-xs text-gray-600">
@@ -841,7 +874,7 @@ const EnhancedDocumentVault = ({
                 variant="ghost"
                 size="sm"
                 className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   handleDeleteSection(item.sectionData.id, item.name);
                 }}
@@ -852,9 +885,9 @@ const EnhancedDocumentVault = ({
               </Button>
             )}
             {statusBadge && (
-              <Badge 
+              <Badge
                 variant={statusBadge.variant}
-                className={cn("text-xs", statusBadge.className)}
+                className={cn('text-xs', statusBadge.className)}
                 data-testid={`status-badge-${item.id}`}
               >
                 {StatusIcon && <StatusIcon className="h-3 w-3" />}
@@ -885,9 +918,9 @@ const EnhancedDocumentVault = ({
   // Get contents of current folder for file list view
   const getCurrentFolderContents = () => {
     if (!documentTree || documentTree.length === 0) return [];
-    
+
     // Find the current folder in the tree
-    const findFolder = (items) => {
+    const findFolder = items => {
       for (const item of items) {
         if (item.id === currentFolder) {
           return item.children || [];
@@ -899,13 +932,13 @@ const EnhancedDocumentVault = ({
       }
       return null;
     };
-    
+
     const contents = findFolder(documentTree) || [];
-    
+
     // Apply sorting
     const sorted = [...contents].sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortColumn) {
         case 'name':
           comparison = a.name.localeCompare(b.name);
@@ -924,17 +957,17 @@ const EnhancedDocumentVault = ({
         default:
           comparison = 0;
       }
-      
+
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-    
+
     return sorted;
   };
-  
+
   const currentFolderContents = getCurrentFolderContents();
-  
+
   // Handle column sort
-  const handleSort = (column) => {
+  const handleSort = column => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -951,19 +984,19 @@ const EnhancedDocumentVault = ({
       return () => document.removeEventListener('click', handleClick);
     }
   }, [contextMenu]);
-  
+
   // Get breadcrumb path from root to current folder
   const getBreadcrumbPath = () => {
     const path = [];
-    
+
     const findPath = (items, targetId, currentPath = []) => {
       for (const item of items) {
         const newPath = [...currentPath, item];
-        
+
         if (item.id === targetId) {
           return newPath;
         }
-        
+
         if (item.children) {
           const found = findPath(item.children, targetId, newPath);
           if (found) return found;
@@ -971,28 +1004,28 @@ const EnhancedDocumentVault = ({
       }
       return null;
     };
-    
+
     const foundPath = findPath(documentTree, currentFolder);
     return foundPath || [];
   };
-  
+
   const breadcrumbPath = getBreadcrumbPath();
-  
+
   // TreeItem for navigation panel - simplified version for left sidebar
   const NavigationTreeItem = ({ item, depth = 0 }) => {
     const isFolder = item.type === 'folder';
     const isExpanded = expandedFolders[item.id];
     const isCurrentFolder = item.id === currentFolder;
     const paddingLeft = depth * 12 + 8;
-    
+
     if (!isFolder) return null; // Only show folders in navigation
-    
+
     return (
       <div key={item.id} data-testid={`nav-tree-item-${item.id}`}>
         <div
           className={cn(
-            "flex items-center py-1.5 px-2 hover:bg-gray-100 cursor-pointer text-sm",
-            isCurrentFolder && "bg-blue-100 text-blue-700 font-semibold"
+            'flex items-center py-1.5 px-2 hover:bg-gray-100 cursor-pointer text-sm',
+            isCurrentFolder && 'bg-blue-100 text-blue-700 font-semibold'
           )}
           style={{ paddingLeft: `${paddingLeft}px` }}
           onClick={() => {
@@ -1013,21 +1046,22 @@ const EnhancedDocumentVault = ({
               <div className="w-3" />
             )}
           </div>
-          
+
           {/* Folder Icon */}
           <Folder className="h-4 w-4 text-yellow-500 mr-2" />
-          
+
           {/* Folder Name */}
           <span className="truncate">{item.name}</span>
         </div>
-        
+
         {/* Children */}
         {isExpanded && item.children && item.children.length > 0 && (
           <div>
-            {item.children.map(child => 
-              child.type === 'folder' && (
-                <NavigationTreeItem key={child.id} item={child} depth={depth + 1} />
-              )
+            {item.children.map(
+              child =>
+                child.type === 'folder' && (
+                  <NavigationTreeItem key={child.id} item={child} depth={depth + 1} />
+                )
             )}
           </div>
         )}
@@ -1042,18 +1076,20 @@ const EnhancedDocumentVault = ({
         <div className="flex items-center justify-between">
           {/* Breadcrumb Navigation */}
           <div className="flex items-center gap-1 text-sm" data-testid="breadcrumb">
-            <Home 
-              className="h-4 w-4 text-gray-600 cursor-pointer hover:text-blue-600" 
+            <Home
+              className="h-4 w-4 text-gray-600 cursor-pointer hover:text-blue-600"
               onClick={() => setCurrentFolder('root-regulatory')}
               data-testid="breadcrumb-home"
             />
             {breadcrumbPath.map((pathItem, index) => (
               <div key={pathItem.id} className="flex items-center gap-1">
                 <ChevronRight className="h-3 w-3 text-gray-400" />
-                <span 
+                <span
                   className={cn(
-                    "cursor-pointer hover:text-blue-600",
-                    index === breadcrumbPath.length - 1 ? "text-gray-900 font-semibold" : "text-gray-600"
+                    'cursor-pointer hover:text-blue-600',
+                    index === breadcrumbPath.length - 1
+                      ? 'text-gray-900 font-semibold'
+                      : 'text-gray-600'
                   )}
                   onClick={() => setCurrentFolder(pathItem.id)}
                   data-testid={`breadcrumb-${pathItem.id}`}
@@ -1063,17 +1099,20 @@ const EnhancedDocumentVault = ({
               </div>
             ))}
           </div>
-          
+
           {/* Right-side Toolbar Actions */}
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
-            <div className="flex items-center border border-gray-300 rounded" data-testid="view-mode-toggle">
+            <div
+              className="flex items-center border border-gray-300 rounded"
+              data-testid="view-mode-toggle"
+            >
               <Button
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-7 px-2 rounded-none border-r",
-                  viewMode === 'details' && "bg-blue-50 text-blue-600"
+                  'h-7 px-2 rounded-none border-r',
+                  viewMode === 'details' && 'bg-blue-50 text-blue-600'
                 )}
                 onClick={() => setViewMode('details')}
                 data-testid="button-view-details"
@@ -1084,8 +1123,8 @@ const EnhancedDocumentVault = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-7 px-2 rounded-none",
-                  viewMode === 'list' && "bg-blue-50 text-blue-600"
+                  'h-7 px-2 rounded-none',
+                  viewMode === 'list' && 'bg-blue-50 text-blue-600'
                 )}
                 onClick={() => setViewMode('list')}
                 data-testid="button-view-list"
@@ -1093,7 +1132,7 @@ const EnhancedDocumentVault = ({
                 <List className="h-4 w-4" />
               </Button>
             </div>
-            
+
             {/* Sort Dropdown - Simple button to cycle through options */}
             <Button
               variant="outline"
@@ -1109,21 +1148,18 @@ const EnhancedDocumentVault = ({
             >
               Sort: {sortColumn} {sortDirection === 'asc' ? '↑' : '↓'}
             </Button>
-            
+
             {/* Properties Panel Toggle */}
             <Button
               variant="outline"
               size="sm"
-              className={cn(
-                "h-7 px-2",
-                showPropertiesPanel && "bg-blue-50 text-blue-600"
-              )}
+              className={cn('h-7 px-2', showPropertiesPanel && 'bg-blue-50 text-blue-600')}
               onClick={() => setShowPropertiesPanel(!showPropertiesPanel)}
               data-testid="button-toggle-properties"
             >
               <SidebarClose className="h-4 w-4" />
             </Button>
-            
+
             {/* Refresh Button */}
             <Button
               variant="ghost"
@@ -1133,12 +1169,12 @@ const EnhancedDocumentVault = ({
               disabled={isLoading}
               data-testid="button-refresh"
             >
-              <Loader2 className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <Loader2 className={cn('h-4 w-4', isLoading && 'animate-spin')} />
             </Button>
           </div>
         </div>
       </div>
-      
+
       {/* Main Three-Panel Area */}
       <div className="flex flex-1 overflow-hidden" data-testid="three-panel-container">
         {/* Left Panel: Navigation Tree (25% width) */}
@@ -1153,76 +1189,83 @@ const EnhancedDocumentVault = ({
                   <Loader2 className="h-6 w-6 mx-auto text-blue-500 animate-spin" />
                 </div>
               ) : (
-                documentTree.map(item => (
-                  <NavigationTreeItem key={item.id} item={item} depth={0} />
-                ))
+                documentTree.map(item => <NavigationTreeItem key={item.id} item={item} depth={0} />)
               )}
             </div>
           </ScrollArea>
         </div>
-        
+
         {/* Center Panel: File List - Details View (50% or 75% width) */}
-        <div 
-          className={cn(
-            "flex flex-col",
-            showPropertiesPanel ? "flex-1" : "flex-[3]"
-          )}
+        <div
+          className={cn('flex flex-col', showPropertiesPanel ? 'flex-1' : 'flex-[3]')}
           data-testid="file-list-panel"
         >
           {/* Column Headers - Sortable */}
-          <div 
+          <div
             className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-2 px-4 py-2 border-b bg-gray-50 sticky top-0 text-xs font-semibold text-gray-700"
             data-testid="column-headers"
           >
-            <div 
+            <div
               className="flex items-center gap-1 cursor-pointer hover:text-blue-600"
               onClick={() => handleSort('name')}
               data-testid="header-name"
             >
               Name
-              {sortColumn === 'name' && (
-                sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-              )}
+              {sortColumn === 'name' &&
+                (sortDirection === 'asc' ? (
+                  <ArrowUp className="h-3 w-3" />
+                ) : (
+                  <ArrowDown className="h-3 w-3" />
+                ))}
             </div>
-            <div 
+            <div
               className="flex items-center gap-1 cursor-pointer hover:text-blue-600"
               onClick={() => handleSort('modified')}
               data-testid="header-modified"
             >
               Date Modified
-              {sortColumn === 'modified' && (
-                sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-              )}
+              {sortColumn === 'modified' &&
+                (sortDirection === 'asc' ? (
+                  <ArrowUp className="h-3 w-3" />
+                ) : (
+                  <ArrowDown className="h-3 w-3" />
+                ))}
             </div>
-            <div 
+            <div
               className="flex items-center gap-1 cursor-pointer hover:text-blue-600"
               onClick={() => handleSort('type')}
               data-testid="header-type"
             >
               Type
-              {sortColumn === 'type' && (
-                sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-              )}
+              {sortColumn === 'type' &&
+                (sortDirection === 'asc' ? (
+                  <ArrowUp className="h-3 w-3" />
+                ) : (
+                  <ArrowDown className="h-3 w-3" />
+                ))}
             </div>
-            <div 
+            <div
               className="flex items-center gap-1 cursor-pointer hover:text-blue-600"
               onClick={() => handleSort('size')}
               data-testid="header-size"
             >
               Size
-              {sortColumn === 'size' && (
-                sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-              )}
+              {sortColumn === 'size' &&
+                (sortDirection === 'asc' ? (
+                  <ArrowUp className="h-3 w-3" />
+                ) : (
+                  <ArrowDown className="h-3 w-3" />
+                ))}
             </div>
             <div data-testid="header-status">Status</div>
           </div>
-          
+
           {/* File Rows */}
           <ScrollArea className="flex-1">
-            <div 
+            <div
               className="divide-y divide-gray-100"
               tabIndex={0}
-              onKeyDown={(e) => handleKeyDown(e, currentFolderContents)}
+              onKeyDown={e => handleKeyDown(e, currentFolderContents)}
               data-testid="file-rows-container"
             >
               {isLoading ? (
@@ -1236,60 +1279,71 @@ const EnhancedDocumentVault = ({
                   const isRenaming = renamingItem?.id === item.id;
                   const statusBadge = item.status ? getStatusBadge(item.status) : null;
                   const StatusIcon = statusBadge?.icon;
-                  
+
                   return (
                     <div
                       key={item.id}
                       className={cn(
-                        "grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-2 px-4 py-2 cursor-pointer group",
-                        "hover:bg-blue-50 transition-colors",
-                        isSelected && "bg-[rgb(0,120,215)] text-white hover:bg-[rgb(0,105,195)]"
+                        'grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-2 px-4 py-2 cursor-pointer group',
+                        'hover:bg-blue-50 transition-colors',
+                        isSelected && 'bg-[rgb(0,120,215)] text-white hover:bg-[rgb(0,105,195)]'
                       )}
-                      onClick={(e) => handleItemClick(item, e, currentFolderContents)}
+                      onClick={e => handleItemClick(item, e, currentFolderContents)}
                       onDoubleClick={() => handleItemDoubleClick(item)}
-                      onContextMenu={(e) => handleContextMenu(e, item)}
+                      onContextMenu={e => handleContextMenu(e, item)}
                       data-testid={`file-row-${item.id}`}
                     >
                       {/* Name Column with Checkbox and Icon */}
                       <div className="flex items-center gap-2 min-w-0">
                         {/* Checkbox - visible on hover or when selected */}
-                        <div 
+                        <div
                           className={cn(
-                            "flex-shrink-0",
-                            !isSelected && "opacity-0 group-hover:opacity-100 transition-opacity"
+                            'flex-shrink-0',
+                            !isSelected && 'opacity-0 group-hover:opacity-100 transition-opacity'
                           )}
                         >
-                          <div 
+                          <div
                             className={cn(
-                              "w-4 h-4 border-2 rounded flex items-center justify-center",
-                              isSelected ? "bg-white border-white" : "border-gray-400"
+                              'w-4 h-4 border-2 rounded flex items-center justify-center',
+                              isSelected ? 'bg-white border-white' : 'border-gray-400'
                             )}
                             data-testid={`checkbox-${item.id}`}
                           >
                             {isSelected && <Check className="h-3 w-3 text-blue-600" />}
                           </div>
                         </div>
-                        
+
                         {/* File Icon */}
                         <div className="flex-shrink-0">
                           {item.type === 'folder' ? (
-                            <Folder className={cn("h-4 w-4", isSelected ? "text-white" : "text-yellow-500")} />
+                            <Folder
+                              className={cn(
+                                'h-4 w-4',
+                                isSelected ? 'text-white' : 'text-yellow-500'
+                              )}
+                            />
                           ) : item.format === 'pdf' ? (
-                            <FileText className={cn("h-4 w-4", isSelected ? "text-white" : "text-red-500")} />
+                            <FileText
+                              className={cn('h-4 w-4', isSelected ? 'text-white' : 'text-red-500')}
+                            />
                           ) : item.format === 'docx' ? (
-                            <FileText className={cn("h-4 w-4", isSelected ? "text-white" : "text-blue-500")} />
+                            <FileText
+                              className={cn('h-4 w-4', isSelected ? 'text-white' : 'text-blue-500')}
+                            />
                           ) : (
-                            <File className={cn("h-4 w-4", isSelected ? "text-white" : "text-gray-500")} />
+                            <File
+                              className={cn('h-4 w-4', isSelected ? 'text-white' : 'text-gray-500')}
+                            />
                           )}
                         </div>
-                        
+
                         {/* File Name - Inline editable */}
                         {isRenaming ? (
                           <Input
                             value={renameValue}
-                            onChange={(e) => setRenameValue(e.target.value)}
+                            onChange={e => setRenameValue(e.target.value)}
                             onBlur={commitRename}
-                            onKeyDown={(e) => {
+                            onKeyDown={e => {
                               if (e.key === 'Enter') {
                                 commitRename();
                               } else if (e.key === 'Escape') {
@@ -1303,10 +1357,10 @@ const EnhancedDocumentVault = ({
                             data-testid={`rename-input-${item.id}`}
                           />
                         ) : (
-                          <span 
+                          <span
                             className={cn(
-                              "text-sm truncate",
-                              isSelected ? "text-white" : "text-gray-900"
+                              'text-sm truncate',
+                              isSelected ? 'text-white' : 'text-gray-900'
                             )}
                             data-testid={`file-name-${item.id}`}
                           >
@@ -1314,30 +1368,40 @@ const EnhancedDocumentVault = ({
                           </span>
                         )}
                       </div>
-                      
+
                       {/* Date Modified */}
-                      <div className={cn("text-xs truncate", isSelected ? "text-white" : "text-gray-600")}>
+                      <div
+                        className={cn(
+                          'text-xs truncate',
+                          isSelected ? 'text-white' : 'text-gray-600'
+                        )}
+                      >
                         {item.modified ? new Date(item.modified).toLocaleDateString() : '-'}
                       </div>
-                      
+
                       {/* Type */}
-                      <div className={cn("text-xs truncate", isSelected ? "text-white" : "text-gray-600")}>
-                        {item.type === 'folder' ? 'Folder' : (item.format?.toUpperCase() || 'File')}
+                      <div
+                        className={cn(
+                          'text-xs truncate',
+                          isSelected ? 'text-white' : 'text-gray-600'
+                        )}
+                      >
+                        {item.type === 'folder' ? 'Folder' : item.format?.toUpperCase() || 'File'}
                       </div>
-                      
+
                       {/* Size */}
-                      <div className={cn("text-xs", isSelected ? "text-white" : "text-gray-600")}>
-                        {item.type === 'folder' ? '-' : (item.size || '0 KB')}
+                      <div className={cn('text-xs', isSelected ? 'text-white' : 'text-gray-600')}>
+                        {item.type === 'folder' ? '-' : item.size || '0 KB'}
                       </div>
-                      
+
                       {/* Status */}
                       <div className="flex items-center gap-2">
                         {statusBadge && (
-                          <Badge 
+                          <Badge
                             variant={statusBadge.variant}
                             className={cn(
-                              "text-xs h-5",
-                              isSelected ? "bg-white text-blue-600" : statusBadge.className
+                              'text-xs h-5',
+                              isSelected ? 'bg-white text-blue-600' : statusBadge.className
                             )}
                             data-testid={`status-${item.id}`}
                           >
@@ -1349,7 +1413,7 @@ const EnhancedDocumentVault = ({
                             variant="ghost"
                             size="sm"
                             className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               handleDeleteSection(item.sectionData.id, item.name);
                             }}
@@ -1373,18 +1437,21 @@ const EnhancedDocumentVault = ({
             </div>
           </ScrollArea>
         </div>
-        
+
         {/* Right Panel: Properties Panel (25% width, togglable) */}
         {showPropertiesPanel && (
-          <div className="w-1/4 border-l border-gray-200 bg-white p-4 overflow-y-auto" data-testid="properties-panel">
+          <div
+            className="w-1/4 border-l border-gray-200 bg-white p-4 overflow-y-auto"
+            data-testid="properties-panel"
+          >
             <h3 className="text-sm font-semibold text-gray-900 mb-4">Properties</h3>
-            
+
             {selectedItems.length > 0 ? (
               <div className="space-y-4">
                 {selectedItems.slice(0, 1).map(item => {
                   const statusBadge = item.status ? getStatusBadge(item.status) : null;
                   const StatusIcon = statusBadge?.icon;
-                  
+
                   return (
                     <div key={item.id} className="space-y-3">
                       {/* Icon and Name */}
@@ -1401,17 +1468,21 @@ const EnhancedDocumentVault = ({
                             {item.name}
                           </h4>
                           <p className="text-xs text-gray-500 mt-1">
-                            {item.type === 'folder' ? 'Folder' : (item.format?.toUpperCase() || 'Document')}
+                            {item.type === 'folder'
+                              ? 'Folder'
+                              : item.format?.toUpperCase() || 'Document'}
                           </p>
                         </div>
                       </div>
-                      
+
                       {/* Section Details */}
                       {item.sectionData && (
                         <div className="space-y-2 text-xs">
                           <div>
                             <span className="font-semibold text-gray-700">Section Number:</span>
-                            <p className="text-gray-900 mt-0.5">{item.sectionData.section_number}</p>
+                            <p className="text-gray-900 mt-0.5">
+                              {item.sectionData.section_number}
+                            </p>
                           </div>
                           <div>
                             <span className="font-semibold text-gray-700">Title:</span>
@@ -1419,15 +1490,15 @@ const EnhancedDocumentVault = ({
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Status */}
                       {statusBadge && (
                         <div>
                           <span className="font-semibold text-xs text-gray-700">Status:</span>
                           <div className="mt-1">
-                            <Badge 
+                            <Badge
                               variant={statusBadge.variant}
-                              className={cn("text-xs", statusBadge.className)}
+                              className={cn('text-xs', statusBadge.className)}
                             >
                               {StatusIcon && <StatusIcon className="h-3 w-3 mr-1" />}
                               {statusBadge.label}
@@ -1435,7 +1506,7 @@ const EnhancedDocumentVault = ({
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Modified Date */}
                       <div className="text-xs">
                         <span className="font-semibold text-gray-700">Modified:</span>
@@ -1443,7 +1514,7 @@ const EnhancedDocumentVault = ({
                           {item.modified ? new Date(item.modified).toLocaleString() : 'Unknown'}
                         </p>
                       </div>
-                      
+
                       {/* Owner */}
                       {item.owner && (
                         <div className="text-xs">
@@ -1451,7 +1522,7 @@ const EnhancedDocumentVault = ({
                           <p className="text-gray-900 mt-0.5">{item.owner}</p>
                         </div>
                       )}
-                      
+
                       {/* File Size */}
                       {item.type !== 'folder' && (
                         <div className="text-xs">
@@ -1459,7 +1530,7 @@ const EnhancedDocumentVault = ({
                           <p className="text-gray-900 mt-0.5">{item.size || '0 KB'}</p>
                         </div>
                       )}
-                      
+
                       {/* Action Buttons */}
                       <div className="pt-3 border-t space-y-2">
                         {item.type === 'file' && (
@@ -1490,7 +1561,9 @@ const EnhancedDocumentVault = ({
                                   variant="outline"
                                   size="sm"
                                   className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => handleDeleteSection(item.sectionData.id, item.name)}
+                                  onClick={() =>
+                                    handleDeleteSection(item.sectionData.id, item.name)
+                                  }
                                   data-testid="properties-delete"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
@@ -1504,11 +1577,12 @@ const EnhancedDocumentVault = ({
                     </div>
                   );
                 })}
-                
+
                 {selectedItems.length > 1 && (
                   <div className="pt-3 border-t">
                     <p className="text-xs text-gray-600">
-                      + {selectedItems.length - 1} more {selectedItems.length - 1 === 1 ? 'item' : 'items'} selected
+                      + {selectedItems.length - 1} more{' '}
+                      {selectedItems.length - 1 === 1 ? 'item' : 'items'} selected
                     </p>
                   </div>
                 )}
@@ -1522,9 +1596,12 @@ const EnhancedDocumentVault = ({
           </div>
         )}
       </div>
-      
+
       {/* Bottom Status Bar */}
-      <div className="border-t border-gray-200 px-4 py-2 bg-gray-50 flex items-center justify-between text-xs text-gray-600" data-testid="status-bar">
+      <div
+        className="border-t border-gray-200 px-4 py-2 bg-gray-50 flex items-center justify-between text-xs text-gray-600"
+        data-testid="status-bar"
+      >
         <div>
           {selectedItems.length > 0 ? (
             <span data-testid="status-selected">
@@ -1536,7 +1613,7 @@ const EnhancedDocumentVault = ({
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -1566,7 +1643,7 @@ const EnhancedDocumentVault = ({
           </Button>
         </div>
       </div>
-      
+
       {/* Context Menu (existing) */}
       {contextMenu && (
         <div
@@ -1576,7 +1653,7 @@ const EnhancedDocumentVault = ({
             top: `${contextMenu.y}px`,
           }}
           data-testid="context-menu"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           {contextMenu.item.type === 'file' && (
             <>
@@ -1591,7 +1668,7 @@ const EnhancedDocumentVault = ({
               <div className="border-t border-gray-200 my-1" />
             </>
           )}
-          
+
           {contextMenu.item.type === 'file' && contextMenu.item.sectionData && (
             <button
               className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2"
@@ -1602,7 +1679,7 @@ const EnhancedDocumentVault = ({
               Duplicate
             </button>
           )}
-          
+
           <button
             className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2"
             onClick={() => handleContextAction('download', contextMenu.item)}
@@ -1611,7 +1688,7 @@ const EnhancedDocumentVault = ({
             <Download className="h-4 w-4" />
             Download
           </button>
-          
+
           <button
             className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2"
             onClick={() => handleContextAction('rename', contextMenu.item)}
@@ -1620,9 +1697,9 @@ const EnhancedDocumentVault = ({
             <FileText className="h-4 w-4" />
             Rename
           </button>
-          
+
           <div className="border-t border-gray-200 my-1" />
-          
+
           <button
             className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2"
             onClick={() => handleContextAction('properties', contextMenu.item)}
@@ -1631,7 +1708,7 @@ const EnhancedDocumentVault = ({
             <FileText className="h-4 w-4" />
             Properties / Info
           </button>
-          
+
           {contextMenu.item.type === 'file' && contextMenu.item.sectionData && (
             <>
               <div className="border-t border-gray-200 my-1" />

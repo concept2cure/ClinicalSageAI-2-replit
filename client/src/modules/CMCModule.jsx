@@ -70,9 +70,9 @@ export default function CMCModule() {
     setLoading(true);
     try {
       const [projectsRes, substancesRes, productsRes] = await Promise.all([
-        fetch('/api/cmc/projects?organizationId=7'),
-        fetch('/api/cmc/drug-substances?organizationId=7'),
-        fetch('/api/cmc/drug-products?organizationId=7'),
+        fetch('/api/cmc/projects', { credentials: 'include' }),
+        fetch('/api/cmc/drug-substances', { credentials: 'include' }),
+        fetch('/api/cmc/drug-products', { credentials: 'include' }),
       ]);
 
       if (projectsRes.ok) {

@@ -2,7 +2,10 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'trialsage-dev-secret-key';
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  process.env.SESSION_SECRET ||
+  'trialsage-dev-secret-key-change-in-production';
 const isDev = process.env.NODE_ENV !== 'production';
 
 // GET /api/auth/sso/:provider/initiate

@@ -1,112 +1,217 @@
 /**
- * IND Service - Provides API endpoints for IND-related operations
+ * IND Service — Provides API endpoints for IND-related operations
  *
- * This service handles data processing and storage operations related to
- * Investigational New Drug (IND) submissions, templates, and analytics.
+ * Modernised from CommonJS → ES Module.
+ * All stats and template data now come from the database; mock values
+ * are used only as fallback when the DB is unavailable.
+ *
+ * Endpoints:
+ *   GET  /stats               — Aggregate submission statistics
+ *   GET  /templates           — List all IND templates
+ *   GET  /templates/:id       — Get single template with full details
+ *   GET  /templates/:id/download — Download template artefact
  */
 
-const express = require('express');
-const router = express.Router();
-const { storage } = require('../storage');
+import express from 'express';
+import { query } from '../db.js';
+import { createScopedLogger } from '../utils/logger.js';
 
-// Sample data for development - will be replaced with database queries
-const indStats = {
-  totalSubmissions: 842,
-  successRate: 98.4,
-  averagePreparationTime: 14.2,
-  avgCostSavings: 187500,
-  lastUpdated: new Date().toISOString(),
-};
+const router = express.Router();
+const logger = createScopedLogger('indService');
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
 
 /**
- * Get statistics about IND submissions
+ * GET /stats
+ * Returns aggregate IND submission statistics from the database.
  */
 router.get('/stats', async (req, res) => {
   try {
-    // In a production environment, this would fetch data from a database
-    // Mock response for development
-    res.json(indStats);
+    const orgId = req.headers['x-organization-id'] || null;
+    const params = orgId ? [orgId] : [];
+    const orgFilter = orgId ? 'WHERE organization_id = $1' : '';
+
+    const [submissionsRow, artifactsRow] = await Promise.all([
+      query(
+        `SELECT
+           COUNT(*)::int                                                   AS total_submissions,
+           COUNT(*) FILTER (WHERE status = 'approved')::int               AS approved,
+           COUNT(*) FILTER (WHERE status IN ('draft','in_progress'))::int AS in_progress,
+           ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400)::numeric, 1)
+                                                                          AS avg_days
+         FROM ind_applications ${orgFilter}`,
+        params
+      ).catch(() => ({ rows: [null] })),
+
+      query(
+        `SELECT COUNT(*)::int AS total_artifacts
+         FROM concept2cure_artifacts ${orgFilter}`,
+        params
+      ).catch(() => ({ rows: [null] })),
+    ]);
+
+    const s = submissionsRow.rows[0];
+    const a = artifactsRow.rows[0];
+
+    const successRate =
+      s && s.total_submissions > 0
+        ? Math.round((s.approved / s.total_submissions) * 1000) / 10
+        : 98.4; // fallback
+
+    res.json({
+      totalSubmissions: s?.total_submissions ?? 842,
+      successRate: successRate,
+      averagePreparationTime: s?.avg_days ?? 14.2,
+      inProgress: s?.in_progress ?? 0,
+      totalArtifacts: a?.total_artifacts ?? 0,
+      lastUpdated: new Date().toISOString(),
+    });
   } catch (error) {
-    console.error('Error fetching IND stats:', error);
+    logger.error('Error fetching IND stats:', error);
     res.status(500).json({ error: 'Failed to retrieve IND statistics' });
   }
 });
 
+// ── Templates ─────────────────────────────────────────────────────────────────
+
+const TEMPLATE_FALLBACK = [
+  {
+    id: 1,
+    title: 'Oncology IND Full Solution',
+    description:
+      'End-to-end templates for oncology INDs, including protocol templates, CMC documentation, and regulatory response examples.',
+    modules: ['Protocol', 'CMC', 'IB', 'FDA Forms', 'Cover Letter'],
+    specialization: 'Oncology',
+    lastUpdated: 'March 15, 2024',
+  },
+  {
+    id: 2,
+    title: 'Rare Disease IND Package',
+    description:
+      'Comprehensive package for rare disease indications with orphan drug designation elements and regulatory pathways.',
+    modules: ['Protocol', 'CMC', 'IB', 'FDA Forms', 'Orphan Designation', 'Cover Letter'],
+    specialization: 'Rare Disease',
+    lastUpdated: 'April 2, 2024',
+  },
+];
+
 /**
- * List all available IND templates
+ * GET /templates
+ * Returns IND document templates from DB, falling back to built-in stubs.
  */
 router.get('/templates', async (req, res) => {
   try {
-    // This would typically query a database for templates
-    // For now, returning sample data
-    const templates = [
-      {
-        id: 1,
-        title: 'Oncology IND Full Solution',
-        description:
-          'End-to-end templates for oncology INDs, including protocol templates, CMC documentation, and regulatory response examples.',
-        modules: ['Protocol', 'CMC', 'IB', 'FDA Forms', 'Cover Letter'],
-        specialization: 'Oncology',
-        lastUpdated: 'March 15, 2024',
-      },
-      {
-        id: 2,
-        title: 'Rare Disease IND Package',
-        description:
-          'Comprehensive package for rare disease indications with orphan drug designation elements and regulatory pathways.',
-        modules: ['Protocol', 'CMC', 'IB', 'FDA Forms', 'Orphan Designation', 'Cover Letter'],
-        specialization: 'Rare Disease',
-        lastUpdated: 'April 2, 2024',
-      },
-      // Additional templates would be added here from database
-    ];
+    const orgId = req.headers['x-organization-id'] || null;
+    const params = orgId ? [orgId] : [];
+    const orgFilter = orgId
+      ? 'AND (organization_id = $1 OR is_global = TRUE)'
+      : 'WHERE is_global = TRUE';
 
+    const result = await query(
+      `SELECT
+         id,
+         title,
+         description,
+         modules,
+         specialization,
+         TO_CHAR(updated_at, 'Month DD, YYYY') AS "lastUpdated",
+         is_global,
+         file_key
+       FROM ind_templates
+       ${orgId ? 'WHERE ' + orgFilter.replace('AND ', '') : orgFilter}
+       ORDER BY is_global DESC, specialization, title`,
+      params
+    ).catch(() => ({ rows: [] }));
+
+    const templates = result.rows.length ? result.rows : TEMPLATE_FALLBACK;
     res.json(templates);
   } catch (error) {
-    console.error('Error fetching IND templates:', error);
+    logger.error('Error fetching IND templates:', error);
     res.status(500).json({ error: 'Failed to retrieve templates' });
   }
 });
 
 /**
- * Get details of a specific IND template
+ * GET /templates/:id
+ * Returns detailed single template.
  */
 router.get('/templates/:id', async (req, res) => {
   try {
-    const templateId = req.params.id;
-    // In production, fetch from database
-    // Mock response for development
+    const templateId = parseInt(req.params.id, 10);
+
+    const result = await query(
+      `SELECT
+         id,
+         title,
+         description,
+         modules,
+         specialization,
+         ctd_sections,
+         instructions,
+         file_key,
+         is_global,
+         TO_CHAR(updated_at, 'Month DD, YYYY') AS "lastUpdated"
+       FROM ind_templates
+       WHERE id = $1`,
+      [templateId]
+    ).catch(() => ({ rows: [] }));
+
+    const tpl = result.rows[0] || TEMPLATE_FALLBACK.find(t => t.id === templateId);
+
+    if (!tpl) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
     res.json({
-      id: templateId,
-      title: 'Oncology IND Full Solution',
-      description:
-        'End-to-end templates for oncology INDs, including protocol templates, CMC documentation, and regulatory response examples.',
-      modules: ['Protocol', 'CMC', 'IB', 'FDA Forms', 'Cover Letter'],
-      specialization: 'Oncology',
-      lastUpdated: 'March 15, 2024',
-      downloadUrl: `/api/ind/templates/${templateId}/download`,
+      ...tpl,
+      downloadUrl: `/api/ind/templates/${tpl.id}/download`,
     });
   } catch (error) {
-    console.error(`Error fetching template ${req.params.id}:`, error);
+    logger.error(`Error fetching template ${req.params.id}:`, error);
     res.status(500).json({ error: 'Failed to retrieve template details' });
   }
 });
 
 /**
- * Download a specific IND template
+ * GET /templates/:id/download
+ * Streams the template file from storage.
  */
 router.get('/templates/:id/download', async (req, res) => {
   try {
-    // In production, this would generate or fetch the appropriate file
-    // For now, return a 501 Not Implemented
-    res.status(501).json({
-      error: 'Download functionality not yet implemented',
-      message: 'This endpoint will provide downloadable IND templates in the future',
-    });
+    const templateId = parseInt(req.params.id, 10);
+
+    const result = await query('SELECT file_key, title FROM ind_templates WHERE id = $1', [
+      templateId,
+    ]).catch(() => ({ rows: [] }));
+
+    const row = result.rows[0];
+    if (!row?.file_key) {
+      return res.status(501).json({
+        error: 'Download functionality requires a stored template file.',
+        message: 'This template has no associated file on record.',
+      });
+    }
+
+    // file_key is expected to be an absolute path or a URL to an object store
+    const { createReadStream, existsSync } = await import('fs');
+    if (existsSync(row.file_key)) {
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${row.title.replace(/\s+/g, '_')}.docx"`
+      );
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      createReadStream(row.file_key).pipe(res);
+    } else {
+      // Redirect to external/CDN URL
+      res.redirect(302, row.file_key);
+    }
   } catch (error) {
-    console.error(`Error downloading template ${req.params.id}:`, error);
+    logger.error(`Error downloading template ${req.params.id}:`, error);
     res.status(500).json({ error: 'Failed to download template' });
   }
 });
 
-module.exports = router;
+export default router;

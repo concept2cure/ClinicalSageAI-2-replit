@@ -273,7 +273,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
               <Building className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Welcome to TrialSage</h1>
+              <h1 className="text-2xl font-bold text-white">Welcome to Concept2Cure</h1>
               <p className="text-primary-100">Let's set up your organization</p>
             </div>
           </div>

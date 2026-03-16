@@ -1,6 +1,6 @@
 /**
  * Concept2Cure - Artifact Panel
- * 
+ *
  * Claude.ai-style artifact viewer panel (right side of split screen).
  * Renders documents, interactive tools, and visualizations.
  */
@@ -12,12 +12,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,7 +82,11 @@ const artifactTypeConfig: Record<
   predicate_search: { icon: Workflow, label: 'Predicate Search', color: 'text-indigo-600' },
   timeline_planner: { icon: Workflow, label: 'Timeline Planner', color: 'text-pink-600' },
   knowledge_graph: { icon: Network, label: 'Knowledge Graph', color: 'text-violet-600' },
-  compliance_dashboard: { icon: BarChart3, label: 'Compliance Dashboard', color: 'text-emerald-600' },
+  compliance_dashboard: {
+    icon: BarChart3,
+    label: 'Compliance Dashboard',
+    color: 'text-emerald-600',
+  },
   submission_progress: { icon: BarChart3, label: 'Submission Progress', color: 'text-sky-600' },
   document: { icon: FileText, label: 'Document', color: 'text-gray-600' },
   code: { icon: FileText, label: 'Code', color: 'text-gray-600' },
@@ -114,7 +113,7 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
     return (
       <textarea
         value={content}
-        onChange={(e) => onContentChange(e.target.value)}
+        onChange={e => onContentChange(e.target.value)}
         className="w-full h-full p-6 font-mono text-sm bg-white border-0 focus:outline-none resize-none"
       />
     );
@@ -122,9 +121,7 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
 
   return (
     <div className="p-6 prose prose-sm max-w-none">
-      <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-relaxed">
-        {content}
-      </pre>
+      <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-relaxed">{content}</pre>
     </div>
   );
 };
@@ -140,34 +137,31 @@ interface InteractiveArtifactProps {
 
 const InteractiveArtifact: React.FC<InteractiveArtifactProps> = ({ type, content }) => {
   if (type === 'risk_heatmap') {
-    const data = content as { risks: Array<{ id: string; category: string; severity: number; label: string }> };
-    
+    const data = content as {
+      risks: Array<{ id: string; category: string; severity: number; label: string }>;
+    };
+
     return (
       <div className="p-6 space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Risk Analysis</h3>
         <div className="space-y-3">
-          {data.risks?.map((risk) => (
-            <div
-              key={risk.id}
-              className="flex items-center gap-4 p-3 bg-white rounded-lg border"
-            >
+          {data.risks?.map(risk => (
+            <div key={risk.id} className="flex items-center gap-4 p-3 bg-white rounded-lg border">
               <div
                 className={cn(
                   'w-3 h-3 rounded-full',
                   risk.severity > 0.7
                     ? 'bg-red-500'
                     : risk.severity > 0.4
-                    ? 'bg-yellow-500'
-                    : 'bg-green-500'
+                      ? 'bg-yellow-500'
+                      : 'bg-green-500'
                 )}
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900">{risk.label}</div>
                 <div className="text-xs text-gray-500">{risk.category}</div>
               </div>
-              <div className="text-sm font-medium">
-                {Math.round(risk.severity * 100)}%
-              </div>
+              <div className="text-sm font-medium">{Math.round(risk.severity * 100)}%</div>
             </div>
           ))}
         </div>
@@ -200,7 +194,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ artifact, onSelectVersi
       {artifact.versions
         .slice()
         .reverse()
-        .map((version) => (
+        .map(version => (
           <button
             key={version.version}
             onClick={() => onSelectVersion(version.version)}
@@ -255,9 +249,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
         <div className="text-gray-500">
           <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
           <p className="text-sm">No artifact selected</p>
-          <p className="text-xs mt-1">
-            Artifacts will appear here when Lumen creates them
-          </p>
+          <p className="text-xs mt-1">Artifacts will appear here when RI creates them</p>
         </div>
       </div>
     );
@@ -330,7 +322,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
   };
 
   const handleSelectVersion = (version: number) => {
-    const selectedVersion = artifact.versions.find((v) => v.version === version);
+    const selectedVersion = artifact.versions.find(v => v.version === version);
     if (selectedVersion) {
       updateArtifact(artifact.id, {
         content: selectedVersion.content,
@@ -376,7 +368,11 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                     onClick={handleCopy}
                     className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
                   >
-                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>Copy</TooltipContent>
@@ -471,9 +467,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
       <ScrollArea className="flex-1">
         {isDocument ? (
           <DocumentArtifact
-            content={
-              isEditing ? editContent : (artifact.content as string)
-            }
+            content={isEditing ? editContent : (artifact.content as string)}
             isEditing={isEditing}
             onContentChange={setEditContent}
           />

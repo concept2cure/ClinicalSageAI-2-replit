@@ -94,6 +94,16 @@ export const featureFlags: Record<string, FeatureFlag> = {
     enabled: true,
   },
 
+  // IVDR module flags
+  ENABLE_IVDR_MODULE: {
+    id: 'ENABLE_IVDR_MODULE',
+    name: 'EU IVDR Module',
+    description:
+      'Enables the EU In Vitro Diagnostic Regulation module for classification, performance evaluation, and technical documentation',
+    defaultValue: true,
+    enabled: true,
+  },
+
   // MAUD validation flags
   ENABLE_MAUD_VALIDATION: {
     id: 'ENABLE_MAUD_VALIDATION',
@@ -176,6 +186,16 @@ export const featureFlags: Record<string, FeatureFlag> = {
     id: 'ENABLE_DEVICE_PROFILE',
     name: 'Device Profile Manager',
     description: 'Enables device profile intake and management for 510(k) submissions',
+    defaultValue: true,
+    enabled: true,
+  },
+
+  // Shell embedding — render modules inside the Concept2Cure shell frame
+  EMBED_MODULES_IN_SHELL: {
+    id: 'EMBED_MODULES_IN_SHELL',
+    name: 'Embed Modules in Shell',
+    description:
+      'When enabled, modules like CERV2 render inside the Concept2Cure shell (sidebar + module frame) instead of as full-page breakouts.',
     defaultValue: true,
     enabled: true,
   },

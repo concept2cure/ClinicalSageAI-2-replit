@@ -6,7 +6,12 @@ type RequestActor = { userName: string; userRole: string | null };
 
 export const getTenantContext = (req: any): TenantContext => {
   const organizationIdParam =
-    req.headers['x-organization-id'] || req.query.organizationId || req.query.organization_id;
+    req.headers['x-organization-id'] ||
+    req.query.organizationId ||
+    req.query.organization_id ||
+    // Fall back to value set by JWT auth middleware
+    (req.organizationId != null ? String(req.organizationId) : undefined) ||
+    (req.tenantId != null ? String(req.tenantId) : undefined);
   const clientWorkspaceIdParam =
     req.headers['x-client-workspace-id'] ||
     req.query.clientWorkspaceId ||

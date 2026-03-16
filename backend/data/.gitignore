@@ -1,0 +1,6 @@
+# Runtime knowledge-base storage — do not commit data files
+# Directory structure is preserved via .gitkeep files
+
+knowledge_metadata/*.json
+processed_knowledge/*.txt
+projects/*.json

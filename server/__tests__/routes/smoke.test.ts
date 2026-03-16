@@ -6,6 +6,10 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+import express from 'express';
+import request from 'supertest';
 
 // Mock Express app
 const mockApp = {
@@ -136,5 +140,81 @@ describe('Service Layer Integration', () => {
   it('should have CortexComplianceService exportable', async () => {
     const module = await import('../../services/cortexComplianceService');
     expect(module.CortexComplianceService).toBeDefined();
+  });
+});
+
+describe('Rescue Cut: Core Workflow Guards', () => {
+  const repoRoot = path.resolve(__dirname, '../../..');
+
+  it('protects /api/cortex/chat with requireAuth', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/cortex-unified.ts'), 'utf8');
+    expect(content).toContain("router.post('/chat', requireAuth");
+  });
+
+  it('protects /api/lumen-cortex/regulatory-analysis with requireAuth', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/lumen-cortex.ts'), 'utf8');
+    expect(content).toContain("router.post('/regulatory-analysis', requireAuth");
+  });
+
+  it('keeps /api/knowledge-base generation endpoints behind authenticateToken', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/knowledge-base.ts'), 'utf8');
+    expect(content).toContain('router.use(authenticateToken)');
+    expect(content).toContain("router.post('/generate-docx'");
+  });
+
+  it('mounts core workflow routes in server index', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/index.ts'), 'utf8');
+    expect(content).toContain("app.use('/api/cortex', cortexUnifiedRoutes)");
+    expect(content).toContain("app.use('/api/lumen-cortex', lumenCortexRoutes.default)");
+  });
+});
+
+describe('Rescue Cut: Core Workflow API Integration', () => {
+  it('rejects invalid JWT on POST /api/cortex/chat', async () => {
+    const module = await import('../../routes/cortex-unified');
+    const router = module.default;
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/cortex', router);
+
+    const res = await request(app)
+      .post('/api/cortex/chat')
+      .set('Authorization', 'Bearer invalid.jwt.token')
+      .send({ message: 'hello' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects invalid JWT on POST /api/lumen-cortex/regulatory-analysis', async () => {
+    const module = await import('../../routes/lumen-cortex');
+    const router = module.default;
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/lumen-cortex', router);
+
+    const res = await request(app)
+      .post('/api/lumen-cortex/regulatory-analysis')
+      .set('Authorization', 'Bearer invalid.jwt.token')
+      .send({ query: 'test' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects invalid JWT on POST /api/knowledge-base/generate-docx', async () => {
+    const module = await import('../../routes/knowledge-base');
+    const router = module.default;
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/knowledge-base', router);
+
+    const res = await request(app)
+      .post('/api/knowledge-base/generate-docx')
+      .set('Authorization', 'Bearer invalid.jwt.token')
+      .send({ title: 'x', content: '<p>x</p>' });
+
+    expect(res.status).toBe(401);
   });
 });

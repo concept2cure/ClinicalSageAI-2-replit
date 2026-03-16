@@ -51,11 +51,7 @@ interface AuthError {
 
 // Logo rendered from actual brand asset
 const BrandLogo = () => (
-  <img
-    src={concept2cureLogo}
-    alt="Concept2Cure"
-    className="h-14 w-auto object-contain"
-  />
+  <img src={concept2cureLogo} alt="Concept2Cure" className="h-14 w-auto object-contain" />
 );
 
 const MicrosoftIcon = () => (
@@ -89,7 +85,12 @@ const GoogleIcon = () => (
 );
 
 const SpinnerIcon = () => (
-  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+  <svg
+    className="animate-spin h-5 w-5"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
     <path
       className="opacity-75"
@@ -206,17 +207,18 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
             inputMode="numeric"
             maxLength={1}
             value={value[index] || ''}
-            onChange={(e) => handleChange(index, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(index, e)}
+            onChange={e => handleChange(index, e.target.value)}
+            onKeyDown={e => handleKeyDown(index, e)}
             onPaste={handlePaste}
             className={`
               w-12 h-14 text-center text-2xl font-medium
               border-2 rounded-xl
               transition-all duration-200
               focus:outline-none focus:ring-0
-              ${error 
-                ? 'border-red-300 bg-red-50 focus:border-red-500' 
-                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+              ${
+                error
+                  ? 'border-red-300 bg-red-50 focus:border-red-500'
+                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
               }
             `}
             autoComplete="one-time-code"
@@ -243,7 +245,7 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
 export const ZenLogin: React.FC = () => {
   const [, setLocation] = useLocation();
   const { login, verifyMfa } = usePortalAuth();
-  
+
   // Form state
   const [step, setStep] = useState<AuthStep>('email');
   const [email, setEmail] = useState('');
@@ -252,7 +254,7 @@ export const ZenLogin: React.FC = () => {
   const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('totp');
   const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
@@ -266,7 +268,7 @@ export const ZenLogin: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
   // Email validation
   // ─────────────────────────────────────────────────────────────────────────────
-  
+
   const validateEmail = useCallback((email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -288,10 +290,10 @@ export const ZenLogin: React.FC = () => {
     }
 
     setIsLoading(true);
-    
+
     // Simulate checking if email exists / determining auth method
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     setIsLoading(false);
     setStep('password');
   }, [email, validateEmail]);
@@ -331,7 +333,9 @@ export const ZenLogin: React.FC = () => {
       setStep('success');
 
       setTimeout(() => {
-        setLocation(computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser()));
+        setLocation(
+          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
+        );
       }, 1000);
     } catch (err) {
       setError({
@@ -367,7 +371,9 @@ export const ZenLogin: React.FC = () => {
 
       setStep('success');
       setTimeout(() => {
-        setLocation(computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser()));
+        setLocation(
+          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
+        );
       }, 1000);
     } catch (err) {
       setError({
@@ -410,62 +416,103 @@ export const ZenLogin: React.FC = () => {
     }
   }, [email, validateEmail]);
 
-  const handleSsoLogin = useCallback(async (provider: 'microsoft' | 'google') => {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Demo / Quick access login
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleDemoLogin = useCallback(async () => {
     setIsLoading(true);
-    console.log(`SSO login with ${provider}`);
+    setError(null);
+    try {
+      const result = await login({
+        email: 'jm.smith@concept2cure.pro',
+        password: 'demo123',
+        rememberDevice: true,
+      });
+      if (!result.success) {
+        setError({
+          message: result.error?.message || 'Demo login failed. Please contact support.',
+        });
+        return;
+      }
+      setStep('success');
+      setTimeout(() => {
+        setLocation(
+          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
+        );
+      }, 800);
+    } catch (err) {
+      setError({ message: 'Demo login failed. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [login, setLocation]);
 
-    // In dev, call the dev SSO helper callback endpoint directly to simulate provider
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const handleSsoLogin = useCallback(
+    async (provider: 'microsoft' | 'google') => {
+      setIsLoading(true);
+      console.log(`SSO login with ${provider}`);
 
-    if (isDev) {
-      try {
-        const resp = await fetch(`/api/auth/sso/${provider}/callback?code=dev-sso-code`);
-        if (resp.ok) {
-          const json = await resp.json();
-          if (json?.accessToken) {
-            // Persist token and use returned user for redirect decision
-            authService.setToken(json.accessToken);
-            const user = json.user;
-            setStep('success');
-            setTimeout(() => {
-              setLocation(computeRedirect(undefined, user, () => user));
-            }, 500);
-            return;
+      // In dev, call the dev SSO helper callback endpoint directly to simulate provider
+      const isDev =
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      if (isDev) {
+        try {
+          const resp = await fetch(`/api/auth/sso/${provider}/callback?code=dev-sso-code`);
+          if (resp.ok) {
+            const json = await resp.json();
+            if (json?.accessToken) {
+              // Persist token and use returned user for redirect decision
+              authService.setToken(json.accessToken);
+              const user = json.user;
+              setStep('success');
+              setTimeout(() => {
+                setLocation(computeRedirect(undefined, user, () => user));
+              }, 500);
+              return;
+            }
           }
+          throw new Error('SSO callback failed');
+        } catch (err) {
+          console.error('SSO dev helper error:', err);
+          setError({ message: 'SSO failed. Please try again.' } as any);
+        } finally {
+          setIsLoading(false);
         }
-        throw new Error('SSO callback failed');
-      } catch (err) {
-        console.error('SSO dev helper error:', err);
-        setError({ message: 'SSO failed. Please try again.' } as any);
-      } finally {
-        setIsLoading(false);
       }
-    }
 
-    // Fallback: keep previous demo behavior for non-dev
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setIsLoading(false);
-    setStep('success');
-    setTimeout(() => {
-      setLocation(computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser()));
-    }, 1000);
-  }, [setLocation]);
+      // Fallback: keep previous demo behavior for non-dev
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setIsLoading(false);
+      setStep('success');
+      setTimeout(() => {
+        setLocation(
+          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
+        );
+      }, 1000);
+    },
+    [setLocation]
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      switch (step) {
-        case 'email':
-          handleEmailContinue();
-          break;
-        case 'password':
-          handleLogin();
-          break;
-        case 'mfa':
-          handleMfaVerify();
-          break;
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        switch (step) {
+          case 'email':
+            handleEmailContinue();
+            break;
+          case 'password':
+            handleLogin();
+            break;
+          case 'mfa':
+            handleMfaVerify();
+            break;
+        }
       }
-    }
-  }, [step, handleEmailContinue, handleLogin, handleMfaVerify]);
+    },
+    [step, handleEmailContinue, handleLogin, handleMfaVerify]
+  );
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Render helpers
@@ -488,7 +535,7 @@ export const ZenLogin: React.FC = () => {
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="you@company.com"
           autoComplete="email"
@@ -498,9 +545,10 @@ export const ZenLogin: React.FC = () => {
             border-2 rounded-xl
             transition-all duration-200
             focus:outline-none focus:ring-0
-            ${error?.field === 'email'
-              ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+            ${
+              error?.field === 'email'
+                ? 'border-red-300 bg-red-50 focus:border-red-500'
+                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
             }
           `}
         />
@@ -540,9 +588,42 @@ export const ZenLogin: React.FC = () => {
           <div className="w-full border-t border-zinc-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-zinc-400 text-xs uppercase tracking-wider">or continue with</span>
+          <span className="px-4 bg-white text-zinc-400 text-xs uppercase tracking-wider">
+            or continue with
+          </span>
         </div>
       </div>
+
+      {/* Quick Demo Access */}
+      <button
+        onClick={handleDemoLogin}
+        disabled={isLoading}
+        className={`
+          w-full py-3 px-4
+          flex items-center justify-center gap-2
+          text-sm font-semibold
+          text-emerald-700 bg-emerald-50 border-2 border-emerald-200
+          hover:bg-emerald-100 hover:border-emerald-300
+          rounded-xl transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed
+        `}
+      >
+        {isLoading ? (
+          <SpinnerIcon />
+        ) : (
+          <>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+            Quick Demo Access — jm.smith@concept2cure.pro
+          </>
+        )}
+      </button>
 
       {/* SSO Buttons */}
       <div className="grid grid-cols-2 gap-3">
@@ -610,7 +691,7 @@ export const ZenLogin: React.FC = () => {
             id="password"
             type={showPassword ? 'text' : 'password'}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter your password"
             autoComplete="current-password"
@@ -620,9 +701,10 @@ export const ZenLogin: React.FC = () => {
               border-2 rounded-xl
               transition-all duration-200
               focus:outline-none focus:ring-0
-              ${error?.field === 'password'
-                ? 'border-red-300 bg-red-50 focus:border-red-500'
-                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+              ${
+                error?.field === 'password'
+                  ? 'border-red-300 bg-red-50 focus:border-red-500'
+                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
               }
             `}
           />
@@ -634,12 +716,27 @@ export const ZenLogin: React.FC = () => {
           >
             {showPassword ? (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                />
               </svg>
             ) : (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
               </svg>
             )}
           </button>
@@ -661,7 +758,7 @@ export const ZenLogin: React.FC = () => {
           <input
             type="checkbox"
             checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
+            onChange={e => setRememberMe(e.target.checked)}
             className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-sm text-zinc-600">Remember me</span>
@@ -719,18 +816,14 @@ export const ZenLogin: React.FC = () => {
           <ShieldIcon />
         </div>
         <h3 className="text-lg font-semibold text-zinc-900">Two-factor authentication</h3>
-        <p className="text-sm text-zinc-600">
-          Enter the 6-digit code from your authenticator app
-        </p>
+        <p className="text-sm text-zinc-600">Enter the 6-digit code from your authenticator app</p>
       </div>
 
       {availableMfaMethods.length > 0 && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700">
-            Verification method
-          </label>
+          <label className="block text-sm font-medium text-zinc-700">Verification method</label>
           <div className="flex flex-wrap gap-2">
-            {availableMfaMethods.map((method) => (
+            {availableMfaMethods.map(method => (
               <button
                 key={method.type}
                 type="button"
@@ -738,9 +831,10 @@ export const ZenLogin: React.FC = () => {
                 className={`
                   px-3 py-1.5 text-sm rounded-full border
                   transition-all duration-200
-                  ${mfaMethod === method.type
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                  ${
+                    mfaMethod === method.type
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
                   }
                 `}
               >
@@ -841,8 +935,8 @@ export const ZenLogin: React.FC = () => {
       </div>
       <h3 className="text-lg font-semibold text-zinc-900">Check your email</h3>
       <p className="text-sm text-zinc-600">
-        We've sent a password reset link to <strong>{email}</strong>. 
-        The link will expire in 1 hour.
+        We've sent a password reset link to <strong>{email}</strong>. The link will expire in 1
+        hour.
       </p>
 
       <button
@@ -886,7 +980,7 @@ export const ZenLogin: React.FC = () => {
       </motion.div>
       <h3 className="text-xl font-semibold text-zinc-900">Welcome back!</h3>
       <p className="text-sm text-zinc-600">Redirecting you to Concept2Cure...</p>
-      
+
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: '100%' }}
@@ -905,7 +999,13 @@ export const ZenLogin: React.FC = () => {
       {/* Left panel — branding / hero */}
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
         {/* Decorative grid */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M60 0H0v60\' fill=\'none\' stroke=\'%23fff\' stroke-width=\'.5\'/%3E%3C/svg%3E")'}} />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 0H0v60' fill='none' stroke='%23fff' stroke-width='.5'/%3E%3C/svg%3E\")",
+          }}
+        />
         {/* Gradient orbs */}
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-[120px]" />
         <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-indigo-500/20 blur-[100px]" />
@@ -914,7 +1014,11 @@ export const ZenLogin: React.FC = () => {
           {/* Top — logo */}
           <div>
             <div className="flex items-center gap-3">
-              <img src={concept2cureLogo} alt="Concept2Cure" className="h-12 w-auto rounded-lg shadow-lg" />
+              <img
+                src={concept2cureLogo}
+                alt="Concept2Cure"
+                className="h-12 w-auto rounded-lg shadow-lg"
+              />
               <span className="text-xl font-semibold text-white tracking-tight">Concept2Cure</span>
             </div>
           </div>
@@ -922,11 +1026,13 @@ export const ZenLogin: React.FC = () => {
           {/* Center — tagline */}
           <div className="space-y-6">
             <h2 className="text-4xl font-bold text-white leading-tight">
-              Accelerate your path<br />from concept to cure.
+              Accelerate your path
+              <br />
+              from concept to cure.
             </h2>
             <p className="text-lg text-blue-200/80 max-w-md leading-relaxed">
-              AI-powered regulatory intelligence for IND, NDA, BLA,
-              510(k) and beyond — purpose-built for life-sciences teams.
+              RI-powered regulatory intelligence for IND, NDA, BLA, 510(k) and beyond —
+              purpose-built for life-sciences teams.
             </p>
             {/* Trust badges */}
             <div className="flex items-center gap-4 pt-4">
@@ -945,10 +1051,12 @@ export const ZenLogin: React.FC = () => {
           {/* Bottom — testimonial / stat */}
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
             <p className="text-sm text-blue-100/90 italic leading-relaxed">
-              "Concept2Cure reduced our IND preparation time from 18 months to
-              under 6 — with full regulatory traceability at every step."
+              "Concept2Cure reduced our IND preparation time from 18 months to under 6 — with full
+              regulatory traceability at every step."
             </p>
-            <p className="mt-3 text-xs text-blue-300/70">— VP Regulatory Affairs, Top-20 Biopharma</p>
+            <p className="mt-3 text-xs text-blue-300/70">
+              — VP Regulatory Affairs, Top-20 Biopharma
+            </p>
           </div>
         </div>
       </div>
@@ -974,9 +1082,7 @@ export const ZenLogin: React.FC = () => {
                 {step === 'success' ? '' : 'Welcome back'}
               </h1>
               {step === 'email' && (
-                <p className="mt-2 text-sm text-zinc-500">
-                  Sign in to your Concept2Cure account
-                </p>
+                <p className="mt-2 text-sm text-zinc-500">Sign in to your Concept2Cure account</p>
               )}
             </div>
 

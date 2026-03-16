@@ -1,6 +1,6 @@
 /**
  * Concept2Cure - CAPA (Corrective and Preventive Action) Management
- * 
+ *
  * Comprehensive CAPA workflow supporting:
  * - Complaint-driven CAPAs
  * - Audit finding CAPAs
@@ -8,19 +8,12 @@
  * - Risk-based prioritization
  * - Effectiveness verification
  * - Root cause analysis (5 Why, Fishbone)
- * 
+ *
  * @module components/regulatory/CAPAManagement
  * @version 1.0.0
  */
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -75,7 +68,7 @@ import {
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-type CAPASource = 
+type CAPASource =
   | 'complaint'
   | 'audit_internal'
   | 'audit_external'
@@ -89,7 +82,7 @@ type CAPAType = 'corrective' | 'preventive' | 'both';
 
 type CAPAPriority = 'critical' | 'major' | 'minor';
 
-type CAPAStatus = 
+type CAPAStatus =
   | 'open'
   | 'investigation'
   | 'root_cause_identified'
@@ -170,29 +163,67 @@ const SOURCE_LABELS: Record<CAPASource, string> = {
 };
 
 const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  open: { label: 'Open', color: 'bg-blue-100 text-blue-800', icon: <FileWarning className="w-4 h-4" /> },
-  investigation: { label: 'Investigation', color: 'bg-yellow-100 text-yellow-800', icon: <Search className="w-4 h-4" /> },
-  root_cause_identified: { label: 'Root Cause Identified', color: 'bg-purple-100 text-purple-800', icon: <GitBranch className="w-4 h-4" /> },
-  action_planning: { label: 'Action Planning', color: 'bg-indigo-100 text-indigo-800', icon: <ClipboardList className="w-4 h-4" /> },
-  implementation: { label: 'Implementation', color: 'bg-orange-100 text-orange-800', icon: <ArrowRight className="w-4 h-4" /> },
-  verification: { label: 'Verification', color: 'bg-cyan-100 text-cyan-800', icon: <CheckCircle2 className="w-4 h-4" /> },
-  effectiveness_check: { label: 'Effectiveness Check', color: 'bg-teal-100 text-teal-800', icon: <TrendingUp className="w-4 h-4" /> },
-  closed: { label: 'Closed', color: 'bg-green-100 text-green-800', icon: <CheckCircle2 className="w-4 h-4" /> },
-  closed_ineffective: { label: 'Closed - Ineffective', color: 'bg-red-100 text-red-800', icon: <XCircle className="w-4 h-4" /> },
+  open: {
+    label: 'Open',
+    color: 'bg-blue-100 text-blue-800',
+    icon: <FileWarning className="w-4 h-4" />,
+  },
+  investigation: {
+    label: 'Investigation',
+    color: 'bg-yellow-100 text-yellow-800',
+    icon: <Search className="w-4 h-4" />,
+  },
+  root_cause_identified: {
+    label: 'Root Cause Identified',
+    color: 'bg-purple-100 text-purple-800',
+    icon: <GitBranch className="w-4 h-4" />,
+  },
+  action_planning: {
+    label: 'Action Planning',
+    color: 'bg-indigo-100 text-indigo-800',
+    icon: <ClipboardList className="w-4 h-4" />,
+  },
+  implementation: {
+    label: 'Implementation',
+    color: 'bg-orange-100 text-orange-800',
+    icon: <ArrowRight className="w-4 h-4" />,
+  },
+  verification: {
+    label: 'Verification',
+    color: 'bg-cyan-100 text-cyan-800',
+    icon: <CheckCircle2 className="w-4 h-4" />,
+  },
+  effectiveness_check: {
+    label: 'Effectiveness Check',
+    color: 'bg-teal-100 text-teal-800',
+    icon: <TrendingUp className="w-4 h-4" />,
+  },
+  closed: {
+    label: 'Closed',
+    color: 'bg-green-100 text-green-800',
+    icon: <CheckCircle2 className="w-4 h-4" />,
+  },
+  closed_ineffective: {
+    label: 'Closed - Ineffective',
+    color: 'bg-red-100 text-red-800',
+    icon: <XCircle className="w-4 h-4" />,
+  },
 };
 
-const PRIORITY_CONFIG: Record<CAPAPriority, { label: string; color: string; daysToClose: number }> = {
-  critical: { label: 'Critical', color: 'bg-red-500 text-white', daysToClose: 30 },
-  major: { label: 'Major', color: 'bg-orange-500 text-white', daysToClose: 60 },
-  minor: { label: 'Minor', color: 'bg-yellow-500 text-white', daysToClose: 90 },
-};
+const PRIORITY_CONFIG: Record<CAPAPriority, { label: string; color: string; daysToClose: number }> =
+  {
+    critical: { label: 'Critical', color: 'bg-red-500 text-white', daysToClose: 30 },
+    major: { label: 'Major', color: 'bg-orange-500 text-white', daysToClose: 60 },
+    minor: { label: 'Minor', color: 'bg-yellow-500 text-white', daysToClose: 90 },
+  };
 
 // Mock data
 const MOCK_CAPAS: CAPA[] = [
   {
     id: 'CAPA-2025-001',
     title: 'Label Error - Incorrect Dosing Instructions',
-    description: 'Customer complaint reported incorrect dosing frequency on product labeling for SKU-12345',
+    description:
+      'Customer complaint reported incorrect dosing frequency on product labeling for SKU-12345',
     source: 'complaint',
     sourceReference: 'COMP-2025-0142',
     type: 'corrective',
@@ -207,10 +238,10 @@ const MOCK_CAPAS: CAPA[] = [
       method: '5why',
       findings: [
         'Why was the label incorrect? Template not updated after formulation change',
-        'Why wasn\'t template updated? Change control process not followed',
-        'Why wasn\'t change control followed? Training incomplete for new staff',
+        "Why wasn't template updated? Change control process not followed",
+        "Why wasn't change control followed? Training incomplete for new staff",
         'Why was training incomplete? Training matrix not current',
-        'Why wasn\'t training matrix current? QA resource constraints',
+        "Why wasn't training matrix current? QA resource constraints",
       ],
       rootCause: 'Inadequate training program for change control process',
       contributingFactors: ['Resource constraints', 'Document control gaps'],
@@ -256,7 +287,8 @@ const MOCK_CAPAS: CAPA[] = [
   {
     id: 'CAPA-2025-002',
     title: 'Sterility Test Failure Trend',
-    description: 'Trending increase in sterility test failures in cleanroom area C over past 3 months',
+    description:
+      'Trending increase in sterility test failures in cleanroom area C over past 3 months',
     source: 'deviation',
     sourceReference: 'DEV-2025-0089',
     type: 'preventive',
@@ -309,9 +341,7 @@ const MOCK_CAPAS: CAPA[] = [
     riskScore: 92,
     regulatoryImpact: true,
     customerImpact: false,
-    history: [
-      { date: '2025-01-20', action: 'CAPA Initiated from 483', user: 'Lisa Park' },
-    ],
+    history: [{ date: '2025-01-20', action: 'CAPA Initiated from 483', user: 'Lisa Park' }],
   },
 ];
 
@@ -329,22 +359,29 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
       if (c.status.startsWith('closed')) return false;
       return new Date(c.targetCloseDate) < new Date();
     }).length;
-    const critical = capas.filter(c => c.priority === 'critical' && !c.status.startsWith('closed')).length;
-    const regulatory = capas.filter(c => c.regulatoryImpact && !c.status.startsWith('closed')).length;
-    const avgDaysOpen = capas
-      .filter(c => !c.status.startsWith('closed'))
-      .reduce((acc, c) => {
-        const days = Math.floor((Date.now() - new Date(c.initiatedDate).getTime()) / (1000 * 60 * 60 * 24));
-        return acc + days;
-      }, 0) / (open || 1);
+    const critical = capas.filter(
+      c => c.priority === 'critical' && !c.status.startsWith('closed')
+    ).length;
+    const regulatory = capas.filter(
+      c => c.regulatoryImpact && !c.status.startsWith('closed')
+    ).length;
+    const avgDaysOpen =
+      capas
+        .filter(c => !c.status.startsWith('closed'))
+        .reduce((acc, c) => {
+          const days = Math.floor(
+            (Date.now() - new Date(c.initiatedDate).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          return acc + days;
+        }, 0) / (open || 1);
 
     return { open, overdue, critical, regulatory, avgDaysOpen: Math.round(avgDaysOpen) };
   }, [capas]);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open CAPAs</p>
@@ -352,11 +389,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <FileWarning className="w-8 h-8 text-blue-500" />
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-4">
+        </div>
+      </div>
+
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
@@ -364,11 +401,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <Clock className="w-8 h-8 text-red-500" />
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-4">
+        </div>
+      </div>
+
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Critical</p>
@@ -376,11 +413,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-4">
+        </div>
+      </div>
+
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Regulatory</p>
@@ -388,11 +425,11 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <FileWarning className="w-8 h-8 text-purple-500" />
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-4">
+        </div>
+      </div>
+
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Avg Days Open</p>
@@ -400,8 +437,8 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
             </div>
             <Calendar className="w-8 h-8 text-gray-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -424,15 +461,19 @@ function StatusBadge({ status }: { status: CAPAStatus }) {
  */
 function PriorityBadge({ priority }: { priority: CAPAPriority }) {
   const config = PRIORITY_CONFIG[priority];
-  return (
-    <Badge className={config.color}>{config.label}</Badge>
-  );
+  return <Badge className={config.color}>{config.label}</Badge>;
 }
 
 /**
  * Root Cause Analysis Panel
  */
-function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCauseAnalysis) => void }) {
+function RootCausePanel({
+  capa,
+  onUpdate,
+}: {
+  capa: CAPA;
+  onUpdate: (rca: RootCauseAnalysis) => void;
+}) {
   const [method, setMethod] = useState<RootCauseAnalysis['method']>('5why');
   const [findings, setFindings] = useState<string[]>(['', '', '', '', '']);
   const [rootCause, setRootCause] = useState('');
@@ -449,20 +490,20 @@ function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCa
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <Brain className="w-5 h-5" />
           Root Cause Analysis
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Perform structured root cause analysis to identify the underlying issue
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </p>
+      </div>
+      <div className="px-3 py-2 space-y-4">
         <div>
           <Label>Analysis Method</Label>
-          <Select value={method} onValueChange={(v) => setMethod(v as any)}>
+          <Select value={method} onValueChange={v => setMethod(v as any)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -483,7 +524,7 @@ function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCa
                 <span className="text-sm font-medium w-16">Why {idx + 1}:</span>
                 <Input
                   value={finding}
-                  onChange={(e) => {
+                  onChange={e => {
                     const newFindings = [...findings];
                     newFindings[idx] = e.target.value;
                     setFindings(newFindings);
@@ -497,15 +538,14 @@ function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCa
 
         {method === 'fishbone' && (
           <div className="grid grid-cols-2 gap-4">
-            {['People', 'Process', 'Equipment', 'Materials', 'Environment', 'Measurement'].map((category) => (
-              <div key={category}>
-                <Label>{category}</Label>
-                <Textarea
-                  placeholder={`${category} factors...`}
-                  className="h-20"
-                />
-              </div>
-            ))}
+            {['People', 'Process', 'Equipment', 'Materials', 'Environment', 'Measurement'].map(
+              category => (
+                <div key={category}>
+                  <Label>{category}</Label>
+                  <Textarea placeholder={`${category} factors...`} className="h-20" />
+                </div>
+              )
+            )}
           </div>
         )}
 
@@ -513,7 +553,7 @@ function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCa
           <Label>Root Cause Statement</Label>
           <Textarea
             value={rootCause}
-            onChange={(e) => setRootCause(e.target.value)}
+            onChange={e => setRootCause(e.target.value)}
             placeholder="Based on the analysis, the root cause is..."
             className="h-24"
           />
@@ -522,9 +562,9 @@ function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCa
         <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
           <Sparkles className="w-5 h-5 text-purple-600" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-purple-800">Lumen AI Analysis</p>
+            <p className="text-sm font-medium text-purple-800">RI Analysis</p>
             <p className="text-xs text-purple-600">
-              Let Lumen analyze similar CAPAs and suggest potential root causes based on historical data
+              Analyze similar CAPAs and suggest potential root causes based on historical data
             </p>
           </div>
           <Button variant="outline" size="sm">
@@ -535,8 +575,8 @@ function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCa
         <Button onClick={handleSave} className="w-full">
           Save Root Cause Analysis
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -547,17 +587,17 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
   const [newAction, setNewAction] = useState({ description: '', assignee: '', dueDate: '' });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <ClipboardList className="w-5 h-5" />
           Corrective/Preventive Actions
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Track actions to address root cause and prevent recurrence
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="px-3 py-2">
         <Table>
           <TableHeader>
             <TableRow>
@@ -568,7 +608,7 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {capa.actions.map((action) => (
+            {capa.actions.map(action => (
               <TableRow key={action.id}>
                 <TableCell className="font-medium">{action.description}</TableCell>
                 <TableCell>{action.assignee}</TableCell>
@@ -576,9 +616,11 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
                 <TableCell>
                   <Badge
                     variant={
-                      action.status === 'completed' ? 'default' :
-                      action.status === 'overdue' ? 'destructive' :
-                      'outline'
+                      action.status === 'completed'
+                        ? 'default'
+                        : action.status === 'overdue'
+                          ? 'destructive'
+                          : 'outline'
                     }
                   >
                     {action.status.replace('_', ' ')}
@@ -595,17 +637,17 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
             <Input
               placeholder="Action description"
               value={newAction.description}
-              onChange={(e) => setNewAction({ ...newAction, description: e.target.value })}
+              onChange={e => setNewAction({ ...newAction, description: e.target.value })}
             />
             <Input
               placeholder="Assignee"
               value={newAction.assignee}
-              onChange={(e) => setNewAction({ ...newAction, assignee: e.target.value })}
+              onChange={e => setNewAction({ ...newAction, assignee: e.target.value })}
             />
             <Input
               type="date"
               value={newAction.dueDate}
-              onChange={(e) => setNewAction({ ...newAction, dueDate: e.target.value })}
+              onChange={e => setNewAction({ ...newAction, dueDate: e.target.value })}
             />
           </div>
           <Button size="sm">
@@ -613,8 +655,8 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
             Add Action
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -623,22 +665,24 @@ function ActionsPanel({ capa }: { capa: CAPA }) {
  */
 function EffectivenessPanel({ capa }: { capa: CAPA }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="border border-border/40 rounded-sm bg-background">
+      <div className="px-3 py-2 border-b border-border/30">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Effectiveness Verification
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Verify that corrective actions have been effective in addressing the root cause
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="px-3 py-2">
         {capa.effectivenessChecks.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No effectiveness checks recorded yet</p>
-            <p className="text-sm">Effectiveness checks should be performed after all actions are complete</p>
+            <p className="text-sm">
+              Effectiveness checks should be performed after all actions are complete
+            </p>
             <Button className="mt-4" variant="outline">
               <Plus className="w-4 h-4 mr-1" />
               Schedule Effectiveness Check
@@ -655,16 +699,18 @@ function EffectivenessPanel({ capa }: { capa: CAPA }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {capa.effectivenessChecks.map((check) => (
+              {capa.effectivenessChecks.map(check => (
                 <TableRow key={check.id}>
                   <TableCell>{check.checkDate}</TableCell>
                   <TableCell>{check.method}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        check.result === 'effective' ? 'default' :
-                        check.result === 'ineffective' ? 'destructive' :
-                        'outline'
+                        check.result === 'effective'
+                          ? 'default'
+                          : check.result === 'ineffective'
+                            ? 'destructive'
+                            : 'outline'
                       }
                     >
                       {check.result.replace('_', ' ')}
@@ -676,8 +722,8 @@ function EffectivenessPanel({ capa }: { capa: CAPA }) {
             </TableBody>
           </Table>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -713,51 +759,57 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Days Open</p>
             <p className="text-2xl font-bold">{daysOpen}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">
               {isOverdue ? 'Days Overdue' : 'Days Remaining'}
             </p>
             <p className={`text-2xl font-bold ${isOverdue ? 'text-red-600' : ''}`}>
               {Math.abs(daysRemaining)}
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Actions Progress</p>
             <div className="flex items-center gap-2">
               <Progress value={progress} className="flex-1" />
-              <span className="text-sm">{completedActions}/{totalActions}</span>
+              <span className="text-sm">
+                {completedActions}/{totalActions}
+              </span>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Risk Score</p>
-            <p className={`text-2xl font-bold ${
-              (capa.riskScore || 0) >= 80 ? 'text-red-600' :
-              (capa.riskScore || 0) >= 50 ? 'text-orange-600' :
-              'text-green-600'
-            }`}>
+            <p
+              className={`text-2xl font-bold ${
+                (capa.riskScore || 0) >= 80
+                  ? 'text-red-600'
+                  : (capa.riskScore || 0) >= 50
+                    ? 'text-orange-600'
+                    : 'text-green-600'
+              }`}
+            >
               {capa.riskScore || 'N/A'}
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>CAPA Details</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 border-b border-border/30">
+          <h3 className="text-sm font-semibold">CAPA Details</h3>
+        </div>
+        <div className="px-3 py-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-muted-foreground">Description</Label>
@@ -802,8 +854,8 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
               </Badge>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Tabs for RCA, Actions, Effectiveness */}
       <Tabs defaultValue="rca">
@@ -816,11 +868,13 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
 
         <TabsContent value="rca">
           {capa.rootCauseAnalysis ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Root Cause Analysis - {capa.rootCauseAnalysis.method.toUpperCase()}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="border border-border/40 rounded-sm bg-background">
+              <div className="px-3 py-2 border-b border-border/30">
+                <h3 className="text-sm font-semibold">
+                  Root Cause Analysis - {capa.rootCauseAnalysis.method.toUpperCase()}
+                </h3>
+              </div>
+              <div className="px-3 py-2 space-y-4">
                 <div>
                   <Label className="text-muted-foreground">Analysis Findings</Label>
                   <ul className="list-disc list-inside mt-2 space-y-1">
@@ -839,8 +893,8 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                   <span>Performed by: {capa.rootCauseAnalysis.performedBy}</span>
                   <span>Date: {capa.rootCauseAnalysis.date}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <RootCausePanel capa={capa} onUpdate={() => {}} />
           )}
@@ -855,11 +909,11 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
         </TabsContent>
 
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>CAPA History</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30">
+              <h3 className="text-sm font-semibold">CAPA History</h3>
+            </div>
+            <div className="px-3 py-2">
               <div className="space-y-4">
                 {capa.history.map((entry, idx) => (
                   <div key={idx} className="flex items-center gap-4 p-3 border-l-2 border-blue-500">
@@ -869,8 +923,8 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -898,18 +952,18 @@ function NewCAPADialog() {
             Create a corrective or preventive action to address a quality issue
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div>
             <Label>Title</Label>
             <Input placeholder="Brief description of the issue" />
           </div>
-          
+
           <div>
             <Label>Description</Label>
             <Textarea placeholder="Detailed description of the issue and its impact" />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Source</Label>
@@ -919,7 +973,9 @@ function NewCAPADialog() {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(SOURCE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -929,7 +985,7 @@ function NewCAPADialog() {
               <Input placeholder="e.g., COMP-2025-001" />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Type</Label>
@@ -973,7 +1029,7 @@ function NewCAPADialog() {
               </Select>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Owner</Label>
@@ -984,7 +1040,7 @@ function NewCAPADialog() {
               <Input placeholder="Product name or N/A" />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2">
               <input type="checkbox" className="rounded" />
@@ -996,9 +1052,11 @@ function NewCAPADialog() {
             </label>
           </div>
         </div>
-        
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
           <Button onClick={() => setOpen(false)}>Create CAPA</Button>
         </DialogFooter>
       </DialogContent>
@@ -1020,8 +1078,12 @@ export function CAPAManagement() {
     return capas.filter(capa => {
       if (filterStatus !== 'all' && capa.status !== filterStatus) return false;
       if (filterPriority !== 'all' && capa.priority !== filterPriority) return false;
-      if (searchTerm && !capa.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !capa.id.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      if (
+        searchTerm &&
+        !capa.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !capa.id.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+        return false;
       return true;
     });
   }, [capas, filterStatus, filterPriority, searchTerm]);
@@ -1054,14 +1116,14 @@ export function CAPAManagement() {
       <CAPAMetrics capas={capas} />
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <Input
                 placeholder="Search CAPAs..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="max-w-sm"
               />
             </div>
@@ -1072,7 +1134,9 @@ export function CAPAManagement() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {Object.entries(STATUS_CONFIG).map(([value, config]) => (
-                  <SelectItem key={value} value={value}>{config.label}</SelectItem>
+                  <SelectItem key={value} value={value}>
+                    {config.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1088,12 +1152,12 @@ export function CAPAManagement() {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* CAPA List */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="border border-border/40 rounded-sm bg-background">
+        <div className="px-3 py-2 p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -1108,11 +1172,12 @@ export function CAPAManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCAPAs.map((capa) => {
-                const isOverdue = new Date(capa.targetCloseDate) < new Date() && !capa.status.startsWith('closed');
+              {filteredCAPAs.map(capa => {
+                const isOverdue =
+                  new Date(capa.targetCloseDate) < new Date() && !capa.status.startsWith('closed');
                 return (
-                  <TableRow 
-                    key={capa.id} 
+                  <TableRow
+                    key={capa.id}
                     className={`cursor-pointer hover:bg-muted/50 ${isOverdue ? 'bg-red-50' : ''}`}
                     onClick={() => setSelectedCAPA(capa)}
                   >
@@ -1143,7 +1208,8 @@ export function CAPAManagement() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {capa.actions.filter(a => a.status === 'completed').length}/{capa.actions.length}
+                        {capa.actions.filter(a => a.status === 'completed').length}/
+                        {capa.actions.length}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -1151,34 +1217,37 @@ export function CAPAManagement() {
               })}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Lumen AI Integration */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-        <CardContent className="p-4">
+      {/* RI Integration */}
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI CAPA Intelligence</h3>
+              <h3 className="font-semibold text-purple-900">RI CAPA Insights</h3>
               <p className="text-sm text-purple-700">
-                Analyze CAPA trends, identify recurring issues, and get AI-powered recommendations
+                Analyze CAPA trends, identify recurring issues, and get RI-powered recommendations
                 for root cause analysis and preventive actions.
               </p>
             </div>
-            <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100">
+            <Button
+              variant="outline"
+              className="border-purple-300 text-purple-700 hover:bg-purple-100"
+            >
               <BarChart3 className="w-4 h-4 mr-2" />
               View Trends
             </Button>
             <Button className="bg-purple-600 hover:bg-purple-700">
               <Brain className="w-4 h-4 mr-2" />
-              AI Analysis
+              RI Analysis
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -43,17 +43,22 @@ import { PharmaPortfolioDashboard } from './components/pharma/PharmaPortfolioDas
 import { CROClientPortal } from './components/cro/CROClientPortal';
 import { FDAMeetingWorkspace } from './components/regulatory/FDAMeetingWorkspace';
 import { ClinicalDocAuthoringWorkspace } from './components/writing/ClinicalDocAuthoringWorkspace';
-import { IndustryModeSelector, type UserConfiguration, type IndustryMode, type UserRole } from './components/onboarding/IndustryModeSelector';
+import {
+  IndustryModeSelector,
+  type UserConfiguration,
+  type IndustryMode,
+  type UserRole,
+} from './components/onboarding/IndustryModeSelector';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type WorkspaceView = 
-  | 'dashboard'        // Industry-specific main dashboard
-  | 'fda_meetings'     // FDA Meeting Workspace
-  | 'authoring'        // Clinical Document Authoring
-  | 'calendar'         // Regulatory Calendar
+type WorkspaceView =
+  | 'dashboard' // Industry-specific main dashboard
+  | 'fda_meetings' // FDA Meeting Workspace
+  | 'authoring' // Clinical Document Authoring
+  | 'calendar' // Regulatory Calendar
   | 'settings';
 
 interface AppState {
@@ -67,12 +72,15 @@ interface AppState {
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const INDUSTRY_CONFIG: Record<IndustryMode, {
-  label: string;
-  icon: React.ReactNode;
-  color: string;
-  dashboardTitle: string;
-}> = {
+const INDUSTRY_CONFIG: Record<
+  IndustryMode,
+  {
+    label: string;
+    icon: React.ReactNode;
+    color: string;
+    dashboardTitle: string;
+  }
+> = {
   biotech: {
     label: 'Biotech',
     icon: <Flask className="w-5 h-5" />,
@@ -115,7 +123,16 @@ const WORKSPACE_VIEWS: Array<{
     id: 'dashboard',
     label: 'Dashboard',
     icon: <LayoutDashboard className="w-5 h-5" />,
-    roles: ['regulatory_affairs', 'medical_writer', 'clinical_ops', 'medical_affairs', 'quality_assurance', 'project_manager', 'executive', 'consultant'],
+    roles: [
+      'regulatory_affairs',
+      'medical_writer',
+      'clinical_ops',
+      'medical_affairs',
+      'quality_assurance',
+      'project_manager',
+      'executive',
+      'consultant',
+    ],
   },
   {
     id: 'fda_meetings',
@@ -139,7 +156,16 @@ const WORKSPACE_VIEWS: Array<{
     id: 'settings',
     label: 'Settings',
     icon: <Settings className="w-5 h-5" />,
-    roles: ['regulatory_affairs', 'medical_writer', 'clinical_ops', 'medical_affairs', 'quality_assurance', 'project_manager', 'executive', 'consultant'],
+    roles: [
+      'regulatory_affairs',
+      'medical_writer',
+      'clinical_ops',
+      'medical_affairs',
+      'quality_assurance',
+      'project_manager',
+      'executive',
+      'consultant',
+    ],
   },
 ];
 
@@ -161,17 +187,17 @@ const Sidebar: React.FC<{
   onToggleCollapse: () => void;
 }> = ({ config, currentView, collapsed, onViewChange, onToggleCollapse }) => {
   const industryConfig = INDUSTRY_CONFIG[config.industryMode];
-  
+
   // Filter views based on user's role
-  const availableViews = WORKSPACE_VIEWS.filter(view => 
-    view.roles.includes(config.primaryRole)
-  );
-  
+  const availableViews = WORKSPACE_VIEWS.filter(view => view.roles.includes(config.primaryRole));
+
   return (
-    <div className={cn(
-      'flex flex-col h-full bg-white border-r border-zinc-200 transition-all duration-300',
-      collapsed ? 'w-16' : 'w-64'
-    )}>
+    <div
+      className={cn(
+        'flex flex-col h-full bg-white border-r border-zinc-200 transition-all duration-300',
+        collapsed ? 'w-16' : 'w-64'
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-zinc-200">
         {!collapsed && (
@@ -189,18 +215,20 @@ const Sidebar: React.FC<{
           {collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
         </button>
       </div>
-      
+
       {/* Industry Badge */}
       {!collapsed && (
         <div className="px-4 py-3">
-          <div className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg',
-            industryConfig.color === 'text-green-600' && 'bg-green-50',
-            industryConfig.color === 'text-blue-600' && 'bg-blue-50',
-            industryConfig.color === 'text-violet-600' && 'bg-violet-50',
-            industryConfig.color === 'text-cyan-600' && 'bg-cyan-50',
-            industryConfig.color === 'text-amber-600' && 'bg-amber-50'
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-lg',
+              industryConfig.color === 'text-green-600' && 'bg-green-50',
+              industryConfig.color === 'text-blue-600' && 'bg-blue-50',
+              industryConfig.color === 'text-violet-600' && 'bg-violet-50',
+              industryConfig.color === 'text-cyan-600' && 'bg-cyan-50',
+              industryConfig.color === 'text-amber-600' && 'bg-amber-50'
+            )}
+          >
             <span className={industryConfig.color}>{industryConfig.icon}</span>
             <span className={cn('text-sm font-medium', industryConfig.color)}>
               {industryConfig.label}
@@ -208,21 +236,19 @@ const Sidebar: React.FC<{
           </div>
         </div>
       )}
-      
+
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1">
         {availableViews.map(view => {
           const isActive = currentView === view.id;
-          
+
           return (
             <button
               key={view.id}
               onClick={() => onViewChange(view.id)}
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-                isActive
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-zinc-600 hover:bg-zinc-100'
+                isActive ? 'bg-blue-50 text-blue-600' : 'text-zinc-600 hover:bg-zinc-100'
               )}
               title={collapsed ? view.label : undefined}
             >
@@ -232,17 +258,17 @@ const Sidebar: React.FC<{
           );
         })}
       </nav>
-      
-      {/* AI Assistant */}
+
+      {/* RI Assistant */}
       {!collapsed && (
         <div className="p-4 border-t border-zinc-200">
           <button className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-violet-500 to-blue-500 text-white rounded-lg hover:opacity-90 transition-opacity">
             <MessageSquare className="w-5 h-5" />
-            <span className="text-sm font-medium">Ask Lumen</span>
+            <span className="text-sm font-medium">Ask RI</span>
           </button>
         </div>
       )}
-      
+
       {/* User */}
       <div className="p-4 border-t border-zinc-200">
         {collapsed ? (
@@ -257,7 +283,9 @@ const Sidebar: React.FC<{
               </div>
               <div>
                 <p className="text-sm font-medium text-zinc-900">User Name</p>
-                <p className="text-xs text-zinc-500 capitalize">{config.primaryRole.replace(/_/g, ' ')}</p>
+                <p className="text-xs text-zinc-500 capitalize">
+                  {config.primaryRole.replace(/_/g, ' ')}
+                </p>
               </div>
             </div>
             <button className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors">
@@ -279,15 +307,13 @@ const Header: React.FC<{
   notifications: number;
 }> = ({ config, notifications }) => {
   const industryConfig = INDUSTRY_CONFIG[config.industryMode];
-  
+
   return (
     <header className="h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold text-zinc-900">
-          {industryConfig.dashboardTitle}
-        </h1>
+        <h1 className="text-lg font-semibold text-zinc-900">{industryConfig.dashboardTitle}</h1>
       </div>
-      
+
       <div className="flex items-center gap-4">
         {/* Search */}
         <div className="relative">
@@ -298,7 +324,7 @@ const Header: React.FC<{
             className="pl-9 pr-4 py-2 w-64 text-sm bg-zinc-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        
+
         {/* Notifications */}
         <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
           <Bell className="w-5 h-5" />
@@ -308,7 +334,7 @@ const Header: React.FC<{
             </span>
           )}
         </button>
-        
+
         {/* Help */}
         <button className="p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
           <MessageSquare className="w-5 h-5" />
@@ -329,7 +355,7 @@ export const IndustryAwareApp: React.FC = () => {
     sidebarCollapsed: false,
     notifications: 3,
   });
-  
+
   // Load saved config from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('concept2cure_config');
@@ -342,50 +368,34 @@ export const IndustryAwareApp: React.FC = () => {
       }
     }
   }, []);
-  
+
   const handleOnboardingComplete = (config: UserConfiguration) => {
     localStorage.setItem('concept2cure_config', JSON.stringify(config));
     setState(prev => ({ ...prev, config }));
   };
-  
+
   const handleViewChange = (view: WorkspaceView) => {
     setState(prev => ({ ...prev, currentView: view }));
   };
-  
+
   const handleToggleSidebar = () => {
     setState(prev => ({ ...prev, sidebarCollapsed: !prev.sidebarCollapsed }));
   };
-  
+
   // Show onboarding if no config
   if (!state.config) {
     return <IndustryModeSelector onComplete={handleOnboardingComplete} />;
   }
-  
+
   // Render industry-specific dashboard
   const renderDashboard = () => {
     switch (state.config?.industryMode) {
       case 'biotech':
-        return (
-          <BiotechProgramDashboard
-            programs={[]}
-            onProgramClick={() => {}}
-          />
-        );
+        return <BiotechProgramDashboard programs={[]} onProgramClick={() => {}} />;
       case 'pharma':
-        return (
-          <PharmaPortfolioDashboard
-            portfolios={[]}
-            onProductClick={() => {}}
-          />
-        );
+        return <PharmaPortfolioDashboard portfolios={[]} onProductClick={() => {}} />;
       case 'cro':
-        return (
-          <CROClientPortal
-            clients={[]}
-            resources={[]}
-            onClientClick={() => {}}
-          />
-        );
+        return <CROClientPortal clients={[]} resources={[]} onClientClick={() => {}} />;
       default:
         return (
           <div className="flex items-center justify-center h-full">
@@ -394,26 +404,16 @@ export const IndustryAwareApp: React.FC = () => {
         );
     }
   };
-  
+
   // Render current workspace view
   const renderWorkspace = () => {
     switch (state.currentView) {
       case 'dashboard':
         return renderDashboard();
       case 'fda_meetings':
-        return (
-          <FDAMeetingWorkspace
-            meetings={[]}
-            onMeetingSelect={() => {}}
-          />
-        );
+        return <FDAMeetingWorkspace meetings={[]} onMeetingSelect={() => {}} />;
       case 'authoring':
-        return (
-          <ClinicalDocAuthoringWorkspace
-            documents={[]}
-            onDocumentSelect={() => {}}
-          />
-        );
+        return <ClinicalDocAuthoringWorkspace documents={[]} onDocumentSelect={() => {}} />;
       case 'settings':
         return (
           <div className="flex items-center justify-center h-full bg-zinc-50">
@@ -427,7 +427,7 @@ export const IndustryAwareApp: React.FC = () => {
         return renderDashboard();
     }
   };
-  
+
   return (
     <div className="flex h-screen bg-zinc-50">
       {/* Sidebar */}
@@ -438,18 +438,13 @@ export const IndustryAwareApp: React.FC = () => {
         onViewChange={handleViewChange}
         onToggleCollapse={handleToggleSidebar}
       />
-      
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header
-          config={state.config}
-          notifications={state.notifications}
-        />
-        
+        <Header config={state.config} notifications={state.notifications} />
+
         {/* Workspace */}
-        <main className="flex-1 overflow-auto">
-          {renderWorkspace()}
-        </main>
+        <main className="flex-1 overflow-auto">{renderWorkspace()}</main>
       </div>
     </div>
   );

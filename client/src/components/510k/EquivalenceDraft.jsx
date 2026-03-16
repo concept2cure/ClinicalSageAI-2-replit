@@ -175,7 +175,7 @@ const EquivalenceDraft = ({ projectId, onAddToReport }) => {
       const pathway = 'Traditional 510(k)'; // This would be the selected pathway
       const docs = await FDA510kService.getFdaGuidanceDocuments(deviceType, pathway);
 
-      // Default mockup guidance documents in case the API call doesn't return any
+      // Standard FDA guidance documents (real FDA URLs, used as static fallback)
       const defaultGuidanceDocs = [
         {
           id: 'guid-001',
@@ -200,11 +200,11 @@ const EquivalenceDraft = ({ projectId, onAddToReport }) => {
         },
       ];
 
-      // Use API response if available, otherwise use default mockups
+      // Use API response if available, otherwise use standard FDA guidance
       setGuidanceDocuments(docs && docs.length > 0 ? docs : defaultGuidanceDocs);
     } catch (error) {
       console.error('Error fetching FDA guidance documents:', error);
-      // Set default mockup guidance documents as fallback
+      // Standard FDA guidance documents (real FDA URLs, used as static fallback)
       setGuidanceDocuments([
         {
           id: 'guid-001',
@@ -223,8 +223,9 @@ const EquivalenceDraft = ({ projectId, onAddToReport }) => {
       ]);
 
       toast({
-        title: 'Warning',
-        description: 'FDA guidance documents could not be loaded from API, using cached data.',
+        title: 'Using Standard Guidance',
+        description:
+          'Showing standard FDA guidance documents. Device-specific guidance could not be loaded.',
         variant: 'default',
       });
     } finally {
@@ -240,77 +241,22 @@ const EquivalenceDraft = ({ projectId, onAddToReport }) => {
       const textToAnalyze = activeTab === 'edit' ? editedDraft : draft;
       const literature = await FDA510kService.findRelevantLiterature(projectId, textToAnalyze);
 
-      // Default mockup literature in case the API call doesn't return any
-      const defaultLiterature = [
-        {
-          id: 'lit-001',
-          title: 'Substantial Equivalence in 510(k) Submissions: Emerging Trends',
-          authors: 'Smith, J., Johnson, A., Williams, M.',
-          journal: 'Journal of Medical Device Regulation',
-          year: '2023',
-          abstract:
-            'This study examines recent trends in FDA 510(k) clearances, focusing on successful substantial equivalence demonstrations.',
-          url: 'https://doi.org/10.1000/journal.med.2023.001',
-          relevanceScore: 94,
-        },
-        {
-          id: 'lit-002',
-          title: 'Predicate Device Selection Strategies: A Comprehensive Analysis',
-          authors: 'Brown, R., Davis, S., Wilson, T.',
-          journal: 'Medical Device Innovation',
-          year: '2022',
-          abstract:
-            'An analysis of predicate device selection criteria and their impact on 510(k) clearance success rates.',
-          url: 'https://doi.org/10.1000/journal.mdi.2022.015',
-          relevanceScore: 87,
-        },
-        {
-          id: 'lit-003',
-          title: 'FDA Expectations for Substantial Equivalence: Analysis of Decision Letters',
-          authors: 'Martinez, C., Lewis, T., Kim, S.',
-          journal: 'Regulatory Affairs Professional Society Journal',
-          year: '2022',
-          abstract:
-            'A systematic review of FDA decision letters to identify common deficiencies in substantial equivalence demonstrations.',
-          url: 'https://doi.org/10.1000/journal.raps.2022.018',
-          relevanceScore: 81,
-        },
-      ];
-
-      // Use API response if available, otherwise use default mockups
-      setLiteratureResults(literature && literature.length > 0 ? literature : defaultLiterature);
+      // Use API response if available, otherwise show empty state honestly
+      if (literature && literature.length > 0) {
+        setLiteratureResults(literature);
+      } else {
+        setLiteratureResults([]);
+      }
     } catch (error) {
       console.error('Error fetching related literature:', error);
-      // Set default mockup literature as fallback
-      setLiteratureResults([
-        {
-          id: 'lit-001',
-          title: 'Substantial Equivalence in 510(k) Submissions: Emerging Trends',
-          authors: 'Smith, J., Johnson, A., Williams, M.',
-          journal: 'Journal of Medical Device Regulation',
-          year: '2023',
-          abstract:
-            'This study examines recent trends in FDA 510(k) clearances, focusing on successful substantial equivalence demonstrations.',
-          url: 'https://doi.org/10.1000/journal.med.2023.001',
-          relevanceScore: 94,
-        },
-        {
-          id: 'lit-002',
-          title: 'Predicate Device Selection Strategies: A Comprehensive Analysis',
-          authors: 'Brown, R., Davis, S., Wilson, T.',
-          journal: 'Medical Device Innovation',
-          year: '2022',
-          abstract:
-            'An analysis of predicate device selection criteria and their impact on 510(k) clearance success rates.',
-          url: 'https://doi.org/10.1000/journal.mdi.2022.015',
-          relevanceScore: 87,
-        },
-      ]);
+      // Show honest empty state — no fake papers
+      setLiteratureResults([]);
 
       toast({
-        title: 'Warning',
-        description: 'Related literature could not be loaded from API, using cached data.',
-        variant: 'default',
+        title: 'Literature Unavailable',
+        description:
+          'Related literature could not be loaded. Please check your connection and try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoadingLiterature(false);

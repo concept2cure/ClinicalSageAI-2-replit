@@ -8,7 +8,7 @@ const router = Router();
 const createProjectSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  submissionType: z.enum(['NDA', 'ANDA', 'BLA', '510k', 'IND', 'PMR', 'PMC']),
+  submissionType: z.enum(['NDA', 'ANDA', 'BLA', '510k', 'IND', 'PMR', 'PMC', 'IVDR']),
   targetAgency: z.string().optional(),
   targetDate: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
@@ -35,7 +35,7 @@ const createTaskSchema = z.object({
 router.get('/projects', async (req: Request, res: Response) => {
   try {
     const result = await query(`
-      SELECT 
+      SELECT
         p.*,
         COUNT(DISTINCT t.id) as total_tasks,
         COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
@@ -45,7 +45,7 @@ router.get('/projects', async (req: Request, res: Response) => {
       GROUP BY p.id
       ORDER BY p.created_at DESC
     `);
-    
+
     const projects = result.rows.map(p => ({
       ...p,
       taskMetrics: {
@@ -55,7 +55,7 @@ router.get('/projects', async (req: Request, res: Response) => {
       },
       completionPercentage: p.completion_percentage || 0,
     }));
-    
+
     res.json({
       success: true,
       data: projects,
@@ -73,7 +73,7 @@ router.get('/projects', async (req: Request, res: Response) => {
 router.post('/projects', async (req: Request, res: Response) => {
   try {
     const validatedData = createProjectSchema.parse(req.body);
-    
+
     const result = await query(
       `INSERT INTO submission_projects (name, description, submission_type, status, stage, target_agency, target_date, priority, created_by)
        VALUES ($1, $2, $3, 'planning', 'planning', $4, $5, $6, 'User')
@@ -87,13 +87,13 @@ router.post('/projects', async (req: Request, res: Response) => {
         validatedData.priority,
       ]
     );
-    
+
     const newProject = result.rows[0];
-    
+
     // Auto-create initial tasks based on submission type
     if (newProject) {
       const initialTasks = getInitialTasksForProject(newProject.submission_type);
-      
+
       for (const task of initialTasks) {
         await query(
           `INSERT INTO submission_tasks (project_id, title, description, status, priority, module_type, category, type)
@@ -106,21 +106,21 @@ router.post('/projects', async (req: Request, res: Response) => {
             task.priority || 'medium',
             task.module,
             task.category,
-            task.type || 'task'
+            task.type || 'task',
           ]
         );
       }
     }
-    
-    res.json({ 
-      success: true, 
-      data: newProject 
+
+    res.json({
+      success: true,
+      data: newProject,
     });
   } catch (error) {
     console.error('Error creating project:', error);
-    res.status(400).json({ 
-      success: false, 
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create project' 
+    res.status(400).json({
+      success: false,
+      error: error instanceof z.ZodError ? error.errors : 'Failed to create project',
     });
   }
 });
@@ -129,23 +129,23 @@ router.post('/projects', async (req: Request, res: Response) => {
 router.get('/tasks', async (req: Request, res: Response) => {
   try {
     const projectId = req.query.projectId;
-    
+
     let queryText = `
-      SELECT t.*, p.name as project_name, p.submission_type 
+      SELECT t.*, p.name as project_name, p.submission_type
       FROM submission_tasks t
       LEFT JOIN submission_projects p ON t.project_id = p.id
     `;
-    
+
     const params: any[] = [];
     if (projectId) {
       queryText += ' WHERE t.project_id = $1';
       params.push(projectId);
     }
-    
+
     queryText += ' ORDER BY t.due_date ASC NULLS LAST, t.priority DESC';
-    
+
     const result = await query(queryText, params);
-    
+
     res.json({
       success: true,
       data: result.rows,
@@ -163,7 +163,7 @@ router.get('/tasks', async (req: Request, res: Response) => {
 router.post('/tasks', async (req: Request, res: Response) => {
   try {
     const validatedData = createTaskSchema.parse(req.body);
-    
+
     const result = await query(
       `INSERT INTO submission_tasks (project_id, title, description, status, priority, module_type, category, type, assigned_to, assigned_email, due_date, estimated_hours)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -183,16 +183,16 @@ router.post('/tasks', async (req: Request, res: Response) => {
         validatedData.estimated_hours || null,
       ]
     );
-    
-    res.json({ 
-      success: true, 
-      data: result.rows[0] 
+
+    res.json({
+      success: true,
+      data: result.rows[0],
     });
   } catch (error) {
     console.error('Error creating task:', error);
-    res.status(400).json({ 
-      success: false, 
-      error: 'Failed to create task' 
+    res.status(400).json({
+      success: false,
+      error: 'Failed to create task',
     });
   }
 });
@@ -202,24 +202,24 @@ router.put('/tasks/:id', async (req: Request, res: Response) => {
   try {
     const taskId = req.params.id;
     const { status, completion_percentage } = req.body;
-    
+
     const result = await query(
-      `UPDATE submission_tasks 
+      `UPDATE submission_tasks
        SET status = $1, completion_percentage = $2, updated_at = CURRENT_TIMESTAMP
        WHERE id = $3
        RETURNING *`,
       [status, completion_percentage || 0, taskId]
     );
-    
-    res.json({ 
-      success: true, 
-      data: result.rows[0] 
+
+    res.json({
+      success: true,
+      data: result.rows[0],
     });
   } catch (error) {
     console.error('Error updating task:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to update task' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update task',
     });
   }
 });
@@ -228,14 +228,14 @@ router.put('/tasks/:id', async (req: Request, res: Response) => {
 router.get('/regulatory-intelligence', async (req: Request, res: Response) => {
   try {
     const result = await query(`
-      SELECT * FROM regulatory_intelligence 
-      ORDER BY published_date DESC 
+      SELECT * FROM regulatory_intelligence
+      ORDER BY published_date DESC
       LIMIT 20
     `);
-    
+
     // If no data, return mock data for demo
     const data = result.rows.length > 0 ? result.rows : getMockRegulatoryIntelligence();
-    
+
     res.json({
       success: true,
       data: data,
@@ -254,7 +254,7 @@ router.get('/regulatory-intelligence', async (req: Request, res: Response) => {
 router.get('/pipeline', async (req: Request, res: Response) => {
   try {
     const result = await query(`
-      SELECT 
+      SELECT
         stage,
         COUNT(*) as count,
         array_agg(json_build_object(
@@ -266,7 +266,7 @@ router.get('/pipeline', async (req: Request, res: Response) => {
         )) as projects
       FROM submission_projects
       GROUP BY stage
-      ORDER BY 
+      ORDER BY
         CASE stage
           WHEN 'planning' THEN 1
           WHEN 'authoring' THEN 2
@@ -276,7 +276,7 @@ router.get('/pipeline', async (req: Request, res: Response) => {
           WHEN 'response' THEN 6
         END
     `);
-    
+
     const stages = ['planning', 'authoring', 'review', 'approval', 'submission', 'response'];
     const pipeline = stages.map(stage => {
       const stageData = result.rows.find(r => r.stage === stage);
@@ -286,7 +286,7 @@ router.get('/pipeline', async (req: Request, res: Response) => {
         projects: stageData ? stageData.projects : [],
       };
     });
-    
+
     res.json({
       success: true,
       data: pipeline,
@@ -304,31 +304,31 @@ router.get('/pipeline', async (req: Request, res: Response) => {
 router.post('/workflow/transition', async (req: Request, res: Response) => {
   try {
     const { projectId, newStage } = req.body;
-    
+
     const result = await query(
-      `UPDATE submission_projects 
+      `UPDATE submission_projects
        SET stage = $1, updated_at = CURRENT_TIMESTAMP
        WHERE id = $2
        RETURNING *`,
       [newStage, projectId]
     );
-    
+
     // Log activity
     await query(
       `INSERT INTO project_activities (project_id, description)
        VALUES ($1, $2)`,
       [projectId, `Project moved to ${newStage} stage`]
     );
-    
-    res.json({ 
-      success: true, 
-      data: result.rows[0] 
+
+    res.json({
+      success: true,
+      data: result.rows[0],
     });
   } catch (error) {
     console.error('Error updating workflow stage:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to update workflow stage' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update workflow stage',
     });
   }
 });
@@ -336,35 +336,207 @@ router.post('/workflow/transition', async (req: Request, res: Response) => {
 // Helper function to generate initial tasks based on submission type
 function getInitialTasksForProject(submissionType: string) {
   const taskTemplates: { [key: string]: any[] } = {
-    'IND': [
-      { title: 'Complete Form FDA 1571', description: 'Fill out investigational new drug application form', module: 'IND', category: 'authoring', priority: 'high' },
-      { title: 'Prepare Investigator\'s Brochure', description: 'Compile all available data on the investigational drug', module: 'IND', category: 'authoring', priority: 'high' },
-      { title: 'Draft Clinical Protocol', description: 'Create detailed protocol for clinical trial', module: 'IND', category: 'authoring', priority: 'critical' },
-      { title: 'Compile CMC Information', description: 'Chemistry, manufacturing, and controls documentation', module: 'CMC', category: 'authoring', priority: 'high' },
-      { title: 'Prepare eCTD Submission Package', description: 'Format documents for electronic submission', module: 'eCTD', category: 'submission', priority: 'medium' },
+    IND: [
+      {
+        title: 'Complete Form FDA 1571',
+        description: 'Fill out investigational new drug application form',
+        module: 'IND',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: "Prepare Investigator's Brochure",
+        description: 'Compile all available data on the investigational drug',
+        module: 'IND',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Draft Clinical Protocol',
+        description: 'Create detailed protocol for clinical trial',
+        module: 'IND',
+        category: 'authoring',
+        priority: 'critical',
+      },
+      {
+        title: 'Compile CMC Information',
+        description: 'Chemistry, manufacturing, and controls documentation',
+        module: 'CMC',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Prepare eCTD Submission Package',
+        description: 'Format documents for electronic submission',
+        module: 'eCTD',
+        category: 'submission',
+        priority: 'medium',
+      },
     ],
-    'NDA': [
-      { title: 'Complete Module 1 Administrative', description: 'Forms, cover letter, and administrative information', module: 'eCTD', category: 'authoring', priority: 'high' },
-      { title: 'Prepare Module 2 Summaries', description: 'CTD summaries and overviews', module: 'eCTD', category: 'authoring', priority: 'high' },
-      { title: 'Compile Module 3 Quality', description: 'Complete quality documentation', module: 'CMC', category: 'authoring', priority: 'critical' },
-      { title: 'Prepare Module 4 Nonclinical', description: 'Nonclinical study reports', module: 'eCTD', category: 'authoring', priority: 'high' },
-      { title: 'Complete Module 5 Clinical', description: 'Clinical study reports and data', module: 'Clinical', category: 'authoring', priority: 'critical' },
-      { title: 'eCTD Technical Validation', description: 'Validate eCTD package before submission', module: 'eCTD', category: 'review', priority: 'high' },
+    NDA: [
+      {
+        title: 'Complete Module 1 Administrative',
+        description: 'Forms, cover letter, and administrative information',
+        module: 'eCTD',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Prepare Module 2 Summaries',
+        description: 'CTD summaries and overviews',
+        module: 'eCTD',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Compile Module 3 Quality',
+        description: 'Complete quality documentation',
+        module: 'CMC',
+        category: 'authoring',
+        priority: 'critical',
+      },
+      {
+        title: 'Prepare Module 4 Nonclinical',
+        description: 'Nonclinical study reports',
+        module: 'eCTD',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Complete Module 5 Clinical',
+        description: 'Clinical study reports and data',
+        module: 'Clinical',
+        category: 'authoring',
+        priority: 'critical',
+      },
+      {
+        title: 'eCTD Technical Validation',
+        description: 'Validate eCTD package before submission',
+        module: 'eCTD',
+        category: 'review',
+        priority: 'high',
+      },
     ],
-    'BLA': [
-      { title: 'Prepare Form FDA 356h', description: 'Application to market a new biologic', module: 'eCTD', category: 'authoring', priority: 'high' },
-      { title: 'Complete Manufacturing Information', description: 'Detailed manufacturing process for biologic', module: 'CMC', category: 'authoring', priority: 'critical' },
-      { title: 'Compile Clinical Data', description: 'All clinical trial data and analyses', module: 'Clinical', category: 'authoring', priority: 'critical' },
-      { title: 'Prepare Risk Management Plan', description: 'REMS if required', module: 'Risk', category: 'authoring', priority: 'medium' },
+    BLA: [
+      {
+        title: 'Prepare Form FDA 356h',
+        description: 'Application to market a new biologic',
+        module: 'eCTD',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Complete Manufacturing Information',
+        description: 'Detailed manufacturing process for biologic',
+        module: 'CMC',
+        category: 'authoring',
+        priority: 'critical',
+      },
+      {
+        title: 'Compile Clinical Data',
+        description: 'All clinical trial data and analyses',
+        module: 'Clinical',
+        category: 'authoring',
+        priority: 'critical',
+      },
+      {
+        title: 'Prepare Risk Management Plan',
+        description: 'REMS if required',
+        module: 'Risk',
+        category: 'authoring',
+        priority: 'medium',
+      },
     ],
     '510k': [
-      { title: 'Complete 510(k) Summary', description: 'Device description and substantial equivalence', module: 'Medical Device', category: 'authoring', priority: 'high' },
-      { title: 'Identify Predicate Device', description: 'Find and document predicate device', module: 'Medical Device', category: 'analysis', priority: 'critical' },
-      { title: 'Compile Performance Testing', description: 'Bench testing and validation data', module: 'Quality', category: 'authoring', priority: 'high' },
-      { title: 'Prepare Labeling', description: 'Device labeling and instructions for use', module: 'Medical Device', category: 'authoring', priority: 'medium' },
+      {
+        title: 'Complete 510(k) Summary',
+        description: 'Device description and substantial equivalence',
+        module: 'Medical Device',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Identify Predicate Device',
+        description: 'Find and document predicate device',
+        module: 'Medical Device',
+        category: 'analysis',
+        priority: 'critical',
+      },
+      {
+        title: 'Compile Performance Testing',
+        description: 'Bench testing and validation data',
+        module: 'Quality',
+        category: 'authoring',
+        priority: 'high',
+      },
+      {
+        title: 'Prepare Labeling',
+        description: 'Device labeling and instructions for use',
+        module: 'Medical Device',
+        category: 'authoring',
+        priority: 'medium',
+      },
+    ],
+    IVDR: [
+      {
+        title: 'Annex VIII Classification',
+        description:
+          'Determine IVDR risk class (A/B/C/D) per Annex VIII rules and document classification rationale',
+        module: 'IVDR',
+        category: 'classification',
+        priority: 'critical',
+      },
+      {
+        title: 'Performance Evaluation Plan',
+        description:
+          'Draft PEP covering scientific validity, analytical performance, and clinical performance per Article 56',
+        module: 'IVDR',
+        category: 'authoring',
+        priority: 'critical',
+      },
+      {
+        title: 'Analytical Performance Studies',
+        description:
+          'Execute and document analytical sensitivity, specificity, accuracy, precision, LoD/LoQ, interfering substances per IVDR Annex I',
+        module: 'IVDR',
+        category: 'validation',
+        priority: 'high',
+      },
+      {
+        title: 'Clinical Evidence Compilation',
+        description:
+          'Compile clinical performance data, literature review, and clinical evidence per Article 56(4) and MDCG guidance',
+        module: 'IVDR',
+        category: 'evidence',
+        priority: 'high',
+      },
+      {
+        title: 'CDx Companion Diagnostic Workflow',
+        description:
+          'If applicable: link biomarker claims to therapeutic product, document intended use, and clinical evidence bridging',
+        module: 'IVDR',
+        category: 'cdx',
+        priority: 'medium',
+      },
+      {
+        title: 'Technical Documentation Assembly',
+        description:
+          'Assemble Annexes II & III technical documentation package including device description, design, manufacturing, and risk management',
+        module: 'IVDR',
+        category: 'submission',
+        priority: 'high',
+      },
+      {
+        title: 'Notified Body Readiness Review',
+        description:
+          'Pre-submission gap analysis against NB expectations, ensure conformity assessment route matches risk class',
+        module: 'IVDR',
+        category: 'review',
+        priority: 'high',
+      },
     ],
   };
-  
+
   return taskTemplates[submissionType] || [];
 }
 
@@ -374,7 +546,8 @@ function getMockRegulatoryIntelligence() {
     {
       id: 1,
       title: 'FDA Publishes New Guidance on Digital Health Technologies',
-      description: 'FDA released comprehensive guidance on software as medical device (SaMD) regulatory requirements',
+      description:
+        'FDA released comprehensive guidance on software as medical device (SaMD) regulatory requirements',
       category: 'FDA',
       impact_level: 'high',
       published_date: new Date('2025-10-20'),

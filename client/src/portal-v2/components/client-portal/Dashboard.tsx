@@ -5,7 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 import { usePortal } from '../../core/portalContext';
-import { Brain, FileText, Shield, Beaker, BarChart3, MessageSquare } from 'lucide-react';
+import {
+  Brain,
+  FileText,
+  Shield,
+  Beaker,
+  BarChart3,
+  MessageSquare,
+  Microscope,
+} from 'lucide-react';
 import LumenCortexChat from '@/components/LumenCortexChat';
 
 const moduleToRoute: Record<string, string> = {
@@ -27,6 +35,7 @@ const moduleToRoute: Record<string, string> = {
   project_hub: '/client-portal/project-hub',
   timeline_planner: '/client-portal/timeline-planner',
   settings: '/client-portal/settings',
+  ivdr_module: '/client-portal/ivdr',
 };
 
 const moduleIcons: Record<string, React.ReactNode> = {
@@ -39,6 +48,7 @@ const moduleIcons: Record<string, React.ReactNode> = {
   document_control: <FileText className="w-5 h-5" />,
   analytics: <BarChart3 className="w-5 h-5" />,
   settings: <Shield className="w-5 h-5" />,
+  ivdr_module: <Microscope className="w-5 h-5" />,
 };
 
 export const Dashboard = () => {

@@ -34,28 +34,28 @@
 }
 
 /* Custom Switch styles for green (ON) and red (OFF) states */
-[role="switch"][aria-checked="true"] {
+[role='switch'][aria-checked='true'] {
   background-color: #22c55e !important; /* Green when ON */
 }
 
-[role="switch"][aria-checked="false"] {
+[role='switch'][aria-checked='false'] {
   background-color: #ef4444 !important; /* Red when OFF */
 }
 
-[role="switch"][aria-checked="true"] span {
+[role='switch'][aria-checked='true'] span {
   background-color: white !important;
 }
 
-[role="switch"][aria-checked="false"] span {
+[role='switch'][aria-checked='false'] span {
   background-color: white !important;
 }
 
 /* Hover states */
-[role="switch"][aria-checked="true"]:hover {
+[role='switch'][aria-checked='true']:hover {
   background-color: #16a34a !important; /* Darker green on hover */
 }
 
-[role="switch"][aria-checked="false"]:hover {
+[role='switch'][aria-checked='false']:hover {
   background-color: #dc2626 !important; /* Darker red on hover */
 }
 
@@ -102,7 +102,7 @@
   display: flex;
   align-items: center;
   padding: 0.5rem 1rem;
-  background: #FAF9F8;
+  background: #faf9f8;
   gap: 0.25rem;
 }
 
@@ -122,15 +122,15 @@
 }
 
 .sp-command-button:hover:not(:disabled) {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 .sp-command-button:active:not(:disabled) {
-  background: #EDEBE9;
+  background: #edebe9;
 }
 
 .sp-command-button:disabled {
-  color: #A19F9D;
+  color: #a19f9d;
   cursor: not-allowed;
 }
 
@@ -143,7 +143,7 @@
   padding: 0 16px;
   color: white;
   font-size: 14px;
-  border-bottom: 1px solid #201F1E;
+  border-bottom: 1px solid #201f1e;
 }
 
 .sp-hub-nav-logo {
@@ -182,14 +182,14 @@
 }
 
 .sp-hub-nav-search::placeholder {
-  color: #C8C6C4;
+  color: #c8c6c4;
 }
 
 .sp-hub-nav-profile {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #0078D4;
+  background: #0078d4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -203,8 +203,8 @@
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  background: #F3F2F1;
-  border-bottom: 1px solid #EDEBE9;
+  background: #f3f2f1;
+  border-bottom: 1px solid #edebe9;
   font-size: 14px;
   min-height: 40px;
 }
@@ -218,21 +218,21 @@
   border-radius: 2px;
   transition: background 0.2s;
   cursor: pointer;
-  color: #605E5C;
+  color: #605e5c;
 }
 
 .sp-breadcrumb-home:hover {
-  background: #E1DFDD;
+  background: #e1dfdd;
 }
 
 .sp-breadcrumb-separator {
-  color: #605E5C;
+  color: #605e5c;
   margin: 0 8px;
   font-weight: normal;
 }
 
 .sp-breadcrumb-item {
-  color: #605E5C;
+  color: #605e5c;
   text-decoration: none;
   transition: color 0.2s;
   cursor: pointer;
@@ -263,7 +263,7 @@
   left: 0;
   margin-top: 4px;
   background: white;
-  border: 1px solid #E1DFDD;
+  border: 1px solid #e1dfdd;
   box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.132);
   border-radius: 2px;
   min-width: 200px;
@@ -283,14 +283,14 @@
 }
 
 .sp-breadcrumb-dropdown-item:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 /* SharePoint Folder Tree Navigation */
 .sp-folder-nav {
   width: 280px;
   background: white;
-  border-right: 1px solid #EDEBE9;
+  border-right: 1px solid #edebe9;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -298,7 +298,7 @@
 
 .sp-folder-nav-header {
   padding: 16px;
-  border-bottom: 1px solid #EDEBE9;
+  border-bottom: 1px solid #edebe9;
   font-weight: 600;
   font-size: 14px;
   color: #323130;
@@ -326,11 +326,11 @@
 }
 
 .sp-folder-item:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 .sp-folder-item.selected {
-  background: #E1F5FE;
+  background: #e1f5fe;
 }
 
 .sp-folder-item-indent {
@@ -355,11 +355,11 @@
   height: 16px;
   margin-right: 8px;
   flex-shrink: 0;
-  color: #C8C6C4;
+  color: #c8c6c4;
 }
 
 .sp-folder-item.folder .sp-folder-item-icon {
-  color: #FFB900;
+  color: #ffb900;
 }
 
 .sp-folder-item-name {
@@ -370,7 +370,7 @@
 }
 
 .sp-folder-item-count {
-  color: #605E5C;
+  color: #605e5c;
   font-size: 12px;
   margin-left: 8px;
 }
@@ -378,7 +378,7 @@
 /* SharePoint Quick Access Panel */
 .sp-quick-access {
   padding: 16px;
-  border-bottom: 1px solid #EDEBE9;
+  border-bottom: 1px solid #edebe9;
 }
 
 .sp-quick-access-section {
@@ -388,7 +388,7 @@
 .sp-quick-access-title {
   font-size: 12px;
   font-weight: 600;
-  color: #605E5C;
+  color: #605e5c;
   text-transform: uppercase;
   margin-bottom: 8px;
   display: flex;
@@ -408,7 +408,7 @@
 }
 
 .sp-quick-access-item:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 .sp-quick-access-item-icon {
@@ -430,10 +430,12 @@
 .sp-properties-panel {
   width: 320px;
   background: white;
-  border-left: 1px solid #EDEBE9;
+  border-left: 1px solid #edebe9;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s, transform 0.3s;
+  transition:
+    width 0.3s,
+    transform 0.3s;
 }
 
 .sp-properties-panel.collapsed {
@@ -443,7 +445,7 @@
 
 .sp-properties-panel-header {
   padding: 16px;
-  border-bottom: 1px solid #EDEBE9;
+  border-bottom: 1px solid #edebe9;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -467,7 +469,7 @@
 }
 
 .sp-properties-panel-close:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 .sp-properties-panel-content {
@@ -483,7 +485,7 @@
 .sp-properties-section-title {
   font-size: 12px;
   font-weight: 600;
-  color: #605E5C;
+  color: #605e5c;
   text-transform: uppercase;
   margin-bottom: 12px;
 }
@@ -496,7 +498,7 @@
 
 .sp-property-label {
   font-size: 12px;
-  color: #605E5C;
+  color: #605e5c;
   margin-bottom: 4px;
 }
 
@@ -514,12 +516,12 @@
 }
 
 .sp-property-value.editable:hover {
-  border-color: #C8C6C4;
-  background: #FAF9F8;
+  border-color: #c8c6c4;
+  background: #faf9f8;
 }
 
 .sp-property-value.editing {
-  border-color: #0078D4;
+  border-color: #0078d4;
   background: white;
   outline: none;
 }
@@ -529,7 +531,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #FAF9F8;
+  background: #faf9f8;
 }
 
 .sp-layout-body {
@@ -563,14 +565,16 @@
 .sp-loading-spinner {
   width: 32px;
   height: 32px;
-  border: 2px solid #EDEBE9;
-  border-top-color: #0078D4;
+  border: 2px solid #edebe9;
+  border-top-color: #0078d4;
   border-radius: 50%;
   animation: sp-spin 0.6s linear infinite;
 }
 
 @keyframes sp-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* SharePoint Empty State */
@@ -586,7 +590,7 @@
 .sp-empty-state-icon {
   width: 48px;
   height: 48px;
-  color: #C8C6C4;
+  color: #c8c6c4;
   margin-bottom: 16px;
 }
 
@@ -599,7 +603,7 @@
 
 .sp-empty-state-description {
   font-size: 14px;
-  color: #605E5C;
+  color: #605e5c;
 }
 
 /* SharePoint-style table hover and selection */
@@ -608,37 +612,39 @@
 }
 
 .sp-table-row:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 .sp-table-row.selected {
-  background: #E1F5FE;
+  background: #e1f5fe;
 }
 
 .sp-table-row.selected:hover {
-  background: #E1F5FE;
+  background: #e1f5fe;
 }
 
 /* SharePoint-style checkboxes */
-input[type="checkbox"].sp-checkbox {
+input[type='checkbox'].sp-checkbox {
   width: 16px;
   height: 16px;
-  border: 1px solid #605E5C;
+  border: 1px solid #605e5c;
   border-radius: 2px;
   cursor: pointer;
 }
 
-input[type="checkbox"].sp-checkbox:checked {
-  background: #0078D4;
-  border-color: #0078D4;
+input[type='checkbox'].sp-checkbox:checked {
+  background: #0078d4;
+  border-color: #0078d4;
 }
 
 /* SharePoint-style context menu */
 .sp-context-menu {
   position: absolute;
   background: white;
-  border: 1px solid #E1DFDD;
-  box-shadow: 0 3.2px 7.2px 0 rgba(0, 0, 0, 0.132), 0 0.6px 1.8px 0 rgba(0, 0, 0, 0.108);
+  border: 1px solid #e1dfdd;
+  box-shadow:
+    0 3.2px 7.2px 0 rgba(0, 0, 0, 0.132),
+    0 0.6px 1.8px 0 rgba(0, 0, 0, 0.108);
   border-radius: 2px;
   min-width: 180px;
   z-index: 1000;
@@ -659,12 +665,12 @@ input[type="checkbox"].sp-checkbox:checked {
 }
 
 .sp-context-menu-item:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 .sp-context-menu-divider {
   height: 1px;
-  background: #E1DFDD;
+  background: #e1dfdd;
   margin: 4px 0;
 }
 
@@ -673,7 +679,7 @@ input[type="checkbox"].sp-checkbox:checked {
   display: inline-block;
   width: 8px;
   height: 8px;
-  background: #00B294;
+  background: #00b294;
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -788,50 +794,50 @@ input[type="checkbox"].sp-checkbox:checked {
 
 :root {
   /* SharePoint/OneDrive Color Palette */
-  --color-primary: #0078D4; /* SharePoint Blue */
-  --color-primary-dark: #106EBE;
-  --color-primary-light: #2B88D8;
+  --color-primary: #0078d4; /* SharePoint Blue */
+  --color-primary-dark: #106ebe;
+  --color-primary-light: #2b88d8;
   --color-primary-glow: rgba(0, 120, 212, 0.2);
-  --color-secondary: #0078D4; /* SharePoint Blue */
-  --color-secondary-dark: #106EBE;
-  --color-secondary-light: #2B88D8;
+  --color-secondary: #0078d4; /* SharePoint Blue */
+  --color-secondary-dark: #106ebe;
+  --color-secondary-light: #2b88d8;
   --color-secondary-glow: rgba(0, 120, 212, 0.2);
-  --color-accent: #0078D4; /* SharePoint Blue */
-  --color-accent-dark: #106EBE;
-  --color-accent-light: #2B88D8;
+  --color-accent: #0078d4; /* SharePoint Blue */
+  --color-accent-dark: #106ebe;
+  --color-accent-light: #2b88d8;
   --color-accent-glow: rgba(0, 120, 212, 0.2);
-  --color-highlight: #107C10; /* SharePoint Success Green */
+  --color-highlight: #107c10; /* SharePoint Success Green */
   --color-highlight-glow: rgba(16, 124, 16, 0.2);
-  
+
   /* SharePoint Status Colors */
-  --color-success: #107C10;
-  --gradient-success: linear-gradient(135deg, #107C10 0%, #0B6A0B 100%);
-  --color-warning: #FFB900;
-  --gradient-warning: linear-gradient(135deg, #FFB900 0%, #FF8C00 100%);
-  --color-error: #D13438;
-  --gradient-error: linear-gradient(135deg, #D13438 0%, #A4262C 100%);
-  --color-info: #0078D4;
-  --gradient-info: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  
+  --color-success: #107c10;
+  --gradient-success: linear-gradient(135deg, #107c10 0%, #0b6a0b 100%);
+  --color-warning: #ffb900;
+  --gradient-warning: linear-gradient(135deg, #ffb900 0%, #ff8c00 100%);
+  --color-error: #d13438;
+  --gradient-error: linear-gradient(135deg, #d13438 0%, #a4262c 100%);
+  --color-info: #0078d4;
+  --gradient-info: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+
   /* Dark Mode Premium Colors */
-  --dark-bg-primary: #0F0F23;
-  --dark-bg-secondary: #1A1A2E;
-  --dark-bg-tertiary: #16213E;
+  --dark-bg-primary: #0f0f23;
+  --dark-bg-secondary: #1a1a2e;
+  --dark-bg-tertiary: #16213e;
   --dark-surface: rgba(255, 255, 255, 0.02);
   --dark-surface-hover: rgba(255, 255, 255, 0.05);
   --dark-glow: rgba(99, 102, 241, 0.15);
-  
+
   /* SharePoint Neutral Palette */
-  --color-gray-50: #FAF9F8;
-  --color-gray-100: #F3F2F1;
-  --color-gray-200: #EDEBE9;
-  --color-gray-300: #E1DFDD;
-  --color-gray-400: #C8C6C4;
+  --color-gray-50: #faf9f8;
+  --color-gray-100: #f3f2f1;
+  --color-gray-200: #edebe9;
+  --color-gray-300: #e1dfdd;
+  --color-gray-400: #c8c6c4;
   --color-gray-500: #979593;
-  --color-gray-600: #605E5C;
+  --color-gray-600: #605e5c;
   --color-gray-700: #484644;
   --color-gray-800: #323130;
-  --color-gray-900: #201F1E;
+  --color-gray-900: #201f1e;
   --color-gray-950: #000000;
   --color-bg: #ffffff;
   --color-surface: #ffffff;
@@ -857,21 +863,21 @@ input[type="checkbox"].sp-checkbox:checked {
   --sidebar-background: 0 0% 100%;
   --sidebar-accent: 0 0% 100%;
   --sidebar-border: 210 20% 94%;
-  
+
   /* SharePoint Gradients - Minimal/Flat */
-  --gradient-primary: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  --gradient-secondary: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  --gradient-accent: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  --gradient-premium: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  --gradient-warm: linear-gradient(135deg, #FFB900 0%, #FF8C00 100%);
-  --gradient-cool: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  --gradient-sunset: linear-gradient(135deg, #FFB900 0%, #FF8C00 100%);
-  --gradient-ocean: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  --gradient-aurora: linear-gradient(135deg, #0078D4 0%, #106EBE 100%);
-  --gradient-dark: linear-gradient(135deg, #323130 0%, #201F1E 100%);
+  --gradient-primary: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  --gradient-secondary: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  --gradient-accent: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  --gradient-premium: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  --gradient-warm: linear-gradient(135deg, #ffb900 0%, #ff8c00 100%);
+  --gradient-cool: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  --gradient-sunset: linear-gradient(135deg, #ffb900 0%, #ff8c00 100%);
+  --gradient-ocean: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  --gradient-aurora: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  --gradient-dark: linear-gradient(135deg, #323130 0%, #201f1e 100%);
   --gradient-mesh: none;
   --gradient-mesh-dark: none;
-  
+
   /* Glass Morphism Effects */
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-bg-solid: rgba(255, 255, 255, 0.9);
@@ -882,7 +888,7 @@ input[type="checkbox"].sp-checkbox:checked {
   --glass-blur: blur(10px);
   --glass-blur-heavy: blur(20px);
   --glass-blur-ultra: blur(40px);
-  
+
   /* SharePoint Shadow Collection */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
@@ -898,7 +904,7 @@ input[type="checkbox"].sp-checkbox:checked {
   --shadow-3d: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
   --shadow-sharepoint: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
   --shadow-sharepoint-hover: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
-  
+
   /* Modern Spacing Scale */
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
@@ -909,7 +915,12 @@ input[type="checkbox"].sp-checkbox:checked {
   --space-3xl: 4rem;
 
   /* Typography - SharePoint Fonts */
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    'Segoe UI',
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -949,7 +960,12 @@ body {
   color: var(--color-text-primary);
   background: var(--color-bg);
   position: relative;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    'Segoe UI',
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
 }
 
 #root {
@@ -1036,7 +1052,9 @@ code,
 pre,
 kbd {
   color: var(--color-text-code);
-  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
   font-variant-ligatures: none;
   color: #0b4aa8;
 }
@@ -1134,7 +1152,8 @@ a:hover {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -1154,7 +1173,8 @@ a:hover {
 }
 
 @keyframes gradient-shift {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -1163,7 +1183,8 @@ a:hover {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -1172,7 +1193,8 @@ a:hover {
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
   }
   50% {
@@ -1228,7 +1250,8 @@ a:hover {
 }
 
 @keyframes morphing {
-  0%, 100% {
+  0%,
+  100% {
     border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
   }
   50% {
@@ -1237,7 +1260,8 @@ a:hover {
 }
 
 @keyframes particle-float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) translateX(0);
     opacity: 0.5;
   }
@@ -1278,10 +1302,10 @@ a:hover {
 
 /* SharePoint Card Styles */
 .card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 2px;
   box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
-  border: 1px solid #EDEBE9;
+  border: 1px solid #edebe9;
   transition: all 0.2s ease;
   position: relative;
   overflow: visible;
@@ -1289,7 +1313,7 @@ a:hover {
 
 .card:hover {
   box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
-  border-color: #C8C6C4;
+  border-color: #c8c6c4;
 }
 
 .card-3d {
@@ -1895,9 +1919,9 @@ div.dropdown-menu-content {
 
 /* SharePoint Button Styles */
 .btn-sharepoint {
-  background: #0078D4;
+  background: #0078d4;
   color: white;
-  border: 1px solid #0078D4;
+  border: 1px solid #0078d4;
   border-radius: 2px;
   padding: 5px 16px;
   font-weight: 400;
@@ -1915,8 +1939,8 @@ div.dropdown-menu-content {
 }
 
 .btn-sharepoint:hover {
-  background: #106EBE;
-  border-color: #106EBE;
+  background: #106ebe;
+  border-color: #106ebe;
 }
 
 .btn-sharepoint:active {
@@ -1927,7 +1951,7 @@ div.dropdown-menu-content {
 .btn-sharepoint-secondary {
   background: white;
   color: #323130;
-  border: 1px solid #C8C6C4;
+  border: 1px solid #c8c6c4;
   border-radius: 2px;
   padding: 5px 16px;
   font-weight: 400;
@@ -1943,14 +1967,14 @@ div.dropdown-menu-content {
 }
 
 .btn-sharepoint-secondary:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
   border-color: #979593;
 }
 
 /* SharePoint Command Bar */
 .sp-command-bar {
-  background: #FFFFFF;
-  border-bottom: 1px solid #EDEBE9;
+  background: #ffffff;
+  border-bottom: 1px solid #edebe9;
   padding: 8px 16px;
   display: flex;
   align-items: center;
@@ -1974,38 +1998,38 @@ div.dropdown-menu-content {
 }
 
 .sp-command-button:hover {
-  background: #F3F2F1;
+  background: #f3f2f1;
 }
 
 .sp-command-button:active {
-  background: #EDEBE9;
+  background: #edebe9;
 }
 
 /* SharePoint List View */
 .sp-list-header {
-  background: #FAF9F8;
-  border-bottom: 1px solid #EDEBE9;
+  background: #faf9f8;
+  border-bottom: 1px solid #edebe9;
   padding: 8px 16px;
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
-  color: #605E5C;
+  color: #605e5c;
 }
 
 .sp-list-row {
   background: white;
-  border-bottom: 1px solid #F3F2F1;
+  border-bottom: 1px solid #f3f2f1;
   padding: 12px 16px;
   transition: background 0.1s ease;
 }
 
 .sp-list-row:hover {
-  background: #FAF9F8;
+  background: #faf9f8;
 }
 
 .sp-list-row.selected {
-  background: #E1F5FE;
-  border-left: 3px solid #0078D4;
+  background: #e1f5fe;
+  border-left: 3px solid #0078d4;
 }
 
 /* SharePoint Document Icon */
@@ -2015,7 +2039,7 @@ div.dropdown-menu-content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #F3F2F1;
+  background: #f3f2f1;
   border-radius: 2px;
 }
 
@@ -2036,13 +2060,13 @@ div.dropdown-menu-content {
 }
 
 .sp-breadcrumb-item:hover {
-  color: #0078D4;
+  color: #0078d4;
   text-decoration: underline;
 }
 
 .sp-breadcrumb-separator {
   margin: 0 8px;
-  color: #C8C6C4;
+  color: #c8c6c4;
 }
 
 /* Modern Progress Rings */
@@ -2212,6 +2236,26 @@ div.dropdown-menu-content {
   background: var(--gradient-secondary);
 }
 
+/* Sidebar scrollbar — thin, neutral, ChatGPT-style */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  border: none;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
 /* Notification Badge */
 .notification-badge {
   position: relative;
@@ -2239,32 +2283,32 @@ div.dropdown-menu-content {
     padding: 1rem;
     gap: 1rem;
   }
-  
+
   .card-3d {
     border-radius: 16px;
   }
-  
+
   .card-3d:hover {
     transform: translateY(-4px);
   }
-  
+
   .glass-panel {
     padding: 1rem;
     border-radius: 12px;
   }
-  
+
   .btn-gradient {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
   }
-  
+
   .fab {
     width: 48px;
     height: 48px;
     bottom: 1rem;
     right: 1rem;
   }
-  
+
   /* Mobile navigation */
   .mobile-nav {
     position: fixed;
@@ -2280,7 +2324,7 @@ div.dropdown-menu-content {
     justify-content: space-around;
     align-items: center;
   }
-  
+
   .mobile-nav-item {
     display: flex;
     flex-direction: column;
@@ -2289,17 +2333,17 @@ div.dropdown-menu-content {
     color: var(--color-gray-600);
     transition: all 0.2s ease;
   }
-  
+
   .mobile-nav-item.active {
     color: var(--color-primary);
   }
-  
+
   .mobile-nav-item svg {
     width: 20px;
     height: 20px;
     margin-bottom: 0.25rem;
   }
-  
+
   .mobile-nav-item span {
     font-size: 0.625rem;
     font-weight: 500;
@@ -2319,11 +2363,11 @@ div.dropdown-menu-content {
   .card-3d:active {
     transform: scale(0.98);
   }
-  
+
   .btn-gradient:active {
     transform: scale(0.95);
   }
-  
+
   button:active {
     opacity: 0.9;
   }
@@ -2367,17 +2411,17 @@ div.dropdown-menu-content {
     font-size: 1.75rem;
     line-height: 2rem;
   }
-  
+
   .text-h1 {
     font-size: 1.5rem;
     line-height: 1.75rem;
   }
-  
+
   .text-h2 {
     font-size: 1.25rem;
     line-height: 1.5rem;
   }
-  
+
   .text-h3 {
     font-size: 1.125rem;
     line-height: 1.375rem;
@@ -2389,7 +2433,7 @@ div.dropdown-menu-content {
   .bento-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .bento-item-lg {
     grid-column: span 2;
   }
@@ -2398,37 +2442,37 @@ div.dropdown-menu-content {
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-gray-50: #18181B;
-    --color-gray-100: #27272A;
-    --color-gray-200: #3F3F46;
-    --color-gray-300: #52525B;
-    --color-gray-400: #71717A;
-    --color-gray-500: #A1A1AA;
-    --color-gray-600: #D4D4D8;
-    --color-gray-700: #E4E4E7;
-    --color-gray-800: #F4F4F5;
-    --color-gray-900: #FAFAFA;
+    --color-gray-50: #18181b;
+    --color-gray-100: #27272a;
+    --color-gray-200: #3f3f46;
+    --color-gray-300: #52525b;
+    --color-gray-400: #71717a;
+    --color-gray-500: #a1a1aa;
+    --color-gray-600: #d4d4d8;
+    --color-gray-700: #e4e4e7;
+    --color-gray-800: #f4f4f5;
+    --color-gray-900: #fafafa;
   }
-  
+
   body {
-    background: linear-gradient(135deg, #0A0A0A 0%, #18181B 100%);
+    background: linear-gradient(135deg, #0a0a0a 0%, #18181b 100%);
   }
-  
+
   .glass-card {
     background: rgba(30, 30, 30, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
-  
+
   .glass-panel {
     background: linear-gradient(135deg, rgba(30, 30, 30, 0.1), rgba(30, 30, 30, 0.2));
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
-  
+
   .card {
     background: rgba(30, 30, 30, 0.98);
     border-color: var(--color-gray-800);
   }
-  
+
   .card-3d {
     background: linear-gradient(135deg, rgba(30, 30, 30, 0.98) 0%, rgba(40, 40, 40, 0.98) 100%);
   }
@@ -2442,7 +2486,7 @@ div.dropdown-menu-content {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   .animate-gradient,
   .animate-pulse,
   .animate-float {
@@ -2459,11 +2503,11 @@ div.dropdown-menu-content {
   .notification-badge {
     display: none !important;
   }
-  
+
   body {
     background: white !important;
   }
-  
+
   .glass-card,
   .glass-panel,
   .card {
@@ -2479,7 +2523,9 @@ div.dropdown-menu-content {
 }
 
 .cerv2-tab:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Active tab indicator with smooth slide animation */
@@ -2555,7 +2601,8 @@ button:focus-visible,
   }
 
   @keyframes badgePulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 1;
     }
     50% {
@@ -2585,7 +2632,9 @@ button:focus-visible,
   }
 
   .info-card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
   /* Smooth button transitions */
@@ -2595,12 +2644,7 @@ button:focus-visible,
 
   /* Loading skeleton shimmer */
   .skeleton-shimmer {
-    background: linear-gradient(
-      90deg,
-      #f3f4f6 0%,
-      #e5e7eb 50%,
-      #f3f4f6 100%
-    );
+    background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
@@ -2622,11 +2666,11 @@ button:focus-visible,
   button {
     transition: none !important;
   }
-  
+
   .cerv2-tab:hover {
     transform: none;
   }
-  
+
   .cerv2-tab-active::after,
   .completion-checkmark,
   .progress-badge,
@@ -2634,13 +2678,13 @@ button:focus-visible,
   .skeleton-shimmer {
     animation: none !important;
   }
-  
+
   /* Still show the elements, just without animation */
   .context-banner-enter {
     opacity: 1;
     transform: none;
   }
-  
+
   .completion-checkmark {
     opacity: 1;
     transform: scale(1);

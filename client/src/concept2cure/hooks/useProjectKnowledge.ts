@@ -9,6 +9,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ProjectKnowledge, UploadedDocument } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,6 +115,7 @@ function formatFileSize(bytes: number): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useProjectKnowledge(projectId: string | null): UseProjectKnowledgeReturn {
+  const queryClient = useQueryClient();
   const [knowledge, setKnowledge] = useState<ProjectKnowledge | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -309,6 +311,10 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
             documents: [...prev.documents, processedDocument],
           };
         });
+
+        // Refresh workspace counts + project artifacts panel
+        queryClient.invalidateQueries({ queryKey: ['workspace-summary'] });
+        queryClient.invalidateQueries({ queryKey: ['project-artifacts'] });
 
         return processedDocument;
       } catch (err) {

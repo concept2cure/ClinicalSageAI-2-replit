@@ -381,7 +381,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <div className="text-sm font-bold text-gray-900">TrialSage</div>
+              <div className="text-sm font-bold text-gray-900">Concept2Cure</div>
               <div className="text-xs text-muted-foreground">Client Portal</div>
             </div>
           </div>

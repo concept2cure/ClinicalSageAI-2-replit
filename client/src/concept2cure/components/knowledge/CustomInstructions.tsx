@@ -1,9 +1,9 @@
 /**
  * Concept2Cure - Custom Instructions
- * 
+ *
  * Per-project AI behavior configuration.
  * Claude.ai parity: Custom instructions in project settings.
- * 
+ *
  * @module concept2cure/components/knowledge/CustomInstructions
  * @version 1.0.0
  */
@@ -12,17 +12,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ChevronDown,
   ChevronRight,
@@ -44,6 +35,8 @@ interface CustomInstructionsProps {
   projectType?: string;
   disabled?: boolean;
   className?: string;
+  /** If true, the collapsible starts expanded on mount (and re-opens when loading finishes) */
+  defaultOpen?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,7 +58,7 @@ Project-Specific:
 - Target Submission Date: [DATE]
 - Product Code: [CODE]`,
 
-  'IND': `You are a regulatory AI assistant for an IND (Investigational New Drug) submission.
+  IND: `You are a regulatory AI assistant for an IND (Investigational New Drug) submission.
 
 Key Guidelines:
 - Follow ICH CTD structure for all documents
@@ -79,7 +72,7 @@ Project-Specific:
 - Therapeutic Area: [AREA]
 - Target First-Patient-In: [DATE]`,
 
-  'NDA': `You are a regulatory AI assistant for an NDA (New Drug Application).
+  NDA: `You are a regulatory AI assistant for an NDA (New Drug Application).
 
 Key Guidelines:
 - Follow eCTD Module 1-5 structure
@@ -92,7 +85,7 @@ Project-Specific:
 - Indication: [INDICATION]
 - PDUFA Date: [DATE]`,
 
-  'BLA': `You are a regulatory AI assistant for a BLA (Biologics License Application).
+  BLA: `You are a regulatory AI assistant for a BLA (Biologics License Application).
 
 Key Guidelines:
 - Follow eCTD Module 1-5 structure with biologic-specific requirements
@@ -115,13 +108,19 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
   projectType,
   disabled = false,
   className,
+  defaultOpen = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [localValue, setLocalValue] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-expand when defaultOpen flips to true (e.g. knowledge finishes loading)
+  useEffect(() => {
+    if (defaultOpen) setIsOpen(true);
+  }, [defaultOpen]);
 
   // Sync local value with prop
   useEffect(() => {
@@ -180,13 +179,9 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-gray-900">
-                Custom Instructions
-              </span>
+              <span className="text-sm font-medium text-gray-900">Custom Instructions</span>
               {value && !isOpen && (
-                <span className="text-xs text-gray-500 truncate max-w-[150px]">
-                  (configured)
-                </span>
+                <span className="text-xs text-gray-500 truncate max-w-[150px]">(configured)</span>
               )}
             </div>
             {isOpen ? (
@@ -203,19 +198,14 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
             <div className="flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
               <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
               <span>
-                Custom instructions tell Lumen how to behave for this specific project.
-                These apply to all conversations within this project.
+                Custom instructions tell RI how to behave for this specific project. These apply to
+                all conversations within this project.
               </span>
             </div>
 
             {/* Template Button */}
             {projectType && INSTRUCTION_TEMPLATES[projectType] && !localValue && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleUseTemplate}
-                className="w-full"
-              >
+              <Button variant="outline" size="sm" onClick={handleUseTemplate} className="w-full">
                 <Sparkles className="h-3.5 w-3.5 mr-2" />
                 Use {projectType} Template
               </Button>
@@ -226,8 +216,8 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
               <Textarea
                 ref={textareaRef}
                 value={localValue}
-                onChange={(e) => setLocalValue(e.target.value)}
-                placeholder={`Tell Lumen how to assist with this project...
+                onChange={e => setLocalValue(e.target.value)}
+                placeholder={`Tell RI how to assist with this project...
 
 Example:
 - "Always reference predicate K123456 for SE arguments"
@@ -261,12 +251,7 @@ Example:
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleReset}
-                          disabled={disabled}
-                        >
+                        <Button variant="ghost" size="sm" onClick={handleReset} disabled={disabled}>
                           <RotateCcw className="h-3.5 w-3.5" />
                         </Button>
                       </TooltipTrigger>
@@ -280,9 +265,7 @@ Example:
                 size="sm"
                 onClick={handleSave}
                 disabled={disabled || !hasChanges || isOverLimit || isSaving}
-                className={cn(
-                  saveSuccess && 'bg-green-600 hover:bg-green-600'
-                )}
+                className={cn(saveSuccess && 'bg-green-600 hover:bg-green-600')}
               >
                 {isSaving ? (
                   <>

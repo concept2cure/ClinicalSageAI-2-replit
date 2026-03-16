@@ -39,7 +39,7 @@ import {
 interface Project {
   id: string;
   name: string;
-  type: SubmissionType;
+  type: string;
   description?: string;
   starred?: boolean;
   archived?: boolean;
@@ -53,7 +53,7 @@ type SubmissionType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'DE_NOVO'
 interface ProjectSwitcherProps {
   isOpen: boolean;
   onClose: () => void;
-  projects: Project[];
+  projects: any[];
   activeProjectId?: string;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
@@ -66,59 +66,95 @@ interface ProjectSwitcherProps {
 // SUBMISSION TYPE CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SUBMISSION_TYPES: Record<SubmissionType, {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
-}> = {
+type SubmissionTypeKey = SubmissionType | string;
+
+const SUBMISSION_TYPE_FALLBACK = {
+  label: 'Project',
+  icon: FileText,
+  color: 'text-zinc-600',
+  bgColor: 'bg-zinc-50',
+};
+
+const SUBMISSION_TYPES: Record<
+  string,
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    bgColor: string;
+  }
+> = {
   '510K': {
     label: '510(k)',
     icon: FileText,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
   },
-  'IND': {
+  IND: {
     label: 'IND',
     icon: Beaker,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
   },
-  'NDA': {
+  NDA: {
     label: 'NDA',
     icon: Pill,
     color: 'text-green-600',
     bgColor: 'bg-green-50',
   },
-  'BLA': {
+  BLA: {
     label: 'BLA',
     icon: Activity,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
   },
-  'PMA': {
+  PMA: {
     label: 'PMA',
     icon: Heart,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
   },
-  'MAA': {
+  MAA: {
     label: 'MAA',
     icon: Microscope,
     color: 'text-pink-600',
     bgColor: 'bg-pink-50',
   },
-  'DE_NOVO': {
+  DE_NOVO: {
     label: 'De Novo',
     icon: FileText,
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
   },
-  'EUA': {
+  EUA: {
     label: 'EUA',
     icon: Activity,
     color: 'text-cyan-600',
     bgColor: 'bg-cyan-50',
+  },
+  clinical_trial: {
+    label: 'Clinical Trial',
+    icon: Activity,
+    color: 'text-teal-600',
+    bgColor: 'bg-teal-50',
+  },
+  regulatory_submission: {
+    label: 'Regulatory',
+    icon: FileText,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+  },
+  medical_device: {
+    label: 'Medical Device',
+    icon: Heart,
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-50',
+  },
+  literature_review: {
+    label: 'Literature Review',
+    icon: Microscope,
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-50',
   },
 };
 
@@ -144,7 +180,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   onDelete,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const typeConfig = SUBMISSION_TYPES[project.type];
+  const typeConfig = SUBMISSION_TYPES[project.type] ?? {
+    label: project.type || 'Project',
+    icon: FileText,
+    color: 'text-zinc-600',
+    bgColor: 'bg-zinc-50',
+  };
   const TypeIcon = typeConfig.icon;
 
   const formatRelativeTime = (date: Date) => {
@@ -182,7 +223,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 
       {/* Star button */}
       <button
-        onClick={(e) => {
+        onClick={e => {
           e.stopPropagation();
           onToggleStar();
         }}
@@ -193,15 +234,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             : 'text-zinc-300 opacity-0 group-hover:opacity-100 hover:text-amber-500'
         )}
       >
-        <Star
-          className={cn('w-4 h-4', project.starred && 'fill-current')}
-        />
+        <Star className={cn('w-4 h-4', project.starred && 'fill-current')} />
       </button>
 
       {/* Menu button */}
       <div className="absolute top-3 right-3">
         <button
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation();
             setShowMenu(!showMenu);
           }}
@@ -215,14 +254,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <>
             <div
               className="fixed inset-0 z-10"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 setShowMenu(false);
               }}
             />
             <div className="absolute right-0 top-8 z-20 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 animate-in fade-in zoom-in-95 duration-100">
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   onArchive();
                   setShowMenu(false);
@@ -233,7 +272,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 Archive
               </button>
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   onDelete();
                   setShowMenu(false);
@@ -263,15 +302,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Name */}
-        <h3 className="text-base font-semibold text-zinc-900 mb-1 line-clamp-1">
-          {project.name}
-        </h3>
+        <h3 className="text-base font-semibold text-zinc-900 mb-1 line-clamp-1">{project.name}</h3>
 
         {/* Description */}
         {project.description && (
-          <p className="text-sm text-zinc-500 mb-3 line-clamp-2">
-            {project.description}
-          </p>
+          <p className="text-sm text-zinc-500 mb-3 line-clamp-2">{project.description}</p>
         )}
 
         {/* Meta */}
@@ -299,25 +334,45 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: { name: string; type: SubmissionType; description?: string }) => void;
+  onCreate: (data: {
+    name: string;
+    type: SubmissionType;
+    description?: string;
+    sponsor?: string;
+    product?: string;
+    region?: string;
+    goal?: string;
+  }) => void;
 }
 
-export const NewProjectModal: React.FC<NewProjectModalProps> = ({
-  isOpen,
-  onClose,
-  onCreate,
-}) => {
+export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onCreate }) => {
   const [name, setName] = useState('');
   const [type, setType] = useState<SubmissionType>('510K');
   const [description, setDescription] = useState('');
+  const [sponsor, setSponsor] = useState('');
+  const [product, setProduct] = useState('');
+  const [region, setRegion] = useState('FDA');
+  const [goal, setGoal] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onCreate({ name: name.trim(), type, description: description.trim() || undefined });
+      onCreate({
+        name: name.trim(),
+        type,
+        description: description.trim() || undefined,
+        sponsor: sponsor.trim() || undefined,
+        product: product.trim() || undefined,
+        region: region || undefined,
+        goal: goal.trim() || undefined,
+      });
       setName('');
       setDescription('');
       setType('510K');
+      setSponsor('');
+      setProduct('');
+      setRegion('FDA');
+      setGoal('');
       onClose();
     }
   };
@@ -330,30 +385,37 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-project-title"
+        onKeyDown={e => {
+          if (e.key === 'Escape') onClose();
+        }}
+        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+      >
         <form onSubmit={handleSubmit}>
           {/* Header */}
           <div className="px-6 py-4 border-b border-zinc-100">
-            <h2 className="text-lg font-semibold text-zinc-900">New Project</h2>
-            <p className="text-sm text-zinc-500 mt-1">
-              Create a new regulatory submission project
-            </p>
+            <h2 id="new-project-title" className="text-lg font-semibold text-zinc-900">
+              New Project
+            </h2>
+            <p className="text-sm text-zinc-500 mt-1">Create a new regulatory submission project</p>
           </div>
 
           {/* Content */}
           <div className="px-6 py-4 space-y-4">
             {/* Project name */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Project Name
-              </label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Project Name</label>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder="e.g., CardioFlow Heart Monitor"
                 className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                 autoFocus
@@ -366,7 +428,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 Submission Type
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {(Object.keys(SUBMISSION_TYPES) as SubmissionType[]).map((submissionType) => {
+                {(Object.keys(SUBMISSION_TYPES) as SubmissionType[]).map(submissionType => {
                   const config = SUBMISSION_TYPES[submissionType];
                   const Icon = config.icon;
                   const isSelected = type === submissionType;
@@ -376,18 +438,16 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       key={submissionType}
                       type="button"
                       onClick={() => setType(submissionType)}
+                      aria-pressed={isSelected}
                       className={cn(
-                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
+                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                         isSelected
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-zinc-200 hover:border-zinc-300'
                       )}
                     >
                       <Icon
-                        className={cn(
-                          'w-5 h-5',
-                          isSelected ? 'text-blue-600' : 'text-zinc-400'
-                        )}
+                        className={cn('w-5 h-5', isSelected ? 'text-blue-600' : 'text-zinc-400')}
                       />
                       <span
                         className={cn(
@@ -410,8 +470,71 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               </label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="Brief description of the project..."
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+              />
+            </div>
+
+            {/* Sponsor */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Sponsor / Client <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={sponsor}
+                onChange={e => setSponsor(e.target.value)}
+                placeholder="e.g., Acme Biotech, Inc."
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Product / Device / Molecule */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Product / Device / Molecule <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={product}
+                onChange={e => setProduct(e.target.value)}
+                placeholder="e.g., CardioFlow HR-200, mRNA-7621"
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Region / Agency */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Region / Agency
+              </label>
+              <select
+                value={region}
+                onChange={e => setRegion(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all bg-white"
+              >
+                <option value="FDA">FDA (United States)</option>
+                <option value="EMA">EMA (European Union)</option>
+                <option value="MHRA">MHRA (United Kingdom)</option>
+                <option value="Health Canada">Health Canada</option>
+                <option value="TGA">TGA (Australia)</option>
+                <option value="PMDA">PMDA (Japan)</option>
+                <option value="ANVISA">ANVISA (Brazil)</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* Goal / Instructions */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Goal & Instructions <span className="text-zinc-400">(optional)</span>
+              </label>
+              <textarea
+                value={goal}
+                onChange={e => setGoal(e.target.value)}
+                placeholder="What are you trying to achieve? Any specific requirements or context for the RI..."
                 rows={3}
                 className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
               />
@@ -423,7 +546,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             >
               Cancel
             </button>
@@ -431,10 +554,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               type="submit"
               disabled={!name.trim()}
               className={cn(
-                'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all',
-                name.trim()
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-zinc-300 cursor-not-allowed'
+                'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                name.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-zinc-300 cursor-not-allowed'
               )}
             >
               Create Project
@@ -465,12 +586,9 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
   const [filter, setFilter] = useState<'all' | 'starred' | 'archived'>('all');
 
   // Filter projects
-  const filteredProjects = projects.filter((project) => {
+  const filteredProjects = projects.filter(project => {
     // Search filter
-    if (
-      searchQuery &&
-      !project.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
+    if (searchQuery && !project.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
 
@@ -483,8 +601,8 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
   });
 
   // Group by starred
-  const starredProjects = filteredProjects.filter((p) => p.starred);
-  const regularProjects = filteredProjects.filter((p) => !p.starred);
+  const starredProjects = filteredProjects.filter(p => p.starred);
+  const regularProjects = filteredProjects.filter(p => !p.starred);
 
   if (!isOpen) return null;
 
@@ -494,47 +612,58 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[10%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-3xl bg-white rounded-2xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-switcher-title"
+        onKeyDown={e => {
+          if (e.key === 'Escape') onClose();
+        }}
+        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150"
+      >
         {/* Header */}
-        <div className="flex-shrink-0 px-6 py-4 border-b border-zinc-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-zinc-900">Projects</h2>
+        <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-100">
+          <div className="flex items-center justify-between mb-2">
+            <h2 id="project-switcher-title" className="text-sm font-semibold text-zinc-900">
+              Switch Project
+            </h2>
             <button
               onClick={onCreateProject}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3" />
               New
             </button>
           </div>
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              autoFocus
             />
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-3">
-            {(['all', 'starred', 'archived'] as const).map((tab) => (
+          <div className="flex gap-0.5 mt-2">
+            {(['all', 'starred', 'archived'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
                 className={cn(
-                  'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
-                  filter === tab
-                    ? 'bg-zinc-900 text-white'
-                    : 'text-zinc-600 hover:bg-zinc-100'
+                  'px-2.5 py-1 text-[11px] font-medium rounded transition-colors capitalize focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                  filter === tab ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
                 )}
+                aria-pressed={filter === tab}
               >
                 {tab}
               </button>
@@ -542,78 +671,327 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Content — compact list rows, not cards */}
+        <div className="flex-1 overflow-y-auto">
           {filteredProjects.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-zinc-100 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-zinc-400" />
-              </div>
-              <h3 className="text-base font-medium text-zinc-900 mb-1">
-                No projects found
-              </h3>
-              <p className="text-sm text-zinc-500">
-                {searchQuery
-                  ? 'Try a different search term'
-                  : 'Create your first project to get started'}
+            <div className="text-center py-8 px-4">
+              <FileText className="w-5 h-5 mx-auto mb-2 text-zinc-300" />
+              <p className="text-xs text-zinc-500">
+                {searchQuery ? 'No projects match your search' : 'No projects yet'}
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="divide-y divide-zinc-50">
               {/* Starred section */}
               {starredProjects.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                    Starred
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {starredProjects.map((project) => (
-                      <ProjectCard
+                <>
+                  <div className="px-4 pt-2 pb-1">
+                    <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      Starred
+                    </span>
+                  </div>
+                  {starredProjects.map(project => {
+                    const tc = SUBMISSION_TYPES[project.type] ?? SUBMISSION_TYPE_FALLBACK;
+                    const TypeIcon = tc.icon;
+                    return (
+                      <button
                         key={project.id}
-                        project={project}
-                        isActive={project.id === activeProjectId}
-                        onSelect={() => {
+                        onClick={() => {
                           onSelectProject(project.id);
                           onClose();
                         }}
-                        onToggleStar={() => onToggleStar(project.id)}
-                        onArchive={() => onArchiveProject(project.id)}
-                        onDelete={() => onDeleteProject(project.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                        className={cn(
+                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
+                          project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
+                        )}
+                      >
+                        <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[12px] font-medium text-zinc-900 truncate">
+                              {project.name}
+                            </span>
+                            {project.starred && (
+                              <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
+                            )}
+                            {project.id === activeProjectId && (
+                              <Check className="w-3 h-3 text-blue-600 shrink-0" />
+                            )}
+                          </div>
+                          {project.description && (
+                            <span className="text-[11px] text-zinc-400 truncate block">
+                              {project.description}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                            tc.bgColor,
+                            tc.color
+                          )}
+                        >
+                          {tc.label}
+                        </span>
+                        <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      </button>
+                    );
+                  })}
+                </>
               )}
 
               {/* Regular projects */}
               {regularProjects.length > 0 && (
-                <div>
+                <>
                   {starredProjects.length > 0 && (
-                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                      All Projects
-                    </h3>
+                    <div className="px-4 pt-2 pb-1">
+                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                        All Projects
+                      </span>
+                    </div>
                   )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {regularProjects.map((project) => (
-                      <ProjectCard
+                  {regularProjects.map(project => {
+                    const tc = SUBMISSION_TYPES[project.type] ?? SUBMISSION_TYPE_FALLBACK;
+                    const TypeIcon = tc.icon;
+                    return (
+                      <button
                         key={project.id}
-                        project={project}
-                        isActive={project.id === activeProjectId}
-                        onSelect={() => {
+                        onClick={() => {
                           onSelectProject(project.id);
                           onClose();
                         }}
-                        onToggleStar={() => onToggleStar(project.id)}
-                        onArchive={() => onArchiveProject(project.id)}
-                        onDelete={() => onDeleteProject(project.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                        className={cn(
+                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
+                          project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
+                        )}
+                      >
+                        <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[12px] font-medium text-zinc-900 truncate">
+                              {project.name}
+                            </span>
+                            {project.id === activeProjectId && (
+                              <Check className="w-3 h-3 text-blue-600 shrink-0" />
+                            )}
+                          </div>
+                          {project.description && (
+                            <span className="text-[11px] text-zinc-400 truncate block">
+                              {project.description}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                            tc.bgColor,
+                            tc.color
+                          )}
+                        >
+                          {tc.label}
+                        </span>
+                        <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      </button>
+                    );
+                  })}
+                </>
               )}
             </div>
           )}
         </div>
+      </div>
+    </>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDIT PROJECT MODAL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface EditProjectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: {
+    name: string;
+    description?: string;
+    sponsor?: string;
+    product?: string;
+    region?: string;
+  };
+  onSave: (data: {
+    name: string;
+    description?: string;
+    sponsor?: string;
+    product?: string;
+    region?: string;
+  }) => void;
+}
+
+export const EditProjectModal: React.FC<EditProjectModalProps> = ({
+  isOpen,
+  onClose,
+  initialData,
+  onSave,
+}) => {
+  const [name, setName] = useState(initialData.name);
+  const [description, setDescription] = useState(initialData.description ?? '');
+  const [sponsor, setSponsor] = useState(initialData.sponsor ?? '');
+  const [product, setProduct] = useState(initialData.product ?? '');
+  const [region, setRegion] = useState(initialData.region ?? 'FDA');
+
+  // Re-sync form when the modal opens with fresh data
+  React.useEffect(() => {
+    if (isOpen) {
+      setName(initialData.name);
+      setDescription(initialData.description ?? '');
+      setSponsor(initialData.sponsor ?? '');
+      setProduct(initialData.product ?? '');
+      setRegion(initialData.region ?? 'FDA');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onSave({
+        name: name.trim(),
+        description: description.trim() || undefined,
+        sponsor: sponsor.trim() || undefined,
+        product: product.trim() || undefined,
+        region: region || undefined,
+      });
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-project-title"
+        onKeyDown={e => {
+          if (e.key === 'Escape') onClose();
+        }}
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+      >
+        <form onSubmit={handleSubmit}>
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-zinc-100">
+            <h2 id="edit-project-title" className="text-lg font-semibold text-zinc-900">
+              Edit Project
+            </h2>
+            <p className="text-sm text-zinc-500 mt-1">Update project metadata</p>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 py-4 space-y-4">
+            {/* Project name */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Project Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="e.g., CardioFlow Heart Monitor"
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                autoFocus
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Description <span className="text-zinc-400">(optional)</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Brief description of the project..."
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+              />
+            </div>
+
+            {/* Sponsor */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Sponsor / Client <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={sponsor}
+                onChange={e => setSponsor(e.target.value)}
+                placeholder="e.g., Acme Biotech, Inc."
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Product */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Product / Device / Molecule <span className="text-zinc-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={product}
+                onChange={e => setProduct(e.target.value)}
+                placeholder="e.g., CardioFlow™, Atorvastatin 20 mg"
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              />
+            </div>
+
+            {/* Region */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                Region / Agency
+              </label>
+              <select
+                value={region}
+                onChange={e => setRegion(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+              >
+                {['FDA', 'EMA', 'MHRA', 'TGA', 'Health Canada', 'PMDA', 'ANVISA', 'Other'].map(
+                  r => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-zinc-100 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
       </div>
     </>
   );

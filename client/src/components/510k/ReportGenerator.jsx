@@ -20,6 +20,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { toast } from '@/hooks/use-toast';
+import { useTenantContext } from '@/contexts/TenantContext';
 import FDA510kService from '@/services/FDA510kService';
 import {
   FileText,
@@ -49,6 +50,8 @@ const ReportGenerator = ({
   sections,
   onSubmissionReady,
 }) => {
+  const { currentOrganization } = useTenantContext();
+  const orgId = String(currentOrganization?.id || '1');
   const [activeTab, setActiveTab] = useState('preview');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -103,17 +106,17 @@ const ReportGenerator = ({
 
     try {
       // Check if we have a submission ID stored
-      const submissionId = deviceProfile.submissionId || 
-                         localStorage.getItem(`510k_submission_${deviceProfile.id}`);
-      
+      const submissionId =
+        deviceProfile.submissionId || localStorage.getItem(`510k_submission_${deviceProfile.id}`);
+
       if (!submissionId) {
         // Create a new 510(k) submission if one doesn't exist
-        const createResponse = await fetch('/api/medical-device/510k', {
+        const createResponse = await fetch('/api/medical-devices/510k', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-organization-id': localStorage.getItem('organizationId'),
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            'x-organization-id': orgId,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
           body: JSON.stringify({
             deviceId: deviceProfile.id,
@@ -128,18 +131,18 @@ const ReportGenerator = ({
                 contactPerson: deviceProfile.contactPerson || 'Not specified',
                 email: deviceProfile.contactEmail || 'Not specified',
                 phone: deviceProfile.contactPhone || 'Not specified',
-                address: deviceProfile.manufacturerAddress || 'Not specified'
+                address: deviceProfile.manufacturerAddress || 'Not specified',
               },
               deviceDescription: {
                 physical: deviceProfile.deviceDescription || '',
                 principleOfOperation: deviceProfile.principleOfOperation || '',
-                materials: deviceProfile.materials || ''
+                materials: deviceProfile.materials || '',
               },
               performanceData: deviceProfile.performanceData || {},
               biocompatibility: deviceProfile.biocompatibility || {},
-              labeling: deviceProfile.labeling || {}
-            }
-          })
+              labeling: deviceProfile.labeling || {},
+            },
+          }),
         });
 
         if (!createResponse.ok) {
@@ -160,10 +163,10 @@ const ReportGenerator = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-organization-id': localStorage.getItem('organizationId'),
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            'x-organization-id': orgId,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
-          body: JSON.stringify({ format })
+          body: JSON.stringify({ format }),
         }
       );
 
@@ -172,7 +175,7 @@ const ReportGenerator = ({
       }
 
       const generateResult = await generateResponse.json();
-      
+
       setProgress(70);
 
       // Store the generated document information
@@ -183,12 +186,12 @@ const ReportGenerator = ({
           filename: generateResult.result.filename,
           generatedAt: generateResult.result.generatedAt,
           format: format,
-          validationStatus: generateResult.result.validationStatus
-        }
+          validationStatus: generateResult.result.validationStatus,
+        },
       };
-      
+
       setGeneratedDocs(newGeneratedDocs);
-      
+
       // Store report data
       const reportData = {
         deviceProfile: deviceProfile,
@@ -199,11 +202,11 @@ const ReportGenerator = ({
           includeESTAR: true,
           includeSummary: true,
           includeAttachments: true,
-        }
+        },
       };
 
       setProgress(80);
-      
+
       setReportData(reportData);
 
       // Check validation status
@@ -277,10 +280,10 @@ const ReportGenerator = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-organization-id': localStorage.getItem('organizationId'),
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            'x-organization-id': orgId,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
-          body: JSON.stringify({ testSubmission: isTestSubmission })
+          body: JSON.stringify({ testSubmission: isTestSubmission }),
         }
       );
 
@@ -290,7 +293,7 @@ const ReportGenerator = ({
       }
 
       const submitResult = await submitResponse.json();
-      
+
       toast({
         title: isTestSubmission ? 'Test Submission Successful' : '510(k) Submitted to FDA',
         description: `Tracking Number: ${submitResult.fdaResponse.submissionTrackingNumber}. ${submitResult.fdaResponse.estimatedReviewTime}`,
@@ -345,11 +348,7 @@ const ReportGenerator = ({
             for FDA submission.
           </p>
           <div className="flex flex-col gap-3 items-center">
-            <Button 
-              onClick={() => generateReport('PDF')} 
-              disabled={isGenerating} 
-              className="mt-4"
-            >
+            <Button onClick={() => generateReport('PDF')} disabled={isGenerating} className="mt-4">
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -363,17 +362,17 @@ const ReportGenerator = ({
               )}
             </Button>
             <div className="flex gap-3">
-              <Button 
-                onClick={() => generateReport('DOCX')} 
-                disabled={isGenerating} 
+              <Button
+                onClick={() => generateReport('DOCX')}
+                disabled={isGenerating}
                 variant="outline"
                 size="sm"
               >
                 Generate DOCX
               </Button>
-              <Button 
-                onClick={() => generateReport('ESTAR')} 
-                disabled={isGenerating} 
+              <Button
+                onClick={() => generateReport('ESTAR')}
+                disabled={isGenerating}
                 variant="outline"
                 size="sm"
               >

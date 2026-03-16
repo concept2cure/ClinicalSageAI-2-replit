@@ -2,7 +2,7 @@
  * Client Portal V3
  *
  * The unified entry point for all V3 UI components.
- * Routes between Dashboard, Programs, Library, and AI Assistant.
+ * Routes between Dashboard, Programs, Library, and RI Copilot.
  *
  * @version 3.0.0
  * @author Concept2Cure Engineering

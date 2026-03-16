@@ -33,12 +33,12 @@ export default function LumenCortex() {
                   <Brain className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-slate-900">Lumen Cortex</h1>
+                  <h1 className="text-lg font-semibold text-slate-900">Regulatory Intelligence</h1>
                   <p className="text-xs text-slate-500">Regulatory Intelligence Assistant</p>
                 </div>
               </div>
             </div>
-            <div className="text-sm text-slate-500">Powered by TrialSage AI</div>
+            <div className="text-sm text-slate-500">Powered by Concept2Cure RI</div>
           </div>
         </div>
       </header>
@@ -52,7 +52,7 @@ export default function LumenCortex() {
 
       {/* Footer hint */}
       <footer className="fixed bottom-0 left-0 right-0 py-2 text-center text-xs text-slate-500 bg-white/80 backdrop-blur-sm border-t border-slate-200/60">
-        Lumen Cortex provides regulatory guidance based on FDA regulations and industry best
+        Concept2Cure RI provides regulatory guidance based on FDA regulations and industry best
         practices. Always verify critical information with official sources.
       </footer>
     </div>

@@ -19,6 +19,10 @@ import {
   FileText,
   ChevronDown,
   Zap,
+  ShieldCheck,
+  TrendingUp,
+  Search,
+  Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +34,18 @@ interface Message {
   content: string;
   timestamp: Date;
   modelUsed?: string;
+  /** Structured intelligence data appended to regulatory queries */
+  intelligence?: {
+    precedents?: Array<{
+      deviceName: string;
+      clearanceNumber: string;
+      decision: string;
+      similarity?: number;
+    }>;
+    riskScore?: number;
+    approvalProbability?: number;
+    strategy?: string;
+  };
 }
 
 interface ModelInfo {
@@ -211,6 +227,82 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // ── Auto-enrich with regulatory intelligence for relevant queries ──
+      const lowerQuery = userMessage.content.toLowerCase();
+      const isRegulatoryQuery =
+        /\b(510\(k\)|pma|ind|nda|bla|cer|submission|regulatory|approval|clearance|fda|predicate|precedent|risk|strategy|validate)\b/i.test(
+          lowerQuery
+        );
+
+      if (isRegulatoryQuery) {
+        try {
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          const token =
+            sessionStorage.getItem('trialsage_access_token') ||
+            localStorage.getItem('trialsage_access_token');
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+
+          const [precRes, foresightRes] = await Promise.allSettled([
+            fetch('/api/precedent-engine/search', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                submissionType: lowerQuery.includes('pma')
+                  ? 'PMA'
+                  : lowerQuery.includes('ind')
+                    ? 'IND'
+                    : '510(k)',
+                indication: userMessage.content.slice(0, 100),
+                limit: 3,
+              }),
+            }).then(r => (r.ok ? r.json() : null)),
+            fetch('/api/foresight/score', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                studyId: `chat_${Date.now()}`,
+                phase: 'III',
+                indication: userMessage.content.slice(0, 100),
+                biomarkers: [],
+                endpoints: [],
+                sampleSize: 100,
+                organizationId: 'org_default',
+              }),
+            }).then(r => (r.ok ? r.json() : null)),
+          ]);
+
+          const intelligence: Message['intelligence'] = {};
+          let hasData = false;
+
+          if (precRes.status === 'fulfilled' && precRes.value?.data?.length) {
+            intelligence.precedents = precRes.value.data.slice(0, 3).map((p: any) => ({
+              deviceName: p.deviceName || p.device_name || 'Unknown',
+              clearanceNumber: p.clearanceNumber || p.clearance_number || '',
+              decision: p.decisionOutcome || p.decision_outcome || '',
+              similarity: p.similarity,
+            }));
+            hasData = true;
+          }
+
+          if (foresightRes.status === 'fulfilled' && foresightRes.value?.prediction) {
+            const pred = foresightRes.value.prediction;
+            intelligence.approvalProbability = pred.successScore || 0;
+            intelligence.riskScore = pred.riskFactors?.length
+              ? Math.min(100, pred.riskFactors.length * 15)
+              : 30;
+            hasData = true;
+          }
+
+          if (hasData) {
+            setMessages(prev =>
+              prev.map(m => (m.id === assistantMessage.id ? { ...m, intelligence } : m))
+            );
+          }
+        } catch {
+          // Intelligence enrichment is best-effort — don't fail the chat
+        }
+      }
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [
@@ -444,6 +536,79 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
                           {message.modelUsed}
                         </span>
                       )}
+                    </div>
+                  )}
+
+                  {/* Structured intelligence enrichment panel */}
+                  {message.intelligence && (
+                    <div className="mt-3 space-y-2 border-t border-gray-200 pt-3">
+                      <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" /> Regulatory Intelligence
+                      </span>
+
+                      {/* Precedents */}
+                      {message.intelligence.precedents &&
+                        message.intelligence.precedents.length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-medium text-gray-500 flex items-center gap-1">
+                              <Search className="w-2.5 h-2.5" /> Precedent Evidence
+                            </span>
+                            {message.intelligence.precedents.map((p, i) => (
+                              <div
+                                key={i}
+                                className="flex items-center justify-between p-1.5 bg-white/80 rounded border border-gray-200 text-[11px]"
+                              >
+                                <div>
+                                  <span className="font-medium text-gray-700">{p.deviceName}</span>
+                                  <span className="text-gray-400 ml-1.5">{p.clearanceNumber}</span>
+                                </div>
+                                <span
+                                  className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${
+                                    p.decision === 'CLEARED' || p.decision === 'APPROVED'
+                                      ? 'bg-emerald-100 text-emerald-700'
+                                      : 'bg-red-100 text-red-700'
+                                  }`}
+                                >
+                                  {p.decision}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                      {/* Scores */}
+                      <div className="flex gap-3">
+                        {message.intelligence.approvalProbability != null && (
+                          <div className="flex items-center gap-1 text-[11px]">
+                            <TrendingUp className="w-3 h-3 text-emerald-500" />
+                            <span className="text-gray-600">Approval:</span>
+                            <span className="font-semibold text-gray-800">
+                              {message.intelligence.approvalProbability}%
+                            </span>
+                          </div>
+                        )}
+                        {message.intelligence.riskScore != null && (
+                          <div className="flex items-center gap-1 text-[11px]">
+                            <Target className="w-3 h-3 text-amber-500" />
+                            <span className="text-gray-600">Risk:</span>
+                            <span
+                              className={`font-semibold ${
+                                message.intelligence.riskScore < 30
+                                  ? 'text-emerald-700'
+                                  : message.intelligence.riskScore < 60
+                                    ? 'text-amber-700'
+                                    : 'text-red-700'
+                              }`}
+                            >
+                              {message.intelligence.riskScore < 30
+                                ? 'Low'
+                                : message.intelligence.riskScore < 60
+                                  ? 'Moderate'
+                                  : 'High'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

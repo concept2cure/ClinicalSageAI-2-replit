@@ -3,6 +3,7 @@ import { lumenCortexService } from '../services/lumen-cortex-service';
 import { db } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { lumenObservationTerms } from '@shared/schema';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -13,7 +14,8 @@ const buildRegulatoryAnalysisResponse = (payload: any) => {
     success: true,
     regulatory_framework: 'ICH E6(R3)',
     overall_confidence_score: 92,
-    regulatory_impact_summary: 'ICH E6(R3) alignment requires targeted remediation before submission.',
+    regulatory_impact_summary:
+      'ICH E6(R3) alignment requires targeted remediation before submission.',
     lumen_ai_recommendations: [
       'Prioritize quality management evidence mapped to ICH E6(R3) Section 5.0.',
       'Address risk-based monitoring controls and data-integrity traceability.',
@@ -175,7 +177,7 @@ router.get('/health', async (_req, res) => {
   }
 });
 
-router.post('/regulatory-analysis', async (req, res) => {
+router.post('/regulatory-analysis', requireAuth, async (req, res) => {
   try {
     const response = buildRegulatoryAnalysisResponse(req.body || {});
     res.json(response);
@@ -261,10 +263,7 @@ router.post('/observation-terms/csr', async (req, res) => {
       });
     }
 
-    const result = await lumenCortexService.syncObservationTermsFromCSR(
-      Number(orgId),
-      limit
-    );
+    const result = await lumenCortexService.syncObservationTermsFromCSR(Number(orgId), limit);
 
     res.json({ success: true, ...result });
   } catch (error) {

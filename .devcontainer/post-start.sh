@@ -3,22 +3,67 @@
 # C2C Codespace Post-Start Hook
 # Runs each time the container starts
 # ═══════════════════════════════════════════════════════════════════════════════
-set -e
+# Do NOT use set -e — a single failed optional step must not trigger recovery mode
+set +e
 
 echo "🔄 C2C Codespace starting..."
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 1. Verify database connectivity
+# 1. Start local PostgreSQL (if installed) and ensure database exists
 # ─────────────────────────────────────────────────────────────────────────────
-if [ -n "$DATABASE_URL" ]; then
-  echo "🗄️  Testing Neon DB connection..."
-  if pg_isready -d "$DATABASE_URL" -t 5 2>/dev/null; then
-    echo "✅ Neon DB connection healthy"
-  else
-    echo "⚠️  Neon DB unreachable — check DATABASE_URL or network"
+if command -v pg_lsclusters &>/dev/null; then
+  PG_VER=$(pg_lsclusters -h 2>/dev/null | awk '{print $1; exit}')
+  PG_CLUSTER=$(pg_lsclusters -h 2>/dev/null | awk '{print $2; exit}')
+
+  if [ -n "$PG_VER" ] && [ -n "$PG_CLUSTER" ]; then
+    echo "🗄️  Configuring PostgreSQL ${PG_VER}/${PG_CLUSTER}..."
+
+    # Ensure trust auth for local dev (idempotent)
+    PG_HBA="/etc/postgresql/${PG_VER}/${PG_CLUSTER}/pg_hba.conf"
+    if [ -f "$PG_HBA" ]; then
+      sudo -n sed -i 's/\bpeer$/trust/' "$PG_HBA" 2>/dev/null || true
+      sudo -n sed -i 's/\bmd5$/trust/'  "$PG_HBA" 2>/dev/null || true
+      sudo -n sed -i 's/\bscram-sha-256$/trust/' "$PG_HBA" 2>/dev/null || true
+    fi
+
+    # Start cluster if not running
+    if ! pg_isready -h localhost -p 5432 -t 2 &>/dev/null; then
+      echo "  Starting PostgreSQL..."
+      sudo -n pg_ctlcluster "$PG_VER" "$PG_CLUSTER" start 2>/dev/null || true
+      sleep 2
+    else
+      # Reload to pick up any pg_hba changes
+      sudo -n pg_ctlcluster "$PG_VER" "$PG_CLUSTER" reload 2>/dev/null || true
+    fi
+
+    # Create database if missing
+    if pg_isready -h localhost -p 5432 -t 5 &>/dev/null; then
+      if ! psql -h localhost -U postgres -lqt 2>/dev/null | cut -d\| -f1 | grep -qw clinicalsage; then
+        psql -h localhost -U postgres -c "CREATE DATABASE clinicalsage" 2>/dev/null || true
+      fi
+      # Enable vector extension if available
+      psql -h localhost -U postgres -d clinicalsage -c "CREATE EXTENSION IF NOT EXISTS vector" 2>/dev/null || true
+
+      # Set local DATABASE_URL fallback
+      export DATABASE_URL="${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/clinicalsage?sslmode=disable}"
+      echo "✅ Local PostgreSQL ready (clinicalsage database)"
+    else
+      echo "⚠️  PostgreSQL failed to start"
+    fi
   fi
-else
-  echo "⚠️  DATABASE_URL not set — skipping DB check"
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1b. Verify remote database connectivity (if DATABASE_URL points externally)
+# ─────────────────────────────────────────────────────────────────────────────
+if [ -n "$DATABASE_URL" ] && echo "$DATABASE_URL" | grep -qv localhost; then
+  echo "🗄️  Testing remote DB connection..."
+  if pg_isready -d "$DATABASE_URL" -t 5 2>/dev/null; then
+    echo "✅ Remote DB connection healthy"
+  else
+    echo "⚠️  Remote DB unreachable — falling back to local PostgreSQL"
+    export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/clinicalsage?sslmode=disable"
+  fi
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
