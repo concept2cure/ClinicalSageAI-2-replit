@@ -644,7 +644,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {greeting?.text || 'Good morning — ready to work?'}
           </h1>
           <p className="text-sm text-zinc-500 max-w-lg mx-auto leading-relaxed">
-            Concept2Cure is your RI co-author for FDA regulatory submissions, clinical trial design,
+            AnA is your AI-powered regulatory intelligence co-author for FDA submissions, clinical trial design,
             and compliance strategy. Tell me what you're working on and I'll generate documents,
             identify gaps, and guide every step.
           </p>
