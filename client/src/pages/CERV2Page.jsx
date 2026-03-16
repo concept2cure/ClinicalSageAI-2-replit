@@ -640,6 +640,7 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const [showSystemHealth, setShowSystemHealth] = useState(false);
   const [showDocumentTree, setShowDocumentTree] = useState(false);
   const [documentPreview, setDocumentPreview] = useState({ show: false, path: '', title: '' });
+  const [showLivePreview, setShowLivePreview] = useState(true); // Live document preview panel
 
   // PMA-related state variables
   const [pmaSearchQuery, setPmaSearchQuery] = useState('');
@@ -6231,6 +6232,25 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
                 </div>
               </Button>
 
+              {/* Live Document Preview Toggle */}
+              <Button
+                variant="default"
+                size="lg"
+                onClick={() => setShowLivePreview(!showLivePreview)}
+                className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                  showLivePreview
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white ring-2 ring-purple-400 ring-offset-2'
+                    : 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 border-2 border-purple-300 hover:from-purple-100 hover:to-purple-200'
+                }`}
+                data-testid="quick-access-live-preview"
+              >
+                <FileText className="h-5 w-5" />
+                <div className="flex flex-col items-start">
+                  <span className="text-sm leading-tight">Live Preview</span>
+                  <span className="text-xs opacity-90 leading-tight">View Document</span>
+                </div>
+              </Button>
+
               {/* Secondary Actions */}
               <div className="ml-4 pl-4 border-l-2 border-gray-200 flex items-center space-x-2">
                 <Button
@@ -7126,10 +7146,208 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
           )}
 
           <div
-            className={`bg-white rounded-lg border shadow-sm flex-1 ${showDocumentTree ? 'rounded-l-none' : ''}`}
+            className={`bg-white rounded-lg border shadow-sm flex-1 min-w-0 ${showDocumentTree ? 'rounded-l-none' : ''}`}
           >
             {renderContent()}
           </div>
+
+          {/* Live Document Preview Panel — visible across ALL workflow stages */}
+          {showLivePreview && activeTab !== 'document-editor' && (
+            <div className="w-96 bg-white border-l border-gray-200 shadow-md flex-shrink-0 flex flex-col max-h-[calc(100vh-200px)] sticky top-4">
+              <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-purple-600" />
+                  <h3 className="font-semibold text-sm text-purple-900">
+                    {DOC_TYPES[selectedDocType]?.label || '510(k)'} Document Preview
+                  </h3>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveTab('document-editor')}
+                    className="h-7 px-2 text-xs text-purple-700 hover:bg-purple-100"
+                  >
+                    <Edit3 className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowLivePreview(false)}
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <ScrollArea className="flex-1 overflow-auto">
+                <div className="p-4 space-y-3">
+                  {/* Device Context Summary */}
+                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                    <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-2">Device Information</h4>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">Device:</span>
+                        <span className="font-medium text-blue-900 text-right max-w-[200px] truncate">
+                          {deviceProfile?.deviceName || deviceName || '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">Manufacturer:</span>
+                        <span className="font-medium text-blue-900 text-right max-w-[200px] truncate">
+                          {deviceProfile?.manufacturer || manufacturer || '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">Intended Use:</span>
+                        <span className="font-medium text-blue-900 text-right max-w-[200px] truncate">
+                          {deviceProfile?.intendedUse || intendedUse || '—'}
+                        </span>
+                      </div>
+                      {deviceProfile?.productCode && (
+                        <div className="flex justify-between">
+                          <span className="text-blue-600">Product Code:</span>
+                          <span className="font-medium text-blue-900">{deviceProfile.productCode}</span>
+                        </div>
+                      )}
+                      {predicateDevices?.length > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-blue-600">Predicates:</span>
+                          <span className="font-medium text-blue-900">{predicateDevices.length} selected</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Document Sections with Live Status */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Document Sections</h4>
+                    {(() => {
+                      const sectionDefs = selectedDocType === 'cerv2_510k' ? [
+                        { id: 'cover_letter', title: 'Cover Letter', num: '1' },
+                        { id: 'admin', title: 'Administrative Info', num: '2' },
+                        { id: 'ifu', title: 'Indications for Use', num: '3' },
+                        { id: 'summary', title: '510(k) Summary', num: '4' },
+                        { id: 'desc', title: 'Device Description', num: '5' },
+                        { id: 'pred', title: 'Predicate Comparison', num: '6' },
+                        { id: 'se', title: 'Substantial Equivalence', num: '7' },
+                        { id: 'testing', title: 'Performance Testing', num: '8' },
+                        { id: 'labeling', title: 'Labeling', num: '9' },
+                        { id: 'concl', title: 'Conclusion', num: '10' },
+                      ] : selectedDocType === 'cerv2_pma' ? [
+                        { id: 'summary', title: 'Summary & General Info', num: '1' },
+                        { id: 'nonclin', title: 'Nonclinical Studies', num: '2' },
+                        { id: 'clin', title: 'Clinical Investigations', num: '3' },
+                        { id: 'mfgqa', title: 'Manufacturing & QA', num: '4' },
+                        { id: 'labeling', title: 'Labeling', num: '5' },
+                        { id: 'risk', title: 'Benefit-Risk Determination', num: '6' },
+                        { id: 'pms', title: 'Post-Market Surveillance', num: '7' },
+                      ] : [
+                        { id: 'sota', title: 'State of the Art', num: '1' },
+                        { id: 'device', title: 'Device Description', num: '2' },
+                        { id: 'dataset', title: 'Clinical Data Set', num: '3' },
+                        { id: 'appraisal', title: 'Critical Appraisal', num: '4' },
+                        { id: 'benefitrisk', title: 'Benefit-Risk Analysis', num: '5' },
+                        { id: 'gspr', title: 'GSPR Mapping', num: '6' },
+                        { id: 'pms', title: 'PMS/PMCF Plan', num: '7' },
+                        { id: 'concl', title: 'Conclusions', num: '8' },
+                      ];
+
+                      // Check saved content from localStorage for each section
+                      const savedData = (() => {
+                        try {
+                          const key = `cerv2:${selectedDocType}:${currentProjectId || 'default'}`;
+                          const raw = localStorage.getItem(key);
+                          if (raw) {
+                            const parsed = JSON.parse(raw);
+                            return parsed.userSectionContent || parsed.sectionData || {};
+                          }
+                        } catch { /* ignore */ }
+                        return {};
+                      })();
+
+                      return (
+                        <div className="space-y-1">
+                          {sectionDefs.map(section => {
+                            const content = savedData[section.id] || '';
+                            const wordCount = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
+                            const hasContent = wordCount > 0;
+                            const isSubstantial = wordCount >= 100;
+
+                            return (
+                              <div
+                                key={section.id}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs cursor-pointer transition-colors ${
+                                  hasContent
+                                    ? isSubstantial
+                                      ? 'bg-green-50 border border-green-200 hover:bg-green-100'
+                                      : 'bg-amber-50 border border-amber-200 hover:bg-amber-100'
+                                    : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                                }`}
+                                onClick={() => setActiveTab('document-editor')}
+                              >
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                                  hasContent
+                                    ? isSubstantial
+                                      ? 'bg-green-500 text-white'
+                                      : 'bg-amber-500 text-white'
+                                    : 'bg-gray-300 text-white'
+                                }`}>
+                                  {isSubstantial ? '✓' : section.num}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className={`font-medium ${hasContent ? 'text-gray-900' : 'text-gray-500'}`}>
+                                    {section.title}
+                                  </span>
+                                </div>
+                                <span className={`text-[10px] flex-shrink-0 ${
+                                  hasContent
+                                    ? isSubstantial ? 'text-green-600' : 'text-amber-600'
+                                    : 'text-gray-400'
+                                }`}>
+                                  {hasContent ? `${wordCount}w` : 'Empty'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Quick stats */}
+                  <div className="bg-gray-50 rounded-lg p-3 border">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="text-center">
+                        <div className="font-bold text-gray-900">
+                          {predicateDevices?.length || 0}
+                        </div>
+                        <div className="text-gray-500">Predicates</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-gray-900">
+                          {literatureResults?.length || 0}
+                        </div>
+                        <div className="text-gray-500">Literature</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Open Full Editor CTA */}
+                  <Button
+                    variant="outline"
+                    className="w-full text-sm border-purple-300 text-purple-700 hover:bg-purple-50"
+                    onClick={() => setActiveTab('document-editor')}
+                  >
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Open Full Document Editor
+                  </Button>
+                </div>
+              </ScrollArea>
+            </div>
+          )}
         </div>
       </div>
 
