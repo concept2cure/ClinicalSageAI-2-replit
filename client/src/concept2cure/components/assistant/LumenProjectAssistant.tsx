@@ -350,7 +350,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               <Sparkles className="w-6 h-6 text-violet-600" />
             </div>
             <h4 className="text-sm font-medium text-zinc-900 mb-1">
-              Hi, I'm Lumen!
+              Hi, I'm AnA!
             </h4>
             <p className="text-xs text-zinc-500 max-w-xs mx-auto">
               {projectContext 

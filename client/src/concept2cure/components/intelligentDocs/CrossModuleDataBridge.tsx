@@ -124,7 +124,7 @@ const MODULE_CONFIGS: ModuleConfig[] = [
   },
   {
     id: 'intelligence_feeds',
-    name: 'Lumen Cortex',
+    name: 'AnA Cortex',
     description: 'Regulatory intelligence and competitor monitoring',
     icon: Zap,
     color: 'indigo',

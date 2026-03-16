@@ -424,7 +424,7 @@ const EmptyState: React.FC = () => {
         <Sparkles className="h-8 w-8 text-purple-600" />
       </div>
       <h2 className="text-xl font-semibold text-gray-900 mb-2">
-        Hello! I'm Lumen
+        Hello! I'm AnA
       </h2>
       <p className="text-gray-500 max-w-md mb-8">
         Your AI regulatory intelligence assistant. I can help you draft

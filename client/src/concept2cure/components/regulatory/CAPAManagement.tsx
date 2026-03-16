@@ -522,9 +522,9 @@ function RootCausePanel({ capa, onUpdate }: { capa: CAPA; onUpdate: (rca: RootCa
         <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
           <Sparkles className="w-5 h-5 text-purple-600" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-purple-800">Lumen AI Analysis</p>
+            <p className="text-sm font-medium text-purple-800">AnA Analysis</p>
             <p className="text-xs text-purple-600">
-              Let Lumen analyze similar CAPAs and suggest potential root causes based on historical data
+              Let AnA analyze similar CAPAs and suggest potential root causes based on historical data
             </p>
           </div>
           <Button variant="outline" size="sm">
