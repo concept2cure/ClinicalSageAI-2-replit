@@ -163,6 +163,51 @@ function verifyClaim(
 }
 
 /**
+ * Generates a default demo response for when no AI provider is available.
+ */
+function generateDemoResponse(_message: string): string {
+  return `## AnA v1.0 — RI Co-pilot
+
+Thank you for your query. I'm AnA (Audit & Narrative Assistant), your RI Co-pilot for regulatory affairs. I can help with:
+
+### My Capabilities
+
+**🏥 Medical Devices**
+- FDA 510(k) submissions
+- De Novo classification requests
+- PMA applications
+- EU MDR compliance & CER preparation
+
+**💊 Pharmaceuticals**
+- IND applications
+- NDA/ANDA submissions
+- CMC documentation
+- Clinical trial design
+
+**📋 Compliance**
+- 21 CFR Part 11 (electronic records)
+- GxP requirements (GMP, GLP, GCP)
+- ISO 13485 quality management
+- Risk management (ISO 14971)
+
+**📄 Documentation**
+- eCTD structure and formatting
+- Regulatory strategy development
+- Gap analysis and remediation
+- Submission timeline planning
+
+### How I Can Help
+
+1. **Ask specific questions** about regulatory requirements
+2. **Request document reviews** for compliance gaps
+3. **Get submission checklists** for your product type
+4. **Explore predicate devices** for 510(k) submissions
+5. **Understand timelines** for different submission pathways
+
+What regulatory challenge can I help you with today?`;
+}
+
+/**
  * POST /api/chat/send-message
  * Main chat endpoint — 9-step provenance-tracked RAG pipeline.
  *
