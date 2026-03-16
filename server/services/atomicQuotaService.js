@@ -24,10 +24,8 @@ export async function atomicCreateProject(organizationId, projectData) {
 
     // Lock the license row to prevent concurrent reads
     const licenseResult = await client.query(
-      `SELECT l.*
-       FROM licenses l
-       INNER JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
-       WHERE cw.organization_id = $1 AND l.status = 'active'
+      `SELECT * FROM licenses
+       WHERE organization_id = $1 AND status = 'active'
        FOR UPDATE`,
       [organizationId]
     );
@@ -128,10 +126,8 @@ export async function atomicCreateUser(organizationId, userData) {
 
     // Lock the license row to prevent concurrent reads
     const licenseResult = await client.query(
-      `SELECT l.*
-       FROM licenses l
-       INNER JOIN client_workspaces cw ON CAST(l.client_id AS INTEGER) = cw.id
-       WHERE cw.organization_id = $1 AND l.status = 'active'
+      `SELECT * FROM licenses
+       WHERE organization_id = $1 AND status = 'active'
        FOR UPDATE`,
       [organizationId]
     );

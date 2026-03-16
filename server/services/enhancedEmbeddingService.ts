@@ -418,12 +418,15 @@ export class EnhancedEmbeddingService {
   }
 
   /**
-   * Hybrid search combining semantic and keyword search
+   * Hybrid search combining semantic and keyword search.
+   * When organizationUuid is provided, results are filtered to that org
+   * (defense-in-depth multi-tenant isolation).
    */
   async searchHybrid(
     query: string,
     limit = 10,
-    semanticWeight = 0.7
+    semanticWeight = 0.7,
+    organizationUuid?: string
   ): Promise<
     Array<{
       id: string;
@@ -437,15 +440,42 @@ export class EnhancedEmbeddingService {
     // Generate query embedding
     const queryResult = await this.embed(query, this.defaultModel);
 
-    // Use the database hybrid search function
-    const { rows } = await this.pool.query(
-      `
-      SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
-    `,
-      [query, `[${queryResult.embedding.join(',')}]`, limit, semanticWeight]
-    );
+    // Push org filter INTO the query to avoid cross-tenant data leakage.
+    // When organizationUuid is provided, wrap search_atoms_hybrid with a
+    // CTE that restricts candidates to the tenant's atoms BEFORE scoring.
+    let rows: any[];
+    if (organizationUuid) {
+      const { rows: orgRows } = await this.pool.query(
+        `
+        WITH org_atoms AS (
+          SELECT a.id
+          FROM lumen_data_atoms a
+          JOIN organizations o ON a.organization_id = o.id
+          WHERE o.uuid = $5
+        ),
+        hybrid AS (
+          SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
+        )
+        SELECT h.*
+        FROM hybrid h
+        INNER JOIN org_atoms oa ON h.id = oa.id
+        ORDER BY h.combined_score DESC
+        LIMIT $4
+        `,
+        [query, `[${queryResult.embedding.join(',')}]`, semanticWeight, limit, organizationUuid]
+      );
+      rows = orgRows;
+    } else {
+      const { rows: allRows } = await this.pool.query(
+        `
+        SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
+        `,
+        [query, `[${queryResult.embedding.join(',')}]`, limit, semanticWeight]
+      );
+      rows = allRows;
+    }
 
-    return rows.map(row => ({
+    return rows.map((row: any) => ({
       id: row.id,
       content: row.content,
       title: row.title,

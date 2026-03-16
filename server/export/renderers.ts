@@ -164,17 +164,30 @@ async function renderHtmlWithStylePack(htmlBody: string, pack: StylePack): Promi
   );
 }
 
-async function renderHtmlToPdf(html: string): Promise<Buffer> {
+export async function renderHtmlToPdf(html: string): Promise<Buffer> {
+  const { buffer } = await renderHtmlToPdfTracked(html);
+  return buffer;
+}
+
+/**
+ * Same as renderHtmlToPdf but returns { buffer, usedFallback } so callers
+ * can emit warnings when Puppeteer is unavailable.
+ */
+export async function renderHtmlToPdfTracked(
+  html: string
+): Promise<{ buffer: Buffer; usedFallback: boolean }> {
   const cluster = await getCluster();
   if (cluster) {
-    return cluster.execute(async ({ page }) => {
+    const buffer: Buffer = await cluster.execute(async ({ page }) => {
       await page.setContent(html, { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true });
       return Buffer.from(pdf);
     });
+    return { buffer, usedFallback: false };
   }
 
-  return renderFallbackPdf(html);
+  const buffer = await renderFallbackPdf(html);
+  return { buffer, usedFallback: true };
 }
 
 function renderFallbackPdf(html: string): Promise<Buffer> {

@@ -88,11 +88,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
         className={cn(zenClasses.buttonIcon, 'md:hidden')}
         aria-label="Toggle menu"
       >
-        {isSidebarOpen ? (
-          <X className="w-5 h-5" />
-        ) : (
-          <Menu className="w-5 h-5" />
-        )}
+        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
       {/* Project indicator */}
@@ -116,11 +112,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
 
     {/* Right section */}
     <div className="flex items-center gap-1">
-      <button
-        onClick={onSearchClick}
-        className={zenClasses.buttonIcon}
-        aria-label="Search"
-      >
+      <button onClick={onSearchClick} className={zenClasses.buttonIcon} aria-label="Search">
         <Search className="w-4 h-4" />
       </button>
       <button
@@ -130,11 +122,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
       >
         <Settings className="w-4 h-4" />
       </button>
-      <button
-        onClick={onProfileClick}
-        className={zenClasses.buttonIcon}
-        aria-label="Profile"
-      >
+      <button onClick={onProfileClick} className={zenClasses.buttonIcon} aria-label="Profile">
         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
           <span className="text-[10px] font-medium text-white">U</span>
         </div>
@@ -178,15 +166,15 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
   // Group by time
   const today = new Date();
   const todayProjects = sortedProjects.filter(
-    (p) => new Date(p.lastUpdated).toDateString() === today.toDateString()
+    p => new Date(p.lastUpdated).toDateString() === today.toDateString()
   );
   const recentProjects = sortedProjects.filter(
-    (p) =>
+    p =>
       new Date(p.lastUpdated).toDateString() !== today.toDateString() &&
       new Date(p.lastUpdated) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   );
   const olderProjects = sortedProjects.filter(
-    (p) => new Date(p.lastUpdated) <= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    p => new Date(p.lastUpdated) <= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   );
 
   const renderProjectGroup = (title: string, items: ZenProject[]) => {
@@ -200,7 +188,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </h3>
         )}
         <div className="space-y-0.5">
-          {items.map((project) => (
+          {items.map(project => (
             <button
               key={project.id}
               onClick={() => onSelectProject(project.id)}
@@ -257,12 +245,9 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
           onClick={onToggleCollapse}
           className={cn(zenClasses.buttonIcon, 'hidden md:flex')}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!isCollapsed}
         >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
@@ -299,18 +284,13 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <div className="w-8 h-8 rounded-lg border-2 border-dashed border-zinc-300 flex items-center justify-center">
             <Plus className="w-4 h-4" />
           </div>
-          {!isCollapsed && (
-            <span className="text-sm font-medium">New project</span>
-          )}
+          {!isCollapsed && <span className="text-sm font-medium">New project</span>}
         </button>
       </div>
 
       {/* Sidebar footer */}
       <div
-        className={cn(
-          'border-t border-zinc-100 p-2',
-          isCollapsed && 'flex flex-col items-center'
-        )}
+        className={cn('border-t border-zinc-100 p-2', isCollapsed && 'flex flex-col items-center')}
       >
         <button
           className={cn(
@@ -341,8 +321,10 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
           'bg-zinc-50 border-r border-zinc-100 h-full transition-all duration-200 ease-in-out',
           // Desktop
           'hidden md:block',
-          isCollapsed ? 'w-[60px]' : 'w-[260px]',
+          isCollapsed ? 'w-[60px]' : 'w-[260px]'
         )}
+        role="navigation"
+        aria-label="Projects sidebar"
       >
         {sidebarContent}
       </aside>
@@ -353,6 +335,8 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
           'fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform duration-200 ease-in-out md:hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        role="navigation"
+        aria-label="Projects sidebar"
       >
         {sidebarContent}
       </aside>
@@ -382,16 +366,55 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const commands: CommandItem[] = [
-    { id: 'new-chat', title: 'New chat', icon: <MessageSquare className="w-4 h-4" />, shortcut: '⌘N', action: () => {} },
-    { id: 'new-project', title: 'New project', icon: <Plus className="w-4 h-4" />, shortcut: '⌘P', action: () => {} },
-    { id: 'search', title: 'Search conversations', icon: <Search className="w-4 h-4" />, shortcut: '⌘F', action: () => {} },
-    { id: 'settings', title: 'Open settings', icon: <Settings className="w-4 h-4" />, shortcut: '⌘,', action: () => {} },
-    { id: '510k', title: 'Start 510(k) submission', icon: <FileText className="w-4 h-4" />, action: () => {} },
-    { id: 'ind', title: 'Start IND submission', icon: <FileText className="w-4 h-4" />, action: () => {} },
-    { id: 'nda', title: 'Start NDA submission', icon: <FileText className="w-4 h-4" />, action: () => {} },
+    {
+      id: 'new-chat',
+      title: 'New chat',
+      icon: <MessageSquare className="w-4 h-4" />,
+      shortcut: '⌘N',
+      action: () => {},
+    },
+    {
+      id: 'new-project',
+      title: 'New project',
+      icon: <Plus className="w-4 h-4" />,
+      shortcut: '⌘P',
+      action: () => {},
+    },
+    {
+      id: 'search',
+      title: 'Search conversations',
+      icon: <Search className="w-4 h-4" />,
+      shortcut: '⌘F',
+      action: () => {},
+    },
+    {
+      id: 'settings',
+      title: 'Open settings',
+      icon: <Settings className="w-4 h-4" />,
+      shortcut: '⌘,',
+      action: () => {},
+    },
+    {
+      id: '510k',
+      title: 'Start 510(k) submission',
+      icon: <FileText className="w-4 h-4" />,
+      action: () => {},
+    },
+    {
+      id: 'ind',
+      title: 'Start IND submission',
+      icon: <FileText className="w-4 h-4" />,
+      action: () => {},
+    },
+    {
+      id: 'nda',
+      title: 'Start NDA submission',
+      icon: <FileText className="w-4 h-4" />,
+      action: () => {},
+    },
   ];
 
-  const filteredCommands = commands.filter((cmd) =>
+  const filteredCommands = commands.filter(cmd =>
     cmd.title.toLowerCase().includes(query.toLowerCase())
   );
 
@@ -403,11 +426,11 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex((i) => Math.min(i + 1, filteredCommands.length - 1));
+          setSelectedIndex(i => Math.min(i + 1, filteredCommands.length - 1));
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex((i) => Math.max(i - 1, 0));
+          setSelectedIndex(i => Math.max(i - 1, 0));
           break;
         case 'Enter':
           e.preventDefault();
@@ -442,17 +465,23 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Dialog */}
-      <div className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
+        className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+      >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-100">
           <Search className="w-5 h-5 text-zinc-400" />
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={e => setQuery(e.target.value)}
             placeholder="Search commands..."
             className="flex-1 text-base bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400"
             autoFocus
@@ -465,9 +494,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         {/* Results */}
         <div className="max-h-80 overflow-y-auto py-2">
           {filteredCommands.length === 0 ? (
-            <div className="px-4 py-8 text-center text-zinc-500">
-              No commands found
-            </div>
+            <div className="px-4 py-8 text-center text-zinc-500">No commands found</div>
           ) : (
             filteredCommands.map((cmd, index) => (
               <button
@@ -477,7 +504,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
                   onClose();
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
+                  'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                   index === selectedIndex
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-zinc-700 hover:bg-zinc-50'
@@ -485,9 +512,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
               >
                 <span className="flex-shrink-0 text-zinc-500">{cmd.icon}</span>
                 <span className="flex-1 text-sm font-medium">{cmd.title}</span>
-                {cmd.shortcut && (
-                  <kbd className="text-xs text-zinc-400">{cmd.shortcut}</kbd>
-                )}
+                {cmd.shortcut && <kbd className="text-xs text-zinc-400">{cmd.shortcut}</kbd>}
               </button>
             ))
           )}
@@ -510,13 +535,37 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
 
   // Mock projects (will be replaced with context)
   const mockProjects: ZenProject[] = [
-    { id: '1', name: 'CardioFlow 510(k)', type: '510K', lastUpdated: new Date(), conversationCount: 12 },
-    { id: '2', name: 'NeuroStim IND', type: 'IND', lastUpdated: new Date(Date.now() - 86400000), conversationCount: 8 },
-    { id: '3', name: 'BioMarker NDA', type: 'NDA', lastUpdated: new Date(Date.now() - 86400000 * 3), conversationCount: 24 },
-    { id: '4', name: 'ImmunoTherapy BLA', type: 'BLA', lastUpdated: new Date(Date.now() - 86400000 * 10), conversationCount: 5 },
+    {
+      id: '1',
+      name: 'CardioFlow 510(k)',
+      type: '510K',
+      lastUpdated: new Date(),
+      conversationCount: 12,
+    },
+    {
+      id: '2',
+      name: 'NeuroStim IND',
+      type: 'IND',
+      lastUpdated: new Date(Date.now() - 86400000),
+      conversationCount: 8,
+    },
+    {
+      id: '3',
+      name: 'BioMarker NDA',
+      type: 'NDA',
+      lastUpdated: new Date(Date.now() - 86400000 * 3),
+      conversationCount: 24,
+    },
+    {
+      id: '4',
+      name: 'ImmunoTherapy BLA',
+      type: 'BLA',
+      lastUpdated: new Date(Date.now() - 86400000 * 10),
+      conversationCount: 5,
+    },
   ];
 
-  const activeProject = mockProjects.find((p) => p.id === activeProjectId);
+  const activeProject = mockProjects.find(p => p.id === activeProjectId);
 
   // Command palette shortcut (⌘K or Ctrl+K)
   useEffect(() => {
@@ -558,16 +607,11 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
         />
 
         {/* Content */}
-        <main className="flex-1 overflow-hidden">
-          {children}
-        </main>
+        <main className="flex-1 overflow-hidden">{children}</main>
       </div>
 
       {/* Command palette */}
-      <ZenCommandPalette
-        isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-      />
+      <ZenCommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </div>
   );
 };

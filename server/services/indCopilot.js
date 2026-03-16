@@ -17,7 +17,8 @@ import path from 'path';
 // Initialize clients
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Only init Supabase if credentials are present (not required in PostgreSQL-only deployments)
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -73,7 +74,7 @@ const REGULATORY_SOURCES = {
 const SECTION_PROMPTS = {
   // Default template (used if no specific template exists)
   default: `
-You are an expert regulatory affairs specialist helping to draft an IND submission. 
+You are an expert regulatory affairs specialist helping to draft an IND submission.
 For the following section, provide content that follows FDA guidelines and regulations.
 Make the content specific, accurate, and properly formatted for an IND submission.
 
@@ -88,7 +89,7 @@ REGULATORY GUIDELINES TO FOLLOW:
 REFERENCES AVAILABLE FOR CITATION:
 {{references}}
 
-Please provide well-structured, technically accurate content for this section. 
+Please provide well-structured, technically accurate content for this section.
 Include appropriate inline citations where relevant, formatting them as [Author, Year] or [Guidance Document].
 The content should be comprehensive yet concise, focusing on the most critical information for regulatory review.
 `,
@@ -556,7 +557,7 @@ async function extractEntities(content, sectionCode, submissionId) {
       messages: [
         {
           role: 'system',
-          content: `Extract key entities from the IND submission content. 
+          content: `Extract key entities from the IND submission content.
           Return a JSON array of objects with format {type, name, attributes}.
           Entity types can include: Drug, Indication, Endpoint, Biomarker, Study, AdverseEvent.
           Attributes should include any relevant details mentioned.`,
@@ -626,9 +627,9 @@ async function validateContent(content, sectionCode, context) {
         {
           role: 'user',
           content: `Validate this content for IND section ${sectionCode}:
-          
+
           ${content}
-          
+
           Context:
           Submission Phase: ${context.submission.phase || 'Not specified'}
           Indication: ${context.drugInfo.indication || 'Not specified'}
@@ -974,9 +975,9 @@ export async function analyzeContent(submissionId, sectionCode) {
         {
           role: 'user',
           content: `Analyze this content for IND section ${sectionCode}:
-          
+
           ${content}
-          
+
           Regulatory Guidelines:
           ${guidelines}`,
         },
@@ -1004,10 +1005,205 @@ export async function analyzeContent(submissionId, sectionCode) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// STREAMING CONTENT GENERATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Stream AI-generated content for an IND section via the OpenAI streaming API.
+ *
+ * The caller is responsible for consuming the async iterable and pushing each
+ * delta to the client (e.g. via Server-Sent Events).
+ *
+ * @param {string} submissionId
+ * @param {string} sectionCode
+ * @param {Object} options  - model, temperature, max_tokens
+ * @returns {AsyncIterable}  OpenAI stream object
+ */
+export async function streamSectionContent(submissionId, sectionCode, options = {}) {
+  const context = await getSubmissionContext(submissionId, sectionCode);
+  const guidelines = await fetchRegulatoryGuidelines(sectionCode);
+  const references = await fetchAvailableReferences(submissionId, sectionCode);
+  const prompt = createPrompt(sectionCode, context, guidelines, references);
+
+  const stream = await openai.chat.completions.create({
+    model: options.model || 'gpt-4o',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are a regulatory affairs specialist with expertise in IND submissions to the FDA.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    temperature: options.temperature || 0.3,
+    max_tokens: options.max_tokens || 2500,
+    stream: true,
+  });
+
+  return stream;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RETRY WRAPPER WITH EXPONENTIAL BACK-OFF
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Wraps any async function with retry + exponential back-off.
+ *
+ * @param {Function}  fn           - async function to call
+ * @param {Object}    opts
+ * @param {number}    opts.retries - max attempts (default 3)
+ * @param {number}    opts.delay   - initial delay ms (default 1 000)
+ * @param {number}    opts.factor  - back-off multiplier (default 2)
+ * @returns {Promise<any>}
+ */
+async function withRetry(fn, { retries = 3, delay = 1000, factor = 2 } = {}) {
+  let lastError;
+  let wait = delay;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      // Do not retry on client errors (4xx) that are not 429 rate-limits
+      const status = err?.status ?? err?.response?.status;
+      if (status && status >= 400 && status < 500 && status !== 429) {
+        throw err;
+      }
+      if (attempt < retries) {
+        logger.warn(
+          `[indCopilot] Attempt ${attempt} failed (${err.message}). Retrying in ${wait}ms…`
+        );
+        await new Promise(r => setTimeout(r, wait));
+        wait *= factor;
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Resilient wrapper for generateSectionContent — retries up to 3 times
+ * on OpenAI transient failures/rate-limits before propagating the error.
+ */
+export async function generateSectionContentWithRetry(submissionId, sectionCode, options = {}) {
+  return withRetry(() => generateSectionContent(submissionId, sectionCode, options), {
+    retries: options.retries ?? 3,
+    delay: options.retryDelay ?? 1000,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BATCH GENERATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Generate content for multiple IND sections sequentially (with retry on each).
+ * Returns a map of sectionCode → result (or error).
+ *
+ * @param {string}   submissionId
+ * @param {string[]} sectionCodes
+ * @param {Object}   options
+ * @returns {Promise<Record<string, {content?: string, error?: string}>>}
+ */
+export async function generateBatchSectionContent(submissionId, sectionCodes, options = {}) {
+  const results = {};
+  for (const code of sectionCodes) {
+    try {
+      results[code] = await generateSectionContentWithRetry(submissionId, code, options);
+    } catch (err) {
+      logger.error(`Batch generation failed for section ${code}: ${err.message}`);
+      results[code] = { error: err.message, section_code: code };
+    }
+  }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPLIANCE CHECKER
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Cross-check generated IND section content against a checklist of known
+ * FDA requirements.  Returns a scored compliance report.
+ *
+ * @param {string} content      - Section content to check
+ * @param {string} sectionCode  - CTD section code
+ * @returns {Promise<{score: number, issues: Array, passed: boolean}>}
+ */
+export async function checkFDACompliance(content, sectionCode) {
+  if (!content || !content.trim()) {
+    return {
+      score: 0,
+      issues: [{ type: 'empty_content', message: 'No content provided' }],
+      passed: false,
+    };
+  }
+
+  const prompt = `
+You are an FDA regulatory compliance expert.
+Review the following IND section content for compliance with 21 CFR 312 and ICH CTD guidelines.
+
+Section: ${sectionCode}
+
+Content:
+---
+${content.slice(0, 3000)}
+---
+
+Return a JSON object with:
+{
+  "score": <integer 0-100>,
+  "issues": [ { "severity": "high|medium|low", "description": "..." } ],
+  "missing_elements": ["..."],
+  "overall_assessment": "pass|conditional_pass|fail"
+}
+
+Return only valid JSON.`;
+
+  try {
+    const completion = await withRetry(() =>
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an FDA IND compliance auditor. Return only valid JSON.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.1,
+        max_tokens: 800,
+      })
+    );
+
+    const raw = completion.choices[0].message.content.trim();
+    const jsonStart = raw.indexOf('{');
+    const parsed = JSON.parse(raw.slice(jsonStart));
+
+    return {
+      score: parsed.score ?? 0,
+      issues: parsed.issues ?? [],
+      missing_elements: parsed.missing_elements ?? [],
+      overall_assessment: parsed.overall_assessment ?? 'fail',
+      passed: (parsed.score ?? 0) >= 70,
+      section_code: sectionCode,
+    };
+  } catch (err) {
+    logger.error(`FDA compliance check failed: ${err.message}`);
+    return { score: 0, issues: [{ type: 'check_error', message: err.message }], passed: false };
+  }
+}
+
 export default {
   generateSectionContent,
+  generateSectionContentWithRetry,
   generateFollowupResponse,
   getCitationDetails,
   getRegulatoryGuidance,
   analyzeContent,
+  streamSectionContent,
+  generateBatchSectionContent,
+  checkFDACompliance,
 };

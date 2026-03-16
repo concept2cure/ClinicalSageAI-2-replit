@@ -6,7 +6,7 @@ import './CanvasSidePanel.css';
  * Side panel for the Canvas Workbench
  * Provides different tabbed views for search, overview, and settings
  */
-const CanvasSidePanel = ({ sections }) => {
+const CanvasSidePanel = ({ sections, submissionType, targetDate, sponsor, product }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -118,19 +118,19 @@ const CanvasSidePanel = ({ sections }) => {
               <h4>Submission Details</h4>
               <div className="info-item">
                 <span className="info-label">Submission Type:</span>
-                <span className="info-value">IND Initial</span>
+                <span className="info-value">{submissionType || 'Not configured'}</span>
               </div>
               <div className="info-item">
                 <span className="info-label">Target Date:</span>
-                <span className="info-value">June 15, 2025</span>
+                <span className="info-value">{targetDate || 'Not set'}</span>
               </div>
               <div className="info-item">
                 <span className="info-label">Sponsor:</span>
-                <span className="info-value">Concept2Cures Biotech</span>
+                <span className="info-value">{sponsor || 'Not configured'}</span>
               </div>
               <div className="info-item">
                 <span className="info-label">Product:</span>
-                <span className="info-value">CTX-101</span>
+                <span className="info-value">{product || 'Not configured'}</span>
               </div>
             </div>
           </div>

@@ -1,0 +1,349 @@
+/workspaces/ClinicalSageAI-2-replit/server/huggingface-service.ts:135:  async generateEmbeddings(text: string, model: HFModel = HFModel.EMBEDDINGS): Promise<number[]> {
+/workspaces/ClinicalSageAI-2-replit/server/huggingface-service.ts:458:    model: HFModel = HFModel.STARLING,
+/workspaces/ClinicalSageAI-2-replit/server/huggingface-service.ts:940:  model: HFModel = HFModel.STARLING,
+/workspaces/ClinicalSageAI-2-replit/server/openai-service.ts:9:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/openai-service.ts:17:  return !!process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/openai-service.ts:28:      model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/openai-service.ts:151:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/test/__tests__/assemblyLine.test.ts:59:    const oldKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/test/__tests__/assemblyLine.test.ts:60:    process.env.OPENAI_API_KEY = 'test';
+/workspaces/ClinicalSageAI-2-replit/server/test/__tests__/assemblyLine.test.ts:71:    process.env.OPENAI_API_KEY = oldKey;
+/workspaces/ClinicalSageAI-2-replit/server/test/__tests__/test-assembly.routes.test.ts:44:    delete process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/test/__tests__/test-assembly.routes.test.ts:77:    const oldKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/test/__tests__/test-assembly.routes.test.ts:78:    process.env.OPENAI_API_KEY = '1';
+/workspaces/ClinicalSageAI-2-replit/server/test/__tests__/test-assembly.routes.test.ts:100:    process.env.OPENAI_API_KEY = oldKey;
+/workspaces/ClinicalSageAI-2-replit/server/deep-csr-analyzer.ts:42:  return !!process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:65:    model: string;
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:90:  model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:91:  embeddingModel: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:102:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:141:    model: CONFIG.embeddingModel,
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:377:      model: CONFIG.model,
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:415:        model: CONFIG.model,
+/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:521:      model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/playbookRoutes.ts:27:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/playbookRoutes.ts:395:      model: 'gpt-5',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/enhancedCMCService.ts:5:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/enhancedCMCService.ts:153:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/enhancedCMCService.ts:226:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/enhancedCMCService.ts:387:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/enhancedCMCService.ts:487:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/enhancedCMCService.ts:537:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/blueprintRoutes.ts:13:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/blueprintRoutes.ts:269:      model: 'gpt-4',
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/regulatory_aiDraft.ts:15:const ON = !!process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/regulatory_aiDraft.ts:80:    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+/workspaces/ClinicalSageAI-2-replit/server/api/cmc/regulatory_aiDraft.ts:82:      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/api/ai/routes.ts:721:        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+/workspaces/ClinicalSageAI-2-replit/server/api/ai/routes.ts:725:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/ai/routes.ts:747:      model: model || 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/api/ai/routes.ts:774:      model: 'fallback',
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:65:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:92:    apiKeyEnvVar: 'OPENAI_API_KEY',
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:93:    defaultModel: 'gpt-4-turbo',
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:95:      chat: 'gpt-4-turbo',
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:96:      embedding: 'text-embedding-3-small'
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:109:      embedding: 'text-embedding-3-small'
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:205:        'No LLM providers available. Please configure OPENAI_API_KEY or KIMI_API_KEY.',
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:236:            model: request.model || config.defaultModel,
+/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:257:          model: response.model,
+/workspaces/ClinicalSageAI-2-replit/server/routes/ai-assistance.ts:57:    apiKeyConfigured: !!process.env.OPENAI_API_KEY
+/workspaces/ClinicalSageAI-2-replit/server/routes/ai-assistance.ts:119:    if (process.env.OPENAI_API_KEY && openaiService) {
+/workspaces/ClinicalSageAI-2-replit/server/routes/ai-assistance.ts:228:    if (process.env.OPENAI_API_KEY && openaiService) {
+/workspaces/ClinicalSageAI-2-replit/server/routes/ai-assistance.ts:299:    apiKeyConfigured: !!process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/routes/ai-assistance.ts:304:      realAI: !!process.env.OPENAI_API_KEY
+/workspaces/ClinicalSageAI-2-replit/server/routes/ai-assistance.ts:308:  if (process.env.OPENAI_API_KEY && openaiService) {
+/workspaces/ClinicalSageAI-2-replit/server/routes/integration-test.ts:73:    ok: !!process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/routes/integration-test.ts:74:    detail: process.env.OPENAI_API_KEY ? 'OPENAI_API_KEY set' : 'OPENAI_API_KEY missing',
+/workspaces/ClinicalSageAI-2-replit/server/routes/integration-test.ts:200:    if (!process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/routes/integration-test.ts:205:        details: 'OPENAI_API_KEY not set — cannot test AI generation',
+/workspaces/ClinicalSageAI-2-replit/server/routes/integration-test.ts:211:          headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:1383:    const apiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:1415:      model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:1432:      model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/routes/ind-templates.ts:423:      content: `Auto-draft for ${moduleName} based on uploaded materials:\n\n${truncate(sourceContext, 2500)}\n\n(Enable OPENAI_API_KEY for full narrative generation.)`,
+/workspaces/ClinicalSageAI-2-replit/server/routes/ai-claims-routes.ts:123:          `AI-generated claim (model: ${claim.model}, generation: ${claim.generation_run_id}). Full text: ${claim.claim_text}`,
+/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:1908:    if (process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:1912:          apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:1926:          model: 'gpt-3.5-turbo',
+/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:1942:              model: 'openai-davinci',
+/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2057:          model: 'template-based',
+/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:4651:        apiKey: process.env.OPENAI_API_KEY || '',
+/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:4714:          model: 'gpt-4-turbo-preview',
+/workspaces/ClinicalSageAI-2-replit/server/routes/nonclinicalRoutes.ts:69:        model: study.model,
+/workspaces/ClinicalSageAI-2-replit/server/routes/nonclinicalRoutes.ts:355:  model: z.string().optional(),
+/workspaces/ClinicalSageAI-2-replit/server/routes/dropout-forecast-routes.ts:241:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:243:        const openaiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:244:        if (!openaiKey) throw new Error('OPENAI_API_KEY not set');
+/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:250:          model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:257:        streamModel = 'openai/gpt-4o-mini';
+/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:380:            model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:810:        metadata: { model: m.model, tokenUsage: m.tokens_used },
+/workspaces/ClinicalSageAI-2-replit/server/routes/chat.ts:286:               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, 5, 0.7, $8)
+/workspaces/ClinicalSageAI-2-replit/server/routes/chat.ts:352:    let model: string;
+/workspaces/ClinicalSageAI-2-replit/server/routes/chat.ts:361:        error: 'No AI providers available. Configure OPENAI_API_KEY or another provider.',
+/workspaces/ClinicalSageAI-2-replit/server/routes/chat.ts:738:  const hasApiKey = !!process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/routes/lumen-cortex-ft.ts:181:      baseModel: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/lumen-cortex-ft.ts:220:        fallbackModel: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/lumen-cortex-ft.ts:245:  registerModel(model: LumenCortexModel): void {
+/workspaces/ClinicalSageAI-2-replit/server/routes/lumen-cortex-ft.ts:378:    const apiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/routes/lumen-cortex-ft.ts:390:          model: modelId,
+/workspaces/ClinicalSageAI-2-replit/server/routes/lumen-cortex-ft.ts:616:  const model: LumenCortexModel = {
+/workspaces/ClinicalSageAI-2-replit/server/routes/document-understanding.ts:597:      model: 'table-transformer',
+/workspaces/ClinicalSageAI-2-replit/server/routes/document-understanding.ts:639:      model: 'layoutlmv3',
+/workspaces/ClinicalSageAI-2-replit/server/routes/document-understanding.ts:669:      model: 'dit-regulatory-classifier',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:63:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:203:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:232:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:261:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:295:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:313:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:336:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:354:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/routes/agent-swarm.ts:825:      model: a.model,
+/workspaces/ClinicalSageAI-2-replit/server/routes/graphrag.ts:192:    const apiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/routes/graphrag.ts:202:        model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/index.ts:2505:        model: 'gemini-2.0-flash-exp',
+/workspaces/ClinicalSageAI-2-replit/server/translation-service.ts:44:          model: 'Helsinki-NLP/opus-mt-' + sourceLanguage + '-' + targetLanguage,
+/workspaces/ClinicalSageAI-2-replit/server/translation-service.ts:194:          model: 'Helsinki-NLP/opus-mt-en-' + targetLanguage,
+/workspaces/ClinicalSageAI-2-replit/server/check-secrets.ts:19:    if (!process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/check-secrets.ts:58:  const allowedSecrets = ['OPENAI_API_KEY', 'HF_API_KEY', 'ANTHROPIC_API_KEY'];
+/workspaces/ClinicalSageAI-2-replit/server/strategic-stats-routes.ts:154:    console.error('Error building regression model:', error);
+/workspaces/ClinicalSageAI-2-replit/server/strategic-stats-routes.ts:217:    console.error('Error generating predictive model:', error);
+/workspaces/ClinicalSageAI-2-replit/server/strategic-stats-routes.ts:355:    console.error('Error evaluating prediction model:', error);
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-feedback-orchestrator.ts:59:      apiKey: process.env.OPENAI_API_KEY || '',
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-feedback-orchestrator.ts:255:        model: 'gpt-4-turbo-preview',
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-feedback-orchestrator.ts:335:        model: 'gpt-4-turbo-preview',
+/workspaces/ClinicalSageAI-2-replit/server/services/multi-agent-council.ts:1154:        'gpt-4-turbo',
+/workspaces/ClinicalSageAI-2-replit/server/services/EvidenceManagementService.ts:60:    const apiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/services/EvidenceManagementService.ts:96:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:175:    if (process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:176:      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:458:    model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:466:        model: 'mock',
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:473:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:488:      model: response.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:501:  ): Promise<{ text: string; model: string }> {
+/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:526:    return { text: response.text, model: response.model };
+/workspaces/ClinicalSageAI-2-replit/server/services/csr-search-service.ts:58:      console.warn('⚠️ Deep semantic search is NOT available (missing OPENAI_API_KEY)');
+/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:8:if (!process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:9:  throw new Error('OPENAI_API_KEY is not defined in the environment variables');
+/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:13:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:29:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:135:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:168:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:191:      model: 'dall-e-3',
+/workspaces/ClinicalSageAI-2-replit/server/services/AssemblyLine.ts:58:    if (process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/AssemblyLine.ts:83:      const provider = process.env.OPENAI_API_KEY ? 'openai' : 'fallback';
+/workspaces/ClinicalSageAI-2-replit/server/services/AssemblyLine.ts:84:      const model = process.env.OPENAI_API_KEY ? 'gpt-4o' : null;
+/workspaces/ClinicalSageAI-2-replit/server/services/keywordExtractionService.ts:98:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/keywordExtractionService.ts:169:      model: process.env.OPENAI_MODEL || 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureSummarizerService.ts:19:const openai = process.env.OPENAI_API_KEY
+/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureSummarizerService.ts:20:  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+/workspaces/ClinicalSageAI-2-replit/server/services/cognitive-ecosystem/types.ts:91:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/cognitive-ecosystem/federated-learning.service.ts:89:    model: Omit<FederatedModel, 'id' | 'aggregationRound' | 'createdAt' | 'updatedAt'>
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:15: * - OpenAI text-embedding-3-small (1536d) - Default
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:16: * - OpenAI text-embedding-3-large (3072d) - High quality
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:17: * - OpenAI text-embedding-ada-002 (1536d) - Legacy
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:33:  | 'text-embedding-3-small'
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:34:  | 'text-embedding-3-large'
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:35:  | 'text-embedding-ada-002';
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:38:  model: EmbeddingModel;
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:48:  model: EmbeddingModel;
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:72:  'text-embedding-3-small': {
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:73:    model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:79:  'text-embedding-3-large': {
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:80:    model: 'text-embedding-3-large',
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:86:  'text-embedding-ada-002': {
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:87:    model: 'text-embedding-ada-002',
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:97:  'text-embedding-3-small': 0.00002,
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:98:  'text-embedding-3-large': 0.00013,
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:99:  'text-embedding-ada-002': 0.0001,
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:109:  private defaultModel: EmbeddingModel = 'text-embedding-3-small';
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:117:    if (!process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:118:      throw new Error('OPENAI_API_KEY is required for embedding service');
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:120:    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:128:  async embed(text: string, model: EmbeddingModel = this.defaultModel): Promise<EmbeddingResult> {
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:179:    model: EmbeddingModel = this.defaultModel
+/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:572:  private getCacheKey(text: string, model: EmbeddingModel): string {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiRecommendationService.ts:14:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/services/aiRecommendationService.ts:18:const MODEL = 'gpt-4o';
+/workspaces/ClinicalSageAI-2-replit/server/services/aiRecommendationService.ts:57:      model: MODEL,
+/workspaces/ClinicalSageAI-2-replit/server/services/aiRecommendationService.ts:161:        model: MODEL,
+/workspaces/ClinicalSageAI-2-replit/server/services/aiRecommendationService.ts:299:        model: MODEL,
+/workspaces/ClinicalSageAI-2-replit/server/services/predictiveSectionService.ts:10:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/lumenCortexClient.ts:108:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/lumenCortexClient.ts:322:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/tableExtractionService.ts:706:  private async callLLMForNarrative(prompt: string): Promise<{ narrative: string; model: string }> {
+/workspaces/ClinicalSageAI-2-replit/server/services/tableExtractionService.ts:712:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:62:      apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:130:          modelUsed: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:157:          modelUsed: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:181:        model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:212:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:292:    modelPreference?: 'gpt-4o' | 'gpt-4o-mini';
+/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:309:        ${settings.modelPreference || 'gpt-4o'},
+/workspaces/ClinicalSageAI-2-replit/server/services/cognitiveAdvisoryService.ts:726:  if (!process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:273:    const apiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:280:    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:370:    const apiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:374:    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:634:          model: figure.metadata.modelUsed,
+/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:679:        : `<!-- ${figureNumber}: ${request.title} -->\n<p>[FIGURE PLACEHOLDER — Configure OPENAI_API_KEY to generate]</p>`;
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:65:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:92:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:117:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:137:  'gpt-4o': {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:139:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:149:  'gpt-4-turbo': {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:151:    model: 'gpt-4-turbo-preview',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:161:  'gpt-4o-mini': {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:163:    model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:175:  'claude-3-5-sonnet': {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:177:    model: 'claude-3-5-sonnet-20241022',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:194:  'claude-3-opus': {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:196:    model: 'claude-3-opus-20240229',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:206:  'claude-3-haiku': {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:208:    model: 'claude-3-haiku-20240307',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:222:    model: 'moonshot-v1-128k',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:234:    model: 'moonshot-v1-32k',
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:248:  document_analysis: ['claude-3-5-sonnet', 'claude-3-opus', 'gpt-4o'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:249:  structured_output: ['gpt-4o', 'gpt-4-turbo', 'claude-3-5-sonnet'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:250:  long_context: ['claude-3-5-sonnet', 'moonshot-v1-128k', 'gpt-4o'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:251:  code_generation: ['claude-3-5-sonnet', 'gpt-4o', 'gpt-4-turbo'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:252:  reasoning: ['claude-3-5-sonnet', 'claude-3-opus', 'gpt-4o'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:253:  chat: ['gpt-4o-mini', 'claude-3-haiku', 'gpt-4o'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:255:  safety_critical: ['claude-3-5-sonnet', 'claude-3-opus', 'gpt-4o'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:256:  regulatory_review: ['claude-3-5-sonnet', 'claude-3-opus', 'gpt-4o'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:257:  general: ['gpt-4o', 'claude-3-5-sonnet', 'gpt-4o-mini'],
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:282:    if (process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:283:      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:290:    if (process.env.ANTHROPIC_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:291:      this.anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:414:    model: string
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:442:    model: string
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:478:    model: string
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:658:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:675:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:702:    model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:716:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/complianceService.ts:5:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/complianceService.ts:32:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai/index.ts:29:  model?: 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
+/workspaces/ClinicalSageAI-2-replit/server/services/ai/index.ts:44:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/ai/index.ts:49:  model?: 'text-embedding-3-small' | 'text-embedding-3-large' | 'text-embedding-ada-002';
+/workspaces/ClinicalSageAI-2-replit/server/services/ai/index.ts:55:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/ai/openai-orchestrator.ts:13:  apiKey: process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai/openai-orchestrator.ts:140:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/csr-extractor-service.ts:58:    primary_model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/csr-extractor-service.ts:363:          model: 'gpt-4-turbo-preview',
+/workspaces/ClinicalSageAI-2-replit/server/services/csr-extractor-service.ts:475:        model: 'gpt-4-turbo-preview',
+/workspaces/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:232:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:378:      model: process.env.OPENAI_MODEL || 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:420:      model: process.env.OPENAI_MODEL || 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/realTimeValidationService.ts:59:      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/services/realTimeValidationService.ts:371:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:28:  apiKey: process.env.OPENAI_API_KEY || 'not-needed-for-replit-ai-integrations',
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:71:      model: AI_MODELS.PREDICTION,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:131:      model: AI_MODELS.REASONING,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:171:      model: AI_MODELS.ANALYSIS,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:287:        model: AI_MODELS.REASONING,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:723:      model: AI_MODELS.NARRATIVE,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:777:        model: AI_MODELS.NARRATIVE,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:859:      model: AI_MODELS.REASONING,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:909:      model: AI_MODELS.NARRATIVE,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:1000:      model: AI_MODELS.PREDICTION,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:1083:      model: AI_MODELS.REASONING,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:1838:      model: AI_MODELS.REASONING,
+/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:1979:      model: AI_MODELS.REASONING,
+/workspaces/ClinicalSageAI-2-replit/server/services/advancedRAGPipeline.ts:140:    if (!process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/advancedRAGPipeline.ts:141:      throw new Error('OPENAI_API_KEY required for RAG pipeline');
+/workspaces/ClinicalSageAI-2-replit/server/services/advancedRAGPipeline.ts:143:    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/advancedRAGPipeline.ts:546:    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/evidence-confidence-heatmap-service.ts:123:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-delta-radar-service.ts:103:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-delta-radar-service.ts:1030:        model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-negotiation-logbook-service.ts:137:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-negotiation-logbook-service.ts:370:          model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-negotiation-logbook-service.ts:486:          model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-negotiation-logbook-service.ts:539:        model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-negotiation-logbook-service.ts:711:        model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/compliance-guardrails-sdk-service.ts:172:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/outcome-based-template-learning-service.ts:124:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/auto-traceability-service.ts:112:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/auto-traceability-service.ts:192:          detectionModel: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/auto-traceability-service.ts:870:        model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/innovation/submission-readiness-twin-service.ts:135:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/cerGenerator.ts:13:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/cerGenerator.ts:38:        model: 'gpt-4',
+/workspaces/ClinicalSageAI-2-replit/server/services/eSTARPlusBuilder.ts:14:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/services/eSTARPlusBuilder.ts:1019:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/eSTARPlusBuilder.ts:1248:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/confidenceScoringEngine.ts:105:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/confidenceScoringEngine.ts:460:      model: process.env.OPENAI_MODEL || 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/sentenceTraceabilityService.ts:193:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/services/sentenceTraceabilityService.ts:257:      model: process.env.OPENAI_MODEL || 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/types.ts:105:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/types.ts:142:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/types.ts:215:  model: string;
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/__tests__/gateway.test.ts:42:        defaultModel: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/__tests__/gateway.test.ts:48:        defaultModel: 'claude-3-5-sonnet-20241022',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/__tests__/gateway.test.ts:335:      model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/__tests__/gateway.test.ts:362:        model: i < 3 ? 'gpt-4o' : 'claude-3-5-sonnet',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/__tests__/gateway.test.ts:392:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:38:    id: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:40:    model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:57:    id: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:59:    model: 'gpt-4o-mini',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:68:    id: 'claude-3-5-sonnet',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:70:    model: 'claude-3-5-sonnet-20241022',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:86:    id: 'claude-3-haiku',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:88:    model: 'claude-3-haiku-20240307',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:99:    model: 'moonshot-v1-128k',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:110:    model: 'moonshot-v1-32k',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:257:      model: selectedModel.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:386:      throw new Error('OpenAI client not initialized (missing OPENAI_API_KEY)');
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:390:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:417:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:443:      throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:451:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:470:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:500:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:516:      model: modelConfig.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:626:      model: 'deterministic',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:712:  private estimateCost(model: ModelConfig, inputTokens: number, outputTokens: number): number {
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:736:        model: response.model,
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:764:    const openaiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:765:    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:779:          defaultModel: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/ai-gateway/gateway.ts:786:          defaultModel: 'claude-3-5-sonnet-20241022',
+/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureAggregatorService.ts:18:const openai = process.env.OPENAI_API_KEY
+/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureAggregatorService.ts:19:  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureAggregatorService.ts:629:        model: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:4: * Combines file vault functionality with advanced 3-axis tagging model:
+/workspaces/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:41:if (process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:43:    apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:330:        model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:466:            model: 'gpt-4o',
+/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureService.ts:211:      const openaiApiKey = process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/workers/entity-extraction-worker.ts:106:    if (!process.env.OPENAI_API_KEY) {
+/workspaces/ClinicalSageAI-2-replit/server/workers/entity-extraction-worker.ts:107:      throw new Error('OPENAI_API_KEY environment variable is required');
+/workspaces/ClinicalSageAI-2-replit/server/workers/entity-extraction-worker.ts:111:      apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/workers/entity-extraction-worker.ts:199:            model: 'gpt-4-turbo',
+/workspaces/ClinicalSageAI-2-replit/server/workers/entity-extraction-worker.ts:277:        modelUsed: 'gpt-4-turbo',
+/workspaces/ClinicalSageAI-2-replit/server/workers/entity-extraction-worker.ts:382:          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'LLM', 'gpt-4-turbo')`,
+/workspaces/ClinicalSageAI-2-replit/server/workers/layout-aware-ingestion.ts:75:  embeddingModel: 'text-embedding-3-small',
+/workspaces/ClinicalSageAI-2-replit/server/workers/layout-aware-ingestion.ts:86:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/workers/layout-aware-ingestion.ts:626:      model: CONFIG.embeddingModel,
+/workspaces/ClinicalSageAI-2-replit/server/workers/layout-aware-ingestion.ts:641:      model: CONFIG.openaiModel,
+/workspaces/ClinicalSageAI-2-replit/server/workers/vectorization-worker.ts:9: * - OpenAI embeddings (text-embedding-3-small or ada-002)
+/workspaces/ClinicalSageAI-2-replit/server/workers/vectorization-worker.ts:44:const EMBEDDING_MODEL = 'text-embedding-3-small';
+/workspaces/ClinicalSageAI-2-replit/server/workers/vectorization-worker.ts:48:  apiKey: process.env.OPENAI_API_KEY,
+/workspaces/ClinicalSageAI-2-replit/server/workers/vectorization-worker.ts:107:      model: EMBEDDING_MODEL,
+/workspaces/ClinicalSageAI-2-replit/server/config/index.ts:31: * - OPENAI_API_KEY - OpenAI API access
+/workspaces/ClinicalSageAI-2-replit/server/config/environment.ts:113:      key: process.env.OPENAI_API_KEY || '',
+/workspaces/ClinicalSageAI-2-replit/server/src/routes/obligations.router.ts:15:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/ClinicalSageAI-2-replit/server/src/services/reg/playbook.ts:19:const ON = !!process.env.OPENAI_API_KEY;
+/workspaces/ClinicalSageAI-2-replit/server/src/services/reg/playbook.ts:20:const ai = () => new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+/workspaces/ClinicalSageAI-2-replit/server/statistics-service.ts:3026:              throw new Error(`Unknown survival model: ${survivalModel}`);
+/workspaces/ClinicalSageAI-2-replit/server/statistics-service.ts:3350:      console.error('Error evaluating prediction model:', error);

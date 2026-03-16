@@ -415,24 +415,29 @@ main() {
         export DATABASE_URL="$DEFAULT_DATABASE_URL"
     fi
 
-    local docker_status=0
-    if check_docker; then
-        docker_status=0
+    # If DATABASE_URL points to a remote host (not localhost), skip local DB setup
+    if [[ "$DATABASE_URL" == *"neon.tech"* || "$DATABASE_URL" == *"supabase"* || ( "$DATABASE_URL" != *"localhost"* && "$DATABASE_URL" != *"127.0.0.1"* ) ]]; then
+        log_info "Remote DATABASE_URL detected, skipping local DB bootstrap"
     else
-        docker_status=$?
-    fi
+        local docker_status=0
+        if check_docker; then
+            docker_status=0
+        else
+            docker_status=$?
+        fi
 
-    if [[ $docker_status -eq 1 ]]; then
-        fail "Failed to initialize Docker database"
-    fi
+        if [[ $docker_status -eq 1 ]]; then
+            fail "Failed to initialize Docker database"
+        fi
 
-    if [[ $docker_status -eq 0 ]]; then
-        ensure_database || fail "Failed to provision local Docker database"
-        export DATABASE_URL="$DEFAULT_DATABASE_URL"
-    elif [[ $docker_status -eq 2 ]]; then
-        # Docker not available — bootstrap PostgreSQL natively
-        ensure_native_postgres || log_warn "Native PostgreSQL setup had issues"
-        export DATABASE_URL="$DEFAULT_DATABASE_URL"
+        if [[ $docker_status -eq 0 ]]; then
+            ensure_database || fail "Failed to provision local Docker database"
+            export DATABASE_URL="$DEFAULT_DATABASE_URL"
+        elif [[ $docker_status -eq 2 ]]; then
+            # Docker not available — bootstrap PostgreSQL natively
+            ensure_native_postgres || log_warn "Native PostgreSQL setup had issues"
+            export DATABASE_URL="$DEFAULT_DATABASE_URL"
+        fi
     fi
 
     if ! verify_connection; then

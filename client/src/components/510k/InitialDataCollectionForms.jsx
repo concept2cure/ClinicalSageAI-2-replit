@@ -4,18 +4,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Package, 
-  Building2, 
+import { useTenantContext } from '@/contexts/TenantContext';
+import {
+  Package,
+  Building2,
   Target,
-  Shield, 
+  Shield,
   FlaskConical,
   Heart,
   Cpu,
@@ -26,29 +33,66 @@ import {
   Info,
   Save,
   Send,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import { DEVICE_TEMPLATES } from '../../services/ProjectTemplates';
 
 const DATA_COLLECTION_SECTIONS = [
-  { id: 'device_info', label: 'Device Information', icon: <Package className="h-4 w-4" />, required: true },
-  { id: 'manufacturer', label: 'Manufacturer Details', icon: <Building2 className="h-4 w-4" />, required: true },
-  { id: 'intended_use', label: 'Intended Use & Indications', icon: <Target className="h-4 w-4" />, required: true },
-  { id: 'classification', label: 'Classification & Regulatory', icon: <Shield className="h-4 w-4" />, required: true },
-  { id: 'predicate', label: 'Predicate Device', icon: <FileText className="h-4 w-4" />, required: false },
-  { id: 'testing', label: 'Testing Requirements', icon: <FlaskConical className="h-4 w-4" />, required: false },
-  { id: 'biocompat', label: 'Biocompatibility', icon: <Heart className="h-4 w-4" />, required: false },
+  {
+    id: 'device_info',
+    label: 'Device Information',
+    icon: <Package className="h-4 w-4" />,
+    required: true,
+  },
+  {
+    id: 'manufacturer',
+    label: 'Manufacturer Details',
+    icon: <Building2 className="h-4 w-4" />,
+    required: true,
+  },
+  {
+    id: 'intended_use',
+    label: 'Intended Use & Indications',
+    icon: <Target className="h-4 w-4" />,
+    required: true,
+  },
+  {
+    id: 'classification',
+    label: 'Classification & Regulatory',
+    icon: <Shield className="h-4 w-4" />,
+    required: true,
+  },
+  {
+    id: 'predicate',
+    label: 'Predicate Device',
+    icon: <FileText className="h-4 w-4" />,
+    required: false,
+  },
+  {
+    id: 'testing',
+    label: 'Testing Requirements',
+    icon: <FlaskConical className="h-4 w-4" />,
+    required: false,
+  },
+  {
+    id: 'biocompat',
+    label: 'Biocompatibility',
+    icon: <Heart className="h-4 w-4" />,
+    required: false,
+  },
   { id: 'software', label: 'Software/AI', icon: <Cpu className="h-4 w-4" />, required: false },
-  { id: 'clinical', label: 'Clinical Data', icon: <Users className="h-4 w-4" />, required: false }
+  { id: 'clinical', label: 'Clinical Data', icon: <Users className="h-4 w-4" />, required: false },
 ];
 
-export default function InitialDataCollectionForms({ 
-  projectId, 
-  templateId, 
-  onComplete, 
-  initialData = {} 
+export default function InitialDataCollectionForms({
+  projectId,
+  templateId,
+  onComplete,
+  initialData = {},
 }) {
   const { toast } = useToast();
+  const { currentOrganization } = useTenantContext();
+  const orgId = String(currentOrganization?.id || '1');
   const [activeSection, setActiveSection] = useState('device_info');
   const [formData, setFormData] = useState({
     device_info: {
@@ -62,7 +106,7 @@ export default function InitialDataCollectionForms({
       weight: '',
       materials: [],
       componentsIncluded: '',
-      ...initialData.device_info
+      ...initialData.device_info,
     },
     manufacturer: {
       companyName: '',
@@ -76,7 +120,7 @@ export default function InitialDataCollectionForms({
       contactPhone: '',
       establishmentNumber: '',
       dunsNumber: '',
-      ...initialData.manufacturer
+      ...initialData.manufacturer,
     },
     intended_use: {
       intendedUse: '',
@@ -87,7 +131,7 @@ export default function InitialDataCollectionForms({
       durationOfUse: 'temporary',
       bodyContact: 'surface',
       tissueType: '',
-      ...initialData.intended_use
+      ...initialData.intended_use,
     },
     classification: {
       deviceClass: 'II',
@@ -98,7 +142,7 @@ export default function InitialDataCollectionForms({
       submissionType: 'traditional',
       guidanceDocuments: [],
       consensusStandards: [],
-      ...initialData.classification
+      ...initialData.classification,
     },
     predicate: {
       hasPredicateDevice: true,
@@ -109,7 +153,7 @@ export default function InitialDataCollectionForms({
       comparisonBasis: 'substantial_equivalence',
       similarities: '',
       differences: '',
-      ...initialData.predicate
+      ...initialData.predicate,
     },
     testing: {
       performanceTesting: [],
@@ -119,7 +163,7 @@ export default function InitialDataCollectionForms({
       testStandards: [],
       testProtocols: '',
       acceptanceCriteria: '',
-      ...initialData.testing
+      ...initialData.testing,
     },
     biocompat: {
       patientContact: true,
@@ -128,7 +172,7 @@ export default function InitialDataCollectionForms({
       iso10993Testing: [],
       materialsOfConcern: '',
       previousTestingAvailable: false,
-      ...initialData.biocompat
+      ...initialData.biocompat,
     },
     software: {
       containsSoftware: false,
@@ -139,7 +183,7 @@ export default function InitialDataCollectionForms({
       cybersecurityRequired: false,
       connectivityType: '',
       dataTypes: [],
-      ...initialData.software
+      ...initialData.software,
     },
     clinical: {
       clinicalDataRequired: false,
@@ -149,8 +193,8 @@ export default function InitialDataCollectionForms({
       primaryEndpoints: '',
       secondaryEndpoints: '',
       adverseEvents: '',
-      ...initialData.clinical
-    }
+      ...initialData.clinical,
+    },
   });
 
   const [completionStatus, setCompletionStatus] = useState({});
@@ -161,32 +205,32 @@ export default function InitialDataCollectionForms({
     if (templateId && DEVICE_TEMPLATES[templateId]) {
       const template = DEVICE_TEMPLATES[templateId];
       const templateDefaults = template.defaultValues;
-      
+
       setFormData(prev => ({
         ...prev,
         classification: {
           ...prev.classification,
           deviceClass: template.deviceClassification,
-          submissionType: template.submissionType
+          submissionType: template.submissionType,
         },
         testing: {
           ...prev.testing,
-          benchTesting: templateDefaults.hasClinicalData
+          benchTesting: templateDefaults.hasClinicalData,
         },
         biocompat: {
           ...prev.biocompat,
-          patientContact: templateDefaults.hasBiocompatibility
+          patientContact: templateDefaults.hasBiocompatibility,
         },
         software: {
           ...prev.software,
           containsSoftware: templateDefaults.hasSoftware,
           hasAI: templateDefaults.hasAI,
-          cybersecurityRequired: templateDefaults.hasCybersecurity
+          cybersecurityRequired: templateDefaults.hasCybersecurity,
         },
         clinical: {
           ...prev.clinical,
-          clinicalDataRequired: templateDefaults.hasClinicalData
-        }
+          clinicalDataRequired: templateDefaults.hasClinicalData,
+        },
       }));
     }
   }, [templateId]);
@@ -200,32 +244,32 @@ export default function InitialDataCollectionForms({
       ...prev,
       [section]: {
         ...prev[section],
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
   const handleArrayChange = (section, field, value, checked) => {
     setFormData(prev => {
       const currentArray = prev[section][field] || [];
-      const updatedArray = checked 
+      const updatedArray = checked
         ? [...currentArray, value]
         : currentArray.filter(item => item !== value);
-      
+
       return {
         ...prev,
         [section]: {
           ...prev[section],
-          [field]: updatedArray
-        }
+          [field]: updatedArray,
+        },
       };
     });
   };
 
-  const validateSection = (sectionId) => {
+  const validateSection = sectionId => {
     const section = formData[sectionId];
     const errors = {};
-    
+
     switch (sectionId) {
       case 'device_info':
         if (!section.deviceName) errors.deviceName = 'Device name is required';
@@ -238,7 +282,8 @@ export default function InitialDataCollectionForms({
         break;
       case 'intended_use':
         if (!section.intendedUse) errors.intendedUse = 'Intended use is required';
-        if (!section.indicationsForUse) errors.indicationsForUse = 'Indications for use is required';
+        if (!section.indicationsForUse)
+          errors.indicationsForUse = 'Indications for use is required';
         break;
       case 'classification':
         if (!section.productCode || section.productCode.length !== 3) {
@@ -251,13 +296,13 @@ export default function InitialDataCollectionForms({
         }
         break;
     }
-    
+
     setValidationErrors(prev => ({ ...prev, [sectionId]: errors }));
     setCompletionStatus(prev => ({
       ...prev,
-      [sectionId]: Object.keys(errors).length === 0
+      [sectionId]: Object.keys(errors).length === 0,
     }));
-    
+
     return Object.keys(errors).length === 0;
   };
 
@@ -265,16 +310,16 @@ export default function InitialDataCollectionForms({
     try {
       const response = await fetch(`/api/510k/projects/${projectId}/initial-data`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'x-organization-id': localStorage.getItem('organizationId') || '1',
-          'x-user-id': localStorage.getItem('userId') || '1'
+          'x-organization-id': orgId,
+          'x-user-id': localStorage.getItem('userId') || '1',
         },
         body: JSON.stringify({
           collectedData: formData,
           completionStatus,
-          lastUpdated: new Date().toISOString()
-        })
+          lastUpdated: new Date().toISOString(),
+        }),
       });
 
       if (response.ok) {
@@ -296,13 +341,13 @@ export default function InitialDataCollectionForms({
     // Validate all required sections
     const requiredSections = DATA_COLLECTION_SECTIONS.filter(s => s.required);
     let allValid = true;
-    
+
     for (const section of requiredSections) {
       if (!validateSection(section.id)) {
         allValid = false;
       }
     }
-    
+
     if (!allValid) {
       toast({
         title: 'Validation Error',
@@ -327,7 +372,7 @@ export default function InitialDataCollectionForms({
             id="deviceName"
             data-testid="input-deviceName"
             value={formData.device_info.deviceName}
-            onChange={(e) => handleInputChange('device_info', 'deviceName', e.target.value)}
+            onChange={e => handleInputChange('device_info', 'deviceName', e.target.value)}
             placeholder="Enter device trade name"
             className={validationErrors.device_info?.deviceName ? 'border-red-500' : ''}
           />
@@ -337,12 +382,14 @@ export default function InitialDataCollectionForms({
         </div>
 
         <div>
-          <Label htmlFor="commonName" data-testid="label-commonName">Common/Usual Name</Label>
+          <Label htmlFor="commonName" data-testid="label-commonName">
+            Common/Usual Name
+          </Label>
           <Input
             id="commonName"
             data-testid="input-commonName"
             value={formData.device_info.commonName}
-            onChange={(e) => handleInputChange('device_info', 'commonName', e.target.value)}
+            onChange={e => handleInputChange('device_info', 'commonName', e.target.value)}
             placeholder="Enter common device name"
           />
         </div>
@@ -350,23 +397,27 @@ export default function InitialDataCollectionForms({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="modelNumber" data-testid="label-modelNumber">Model Number</Label>
+          <Label htmlFor="modelNumber" data-testid="label-modelNumber">
+            Model Number
+          </Label>
           <Input
             id="modelNumber"
             data-testid="input-modelNumber"
             value={formData.device_info.modelNumber}
-            onChange={(e) => handleInputChange('device_info', 'modelNumber', e.target.value)}
+            onChange={e => handleInputChange('device_info', 'modelNumber', e.target.value)}
             placeholder="Enter model number"
           />
         </div>
 
         <div>
-          <Label htmlFor="catalogNumber" data-testid="label-catalogNumber">Catalog Number</Label>
+          <Label htmlFor="catalogNumber" data-testid="label-catalogNumber">
+            Catalog Number
+          </Label>
           <Input
             id="catalogNumber"
             data-testid="input-catalogNumber"
             value={formData.device_info.catalogNumber}
-            onChange={(e) => handleInputChange('device_info', 'catalogNumber', e.target.value)}
+            onChange={e => handleInputChange('device_info', 'catalogNumber', e.target.value)}
             placeholder="Enter catalog number"
           />
         </div>
@@ -380,13 +431,15 @@ export default function InitialDataCollectionForms({
           id="deviceDescription"
           data-testid="textarea-deviceDescription"
           value={formData.device_info.deviceDescription}
-          onChange={(e) => handleInputChange('device_info', 'deviceDescription', e.target.value)}
+          onChange={e => handleInputChange('device_info', 'deviceDescription', e.target.value)}
           placeholder="Provide a detailed description of the device, its components, and how it works"
           rows={4}
           className={validationErrors.device_info?.deviceDescription ? 'border-red-500' : ''}
         />
         {validationErrors.device_info?.deviceDescription && (
-          <p className="text-xs text-red-500 mt-1">{validationErrors.device_info.deviceDescription}</p>
+          <p className="text-xs text-red-500 mt-1">
+            {validationErrors.device_info.deviceDescription}
+          </p>
         )}
       </div>
 
@@ -398,7 +451,9 @@ export default function InitialDataCollectionForms({
           id="physicalCharacteristics"
           data-testid="textarea-physicalCharacteristics"
           value={formData.device_info.physicalCharacteristics}
-          onChange={(e) => handleInputChange('device_info', 'physicalCharacteristics', e.target.value)}
+          onChange={e =>
+            handleInputChange('device_info', 'physicalCharacteristics', e.target.value)
+          }
           placeholder="Describe size, shape, color, and other physical properties"
           rows={3}
         />
@@ -406,23 +461,27 @@ export default function InitialDataCollectionForms({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="dimensions" data-testid="label-dimensions">Dimensions</Label>
+          <Label htmlFor="dimensions" data-testid="label-dimensions">
+            Dimensions
+          </Label>
           <Input
             id="dimensions"
             data-testid="input-dimensions"
             value={formData.device_info.dimensions}
-            onChange={(e) => handleInputChange('device_info', 'dimensions', e.target.value)}
+            onChange={e => handleInputChange('device_info', 'dimensions', e.target.value)}
             placeholder="e.g., 10cm x 5cm x 2cm"
           />
         </div>
 
         <div>
-          <Label htmlFor="weight" data-testid="label-weight">Weight</Label>
+          <Label htmlFor="weight" data-testid="label-weight">
+            Weight
+          </Label>
           <Input
             id="weight"
             data-testid="input-weight"
             value={formData.device_info.weight}
-            onChange={(e) => handleInputChange('device_info', 'weight', e.target.value)}
+            onChange={e => handleInputChange('device_info', 'weight', e.target.value)}
             placeholder="e.g., 500g"
           />
         </div>
@@ -433,24 +492,28 @@ export default function InitialDataCollectionForms({
   const renderManufacturerForm = () => (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="companyName" data-testid="label-companyName">Company Name *</Label>
+        <Label htmlFor="companyName" data-testid="label-companyName">
+          Company Name *
+        </Label>
         <Input
           id="companyName"
           data-testid="input-companyName"
           value={formData.manufacturer.companyName}
-          onChange={(e) => handleInputChange('manufacturer', 'companyName', e.target.value)}
+          onChange={e => handleInputChange('manufacturer', 'companyName', e.target.value)}
           placeholder="Enter manufacturer company name"
           className={validationErrors.manufacturer?.companyName ? 'border-red-500' : ''}
         />
       </div>
 
       <div>
-        <Label htmlFor="address" data-testid="label-address">Address *</Label>
+        <Label htmlFor="address" data-testid="label-address">
+          Address *
+        </Label>
         <Input
           id="address"
           data-testid="input-address"
           value={formData.manufacturer.address}
-          onChange={(e) => handleInputChange('manufacturer', 'address', e.target.value)}
+          onChange={e => handleInputChange('manufacturer', 'address', e.target.value)}
           placeholder="Street address"
           className={validationErrors.manufacturer?.address ? 'border-red-500' : ''}
         />
@@ -458,46 +521,54 @@ export default function InitialDataCollectionForms({
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="city" data-testid="label-city">City</Label>
+          <Label htmlFor="city" data-testid="label-city">
+            City
+          </Label>
           <Input
             id="city"
             data-testid="input-city"
             value={formData.manufacturer.city}
-            onChange={(e) => handleInputChange('manufacturer', 'city', e.target.value)}
+            onChange={e => handleInputChange('manufacturer', 'city', e.target.value)}
             placeholder="City"
           />
         </div>
 
         <div>
-          <Label htmlFor="state" data-testid="label-state">State</Label>
+          <Label htmlFor="state" data-testid="label-state">
+            State
+          </Label>
           <Input
             id="state"
             data-testid="input-state"
             value={formData.manufacturer.state}
-            onChange={(e) => handleInputChange('manufacturer', 'state', e.target.value)}
+            onChange={e => handleInputChange('manufacturer', 'state', e.target.value)}
             placeholder="State"
           />
         </div>
 
         <div>
-          <Label htmlFor="zipCode" data-testid="label-zipCode">ZIP Code</Label>
+          <Label htmlFor="zipCode" data-testid="label-zipCode">
+            ZIP Code
+          </Label>
           <Input
             id="zipCode"
             data-testid="input-zipCode"
             value={formData.manufacturer.zipCode}
-            onChange={(e) => handleInputChange('manufacturer', 'zipCode', e.target.value)}
+            onChange={e => handleInputChange('manufacturer', 'zipCode', e.target.value)}
             placeholder="ZIP"
           />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="contactPerson" data-testid="label-contactPerson">Contact Person *</Label>
+        <Label htmlFor="contactPerson" data-testid="label-contactPerson">
+          Contact Person *
+        </Label>
         <Input
           id="contactPerson"
           data-testid="input-contactPerson"
           value={formData.manufacturer.contactPerson}
-          onChange={(e) => handleInputChange('manufacturer', 'contactPerson', e.target.value)}
+          onChange={e => handleInputChange('manufacturer', 'contactPerson', e.target.value)}
           placeholder="Full name of primary contact"
           className={validationErrors.manufacturer?.contactPerson ? 'border-red-500' : ''}
         />
@@ -505,24 +576,28 @@ export default function InitialDataCollectionForms({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="contactEmail" data-testid="label-contactEmail">Contact Email</Label>
+          <Label htmlFor="contactEmail" data-testid="label-contactEmail">
+            Contact Email
+          </Label>
           <Input
             id="contactEmail"
             data-testid="input-contactEmail"
             type="email"
             value={formData.manufacturer.contactEmail}
-            onChange={(e) => handleInputChange('manufacturer', 'contactEmail', e.target.value)}
+            onChange={e => handleInputChange('manufacturer', 'contactEmail', e.target.value)}
             placeholder="email@company.com"
           />
         </div>
 
         <div>
-          <Label htmlFor="contactPhone" data-testid="label-contactPhone">Contact Phone</Label>
+          <Label htmlFor="contactPhone" data-testid="label-contactPhone">
+            Contact Phone
+          </Label>
           <Input
             id="contactPhone"
             data-testid="input-contactPhone"
             value={formData.manufacturer.contactPhone}
-            onChange={(e) => handleInputChange('manufacturer', 'contactPhone', e.target.value)}
+            onChange={e => handleInputChange('manufacturer', 'contactPhone', e.target.value)}
             placeholder="(555) 123-4567"
           />
         </div>
@@ -537,18 +612,20 @@ export default function InitialDataCollectionForms({
             id="establishmentNumber"
             data-testid="input-establishmentNumber"
             value={formData.manufacturer.establishmentNumber}
-            onChange={(e) => handleInputChange('manufacturer', 'establishmentNumber', e.target.value)}
+            onChange={e => handleInputChange('manufacturer', 'establishmentNumber', e.target.value)}
             placeholder="10-digit FEI number"
           />
         </div>
 
         <div>
-          <Label htmlFor="dunsNumber" data-testid="label-dunsNumber">DUNS Number</Label>
+          <Label htmlFor="dunsNumber" data-testid="label-dunsNumber">
+            DUNS Number
+          </Label>
           <Input
             id="dunsNumber"
             data-testid="input-dunsNumber"
             value={formData.manufacturer.dunsNumber}
-            onChange={(e) => handleInputChange('manufacturer', 'dunsNumber', e.target.value)}
+            onChange={e => handleInputChange('manufacturer', 'dunsNumber', e.target.value)}
             placeholder="9-digit DUNS"
           />
         </div>
@@ -606,13 +683,9 @@ export default function InitialDataCollectionForms({
             </TabsList>
 
             <div className="p-6">
-              <TabsContent value="device_info">
-                {renderDeviceInfoForm()}
-              </TabsContent>
+              <TabsContent value="device_info">{renderDeviceInfoForm()}</TabsContent>
 
-              <TabsContent value="manufacturer">
-                {renderManufacturerForm()}
-              </TabsContent>
+              <TabsContent value="manufacturer">{renderManufacturerForm()}</TabsContent>
 
               {/* Add other form sections similarly */}
             </div>
@@ -622,11 +695,7 @@ export default function InitialDataCollectionForms({
 
       {/* Actions */}
       <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handleSaveProgress}
-          data-testid="button-save-progress"
-        >
+        <Button variant="outline" onClick={handleSaveProgress} data-testid="button-save-progress">
           <Save className="h-4 w-4 mr-2" />
           Save Progress
         </Button>

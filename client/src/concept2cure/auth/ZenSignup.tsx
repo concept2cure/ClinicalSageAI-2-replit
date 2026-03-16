@@ -40,7 +40,14 @@ interface FormData {
 
 const LogoIcon = () => (
   <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="2" className="text-blue-600" />
+    <circle
+      cx="20"
+      cy="20"
+      r="18"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="text-blue-600"
+    />
     <path
       d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
       stroke="currentColor"
@@ -81,7 +88,12 @@ const CheckIcon = () => (
 );
 
 const SpinnerIcon = () => (
-  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+  <svg
+    className="animate-spin h-5 w-5"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
     <path
       className="opacity-75"
@@ -144,11 +156,11 @@ const USE_CASES = [
 
 export const ZenSignup: React.FC = () => {
   const [, setLocation] = useLocation();
-  
+
   const [step, setStep] = useState<SignupStep>('info');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -166,47 +178,54 @@ export const ZenSignup: React.FC = () => {
   });
 
   const updateField = useCallback((field: keyof FormData, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: '' }));
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => ({ ...prev, [field]: '' }));
   }, []);
 
-  const validateStep = useCallback((currentStep: SignupStep): boolean => {
-    const newErrors: Record<string, string> = {};
+  const validateStep = useCallback(
+    (currentStep: SignupStep): boolean => {
+      const newErrors: Record<string, string> = {};
 
-    if (currentStep === 'info') {
-      if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-      if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-      if (!formData.email.trim()) {
-        newErrors.email = 'Email is required';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Please enter a valid email address';
+      if (currentStep === 'info') {
+        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+        if (!formData.email.trim()) {
+          newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          newErrors.email = 'Please enter a valid email address';
+        }
+        if (!formData.jobTitle.trim()) newErrors.jobTitle = 'Job title is required';
+        if (!formData.password) newErrors.password = 'Password is required';
+        if (formData.password && formData.password.length < 8) {
+          newErrors.password = 'Password must be at least 8 characters';
+        }
+        if (formData.password !== formData.confirmPassword) {
+          newErrors.confirmPassword = 'Passwords do not match';
+        }
       }
-      if (!formData.jobTitle.trim()) newErrors.jobTitle = 'Job title is required';
-      if (!formData.password) newErrors.password = 'Password is required';
-      if (formData.password && formData.password.length < 8) {
-        newErrors.password = 'Password must be at least 8 characters';
+
+      if (currentStep === 'organization') {
+        if (!formData.organization.trim()) newErrors.organization = 'Organization name is required';
+        if (!formData.organizationType)
+          newErrors.organizationType = 'Please select an organization type';
+        if (!formData.country.trim()) newErrors.country = 'Country is required';
+        if (!formData.useCase) newErrors.useCase = 'Please select a primary use case';
       }
-      if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
+
+      if (currentStep === 'compliance') {
+        if (!formData.acceptedTerms)
+          newErrors.acceptedTerms = 'You must accept the Terms of Service';
+        if (!formData.acceptedPrivacy)
+          newErrors.acceptedPrivacy = 'You must accept the Privacy Policy';
+        if (!formData.acceptedCompliance)
+          newErrors.acceptedCompliance = 'You must acknowledge compliance requirements';
       }
-    }
 
-    if (currentStep === 'organization') {
-      if (!formData.organization.trim()) newErrors.organization = 'Organization name is required';
-      if (!formData.organizationType) newErrors.organizationType = 'Please select an organization type';
-      if (!formData.country.trim()) newErrors.country = 'Country is required';
-      if (!formData.useCase) newErrors.useCase = 'Please select a primary use case';
-    }
-
-    if (currentStep === 'compliance') {
-      if (!formData.acceptedTerms) newErrors.acceptedTerms = 'You must accept the Terms of Service';
-      if (!formData.acceptedPrivacy) newErrors.acceptedPrivacy = 'You must accept the Privacy Policy';
-      if (!formData.acceptedCompliance) newErrors.acceptedCompliance = 'You must acknowledge compliance requirements';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [formData]);
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    },
+    [formData]
+  );
 
   const handleNext = useCallback(() => {
     if (step === 'info' && validateStep('info')) {
@@ -225,7 +244,7 @@ export const ZenSignup: React.FC = () => {
     if (!validateStep('compliance')) return;
 
     setIsLoading(true);
-    
+
     try {
       const industryModeMap: Record<string, string> = {
         pharma: 'pharma',
@@ -270,7 +289,7 @@ export const ZenSignup: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   const steps = ['info', 'organization', 'compliance'] as const;
-  const currentStepIndex = steps.indexOf(step as typeof steps[number]);
+  const currentStepIndex = steps.indexOf(step as (typeof steps)[number]);
 
   const renderProgress = () => (
     <div className="flex items-center justify-center gap-2 mb-8">
@@ -280,10 +299,7 @@ export const ZenSignup: React.FC = () => {
             className={`
               w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
               transition-all duration-300
-              ${index <= currentStepIndex
-                ? 'bg-blue-600 text-white'
-                : 'bg-zinc-200 text-zinc-500'
-              }
+              ${index <= currentStepIndex ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-500'}
             `}
           >
             {index < currentStepIndex ? <CheckIcon /> : index + 1}
@@ -319,22 +335,21 @@ export const ZenSignup: React.FC = () => {
         id={field}
         type={type}
         value={formData[field] as string}
-        onChange={(e) => updateField(field, e.target.value)}
+        onChange={e => updateField(field, e.target.value)}
         placeholder={placeholder}
         className={`
           w-full px-4 py-3 text-base
           border-2 rounded-xl
           transition-all duration-200
           focus:outline-none focus:ring-0
-          ${errors[field]
-            ? 'border-red-300 bg-red-50 focus:border-red-500'
-            : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+          ${
+            errors[field]
+              ? 'border-red-300 bg-red-50 focus:border-red-500'
+              : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
           }
         `}
       />
-      {errors[field] && (
-        <p className="text-sm text-red-600">{errors[field]}</p>
-      )}
+      {errors[field] && <p className="text-sm text-red-600">{errors[field]}</p>}
     </div>
   );
 
@@ -351,7 +366,7 @@ export const ZenSignup: React.FC = () => {
       <select
         id={field}
         value={formData[field] as string}
-        onChange={(e) => updateField(field, e.target.value)}
+        onChange={e => updateField(field, e.target.value)}
         className={`
           w-full px-4 py-3 text-base
           border-2 rounded-xl
@@ -359,9 +374,10 @@ export const ZenSignup: React.FC = () => {
           focus:outline-none focus:ring-0
           appearance-none
           bg-white
-          ${errors[field]
-            ? 'border-red-300 bg-red-50 focus:border-red-500'
-            : 'border-zinc-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+          ${
+            errors[field]
+              ? 'border-red-300 bg-red-50 focus:border-red-500'
+              : 'border-zinc-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
           }
         `}
         style={{
@@ -372,15 +388,13 @@ export const ZenSignup: React.FC = () => {
         }}
       >
         <option value="">{placeholder || 'Select...'}</option>
-        {options.map((opt) => (
+        {options.map(opt => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
         ))}
       </select>
-      {errors[field] && (
-        <p className="text-sm text-red-600">{errors[field]}</p>
-      )}
+      {errors[field] && <p className="text-sm text-red-600">{errors[field]}</p>}
     </div>
   );
 
@@ -402,8 +416,18 @@ export const ZenSignup: React.FC = () => {
         <FormInput label="Last name" field="lastName" placeholder="Smith" />
       </div>
       <FormInput label="Work email" field="email" type="email" placeholder="jane@company.com" />
-      <FormInput label="Password" field="password" type="password" placeholder="Create a password" />
-      <FormInput label="Confirm password" field="confirmPassword" type="password" placeholder="Confirm password" />
+      <FormInput
+        label="Password"
+        field="password"
+        type="password"
+        placeholder="Create a password"
+      />
+      <FormInput
+        label="Confirm password"
+        field="confirmPassword"
+        type="password"
+        placeholder="Confirm password"
+      />
       <FormInput label="Job title" field="jobTitle" placeholder="Regulatory Affairs Manager" />
 
       <button
@@ -495,58 +519,66 @@ export const ZenSignup: React.FC = () => {
         <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200">
           <h4 className="font-medium text-zinc-900 mb-2">Compliance Acknowledgments</h4>
           <p className="text-sm text-zinc-600">
-            Concept2Cure is designed for regulated industries and maintains strict compliance 
-            with FDA 21 CFR Part 11 requirements for electronic records and signatures.
+            Concept2Cure is designed for regulated industries and maintains strict compliance with
+            FDA 21 CFR Part 11 requirements for electronic records and signatures.
           </p>
         </div>
 
         {/* Checkboxes */}
-        <label className={`
+        <label
+          className={`
           flex items-start gap-3 p-3 rounded-lg cursor-pointer
           transition-colors hover:bg-zinc-50
           ${errors.acceptedTerms ? 'bg-red-50' : ''}
-        `}>
+        `}
+        >
           <input
             type="checkbox"
             checked={formData.acceptedTerms}
-            onChange={(e) => updateField('acceptedTerms', e.target.checked)}
+            onChange={e => updateField('acceptedTerms', e.target.checked)}
             className="w-5 h-5 mt-0.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-sm text-zinc-700">
-            I agree to the <button className="text-blue-600 hover:underline">Terms of Service</button>
+            I agree to the{' '}
+            <button className="text-blue-600 hover:underline">Terms of Service</button>
           </span>
         </label>
 
-        <label className={`
+        <label
+          className={`
           flex items-start gap-3 p-3 rounded-lg cursor-pointer
           transition-colors hover:bg-zinc-50
           ${errors.acceptedPrivacy ? 'bg-red-50' : ''}
-        `}>
+        `}
+        >
           <input
             type="checkbox"
             checked={formData.acceptedPrivacy}
-            onChange={(e) => updateField('acceptedPrivacy', e.target.checked)}
+            onChange={e => updateField('acceptedPrivacy', e.target.checked)}
             className="w-5 h-5 mt-0.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-sm text-zinc-700">
-            I accept the <button className="text-blue-600 hover:underline">Privacy Policy</button> and consent to data processing
+            I accept the <button className="text-blue-600 hover:underline">Privacy Policy</button>{' '}
+            and consent to data processing
           </span>
         </label>
 
-        <label className={`
+        <label
+          className={`
           flex items-start gap-3 p-3 rounded-lg cursor-pointer
           transition-colors hover:bg-zinc-50
           ${errors.acceptedCompliance ? 'bg-red-50' : ''}
-        `}>
+        `}
+        >
           <input
             type="checkbox"
             checked={formData.acceptedCompliance}
-            onChange={(e) => updateField('acceptedCompliance', e.target.checked)}
+            onChange={e => updateField('acceptedCompliance', e.target.checked)}
             className="w-5 h-5 mt-0.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-sm text-zinc-700">
-            I acknowledge that my use will comply with applicable regulatory requirements 
-            and organizational policies
+            I acknowledge that my use will comply with applicable regulatory requirements and
+            organizational policies
           </span>
         </label>
       </div>
@@ -594,19 +626,19 @@ export const ZenSignup: React.FC = () => {
           <CheckIcon />
         </motion.div>
       </motion.div>
-      
+
       <div className="space-y-2">
         <h3 className="text-xl font-semibold text-zinc-900">Request Submitted!</h3>
         <p className="text-zinc-600">
-          Thank you for your interest in Concept2Cure. Our team will review your 
-          request and contact you at <strong>{formData.email}</strong> within 1-2 business days.
+          Thank you for your interest in Concept2Cure. Our team will review your request and contact
+          you at <strong>{formData.email}</strong> within 1-2 business days.
         </p>
       </div>
 
       <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
         <p className="text-sm text-blue-800">
-          <strong>What's next?</strong> We'll schedule a brief call to understand your 
-          regulatory needs and set up your personalized workspace.
+          <strong>What's next?</strong> We'll schedule a brief call to understand your regulatory
+          needs and set up your personalized workspace.
         </p>
       </div>
 

@@ -806,6 +806,20 @@ export class AuthService {
     this.storeTokens(persistent);
     this.storeUser();
     this.setupTokenRefresh();
+    // Auto-select the user's organization so all modules pick it up immediately
+    if (user?.organizationId) {
+      localStorage.setItem('currentOrganizationId', String(user.organizationId));
+      localStorage.setItem('currentOrganization', String(user.organizationId));
+    }
+    if (user?.organizationName) {
+      localStorage.setItem('currentOrganizationName', user.organizationName);
+      // Derive a slug: lowercase, replace non-alphanumeric with hyphens
+      const slug = user.organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      localStorage.setItem('activeOrgSlug', slug);
+    }
   }
 
   private clearAuth(): void {
@@ -851,6 +865,19 @@ export class AuthService {
             tokenType: 'Bearer',
           };
           this.user = JSON.parse(userStr);
+          // Restore org to localStorage for components that read it directly
+          if (this.user?.organizationId && !localStorage.getItem('currentOrganizationId')) {
+            localStorage.setItem('currentOrganizationId', String(this.user.organizationId));
+            localStorage.setItem('currentOrganization', String(this.user.organizationId));
+          }
+          if (this.user?.organizationName && !localStorage.getItem('activeOrgSlug')) {
+            localStorage.setItem('currentOrganizationName', this.user.organizationName);
+            const slug = this.user.organizationName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '');
+            localStorage.setItem('activeOrgSlug', slug);
+          }
         }
       }
     } catch (error) {

@@ -16,7 +16,7 @@ const SENSITIVE_KEYS = [
   'dob',
 ];
 
-const redactValue = (value) => {
+const redactValue = value => {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') return '[REDACTED]';
   if (typeof value === 'object') return '[REDACTED]';
@@ -30,7 +30,7 @@ const redactContext = (context, depth = 0) => {
   const output = Array.isArray(context) ? [] : {};
   for (const [key, value] of Object.entries(context)) {
     const lowerKey = key.toLowerCase();
-    const shouldRedact = SENSITIVE_KEYS.some((sensitive) => lowerKey.includes(sensitive));
+    const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
 
     if (shouldRedact) {
       output[key] = redactValue(value);
@@ -114,7 +114,7 @@ const baseLogger = {
  * @param {string} scope The scope/name of the module using the logger
  * @returns A logger instance that includes the scope in all messages
  */
-export const createScopedLogger = (scope) => ({
+export const createScopedLogger = scope => ({
   info: (message, context = {}) => baseLogger.info(`[${scope}] ${message}`, context),
   error: (message, context = {}) => baseLogger.error(`[${scope}] ${message}`, context),
   warn: (message, context = {}) => baseLogger.warn(`[${scope}] ${message}`, context),
@@ -125,4 +125,6 @@ export const createContextLogger = createScopedLogger;
 
 const logger = baseLogger;
 
+// Named export so files can use: import { logger } from '../utils/logger.js'
+export { logger };
 export default logger;

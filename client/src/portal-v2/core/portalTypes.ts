@@ -289,6 +289,7 @@ export type SubmissionType =
   | 'CTA'
   | 'IMPD'
   | 'DMF'
+  | 'IVDR'
   | 'Annual_Report'
   | 'Safety_Report'
   | 'Amendment'
@@ -374,6 +375,7 @@ export type ModuleId =
   | 'timeline_planner'
   | 'platform_readiness'
   | 'lumen_cortex'
+  | 'ivdr_module'
   | 'settings';
 
 /** Module metadata for navigation and display */

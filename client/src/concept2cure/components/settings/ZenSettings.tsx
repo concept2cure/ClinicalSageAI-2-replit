@@ -84,9 +84,7 @@ const SettingRow: React.FC<SettingRowProps> = ({ label, description, children })
   <div className="flex items-center justify-between py-4 border-b border-zinc-100 last:border-b-0">
     <div className="flex-1 pr-4">
       <div className="text-sm font-medium text-zinc-900">{label}</div>
-      {description && (
-        <div className="text-xs text-zinc-500 mt-0.5">{description}</div>
-      )}
+      {description && <div className="text-xs text-zinc-500 mt-0.5">{description}</div>}
     </div>
     <div className="flex-shrink-0">{children}</div>
   </div>
@@ -122,9 +120,7 @@ interface SectionHeaderProps {
 const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description }) => (
   <div className="mb-6">
     <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
-    {description && (
-      <p className="text-sm text-zinc-500 mt-1">{description}</p>
-    )}
+    {description && <p className="text-sm text-zinc-500 mt-1">{description}</p>}
   </div>
 );
 
@@ -161,7 +157,7 @@ const ProfileSection: React.FC = () => {
     const normalizeList = (value: string) =>
       value
         .split(/\n|,/)
-        .map((item) => item.trim())
+        .map(item => item.trim())
         .filter(Boolean);
 
     const profile = {
@@ -200,20 +196,16 @@ const ProfileSection: React.FC = () => {
       {/* Form */}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-            Full Name
-          </label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Full Name</label>
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={e => setName(e.target.value)}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-            Email Address
-          </label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Email Address</label>
           <input
             type="email"
             value={email}
@@ -225,35 +217,29 @@ const ProfileSection: React.FC = () => {
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-            Role
-          </label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Role</label>
           <input
             type="text"
             value={role}
-            onChange={(e) => setRole(e.target.value)}
+            onChange={e => setRole(e.target.value)}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-            Objectives
-          </label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Objectives</label>
           <textarea
             value={objectives}
-            onChange={(e) => setObjectives(e.target.value)}
+            onChange={e => setObjectives(e.target.value)}
             rows={3}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
             placeholder="Comma or new-line separated"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-            Success criteria
-          </label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Success criteria</label>
           <textarea
             value={criteria}
-            onChange={(e) => setCriteria(e.target.value)}
+            onChange={e => setCriteria(e.target.value)}
             rows={3}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
             placeholder="What must be true for success"
@@ -310,7 +296,7 @@ const OrganizationSection: React.FC = () => {
           </button>
         </SettingRow>
 
-        <SettingRow label="Usage" description="847 / 1,000 AI queries this month">
+        <SettingRow label="Usage" description="847 / 1,000 RI queries this month">
           <div className="w-24 h-2 bg-zinc-200 rounded-full overflow-hidden">
             <div className="h-full bg-blue-600 rounded-full" style={{ width: '84.7%' }} />
           </div>
@@ -333,44 +319,26 @@ const NotificationsSection: React.FC = () => {
 
   return (
     <div>
-      <SectionHeader
-        title="Notifications"
-        description="Choose what notifications you receive"
-      />
+      <SectionHeader title="Notifications" description="Choose what notifications you receive" />
 
       <div className="bg-white rounded-xl border border-zinc-200">
-        <SettingRow
-          label="Email Digest"
-          description="Daily summary of your activity"
-        >
+        <SettingRow label="Email Digest" description="Daily summary of your activity">
           <ToggleSwitch enabled={emailDigest} onChange={setEmailDigest} />
         </SettingRow>
 
-        <SettingRow
-          label="Project Updates"
-          description="When projects you're part of change"
-        >
+        <SettingRow label="Project Updates" description="When projects you're part of change">
           <ToggleSwitch enabled={projectUpdates} onChange={setProjectUpdates} />
         </SettingRow>
 
-        <SettingRow
-          label="Mentions"
-          description="When someone mentions you in a chat"
-        >
+        <SettingRow label="Mentions" description="When someone mentions you in a chat">
           <ToggleSwitch enabled={mentionAlerts} onChange={setMentionAlerts} />
         </SettingRow>
 
-        <SettingRow
-          label="Weekly Reports"
-          description="Weekly summary sent every Monday"
-        >
+        <SettingRow label="Weekly Reports" description="Weekly summary sent every Monday">
           <ToggleSwitch enabled={weeklyReport} onChange={setWeeklyReport} />
         </SettingRow>
 
-        <SettingRow
-          label="Regulatory Alerts"
-          description="New guidance and deadline reminders"
-        >
+        <SettingRow label="Regulatory Alerts" description="New guidance and deadline reminders">
           <ToggleSwitch enabled={regulatoryAlerts} onChange={setRegulatoryAlerts} />
         </SettingRow>
       </div>
@@ -387,32 +355,18 @@ const SecuritySection: React.FC = () => {
 
   return (
     <div>
-      <SectionHeader
-        title="Security"
-        description="Protect your account and data"
-      />
+      <SectionHeader title="Security" description="Protect your account and data" />
 
       <div className="bg-white rounded-xl border border-zinc-200 mb-6">
-        <SettingRow
-          label="Two-Factor Authentication"
-          description="Add an extra layer of security"
-        >
+        <SettingRow label="Two-Factor Authentication" description="Add an extra layer of security">
           <ToggleSwitch enabled={twoFactor} onChange={setTwoFactor} />
         </SettingRow>
 
-        <SettingRow
-          label="Password"
-          description="Last changed 30 days ago"
-        >
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            Change
-          </button>
+        <SettingRow label="Password" description="Last changed 30 days ago">
+          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Change</button>
         </SettingRow>
 
-        <SettingRow
-          label="Active Sessions"
-          description="3 devices currently signed in"
-        >
+        <SettingRow label="Active Sessions" description="3 devices currently signed in">
           <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
             View
             <ChevronRight className="w-4 h-4" />
@@ -456,16 +410,11 @@ const AppearanceSection: React.FC = () => {
 
   return (
     <div>
-      <SectionHeader
-        title="Appearance"
-        description="Customize how Concept2Cure looks"
-      />
+      <SectionHeader title="Appearance" description="Customize how Concept2Cure looks" />
 
       {/* Theme selector */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 mb-3">
-          Theme
-        </label>
+        <label className="block text-sm font-medium text-zinc-700 mb-3">Theme</label>
         <div className="flex gap-3">
           {themes.map(({ id, label, icon: Icon }) => (
             <button
@@ -478,12 +427,7 @@ const AppearanceSection: React.FC = () => {
                   : 'border-zinc-200 hover:border-zinc-300'
               )}
             >
-              <Icon
-                className={cn(
-                  'w-6 h-6',
-                  theme === id ? 'text-blue-600' : 'text-zinc-400'
-                )}
-              />
+              <Icon className={cn('w-6 h-6', theme === id ? 'text-blue-600' : 'text-zinc-400')} />
               <span
                 className={cn(
                   'text-sm font-medium',
@@ -498,17 +442,11 @@ const AppearanceSection: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-xl border border-zinc-200">
-        <SettingRow
-          label="Compact Mode"
-          description="Reduce spacing for denser layouts"
-        >
+        <SettingRow label="Compact Mode" description="Reduce spacing for denser layouts">
           <ToggleSwitch enabled={compactMode} onChange={setCompactMode} />
         </SettingRow>
 
-        <SettingRow
-          label="Show Tips"
-          description="Display helpful hints and shortcuts"
-        >
+        <SettingRow label="Show Tips" description="Display helpful hints and shortcuts">
           <ToggleSwitch enabled={showTips} onChange={setShowTips} />
         </SettingRow>
       </div>
@@ -554,13 +492,10 @@ const IntegrationsSection: React.FC = () => {
 
   return (
     <div>
-      <SectionHeader
-        title="Integrations"
-        description="Connect with your other tools"
-      />
+      <SectionHeader title="Integrations" description="Connect with your other tools" />
 
       <div className="space-y-3">
-        {integrations.map((integration) => (
+        {integrations.map(integration => (
           <div
             key={integration.id}
             className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200"
@@ -570,9 +505,7 @@ const IntegrationsSection: React.FC = () => {
                 {integration.icon}
               </div>
               <div>
-                <h3 className="text-sm font-medium text-zinc-900">
-                  {integration.name}
-                </h3>
+                <h3 className="text-sm font-medium text-zinc-900">{integration.name}</h3>
                 <p className="text-xs text-zinc-500">{integration.description}</p>
               </div>
             </div>
@@ -612,35 +545,28 @@ const HelpSection: React.FC = () => {
       />
 
       <div className="space-y-3 mb-6">
-        {resources.map(({ id, label, icon: Icon, link }) => (
-          <a
+        {resources.map(({ id, label, icon: Icon }) => (
+          <div
             key={id}
-            href={link}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200"
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-zinc-500" />
               <span className="text-sm font-medium text-zinc-900">{label}</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-zinc-400" />
-          </a>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
+              Coming soon
+            </span>
+          </div>
         ))}
       </div>
 
       <div className="text-center py-6 border-t border-zinc-100">
-        <p className="text-xs text-zinc-400 mb-2">
-          Concept2Cure v3.0.0 • © 2026 Concept2Cure
-        </p>
+        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
         <div className="flex justify-center gap-4 text-xs">
-          <a href="#" className="text-zinc-500 hover:text-zinc-700">
-            Terms
-          </a>
-          <a href="#" className="text-zinc-500 hover:text-zinc-700">
-            Privacy
-          </a>
-          <a href="#" className="text-zinc-500 hover:text-zinc-700">
-            Licenses
-          </a>
+          <span className="text-zinc-400">Terms</span>
+          <span className="text-zinc-400">Privacy</span>
+          <span className="text-zinc-400">Licenses</span>
         </div>
       </div>
     </div>
@@ -674,10 +600,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Modal */}
       <div className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden z-50 flex animate-in fade-in zoom-in-95 duration-150">

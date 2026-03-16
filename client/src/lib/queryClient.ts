@@ -12,7 +12,8 @@ export const apiRequest = async (
   body?: any,
   customHeaders?: Record<string, string>
 ): Promise<Response> => {
-  // Get organization ID from localStorage
+  // Module-level: cannot use React hooks here. Reads from localStorage
+  // which is synced by TenantProvider. Components should use useTenantContext() directly.
   const organizationId =
     localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
 
@@ -58,7 +59,7 @@ export const apiRequest = async (
 export const getQueryFn = (options: GetQueryFnOptions = {}) => {
   return async ({ queryKey }: { queryKey: string[] }) => {
     const [url] = queryKey;
-    // Get organization ID from localStorage
+    // Module-level: cannot use React hooks. Synced by TenantProvider.
     const organizationId =
       localStorage.getItem('organizationId') ||
       localStorage.getItem('currentOrganizationId') ||

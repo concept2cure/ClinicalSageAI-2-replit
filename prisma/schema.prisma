@@ -1,6 +1,7 @@
 // datasource & generator
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -9,56 +10,56 @@ datasource db {
 }
 
 // Enums
-enum Priority { 
-  LOW 
-  MEDIUM 
-  HIGH 
-  CRITICAL 
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
-enum TaskStatus { 
-  OPEN 
-  IN_REVIEW 
-  BLOCKED 
-  DONE 
+enum TaskStatus {
+  OPEN
+  IN_REVIEW
+  BLOCKED
+  DONE
 }
 
-enum GateStatus { 
-  NOT_STARTED 
-  IN_PROGRESS 
-  BLOCKED 
-  READY_FOR_QA 
-  APPROVED 
+enum GateStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  READY_FOR_QA
+  APPROVED
 }
 
-enum Severity { 
-  INFO 
-  WARNING 
-  ERROR 
+enum Severity {
+  INFO
+  WARNING
+  ERROR
 }
 
-enum IssueStatus { 
-  OPEN 
-  WAIVED 
-  CLOSED 
+enum IssueStatus {
+  OPEN
+  WAIVED
+  CLOSED
 }
 
-enum Impact { 
-  LOW 
-  MEDIUM 
-  HIGH 
+enum Impact {
+  LOW
+  MEDIUM
+  HIGH
 }
 
-enum Probability { 
-  LOW 
-  MEDIUM 
-  HIGH 
+enum Probability {
+  LOW
+  MEDIUM
+  HIGH
 }
 
-enum MethodStatus { 
-  DRAFT 
-  IN_VALIDATION 
-  APPROVED 
+enum MethodStatus {
+  DRAFT
+  IN_VALIDATION
+  APPROVED
 }
 
 model CmcTask {
