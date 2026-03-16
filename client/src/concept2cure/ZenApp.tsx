@@ -34,6 +34,7 @@ import { ZenSettings } from './components/settings/ZenSettings';
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import { WorkflowTimeline, NextActionsPanel } from './components/workflow';
 import { useProjects } from './hooks/useProjects';
+import { useProjectTasks, type ProjectTask, type TaskSummary } from './hooks/useProjectTasks';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import type { IndustryMode } from './types/workspace';
@@ -61,6 +62,17 @@ import {
   Loader2,
   Target,
   FileText,
+  Plus,
+  ArrowLeft,
+  CircleDot,
+  Play,
+  Pause,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  ListTodo,
+  Calendar,
+  TrendingUp,
 } from 'lucide-react';
 
 // ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
@@ -330,6 +342,22 @@ export const ZenApp: React.FC = () => {
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(projects[0]?.id);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
+
+  // Sherpa project detail view state
+  const [sherpaDetailProjectId, setSherpaDetailProjectId] = useState<string | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [taskFilter, setTaskFilter] = useState<string>('all');
+
+  // Task management for the selected project in sherpa mode
+  const {
+    tasks: projectTasks,
+    isLoadingTasks,
+    summary: taskSummary,
+    createTask,
+    updateTask,
+    generateMilestones,
+    isGenerating: isGeneratingMilestones,
+  } = useProjectTasks(sherpaDetailProjectId || activeProjectId);
 
   // Pending draft request from IND Workspace → passed to ZenChat when switching to assistant mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
@@ -944,87 +972,376 @@ export const ZenApp: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 flex min-w-0">
-          {/* Sherpa Mode - Project Overview */}
+          {/* Sherpa Mode - Project Management Hub */}
           {layoutMode === 'sherpa' && (
             <div className="flex-1 overflow-y-auto bg-stone-50 p-8">
-              <div className="max-w-5xl mx-auto">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-semibold text-zinc-900">Project Overview</h2>
-                  <p className="text-sm text-zinc-500 mt-1">
-                    {projects.length} project{projects.length !== 1 ? 's' : ''} in your workspace
-                  </p>
-                </div>
+              <div className="max-w-6xl mx-auto">
 
-                {projectsLoading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                    <span className="ml-3 text-zinc-500">Loading projects...</span>
-                  </div>
-                ) : projects.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <Folder className="w-12 h-12 text-zinc-300 mb-4" />
-                    <h3 className="text-lg font-medium text-zinc-700">No projects yet</h3>
-                    <p className="text-sm text-zinc-500 mt-1 max-w-sm">
-                      Create your first project to get started with regulatory submissions.
-                    </p>
-                    <button
-                      onClick={() => setNewProjectOpen(true)}
-                      className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                      Create Project
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {projects.map(project => (
-                      <button
-                        key={project.id}
-                        onClick={() => {
-                          setActiveProjectId(project.id);
-                          setLayoutMode('assistant');
-                        }}
-                        className={cn(
-                          'text-left p-5 rounded-xl border bg-white shadow-sm',
-                          'hover:shadow-md hover:border-indigo-200 transition-all',
-                          activeProjectId === project.id && 'ring-2 ring-indigo-500 border-indigo-300'
-                        )}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div
-                            className={cn(
-                              'px-2 py-0.5 rounded text-xs font-medium',
-                              `bg-${project.color}-100 text-${project.color}-700`
-                            )}
-                          >
-                            {project.type}
+                {/* ── Project Detail View ─────────────────────────────────────── */}
+                {sherpaDetailProjectId ? (() => {
+                  const detailProject = projects.find(p => p.id === sherpaDetailProjectId);
+                  if (!detailProject) return null;
+
+                  const filteredTasks = taskFilter === 'all'
+                    ? projectTasks
+                    : projectTasks.filter(t => t.status === taskFilter);
+
+                  const statusIcon = (status: string) => {
+                    switch (status) {
+                      case 'done': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+                      case 'in-progress': return <Play className="w-4 h-4 text-blue-500" />;
+                      case 'review': return <CircleDot className="w-4 h-4 text-amber-500" />;
+                      case 'blocked': return <AlertCircle className="w-4 h-4 text-red-500" />;
+                      default: return <Pause className="w-4 h-4 text-zinc-400" />;
+                    }
+                  };
+
+                  const priorityColor = (p: string) => {
+                    switch (p) {
+                      case 'urgent': return 'bg-red-100 text-red-700';
+                      case 'high': return 'bg-orange-100 text-orange-700';
+                      case 'medium': return 'bg-blue-100 text-blue-700';
+                      default: return 'bg-zinc-100 text-zinc-600';
+                    }
+                  };
+
+                  return (
+                    <div>
+                      {/* Header with back navigation */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <button
+                          onClick={() => setSherpaDetailProjectId(null)}
+                          className="p-2 rounded-lg hover:bg-white border border-transparent hover:border-zinc-200 transition-colors"
+                        >
+                          <ArrowLeft className="w-4 h-4 text-zinc-600" />
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-xl font-semibold text-zinc-900">{detailProject.name}</h2>
+                            <span className={cn('px-2 py-0.5 rounded text-xs font-medium', `bg-${detailProject.color || 'indigo'}-100 text-${detailProject.color || 'indigo'}-700`)}>
+                              {detailProject.type || detailProject.submissionType}
+                            </span>
                           </div>
-                          {project.starred && (
-                            <span className="text-amber-400 text-sm">&#9733;</span>
+                          {detailProject.description && (
+                            <p className="text-sm text-zinc-500 mt-0.5">{detailProject.description}</p>
                           )}
                         </div>
-                        <h3 className="font-semibold text-zinc-900 text-sm mb-1 truncate">
-                          {project.name}
-                        </h3>
-                        {project.description && (
-                          <p className="text-xs text-zinc-500 mb-3 line-clamp-2">
-                            {project.description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between text-xs text-zinc-400 mt-auto pt-2 border-t border-zinc-100">
-                          <span className="flex items-center gap-1">
-                            <FileText className="w-3 h-3" />
-                            {project.conversationCount} conversation{project.conversationCount !== 1 ? 's' : ''}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {project.lastUpdated
-                              ? new Date(project.lastUpdated).toLocaleDateString()
-                              : 'N/A'}
-                          </span>
+                        <button
+                          onClick={() => {
+                            setActiveProjectId(sherpaDetailProjectId);
+                            setLayoutMode('assistant');
+                          }}
+                          className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          Open in Copilot
+                        </button>
+                      </div>
+
+                      {/* Health Dashboard */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            <span className="text-xs text-zinc-500 font-medium">Health Score</span>
+                          </div>
+                          <div className="text-2xl font-bold text-zinc-900">
+                            {taskSummary?.healthScore ?? '—'}
+                            <span className="text-sm font-normal text-zinc-400">/100</span>
+                          </div>
                         </div>
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <ListTodo className="w-4 h-4 text-blue-500" />
+                            <span className="text-xs text-zinc-500 font-medium">Tasks</span>
+                          </div>
+                          <div className="text-2xl font-bold text-zinc-900">
+                            {taskSummary?.completed ?? 0}
+                            <span className="text-sm font-normal text-zinc-400">/{taskSummary?.total ?? 0}</span>
+                          </div>
+                          {taskSummary && taskSummary.total > 0 && (
+                            <div className="mt-2 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${taskSummary.completionRate}%` }} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertCircle className="w-4 h-4 text-red-500" />
+                            <span className="text-xs text-zinc-500 font-medium">Overdue</span>
+                          </div>
+                          <div className={cn('text-2xl font-bold', (taskSummary?.overdue ?? 0) > 0 ? 'text-red-600' : 'text-zinc-900')}>
+                            {taskSummary?.overdue ?? 0}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl border p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="w-4 h-4 text-indigo-500" />
+                            <span className="text-xs text-zinc-500 font-medium">In Progress</span>
+                          </div>
+                          <div className="text-2xl font-bold text-zinc-900">
+                            {taskSummary?.byStatus?.['in-progress'] ?? 0}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Task Actions Bar */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-zinc-700">Tasks & Milestones</h3>
+                          <div className="flex gap-1 ml-2">
+                            {['all', 'todo', 'in-progress', 'review', 'done', 'blocked'].map(f => (
+                              <button
+                                key={f}
+                                onClick={() => setTaskFilter(f)}
+                                className={cn(
+                                  'px-2 py-0.5 text-xs rounded-full border transition-colors capitalize',
+                                  taskFilter === f ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                                )}
+                              >
+                                {f === 'all' ? `All (${taskSummary?.total ?? 0})` : f}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {projectTasks.length === 0 && (
+                            <button
+                              onClick={async () => {
+                                const subType = detailProject.type || detailProject.submissionType || 'IND';
+                                try {
+                                  await generateMilestones({ submissionType: subType });
+                                } catch (e) {
+                                  console.error('Failed to generate milestones:', e);
+                                }
+                              }}
+                              disabled={isGeneratingMilestones}
+                              className="px-3 py-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              {isGeneratingMilestones ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                              Auto-Generate {detailProject.type || detailProject.submissionType} Milestones
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setNewTaskOpen(!newTaskOpen)}
+                            className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Add Task
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Inline New Task Form */}
+                      {newTaskOpen && (
+                        <form
+                          className="bg-white rounded-xl border p-4 mb-4"
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            const form = e.target as HTMLFormElement;
+                            const formData = new FormData(form);
+                            try {
+                              await createTask({
+                                name: formData.get('name') as string,
+                                description: formData.get('description') as string || undefined,
+                                priority: (formData.get('priority') as any) || 'medium',
+                                moduleType: (formData.get('category') as string) || undefined,
+                                dueDate: (formData.get('dueDate') as string) || undefined,
+                              });
+                              setNewTaskOpen(false);
+                              form.reset();
+                            } catch (err) {
+                              console.error('Failed to create task:', err);
+                            }
+                          }}
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input name="name" required placeholder="Task name..." className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+                            <input name="description" placeholder="Description (optional)" className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+                            <select name="priority" className="px-3 py-2 border rounded-lg text-sm bg-white">
+                              <option value="low">Low Priority</option>
+                              <option value="medium" selected>Medium Priority</option>
+                              <option value="high">High Priority</option>
+                              <option value="urgent">Urgent</option>
+                            </select>
+                            <select name="category" className="px-3 py-2 border rounded-lg text-sm bg-white">
+                              <option value="">Category...</option>
+                              <option value="document-prep">Document Preparation</option>
+                              <option value="review">Review & QC</option>
+                              <option value="regulatory">Regulatory</option>
+                              <option value="submission">Submission</option>
+                              <option value="meeting">Meeting</option>
+                              <option value="testing">Testing</option>
+                              <option value="analysis">Analysis</option>
+                              <option value="quality">Quality</option>
+                              <option value="milestone">Milestone</option>
+                            </select>
+                            <input name="dueDate" type="date" className="px-3 py-2 border rounded-lg text-sm" />
+                            <div className="flex gap-2">
+                              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Create</button>
+                              <button type="button" onClick={() => setNewTaskOpen(false)} className="px-4 py-2 border text-sm rounded-lg hover:bg-zinc-50">Cancel</button>
+                            </div>
+                          </div>
+                        </form>
+                      )}
+
+                      {/* Task List */}
+                      {isLoadingTasks ? (
+                        <div className="flex items-center justify-center py-12">
+                          <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                        </div>
+                      ) : filteredTasks.length === 0 ? (
+                        <div className="bg-white rounded-xl border p-8 text-center">
+                          <ListTodo className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+                          <p className="text-sm text-zinc-500">
+                            {projectTasks.length === 0
+                              ? 'No tasks yet. Add tasks manually or auto-generate submission milestones.'
+                              : `No ${taskFilter} tasks.`}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {filteredTasks.map(task => (
+                            <div
+                              key={task.id}
+                              className={cn(
+                                'bg-white rounded-lg border p-3 flex items-center gap-3 hover:shadow-sm transition-shadow group',
+                                task.status === 'done' && 'opacity-60'
+                              )}
+                            >
+                              <button
+                                onClick={async () => {
+                                  const nextStatus = task.status === 'done' ? 'todo' : task.status === 'todo' ? 'in-progress' : task.status === 'in-progress' ? 'review' : 'done';
+                                  await updateTask({ taskId: task.id, updates: { status: nextStatus, ...(nextStatus === 'done' ? { completedAt: new Date().toISOString() } : {}) } });
+                                }}
+                                className="flex-shrink-0"
+                                title={`Status: ${task.status} (click to advance)`}
+                              >
+                                {statusIcon(task.status)}
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className={cn('text-sm font-medium', task.status === 'done' ? 'line-through text-zinc-400' : 'text-zinc-800')}>
+                                    {task.name}
+                                  </span>
+                                  <span className={cn('px-1.5 py-0.5 text-[10px] rounded font-medium', priorityColor(task.priority))}>
+                                    {task.priority}
+                                  </span>
+                                  {task.moduleType && (
+                                    <span className="px-1.5 py-0.5 text-[10px] rounded bg-slate-100 text-slate-600 font-medium capitalize">
+                                      {task.moduleType}
+                                    </span>
+                                  )}
+                                </div>
+                                {task.description && (
+                                  <p className="text-xs text-zinc-400 mt-0.5 truncate">{task.description}</p>
+                                )}
+                              </div>
+                              {task.dueDate && (
+                                <span className={cn(
+                                  'text-xs flex-shrink-0',
+                                  new Date(task.dueDate) < new Date() && task.status !== 'done' ? 'text-red-500 font-medium' : 'text-zinc-400'
+                                )}>
+                                  {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })() : (
+                  /* ── Project Grid View ──────────────────────────────────────── */
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-semibold text-zinc-900">Project Management</h2>
+                        <p className="text-sm text-zinc-500 mt-1">
+                          {projects.length} project{projects.length !== 1 ? 's' : ''} in your workspace
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setNewProjectOpen(true)}
+                        className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        New Project
                       </button>
-                    ))}
-                  </div>
+                    </div>
+
+                    {projectsLoading ? (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                        <span className="ml-3 text-zinc-500">Loading projects...</span>
+                      </div>
+                    ) : projects.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <Folder className="w-12 h-12 text-zinc-300 mb-4" />
+                        <h3 className="text-lg font-medium text-zinc-700">No projects yet</h3>
+                        <p className="text-sm text-zinc-500 mt-1 max-w-sm">
+                          Create your first regulatory submission project to get started.
+                        </p>
+                        <button
+                          onClick={() => setNewProjectOpen(true)}
+                          className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                          Create Project
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {projects.map(project => (
+                          <button
+                            key={project.id}
+                            onClick={() => {
+                              setSherpaDetailProjectId(project.id);
+                              setActiveProjectId(project.id);
+                            }}
+                            className={cn(
+                              'text-left p-5 rounded-xl border bg-white shadow-sm',
+                              'hover:shadow-md hover:border-indigo-200 transition-all',
+                              activeProjectId === project.id && 'ring-2 ring-indigo-500 border-indigo-300'
+                            )}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div
+                                className={cn(
+                                  'px-2 py-0.5 rounded text-xs font-medium',
+                                  `bg-${project.color || 'indigo'}-100 text-${project.color || 'indigo'}-700`
+                                )}
+                              >
+                                {project.type || project.submissionType}
+                              </div>
+                              {project.starred && (
+                                <span className="text-amber-400 text-sm">&#9733;</span>
+                              )}
+                            </div>
+                            <h3 className="font-semibold text-zinc-900 text-sm mb-1 truncate">
+                              {project.name}
+                            </h3>
+                            {project.description && (
+                              <p className="text-xs text-zinc-500 mb-3 line-clamp-2">
+                                {project.description}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between text-xs text-zinc-400 mt-auto pt-2 border-t border-zinc-100">
+                              <span className="flex items-center gap-1">
+                                <FileText className="w-3 h-3" />
+                                {project.conversationCount ?? 0} chats
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {project.lastUpdated || project.updatedAt
+                                  ? new Date(project.lastUpdated || project.updatedAt).toLocaleDateString()
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

@@ -504,6 +504,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       description: 'Prepare a pre-meeting briefing package for FDA Type B meeting with questions and supporting data summary',
       highlight: false,
     },
+    {
+      title: 'Plan my submission timeline and tasks',
+      description: 'Generate a milestone-based project plan with tasks, dependencies, and critical path for my submission type',
+      highlight: false,
+    },
   ].slice(0, 6); // Show max 6 suggestions
 
   return (
