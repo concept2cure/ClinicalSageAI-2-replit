@@ -2300,4 +2300,168 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PDF EXPORT FOR CHAT ARTIFACTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/artifacts/export-pdf
+ * Generate a PDF from artifact content
+ */
+router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
+  // Validate input
+  const { title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: 'title and content are required' });
+  }
+
+  try {
+    // Use pdf-lib to create a PDF from the content
+    const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+
+    const pdfDoc = await PDFDocument.create();
+    const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+
+    const fontSize = 11;
+    const titleFontSize = 18;
+    const headingFontSize = 14;
+    const margin = 72; // 1 inch
+    const pageWidth = 612; // Letter size
+    const pageHeight = 792;
+    const maxWidth = pageWidth - 2 * margin;
+
+    let page = pdfDoc.addPage([pageWidth, pageHeight]);
+    let y = pageHeight - margin;
+
+    // Title
+    page.drawText(title, {
+      x: margin,
+      y: y,
+      size: titleFontSize,
+      font: timesBold,
+      color: rgb(0.1, 0.1, 0.1),
+    });
+    y -= titleFontSize + 20;
+
+    // Date line
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    page.drawText(dateStr, {
+      x: margin,
+      y: y,
+      size: 9,
+      font: timesRoman,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+    y -= 30;
+
+    // Draw a separator line
+    page.drawLine({
+      start: { x: margin, y: y },
+      end: { x: pageWidth - margin, y: y },
+      thickness: 0.5,
+      color: rgb(0.8, 0.8, 0.8),
+    });
+    y -= 20;
+
+    // Content - split by lines, handle headings and paragraphs
+    const lines = content.split('\n');
+    for (const line of lines) {
+      // Check if we need a new page
+      if (y < margin + 40) {
+        // Add page number to current page
+        const pageNum = pdfDoc.getPageCount();
+        page.drawText(`Page ${pageNum}`, {
+          x: pageWidth / 2 - 20,
+          y: margin / 2,
+          size: 9,
+          font: timesRoman,
+          color: rgb(0.5, 0.5, 0.5),
+        });
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        y = pageHeight - margin;
+      }
+
+      if (line.startsWith('# ')) {
+        y -= 10;
+        const text = line.slice(2);
+        page.drawText(text, { x: margin, y, size: titleFontSize, font: timesBold, color: rgb(0.1, 0.1, 0.1) });
+        y -= titleFontSize + 8;
+      } else if (line.startsWith('## ')) {
+        y -= 8;
+        const text = line.slice(3);
+        page.drawText(text, { x: margin, y, size: headingFontSize, font: timesBold, color: rgb(0.15, 0.15, 0.15) });
+        y -= headingFontSize + 6;
+      } else if (line.startsWith('### ')) {
+        y -= 6;
+        const text = line.slice(4);
+        page.drawText(text, { x: margin, y, size: 12, font: timesBold, color: rgb(0.2, 0.2, 0.2) });
+        y -= 18;
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        const text = '  \u2022 ' + line.slice(2);
+        // Word wrap
+        const words = text.split(' ');
+        let currentLine = '';
+        for (const word of words) {
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const width = timesRoman.widthOfTextAtSize(testLine, fontSize);
+          if (width > maxWidth - 20) {
+            page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            y -= fontSize + 4;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          y -= fontSize + 4;
+        }
+      } else if (line.trim() === '') {
+        y -= 8;
+      } else {
+        // Regular paragraph with word wrap
+        const cleanText = line.replace(/\*\*/g, '');
+        const words = cleanText.split(' ');
+        let currentLine = '';
+        for (const word of words) {
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const width = timesRoman.widthOfTextAtSize(testLine, fontSize);
+          if (width > maxWidth) {
+            if (y < margin + 40) {
+              const pageNum = pdfDoc.getPageCount();
+              page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+              page = pdfDoc.addPage([pageWidth, pageHeight]);
+              y = pageHeight - margin;
+            }
+            page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            y -= fontSize + 4;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          y -= fontSize + 4;
+        }
+      }
+    }
+
+    // Add page number to last page
+    const pageNum = pdfDoc.getPageCount();
+    page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+
+    const pdfBytes = await pdfDoc.save();
+    const safeTitle = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
+    res.send(Buffer.from(pdfBytes));
+  } catch (error: any) {
+    logger.error('Failed to export PDF', { error: error.message });
+    return sendError(res, 500, 'Failed to generate PDF');
+  }
+});
+
 export default router;

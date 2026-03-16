@@ -43,6 +43,11 @@ interface DocumentActionsResult {
   isExporting: boolean;
   exportError: Error | null;
 
+  /** Export content as a PDF download */
+  exportPdf: (title: string, content: string) => Promise<void>;
+  isExportingPdf: boolean;
+  exportPdfError: Error | null;
+
   /** Navigate to the co-author editor for a given document */
   openInEditor: (documentId: string) => void;
 
@@ -147,6 +152,44 @@ export function useDocumentActions(): DocumentActionsResult {
     }
   }, []);
 
+  // ─── Export PDF ─────────────────────────────────────────────────────────────
+
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [exportPdfError, setExportPdfError] = useState<Error | null>(null);
+
+  const exportPdf = useCallback(async (title: string, content: string) => {
+    setIsExportingPdf(true);
+    setExportPdfError(null);
+    try {
+      const response = await fetch('/api/concept2cure/artifacts/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err?.message || 'Failed to export PDF');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/[^a-zA-Z0-9_.-]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('PDF export failed');
+      setExportPdfError(error);
+      throw error;
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, []);
+
   // ─── Open in Editor ─────────────────────────────────────────────────────────
 
   const openInEditor = useCallback(
@@ -164,6 +207,10 @@ export function useDocumentActions(): DocumentActionsResult {
     exportDocx,
     isExporting,
     exportError,
+
+    exportPdf,
+    isExportingPdf,
+    exportPdfError,
 
     openInEditor,
 

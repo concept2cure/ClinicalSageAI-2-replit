@@ -109,7 +109,8 @@ const TypingIndicator: React.FC = () => (
 interface ArtifactActionsProps {
   artifact: CortexArtifact;
   onSave: (artifact: CortexArtifact) => void;
-  onExport: (artifact: CortexArtifact) => void;
+  onExportDocx: (artifact: CortexArtifact) => void;
+  onExportPdf: (artifact: CortexArtifact) => void;
   onOpenEditor: (artifact: CortexArtifact) => void;
   savingId: string | null;
   savedIds: Set<string>;
@@ -118,23 +119,27 @@ interface ArtifactActionsProps {
 const ArtifactActions: React.FC<ArtifactActionsProps> = ({
   artifact,
   onSave,
-  onExport,
+  onExportDocx,
+  onExportPdf,
   onOpenEditor,
   savingId,
   savedIds,
 }) => {
   const isSaving = savingId === artifact.id;
   const isSaved = savedIds.has(artifact.id);
+  const [showExportMenu, setShowExportMenu] = React.useState(false);
+  const wordCount = artifact.content?.split(/\s+/).length || 0;
 
   return (
     <div className="mt-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
         <FileText className="w-4 h-4 text-violet-500" />
-        <span className="text-sm font-medium text-zinc-800 truncate">
+        <span className="text-sm font-medium text-zinc-800 truncate flex-1">
           {artifact.title}
         </span>
+        <span className="text-xs text-zinc-400">{wordCount.toLocaleString()} words</span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           onClick={() => onSave(artifact)}
           disabled={isSaving || isSaved}
@@ -152,21 +157,54 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           ) : (
             <Save className="w-3.5 h-3.5" />
           )}
-          {isSaved ? 'Saved' : 'Save to Vault'}
+          {isSaved ? 'Saved to Vault' : 'Save to Vault'}
         </button>
-        <button
-          onClick={() => onExport(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Export DOCX
-        </button>
+
+        {/* Export dropdown - DOCX, PDF */}
+        <div className="relative">
+          <button
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export
+            <ChevronDown className="w-3 h-3" />
+          </button>
+          {showExportMenu && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+              <div className="absolute left-0 bottom-full mb-1 w-52 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+                <button
+                  onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                >
+                  <FileText className="w-4 h-4 text-blue-500" />
+                  <div className="text-left">
+                    <div className="font-medium text-xs">Word Document (.docx)</div>
+                    <div className="text-[10px] text-zinc-400">MS Word, Google Docs compatible</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { onExportPdf(artifact); setShowExportMenu(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                >
+                  <FileText className="w-4 h-4 text-red-500" />
+                  <div className="text-left">
+                    <div className="font-medium text-xs">PDF Document (.pdf)</div>
+                    <div className="text-[10px] text-zinc-400">Read-only, print-ready</div>
+                  </div>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
         >
           <PenTool className="w-3.5 h-3.5" />
-          Open in Editor
+          Edit Inline
         </button>
       </div>
     </div>
@@ -180,7 +218,8 @@ interface MessageBubbleProps {
   onFeedback?: (positive: boolean) => void;
   onNavigate?: (href: string) => void;
   onSaveArtifact?: (artifact: CortexArtifact) => void;
-  onExportArtifact?: (artifact: CortexArtifact) => void;
+  onExportDocxArtifact?: (artifact: CortexArtifact) => void;
+  onExportPdfArtifact?: (artifact: CortexArtifact) => void;
   onOpenEditorArtifact?: (artifact: CortexArtifact) => void;
   savingArtifactId?: string | null;
   savedArtifactIds?: Set<string>;
@@ -193,7 +232,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onFeedback,
   onNavigate,
   onSaveArtifact,
-  onExportArtifact,
+  onExportDocxArtifact,
+  onExportPdfArtifact,
   onOpenEditorArtifact,
   savingArtifactId,
   savedArtifactIds,
@@ -315,7 +355,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                       key={artifact.id}
                       artifact={artifact}
                       onSave={onSaveArtifact}
-                      onExport={onExportArtifact || (() => {})}
+                      onExportDocx={onExportDocxArtifact || (() => {})}
+                      onExportPdf={onExportPdfArtifact || (() => {})}
                       onOpenEditor={onOpenEditorArtifact || (() => {})}
                       savingId={savingArtifactId || null}
                       savedIds={savedArtifactIds || new Set()}
@@ -439,26 +480,31 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         ]
       : []),
     {
-      title: 'Start a 510(k) submission',
-      description: 'Guide me through the predicate device selection',
+      title: 'Draft a complete IND Cover Letter',
+      description: 'Generate a formal FDA cover letter with all required elements — I\'ll create a governed document you can edit inline and export',
       highlight: false,
     },
     {
-      title: 'Draft an IND protocol',
-      description: 'Help me design a Phase 1 clinical trial',
+      title: 'Generate a 510(k) Substantial Equivalence comparison',
+      description: 'Build a detailed predicate comparison table with device description, indications, and technological characteristics',
       highlight: false,
     },
     {
-      title: 'Analyze regulatory pathway',
-      description: 'Compare 510(k) vs PMA for my device',
+      title: 'Write a Clinical Overview (Module 2.5)',
+      description: 'Draft a comprehensive CTD clinical overview with benefit-risk assessment — save to vault when ready',
       highlight: false,
     },
     {
-      title: 'Generate submission documents',
-      description: 'Create an indications for use statement',
+      title: 'Create a Clinical Evaluation Report (EU MDR)',
+      description: 'Generate a CER with clinical data appraisal, literature review, and equivalence analysis per MEDDEV 2.7/1',
       highlight: false,
     },
-  ].slice(0, 5); // Show max 5 suggestions
+    {
+      title: 'Draft a Regulatory Briefing Document',
+      description: 'Prepare a pre-meeting briefing package for FDA Type B meeting with questions and supporting data summary',
+      highlight: false,
+    },
+  ].slice(0, 6); // Show max 6 suggestions
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full px-4 py-12">
@@ -671,7 +717,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     saveArtifact,
     isSaving,
     exportDocx,
+    exportPdf,
     openInEditor,
+    createDocument,
   } = useDocumentActions();
 
   // Track saving state per artifact
@@ -795,6 +843,11 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         content: artifact.content,
         type: artifact.format || 'markdown',
         category: 'document',
+        metadata: {
+          submissionType: submissionType || 'general',
+          generatedFrom: 'copilot',
+          wordCount: artifact.content?.split(/\s+/).length || 0,
+        },
       });
       setSavedArtifactIds(prev => new Set(prev).add(artifact.id));
     } catch (err) {
@@ -802,9 +855,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     } finally {
       setSavingArtifactId(null);
     }
-  }, [projectId, saveArtifact]);
+  }, [projectId, saveArtifact, submissionType]);
 
-  const handleExportArtifact = useCallback(async (artifact: CortexArtifact) => {
+  const handleExportDocxArtifact = useCallback(async (artifact: CortexArtifact) => {
     try {
       await exportDocx(artifact.title, artifact.content);
     } catch (err) {
@@ -812,10 +865,31 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     }
   }, [exportDocx]);
 
-  const handleOpenEditorArtifact = useCallback((artifact: CortexArtifact) => {
-    // If the artifact was saved and has an ID, open it in the editor
-    openInEditor(artifact.id);
-  }, [openInEditor]);
+  const handleExportPdfArtifact = useCallback(async (artifact: CortexArtifact) => {
+    try {
+      await exportPdf(artifact.title, artifact.content);
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+    }
+  }, [exportPdf]);
+
+  const handleOpenEditorArtifact = useCallback(async (artifact: CortexArtifact) => {
+    // Save artifact as a document first, then open in the TipTap editor
+    try {
+      const doc = await createDocument({
+        title: artifact.title,
+        content: artifact.content,
+        documentType: submissionType || 'regulatory',
+      });
+      // Navigate to the editor with the newly created document ID
+      const docId = doc?.id || doc?.documentId || artifact.id;
+      openInEditor(String(docId));
+    } catch (err) {
+      // Fallback: open editor with artifact ID
+      console.warn('Could not create document, opening with artifact ID:', err);
+      openInEditor(artifact.id);
+    }
+  }, [createDocument, openInEditor, submissionType]);
 
   // Handle suggestion click
   const handleSuggestionClick = (text: string) => {
@@ -878,7 +952,8 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 }
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}
-                onExportArtifact={handleExportArtifact}
+                onExportDocxArtifact={handleExportDocxArtifact}
+                onExportPdfArtifact={handleExportPdfArtifact}
                 onOpenEditorArtifact={handleOpenEditorArtifact}
                 savingArtifactId={savingArtifactId}
                 savedArtifactIds={savedArtifactIds}

@@ -526,33 +526,91 @@ export const DocumentVault: React.FC = () => {
     return 0;
   }, [vaultDocuments]);
 
-  // Static folder structure with dynamic counts
-  const [folders, setFolders] = useState<VaultFolder[]>([
-    {
-      id: 'ctd',
-      name: 'CTD Modules',
-      parentId: null,
-      documentCount: 0,
-      isExpanded: true,
-      children: [
+  // Package-mode-aware folder structures
+  const [packageMode, setPackageMode] = useState<string>('ind');
+
+  const FOLDER_STRUCTURES: Record<string, VaultFolder[]> = useMemo(() => ({
+    ind: [
+      { id: 'ctd', name: 'CTD Modules', parentId: null, documentCount: 0, isExpanded: true, children: [
+        { id: 'm1', name: 'Module 1 - Administrative', parentId: 'ctd', documentCount: 0 },
+        { id: 'm2', name: 'Module 2 - CTD Summaries', parentId: 'ctd', documentCount: 0 },
+        { id: 'm3', name: 'Module 3 - Quality (CMC)', parentId: 'ctd', documentCount: 0 },
+        { id: 'm4', name: 'Module 4 - Nonclinical', parentId: 'ctd', documentCount: 0 },
+        { id: 'm5', name: 'Module 5 - Clinical', parentId: 'ctd', documentCount: 0 },
+      ]},
+      { id: 'protocols', name: 'Protocols', parentId: null, documentCount: 0 },
+      { id: 'ibs', name: 'Investigator Brochures', parentId: null, documentCount: 0 },
+      { id: 'csrs', name: 'Clinical Study Reports', parentId: null, documentCount: 0 },
+      { id: 'correspondence', name: 'Agency Correspondence', parentId: null, documentCount: 0, isLocked: true },
+    ],
+    '510k': [
+      { id: '510k-admin', name: '510(k) Administrative', parentId: null, documentCount: 0, isExpanded: true, children: [
+        { id: 'cover', name: 'Cover Letter', parentId: '510k-admin', documentCount: 0 },
+        { id: 'ifu-stmt', name: 'Indications for Use Statement', parentId: '510k-admin', documentCount: 0 },
+        { id: '510k-summary', name: '510(k) Summary', parentId: '510k-admin', documentCount: 0 },
+        { id: 'truthful', name: 'Truthful & Accuracy Statement', parentId: '510k-admin', documentCount: 0 },
+      ]},
+      { id: '510k-tech', name: 'Technical Sections', parentId: null, documentCount: 0, isExpanded: true, children: [
+        { id: 'device-desc', name: 'Device Description', parentId: '510k-tech', documentCount: 0 },
+        { id: 'sub-equiv', name: 'Substantial Equivalence', parentId: '510k-tech', documentCount: 0 },
+        { id: 'perf-bench', name: 'Performance Data - Bench', parentId: '510k-tech', documentCount: 0 },
+        { id: 'perf-clinical', name: 'Performance Data - Clinical', parentId: '510k-tech', documentCount: 0 },
+        { id: 'biocompat', name: 'Biocompatibility', parentId: '510k-tech', documentCount: 0 },
+        { id: 'software', name: 'Software Documentation', parentId: '510k-tech', documentCount: 0 },
+        { id: 'sterilization', name: 'Sterilization', parentId: '510k-tech', documentCount: 0 },
+        { id: 'electrical', name: 'Electrical Safety', parentId: '510k-tech', documentCount: 0 },
+      ]},
+      { id: 'labeling', name: 'Labeling', parentId: null, documentCount: 0 },
+      { id: 'standards', name: 'Standards & Guidance', parentId: null, documentCount: 0 },
+      { id: 'correspondence', name: 'Agency Correspondence', parentId: null, documentCount: 0, isLocked: true },
+    ],
+    pma: [
+      { id: 'pma-admin', name: 'PMA Administrative', parentId: null, documentCount: 0, isExpanded: true, children: [
+        { id: 'pma-cover', name: 'Cover Letter', parentId: 'pma-admin', documentCount: 0 },
+        { id: 'pma-toc', name: 'Table of Contents', parentId: 'pma-admin', documentCount: 0 },
+        { id: 'pma-summary', name: 'Summary of S&E', parentId: 'pma-admin', documentCount: 0 },
+      ]},
+      { id: 'pma-tech', name: 'Device & Manufacturing', parentId: null, documentCount: 0, isExpanded: true, children: [
+        { id: 'pma-device', name: 'Device Description', parentId: 'pma-tech', documentCount: 0 },
+        { id: 'pma-mfg', name: 'Manufacturing Information', parentId: 'pma-tech', documentCount: 0 },
+        { id: 'pma-risk', name: 'Risk Analysis / FMEA', parentId: 'pma-tech', documentCount: 0 },
+      ]},
+      { id: 'pma-nonclinical', name: 'Nonclinical Studies', parentId: null, documentCount: 0 },
+      { id: 'pma-clinical', name: 'Clinical Investigations', parentId: null, documentCount: 0 },
+      { id: 'labeling', name: 'Labeling', parentId: null, documentCount: 0 },
+      { id: 'correspondence', name: 'Agency Correspondence', parentId: null, documentCount: 0, isLocked: true },
+    ],
+    cer: [
+      { id: 'cer-main', name: 'Clinical Evaluation', parentId: null, documentCount: 0, isExpanded: true, children: [
+        { id: 'cer-report', name: 'Clinical Evaluation Report', parentId: 'cer-main', documentCount: 0 },
+        { id: 'cer-lit', name: 'Literature Review', parentId: 'cer-main', documentCount: 0 },
+        { id: 'cer-equiv', name: 'Equivalence Analysis', parentId: 'cer-main', documentCount: 0 },
+        { id: 'cer-data', name: 'Clinical Data Appraisal', parentId: 'cer-main', documentCount: 0 },
+      ]},
+      { id: 'pmcf', name: 'Post-Market Clinical Follow-up', parentId: null, documentCount: 0, children: [
+        { id: 'pmcf-plan', name: 'PMCF Plan', parentId: 'pmcf', documentCount: 0 },
+        { id: 'pmcf-report', name: 'PMCF Report', parentId: 'pmcf', documentCount: 0 },
+      ]},
+      { id: 'sscp', name: 'SSCP', parentId: null, documentCount: 0 },
+      { id: 'risk-mgmt', name: 'Risk Management', parentId: null, documentCount: 0 },
+      { id: 'tech-doc', name: 'Technical Documentation', parentId: null, documentCount: 0 },
+      { id: 'correspondence', name: 'Notified Body Correspondence', parentId: null, documentCount: 0, isLocked: true },
+    ],
+    nda: [
+      { id: 'ctd', name: 'CTD Modules', parentId: null, documentCount: 0, isExpanded: true, children: [
         { id: 'm1', name: 'Module 1 - Administrative', parentId: 'ctd', documentCount: 0 },
         { id: 'm2', name: 'Module 2 - CTD Summaries', parentId: 'ctd', documentCount: 0 },
         { id: 'm3', name: 'Module 3 - Quality', parentId: 'ctd', documentCount: 0 },
         { id: 'm4', name: 'Module 4 - Nonclinical', parentId: 'ctd', documentCount: 0 },
         { id: 'm5', name: 'Module 5 - Clinical', parentId: 'ctd', documentCount: 0 },
-      ],
-    },
-    { id: 'protocols', name: 'Protocols', parentId: null, documentCount: 0 },
-    { id: 'ibs', name: 'Investigator Brochures', parentId: null, documentCount: 0 },
-    { id: 'csrs', name: 'Clinical Study Reports', parentId: null, documentCount: 0 },
-    {
-      id: 'correspondence',
-      name: 'Agency Correspondence',
-      parentId: null,
-      documentCount: 0,
-      isLocked: true,
-    },
-  ]);
+      ]},
+      { id: 'labeling', name: 'Labeling (USPI / MedGuide)', parentId: null, documentCount: 0 },
+      { id: 'rems', name: 'REMS', parentId: null, documentCount: 0 },
+      { id: 'correspondence', name: 'Agency Correspondence', parentId: null, documentCount: 0, isLocked: true },
+    ],
+  }), []);
+
+  const [folders, setFolders] = useState<VaultFolder[]>(FOLDER_STRUCTURES['ind']);
 
   // Update folder counts when documents change
   const foldersWithCounts = useMemo(() => {
@@ -686,10 +744,37 @@ export const DocumentVault: React.FC = () => {
               </Button>
             </>
           )}
-          <Button variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            New Folder
-          </Button>
+          {/* Package mode selector */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Folder className="h-4 w-4 mr-2" />
+                {packageMode === 'ind' ? 'IND / eCTD' :
+                 packageMode === '510k' ? '510(k)' :
+                 packageMode === 'pma' ? 'PMA' :
+                 packageMode === 'cer' ? 'EU MDR CER' :
+                 packageMode === 'nda' ? 'NDA' : packageMode.toUpperCase()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {Object.keys(FOLDER_STRUCTURES).map(mode => (
+                <DropdownMenuItem
+                  key={mode}
+                  onClick={() => {
+                    setPackageMode(mode);
+                    setFolders(FOLDER_STRUCTURES[mode]);
+                    setSelectedFolderId(null);
+                  }}
+                >
+                  {mode === 'ind' ? 'IND / eCTD' :
+                   mode === '510k' ? '510(k)' :
+                   mode === 'pma' ? 'PMA' :
+                   mode === 'cer' ? 'EU MDR CER' :
+                   mode === 'nda' ? 'NDA' : mode.toUpperCase()}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
