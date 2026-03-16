@@ -1,12 +1,59 @@
-# Terraform (Staging) — ROS Part 11
+# Terraform — C2C AWS Infrastructure
 
-This folder contains scaffolding for the staging Terraform environment focused on Part 11 compliance (VPC, S3 WORM evidence, CloudTrail). This is a "plan-only" first-stage PR to validate design and security reviews.
+## Directory Structure
 
-Usage:
+```
+terraform/
+├── bootstrap/       # One-time: S3 + DynamoDB for remote state
+├── environments/
+│   ├── staging/     # Staging environment (VPC, S3 evidence, CloudTrail)
+│   └── production/  # Full prod stack (VPC, ECR, RDS, ECS, ALB, CloudFront)
+└── modules/
+    ├── alb/                 # Application Load Balancer
+    ├── cloudfront/          # CloudFront + S3 static hosting
+    ├── compliance-evidence/ # S3 WORM + CloudTrail (21 CFR Part 11)
+    ├── ecr/                 # Elastic Container Registry
+    ├── ecs-fargate/         # ECS Fargate cluster + services
+    ├── rds/                 # RDS PostgreSQL (encrypted, multi-AZ)
+    ├── secrets/             # AWS Secrets Manager
+    └── vpc-secure/          # VPC with public/private subnets, NAT, endpoints
+```
 
-1. Copy `terraform.tfvars.example` to `terraform.tfvars` and edit variables as needed.
-2. Run `terraform init` and `terraform plan` in `terraform/environments/staging` (no backend configured in plan-only mode).
+## Getting Started
 
-Notes:
-- Modules are intentionally simple and safe in this PR (no state/backend); apply will be gated and later done with a controlled process.
-- See `docs/SECURITY_REVIEW_CHECKLIST.md` for the required pre-merge controls and evidence list.
+### 1. Bootstrap remote state (once per AWS account)
+
+```bash
+cd terraform/bootstrap
+terraform init
+terraform apply
+```
+
+### 2. Deploy staging
+
+```bash
+cd terraform/environments/staging
+cp ../../terraform.tfvars.example terraform.tfvars  # Edit values
+terraform init
+terraform plan
+terraform apply
+```
+
+### 3. Deploy production
+
+```bash
+cd terraform/environments/production
+cp terraform.tfvars.example terraform.tfvars  # Edit values
+terraform init
+terraform plan
+terraform apply -var="jwt_secret=..." -var="openai_api_key=..."
+```
+
+## Security Notes
+
+- All secrets are stored in AWS Secrets Manager, never in tfvars
+- RDS uses `manage_master_user_password = true` (AWS-managed credentials)
+- S3 evidence bucket uses Object Lock (WORM) with 7-year retention
+- TLS 1.3 enforced on ALB; CloudFront uses TLS 1.2+
+- ECS tasks run in private subnets; only ALB is public-facing
+- Container images use immutable tags + scan-on-push

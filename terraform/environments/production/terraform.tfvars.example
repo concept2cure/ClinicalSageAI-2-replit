@@ -1,0 +1,20 @@
+# Production tfvars — do NOT commit secrets here.
+# Pass secrets via: terraform apply -var="jwt_secret=..." -var="openai_api_key=..."
+# Or use TF_VAR_jwt_secret and TF_VAR_openai_api_key environment variables.
+
+region          = "us-east-1"
+vpc_cidr        = "10.10.0.0/16"
+public_subnets  = ["10.10.101.0/24", "10.10.102.0/24"]
+private_subnets = ["10.10.1.0/24", "10.10.2.0/24"]
+azs             = ["us-east-1a", "us-east-1b"]
+
+rds_instance_class = "db.t3.medium"
+api_cpu            = 1024
+api_memory         = 2048
+api_desired_count  = 2
+worker_desired_count = 1
+
+# Replace with your actual ACM certificate ARN
+acm_certificate_arn       = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"
+cloudfront_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"
+domain_aliases             = []

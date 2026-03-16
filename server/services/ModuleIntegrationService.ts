@@ -12,7 +12,7 @@ import { WorkflowService } from './WorkflowService';
 import {
   unifiedDocuments,
   moduleDocuments,
-  documentVersions,
+  workflowDocumentVersions,
   documentAuditLogs,
   documentWorkflows,
 } from '../../shared/schema/unified_workflow';
@@ -59,7 +59,7 @@ export class ModuleIntegrationService {
 
         // Create the initial version
         const [version] = await tx
-          .insert(documentVersions)
+          .insert(workflowDocumentVersions)
           .values({
             documentId: unifiedDoc.id,
             version: 1,
@@ -258,11 +258,11 @@ export class ModuleIntegrationService {
 
     const latestVersion = await this.db
       .select()
-      .from(documentVersions)
+      .from(workflowDocumentVersions)
       .where(
         and(
-          eq(documentVersions.documentId, documentId),
-          eq(documentVersions.version, document[0].latestVersion)
+          eq(workflowDocumentVersions.documentId, documentId),
+          eq(workflowDocumentVersions.version, document[0].latestVersion)
         )
       )
       .limit(1);
@@ -300,7 +300,7 @@ export class ModuleIntegrationService {
       if (updateData.content !== undefined) {
         // Create a new version
         const [version] = await tx
-          .insert(documentVersions)
+          .insert(workflowDocumentVersions)
           .values({
             documentId,
             version: existingDoc[0].latestVersion + 1,

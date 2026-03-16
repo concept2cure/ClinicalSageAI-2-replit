@@ -581,6 +581,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     [loadArtifacts, loadDossierMetrics]
   );
 
+  // Active artifact for doc-header and outline (must be before callbacks that reference it)
+  const activeArtifact = useMemo(() => {
+    if (!selectedDocId) return null;
+    return artifacts.find(a => a.id === selectedDocId) || null;
+  }, [selectedDocId, artifacts]);
+
+  // Ref for use in callbacks that need current activeArtifact
+  const activeArtifactRef = useRef(activeArtifact);
+  activeArtifactRef.current = activeArtifact;
+
   // ── Phase 4 panel openers ──────────────────────────────────────────────
   const openTransformCanvas = useCallback(
     (ctdSection?: string, templateKey?: string, artifactId?: string, artifactTitle?: string) => {
@@ -592,11 +602,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   const openVerification = useCallback(
     (artifactId?: string) => {
-      const art = artifactId ? artifacts.find(a => a.id === artifactId) : activeArtifact;
+      const art = artifactId ? artifacts.find(a => a.id === artifactId) : activeArtifactRef.current;
       setPhase4Ctx({ artifactId: art?.id, artifactTitle: art?.title });
       setPhase4Panel('verification');
     },
-    [artifacts, activeArtifact]
+    [artifacts]
   );
 
   const openProgramTwin = useCallback(() => {
@@ -713,16 +723,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         : 'Select a section'
       : FOLDER_LABELS[selectedFolder] || selectedFolder;
   const browseDocs = leftRailMode === 'dossier' ? sectionDocs : folderDocs;
-
-  // Active artifact for doc-header and outline
-  const activeArtifact = useMemo(() => {
-    if (!selectedDocId) return null;
-    return artifacts.find(a => a.id === selectedDocId) || null;
-  }, [selectedDocId, artifacts]);
-
-  // Ref for use in callbacks that need current activeArtifact
-  const activeArtifactRef = useRef(activeArtifact);
-  activeArtifactRef.current = activeArtifact;
 
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;

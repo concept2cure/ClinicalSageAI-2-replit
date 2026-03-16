@@ -70,6 +70,10 @@ output "evidence_bucket" {
   value = aws_s3_bucket.evidence.id
 }
 
+output "evidence_bucket_arn" {
+  value = aws_s3_bucket.evidence.arn
+}
+
 output "cloudtrail_id" {
   value = aws_cloudtrail.part11_audit.id
 }
