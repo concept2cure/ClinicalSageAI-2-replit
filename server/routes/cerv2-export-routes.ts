@@ -15,6 +15,7 @@
 import { Router, Request, Response } from 'express';
 import archiver from 'archiver';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { stylePacks } from '../export/stylePacks/config';
 import {
   renderPdfBuffersFor510k,
@@ -27,6 +28,22 @@ import { mockVault } from '../services/mockVault';
 import { authMiddleware } from '../auth';
 
 const router = Router();
+
+// ── Rate limiting for export endpoints ──────────────────────────────────────
+const exportRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 10, // 10 exports per minute per user
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many export requests — please wait before trying again.' },
+  keyGenerator: (req: any) => {
+    const userId = req.userId || req.user?.id || 'anon';
+    const orgId = req.header('x-organization-id') || 'unknown';
+    return `cerv2-export:${orgId}:${userId}`;
+  },
+});
+
+router.use(['/pdf', '/docx', '/zip'], exportRateLimiter);
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);

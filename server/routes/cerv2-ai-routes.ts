@@ -11,6 +11,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { authMiddleware } from '../auth';
 import OpenAI from 'openai';
 import ragService from '../services/biotechRagService.js';
@@ -26,6 +27,24 @@ try {
 }
 
 const router = Router();
+
+// ── Rate limiting for AI endpoints (prevents runaway OpenAI costs) ──────────
+const aiRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 20, // 20 AI requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many AI requests — please wait before trying again.' },
+  keyGenerator: (req: any) => {
+    // Rate limit by user + org to prevent abuse
+    const userId = req.userId || req.user?.id || 'anon';
+    const orgId = req.header('x-organization-id') || 'unknown';
+    return `cerv2-ai:${orgId}:${userId}`;
+  },
+});
+
+// Apply to all AI generation routes (suggest, equivalence, benefit-risk, analyze-section)
+router.use(['/suggest', '/equivalence', '/benefit-risk', '/analyze-section'], aiRateLimiter);
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
@@ -693,6 +712,183 @@ router.post(
   }
 );
 
+// ── POST /validate ────────────────────────────────────────────────────────────
+// Server-side compliance validation engine for FDA 510(k), PMA, and EU MDR CER
+const validateSchema = z.object({
+  docType: z.enum(validDocTypes),
+  sections: z.record(z.string(), z.string()), // { sectionId: content }
+  deviceContext: z
+    .object({
+      deviceName: z.string().optional(),
+      predicateDevice: z.string().optional(),
+      intendedUse: z.string().optional(),
+    })
+    .optional(),
+});
+
+// Section targets (mirrors client cerv2-section-targets.js)
+const sectionTargets: Record<string, Record<string, { min: number; target: number; requiredElements: string[] }>> = {
+  cerv2_510k: {
+    cover_letter: { min: 150, target: 300, requiredElements: ['device name', 'predicate', 'k-number', 'intended use'] },
+    admin: { min: 100, target: 250, requiredElements: ['submitter', 'contact', 'establishment registration'] },
+    ifu: { min: 200, target: 500, requiredElements: ['intended use', 'target population', 'contraindications'] },
+    summary: { min: 500, target: 1500, requiredElements: ['device description', 'intended use', 'predicate comparison', 'substantial equivalence'] },
+    desc: { min: 300, target: 800, requiredElements: ['components', 'materials', 'dimensions', 'operating principle'] },
+    pred: { min: 300, target: 700, requiredElements: ['predicate device', 'k-number', 'manufacturer', 'comparison table'] },
+    se: { min: 800, target: 2000, requiredElements: ['intended use comparison', 'technological characteristics', 'performance data', 'conclusion'] },
+    testing: { min: 500, target: 1500, requiredElements: ['test standards', 'biocompatibility', 'performance results'] },
+    labeling: { min: 200, target: 500, requiredElements: ['IFU', 'warnings', 'precautions'] },
+    concl: { min: 150, target: 400, requiredElements: ['substantial equivalence determination', 'predicate reference'] },
+  },
+  cerv2_pma: {
+    summary: { min: 500, target: 1500, requiredElements: ['device description', 'indications', 'classification', 'regulation'] },
+    nonclin: { min: 800, target: 2500, requiredElements: ['bench testing', 'biocompatibility', 'electrical safety', 'EMC', 'software V&V'] },
+    clin: { min: 1500, target: 5000, requiredElements: ['study design', 'enrollment', 'primary endpoint', 'safety data', 'effectiveness data'] },
+    mfgqa: { min: 500, target: 1200, requiredElements: ['facility', 'ISO 13485', 'QSR compliance', 'supplier management'] },
+    labeling: { min: 300, target: 800, requiredElements: ['physician manual', 'patient manual', 'warnings'] },
+    risk: { min: 500, target: 1500, requiredElements: ['benefits', 'risks', 'benefit-risk determination'] },
+    pms: { min: 300, target: 800, requiredElements: ['post-approval study', 'reporting timeline', 'endpoints'] },
+  },
+  cerv2_cer: {
+    sota: { min: 800, target: 2500, requiredElements: ['current clinical knowledge', 'available alternatives', 'unmet need'] },
+    device: { min: 400, target: 1000, requiredElements: ['device description', 'intended purpose', 'MDR classification'] },
+    dataset: { min: 1000, target: 3000, requiredElements: ['search protocol', 'databases', 'inclusion/exclusion criteria', 'PRISMA'] },
+    appraisal: { min: 500, target: 1500, requiredElements: ['appraisal criteria', 'scientific validity', 'relevance'] },
+    benefitrisk: { min: 800, target: 2000, requiredElements: ['clinical benefits', 'residual risks', 'benefit-risk ratio'] },
+    gspr: { min: 500, target: 1500, requiredElements: ['GSPR mapping', 'compliance status', 'evidence references'] },
+    pms: { min: 500, target: 1200, requiredElements: ['PMS plan', 'PMCF plan', 'MDR Articles 83-86'] },
+    concl: { min: 300, target: 700, requiredElements: ['overall conclusion', 'GSPR conformity', 'evaluator qualification'] },
+  },
+};
+
+// Regulatory standard patterns per doc type
+const requiredStandards: Record<string, Array<{ pattern: RegExp; label: string; sections: string[] }>> = {
+  cerv2_510k: [
+    { pattern: /IEC 60601/i, label: 'IEC 60601 (Electrical Safety)', sections: ['testing'] },
+    { pattern: /ISO 10993/i, label: 'ISO 10993 (Biocompatibility)', sections: ['testing'] },
+    { pattern: /21\s*CFR/i, label: '21 CFR Reference', sections: ['admin', 'summary', 'labeling'] },
+  ],
+  cerv2_pma: [
+    { pattern: /21\s*CFR\s*Part\s*820/i, label: '21 CFR Part 820 (QSR)', sections: ['mfgqa'] },
+    { pattern: /ISO 13485/i, label: 'ISO 13485 (QMS)', sections: ['mfgqa'] },
+    { pattern: /IEC 60601/i, label: 'IEC 60601 (Electrical Safety)', sections: ['nonclin'] },
+    { pattern: /ISO 10993/i, label: 'ISO 10993 (Biocompatibility)', sections: ['nonclin'] },
+  ],
+  cerv2_cer: [
+    { pattern: /MDR\s*2017\/745/i, label: 'MDR 2017/745', sections: ['sota', 'benefitrisk', 'gspr', 'concl'] },
+    { pattern: /MEDDEV\s*2\.7\/1/i, label: 'MEDDEV 2.7/1 rev. 4', sections: ['sota', 'dataset', 'appraisal'] },
+    { pattern: /ISO 14971/i, label: 'ISO 14971 (Risk Management)', sections: ['benefitrisk'] },
+    { pattern: /Annex\s*(I|XIV)/i, label: 'MDR Annex I/XIV', sections: ['gspr', 'concl'] },
+  ],
+};
+
+const PLACEHOLDER_REGEX = /\[[A-Z][A-Z _/()-]{2,}\]/g;
+
+function validateSectionServer(
+  docType: string,
+  sectionId: string,
+  content: string,
+  deviceContext: any = {}
+) {
+  const issues: string[] = [];
+  const target = sectionTargets[docType]?.[sectionId] || { min: 100, target: 500, requiredElements: [] };
+  const words = content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
+
+  if (!content || words === 0) {
+    return { severity: 'error' as const, issues: ['Section is empty — add content before export.'], score: 0 };
+  }
+
+  if (words < target.min) {
+    issues.push(`Section has ${words} words — minimum ${target.min} recommended.`);
+  }
+
+  const placeholders = content.match(PLACEHOLDER_REGEX);
+  if (placeholders && placeholders.length > 0) {
+    const unique = [...new Set(placeholders)];
+    issues.push(`${unique.length} unresolved placeholder${unique.length > 1 ? 's' : ''}: ${unique.slice(0, 3).join(', ')}${unique.length > 3 ? ` (+${unique.length - 3} more)` : ''}`);
+  }
+
+  const lower = content.toLowerCase();
+  const missingElements = target.requiredElements.filter((el: string) => !lower.includes(el.toLowerCase()));
+  if (missingElements.length > 0) {
+    issues.push(`Missing required elements: ${missingElements.slice(0, 3).join(', ')}${missingElements.length > 3 ? ` (+${missingElements.length - 3} more)` : ''}`);
+  }
+
+  const standards = requiredStandards[docType] || [];
+  const applicable = standards.filter(s => s.sections.includes(sectionId));
+  const missingStandards = applicable.filter(s => !s.pattern.test(content));
+  if (missingStandards.length > 0) {
+    issues.push(`Missing regulatory references: ${missingStandards.map(s => s.label).join(', ')}`);
+  }
+
+  if (deviceContext?.deviceName && content.includes('[DEVICE NAME]')) {
+    issues.push(`Device name placeholder still present — should be "${deviceContext.deviceName}".`);
+  }
+
+  let score = 100;
+  if (words < target.min) score -= 30;
+  else if (words < target.target) score -= 10;
+  if (placeholders?.length) score -= Math.min(40, placeholders.length * 10);
+  if (missingElements.length) score -= Math.min(30, missingElements.length * 10);
+  if (missingStandards.length) score -= Math.min(20, missingStandards.length * 10);
+  score = Math.max(0, Math.min(100, score));
+
+  const hasError = issues.some(i => i.includes('empty') || i.includes('placeholder') || i.includes('Missing required'));
+
+  return {
+    severity: hasError ? 'error' : issues.length > 0 ? 'warning' : 'pass',
+    issues,
+    score,
+    wordCount: words,
+    targetWordCount: target.target,
+  };
+}
+
+router.post(
+  '/validate',
+  authMiddleware,
+  requireEditorAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const validation = validateSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid request', details: validation.error.flatten() });
+      }
+
+      const { docType, sections, deviceContext } = validation.data;
+      const results: Record<string, any> = {};
+      let totalScore = 0;
+      let errorCount = 0;
+      let warningCount = 0;
+      const sectionIds = Object.keys(sections);
+
+      for (const sectionId of sectionIds) {
+        const result = validateSectionServer(docType, sectionId, sections[sectionId], deviceContext);
+        results[sectionId] = result;
+        totalScore += result.score;
+        if (result.severity === 'error') errorCount++;
+        if (result.severity === 'warning') warningCount++;
+      }
+
+      const overallScore = sectionIds.length > 0 ? Math.round(totalScore / sectionIds.length) : 0;
+      const readyForExport = errorCount === 0 && overallScore >= 60;
+
+      return res.json({
+        sections: results,
+        overallScore,
+        errorCount,
+        warningCount,
+        sectionCount: sectionIds.length,
+        readyForExport,
+        docType,
+      });
+    } catch (err: any) {
+      console.error('[CERV2 AI] Validate error:', err);
+      res.status(500).json({ error: 'Validation failed', message: err.message });
+    }
+  }
+);
+
 // ── GET /health ────────────────────────────────────────────────────────────────
 // Health check for CERV2 AI service availability
 router.get('/health', (_req: Request, res: Response) => {
@@ -705,6 +901,7 @@ router.get('/health', (_req: Request, res: Response) => {
       'POST /equivalence',
       'POST /benefit-risk',
       'POST /analyze-section',
+      'POST /validate',
       'GET  /templates/:docType',
       'GET  /health',
     ],
