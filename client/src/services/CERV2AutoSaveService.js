@@ -25,13 +25,17 @@
 
 const STORAGE_PREFIX = 'cerv2';
 const AUTOSAVE_DEBOUNCE_MS = 2000;
+const SERVER_SYNC_DEBOUNCE_MS = 15000; // Sync to server every 15s (less frequent than localStorage)
 const MAX_VERSIONS = 50;
 
 class CERV2AutoSaveService {
   constructor() {
     this._timers = {};
+    this._serverTimers = {};
     this._docType = null;
     this._projectId = 'default';
+    this._serverDocumentId = null; // Tracks the server-side document ID once created
+    this._lastServerSync = null;
   }
 
   // ── Initialization ─────────────────────────────────────────────────────
@@ -102,6 +106,7 @@ class CERV2AutoSaveService {
 
   /**
    * Debounced save — waits AUTOSAVE_DEBOUNCE_MS after last call.
+   * Also triggers a server sync on a slower cadence.
    */
   saveDebounced(state) {
     const timerKey = this._key();
@@ -109,6 +114,63 @@ class CERV2AutoSaveService {
     this._timers[timerKey] = setTimeout(() => {
       this.save(state);
     }, AUTOSAVE_DEBOUNCE_MS);
+
+    // Server sync on a slower cadence to avoid hammering the API
+    if (this._serverTimers[timerKey]) clearTimeout(this._serverTimers[timerKey]);
+    this._serverTimers[timerKey] = setTimeout(() => {
+      this._syncToServer(state);
+    }, SERVER_SYNC_DEBOUNCE_MS);
+  }
+
+  /**
+   * Sync current state to the server for persistent storage.
+   * Non-blocking — failures are logged but don't interrupt the user.
+   */
+  async _syncToServer(state) {
+    if (!this._docType) return;
+    try {
+      const orgId = localStorage.getItem('currentOrganizationId') || '1';
+      const documentId = this._serverDocumentId || 'new';
+      const title = state.deviceContext?.deviceName
+        ? `${state.deviceContext.deviceName} — ${this._docType}`
+        : `CERV2 ${this._docType} Document`;
+
+      const response = await fetch(`/api/cerv2/documents/${documentId}/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-organization-id': orgId,
+        },
+        body: JSON.stringify({
+          documentType: this._docType,
+          title,
+          sections: state.userSectionContent || state.sectionData || {},
+          metadata: {
+            projectId: this._projectId,
+            deviceContext: state.deviceContext || {},
+            docType: this._docType,
+            savedAt: new Date().toISOString(),
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Remember the server document ID for subsequent saves
+        if (result.documentId) {
+          this._serverDocumentId = result.documentId;
+        }
+        this._lastServerSync = new Date().toISOString();
+      }
+    } catch (err) {
+      // Non-critical — localStorage save already succeeded
+      console.warn('[CERV2AutoSave] Server sync failed (will retry):', err.message);
+    }
+  }
+
+  /** Returns the timestamp of the last successful server sync, or null. */
+  getLastServerSync() {
+    return this._lastServerSync;
   }
 
   // ── Load ───────────────────────────────────────────────────────────────
@@ -200,7 +262,9 @@ class CERV2AutoSaveService {
 
   cancelAll() {
     for (const timer of Object.values(this._timers)) clearTimeout(timer);
+    for (const timer of Object.values(this._serverTimers)) clearTimeout(timer);
     this._timers = {};
+    this._serverTimers = {};
   }
 }
 

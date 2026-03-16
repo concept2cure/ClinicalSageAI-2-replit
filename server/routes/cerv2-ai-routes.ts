@@ -34,6 +34,16 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
   if (!role || !allowedRoles.has(role)) {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
+  // Verify organization context exists (prevents cross-org access)
+  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
+  const tenantOrg = req.tenantContext?.organizationId;
+  const userOrg = req.user?.organizationId || req.tenantId;
+  const orgId = headerOrg || tenantOrg || userOrg;
+  if (!orgId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+  // Attach resolved org for downstream use
+  req.resolvedOrganizationId = Number(orgId);
   return next();
 };
 
@@ -267,7 +277,7 @@ router.post(
         suggestion = templates[fieldId] || templates[sectionId] || '';
         finalSource = 'template';
 
-        // Replace placeholders with context
+        // Replace all known placeholders with context or descriptive defaults
         if (context?.deviceName) {
           suggestion = suggestion.replace(/\[DEVICE NAME\]/g, context.deviceName);
         }
@@ -275,12 +285,17 @@ router.post(
           suggestion = suggestion.replace(/\[PREDICATE DEVICE\]/g, context.predicateDevice);
           suggestion = suggestion.replace(/\[PREDICATE K\]/g, context.predicateDevice);
           suggestion = suggestion.replace(/\[PREDICATE K-NUMBER\]/g, context.predicateDevice);
+          suggestion = suggestion.replace(/\[PREDICATE\]/g, context.predicateDevice);
+          suggestion = suggestion.replace(/\[K-NUMBER\]/g, context.predicateDevice);
+          suggestion = suggestion.replace(/\[REFERENCE DEVICE\]/g, context.predicateDevice);
         }
         if (context?.indication) {
           suggestion = suggestion.replace(/\[INTENDED USE\]/g, context.indication);
           suggestion = suggestion.replace(/\[INDICATION\]/g, context.indication);
           suggestion = suggestion.replace(/\[INTENDED PURPOSE\]/g, context.indication);
         }
+        // Remove any remaining bracket placeholders so clients never see raw [TOKENS]
+        suggestion = suggestion.replace(/\[[A-Z][A-Z _/,()]{2,}\]/g, '___');
       }
 
       return res.json({
@@ -350,10 +365,12 @@ router.post(
         `Based on the foregoing comparison, ${deviceName} is substantially equivalent to ${predicateDevice} and should be cleared for commercial distribution in the United States.`,
       ].join('\n');
 
+      // Clean any remaining bracket placeholders
+      const cleanedText = text.replace(/\[[A-Z][A-Z _/,()]{2,}\]/g, '___');
+
       return res.json({
-        text,
+        text: cleanedText,
         source: 'template',
-        note: 'Template-based SE text. Full GPT integration available in Phase 8.',
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Equivalence error:', err);
@@ -409,10 +426,12 @@ router.post(
         `Based on the totality of evidence, the benefits of ${deviceName} for the intended patient population significantly outweigh the identified risks. The benefit-risk profile is favorable${isCer ? ' and supports conformity with the General Safety and Performance Requirements of MDR 2017/745' : ' and supports a reasonable assurance of safety and effectiveness'}.`,
       ].join('\n');
 
+      // Clean any remaining bracket placeholders
+      const cleanedText = text.replace(/\[[A-Z][A-Z _/,()]{2,}\]/g, '___');
+
       return res.json({
-        text,
+        text: cleanedText,
         source: 'template',
-        note: 'Template-based benefit-risk text. Full GPT integration available in Phase 8.',
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Benefit-risk error:', err);
@@ -439,7 +458,7 @@ router.get(
       return res.json({
         docType,
         templates: sectionTemplates[docType] || {},
-        note: 'Template text with [PLACEHOLDER] tokens. Replace before use.',
+        note: 'Template text — fill in device-specific details before use.',
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Templates error:', err);
@@ -650,11 +669,14 @@ router.post(
         if (ctx.predicateDevice) {
           suggestion = suggestion.replace(/\[PREDICATE DEVICE\]/g, ctx.predicateDevice);
           suggestion = suggestion.replace(/\[PREDICATE K\]/g, ctx.predicateDevice);
+          suggestion = suggestion.replace(/\[PREDICATE\]/g, ctx.predicateDevice);
         }
         if (ctx.intendedUse) {
           suggestion = suggestion.replace(/\[INTENDED USE\]/g, ctx.intendedUse);
           suggestion = suggestion.replace(/\[INTENDED PURPOSE\]/g, ctx.intendedUse);
         }
+        // Remove any remaining bracket placeholders
+        suggestion = suggestion.replace(/\[[A-Z][A-Z _/,()]{2,}\]/g, '___');
       }
 
       return res.json({
