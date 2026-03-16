@@ -463,6 +463,10 @@ export default function registerRoutes(app: Express): void {
   
   // Mount Content Plan routes
   app.use('/api/content-plan', contentPlanRoutes);
+
+  // Mount Claude Intelligence routes (document drafting, vision, batch, streaming)
+  const claudeIntelligenceRoutes = require('./routes/claude-intelligence').default;
+  app.use('/api/claude', claudeIntelligenceRoutes);
   
   // Basic health and status routes are now available
   console.log('✅ Basic API routes mounted');
@@ -476,6 +480,7 @@ export default function registerRoutes(app: Express): void {
   console.log('✅ Comprehensive Task Management APIs mounted successfully');
   console.log('✅ Module Management routes mounted successfully');
   console.log('✅ SharePoint File Management API routes mounted successfully');
+  console.log('✅ Claude Intelligence API routes mounted (draft, stream, review, vision, batch)');
 
   // Register Device Profile API routes directly
   const DeviceProfileService = require('./services/DeviceProfileService').default;
