@@ -25,6 +25,7 @@ import {
   PenLine,
   ClipboardList,
   Shield,
+  GraduationCap,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -471,6 +472,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="Submission Ops"
               active={activeNavId === 'submission-workspace'}
               onClick={() => onNavigate?.('submission-workspace')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── Enablement ────────────────────────────────────── */}
+          <WorkspaceGroup label="Enablement" defaultOpen={false}>
+            <NavItem
+              icon={<GraduationCap className="w-3.5 h-3.5" />}
+              label="Dr. Sage Academy"
+              active={activeNavId === 'enablement-center'}
+              onClick={() => onNavigate?.('enablement-center')}
             />
           </WorkspaceGroup>
 

@@ -117,6 +117,14 @@ const ConvergentCanvas = lazy(() =>
   import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
 );
 
+// Enablement Center — Dr. Sage + AnA 1.0 dual-AI enablement hub
+const EnablementCenter = lazy(() =>
+  import('./components/enablement/EnablementCenter')
+);
+
+// Dr. Sage Global Layer — persistent help/guide/copilot presence
+import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
+
 // Snow Globe — Cross-platform prediction & intelligence
 const SnowGlobeHome = lazy(() =>
   import('./pages/SnowGlobe/SnowGlobeHome')
@@ -268,7 +276,8 @@ type LayoutMode =
   | 'document-vault'
   | 'clinical-trial'
   | 'snowglobe'
-  | 'snowglobe-chambers';
+  | 'snowglobe-chambers'
+  | 'enablement-center';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1222,6 +1231,7 @@ export const ZenApp: React.FC = () => {
               'submission-workspace': 'submission-workspace',
               snowglobe: 'snowglobe',
               'snowglobe-chambers': 'snowglobe',
+              'enablement-center': 'enablement-center',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1304,6 +1314,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'submission-workspace':
               setLayoutMode('submission-workspace');
+              break;
+            case 'enablement-center':
+              setLayoutMode('enablement-center');
               break;
             default:
               break;
@@ -1909,6 +1922,33 @@ export const ZenApp: React.FC = () => {
                   </Suspense>
                 </ErrorBoundary>
               )}
+            </div>
+          )}
+
+          {/* ── Enablement Center — Dr. Sage + AnA 1.0 dual-AI hub ── */}
+          {!embeddedModule && layoutMode === 'enablement-center' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-enablement-center">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <div className="text-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
+                        <p className="text-sm text-zinc-500">Loading Enablement Center...</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <EnablementCenter
+                    onClose={() => setLayoutMode('regulatory-workspace')}
+                    contextProfile={{
+                      productType: activeProject?.type,
+                      userRole: userRole,
+                      clientType: industryMode,
+                    }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
@@ -2800,6 +2840,17 @@ export const ZenApp: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Dr. Sage — Persistent global help/guide/copilot layer */}
+      <DrSageGlobalLayer
+        onOpenEnablementCenter={() => setLayoutMode('enablement-center')}
+        contextProfile={{
+          productType: activeProject?.type,
+          userRole: userRole,
+          screenName: layoutMode,
+          activeProject: activeProject?.name,
+        }}
+      />
 
       {/* Command palette */}
       <ZenCommandPalette
