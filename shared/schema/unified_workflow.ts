@@ -67,8 +67,8 @@ export const unifiedDocuments = pgTable('unified_documents', {
   metadata: json('metadata').$type<Record<string, any>>().default({}),
 });
 
-export const documentVersions = pgTable(
-  'document_versions',
+export const workflowDocumentVersions = pgTable(
+  'workflow_document_versions',
   {
     id: serial('id').primaryKey(),
     documentId: integer('document_id')
@@ -82,7 +82,7 @@ export const documentVersions = pgTable(
   },
   table => {
     return {
-      docVersionIdx: uniqueIndex('doc_version_idx').on(table.documentId, table.version),
+      wfDocVersionIdx: uniqueIndex('wf_doc_version_idx').on(table.documentId, table.version),
     };
   }
 );
@@ -218,7 +218,7 @@ export const documentComments = pgTable('document_comments', {
   documentId: integer('document_id')
     .notNull()
     .references(() => unifiedDocuments.id, { onDelete: 'cascade' }),
-  versionId: integer('version_id').references(() => documentVersions.id),
+  versionId: integer('version_id').references(() => workflowDocumentVersions.id),
   content: text('content').notNull(),
   createdBy: text('created_by').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -232,7 +232,7 @@ export const documentComments = pgTable('document_comments', {
 
 // Relations
 export const unifiedDocumentsRelations = relations(unifiedDocuments, ({ many }) => ({
-  versions: many(documentVersions),
+  versions: many(workflowDocumentVersions),
   moduleDocuments: many(moduleDocuments),
   workflows: many(documentWorkflows),
   auditLogs: many(documentAuditLogs),
@@ -240,9 +240,9 @@ export const unifiedDocumentsRelations = relations(unifiedDocuments, ({ many }) 
   comments: many(documentComments),
 }));
 
-export const documentVersionsRelations = relations(documentVersions, ({ one }) => ({
+export const workflowDocumentVersionsRelations = relations(workflowDocumentVersions, ({ one }) => ({
   document: one(unifiedDocuments, {
-    fields: [documentVersions.documentId],
+    fields: [workflowDocumentVersions.documentId],
     references: [unifiedDocuments.id],
   }),
 }));
@@ -309,9 +309,9 @@ export const documentCommentsRelations = relations(documentComments, ({ one, man
     fields: [documentComments.documentId],
     references: [unifiedDocuments.id],
   }),
-  version: one(documentVersions, {
+  version: one(workflowDocumentVersions, {
     fields: [documentComments.versionId],
-    references: [documentVersions.id],
+    references: [workflowDocumentVersions.id],
   }),
   parent: one(documentComments, {
     fields: [documentComments.parentId],
@@ -325,7 +325,7 @@ export const insertUnifiedDocumentSchema = createInsertSchema(unifiedDocuments, 
   metadata: z.record(z.any()).optional(),
 });
 
-export const insertDocumentVersionSchema = createInsertSchema(documentVersions, {
+export const insertDocumentVersionSchema = createInsertSchema(workflowDocumentVersions, {
   content: z.record(z.any()).optional(),
 });
 
@@ -356,7 +356,7 @@ export const insertWorkflowApprovalSchema = createInsertSchema(workflowApprovals
 export type UnifiedDocument = typeof unifiedDocuments.$inferSelect;
 export type InsertUnifiedDocument = z.infer<typeof insertUnifiedDocumentSchema>;
 
-export type DocumentVersion = typeof documentVersions.$inferSelect;
+export type DocumentVersion = typeof workflowDocumentVersions.$inferSelect;
 export type InsertDocumentVersion = z.infer<typeof insertDocumentVersionSchema>;
 
 export type ModuleDocument = typeof moduleDocuments.$inferSelect;

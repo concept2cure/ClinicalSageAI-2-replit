@@ -3,6 +3,11 @@ variable "vpc_cidr" {
   default = "10.9.0.0/16"
 }
 
+variable "public_subnets" {
+  type    = list(string)
+  default = ["10.9.101.0/24", "10.9.102.0/24"]
+}
+
 variable "private_subnets" {
   type    = list(string)
   default = ["10.9.1.0/24", "10.9.2.0/24"]
