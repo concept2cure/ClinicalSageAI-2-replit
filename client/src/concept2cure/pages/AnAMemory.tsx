@@ -95,7 +95,7 @@ function relativeTime(dateStr: string): string {
 // COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function AnAMemory() {
+export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
   const [projectContext, setProjectContext] = useState<ProjectContext>({
     therapeuticArea: '',

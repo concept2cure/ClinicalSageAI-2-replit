@@ -290,7 +290,7 @@ function SkeletonLoader() {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function SubmissionGapAnalysis() {
+export default function SubmissionGapAnalysis({ projectId, submissionType }: { projectId?: string; submissionType?: string }) {
   // ─── State ────────────────────────────────────────────────────────────────
   const [submissionType, setSubmissionType] = useState<SubmissionType | ''>('');
   const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());

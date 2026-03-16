@@ -236,119 +236,7 @@ interface DashboardMetric {
   target?: number;
 }
 
-const generateMockTasks = (role: UserRole): DashboardTask[] => {
-  const roleConfig = ROLE_CONFIGS[role];
-  const baseTasks: DashboardTask[] = [
-    {
-      id: '1',
-      title: 'Complete predicate comparison table',
-      project: 'CardioFlow 510(k)',
-      submissionType: '510K',
-      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      priority: 'high',
-      status: 'in_progress',
-    },
-    {
-      id: '2',
-      title: 'Review IND Module 2.5 clinical summary',
-      project: 'NeuroCure IND',
-      submissionType: 'IND',
-      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-      priority: 'medium',
-      status: 'pending',
-    },
-    {
-      id: '3',
-      title: 'Prepare pre-submission meeting questions',
-      project: 'DiagnostiX DE NOVO',
-      submissionType: 'DE_NOVO',
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      priority: 'critical',
-      status: 'pending',
-    },
-  ];
-
-  // Filter by relevant submissions for this role
-  return baseTasks.filter(t => roleConfig.relevantSubmissions.includes(t.submissionType));
-};
-
-const generateMockMetrics = (role: UserRole): DashboardMetric[] => {
-  const metricsMap: Record<UserRole, DashboardMetric[]> = {
-    ra_lead: [
-      { id: 'm1', label: 'Active Submissions', value: 7, change: 2, trend: 'up' },
-      { id: 'm2', label: 'Pending FDA Actions', value: 3, change: -1, trend: 'down' },
-      { id: 'm3', label: 'Days to Next Deadline', value: 14, target: 30 },
-      { id: 'm4', label: 'Approval Rate YTD', value: 92, target: 90, trend: 'up' },
-    ],
-    ra_associate: [
-      { id: 'm1', label: 'Documents in Queue', value: 12, change: 3, trend: 'up' },
-      { id: 'm2', label: 'Completed This Week', value: 8, change: 2, trend: 'up' },
-      { id: 'm3', label: 'Avg Review Cycles', value: 2.3, target: 2.0, trend: 'stable' },
-      { id: 'm4', label: 'Template Compliance', value: 96, target: 95 },
-    ],
-    qa_manager: [
-      { id: 'm1', label: 'Open CAPAs', value: 4, change: -2, trend: 'down' },
-      { id: 'm2', label: 'Overdue Findings', value: 1, target: 0, trend: 'stable' },
-      { id: 'm3', label: 'SOP Currency', value: 94, target: 100, trend: 'up' },
-      { id: 'm4', label: 'Audit Ready Score', value: 87, target: 90 },
-    ],
-    clinical_lead: [
-      { id: 'm1', label: 'Active Studies', value: 3, change: 1, trend: 'up' },
-      { id: 'm2', label: 'Enrollment Rate', value: 78, target: 80, trend: 'up' },
-      { id: 'm3', label: 'Sites Activated', value: 24, target: 30 },
-      { id: 'm4', label: 'Protocol Amendments', value: 2, change: 0, trend: 'stable' },
-    ],
-    clinical_ops: [
-      { id: 'm1', label: 'Sites in Startup', value: 8, change: 2, trend: 'up' },
-      { id: 'm2', label: 'Open Queries', value: 156, target: 100, trend: 'down' },
-      { id: 'm3', label: 'Monitoring Visits', value: 12, change: 4, trend: 'up' },
-      { id: 'm4', label: 'Query Resolution (days)', value: 4.2, target: 5.0 },
-    ],
-    cmc_lead: [
-      { id: 'm1', label: 'Batches in Release', value: 5, change: 1, trend: 'up' },
-      { id: 'm2', label: 'Stability Studies', value: 8, change: 0, trend: 'stable' },
-      { id: 'm3', label: 'Method Validations', value: 3, change: 1, trend: 'up' },
-      { id: 'm4', label: 'OOS Investigations', value: 1, target: 0 },
-    ],
-    medical_writer: [
-      { id: 'm1', label: 'Documents in Progress', value: 6, change: 2, trend: 'up' },
-      { id: 'm2', label: 'Pages Written (MTD)', value: 342, change: 87, trend: 'up' },
-      { id: 'm3', label: 'Review Turnaround (days)', value: 3.1, target: 3.0 },
-      { id: 'm4', label: 'QC Pass Rate', value: 94, target: 95 },
-    ],
-    biostatistician: [
-      { id: 'm1', label: 'SAPs in Development', value: 2, change: 0, trend: 'stable' },
-      { id: 'm2', label: 'Datasets Locked', value: 1, change: 1, trend: 'up' },
-      { id: 'm3', label: 'TLFs Programmed', value: 156, target: 200 },
-      { id: 'm4', label: 'Analysis Queries', value: 23, change: -8, trend: 'down' },
-    ],
-    project_manager: [
-      { id: 'm1', label: 'Milestones On Track', value: 85, target: 90, trend: 'stable' },
-      { id: 'm2', label: 'Resource Utilization', value: 92, target: 85 },
-      { id: 'm3', label: 'Budget Variance', value: -3, target: 0, trend: 'down' },
-      { id: 'm4', label: 'Open Risk Items', value: 7, change: 2, trend: 'up' },
-    ],
-    safety_officer: [
-      { id: 'm1', label: 'SAEs Pending Review', value: 4, change: 2, trend: 'up' },
-      { id: 'm2', label: 'DSUR Due (days)', value: 45, target: 60 },
-      { id: 'm3', label: 'Signal Reviews', value: 2, change: 1, trend: 'up' },
-      { id: 'm4', label: 'Expedited Reports (30d)', value: 6, change: 0, trend: 'stable' },
-    ],
-    executive: [
-      { id: 'm1', label: 'Portfolio Programs', value: 12, change: 1, trend: 'up' },
-      { id: 'm2', label: 'Key Milestones (Q)', value: 4, target: 5 },
-      { id: 'm3', label: 'Budget Adherence', value: 97, target: 100 },
-      { id: 'm4', label: 'Pipeline Value ($M)', value: 2400, change: 350, trend: 'up' },
-    ],
-    engineering: [
-      { id: 'm1', label: 'Design Controls Open', value: 23, change: -5, trend: 'down' },
-      { id: 'm2', label: 'V&V Protocols', value: 8, change: 2, trend: 'up' },
-      { id: 'm3', label: 'DHF Completion', value: 76, target: 100 },
-      { id: 'm4', label: 'ECOs Pending', value: 5, change: 1, trend: 'up' },
-    ],
-  };
-  return metricsMap[role] || [];
-};
+// Mock generators removed — RoleDashboard now uses useOperationalData() for all real data
 
 // ─────────────────────────────────────────────────────────────────────────────
 // METRIC CARD COMPONENT
@@ -513,10 +401,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
 
 interface AIAssistantPanelProps {
   role: UserRole;
-  onAskLumen: (question: string) => void;
+  onAskAnA: (question: string) => void;
 }
 
-const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen }) => {
+const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) => {
   const roleConfig = ROLE_CONFIGS[role];
   
   const suggestions: Record<UserRole, string[]> = {
@@ -598,7 +486,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskLumen })
           {suggestions[role]?.slice(0, 3).map((suggestion, idx) => (
             <button
               key={idx}
-              onClick={() => onAskLumen(suggestion)}
+              onClick={() => onAskAnA(suggestion)}
               className="w-full text-left p-2 text-xs text-gray-600 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
             >
               {suggestion}
@@ -618,7 +506,7 @@ interface RoleDashboardProps {
   initialRole?: UserRole;
   onRoleChange?: (role: UserRole) => void;
   onNavigateToTask?: (taskId: string) => void;
-  onAskLumen?: (question: string) => void;
+  onAskAnA?: (question: string) => void;
   className?: string;
 }
 
@@ -626,7 +514,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   initialRole = 'ra_lead',
   onRoleChange,
   onNavigateToTask,
-  onAskLumen,
+  onAskAnA,
   className,
 }) => {
   const [currentRole, setCurrentRole] = useState<UserRole>(initialRole);
@@ -669,72 +557,55 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
     return [];
   }, [operationalData]);
   const activeWorkflowRunId = useMemo(
-    () => `demo-${currentRole}-workflow-run`,
+    () => `workflow-${currentRole}`,
     [currentRole]
   );
-  const activeWorkflowSteps = useMemo(
-    () => [
-      {
-        id: 'step-compile-section',
-        name: 'Compile submission section',
-        description: 'Draft and finalize required section content for review.',
-        status: 'IN_PROGRESS' as const,
-        stepType: 'TASK' as const,
-        order: 1,
-        phaseName: 'Authoring',
-        assigneeRole: roleConfig.shortTitle,
-        slaDueAt: new Date(Date.now() + 6 * 60 * 60 * 1000),
-        isRequired: true,
-        startedAt: new Date(Date.now() - 60 * 60 * 1000),
-      },
-      {
-        id: 'step-review-approval',
-        name: 'Regulatory review',
-        description: 'Regulatory review and approval of compiled section.',
-        status: 'READY' as const,
-        stepType: 'APPROVAL' as const,
-        order: 2,
-        phaseName: 'Review',
-        assigneeRole: 'QA Manager',
-        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        isRequired: true,
-      },
-    ],
-    [roleConfig.shortTitle]
-  );
-  const nextActions = useMemo(
-    () => [
-      {
-        id: 'action-compile-section',
-        name: 'Finalize compliance section',
-        description: 'Complete the compliance summary and attach evidence.',
-        stepType: 'TASK' as const,
-        status: 'READY' as const,
-        workflowName: 'Regulatory Submission Prep',
-        workflowId: 'workflow-reg-prep-01',
-        workflowRunId: activeWorkflowRunId,
-        slaDueAt: new Date(Date.now() + 4 * 60 * 60 * 1000),
-        assigneeRole: roleConfig.shortTitle,
-        order: 1,
-        priority: 'HIGH' as const,
-      },
-      {
-        id: 'action-review-section',
-        name: 'Review draft evidence pack',
-        description: 'Approve the evidence package for submission.',
-        stepType: 'APPROVAL' as const,
-        status: 'AWAITING_APPROVAL' as const,
-        workflowName: 'Regulatory Submission Prep',
-        workflowId: 'workflow-reg-prep-01',
-        workflowRunId: activeWorkflowRunId,
-        slaDueAt: new Date(Date.now() + 20 * 60 * 60 * 1000),
-        assigneeRole: 'QA Manager',
-        order: 2,
-        priority: 'MEDIUM' as const,
-      },
-    ],
-    [activeWorkflowRunId, roleConfig.shortTitle]
-  );
+
+  // Derive workflow steps from real operational tasks
+  const activeWorkflowSteps = useMemo(() => {
+    const statusMap = (s: string) => {
+      if (s === 'completed') return 'COMPLETED' as const;
+      if (s === 'in-progress' || s === 'review') return 'IN_PROGRESS' as const;
+      if (s === 'blocked') return 'BLOCKED' as const;
+      return 'PENDING' as const;
+    };
+    if (tasks.length > 0) {
+      return tasks.slice(0, 5).map((t, i) => ({
+        id: `step-${t.id}`,
+        name: t.title,
+        description: '',
+        status: statusMap(t.status),
+        stepType: (t.status === 'review' ? 'APPROVAL' : 'TASK') as 'TASK' | 'APPROVAL',
+        order: i + 1,
+        phaseName: t.project || 'General',
+        assigneeRole: t.assignee || roleConfig.shortTitle,
+        slaDueAt: t.dueDate ? new Date(t.dueDate) : undefined,
+        isRequired: t.priority === 'high' || t.priority === 'critical',
+      }));
+    }
+    return [];
+  }, [tasks, roleConfig.shortTitle]);
+
+  // Derive next actions from real operational tasks (incomplete, sorted by priority)
+  const nextActions = useMemo(() => {
+    const incomplete = tasks
+      .filter(t => t.status !== 'completed' && t.status !== 'cancelled')
+      .slice(0, 3);
+    return incomplete.map((t, i) => ({
+      id: `action-${t.id}`,
+      name: t.title,
+      description: t.description || '',
+      stepType: (t.status === 'review' ? 'APPROVAL' : 'TASK') as 'TASK' | 'APPROVAL',
+      status: (t.status === 'in-progress' ? 'IN_PROGRESS' : t.status === 'blocked' ? 'BLOCKED' : 'READY') as 'READY' | 'IN_PROGRESS' | 'BLOCKED' | 'AWAITING_APPROVAL',
+      workflowName: t.project || 'Tasks',
+      workflowId: `workflow-${currentRole}`,
+      workflowRunId: activeWorkflowRunId,
+      slaDueAt: t.dueDate ? new Date(t.dueDate) : undefined,
+      assigneeRole: t.assignee || roleConfig.shortTitle,
+      order: i + 1,
+      priority: (t.priority === 'critical' ? 'HIGH' : t.priority?.toUpperCase() || 'MEDIUM') as 'HIGH' | 'MEDIUM' | 'LOW',
+    }));
+  }, [tasks, currentRole, activeWorkflowRunId, roleConfig.shortTitle]);
 
   const handleRoleChange = (role: UserRole) => {
     setCurrentRole(role);
@@ -821,7 +692,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
             <div>
               <AIAssistantPanel
                 role={currentRole}
-                onAskLumen={onAskLumen || (() => {})}
+                onAskAnA={onAskAnA || (() => {})}
               />
             </div>
           </div>

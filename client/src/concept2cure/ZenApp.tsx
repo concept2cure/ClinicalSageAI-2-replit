@@ -612,13 +612,31 @@ export const ZenApp: React.FC = () => {
 
   const activeProject = projects.find(p => p.id === activeProjectId);
 
-  const contextMetrics = {
-    deadlineDays: 47,
-    complianceScore: 0.87,
-    riskCount: 3,
-    lastActivity: 'FDA response received 2h ago',
-    auditStatus: 'Audit trail active',
-  };
+  const contextMetrics = useMemo(() => {
+    if (!activeProject || !taskSummary) {
+      return {
+        deadlineDays: '—',
+        complianceScore: 0,
+        riskCount: 0,
+        lastActivity: 'No project selected',
+        auditStatus: 'Audit trail active',
+      };
+    }
+    // Deadline days from project target date
+    const targetDate = activeProject.targetDate ? new Date(activeProject.targetDate) : null;
+    const deadlineDays = targetDate
+      ? Math.max(0, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : '—';
+    // Compliance from task health
+    const complianceScore = taskSummary.healthScore / 100;
+    // Risks = overdue + blocked
+    const riskCount = taskSummary.overdue + (taskSummary.byStatus?.blocked || 0);
+    // Last activity from most recent task update
+    const lastActivity = taskSummary.total > 0
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
+    return { deadlineDays, complianceScore, riskCount, lastActivity, auditStatus: 'Audit trail active' };
+  }, [activeProject, taskSummary]);
 
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
@@ -667,63 +685,42 @@ export const ZenApp: React.FC = () => {
   );
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
-  const timelineSteps = useMemo(
-    () => [
-      {
-        id: 'step-intake',
-        name: 'Project Intake',
-        description: 'Capture submission scope, device metadata, and milestones.',
-        status: 'COMPLETED' as const,
-        stepType: 'TASK' as const,
-        order: 1,
-        phaseId: 'phase-intake',
-        phaseName: 'Intake',
-        assigneeRole: 'RA Lead',
-        completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        isRequired: true,
-      },
-      {
-        id: 'step-authoring',
-        name: 'Draft Core Sections',
-        description: 'Generate and refine core submission sections.',
-        status: 'IN_PROGRESS' as const,
-        stepType: 'TASK' as const,
-        order: 2,
-        phaseId: 'phase-authoring',
-        phaseName: 'Authoring',
-        assigneeRole: 'Medical Writer',
-        startedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        slaDueAt: new Date(Date.now() + 10 * 60 * 60 * 1000),
-        isRequired: true,
-      },
-      {
-        id: 'step-review',
-        name: 'Regulatory Review',
-        description: 'QA and regulatory approval of drafted sections.',
-        status: 'READY' as const,
-        stepType: 'APPROVAL' as const,
-        order: 3,
-        phaseId: 'phase-review',
-        phaseName: 'Review',
-        assigneeRole: 'QA Manager',
-        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        isRequired: true,
-      },
-      {
-        id: 'step-export',
-        name: 'Submission Export',
-        description: 'Generate finalized eCTD package for submission.',
-        status: 'PENDING' as const,
-        stepType: 'EXPORT' as const,
-        order: 4,
-        phaseId: 'phase-export',
-        phaseName: 'Submission',
-        assigneeRole: 'Project Manager',
-        isRequired: true,
-      },
-    ],
-    []
-  );
+
+  // Derive timeline steps from real project tasks
+  const timelineSteps = useMemo(() => {
+    const statusToStep = (s: string) => {
+      if (s === 'done') return 'COMPLETED' as const;
+      if (s === 'in-progress' || s === 'review') return 'IN_PROGRESS' as const;
+      if (s === 'blocked') return 'BLOCKED' as const;
+      return 'PENDING' as const;
+    };
+    if (tasks.length > 0) {
+      return tasks
+        .sort((a, b) => a.id - b.id)
+        .slice(0, 10)
+        .map((t, i) => ({
+          id: `step-task-${t.id}`,
+          name: t.name,
+          description: t.description || '',
+          status: statusToStep(t.status),
+          stepType: 'TASK' as const,
+          order: i + 1,
+          phaseId: `phase-${t.moduleType || 'general'}`,
+          phaseName: t.moduleType || 'General',
+          assigneeRole: t.priority === 'urgent' ? 'Lead' : 'Team',
+          completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
+          slaDueAt: t.dueDate ? new Date(t.dueDate) : undefined,
+          isRequired: t.priority === 'high' || t.priority === 'urgent',
+        }));
+    }
+    // Fallback when no tasks exist
+    return [
+      { id: 'step-intake', name: 'Project Intake', description: 'Set up project scope and milestones.', status: 'PENDING' as const, stepType: 'TASK' as const, order: 1, phaseId: 'phase-intake', phaseName: 'Intake', assigneeRole: 'RA Lead', isRequired: true },
+      { id: 'step-authoring', name: 'Draft Core Sections', description: 'Create submission sections.', status: 'PENDING' as const, stepType: 'TASK' as const, order: 2, phaseId: 'phase-authoring', phaseName: 'Authoring', assigneeRole: 'Writer', isRequired: true },
+      { id: 'step-review', name: 'Regulatory Review', description: 'QA approval.', status: 'PENDING' as const, stepType: 'APPROVAL' as const, order: 3, phaseId: 'phase-review', phaseName: 'Review', assigneeRole: 'QA', isRequired: true },
+      { id: 'step-export', name: 'Submission Export', description: 'Generate eCTD package.', status: 'PENDING' as const, stepType: 'EXPORT' as const, order: 4, phaseId: 'phase-export', phaseName: 'Submission', assigneeRole: 'PM', isRequired: true },
+    ];
+  }, [tasks]);
 
   const primaryObjective = userProfile?.objectives?.[0] || 'Submission readiness';
   const userRole = userProfile?.role || 'Regulatory Lead';
@@ -734,77 +731,79 @@ export const ZenApp: React.FC = () => {
   const rawDisplayName = userProfile?.preferences?.displayName;
   const userName = typeof rawDisplayName === 'string' ? rawDisplayName : 'User';
 
-  const agentRoster = useMemo(
-    () => [
+  // Agent roster reflects real project state
+  const agentRoster = useMemo(() => {
+    const hasOverdue = taskSummary && taskSummary.overdue > 0;
+    const hasBlocked = taskSummary && (taskSummary.byStatus?.blocked || 0) > 0;
+    const inProgress = taskSummary && (taskSummary.byStatus?.['in-progress'] || 0) > 0;
+    return [
       {
         id: 'agent-compliance',
         name: `${userRole} Agent`,
-        status: 'Active',
+        status: inProgress ? 'Active' : 'Idle',
         focus: primaryObjective,
       },
       {
         id: 'agent-evidence',
         name: 'Evidence Agent',
-        status: 'Reviewing',
-        focus: userProfile?.criteria?.[0] || 'Clinical evidence map',
+        status: hasOverdue ? 'Alert' : inProgress ? 'Reviewing' : 'Idle',
+        focus: hasOverdue ? `${taskSummary!.overdue} overdue items` : (userProfile?.criteria?.[0] || 'Clinical evidence map'),
       },
       {
         id: 'agent-quality',
         name: 'Quality Agent',
-        status: 'Queued',
-        focus: userProfile?.criteria?.[1] || 'Section audit checks',
+        status: hasBlocked ? 'Blocked' : 'Queued',
+        focus: hasBlocked ? `${taskSummary!.byStatus?.blocked || 0} blocked tasks` : (userProfile?.criteria?.[1] || 'Section audit checks'),
       },
-    ],
-    [primaryObjective, userProfile, userRole]
-  );
+    ];
+  }, [primaryObjective, userProfile, userRole, taskSummary]);
 
-  const nextActions = useMemo(
-    () => [
-      {
-        id: 'action-compile-section',
-        name: `Advance ${primaryObjective.toLowerCase()}`,
-        description: `Progress ${primaryObjective.toLowerCase()} with evidence alignment.`,
-        stepType: 'TASK' as const,
-        status: 'READY' as const,
-        workflowName: 'Priority Objectives',
-        workflowId: 'workflow-reg-prep-01',
+  // Derive next actions from real project tasks (prioritize overdue, in-progress, blocked)
+  const nextActions = useMemo(() => {
+    const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+    const actionableTasks = tasks
+      .filter(t => t.status !== 'done')
+      .sort((a, b) => {
+        // Overdue first
+        const aOverdue = a.dueDate && new Date(a.dueDate) < new Date() ? -1 : 0;
+        const bOverdue = b.dueDate && new Date(b.dueDate) < new Date() ? -1 : 0;
+        if (aOverdue !== bOverdue) return aOverdue - bOverdue;
+        // Then by priority
+        return (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3);
+      })
+      .slice(0, 3);
+
+    if (actionableTasks.length > 0) {
+      return actionableTasks.map((t, i) => ({
+        id: `action-task-${t.id}`,
+        name: t.name,
+        description: t.description || '',
+        stepType: (t.status === 'review' ? 'REVIEW' : 'TASK') as 'TASK' | 'REVIEW' | 'APPROVAL',
+        status: (t.status === 'in-progress' ? 'IN_PROGRESS' : t.status === 'blocked' ? 'BLOCKED' : 'READY') as 'READY' | 'IN_PROGRESS' | 'BLOCKED' | 'AWAITING_APPROVAL',
+        workflowName: t.moduleType || 'Project Tasks',
+        workflowId: `workflow-${activeProjectId}`,
         workflowRunId,
-        slaDueAt: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        slaDueAt: t.dueDate ? new Date(t.dueDate) : undefined,
         assigneeRole: userRole,
-        order: 1,
-        priority: 'HIGH' as const,
-      },
-      {
-        id: 'action-review-claims',
-        name: userProfile?.criteria?.[0] || 'Review efficacy claims',
-        description: 'Validate claims against source evidence.',
-        stepType: 'REVIEW' as const,
-        status: 'IN_PROGRESS' as const,
-        workflowName: 'Evidence Validation',
-        workflowId: 'workflow-evd-02',
-        workflowRunId,
-        slaDueAt: new Date(Date.now() + 10 * 60 * 60 * 1000),
-        assigneeRole: userRole,
-        order: 2,
-        priority: 'MEDIUM' as const,
-      },
-      {
-        id: 'action-approval-qa',
-        name: userProfile?.criteria?.[1] || 'QA sign-off checklist',
-        description: 'Approve final quality checklist for submission.',
-        stepType: 'APPROVAL' as const,
-        status: 'AWAITING_APPROVAL' as const,
-        workflowName: 'Quality Governance',
-        workflowId: 'workflow-qa-03',
-        workflowRunId,
-        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        assigneeRole: userRole,
-        order: 3,
-        priority: 'LOW' as const,
-      },
-    ],
-    [primaryObjective, userProfile, userRole, workflowRunId]
-  );
+        order: i + 1,
+        priority: (t.priority?.toUpperCase() || 'MEDIUM') as 'HIGH' | 'MEDIUM' | 'LOW',
+      }));
+    }
+    // Fallback when no tasks
+    return [{
+      id: 'action-create-tasks',
+      name: 'Generate project milestones',
+      description: 'Create tasks for your submission type to get started.',
+      stepType: 'TASK' as const,
+      status: 'READY' as const,
+      workflowName: 'Project Setup',
+      workflowId: `workflow-${activeProjectId}`,
+      workflowRunId,
+      assigneeRole: userRole,
+      order: 1,
+      priority: 'HIGH' as const,
+    }];
+  }, [tasks, activeProjectId, userRole, workflowRunId]);
 
   useEffect(() => {
     const loadProfile = () => {
@@ -1395,9 +1394,9 @@ export const ZenApp: React.FC = () => {
               <div className="max-w-3xl mx-auto">
                 <WorkflowTimeline
                   steps={timelineSteps}
-                  currentStepId="step-authoring"
-                  progressPercent={50}
-                  assetState="REVIEW"
+                  currentStepId={timelineSteps.find(s => s.status === 'IN_PROGRESS')?.id || timelineSteps[0]?.id || ''}
+                  progressPercent={taskSummary ? Math.round(taskSummary.completionRate) : 0}
+                  assetState={taskSummary && taskSummary.overdue > 0 ? 'OVERDUE' : taskSummary && taskSummary.completionRate > 80 ? 'APPROVED' : 'REVIEW'}
                   workflowRunId={workflowRunId}
                   showPhases
                 />
@@ -1407,7 +1406,7 @@ export const ZenApp: React.FC = () => {
 
           {layoutMode === 'audit' && (
             <div className="flex-1 overflow-y-auto bg-zinc-50">
-              <ProductAuditQuestionnaire />
+              <ProductAuditQuestionnaire projectId={activeProjectId} />
             </div>
           )}
 
@@ -1423,7 +1422,7 @@ export const ZenApp: React.FC = () => {
                 </div>
               }
             >
-              <MissionControl />
+              <MissionControl projectId={activeProjectId} />
             </Suspense>
           )}
 
@@ -1462,22 +1461,22 @@ export const ZenApp: React.FC = () => {
           {/* AnA Intelligence Features */}
           {layoutMode === 'intelligence-feed' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
-              <div className="flex-1 overflow-y-auto"><RegulatoryIntelligenceFeed /></div>
+              <div className="flex-1 overflow-y-auto"><RegulatoryIntelligenceFeed projectId={activeProjectId} submissionType={activeProject?.type} /></div>
             </Suspense>
           )}
           {layoutMode === 'gap-analysis' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
-              <div className="flex-1 overflow-y-auto"><SubmissionGapAnalysis /></div>
+              <div className="flex-1 overflow-y-auto"><SubmissionGapAnalysis projectId={activeProjectId} submissionType={activeProject?.type} /></div>
             </Suspense>
           )}
           {layoutMode === 'change-impact' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
-              <div className="flex-1 overflow-y-auto"><DocumentChangeImpact /></div>
+              <div className="flex-1 overflow-y-auto"><DocumentChangeImpact projectId={activeProjectId} submissionType={activeProject?.type} /></div>
             </Suspense>
           )}
           {layoutMode === 'ana-memory' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
-              <div className="flex-1 overflow-y-auto"><AnAMemory /></div>
+              <div className="flex-1 overflow-y-auto"><AnAMemory projectId={activeProjectId} /></div>
             </Suspense>
           )}
 

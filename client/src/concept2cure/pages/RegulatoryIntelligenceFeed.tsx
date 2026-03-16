@@ -586,7 +586,12 @@ function generateFallbackData(): FeedResponse {
 // Main Component
 // ---------------------------------------------------------------------------
 
-const RegulatoryIntelligenceFeed: React.FC = () => {
+interface RegulatoryIntelligenceFeedProps {
+  projectId?: string;
+  submissionType?: string;
+}
+
+const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({ projectId, submissionType }) => {
   // ------ State ------
   const [feedData, setFeedData] = useState<FeedResponse | null>(null);
   const [loading, setLoading] = useState(true);

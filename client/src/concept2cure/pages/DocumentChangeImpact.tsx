@@ -168,7 +168,7 @@ function LoadingSkeleton() {
 // COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function DocumentChangeImpact() {
+export default function DocumentChangeImpact({ projectId, submissionType }: { projectId?: string; submissionType?: string }) {
   const [selectedGuidance, setSelectedGuidance] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState('');
   const [loading, setLoading] = useState(false);
