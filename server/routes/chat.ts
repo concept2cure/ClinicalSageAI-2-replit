@@ -10,7 +10,7 @@
 
 import { Router, Request, Response } from 'express';
 import { getGateway } from '../services/ai-gateway/index.js';
-import type { GatewayResponse } from '../services/ai-gateway/types.js';
+import type { GatewayResponse, GatewayMessage } from '../services/ai-gateway/types.js';
 import { pool } from '../db.js';
 import {
   getOrCreateThread,
@@ -772,6 +772,93 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
       error: 'Failed to delete thread',
       code: 'THREAD_DELETE_ERROR',
     });
+  }
+});
+
+/**
+ * POST /api/chat/stream
+ * Stream chat responses via Server-Sent Events (SSE).
+ * Same provenance pipeline as /send-message but with real-time token delivery.
+ */
+router.post('/stream', async (req: Request, res: Response) => {
+  try {
+    const { message, thread_id, system_prompt } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    const gw = ensureGateway();
+    if (!gw || gw.getEnabledProviders().length === 0) {
+      return res.status(503).json({
+        error: 'No AI providers available. Configure ANTHROPIC_API_KEY or OPENAI_API_KEY.',
+      });
+    }
+
+    // Set SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    // Build messages
+    const systemContent = system_prompt || REGULATORY_SYSTEM_PROMPT;
+    const gwMessages: GatewayMessage[] = [
+      { role: 'system', content: systemContent },
+      { role: 'user', content: message },
+    ];
+
+    // If thread_id provided, load previous messages
+    if (thread_id) {
+      try {
+        const history = await getThreadMessages(thread_id);
+        if (history.length > 0) {
+          // Insert history before the current user message
+          const historyMessages = history.slice(-10).map((m: any) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          }));
+          gwMessages.splice(1, 0, ...historyMessages);
+        }
+      } catch (_e) {
+        /* ignore — proceed without history */
+      }
+    }
+
+    const gwResponse = await gw.route({
+      taskType: 'chat',
+      messages: gwMessages,
+      temperature: 0.7,
+      maxTokens: 4096,
+      stream: true,
+      onStream: (chunk: string, metadata?: any) => {
+        res.write(`data: ${JSON.stringify({
+          type: metadata?.type || 'text',
+          content: chunk,
+        })}\n\n`);
+      },
+      callerModule: 'lumen-cortex-chat-stream',
+    });
+
+    // Send final event
+    res.write(`data: ${JSON.stringify({
+      type: 'done',
+      model: gwResponse.model,
+      provider: gwResponse.provider,
+      usage: gwResponse.usage,
+      latencyMs: gwResponse.latencyMs,
+    })}\n\n`);
+
+    res.end();
+  } catch (error: any) {
+    console.error('[Chat Stream] Error:', error.message);
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+      res.end();
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 

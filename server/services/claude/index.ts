@@ -29,3 +29,10 @@ export {
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
 } from './ClaudeToolDefinitions';
+
+export {
+  executeAgenticLoop,
+  registerToolHandler,
+  getAvailableTools,
+  type AgenticOptions,
+} from './ClaudeToolExecutor';

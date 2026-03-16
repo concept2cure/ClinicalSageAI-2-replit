@@ -13,18 +13,8 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { authMiddleware } from '../auth';
-import OpenAI from 'openai';
+import { getGateway } from '../services/ai-gateway/gateway.js';
 import ragService from '../services/biotechRagService.js';
-
-// Initialize OpenAI for real AI generation
-let openai: OpenAI | null = null;
-try {
-  if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
-} catch {
-  console.log('[CERV2 AI] OpenAI not available, using template fallback');
-}
 
 const router = Router();
 
@@ -223,10 +213,11 @@ async function generateWithRAG(
     console.warn('[CERV2 AI] RAG retrieval failed, continuing without context:', ragErr);
   }
 
-  // Step 2: Generate with LLM if available
-  if (openai) {
-    try {
-      const messages: any[] = [
+  // Step 2: Generate with LLM via AI Gateway (Claude primary)
+  try {
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length > 0) {
+      const messages: Array<{ role: 'system' | 'user'; content: string }> = [
         { role: 'system', content: systemPrompt },
       ];
       if (ragContext) {
@@ -237,19 +228,20 @@ async function generateWithRAG(
       }
       messages.push({ role: 'user', content: prompt });
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const gwResponse = await gw.route({
+        taskType: 'document_drafting',
         messages,
         temperature: 0.3,
-        max_tokens: 2000,
+        maxTokens: 2000,
+        callerModule: 'cerv2-ai-routes/generateWithRAG',
       });
-      const text = completion.choices[0]?.message?.content || '';
+      const text = gwResponse.content || '';
       if (text.length > 50) {
         return { text, source: ragContext ? 'rag+ai' : 'ai', ragSources };
       }
-    } catch (aiErr) {
-      console.warn('[CERV2 AI] OpenAI generation failed, falling back to template:', aiErr);
     }
+  } catch (aiErr) {
+    console.warn('[CERV2 AI] AI Gateway generation failed, falling back to template:', aiErr);
   }
 
   // Step 3: Fallback — return empty to let caller use template

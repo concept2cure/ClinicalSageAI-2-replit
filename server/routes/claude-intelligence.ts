@@ -348,6 +348,93 @@ router.post('/quick', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Agentic Loop (multi-turn tool use)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/claude/agent
+ * Run a multi-turn agentic loop with Claude tool use.
+ * Claude can search evidence, look up regulations, and generate citations autonomously.
+ */
+router.post('/agent', async (req: Request, res: Response) => {
+  try {
+    const { prompt, framework, systemPrompt, maxRounds, enableThinking } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Missing required field: prompt' });
+    }
+
+    const { executeAgenticLoop } = await import(
+      '../services/claude/ClaudeToolExecutor'
+    );
+    const { DOCUMENT_DRAFTING_TOOLS } = await import(
+      '../services/claude/ClaudeToolDefinitions'
+    );
+
+    // Build system prompt
+    let system = systemPrompt || 'You are a regulatory affairs expert with access to clinical trial databases, FDA guidance, and literature search tools. Use the available tools to research and provide evidence-based answers.';
+    if (framework) {
+      const { default: draftingService } = await import(
+        '../services/claude/ClaudeDocumentDraftingService'
+      );
+      // Framework context is embedded in the system prompt
+    }
+
+    const result = await executeAgenticLoop(
+      {
+        taskType: 'document_drafting',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: prompt },
+        ],
+        provider: 'anthropic',
+        model: 'claude-opus-4-20250514',
+        maxTokens: 8192,
+        tools: DOCUMENT_DRAFTING_TOOLS,
+        toolChoice: 'auto',
+        thinking: enableThinking ? { enabled: true, budgetTokens: 15000 } : undefined,
+        promptCache: { enabled: true, type: 'ephemeral' },
+        organizationId: (req as any).organizationId,
+        userId: (req as any).userId,
+        callerModule: 'claude-intelligence/agent',
+      },
+      {
+        maxRounds: maxRounds || 5,
+        onToolExecution: (toolName, input, result) => {
+          console.log(`[Claude Agent] Tool: ${toolName}`, Object.keys(input));
+        },
+      }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        content: result.content,
+        thinking: result.thinking,
+        toolsUsed: result.toolUses?.map(t => t.name),
+        model: result.model,
+        usage: result.usage,
+        latencyMs: result.latencyMs,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Claude Intelligence] Agent error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/claude/tools
+ * List available tools and their registration status.
+ */
+router.get('/tools', async (_req: Request, res: Response) => {
+  const { getAvailableTools } = await import(
+    '../services/claude/ClaudeToolExecutor'
+  );
+  res.json({ success: true, data: { tools: getAvailableTools() } });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Health & Info
 // ─────────────────────────────────────────────────────────────────────────────
 
