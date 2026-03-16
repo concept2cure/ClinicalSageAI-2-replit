@@ -26,6 +26,7 @@ import {
   ClipboardList,
   Shield,
   Globe,
+  BookOpen,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -482,6 +483,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="Submission Ops"
               active={activeNavId === 'submission-workspace'}
               onClick={() => onNavigate?.('submission-workspace')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── About & Training ─────────────────────────────── */}
+          <WorkspaceGroup label="Learn" defaultOpen={false}>
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="About & Training"
+              active={activeNavId === 'about-training'}
+              onClick={() => onNavigate?.('about-training')}
             />
           </WorkspaceGroup>
 

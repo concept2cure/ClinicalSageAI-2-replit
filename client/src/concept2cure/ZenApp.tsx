@@ -125,6 +125,11 @@ const SnowGlobeChambers = lazy(() =>
   import('./pages/SnowGlobe/SnowGlobeChambers')
 );
 
+// About & Training Center (with Dr. Sage FDA Reviewer AI)
+const AboutTrainingCenter = lazy(() =>
+  import('./pages/AboutTrainingCenter').then(m => ({ default: m.AboutTrainingCenter }))
+);
+
 // Lazy load Phase 7 Mission Control components
 const MissionControl = lazy(() =>
   import('./pages/MissionControl').then(m => ({ default: m.MissionControl }))
@@ -268,7 +273,8 @@ type LayoutMode =
   | 'document-vault'
   | 'clinical-trial'
   | 'snowglobe'
-  | 'snowglobe-chambers';
+  | 'snowglobe-chambers'
+  | 'about-training';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1245,6 +1251,7 @@ export const ZenApp: React.FC = () => {
               'submission-workspace': 'submission-workspace',
               snowglobe: 'snowglobe',
               'snowglobe-chambers': 'snowglobe',
+              'about-training': 'about-training',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1327,6 +1334,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'snowglobe':
               setLayoutMode('snowglobe');
+              break;
+            case 'about-training':
+              setLayoutMode('about-training');
               break;
             case 'submission-workspace':
               setLayoutMode('submission-workspace');
@@ -1530,6 +1540,15 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe-chambers">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
                 <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* About & Training Center (Dr. Sage FDA Reviewer AI) */}
+          {!embeddedModule && layoutMode === 'about-training' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-about-training">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+                <AboutTrainingCenter />
               </Suspense>
             </div>
           )}
