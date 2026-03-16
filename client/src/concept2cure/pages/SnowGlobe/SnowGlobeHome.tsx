@@ -16,8 +16,10 @@
  * - Multi-tenant: Org-scoped data only
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
+
+const ScenarioComparison = lazy(() => import('./ScenarioComparison'));
 import {
   AlertTriangle,
   ArrowDown,
@@ -776,15 +778,17 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
   }, []);
 
   const handleChamberDeepDive = useCallback((chamber: ChamberKey) => {
-    // Placeholder: would navigate to the chamber detail view
+    window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: 'snowglobe-chambers', chamber } }));
   }, []);
 
   const handleCreateMemo = useCallback(() => {
-    // Placeholder: would trigger findings memo generation
+    window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: 'snowglobe-chambers' } }));
   }, []);
 
+  const [showComparison, setShowComparison] = useState(false);
+
   const handleCompareScenarios = useCallback(() => {
-    // Placeholder: would open side-by-side scenario comparison
+    setShowComparison(true);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -1085,6 +1089,22 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
           </div>
         </section>
       </div>
+
+      {/* Scenario Comparison Modal Overlay */}
+      {showComparison && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-zinc-200">
+            <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-zinc-300" /></div>}>
+              <ScenarioComparison
+                programId={programId}
+                baselineId={null}
+                alternateId={selectedScenarioId}
+                onClose={() => setShowComparison(false)}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

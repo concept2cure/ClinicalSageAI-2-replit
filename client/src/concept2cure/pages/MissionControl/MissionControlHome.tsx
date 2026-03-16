@@ -55,6 +55,7 @@ import {
   useScaffoldProgram,
   useProvenance,
 } from '../../hooks/useMissionControl';
+import SnowGlobeMissionControlCard from '../SnowGlobe/SnowGlobeMissionControlCard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -619,6 +620,16 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
             )}
           </div>
         </div>
+
+        {/* ── Snow Globe — Prediction Intelligence Summary ────────────────── */}
+        {activeProgram && (
+          <div className="mt-6">
+            <SnowGlobeMissionControlCard
+              programId={activeProgram.id}
+              className="rounded-xl"
+            />
+          </div>
+        )}
 
         {/* ── Quick Access — Mission Control Modules ──────────────────────── */}
         <div className="mt-6">

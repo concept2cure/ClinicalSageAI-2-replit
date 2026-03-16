@@ -6,8 +6,10 @@
  * right status/evidence/review metadata.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
+
+const SnowGlobeDossierNodeSummary = lazy(() => import('../SnowGlobe/SnowGlobeDossierNodeSummary'));
 import {
   FileText,
   FolderOpen,
@@ -330,6 +332,11 @@ export const DossierView: React.FC<DossierViewProps> = ({
                   </p>
                 </div>
               </div>
+
+              {/* Snow Globe compliance assessment for this dossier node */}
+              <Suspense fallback={null}>
+                <SnowGlobeDossierNodeSummary nodeId={selectedArtifact.id} className="mt-0" />
+              </Suspense>
             </div>
           )}
         </div>

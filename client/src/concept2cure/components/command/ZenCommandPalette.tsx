@@ -420,6 +420,15 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     action: () => onAction('nav-snowglobe'),
     keywords: ['snowglobe', 'prediction', 'stress', 'test', 'scan', 'agency', 'reviewer', 'attack', 'audit', 'intelligence', 'simulation'],
   },
+  {
+    id: 'nav-snowglobe-chambers',
+    title: 'Snow Globe Chambers',
+    subtitle: 'Deep-dive into individual prediction engines',
+    icon: <Snowflake className="w-4 h-4 text-cyan-600" />,
+    category: 'tools',
+    action: () => onAction('nav-snowglobe-chambers'),
+    keywords: ['chambers', 'engine', 'agency', 'reviewer', 'audit', 'route', 'evidence', 'collaboration', 'deep dive'],
+  },
 
   // AI
   {

@@ -6,8 +6,10 @@
  * what depends on what, and what can be auto-drafted next.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
+
+const SnowGlobeArtifactSummary = lazy(() => import('../SnowGlobe/SnowGlobeArtifactSummary'));
 import {
   FileText,
   AlertTriangle,
@@ -296,6 +298,10 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
               )}
             </div>
           </div>
+          {/* Snow Globe risk assessment for this artifact */}
+          <Suspense fallback={null}>
+            <SnowGlobeArtifactSummary artifactId={selectedArtifact.id} className="mt-3 mx-auto max-w-5xl" />
+          </Suspense>
         </div>
       )}
     </div>

@@ -210,7 +210,8 @@ type LayoutMode =
   | 'task-board'
   | 'team-workspace'
   | 'program-analytics'
-  | 'snowglobe';
+  | 'snowglobe'
+  | 'snowglobe-chambers';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1645,6 +1646,13 @@ export const ZenApp: React.FC = () => {
           {layoutMode === 'snowglobe' && (
             <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-cyan-500" /></div>}>
               <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
+            </Suspense>
+          )}
+
+          {/* Snow Globe — Chamber Detail View */}
+          {layoutMode === 'snowglobe-chambers' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-cyan-500" /></div>}>
+              <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
             </Suspense>
           )}
 
