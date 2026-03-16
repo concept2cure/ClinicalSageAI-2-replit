@@ -4,33 +4,44 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { 
-  ChevronRight, 
-  ChevronLeft, 
-  CheckCircle, 
-  Building2, 
-  Package, 
-  Users, 
-  Calendar, 
-  Shield, 
-  Cpu, 
-  Heart, 
+import {
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle,
+  Building2,
+  Package,
+  Users,
+  Calendar,
+  Shield,
+  Cpu,
+  Heart,
   FlaskConical,
   Zap,
   FileText,
   Save,
   Rocket,
   Layout,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
-import { DEVICE_TEMPLATES, applyTemplateToForm, getAllTemplates } from '../../services/ProjectTemplates';
+import {
+  DEVICE_TEMPLATES,
+  applyTemplateToForm,
+  getAllTemplates,
+} from '../../services/ProjectTemplates';
 
 const WIZARD_STEPS = [
   { id: 'template', label: 'Choose Template', icon: <Layout className="h-5 w-5" /> },
@@ -40,7 +51,7 @@ const WIZARD_STEPS = [
   { id: 'requirements', label: 'Special Requirements', icon: <Cpu className="h-5 w-5" /> },
   { id: 'team', label: 'Team Assignment', icon: <Users className="h-5 w-5" /> },
   { id: 'timeline', label: 'Timeline', icon: <Calendar className="h-5 w-5" /> },
-  { id: 'review', label: 'Review & Create', icon: <CheckCircle className="h-5 w-5" /> }
+  { id: 'review', label: 'Review & Create', icon: <CheckCircle className="h-5 w-5" /> },
 ];
 
 export default function ProjectCreationWizard({ onComplete, onCancel }) {
@@ -48,20 +59,20 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Form data state
   const [formData, setFormData] = useState({
     // Template Selection
     templateId: '',
     requiredSections: [],
     documentMapping: {},
-    
+
     // Basic Information
     projectName: '',
     projectDescription: '',
     submissionType: 'traditional',
     organizationId: null,
-    
+
     // Device Details
     deviceName: '',
     deviceModel: '',
@@ -70,7 +81,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
     manufacturerAddress: '',
     intendedUse: '',
     indicationsForUse: '',
-    
+
     // Classification
     deviceClassification: 'II',
     productCode: '',
@@ -78,7 +89,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
     panelCode: '',
     predicateDeviceName: '',
     predicateDeviceNumber: '',
-    
+
     // Special Requirements
     hasSoftware: false,
     hasCybersecurity: false,
@@ -86,33 +97,37 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
     hasBiocompatibility: true,
     hasClinicalData: false,
     hasAI: false,
-    
+
     // Team Assignment
     projectLead: '',
     regulatoryLead: '',
     qualityLead: '',
     teamMembers: [],
-    
+
     // Timeline
     targetSubmissionDate: '',
     estimatedDuration: '6',
-    priority: 'medium'
+    priority: 'medium',
   });
 
   // Available templates
   const [templates] = useState(getAllTemplates());
 
-  // Get organization ID from localStorage
+  // Get organization ID from TenantContext
+  const { currentOrganization } = useTenantContext();
   useEffect(() => {
-    const orgId = localStorage.getItem('currentOrganizationId') || localStorage.getItem('organizationId');
+    const orgId = currentOrganization?.id;
     if (orgId) {
-      setFormData(prev => ({ ...prev, organizationId: parseInt(orgId) }));
+      setFormData(prev => ({
+        ...prev,
+        organizationId: typeof orgId === 'string' ? parseInt(orgId) : orgId,
+      }));
     }
-  }, []);
+  }, [currentOrganization]);
 
   // Create project mutation
   const createProjectMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async data => {
       // First create the base project
       const projectResponse = await apiRequest('/api/510k/projects', {
         method: 'POST',
@@ -121,8 +136,8 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
           description: data.projectDescription,
           type: 'regulatory',
           status: 'planning',
-          organizationId: data.organizationId
-        })
+          organizationId: data.organizationId,
+        }),
       });
 
       if (!projectResponse.ok) {
@@ -136,8 +151,8 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
         method: 'POST',
         body: JSON.stringify({
           ...data,
-          projectId: project.id
-        })
+          projectId: project.id,
+        }),
       });
 
       if (!response.ok) {
@@ -163,7 +178,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
           evidence: { status: 'todo', completion: 0, gates: {} },
           authoring: { status: 'todo', completion: 0, gates: {} },
           estar_rta: { status: 'todo', completion: 0, gates: {} },
-          submit_ai: { status: 'todo', completion: 0, gates: {} }
+          submit_ai: { status: 'todo', completion: 0, gates: {} },
         },
         // Copy over template-based settings
         hasSoftware: data.hasSoftware,
@@ -173,7 +188,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
         hasClinicalData: data.hasClinicalData,
         hasPatientContacting: data.hasPatientContacting,
         contactDuration: data.contactDuration,
-        contactType: data.contactType
+        contactType: data.contactType,
       };
 
       // Initialize the workflow with initial data
@@ -183,13 +198,13 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
           stage: 'setup',
           section: 'device_intake',
           data: workflowInitData,
-          organizationId: data.organizationId
-        })
+          organizationId: data.organizationId,
+        }),
       });
 
       return projectResult;
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       queryClient.invalidateQueries({ queryKey: ['/api/510k/workflow/projects'] });
       toast({
@@ -198,21 +213,21 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
       });
       onComplete(data);
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create project',
         variant: 'destructive',
       });
       setIsSubmitting(false);
-    }
+    },
   });
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleTemplateSelect = (templateKey) => {
+  const handleTemplateSelect = templateKey => {
     const updatedFormData = applyTemplateToForm(templateKey, formData);
     setFormData(updatedFormData);
     toast({
@@ -233,14 +248,14 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
 
   const validateCurrentStep = () => {
     const step = WIZARD_STEPS[currentStep].id;
-    
+
     switch (step) {
       case 'basic':
         if (!formData.projectName || !formData.projectDescription) {
           toast({
             title: 'Validation Error',
             description: 'Please fill in all required fields',
-            variant: 'destructive'
+            variant: 'destructive',
           });
           return false;
         }
@@ -250,7 +265,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
           toast({
             title: 'Validation Error',
             description: 'Device name and intended use are required',
-            variant: 'destructive'
+            variant: 'destructive',
           });
           return false;
         }
@@ -260,13 +275,13 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
           toast({
             title: 'Validation Error',
             description: 'Device classification is required',
-            variant: 'destructive'
+            variant: 'destructive',
           });
           return false;
         }
         break;
     }
-    
+
     return true;
   };
 
@@ -285,12 +300,13 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             <Alert>
               <Sparkles className="h-4 w-4" />
               <AlertDescription>
-                Choose a pre-configured template to accelerate your 510(k) submission. Templates include optimized workflows, required sections, and smart document mapping.
+                Choose a pre-configured template to accelerate your 510(k) submission. Templates
+                include optimized workflows, required sections, and smart document mapping.
               </AlertDescription>
             </Alert>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {templates.map((template) => (
+              {templates.map(template => (
                 <Card
                   key={template.key}
                   className={`cursor-pointer transition-all hover:shadow-lg ${
@@ -324,7 +340,9 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                         <li>• {template.estimatedDuration || '6'} months estimated</li>
                         {template.defaultValues.hasSoftware && <li>• Software/SaMD support</li>}
                         {template.defaultValues.hasAI && <li>• AI/ML capabilities</li>}
-                        {template.defaultValues.hasClinicalData && <li>• Clinical data included</li>}
+                        {template.defaultValues.hasClinicalData && (
+                          <li>• Clinical data included</li>
+                        )}
                       </ul>
                     </div>
                   </CardContent>
@@ -341,29 +359,33 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             )}
           </div>
         );
-        
+
       case 'basic':
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="projectName" data-testid="label-projectName">Project Name *</Label>
+              <Label htmlFor="projectName" data-testid="label-projectName">
+                Project Name *
+              </Label>
               <Input
                 id="projectName"
                 data-testid="input-projectName"
                 value={formData.projectName}
-                onChange={(e) => handleInputChange('projectName', e.target.value)}
+                onChange={e => handleInputChange('projectName', e.target.value)}
                 placeholder="Enter project name"
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="projectDescription" data-testid="label-projectDescription">Project Description *</Label>
+              <Label htmlFor="projectDescription" data-testid="label-projectDescription">
+                Project Description *
+              </Label>
               <Textarea
                 id="projectDescription"
                 data-testid="textarea-projectDescription"
                 value={formData.projectDescription}
-                onChange={(e) => handleInputChange('projectDescription', e.target.value)}
+                onChange={e => handleInputChange('projectDescription', e.target.value)}
                 placeholder="Describe the project objectives and scope"
                 className="mt-1"
                 rows={4}
@@ -371,10 +393,12 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             </div>
 
             <div>
-              <Label htmlFor="submissionType" data-testid="label-submissionType">Submission Type</Label>
+              <Label htmlFor="submissionType" data-testid="label-submissionType">
+                Submission Type
+              </Label>
               <Select
                 value={formData.submissionType}
-                onValueChange={(value) => handleInputChange('submissionType', value)}
+                onValueChange={value => handleInputChange('submissionType', value)}
                 data-testid="select-submissionType"
               >
                 <SelectTrigger className="mt-1">
@@ -395,24 +419,28 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="deviceName" data-testid="label-deviceName">Device Name *</Label>
+                <Label htmlFor="deviceName" data-testid="label-deviceName">
+                  Device Name *
+                </Label>
                 <Input
                   id="deviceName"
                   data-testid="input-deviceName"
                   value={formData.deviceName}
-                  onChange={(e) => handleInputChange('deviceName', e.target.value)}
+                  onChange={e => handleInputChange('deviceName', e.target.value)}
                   placeholder="Enter device name"
                   className="mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="deviceModel" data-testid="label-deviceModel">Model Number</Label>
+                <Label htmlFor="deviceModel" data-testid="label-deviceModel">
+                  Model Number
+                </Label>
                 <Input
                   id="deviceModel"
                   data-testid="input-deviceModel"
                   value={formData.deviceModel}
-                  onChange={(e) => handleInputChange('deviceModel', e.target.value)}
+                  onChange={e => handleInputChange('deviceModel', e.target.value)}
                   placeholder="Enter model number"
                   className="mt-1"
                 />
@@ -420,24 +448,28 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             </div>
 
             <div>
-              <Label htmlFor="manufacturerName" data-testid="label-manufacturerName">Manufacturer Name</Label>
+              <Label htmlFor="manufacturerName" data-testid="label-manufacturerName">
+                Manufacturer Name
+              </Label>
               <Input
                 id="manufacturerName"
                 data-testid="input-manufacturerName"
                 value={formData.manufacturerName}
-                onChange={(e) => handleInputChange('manufacturerName', e.target.value)}
+                onChange={e => handleInputChange('manufacturerName', e.target.value)}
                 placeholder="Enter manufacturer name"
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="intendedUse" data-testid="label-intendedUse">Intended Use *</Label>
+              <Label htmlFor="intendedUse" data-testid="label-intendedUse">
+                Intended Use *
+              </Label>
               <Textarea
                 id="intendedUse"
                 data-testid="textarea-intendedUse"
                 value={formData.intendedUse}
-                onChange={(e) => handleInputChange('intendedUse', e.target.value)}
+                onChange={e => handleInputChange('intendedUse', e.target.value)}
                 placeholder="Describe the intended use of the device"
                 className="mt-1"
                 rows={3}
@@ -445,12 +477,14 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             </div>
 
             <div>
-              <Label htmlFor="indicationsForUse" data-testid="label-indicationsForUse">Indications for Use</Label>
+              <Label htmlFor="indicationsForUse" data-testid="label-indicationsForUse">
+                Indications for Use
+              </Label>
               <Textarea
                 id="indicationsForUse"
                 data-testid="textarea-indicationsForUse"
                 value={formData.indicationsForUse}
-                onChange={(e) => handleInputChange('indicationsForUse', e.target.value)}
+                onChange={e => handleInputChange('indicationsForUse', e.target.value)}
                 placeholder="Describe the indications for use"
                 className="mt-1"
                 rows={3}
@@ -463,10 +497,12 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="deviceClassification" data-testid="label-deviceClassification">Device Classification *</Label>
+              <Label htmlFor="deviceClassification" data-testid="label-deviceClassification">
+                Device Classification *
+              </Label>
               <Select
                 value={formData.deviceClassification}
-                onValueChange={(value) => handleInputChange('deviceClassification', value)}
+                onValueChange={value => handleInputChange('deviceClassification', value)}
                 data-testid="select-deviceClassification"
               >
                 <SelectTrigger className="mt-1">
@@ -482,12 +518,14 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="productCode" data-testid="label-productCode">Product Code</Label>
+                <Label htmlFor="productCode" data-testid="label-productCode">
+                  Product Code
+                </Label>
                 <Input
                   id="productCode"
                   data-testid="input-productCode"
                   value={formData.productCode}
-                  onChange={(e) => handleInputChange('productCode', e.target.value)}
+                  onChange={e => handleInputChange('productCode', e.target.value)}
                   placeholder="3-letter product code"
                   className="mt-1"
                   maxLength={3}
@@ -495,12 +533,14 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
               </div>
 
               <div>
-                <Label htmlFor="regulationNumber" data-testid="label-regulationNumber">Regulation Number</Label>
+                <Label htmlFor="regulationNumber" data-testid="label-regulationNumber">
+                  Regulation Number
+                </Label>
                 <Input
                   id="regulationNumber"
                   data-testid="input-regulationNumber"
                   value={formData.regulationNumber}
-                  onChange={(e) => handleInputChange('regulationNumber', e.target.value)}
+                  onChange={e => handleInputChange('regulationNumber', e.target.value)}
                   placeholder="e.g., 21 CFR 880.5180"
                   className="mt-1"
                 />
@@ -508,24 +548,28 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             </div>
 
             <div>
-              <Label htmlFor="predicateDeviceName" data-testid="label-predicateDeviceName">Predicate Device Name</Label>
+              <Label htmlFor="predicateDeviceName" data-testid="label-predicateDeviceName">
+                Predicate Device Name
+              </Label>
               <Input
                 id="predicateDeviceName"
                 data-testid="input-predicateDeviceName"
                 value={formData.predicateDeviceName}
-                onChange={(e) => handleInputChange('predicateDeviceName', e.target.value)}
+                onChange={e => handleInputChange('predicateDeviceName', e.target.value)}
                 placeholder="Enter predicate device name"
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="predicateDeviceNumber" data-testid="label-predicateDeviceNumber">Predicate Device 510(k) Number</Label>
+              <Label htmlFor="predicateDeviceNumber" data-testid="label-predicateDeviceNumber">
+                Predicate Device 510(k) Number
+              </Label>
               <Input
                 id="predicateDeviceNumber"
                 data-testid="input-predicateDeviceNumber"
                 value={formData.predicateDeviceNumber}
-                onChange={(e) => handleInputChange('predicateDeviceNumber', e.target.value)}
+                onChange={e => handleInputChange('predicateDeviceNumber', e.target.value)}
                 placeholder="e.g., K123456"
                 className="mt-1"
               />
@@ -546,7 +590,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                   id="hasSoftware"
                   data-testid="checkbox-hasSoftware"
                   checked={formData.hasSoftware}
-                  onCheckedChange={(checked) => handleInputChange('hasSoftware', checked)}
+                  onCheckedChange={checked => handleInputChange('hasSoftware', checked)}
                 />
                 <Label htmlFor="hasSoftware" className="flex items-center cursor-pointer">
                   <Cpu className="h-4 w-4 mr-2" />
@@ -559,7 +603,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                   id="hasCybersecurity"
                   data-testid="checkbox-hasCybersecurity"
                   checked={formData.hasCybersecurity}
-                  onCheckedChange={(checked) => handleInputChange('hasCybersecurity', checked)}
+                  onCheckedChange={checked => handleInputChange('hasCybersecurity', checked)}
                 />
                 <Label htmlFor="hasCybersecurity" className="flex items-center cursor-pointer">
                   <Shield className="h-4 w-4 mr-2" />
@@ -572,7 +616,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                   id="hasSterility"
                   data-testid="checkbox-hasSterility"
                   checked={formData.hasSterility}
-                  onCheckedChange={(checked) => handleInputChange('hasSterility', checked)}
+                  onCheckedChange={checked => handleInputChange('hasSterility', checked)}
                 />
                 <Label htmlFor="hasSterility" className="flex items-center cursor-pointer">
                   <FlaskConical className="h-4 w-4 mr-2" />
@@ -585,7 +629,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                   id="hasBiocompatibility"
                   data-testid="checkbox-hasBiocompatibility"
                   checked={formData.hasBiocompatibility}
-                  onCheckedChange={(checked) => handleInputChange('hasBiocompatibility', checked)}
+                  onCheckedChange={checked => handleInputChange('hasBiocompatibility', checked)}
                 />
                 <Label htmlFor="hasBiocompatibility" className="flex items-center cursor-pointer">
                   <Heart className="h-4 w-4 mr-2" />
@@ -598,7 +642,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                   id="hasClinicalData"
                   data-testid="checkbox-hasClinicalData"
                   checked={formData.hasClinicalData}
-                  onCheckedChange={(checked) => handleInputChange('hasClinicalData', checked)}
+                  onCheckedChange={checked => handleInputChange('hasClinicalData', checked)}
                 />
                 <Label htmlFor="hasClinicalData" className="flex items-center cursor-pointer">
                   <Users className="h-4 w-4 mr-2" />
@@ -611,7 +655,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                   id="hasAI"
                   data-testid="checkbox-hasAI"
                   checked={formData.hasAI}
-                  onCheckedChange={(checked) => handleInputChange('hasAI', checked)}
+                  onCheckedChange={checked => handleInputChange('hasAI', checked)}
                 />
                 <Label htmlFor="hasAI" className="flex items-center cursor-pointer">
                   <Zap className="h-4 w-4 mr-2" />
@@ -626,36 +670,42 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="projectLead" data-testid="label-projectLead">Project Lead</Label>
+              <Label htmlFor="projectLead" data-testid="label-projectLead">
+                Project Lead
+              </Label>
               <Input
                 id="projectLead"
                 data-testid="input-projectLead"
                 value={formData.projectLead}
-                onChange={(e) => handleInputChange('projectLead', e.target.value)}
+                onChange={e => handleInputChange('projectLead', e.target.value)}
                 placeholder="Enter project lead name or email"
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="regulatoryLead" data-testid="label-regulatoryLead">Regulatory Lead</Label>
+              <Label htmlFor="regulatoryLead" data-testid="label-regulatoryLead">
+                Regulatory Lead
+              </Label>
               <Input
                 id="regulatoryLead"
                 data-testid="input-regulatoryLead"
                 value={formData.regulatoryLead}
-                onChange={(e) => handleInputChange('regulatoryLead', e.target.value)}
+                onChange={e => handleInputChange('regulatoryLead', e.target.value)}
                 placeholder="Enter regulatory lead name or email"
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="qualityLead" data-testid="label-qualityLead">Quality Lead</Label>
+              <Label htmlFor="qualityLead" data-testid="label-qualityLead">
+                Quality Lead
+              </Label>
               <Input
                 id="qualityLead"
                 data-testid="input-qualityLead"
                 value={formData.qualityLead}
-                onChange={(e) => handleInputChange('qualityLead', e.target.value)}
+                onChange={e => handleInputChange('qualityLead', e.target.value)}
                 placeholder="Enter quality lead name or email"
                 className="mt-1"
               />
@@ -667,22 +717,26 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
         return (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="targetSubmissionDate" data-testid="label-targetSubmissionDate">Target Submission Date</Label>
+              <Label htmlFor="targetSubmissionDate" data-testid="label-targetSubmissionDate">
+                Target Submission Date
+              </Label>
               <Input
                 id="targetSubmissionDate"
                 data-testid="input-targetSubmissionDate"
                 type="date"
                 value={formData.targetSubmissionDate}
-                onChange={(e) => handleInputChange('targetSubmissionDate', e.target.value)}
+                onChange={e => handleInputChange('targetSubmissionDate', e.target.value)}
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="estimatedDuration" data-testid="label-estimatedDuration">Estimated Duration (months)</Label>
+              <Label htmlFor="estimatedDuration" data-testid="label-estimatedDuration">
+                Estimated Duration (months)
+              </Label>
               <Select
                 value={formData.estimatedDuration}
-                onValueChange={(value) => handleInputChange('estimatedDuration', value)}
+                onValueChange={value => handleInputChange('estimatedDuration', value)}
                 data-testid="select-estimatedDuration"
               >
                 <SelectTrigger className="mt-1">
@@ -699,10 +753,12 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             </div>
 
             <div>
-              <Label htmlFor="priority" data-testid="label-priority">Priority Level</Label>
+              <Label htmlFor="priority" data-testid="label-priority">
+                Priority Level
+              </Label>
               <Select
                 value={formData.priority}
-                onValueChange={(value) => handleInputChange('priority', value)}
+                onValueChange={value => handleInputChange('priority', value)}
                 data-testid="select-priority"
               >
                 <SelectTrigger className="mt-1">
@@ -731,37 +787,78 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             <div className="space-y-3">
               <div>
                 <h4 className="font-semibold text-sm text-gray-600">Basic Information</h4>
-                <p className="text-sm"><strong>Project Name:</strong> {formData.projectName}</p>
-                <p className="text-sm"><strong>Submission Type:</strong> {formData.submissionType}</p>
+                <p className="text-sm">
+                  <strong>Project Name:</strong> {formData.projectName}
+                </p>
+                <p className="text-sm">
+                  <strong>Submission Type:</strong> {formData.submissionType}
+                </p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-sm text-gray-600">Device Details</h4>
-                <p className="text-sm"><strong>Device Name:</strong> {formData.deviceName}</p>
-                <p className="text-sm"><strong>Classification:</strong> Class {formData.deviceClassification}</p>
+                <p className="text-sm">
+                  <strong>Device Name:</strong> {formData.deviceName}
+                </p>
+                <p className="text-sm">
+                  <strong>Classification:</strong> Class {formData.deviceClassification}
+                </p>
                 {formData.predicateDeviceName && (
-                  <p className="text-sm"><strong>Predicate:</strong> {formData.predicateDeviceName}</p>
+                  <p className="text-sm">
+                    <strong>Predicate:</strong> {formData.predicateDeviceName}
+                  </p>
                 )}
               </div>
 
               <div>
                 <h4 className="font-semibold text-sm text-gray-600">Special Requirements</h4>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {formData.hasSoftware && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Software</span>}
-                  {formData.hasCybersecurity && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Cybersecurity</span>}
-                  {formData.hasSterility && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Sterility</span>}
-                  {formData.hasBiocompatibility && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Biocompatibility</span>}
-                  {formData.hasClinicalData && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Clinical Data</span>}
-                  {formData.hasAI && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">AI/ML</span>}
+                  {formData.hasSoftware && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                      Software
+                    </span>
+                  )}
+                  {formData.hasCybersecurity && (
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                      Cybersecurity
+                    </span>
+                  )}
+                  {formData.hasSterility && (
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                      Sterility
+                    </span>
+                  )}
+                  {formData.hasBiocompatibility && (
+                    <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                      Biocompatibility
+                    </span>
+                  )}
+                  {formData.hasClinicalData && (
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                      Clinical Data
+                    </span>
+                  )}
+                  {formData.hasAI && (
+                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
+                      AI/ML
+                    </span>
+                  )}
                 </div>
               </div>
 
               {formData.targetSubmissionDate && (
                 <div>
                   <h4 className="font-semibold text-sm text-gray-600">Timeline</h4>
-                  <p className="text-sm"><strong>Target Submission:</strong> {new Date(formData.targetSubmissionDate).toLocaleDateString()}</p>
-                  <p className="text-sm"><strong>Duration:</strong> {formData.estimatedDuration} months</p>
-                  <p className="text-sm"><strong>Priority:</strong> {formData.priority}</p>
+                  <p className="text-sm">
+                    <strong>Target Submission:</strong>{' '}
+                    {new Date(formData.targetSubmissionDate).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm">
+                    <strong>Duration:</strong> {formData.estimatedDuration} months
+                  </p>
+                  <p className="text-sm">
+                    <strong>Priority:</strong> {formData.priority}
+                  </p>
                 </div>
               )}
             </div>
@@ -794,9 +891,11 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
                   index <= currentStep ? 'text-blue-600' : 'text-gray-400'
                 }`}
               >
-                <div className={`rounded-full p-2 ${
-                  index <= currentStep ? 'bg-blue-100' : 'bg-gray-100'
-                }`}>
+                <div
+                  className={`rounded-full p-2 ${
+                    index <= currentStep ? 'bg-blue-100' : 'bg-gray-100'
+                  }`}
+                >
                   {step.icon}
                 </div>
                 <span className="text-xs mt-1 text-center">{step.label}</span>
@@ -806,9 +905,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
         </div>
 
         {/* Step content */}
-        <div className="min-h-[400px]">
-          {renderStepContent()}
-        </div>
+        <div className="min-h-[400px]">{renderStepContent()}</div>
 
         {/* Navigation buttons */}
         <div className="flex justify-between mt-8">
@@ -837,11 +934,7 @@ export default function ProjectCreationWizard({ onComplete, onCancel }) {
             </Button>
 
             {currentStep < WIZARD_STEPS.length - 1 ? (
-              <Button
-                onClick={handleNext}
-                disabled={isSubmitting}
-                data-testid="button-next"
-              >
+              <Button onClick={handleNext} disabled={isSubmitting} data-testid="button-next">
                 Next
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>

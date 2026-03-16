@@ -22,7 +22,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -493,30 +492,30 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
     <div className="space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
-        <Card className="cursor-pointer hover:border-gray-300" onClick={() => setFilterStatus('all')}>
-          <CardContent className="p-3 text-center">
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-gray-300" onClick={() => setFilterStatus('all')}>
+          <div className="px-3 py-2 p-3 text-center">
             <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             <p className="text-xs text-gray-500">Total</p>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:border-green-300" onClick={() => setFilterStatus('completed')}>
-          <CardContent className="p-3 text-center">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-green-300" onClick={() => setFilterStatus('completed')}>
+          <div className="px-3 py-2 p-3 text-center">
             <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
             <p className="text-xs text-gray-500">Completed</p>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:border-amber-300" onClick={() => setFilterStatus('pending')}>
-          <CardContent className="p-3 text-center">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-amber-300" onClick={() => setFilterStatus('pending')}>
+          <div className="px-3 py-2 p-3 text-center">
             <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
             <p className="text-xs text-gray-500">Pending</p>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:border-red-300" onClick={() => setFilterStatus('overdue')}>
-          <CardContent className="p-3 text-center">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-red-300" onClick={() => setFilterStatus('overdue')}>
+          <div className="px-3 py-2 p-3 text-center">
             <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
             <p className="text-xs text-gray-500">Overdue</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Training Records Table */}
@@ -635,8 +634,8 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-3 p-4 bg-gray-50 border-b">
-        <Card>
-          <CardContent className="p-3 flex items-center gap-3">
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
               <FileText className="h-5 w-5 text-blue-600" />
             </div>
@@ -644,10 +643,10 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               <p className="text-xs text-gray-500">Total SOPs</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 flex items-center gap-3">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
@@ -655,10 +654,10 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <p className="text-2xl font-bold text-green-600">{stats.effective}</p>
               <p className="text-xs text-gray-500">Effective</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 flex items-center gap-3">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
@@ -666,10 +665,10 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <p className="text-2xl font-bold text-amber-600">{stats.underReview}</p>
               <p className="text-xs text-gray-500">Under Review</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 flex items-center gap-3">
+          </div>
+        </div>
+        <div className="border border-border/40 rounded-sm bg-background">
+          <div className="px-3 py-2 p-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
               <RefreshCw className="h-5 w-5 text-red-600" />
             </div>
@@ -677,8 +676,8 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <p className="text-2xl font-bold text-red-600">{stats.reviewDue}</p>
               <p className="text-xs text-gray-500">Review Due</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -723,8 +722,8 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
                 .map(sop => {
                   const daysUntil = Math.ceil((new Date(sop.reviewDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                   return (
-                    <Card key={sop.id}>
-                      <CardContent className="p-3 flex items-center justify-between">
+                    <div key={sop.id} className="border border-border/40 rounded-sm bg-background">
+                      <div className="px-3 py-2 p-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             'w-10 h-10 rounded-lg flex items-center justify-center',
@@ -751,8 +750,8 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
                             {new Date(sop.reviewDate).toLocaleDateString()}
                           </p>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   );
                 })}
             </div>

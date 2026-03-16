@@ -7,7 +7,7 @@
  * - Immutable audit trails with cryptographic hashing (§11.10(e))
  * - Authority checks and access controls (§11.10(d))
  * - Closed/open system controls (§11.10(a-c))
- * - Time-stamped operations with NIST-traceable timestamps
+ * - Time-stamped operations with server-authoritative timestamps
  * - Document version control with full lineage (§11.10(e))
  * - Validation documentation (IQ/OQ/PQ) tracking
  * - SOC 2 Type II evidence collection
@@ -39,7 +39,7 @@ export interface ElectronicSignature {
   meaning: SignatureMeaning;
   customMeaning?: string;
   timestamp: Date;
-  nistTimestamp?: string; // NIST-traceable timestamp
+  serverTimestamp?: string; // Server-authoritative timestamp (ISO 8601)
   ipAddress: string;
   userAgent: string;
   signatureHash: string; // SHA-256 of document content + signer + timestamp
@@ -77,7 +77,7 @@ export interface AuditTrailEntry {
   newValue?: string;
   changeReason?: string; // Required for modifications to GxP records
   timestamp: Date;
-  nistTimestamp?: string;
+  serverTimestamp?: string;
   ipAddress: string;
   userAgent: string;
   sessionId: string;
@@ -877,7 +877,7 @@ router.get('/health', (_req: Request, res: Response) => {
       authorityChecks: true,
       soc2Evidence: true,
       gamp5Validation: true,
-      nistTimestamps: !!process.env.NIST_TIMESTAMP_SERVICE,
+      trustedTimestamps: !!process.env.TRUSTED_TIMESTAMP_SERVICE, // TSA integration (only true if actually configured)
     },
     hashAlgorithm: 'SHA-256',
     auditChainLength: 'active',

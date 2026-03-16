@@ -1,6 +1,6 @@
 /**
  * ForesightAI™ Core API Routes
- * 
+ *
  * Provides predictive scoring, pattern analysis, and recommendations
  * for clinical trial success across all phases (0/I through IV)
  */
@@ -14,6 +14,7 @@ import {
   foresightPredictions,
   clinicalFeedback,
   translationalPatterns,
+  csrReports,
   type InsertForesightPrediction,
   type InsertClinicalFeedback,
 } from '@shared/schema';
@@ -27,18 +28,26 @@ const PredictionRequestSchema = z.object({
   studyId: z.string(),
   phase: z.string(),
   indication: z.string(),
-  biomarkers: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    type: z.string(),
-  })).optional(),
-  endpoints: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    type: z.string(),
-  })).optional(),
+  biomarkers: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        type: z.string(),
+      })
+    )
+    .optional(),
+  endpoints: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        type: z.string(),
+      })
+    )
+    .optional(),
   sampleSize: z.number().optional(),
-  organizationId: z.number().optional(),
+  organizationId: z.union([z.number(), z.string()]).optional(),
 });
 
 const FeedbackSchema = z.object({
@@ -49,7 +58,7 @@ const FeedbackSchema = z.object({
   actualOutcome: z.string(),
   predictedOutcome: z.string().optional(),
   learningPoints: z.any().optional(),
-  organizationId: z.number().optional(),
+  organizationId: z.union([z.number(), z.string()]).optional(),
 });
 
 /**
@@ -59,7 +68,7 @@ const FeedbackSchema = z.object({
 router.post('/score', async (req, res) => {
   try {
     const data = PredictionRequestSchema.parse(req.body);
-    
+
     // Get historical patterns for this indication/phase
     const patterns = await db
       .select()
@@ -70,34 +79,36 @@ router.post('/score', async (req, res) => {
           eq(translationalPatterns.phase, data.phase)
         )
       );
-    
+
     // Get biomarker-endpoint correlations
     const correlations = await knowledgeGraph.findBiomarkerEndpointCorrelations(
       data.indication,
       data.phase
     );
-    
+
     // Calculate base success score
     let successScore = 0.5; // Start with neutral score
-    
+
     // Adjust based on historical patterns
     const successPatterns = patterns.filter(p => p.patternType === 'success');
     const failurePatterns = patterns.filter(p => p.patternType === 'failure');
-    
+
     if (successPatterns.length > 0) {
-      const avgSuccessRate = successPatterns.reduce((acc, p) => acc + (p.successRate || 0), 0) / successPatterns.length;
+      const avgSuccessRate =
+        successPatterns.reduce((acc, p) => acc + (p.successRate || 0), 0) / successPatterns.length;
       successScore = avgSuccessRate;
     }
-    
+
     // Adjust based on biomarker correlations
     if (correlations.length > 0) {
-      const avgCorrelation = correlations.reduce((acc, c) => acc + (c.correlationScore || 0), 0) / correlations.length;
+      const avgCorrelation =
+        correlations.reduce((acc, c) => acc + (c.correlationScore || 0), 0) / correlations.length;
       successScore = (successScore + avgCorrelation) / 2;
     }
-    
+
     // Risk factors analysis
     const riskFactors = [];
-    
+
     if (data.sampleSize && data.sampleSize < 50) {
       riskFactors.push({
         factor: 'small_sample_size',
@@ -106,19 +117,19 @@ router.post('/score', async (req, res) => {
       });
       successScore -= 0.15;
     }
-    
+
     if (failurePatterns.length > successPatterns.length) {
       riskFactors.push({
         factor: 'negative_historical_trend',
-        impact: -0.20,
+        impact: -0.2,
         description: 'More failure patterns than success patterns in historical data',
       });
-      successScore -= 0.20;
+      successScore -= 0.2;
     }
-    
+
     // Generate recommendations
     const recommendations = [];
-    
+
     if (successScore < 0.5) {
       recommendations.push({
         type: 'protocol',
@@ -126,7 +137,7 @@ router.post('/score', async (req, res) => {
         action: 'Consider adaptive trial design to allow for mid-study modifications',
       });
     }
-    
+
     if (data.sampleSize && data.sampleSize < 100) {
       recommendations.push({
         type: 'enrollment',
@@ -134,7 +145,7 @@ router.post('/score', async (req, res) => {
         action: 'Increase sample size or consider stratification to improve statistical power',
       });
     }
-    
+
     if (correlations.length > 0) {
       const strongCorrelations = correlations.filter(c => (c.correlationScore || 0) > 0.7);
       if (strongCorrelations.length > 0) {
@@ -145,19 +156,14 @@ router.post('/score', async (req, res) => {
         });
       }
     }
-    
+
     // Find similar trials
     const similarTrials = await db
       .select()
       .from(csrReports)
-      .where(
-        and(
-          eq(csrReports.indication, data.indication),
-          eq(csrReports.phase, data.phase)
-        )
-      )
+      .where(and(eq(csrReports.indication, data.indication), eq(csrReports.phase, data.phase)))
       .limit(5);
-    
+
     // Save prediction to database
     const predictionData: InsertForesightPrediction = {
       studyId: data.studyId,
@@ -183,12 +189,12 @@ router.post('/score', async (req, res) => {
       organizationId: data.organizationId,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     };
-    
+
     const [savedPrediction] = await db
       .insert(foresightPredictions)
       .values(predictionData)
       .returning();
-    
+
     res.json({
       success: true,
       prediction: {
@@ -219,26 +225,26 @@ router.post('/score', async (req, res) => {
 router.get('/patterns', async (req, res) => {
   try {
     const { indication, phase } = req.query;
-    
+
     if (!indication || !phase) {
       return res.status(400).json({
         success: false,
         error: 'Indication and phase are required',
       });
     }
-    
+
     // Get translational patterns
     const patterns = await knowledgeGraph.getTranslationalPatterns(
       indication as string,
       phase as string
     );
-    
+
     // Get failure patterns
     const failurePatterns = await knowledgeGraph.identifyFailurePatterns(
       indication as string,
       phase as string
     );
-    
+
     res.json({
       success: true,
       data: {
@@ -263,14 +269,14 @@ router.get('/patterns', async (req, res) => {
 router.get('/recommendations', async (req, res) => {
   try {
     const { studyId, phase, indication } = req.query;
-    
+
     if (!phase || !indication) {
       return res.status(400).json({
         success: false,
         error: 'Phase and indication are required',
       });
     }
-    
+
     // Get existing predictions if available
     let predictions = [];
     if (studyId) {
@@ -281,14 +287,14 @@ router.get('/recommendations', async (req, res) => {
         .orderBy(desc(foresightPredictions.createdAt))
         .limit(1);
     }
-    
+
     // Get biomarker-endpoint correlations
     const correlations = await knowledgeGraph.findBiomarkerEndpointCorrelations(
       indication as string,
       phase as string,
       0.6 // Higher threshold for recommendations
     );
-    
+
     // Build recommendations
     const recommendations = {
       protocol: [],
@@ -297,7 +303,7 @@ router.get('/recommendations', async (req, res) => {
       biomarkers: [],
       safety: [],
     };
-    
+
     // Protocol recommendations
     if (phase === 'Phase I') {
       recommendations.protocol.push({
@@ -306,7 +312,7 @@ router.get('/recommendations', async (req, res) => {
         rationale: 'Standard approach for Phase I safety assessment',
       });
     }
-    
+
     if (phase === 'Phase II') {
       recommendations.protocol.push({
         priority: 'medium',
@@ -314,7 +320,7 @@ router.get('/recommendations', async (req, res) => {
         rationale: 'Allows for mid-study adjustments based on interim results',
       });
     }
-    
+
     // Biomarker recommendations
     if (correlations.length > 0) {
       const topBiomarkers = correlations.slice(0, 3);
@@ -324,14 +330,14 @@ router.get('/recommendations', async (req, res) => {
         rationale: `Strong correlation with clinical endpoints (${topBiomarkers[0].correlationScore?.toFixed(2)} correlation)`,
       });
     }
-    
+
     // Endpoint recommendations
     recommendations.endpoints.push({
       priority: 'high',
       action: `Use validated endpoints for ${indication}`,
       rationale: 'FDA-accepted endpoints increase approval likelihood',
     });
-    
+
     res.json({
       success: true,
       recommendations,
@@ -357,7 +363,7 @@ router.get('/recommendations', async (req, res) => {
  */
 router.get('/phase/:phase/modules', async (req, res) => {
   const { phase } = req.params;
-  
+
   const phaseModules: Record<string, any> = {
     '0': {
       modules: [
@@ -381,7 +387,7 @@ router.get('/phase/:phase/modules', async (req, res) => {
         },
       ],
     },
-    'I': {
+    I: {
       modules: [
         {
           id: 'dose-escalation',
@@ -403,7 +409,7 @@ router.get('/phase/:phase/modules', async (req, res) => {
         },
       ],
     },
-    'II': {
+    II: {
       modules: [
         {
           id: 'enrollment-stratifier',
@@ -431,7 +437,7 @@ router.get('/phase/:phase/modules', async (req, res) => {
         },
       ],
     },
-    'III': {
+    III: {
       modules: [
         {
           id: 'ctd-builder',
@@ -459,7 +465,7 @@ router.get('/phase/:phase/modules', async (req, res) => {
         },
       ],
     },
-    'IV': {
+    IV: {
       modules: [
         {
           id: 'rwe-bridging',
@@ -476,9 +482,9 @@ router.get('/phase/:phase/modules', async (req, res) => {
       ],
     },
   };
-  
+
   const modules = phaseModules[phase] || { modules: [] };
-  
+
   res.json({
     success: true,
     phase,
@@ -493,7 +499,7 @@ router.get('/phase/:phase/modules', async (req, res) => {
 router.post('/feedback', async (req, res) => {
   try {
     const data = FeedbackSchema.parse(req.body);
-    
+
     // Save feedback
     const feedbackData: InsertClinicalFeedback = {
       studyId: data.studyId,
@@ -507,18 +513,15 @@ router.post('/feedback', async (req, res) => {
       verified: false,
       organizationId: data.organizationId,
     };
-    
-    const [savedFeedback] = await db
-      .insert(clinicalFeedback)
-      .values(feedbackData)
-      .returning();
-    
+
+    const [savedFeedback] = await db.insert(clinicalFeedback).values(feedbackData).returning();
+
     // Update patterns based on feedback
     if (data.actualOutcome === 'success' || data.actualOutcome === 'failure') {
       // This would trigger pattern learning in production
       console.log('Updating patterns based on feedback:', data.actualOutcome);
     }
-    
+
     res.json({
       success: true,
       feedback: {
@@ -544,7 +547,7 @@ router.post('/feedback', async (req, res) => {
 router.get('/knowledge-graph', async (req, res) => {
   try {
     const { indication, phase, limit = 100 } = req.query;
-    
+
     const conditions = [];
     if (indication) {
       conditions.push(eq(biomarkerEndpoints.indication, indication as string));
@@ -552,18 +555,18 @@ router.get('/knowledge-graph', async (req, res) => {
     if (phase) {
       conditions.push(eq(biomarkerEndpoints.phase, phase as string));
     }
-    
+
     // Get biomarker-endpoint relationships
     const relationships = await db
       .select()
       .from(biomarkerEndpoints)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .limit(Number(limit));
-    
+
     // Format for visualization
     const nodes = new Map();
     const edges = [];
-    
+
     relationships.forEach(rel => {
       // Add biomarker node
       if (!nodes.has(`bio_${rel.biomarkerId}`)) {
@@ -574,7 +577,7 @@ router.get('/knowledge-graph', async (req, res) => {
           group: rel.biomarkerType,
         });
       }
-      
+
       // Add endpoint node
       if (!nodes.has(`end_${rel.endpointId}`)) {
         nodes.set(`end_${rel.endpointId}`, {
@@ -584,7 +587,7 @@ router.get('/knowledge-graph', async (req, res) => {
           group: rel.endpointType,
         });
       }
-      
+
       // Add edge
       edges.push({
         source: `bio_${rel.biomarkerId}`,
@@ -593,7 +596,7 @@ router.get('/knowledge-graph', async (req, res) => {
         evidence: rel.evidenceCount || 0,
       });
     });
-    
+
     res.json({
       success: true,
       graph: {

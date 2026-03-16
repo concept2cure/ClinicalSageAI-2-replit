@@ -69,59 +69,48 @@ const nextMilestones = [
 
 const Vault = () => {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
-        <header className="flex flex-col gap-6 rounded-2xl bg-white p-8 shadow-sm">
-          <div className="flex flex-col gap-3">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Concept2Cure Vault™
-            </span>
-            <h1 className="text-3xl font-semibold text-slate-900">
-              Field-ready document control with enterprise-grade compliance
-            </h1>
-            <p className="text-base text-slate-600">
-              Modernize how teams capture, manage, and validate clinical documents in the field.
-              Vault now pairs mobile usability with audit-ready governance to outpace legacy DMS
-              workflows.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <button
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-              type="button"
-            >
-              Launch Vault Workspace
-            </button>
-            <button
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
-              type="button"
-            >
-              Upload Field Documents
-            </button>
-            <button
-              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
-              type="button"
-            >
-              View Compliance Status
-            </button>
-          </div>
-        </header>
+    <div className="bg-white">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-4">
+        {/* Compact action bar — title provided by shell WorkspaceHeader */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+            type="button"
+          >
+            Launch Vault Workspace
+          </button>
+          <button
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+            type="button"
+          >
+            Upload Field Documents
+          </button>
+          <button
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+            type="button"
+          >
+            View Compliance Status
+          </button>
+        </div>
 
         <section className="grid gap-4 md:grid-cols-2">
-          {quickStats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl bg-white p-6 shadow-sm">
+          {quickStats.map(stat => (
+            <div
+              key={stat.label}
+              className="rounded-xl bg-white p-6 shadow-sm border border-slate-100"
+            >
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                 {stat.label}
               </p>
               <div className="mt-3 flex items-end justify-between">
-                <span className="text-3xl font-semibold text-slate-900">{stat.value}</span>
+                <span className="text-2xl font-semibold text-slate-900">{stat.value}</span>
                 <span className="text-sm text-slate-500">{stat.detail}</span>
               </div>
             </div>
           ))}
         </section>
 
-        <section className="rounded-2xl bg-white p-8 shadow-sm">
+        <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl font-semibold text-slate-900">Built for field usability</h2>
             <p className="text-sm text-slate-600">
@@ -129,7 +118,7 @@ const Vault = () => {
             </p>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {fieldCapabilities.map((capability) => (
+            {fieldCapabilities.map(capability => (
               <div key={capability.title} className="rounded-xl border border-slate-100 p-5">
                 <h3 className="text-sm font-semibold text-slate-900">{capability.title}</h3>
                 <p className="mt-2 text-sm text-slate-600">{capability.description}</p>
@@ -138,7 +127,7 @@ const Vault = () => {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white p-8 shadow-sm">
+        <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl font-semibold text-slate-900">
               Vault vs. Veeva: practical differences
@@ -148,7 +137,7 @@ const Vault = () => {
             </p>
           </div>
           <div className="mt-6 grid gap-4">
-            {veevaComparison.map((item) => (
+            {veevaComparison.map(item => (
               <div
                 key={item.title}
                 className="grid gap-4 rounded-xl border border-slate-100 p-5 md:grid-cols-3"
@@ -165,15 +154,17 @@ const Vault = () => {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white p-8 shadow-sm">
+        <section className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold text-slate-900">Roadmap toward field excellence</h2>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Roadmap toward field excellence
+            </h2>
             <p className="text-sm text-slate-600">
               Delivery plan for the next iterations of Vault modernization.
             </p>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {nextMilestones.map((item) => (
+            {nextMilestones.map(item => (
               <div key={item.title} className="rounded-xl border border-slate-100 p-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>

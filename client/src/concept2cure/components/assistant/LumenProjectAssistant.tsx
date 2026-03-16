@@ -131,7 +131,7 @@ const getProjectSuggestions = (context?: ProjectContext): SuggestedAction[] => {
         action: () => {},
       });
     }
-    
+
     if (context.phase === 'predicate') {
       suggestions.push({
         id: 'find-predicates',
@@ -204,17 +204,17 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isThinking, setIsThinking] = useState(false);
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
-  
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   const suggestions = getProjectSuggestions(projectContext);
-  
+
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-  
+
   // Auto-resize textarea
   useEffect(() => {
     if (inputRef.current) {
@@ -222,44 +222,47 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
     }
   }, [input]);
-  
+
   // Send message
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim()) return;
-    
-    const userMessage: Message = {
-      id: `msg-${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: new Date(),
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setShowQuickPrompts(false);
-    setIsThinking(true);
-    
-    try {
-      // In production, this would call the Lumen Cortex API
-      // Simulated response for now
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const assistantMessage: Message = {
-        id: `msg-${Date.now()}-response`,
-        role: 'assistant',
-        content: getSmartResponse(text, projectContext),
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
+
+      const userMessage: Message = {
+        id: `msg-${Date.now()}`,
+        role: 'user',
+        content: text,
         timestamp: new Date(),
-        actions: getSuggestedActions(text, projectContext, onNavigate, onCreateTask),
       };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Lumen error:', error);
-    } finally {
-      setIsThinking(false);
-    }
-  }, [projectContext, onNavigate, onCreateTask]);
-  
+
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+      setShowQuickPrompts(false);
+      setIsThinking(true);
+
+      try {
+        // In production, this would call the Lumen Cortex API
+        // Simulated response for now
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const assistantMessage: Message = {
+          id: `msg-${Date.now()}-response`,
+          role: 'assistant',
+          content: getSmartResponse(text, projectContext),
+          timestamp: new Date(),
+          actions: getSuggestedActions(text, projectContext, onNavigate, onCreateTask),
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+      } catch (error) {
+        console.error('Lumen error:', error);
+      } finally {
+        setIsThinking(false);
+      }
+    },
+    [projectContext, onNavigate, onCreateTask]
+  );
+
   // Handle keyboard submit
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -267,7 +270,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       sendMessage(input);
     }
   };
-  
+
   // Quick prompt click
   const handleQuickPrompt = (promptId: string) => {
     const prompt = QUICK_PROMPTS.find(p => p.id === promptId);
@@ -283,7 +286,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       }
     }
   };
-  
+
   // Compact header for floating mode
   if (position === 'floating' && !isExpanded) {
     return (
@@ -303,12 +306,13 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       </button>
     );
   }
-  
+
   return (
     <div
       className={cn(
         'flex flex-col bg-white rounded-2xl overflow-hidden',
-        position === 'floating' && 'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-2xl border border-zinc-200',
+        position === 'floating' &&
+          'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-2xl border border-zinc-200',
         position === 'sidebar' && 'h-full border-l border-zinc-200',
         position === 'inline' && 'border border-zinc-200',
         className
@@ -323,13 +327,11 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">AnA</h3>
             {projectContext && (
-              <p className="text-xs text-zinc-500">
-                Working on {projectContext.name}
-              </p>
+              <p className="text-xs text-zinc-500">Working on {projectContext.name}</p>
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-1">
           {position === 'floating' && (
             <button
@@ -341,7 +343,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
           )}
         </div>
       </div>
-      
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px] max-h-[300px]">
         {messages.length === 0 ? (
@@ -349,23 +351,18 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-6 h-6 text-violet-600" />
             </div>
-            <h4 className="text-sm font-medium text-zinc-900 mb-1">
-              Hi, I'm AnA!
-            </h4>
+            <h4 className="text-sm font-medium text-zinc-900 mb-1">Hi, I'm AnA!</h4>
             <p className="text-xs text-zinc-500 max-w-xs mx-auto">
-              {projectContext 
+              {projectContext
                 ? `I can help you with ${projectContext.name}. Ask me anything or pick a quick action below.`
                 : 'I can help you navigate, find documents, create tasks, and more.'}
             </p>
           </div>
         ) : (
-          messages.map((message) => (
+          messages.map(message => (
             <div
               key={message.id}
-              className={cn(
-                'flex gap-3',
-                message.role === 'user' && 'flex-row-reverse'
-              )}
+              className={cn('flex gap-3', message.role === 'user' && 'flex-row-reverse')}
             >
               {/* Avatar */}
               {message.role === 'assistant' && (
@@ -373,22 +370,20 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
               )}
-              
+
               {/* Message Content */}
               <div
                 className={cn(
                   'max-w-[80%] rounded-2xl px-4 py-2.5',
-                  message.role === 'user' 
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-zinc-100 text-zinc-900'
+                  message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-zinc-100 text-zinc-900'
                 )}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                
+
                 {/* Action Buttons */}
                 {message.actions && message.actions.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    {message.actions.map((action) => {
+                    {message.actions.map(action => {
                       const Icon = action.icon;
                       return (
                         <button
@@ -412,7 +407,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             </div>
           ))
         )}
-        
+
         {/* Thinking indicator */}
         {isThinking && (
           <div className="flex gap-3">
@@ -427,16 +422,16 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
-      
+
       {/* Suggestions */}
       {suggestions.length > 0 && showQuickPrompts && messages.length === 0 && (
         <div className="px-4 pb-2 border-t border-zinc-100">
           <p className="text-xs text-zinc-500 mb-2 mt-3">Suggested actions</p>
           <div className="space-y-2">
-            {suggestions.map((suggestion) => {
+            {suggestions.map(suggestion => {
               const Icon = suggestion.icon;
               return (
                 <button
@@ -465,12 +460,12 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Quick Prompts */}
       {showQuickPrompts && messages.length === 0 && (
         <div className="px-4 pb-2">
           <div className="flex flex-wrap gap-2">
-            {QUICK_PROMPTS.slice(0, 3).map((prompt) => {
+            {QUICK_PROMPTS.slice(0, 3).map(prompt => {
               const Icon = prompt.icon;
               return (
                 <button
@@ -490,14 +485,14 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Input */}
       <div className="p-4 border-t border-zinc-100">
         <div className="relative flex items-end gap-2 bg-zinc-50 rounded-xl px-3 py-2">
           <textarea
             ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask AnA anything..."
             rows={1}
@@ -507,7 +502,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               'min-h-[24px] max-h-[120px]'
             )}
           />
-          
+
           <div className="flex items-center gap-1">
             <button
               className="p-1.5 rounded-lg hover:bg-zinc-200 text-zinc-500"
@@ -515,7 +510,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             >
               <Paperclip className="w-4 h-4" />
             </button>
-            
+
             <button
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isThinking}
@@ -541,23 +536,23 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
 
 function getSmartResponse(input: string, context?: ProjectContext): string {
   const lowered = input.toLowerCase();
-  
+
   if (lowered.includes('what should') || lowered.includes('next')) {
     if (context) {
       return `Based on where you are in the ${context.type} submission process, I recommend:\n\n1. Complete the device description section\n2. Review the predicate comparison table\n3. Upload any pending test results\n\nWould you like me to take you to any of these?`;
     }
     return 'To get started, I recommend creating a new project. Would you like to start a 510(k), IND, or NDA submission?';
   }
-  
+
   if (lowered.includes('take me to') || lowered.includes('go to')) {
     return 'I can navigate you there. Which section would you like to visit?';
   }
-  
+
   if (lowered.includes('create') && lowered.includes('task')) {
-    return 'I\'ll help you create a task. What would you like the task to be about?';
+    return "I'll help you create a task. What would you like the task to be about?";
   }
-  
-  return 'I understand. Let me help you with that. Could you provide more details about what you\'d like to accomplish?';
+
+  return "I understand. Let me help you with that. Could you provide more details about what you'd like to accomplish?";
 }
 
 function getSuggestedActions(
@@ -568,7 +563,7 @@ function getSuggestedActions(
 ): SuggestedAction[] {
   const lowered = input.toLowerCase();
   const actions: SuggestedAction[] = [];
-  
+
   if (lowered.includes('next') || lowered.includes('should')) {
     actions.push({
       id: 'go-device-desc',
@@ -577,16 +572,18 @@ function getSuggestedActions(
       icon: Navigation,
       action: () => onNavigate('/projects/' + (context?.id || '') + '/device-description'),
     });
-    
+
     actions.push({
       id: 'create-reminder',
       type: 'task',
       label: 'Create reminder task',
       icon: CheckSquare,
-      action: () => context && onCreateTask({ title: 'Follow up on device description', projectId: context.id }),
+      action: () =>
+        context &&
+        onCreateTask({ title: 'Follow up on device description', projectId: context.id }),
     });
   }
-  
+
   return actions;
 }
 

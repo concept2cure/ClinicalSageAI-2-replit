@@ -23,11 +23,11 @@ export const MedicalWritingWorkspace: React.FC<MedicalWritingWorkspaceProps> = (
         <h2 className="text-xl font-semibold text-zinc-900">Medical Writing Workspace</h2>
         <p className="text-sm text-zinc-500">Document Authoring & Review</p>
       </div>
-      
+
       <div className="flex-1 p-6">
         <div className="grid grid-cols-3 gap-6">
           {[
-            { icon: PenTool, title: 'eCTD CoAuthor', description: 'AI-assisted authoring' },
+            { icon: PenTool, title: 'eCTD CoAuthor', description: 'RI-assisted authoring' },
             { icon: FileText, title: 'Document Queue', description: 'Active assignments' },
             { icon: BookOpen, title: 'Style Guide', description: 'Templates & standards' },
             { icon: CheckCircle2, title: 'QC Checklist', description: 'Review workflows' },

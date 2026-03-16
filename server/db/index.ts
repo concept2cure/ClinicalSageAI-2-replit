@@ -55,14 +55,16 @@ if (!connectionString) {
 }
 
 let client: ReturnType<typeof postgres> | null = null;
-let db: PostgresJsDatabase | null = null;
+let _db: PostgresJsDatabase | null = null;
 
 if (connectionString) {
   client = postgres(connectionString, {
     ssl: getSslConfig(connectionString),
   });
-  db = drizzle(client);
+  _db = drizzle(client);
 }
 
+// Cast away null – the process exits above when no connection string is set.
+const db = _db as NonNullable<typeof _db>;
 export { db };
 export default db;

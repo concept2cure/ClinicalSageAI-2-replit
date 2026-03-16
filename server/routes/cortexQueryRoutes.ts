@@ -143,7 +143,7 @@ router.post('/query', async (req: Request, res: Response) => {
 
     switch (mode) {
       case 'search':
-        response = await handleSearchMode(query, options);
+        response = await handleSearchMode(query, options, organizationUuid);
         break;
       case 'generate':
         response = await handleGenerateMode(
@@ -185,14 +185,19 @@ router.post('/query', async (req: Request, res: Response) => {
  */
 async function handleSearchMode(
   query: string,
-  options: CortexQueryRequest['options']
+  options: CortexQueryRequest['options'],
+  organizationUuid?: string
 ): Promise<CortexQueryResponse> {
   const embeddingService = getEmbeddingService(pool!);
 
+  // Scope search to requesting org. If no org provided, RLS on the
+  // underlying lumen_data_atoms table will return empty — this is
+  // intentional defense-in-depth per multi-tenant isolation rules.
   const results = await embeddingService.searchHybrid(
     query,
     options?.limit || 10,
-    0.7 // semantic weight
+    0.7, // semantic weight
+    organizationUuid
   );
 
   return {

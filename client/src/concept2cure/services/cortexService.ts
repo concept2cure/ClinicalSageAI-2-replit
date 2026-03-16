@@ -445,24 +445,75 @@ export class CortexService {
       }
 
       const decoder = new TextDecoder();
-      let fullResponse = '';
       let threadId = params.threadId || crypto.randomUUID();
+      const isSSE = response.headers.get('content-type')?.includes('text/event-stream');
 
-      let done = false;
-      while (!done) {
-        const result = await reader.read();
-        done = result.done;
-        if (done) break;
+      if (isSSE) {
+        // Real SSE streaming — parse `data: {...}` lines as they arrive
+        let buffer = '';
+        let finalContent = '';
 
-        const chunk = decoder.decode(result.value, { stream: true });
-        fullResponse += chunk;
-        params.onChunk(chunk);
+        while (true) {
+          const result = await reader.read();
+          if (result.done) break;
+          buffer += decoder.decode(result.value, { stream: true });
+
+          // Process all complete lines in the buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? ''; // Keep last (possibly incomplete) line
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const jsonStr = line.slice(6).trim();
+            if (!jsonStr) continue;
+            try {
+              const event = JSON.parse(jsonStr) as {
+                type: string;
+                text?: string;
+                thread_id?: string;
+              };
+              if (event.type === 'chunk' && event.text) {
+                finalContent += event.text;
+                params.onChunk(event.text);
+              } else if (event.type === 'done') {
+                if (event.thread_id) threadId = event.thread_id;
+              }
+            } catch {
+              /* ignore malformed lines */
+            }
+          }
+        }
+
+        params.onComplete({
+          threadId,
+          artifacts: this.parseArtifacts(finalContent),
+        });
+      } else {
+        // Non-streaming JSON response (fallback)
+        let fullResponse = '';
+        while (true) {
+          const result = await reader.read();
+          if (result.done) break;
+          fullResponse += decoder.decode(result.value, { stream: true });
+        }
+
+        let displayContent = fullResponse;
+        try {
+          const parsed = JSON.parse(fullResponse);
+          if (parsed && (parsed.answer || parsed.response)) {
+            displayContent = parsed.answer || parsed.response;
+            if (parsed.thread_id) threadId = parsed.thread_id;
+          }
+        } catch {
+          // Not JSON — use raw text
+        }
+
+        params.onChunk(displayContent);
+        params.onComplete({
+          threadId,
+          artifacts: this.parseArtifacts(displayContent),
+        });
       }
-
-      params.onComplete({
-        threadId,
-        artifacts: this.parseArtifacts(fullResponse),
-      });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         return; // Request was cancelled
@@ -792,6 +843,21 @@ export class CortexService {
 
     if (!response.ok && response.status !== 404) {
       throw new CortexServiceError('Failed to delete thread', 'DELETE_ERROR', response.status);
+    }
+  }
+
+  /**
+   * Update a thread title
+   */
+  async updateThreadTitle(threadId: string, title: string): Promise<void> {
+    try {
+      await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, {
+        method: 'PATCH',
+        headers: { ...this.withAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+    } catch {
+      // Non-critical — silently ignore title update failures
     }
   }
 

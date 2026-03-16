@@ -1,9 +1,9 @@
 /**
  * Concept2Cure - Version History Component
- * 
+ *
  * Claude.ai parity: Artifact version timeline with diff view.
  * Tracks all edits to artifacts with ability to restore any version.
- * 
+ *
  * @module concept2cure/components/artifacts/VersionHistory
  * @version 1.0.0
  */
@@ -14,12 +14,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -106,7 +101,7 @@ const getChangeIcon = (changeType: string) => {
 const getChangeLabel = (changeType: string): string => {
   switch (changeType) {
     case 'ai':
-      return 'AnA';
+      return 'RI';
     case 'user':
       return 'Manual edit';
     case 'restore':
@@ -144,16 +139,9 @@ const VersionItem: React.FC<VersionItemProps> = ({
   const ChangeIcon = getChangeIcon(version.changeType);
 
   return (
-    <div
-      className={cn(
-        'relative pl-6',
-        !isFirst && 'pt-4'
-      )}
-    >
+    <div className={cn('relative pl-6', !isFirst && 'pt-4')}>
       {/* Timeline connector */}
-      {!isFirst && (
-        <div className="absolute left-[11px] top-0 h-4 w-0.5 bg-gray-200" />
-      )}
+      {!isFirst && <div className="absolute left-[11px] top-0 h-4 w-0.5 bg-gray-200" />}
 
       {/* Timeline dot */}
       <div
@@ -165,11 +153,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
           isSelected && 'ring-2 ring-amber-400 ring-offset-1'
         )}
       >
-        {isCurrent ? (
-          <Check className="h-3.5 w-3.5" />
-        ) : (
-          <ChangeIcon className="h-3.5 w-3.5" />
-        )}
+        {isCurrent ? <Check className="h-3.5 w-3.5" /> : <ChangeIcon className="h-3.5 w-3.5" />}
       </div>
 
       {/* Version content */}
@@ -183,29 +167,29 @@ const VersionItem: React.FC<VersionItemProps> = ({
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className={cn(
-                'text-sm font-medium',
-                isCurrent ? 'text-blue-700' : 'text-gray-900'
-              )}>
+              <span
+                className={cn('text-sm font-medium', isCurrent ? 'text-blue-700' : 'text-gray-900')}
+              >
                 Version {version.versionNumber}
               </span>
               {isCurrent && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700"
+                >
                   Current
                 </Badge>
               )}
               {version.changeType === 'ai' && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                   <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                  AI
+                  RI
                 </Badge>
               )}
             </div>
 
             {version.changeSummary && (
-              <p className="text-xs text-gray-600 mt-1">
-                {version.changeSummary}
-              </p>
+              <p className="text-xs text-gray-600 mt-1">{version.changeSummary}</p>
             )}
 
             <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
@@ -216,15 +200,20 @@ const VersionItem: React.FC<VersionItemProps> = ({
           </div>
 
           {/* Actions */}
-          <div className={cn(
-            'flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity'
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity'
+            )}
+          >
             {!isCurrent && (
               <TooltipProvider>
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={(e) => { e.stopPropagation(); onRestore(); }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        onRestore();
+                      }}
                       className="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50"
                     >
                       <RotateCcw className="h-4 w-4" />
@@ -239,7 +228,10 @@ const VersionItem: React.FC<VersionItemProps> = ({
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={(e) => { e.stopPropagation(); onCompare(); }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        onCompare();
+                      }}
                       className="p-1.5 rounded-md text-gray-400 hover:text-purple-600 hover:bg-purple-50"
                     >
                       <GitCompare className="h-4 w-4" />
@@ -276,15 +268,11 @@ const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
       <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-red-100 border border-red-300" />
-          <span className="text-gray-600">
-            Version {versionA.versionNumber} (older)
-          </span>
+          <span className="text-gray-600">Version {versionA.versionNumber} (older)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-green-100 border border-green-300" />
-          <span className="text-gray-600">
-            Version {versionB.versionNumber} (newer)
-          </span>
+          <span className="text-gray-600">Version {versionB.versionNumber} (newer)</span>
         </div>
       </div>
 
@@ -306,9 +294,7 @@ const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
                   isRemoved && 'bg-red-50 text-red-800 line-through'
                 )}
               >
-                <span className="inline-block w-8 text-gray-400 select-none">
-                  {idx + 1}
-                </span>
+                <span className="inline-block w-8 text-gray-400 select-none">{idx + 1}</span>
                 {line || ' '}
               </div>
             );
@@ -341,17 +327,13 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
 
   // Sort versions newest first
   const sortedVersions = useMemo(() => {
-    return [...versions].sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    return [...versions].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [versions]);
 
-  const selectedVersion = selectedVersionId 
-    ? versions.find(v => v.id === selectedVersionId) 
-    : null;
-  const compareTarget = compareTargetId
-    ? versions.find(v => v.id === compareTargetId)
-    : null;
+  const selectedVersion = selectedVersionId ? versions.find(v => v.id === selectedVersionId) : null;
+  const compareTarget = compareTargetId ? versions.find(v => v.id === compareTargetId) : null;
 
   const handleRestore = () => {
     if (restoreTargetId) {
@@ -410,10 +392,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                 </Button>
 
                 {compareMode && selectedVersion && compareTarget && (
-                  <Button
-                    size="sm"
-                    onClick={() => setShowDiffView(true)}
-                  >
+                  <Button size="sm" onClick={() => setShowDiffView(true)}>
                     <Eye className="h-4 w-4 mr-2" />
                     View Diff
                   </Button>
@@ -423,13 +402,11 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
 
             {compareMode && (
               <div className="p-3 bg-purple-50 rounded-lg text-sm text-purple-700 mb-4">
-                {!selectedVersionId ? (
-                  'Select the first version to compare'
-                ) : !compareTargetId ? (
-                  'Now select the second version'
-                ) : (
-                  `Comparing v${selectedVersion?.versionNumber} → v${compareTarget?.versionNumber}`
-                )}
+                {!selectedVersionId
+                  ? 'Select the first version to compare'
+                  : !compareTargetId
+                    ? 'Now select the second version'
+                    : `Comparing v${selectedVersion?.versionNumber} → v${compareTarget?.versionNumber}`}
               </div>
             )}
 
@@ -443,7 +420,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                     isCurrent={version.id === currentVersionId}
                     isFirst={idx === 0}
                     isSelected={
-                      compareMode && 
+                      compareMode &&
                       (version.id === selectedVersionId || version.id === compareTargetId)
                     }
                     onSelect={() => {
@@ -457,24 +434,26 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                           setCompareTargetId(null);
                         }
                       } else {
-                        setSelectedVersionId(
-                          selectedVersionId === version.id ? null : version.id
-                        );
+                        setSelectedVersionId(selectedVersionId === version.id ? null : version.id);
                       }
                     }}
                     onRestore={() => {
                       setRestoreTargetId(version.id);
                       setShowRestoreDialog(true);
                     }}
-                    onCompare={onCompareVersions ? () => {
-                      if (selectedVersionId && selectedVersionId !== version.id) {
-                        setCompareTargetId(version.id);
-                        setShowDiffView(true);
-                      } else {
-                        setSelectedVersionId(version.id);
-                        setCompareMode(true);
-                      }
-                    } : undefined}
+                    onCompare={
+                      onCompareVersions
+                        ? () => {
+                            if (selectedVersionId && selectedVersionId !== version.id) {
+                              setCompareTargetId(version.id);
+                              setShowDiffView(true);
+                            } else {
+                              setSelectedVersionId(version.id);
+                              setCompareMode(true);
+                            }
+                          }
+                        : undefined
+                    }
                   />
                 ))}
               </div>
@@ -486,9 +465,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                 <Download className="h-4 w-4 mr-2" />
                 Export All Versions
               </Button>
-              <span className="text-xs text-gray-400">
-                {versionCount} total versions
-              </span>
+              <span className="text-xs text-gray-400">{versionCount} total versions</span>
             </div>
           </div>
         </DialogContent>
@@ -500,15 +477,13 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Restore this version?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will create a new version with the content from the selected
-              version. The current version will be preserved in history.
+              This will create a new version with the content from the selected version. The current
+              version will be preserved in history.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRestore}>
-              Restore Version
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleRestore}>Restore Version</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,12 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,10 +42,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 /**
  * FDA 510(k) RTA (Refuse-to-Accept) Checklist Panel
- * 
+ *
  * Critical component for ensuring 510(k) submissions meet FDA acceptance criteria
  * Based on FDA's official RTA Policy for 510(k)s
- * 
+ *
  * Features:
  * - Complete FDA RTA checklist with all required items
  * - Page number annotation for each item
@@ -290,7 +279,7 @@ export default function RTAChecklistPanel({
         notes: '',
       };
     });
-    
+
     // Load saved data if available
     const savedData = localStorage.getItem(`rta_checklist_${documentId}`);
     if (savedData) {
@@ -316,10 +305,11 @@ export default function RTAChecklistPanel({
 
   // Get categories for tabs
   const categories = [...new Set(RTA_CHECKLIST_ITEMS.map(item => item.category))];
-  
+
   // Filter items based on search and active tab
   const filteredItems = RTA_CHECKLIST_ITEMS.filter(item => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch =
+      searchTerm === '' ||
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === 'all' || item.category === activeTab;
@@ -345,7 +335,7 @@ export default function RTAChecklistPanel({
     try {
       // Save to localStorage
       localStorage.setItem(`rta_checklist_${documentId}`, JSON.stringify(checklistData));
-      
+
       // TODO: Save to backend API
       // await fetch(`/api/510k/rta-checklist/${documentId}`, {
       //   method: 'POST',
@@ -358,7 +348,7 @@ export default function RTAChecklistPanel({
         title: 'Checklist Saved',
         description: 'RTA checklist has been saved successfully',
       });
-      
+
       if (onChecklistUpdate) {
         onChecklistUpdate(checklistData);
       }
@@ -377,7 +367,7 @@ export default function RTAChecklistPanel({
   // Validate checklist
   const validateChecklist = () => {
     const errors = [];
-    
+
     RTA_CHECKLIST_ITEMS.forEach(item => {
       if (item.required && checklistData[item.id]?.status !== 'complete') {
         errors.push({
@@ -386,7 +376,7 @@ export default function RTAChecklistPanel({
           message: `Required item "${item.title}" is not complete`,
         });
       }
-      
+
       if (checklistData[item.id]?.checked && !checklistData[item.id]?.pageNumbers) {
         errors.push({
           itemId: item.id,
@@ -396,9 +386,9 @@ export default function RTAChecklistPanel({
         });
       }
     });
-    
+
     setValidationErrors(errors);
-    
+
     if (errors.filter(e => e.severity !== 'warning').length === 0) {
       toast({
         title: 'Validation Passed',
@@ -414,27 +404,40 @@ export default function RTAChecklistPanel({
         variant: 'destructive',
       });
     }
-    
+
     return errors.length === 0;
   };
 
   // Export checklist to PDF
   const exportToPDF = () => {
-    // TODO: Implement PDF export
     toast({
-      title: 'Export Started',
-      description: 'Generating PDF with page annotations...',
+      title: 'PDF Export Not Yet Available',
+      description: 'RTA Checklist PDF export is under development. Use the JSON export for now.',
+      variant: 'default',
     });
-    
-    // Mock implementation
-    setTimeout(() => {
-      const blob = new Blob(['RTA Checklist PDF'], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `RTA_Checklist_${deviceProfile?.deviceName || 'device'}_${new Date().toISOString().split('T')[0]}.pdf`;
-      a.click();
-    }, 1000);
+
+    // Export as structured JSON instead — honest about the format
+    const checklistExport = {
+      title: `RTA Checklist — ${deviceProfile?.deviceName || 'Device'}`,
+      exportedAt: new Date().toISOString(),
+      format: 'json',
+      note: 'PDF export is under development. This JSON file contains your checklist data.',
+      items: RTA_CHECKLIST_ITEMS.map(item => ({
+        id: item.id,
+        title: item.title,
+        required: item.required,
+        status: checklistData[item.id]?.status || 'not-started',
+        pageReference: checklistData[item.id]?.pageReference || '',
+        notes: checklistData[item.id]?.notes || '',
+      })),
+    };
+    const blob = new Blob([JSON.stringify(checklistExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `RTA_Checklist_${deviceProfile?.deviceName || 'device'}_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Import page numbers from document
@@ -463,7 +466,8 @@ export default function RTAChecklistPanel({
                 FDA 510(k) RTA Checklist
               </CardTitle>
               <CardDescription className="mt-2">
-                Refuse-to-Accept (RTA) Policy Checklist - Ensure your 510(k) submission meets FDA acceptance criteria
+                Refuse-to-Accept (RTA) Policy Checklist - Ensure your 510(k) submission meets FDA
+                acceptance criteria
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -473,7 +477,9 @@ export default function RTAChecklistPanel({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => window.open('https://www.fda.gov/media/83888/download', '_blank')}
+                      onClick={() =>
+                        window.open('https://www.fda.gov/media/83888/download', '_blank')
+                      }
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
@@ -483,19 +489,11 @@ export default function RTAChecklistPanel({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <Button
-                variant="outline"
-                onClick={importPageNumbers}
-                className="gap-2"
-              >
+              <Button variant="outline" onClick={importPageNumbers} className="gap-2">
                 <Upload className="h-4 w-4" />
                 Import Pages
               </Button>
-              <Button
-                variant="outline"
-                onClick={exportToPDF}
-                className="gap-2"
-              >
+              <Button variant="outline" onClick={exportToPDF} className="gap-2">
                 <Download className="h-4 w-4" />
                 Export PDF
               </Button>
@@ -562,24 +560,16 @@ export default function RTAChecklistPanel({
               <Input
                 placeholder="Search checklist items..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="max-w-sm"
               />
             </div>
             <div className="flex gap-2">
-              <Button
-                onClick={validateChecklist}
-                variant="outline"
-                className="gap-2"
-              >
+              <Button onClick={validateChecklist} variant="outline" className="gap-2">
                 <CheckCircle2 className="h-4 w-4" />
                 Validate
               </Button>
-              <Button
-                onClick={saveChecklist}
-                disabled={saving}
-                className="gap-2"
-              >
+              <Button onClick={saveChecklist} disabled={saving} className="gap-2">
                 {saving ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -608,18 +598,20 @@ export default function RTAChecklistPanel({
 
             <ScrollArea className="h-[600px] w-full pr-4">
               <div className="space-y-4">
-                {filteredItems.map((item) => {
+                {filteredItems.map(item => {
                   const itemData = checklistData[item.id] || {};
                   const isComplete = itemData.status === 'complete';
                   const hasPageNumbers = itemData.pageNumbers?.trim().length > 0;
-                  
+
                   return (
                     <Card
                       key={item.id}
                       className={`border ${
-                        isComplete ? 'border-green-200 bg-green-50/30' :
-                        item.required ? 'border-amber-200 bg-amber-50/30' :
-                        'border-gray-200'
+                        isComplete
+                          ? 'border-green-200 bg-green-50/30'
+                          : item.required
+                            ? 'border-amber-200 bg-amber-50/30'
+                            : 'border-gray-200'
                       }`}
                     >
                       <CardContent className="p-4">
@@ -630,7 +622,7 @@ export default function RTAChecklistPanel({
                               <Checkbox
                                 id={item.id}
                                 checked={itemData.checked || false}
-                                onCheckedChange={(checked) => 
+                                onCheckedChange={checked =>
                                   updateChecklistItem(item.id, 'checked', checked)
                                 }
                                 className="mt-1"
@@ -652,9 +644,7 @@ export default function RTAChecklistPanel({
                                     </Badge>
                                   )}
                                 </label>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {item.description}
-                                </p>
+                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
                                 {item.conditional && (
                                   <p className="text-xs text-amber-600 mt-1">
                                     <AlertCircle className="h-3 w-3 inline mr-1" />
@@ -666,7 +656,7 @@ export default function RTAChecklistPanel({
                                 </p>
                               </div>
                             </div>
-                            
+
                             {/* Status Badge */}
                             <div className="flex items-center gap-2">
                               {isComplete ? (
@@ -697,20 +687,18 @@ export default function RTAChecklistPanel({
                               <Input
                                 placeholder="e.g., 12-15, 47"
                                 value={itemData.pageNumbers || ''}
-                                onChange={(e) => 
+                                onChange={e =>
                                   updateChecklistItem(item.id, 'pageNumbers', e.target.value)
                                 }
                                 className="mt-1 text-sm"
                               />
                             </div>
                             <div className="col-span-2">
-                              <label className="text-xs font-medium text-gray-700">
-                                Notes
-                              </label>
+                              <label className="text-xs font-medium text-gray-700">Notes</label>
                               <Input
                                 placeholder="Additional notes or comments"
                                 value={itemData.notes || ''}
-                                onChange={(e) => 
+                                onChange={e =>
                                   updateChecklistItem(item.id, 'notes', e.target.value)
                                 }
                                 className="mt-1 text-sm"
@@ -744,15 +732,13 @@ export default function RTAChecklistPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Export RTA Checklist</AlertDialogTitle>
             <AlertDialogDescription>
-              Export your RTA checklist with page annotations for FDA submission review.
-              The PDF will include all completed items with their corresponding page numbers.
+              Export your RTA checklist with page annotations for FDA submission review. The PDF
+              will include all completed items with their corresponding page numbers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={exportToPDF}>
-              Export to PDF
-            </AlertDialogAction>
+            <AlertDialogAction onClick={exportToPDF}>Export to PDF</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

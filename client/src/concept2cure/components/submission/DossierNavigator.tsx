@@ -44,7 +44,13 @@ import {
   Circle,
   Loader2,
 } from 'lucide-react';
-import type { SubmissionDossier, DocumentStatus, DossierDocument, SubmissionType, RegulatoryRegion } from '../../types/workspace';
+import type {
+  SubmissionDossier,
+  DocumentStatus,
+  DossierDocument,
+  SubmissionType,
+  RegulatoryRegion,
+} from '../../types/workspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -80,28 +86,37 @@ interface TreeNode {
 // eCTD MODULE STRUCTURE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ECTD_STRUCTURE: Record<string, { name: string; children?: Record<string, { name: string; children?: Record<string, string> }> }> = {
+const ECTD_STRUCTURE: Record<
+  string,
+  { name: string; children?: Record<string, { name: string; children?: Record<string, string> }> }
+> = {
   '1': {
     name: 'Administrative Information and Prescribing Information',
     children: {
       '1.1': { name: 'Forms' },
       '1.2': { name: 'Cover Letters' },
-      '1.3': { name: 'Administrative Information', children: {
-        '1.3.1': 'Contact/Sponsor Information',
-        '1.3.2': 'Field Copy Certification',
-        '1.3.3': 'Debarment Certification',
-        '1.3.4': 'Financial Disclosure',
-        '1.3.5': 'Patent and Exclusivity',
-      }},
+      '1.3': {
+        name: 'Administrative Information',
+        children: {
+          '1.3.1': 'Contact/Sponsor Information',
+          '1.3.2': 'Field Copy Certification',
+          '1.3.3': 'Debarment Certification',
+          '1.3.4': 'Financial Disclosure',
+          '1.3.5': 'Patent and Exclusivity',
+        },
+      },
       '1.4': { name: 'References' },
       '1.5': { name: 'Application Status' },
       '1.6': { name: 'Meetings' },
       '1.12': { name: 'REMS' },
-      '1.14': { name: 'Labeling', children: {
-        '1.14.1': 'Draft Labeling',
-        '1.14.2': 'Final Printed Labeling',
-        '1.14.3': 'Listed Drug Labeling',
-      }},
+      '1.14': {
+        name: 'Labeling',
+        children: {
+          '1.14.1': 'Draft Labeling',
+          '1.14.2': 'Final Printed Labeling',
+          '1.14.3': 'Listed Drug Labeling',
+        },
+      },
     },
   },
   '2': {
@@ -111,45 +126,57 @@ const ECTD_STRUCTURE: Record<string, { name: string; children?: Record<string, {
       '2.3': { name: 'Quality Overall Summary' },
       '2.4': { name: 'Nonclinical Overview' },
       '2.5': { name: 'Clinical Overview' },
-      '2.6': { name: 'Nonclinical Written and Tabulated Summaries', children: {
-        '2.6.1': 'Introduction',
-        '2.6.2': 'Pharmacology Written Summary',
-        '2.6.3': 'Pharmacology Tabulated Summary',
-        '2.6.4': 'Pharmacokinetics Written Summary',
-        '2.6.5': 'Pharmacokinetics Tabulated Summary',
-        '2.6.6': 'Toxicology Written Summary',
-        '2.6.7': 'Toxicology Tabulated Summary',
-      }},
-      '2.7': { name: 'Clinical Summary', children: {
-        '2.7.1': 'Summary of Biopharmaceutic Studies',
-        '2.7.2': 'Summary of Clinical Pharmacology Studies',
-        '2.7.3': 'Summary of Clinical Efficacy',
-        '2.7.4': 'Summary of Clinical Safety',
-        '2.7.5': 'Literature References',
-        '2.7.6': 'Synopses of Individual Studies',
-      }},
+      '2.6': {
+        name: 'Nonclinical Written and Tabulated Summaries',
+        children: {
+          '2.6.1': 'Introduction',
+          '2.6.2': 'Pharmacology Written Summary',
+          '2.6.3': 'Pharmacology Tabulated Summary',
+          '2.6.4': 'Pharmacokinetics Written Summary',
+          '2.6.5': 'Pharmacokinetics Tabulated Summary',
+          '2.6.6': 'Toxicology Written Summary',
+          '2.6.7': 'Toxicology Tabulated Summary',
+        },
+      },
+      '2.7': {
+        name: 'Clinical Summary',
+        children: {
+          '2.7.1': 'Summary of Biopharmaceutic Studies',
+          '2.7.2': 'Summary of Clinical Pharmacology Studies',
+          '2.7.3': 'Summary of Clinical Efficacy',
+          '2.7.4': 'Summary of Clinical Safety',
+          '2.7.5': 'Literature References',
+          '2.7.6': 'Synopses of Individual Studies',
+        },
+      },
     },
   },
   '3': {
     name: 'Quality',
     children: {
-      '3.2': { name: 'Body of Data', children: {
-        '3.2.S': 'Drug Substance',
-        '3.2.P': 'Drug Product',
-        '3.2.A': 'Appendices',
-        '3.2.R': 'Regional Information',
-      }},
+      '3.2': {
+        name: 'Body of Data',
+        children: {
+          '3.2.S': 'Drug Substance',
+          '3.2.P': 'Drug Product',
+          '3.2.A': 'Appendices',
+          '3.2.R': 'Regional Information',
+        },
+      },
       '3.3': { name: 'Literature References' },
     },
   },
   '4': {
     name: 'Nonclinical Study Reports',
     children: {
-      '4.2': { name: 'Study Reports', children: {
-        '4.2.1': 'Pharmacology',
-        '4.2.2': 'Pharmacokinetics',
-        '4.2.3': 'Toxicology',
-      }},
+      '4.2': {
+        name: 'Study Reports',
+        children: {
+          '4.2.1': 'Pharmacology',
+          '4.2.2': 'Pharmacokinetics',
+          '4.2.3': 'Toxicology',
+        },
+      },
       '4.3': { name: 'Literature References' },
     },
   },
@@ -157,15 +184,18 @@ const ECTD_STRUCTURE: Record<string, { name: string; children?: Record<string, {
     name: 'Clinical Study Reports',
     children: {
       '5.2': { name: 'Tabular Listing of All Clinical Studies' },
-      '5.3': { name: 'Clinical Study Reports', children: {
-        '5.3.1': 'Biopharmaceutic Studies',
-        '5.3.2': 'PK/PD Studies',
-        '5.3.3': 'Studies in Healthy Subjects',
-        '5.3.4': 'Patient PK and Initial Tolerability',
-        '5.3.5': 'Efficacy and Safety Studies',
-        '5.3.6': 'Post-Marketing Experience',
-        '5.3.7': 'Case Report Forms and Individual Patient Listings',
-      }},
+      '5.3': {
+        name: 'Clinical Study Reports',
+        children: {
+          '5.3.1': 'Biopharmaceutic Studies',
+          '5.3.2': 'PK/PD Studies',
+          '5.3.3': 'Studies in Healthy Subjects',
+          '5.3.4': 'Patient PK and Initial Tolerability',
+          '5.3.5': 'Efficacy and Safety Studies',
+          '5.3.6': 'Post-Marketing Experience',
+          '5.3.7': 'Case Report Forms and Individual Patient Listings',
+        },
+      },
       '5.4': { name: 'Literature References' },
     },
   },
@@ -178,7 +208,12 @@ const ECTD_STRUCTURE: Record<string, { name: string; children?: Record<string, {
 const getStatusConfig = (status?: DocumentStatus['status']) => {
   switch (status) {
     case 'published':
-      return { icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100', label: 'Published' };
+      return {
+        icon: CheckCircle,
+        color: 'text-emerald-600',
+        bg: 'bg-emerald-100',
+        label: 'Published',
+      };
     case 'final':
       return { icon: Check, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Final' };
     case 'qc':
@@ -262,7 +297,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   const hasChildren = node.children && node.children.length > 0;
   const statusConfig = getStatusConfig(node.status);
   const StatusIcon = statusConfig.icon;
-  
+
   return (
     <div
       className={cn(
@@ -274,7 +309,10 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
       {/* Expand/Collapse */}
       {hasChildren ? (
         <button
-          onClick={(e) => { e.stopPropagation(); onToggle(); }}
+          onClick={e => {
+            e.stopPropagation();
+            onToggle();
+          }}
           className="p-0.5 hover:bg-zinc-200 rounded"
         >
           {isExpanded ? (
@@ -286,7 +324,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
       ) : (
         <div className="w-5" />
       )}
-      
+
       {/* Folder/Document Icon */}
       <div onClick={onSelect} className="flex-1 flex items-center gap-2 min-w-0">
         {node.type === 'module' || node.type === 'section' ? (
@@ -298,29 +336,33 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
         ) : (
           <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
         )}
-        
+
         {/* Name */}
-        <span className={cn(
-          'text-sm truncate',
-          node.type === 'module' ? 'font-semibold text-zinc-900' : 'text-zinc-700'
-        )}>
+        <span
+          className={cn(
+            'text-sm truncate',
+            node.type === 'module' ? 'font-semibold text-zinc-900' : 'text-zinc-700'
+          )}
+        >
           <span className="text-zinc-400 mr-1">{node.ectdPath}</span>
           {node.name}
         </span>
-        
+
         {/* Status badge */}
         {node.status && node.status !== 'not_required' && (
-          <span className={cn(
-            'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs flex-shrink-0',
-            statusConfig.bg,
-            statusConfig.color
-          )}>
+          <span
+            className={cn(
+              'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs flex-shrink-0',
+              statusConfig.bg,
+              statusConfig.color
+            )}
+          >
             <StatusIcon className="w-3 h-3" />
             <span className="hidden sm:inline">{statusConfig.label}</span>
           </span>
         )}
       </div>
-      
+
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {node.type === 'subsection' && onCreateArtifact && (
@@ -334,17 +376,17 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
         )}
         {node.type === 'subsection' && onUpload && (
           <button
-            onClick={(e) => { e.stopPropagation(); onUpload(); }}
+            onClick={e => {
+              e.stopPropagation();
+              onUpload();
+            }}
             className="p-1 hover:bg-zinc-200 rounded"
             title="Upload document"
           >
             <Upload className="w-3.5 h-3.5 text-zinc-500" />
           </button>
         )}
-        <button
-          className="p-1 hover:bg-zinc-200 rounded"
-          title="More actions"
-        >
+        <button className="p-1 hover:bg-zinc-200 rounded" title="More actions">
           <MoreHorizontal className="w-3.5 h-3.5 text-zinc-500" />
         </button>
       </div>
@@ -364,7 +406,7 @@ const ModuleHeader: React.FC<{
   onToggle: () => void;
 }> = ({ moduleId, moduleName, progress, isExpanded, onToggle }) => {
   const progressPercent = Math.round((progress.complete / progress.total) * 100);
-  
+
   return (
     <button
       onClick={onToggle}
@@ -375,28 +417,32 @@ const ModuleHeader: React.FC<{
       )}
     >
       {/* Module number */}
-      <div className={cn(
-        'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0',
-        moduleId === '1' && 'bg-blue-100 text-blue-700',
-        moduleId === '2' && 'bg-violet-100 text-violet-700',
-        moduleId === '3' && 'bg-emerald-100 text-emerald-700',
-        moduleId === '4' && 'bg-amber-100 text-amber-700',
-        moduleId === '5' && 'bg-pink-100 text-pink-700',
-      )}>
+      <div
+        className={cn(
+          'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0',
+          moduleId === '1' && 'bg-blue-100 text-blue-700',
+          moduleId === '2' && 'bg-violet-100 text-violet-700',
+          moduleId === '3' && 'bg-emerald-100 text-emerald-700',
+          moduleId === '4' && 'bg-amber-100 text-amber-700',
+          moduleId === '5' && 'bg-pink-100 text-pink-700'
+        )}
+      >
         {moduleId}
       </div>
-      
+
       {/* Module info */}
       <div className="flex-1 text-left min-w-0">
         <h3 className="font-semibold text-zinc-900 text-sm">Module {moduleId}</h3>
         <p className="text-xs text-zinc-500 truncate">{moduleName}</p>
       </div>
-      
+
       {/* Progress */}
       <div className="flex items-center gap-3 flex-shrink-0">
         <div className="w-24">
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-zinc-500">{progress.complete}/{progress.total}</span>
+            <span className="text-zinc-500">
+              {progress.complete}/{progress.total}
+            </span>
             <span className="font-medium text-zinc-700">{progressPercent}%</span>
           </div>
           <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
@@ -411,7 +457,7 @@ const ModuleHeader: React.FC<{
             />
           </div>
         </div>
-        
+
         {isExpanded ? (
           <ChevronDown className="w-5 h-5 text-zinc-400" />
         ) : (
@@ -441,7 +487,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  
+
   // Toggle module expansion
   const toggleModule = (moduleId: string) => {
     setExpandedModules(prev => {
@@ -454,7 +500,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
       return next;
     });
   };
-  
+
   // Toggle section expansion
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => {
@@ -467,7 +513,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
       return next;
     });
   };
-  
+
   // Calculate overall progress from actual dossier sections
   const overallProgress = useMemo(() => {
     const sections = dossier.sections || [];
@@ -484,7 +530,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
     const total = sections.length;
     return { complete, total, percent: total > 0 ? Math.round((complete / total) * 100) : 0 };
   }, [dossier]);
-  
+
   return (
     <div className={cn('flex flex-col h-full bg-white', className)}>
       {/* Header */}
@@ -504,17 +550,19 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
               )}
             </div>
           </div>
-          
+
           {/* Overall Status */}
           <div className="text-right">
-            <div className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium',
-              dossier.status.overall === 'drafting' && 'bg-blue-100 text-blue-700',
-              dossier.status.overall === 'internal_review' && 'bg-amber-100 text-amber-700',
-              dossier.status.overall === 'qc' && 'bg-violet-100 text-violet-700',
-              dossier.status.overall === 'ready' && 'bg-emerald-100 text-emerald-700',
-              dossier.status.overall === 'submitted' && 'bg-zinc-100 text-zinc-700'
-            )}>
+            <div
+              className={cn(
+                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium',
+                dossier.status.overall === 'drafting' && 'bg-blue-100 text-blue-700',
+                dossier.status.overall === 'internal_review' && 'bg-amber-100 text-amber-700',
+                dossier.status.overall === 'qc' && 'bg-violet-100 text-violet-700',
+                dossier.status.overall === 'ready' && 'bg-emerald-100 text-emerald-700',
+                dossier.status.overall === 'submitted' && 'bg-zinc-100 text-zinc-700'
+              )}
+            >
               {dossier.status.overall === 'drafting' && <Edit3 className="w-3.5 h-3.5" />}
               {dossier.status.overall === 'qc' && <Eye className="w-3.5 h-3.5" />}
               {dossier.status.overall === 'ready' && <CheckCircle className="w-3.5 h-3.5" />}
@@ -522,7 +570,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* Overall Progress Bar */}
         <div className="mb-4">
           <div className="flex items-center justify-between text-sm mb-1.5">
@@ -540,7 +588,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
             <span>{overallProgress.total - overallProgress.complete} remaining</span>
           </div>
         </div>
-        
+
         {/* Search & Filter */}
         <div className="flex items-center gap-2">
           <div className="flex-1 relative">
@@ -549,7 +597,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
               type="text"
               placeholder="Search sections..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -559,13 +607,13 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
           </button>
         </div>
       </div>
-      
+
       {/* Module List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {Object.entries(ECTD_STRUCTURE).map(([moduleId, module]) => {
           const isExpanded = expandedModules.has(moduleId);
           const progress = getProgressForModule(moduleId, dossier, sectionArtifacts);
-          
+
           return (
             <div key={moduleId}>
               <ModuleHeader
@@ -575,14 +623,14 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                 isExpanded={isExpanded}
                 onToggle={() => toggleModule(moduleId)}
               />
-              
+
               {/* Module contents */}
               {isExpanded && module.children && (
                 <div className="mt-2 ml-4 pl-4 border-l border-zinc-200">
                   {Object.entries(module.children).map(([sectionId, section]) => {
                     const sectionExpanded = expandedSections.has(sectionId);
                     const hasSubsections = typeof section === 'object' && 'children' in section;
-                    
+
                     return (
                       <div key={sectionId}>
                         <TreeNodeItem
@@ -615,7 +663,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                           onOpenArtifact={onOpenArtifact}
                           isSelected={selectedSection === sectionId}
                         />
-                        
+
                         {/* Subsections */}
                         {sectionExpanded && hasSubsections && (section as any).children && (
                           <div className="ml-4">
@@ -684,7 +732,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
           );
         })}
       </div>
-      
+
       {/* Footer Actions */}
       <div className="flex-shrink-0 border-t border-zinc-200 p-4">
         <div className="flex items-center gap-2">
@@ -703,3 +751,97 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
 };
 
 export default DossierNavigator;
+
+// ─── Standalone (self-contained demo entry point for ZenApp) ──────────────────
+
+const _ds = (
+  sectionId: string,
+  sectionName: string,
+  status: DocumentStatus['status']
+): DocumentStatus => ({
+  sectionId,
+  sectionName,
+  status,
+  documents: [] as DossierDocument[],
+});
+
+const DEMO_DOSSIER: SubmissionDossier = {
+  id: 'dossier-ind-001',
+  name: 'Lemizumab IND Submission',
+  type: 'IND',
+  sequence: '0000',
+  region: 'US',
+  applicationNumber: 'IND 123456',
+  productId: 'lemizumab-001',
+  sponsor: 'Concept2Cure Therapeutics, Inc.',
+  modules: {
+    module1: {
+      id: 'm1',
+      coverLetter: _ds('1.1', 'Cover Letter', 'final'),
+      forms: { form1571: _ds('1.2', 'Form FDA 1571', 'final') },
+    },
+    module2: {
+      id: 'm2',
+      qualityOverall: _ds('2.3', 'Quality Overall Summary', 'review'),
+      nonclinicalOverall: _ds('2.4', 'Nonclinical Overview', 'drafting'),
+      clinicalOverall: _ds('2.5', 'Clinical Overview', 'not_started'),
+      nonclinicalWritten: _ds('2.6', 'Nonclinical Written Summary', 'drafting'),
+      nonclinicalTabulated: _ds('2.7', 'Nonclinical Tabulated Summary', 'not_started'),
+      clinicalWritten: _ds('2.7.3', 'Clinical Summary', 'not_started'),
+      clinicalTabulated: _ds('2.7.4', 'Clinical Tabulated Listing', 'not_started'),
+    },
+    module3: {
+      id: 'm3',
+      drugSubstance: {
+        generalInfo: _ds('3.2.S.1', 'General Information', 'final'),
+        manufacture: _ds('3.2.S.2', 'Manufacture', 'review'),
+        characterization: _ds('3.2.S.3', 'Characterization', 'review'),
+        control: _ds('3.2.S.4', 'Control of Drug Substance', 'drafting'),
+        referenceStandards: _ds('3.2.S.5', 'Reference Standards', 'not_started'),
+        containerClosure: _ds('3.2.S.6', 'Container Closure', 'drafting'),
+        stability: _ds('3.2.S.7', 'Stability', 'drafting'),
+      },
+      drugProduct: {
+        description: _ds('3.2.P.1', 'Description of Product', 'drafting'),
+        development: _ds('3.2.P.2', 'Pharmaceutical Development', 'not_started'),
+        manufacture: _ds('3.2.P.3', 'Manufacture', 'not_started'),
+        control: _ds('3.2.P.4', 'Control of Drug Product', 'not_started'),
+        referenceStandards: _ds('3.2.P.5', 'Reference Standards', 'not_started'),
+        containerClosure: _ds('3.2.P.6', 'Container Closure', 'not_started'),
+        stability: _ds('3.2.P.7', 'Stability', 'not_started'),
+      },
+    },
+    module4: {
+      id: 'm4',
+      pharmacology: _ds('4.2.1', 'Pharmacology', 'review'),
+      pharmacokinetics: _ds('4.2.2', 'Pharmacokinetics', 'drafting'),
+      toxicology: _ds('4.2.3', 'Toxicology', 'not_started'),
+    },
+    module5: {
+      id: 'm5',
+      biopharmStudies: _ds('5.3.1', 'Biopharmaceutics Studies', 'not_started'),
+      clinicalPharmStudies: _ds('5.3.2', 'Clinical Pharmacology Studies', 'not_started'),
+      efficacyStudies: _ds('5.3.5', 'Reports of Efficacy Studies', 'not_started'),
+      safetyStudies: _ds('5.3.4', 'Safety Studies', 'not_started'),
+      literatureRefs: _ds('5.4', 'Literature References', 'not_started'),
+      synopses: _ds('5.3.7', 'Clinical Study Synopses', 'not_started'),
+    },
+  },
+  status: {
+    overall: 'drafting',
+    moduleStatus: {
+      m1: 'complete',
+      m2: 'in_progress',
+      m3: 'in_progress',
+      m4: 'in_progress',
+      m5: 'not_started',
+    },
+  },
+  timeline: {
+    targetFiling: '2026-09-30',
+  },
+};
+
+export const DossierNavigatorStandalone: React.FC = () => (
+  <DossierNavigator dossier={DEMO_DOSSIER} />
+);

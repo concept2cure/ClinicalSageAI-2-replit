@@ -169,6 +169,10 @@ export type Permission =
   | 'submissions:read'
   | 'submissions:write'
   | 'submissions:submit'
+  | 'ivdr:read'
+  | 'ivdr:write'
+  | 'ivdr:classify'
+  | 'ivdr:approve'
   | 'admin:full';
 
 /** Role permission mappings */
@@ -201,6 +205,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'submissions:read',
     'submissions:write',
     'submissions:submit',
+    'ivdr:read',
+    'ivdr:write',
+    'ivdr:classify',
+    'ivdr:approve',
     'admin:full',
   ],
   regulatory_lead: [
@@ -226,6 +234,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'submissions:read',
     'submissions:write',
     'submissions:submit',
+    'ivdr:read',
+    'ivdr:write',
+    'ivdr:classify',
+    'ivdr:approve',
   ],
   clinical_ops: [
     'documents:read',
@@ -240,6 +252,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'settings:read',
     'audit:read',
     'submissions:read',
+    'ivdr:read',
   ],
   medical_writer: [
     'documents:read',
@@ -282,6 +295,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'audit:read',
     'audit:export',
     'submissions:read',
+    'ivdr:read',
+    'ivdr:write',
+    'ivdr:classify',
   ],
   legal_counsel: [
     'documents:read',

@@ -46,27 +46,27 @@ export interface ContextRibbonProps {
   project?: string;
   status?: string;
   workspaceMode?: WorkspaceMode;
-  
+
   // Deadlines
-  deadline?: string;       // Target date string
-  daysRemaining?: number;  // Pre-calculated days
-  
+  deadline?: string; // Target date string
+  daysRemaining?: number; // Pre-calculated days
+
   // Risk
   riskLevel?: RiskLevel;
-  riskItems?: number;      // Count of outstanding risks
-  
+  riskItems?: number; // Count of outstanding risks
+
   // Connection
   connection?: ConnectionStatus;
   lastSyncTime?: string;
-  
+
   // Team
   activeUsers?: number;
-  
+
   // Actions
   onProjectClick?: () => void;
   onRiskClick?: () => void;
   onConnectionClick?: () => void;
-  
+
   className?: string;
 }
 
@@ -74,13 +74,16 @@ export interface ContextRibbonProps {
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const RISK_CONFIG: Record<RiskLevel, {
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon: React.ReactNode;
-  pulse: boolean;
-}> = {
+const RISK_CONFIG: Record<
+  RiskLevel,
+  {
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    icon: React.ReactNode;
+    pulse: boolean;
+  }
+> = {
   LOW: {
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
@@ -111,25 +114,47 @@ const RISK_CONFIG: Record<RiskLevel, {
   },
 };
 
-const MODE_CONFIG: Record<WorkspaceMode, {
-  label: string;
-  color: string;
-  icon: React.ReactNode;
-}> = {
-  monitoring: { label: 'Monitoring', color: 'text-blue-600', icon: <Activity className="w-3 h-3" /> },
+const MODE_CONFIG: Record<
+  WorkspaceMode,
+  {
+    label: string;
+    color: string;
+    icon: React.ReactNode;
+  }
+> = {
+  monitoring: {
+    label: 'Monitoring',
+    color: 'text-blue-600',
+    icon: <Activity className="w-3 h-3" />,
+  },
   drafting: { label: 'Drafting', color: 'text-violet-600', icon: <Target className="w-3 h-3" /> },
   review: { label: 'Review', color: 'text-amber-600', icon: <Activity className="w-3 h-3" /> },
-  submission: { label: 'Submission', color: 'text-green-600', icon: <Mountain className="w-3 h-3" /> },
+  submission: {
+    label: 'Submission',
+    color: 'text-green-600',
+    icon: <Mountain className="w-3 h-3" />,
+  },
   audit: { label: 'Audit Mode', color: 'text-red-600', icon: <ShieldCheck className="w-3 h-3" /> },
 };
 
-const CONNECTION_CONFIG: Record<ConnectionStatus, {
-  color: string;
-  icon: React.ReactNode;
-  label: string;
-}> = {
-  LIVE: { color: 'text-blue-500', icon: <CloudLightning className="w-4 h-4" />, label: 'Connected' },
-  SYNCING: { color: 'text-amber-500', icon: <Wifi className="w-4 h-4 animate-pulse" />, label: 'Syncing...' },
+const CONNECTION_CONFIG: Record<
+  ConnectionStatus,
+  {
+    color: string;
+    icon: React.ReactNode;
+    label: string;
+  }
+> = {
+  LIVE: {
+    color: 'text-blue-500',
+    icon: <CloudLightning className="w-4 h-4" />,
+    label: 'Connected',
+  },
+  SYNCING: {
+    color: 'text-amber-500',
+    icon: <Wifi className="w-4 h-4 animate-pulse" />,
+    label: 'Syncing...',
+  },
   OFFLINE: { color: 'text-zinc-400', icon: <WifiOff className="w-4 h-4" />, label: 'Offline' },
 };
 
@@ -156,17 +181,21 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
   const riskConfig = RISK_CONFIG[riskLevel];
   const modeConfig = MODE_CONFIG[workspaceMode];
   const connConfig = CONNECTION_CONFIG[connection];
-  
+
   // Calculate days if deadline is provided but daysRemaining isn't
-  const days = daysRemaining ?? (deadline 
-    ? Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null);
-  
+  const days =
+    daysRemaining ??
+    (deadline
+      ? Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null);
+
   return (
-    <div className={cn(
-      'h-12 bg-white border-b border-slate-200 flex items-center justify-between px-6 text-xs shadow-sm z-30 select-none',
-      className
-    )}>
+    <div
+      className={cn(
+        'h-12 bg-white border-b border-slate-200 flex items-center justify-between px-6 text-xs shadow-sm z-30 select-none',
+        className
+      )}
+    >
       {/* ═══════ LEFT: ACTIVE CONTEXT ═══════ */}
       <div className="flex items-center gap-4">
         {/* Context Indicator */}
@@ -174,7 +203,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           <Activity className="w-3.5 h-3.5 text-blue-600" />
           <span className="text-[10px]">ACTIVE CONTEXT</span>
         </div>
-        
+
         {/* Project / Status */}
         <button
           onClick={onProjectClick}
@@ -190,41 +219,47 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           </span>
         </button>
       </div>
-      
+
       {/* ═══════ RIGHT: HEALTH & TELEMETRY ═══════ */}
       <div className="flex items-center gap-4">
         {/* Deadline Countdown */}
         {days !== null && (
-          <div className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-lg border',
-            days <= 7 && 'bg-red-50 border-red-200',
-            days > 7 && days <= 14 && 'bg-amber-50 border-amber-200',
-            days > 14 && days <= 30 && 'bg-blue-50 border-blue-200',
-            days > 30 && 'bg-slate-50 border-slate-200'
-          )}>
-            <Clock className={cn(
-              'w-3.5 h-3.5',
-              days <= 7 && 'text-red-500',
-              days > 7 && days <= 14 && 'text-amber-500',
-              days > 14 && days <= 30 && 'text-blue-500',
-              days > 30 && 'text-slate-500'
-            )} />
+          <div
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded-lg border',
+              days <= 7 && 'bg-red-50 border-red-200',
+              days > 7 && days <= 14 && 'bg-amber-50 border-amber-200',
+              days > 14 && days <= 30 && 'bg-blue-50 border-blue-200',
+              days > 30 && 'bg-slate-50 border-slate-200'
+            )}
+          >
+            <Clock
+              className={cn(
+                'w-3.5 h-3.5',
+                days <= 7 && 'text-red-500',
+                days > 7 && days <= 14 && 'text-amber-500',
+                days > 14 && days <= 30 && 'text-blue-500',
+                days > 30 && 'text-slate-500'
+              )}
+            />
             <span className="text-slate-600">DUE:</span>
-            <span className={cn(
-              'font-mono font-bold',
-              days <= 7 && 'text-red-600',
-              days > 7 && days <= 14 && 'text-amber-600',
-              days > 14 && days <= 30 && 'text-blue-600',
-              days > 30 && 'text-slate-600'
-            )}>
+            <span
+              className={cn(
+                'font-mono font-bold',
+                days <= 7 && 'text-red-600',
+                days > 7 && days <= 14 && 'text-amber-600',
+                days > 14 && days <= 30 && 'text-blue-600',
+                days > 30 && 'text-slate-600'
+              )}
+            >
               {days}d
             </span>
           </div>
         )}
-        
+
         {/* Divider */}
         <div className="h-6 w-px bg-slate-200" />
-        
+
         {/* Risk Level */}
         <button
           onClick={onRiskClick}
@@ -240,24 +275,24 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           <div className={cn(riskConfig.color, riskConfig.pulse && 'animate-pulse')}>
             {riskConfig.icon}
           </div>
-          <span className={cn('font-black', riskConfig.color)}>
-            {riskLevel}
-          </span>
+          <span className={cn('font-black', riskConfig.color)}>{riskLevel}</span>
           {riskItems !== undefined && riskItems > 0 && (
-            <span className={cn(
-              'px-1.5 py-0.5 text-[10px] font-bold rounded-full',
-              riskLevel === 'CRITICAL' || riskLevel === 'HIGH' 
-                ? 'bg-red-600 text-white' 
-                : 'bg-slate-200 text-slate-600'
-            )}>
+            <span
+              className={cn(
+                'px-1.5 py-0.5 text-[10px] font-bold rounded-full',
+                riskLevel === 'CRITICAL' || riskLevel === 'HIGH'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-200 text-slate-600'
+              )}
+            >
               {riskItems}
             </span>
           )}
         </button>
-        
+
         {/* Divider */}
         <div className="h-6 w-px bg-slate-200" />
-        
+
         {/* Active Users */}
         {activeUsers > 0 && (
           <>
@@ -269,8 +304,8 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
             <div className="h-6 w-px bg-slate-200" />
           </>
         )}
-        
-        {/* Lumen Cortex Connection */}
+
+        {/* RI Connection */}
         <button
           onClick={onConnectionClick}
           className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
@@ -278,13 +313,13 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         >
           <Zap className="w-3.5 h-3.5 text-blue-600" />
           <span className="text-[10px] font-bold text-slate-500 tracking-wider">CORTEX</span>
-          <div className={connConfig.color}>
-            {connConfig.icon}
-          </div>
-          <span className={cn(
-            'font-mono text-[10px]',
-            connection === 'LIVE' ? 'text-blue-600' : 'text-slate-400'
-          )}>
+          <div className={connConfig.color}>{connConfig.icon}</div>
+          <span
+            className={cn(
+              'font-mono text-[10px]',
+              connection === 'LIVE' ? 'text-blue-600' : 'text-slate-400'
+            )}
+          >
             {connection}
           </span>
         </button>

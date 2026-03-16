@@ -5,7 +5,6 @@
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/aws-cli:1": {},
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
@@ -85,12 +84,11 @@
   "postStartCommand": "bash .devcontainer/post-start.sh",
 
   "remoteUser": "root",
-  "updateRemoteUserUID": true,
 
   "remoteEnv": {
     "NODE_ENV": "development",
     "DATABASE_URL": "${localEnv:DATABASE_NEON_NEW_SECRET}"
   },
 
-  "mounts": ["source=c2c-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume"]
+  "mounts": []
 }

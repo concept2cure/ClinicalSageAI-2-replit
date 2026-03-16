@@ -20,10 +20,12 @@ import medicalDeviceRoutes from './medical-device-api';
 import concept2cureRoutes from './concept2cure';
 import missionControlRoutes from './mission-control';
 import productAuditRoutes from './product-audit';
+import precedentEngineRoutes from './precedent-engine';
 import workflowRoutes from './workflow';
 import cmcDashboardRoutes from './cmc-dashboard';
 import anaFeaturesRoutes from './ana-features';
 import regulatoryPathwayIntelligenceRoutes from './regulatory-pathway-intelligence';
+import submissionOpsRoutes from './submission-ops';
 import { authMiddleware } from '../auth';
 
 const router = Router();
@@ -61,6 +63,9 @@ router.use('/concept2cure', concept2cureRoutes);
 router.use('/mission-control', missionControlRoutes);
 router.use('/product-audit', productAuditRoutes);
 
+// Regulatory Precedent Engine
+router.use('/precedent-engine', precedentEngineRoutes);
+
 // Workflow & Proofs
 router.use('/workflow', workflowRoutes);
 
@@ -72,6 +77,9 @@ router.use('/ana', anaFeaturesRoutes);
 
 // Regulatory Pathway Intelligence Engine (30+ agencies, 65+ ICH guidelines, document matrix)
 router.use('/regulatory-intelligence-engine', regulatoryPathwayIntelligenceRoutes);
+
+// Phase 15 Submission Operations Command Center
+router.use('/submission-ops', submissionOpsRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {

@@ -77,7 +77,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/portal/dashboard' },
   { id: 'programs', label: 'Programs', icon: FolderKanban, href: '/portal/programs', badge: 12 },
   { id: 'library', label: 'Evidence Library', icon: FileText, href: '/portal/library' },
-  { id: 'assistant', label: 'AI Assistant', icon: Sparkles, href: '/portal/assistant' },
+  { id: 'assistant', label: 'RI Copilot', icon: Sparkles, href: '/portal/assistant' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/portal/analytics' },
   { id: 'calendar', label: 'Calendar', icon: Calendar, href: '/portal/calendar' },
   { id: 'team', label: 'Team', icon: Users, href: '/portal/team' },
@@ -328,7 +328,7 @@ const Sidebar: React.FC<SidebarProps> = memo(
       <Logo collapsed={collapsed} />
 
       {/* Main nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
         {NAV_ITEMS.map(item => (
           <NavItemButton
             key={item.id}
@@ -423,10 +423,10 @@ const Header: React.FC<HeaderProps> = memo(({ title, sidebarCollapsed }) => {
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        {/* AI Quick Action */}
+        {/* RI Quick Action */}
         <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-accent-500 text-white text-sm font-medium hover:from-primary-600 hover:to-accent-600 transition-all shadow-sm">
           <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">Ask AI</span>
+          <span className="hidden sm:inline">Ask RI</span>
         </button>
 
         {/* Notifications */}
@@ -476,7 +476,7 @@ const MobileMenu: React.FC<MobileMenuProps> = memo(({ open, onClose, activeItem,
           className="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 lg:hidden flex flex-col"
         >
           <Logo />
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto sidebar-scroll">
             {NAV_ITEMS.map(item => (
               <NavItemButton
                 key={item.id}

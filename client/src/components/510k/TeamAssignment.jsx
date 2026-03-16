@@ -3,11 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import {
@@ -24,80 +31,82 @@ import {
   AlertCircle,
   Crown,
   UserCheck,
-  Clock
+  Clock,
 } from 'lucide-react';
 
 // Predefined roles for 510(k) projects
 const PROJECT_ROLES = [
-  { 
-    id: 'project_lead', 
-    label: 'Project Lead', 
+  {
+    id: 'project_lead',
+    label: 'Project Lead',
     icon: <Crown className="h-4 w-4" />,
     description: 'Overall project responsibility and coordination',
     required: true,
-    permissions: ['full_access', 'approve_submissions', 'manage_team']
+    permissions: ['full_access', 'approve_submissions', 'manage_team'],
   },
-  { 
-    id: 'regulatory_lead', 
-    label: 'Regulatory Lead', 
+  {
+    id: 'regulatory_lead',
+    label: 'Regulatory Lead',
     icon: <Shield className="h-4 w-4" />,
     description: 'Regulatory strategy and FDA compliance',
     required: true,
-    permissions: ['edit_regulatory', 'approve_regulatory', 'submit_fda']
+    permissions: ['edit_regulatory', 'approve_regulatory', 'submit_fda'],
   },
-  { 
-    id: 'quality_lead', 
-    label: 'Quality Lead', 
+  {
+    id: 'quality_lead',
+    label: 'Quality Lead',
     icon: <UserCheck className="h-4 w-4" />,
     description: 'Quality system and compliance oversight',
     required: true,
-    permissions: ['edit_quality', 'approve_quality', 'audit_trail']
+    permissions: ['edit_quality', 'approve_quality', 'audit_trail'],
   },
-  { 
-    id: 'technical_lead', 
-    label: 'Technical Lead', 
+  {
+    id: 'technical_lead',
+    label: 'Technical Lead',
     icon: <Briefcase className="h-4 w-4" />,
     description: 'Technical documentation and testing',
     required: false,
-    permissions: ['edit_technical', 'upload_test_data', 'review_technical']
+    permissions: ['edit_technical', 'upload_test_data', 'review_technical'],
   },
-  { 
-    id: 'clinical_lead', 
-    label: 'Clinical Lead', 
+  {
+    id: 'clinical_lead',
+    label: 'Clinical Lead',
     icon: <Heart className="h-4 w-4" />,
     description: 'Clinical data and studies management',
     required: false,
-    permissions: ['edit_clinical', 'manage_clinical_data', 'review_clinical']
+    permissions: ['edit_clinical', 'manage_clinical_data', 'review_clinical'],
   },
-  { 
-    id: 'reviewer', 
-    label: 'Reviewer', 
+  {
+    id: 'reviewer',
+    label: 'Reviewer',
     icon: <FileText className="h-4 w-4" />,
     description: 'Document review and feedback',
     required: false,
-    permissions: ['view_all', 'add_comments', 'track_changes']
+    permissions: ['view_all', 'add_comments', 'track_changes'],
   },
-  { 
-    id: 'contributor', 
-    label: 'Contributor', 
+  {
+    id: 'contributor',
+    label: 'Contributor',
     icon: <Users className="h-4 w-4" />,
     description: 'Content creation and data entry',
     required: false,
-    permissions: ['edit_assigned', 'upload_documents', 'add_data']
-  }
+    permissions: ['edit_assigned', 'upload_documents', 'add_data'],
+  },
 ];
 
 export default function TeamAssignment({ projectId, onComplete, initialTeam = [] }) {
   const { toast } = useToast();
+  const { currentOrganization } = useTenantContext();
+  const orgId = String(currentOrganization?.id || '1');
   const queryClient = useQueryClient();
-  
+
   const [teamMembers, setTeamMembers] = useState(initialTeam);
   const [newMember, setNewMember] = useState({
     name: '',
     email: '',
     role: '',
     phone: '',
-    department: ''
+    department: '',
   });
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
@@ -108,19 +117,19 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
     queryFn: async () => {
       const response = await fetch('/api/organization/users', {
         headers: {
-          'x-organization-id': localStorage.getItem('organizationId') || '1'
-        }
+          'x-organization-id': orgId,
+        },
       });
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
-    }
+    },
   });
 
   // Validate team composition
   const validateTeam = () => {
     const errors = {};
     const assignedRoles = teamMembers.map(m => m.role);
-    
+
     // Check required roles
     const requiredRoles = PROJECT_ROLES.filter(r => r.required);
     for (const role of requiredRoles) {
@@ -128,7 +137,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
         errors[role.id] = `${role.label} is required`;
       }
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -139,7 +148,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
       toast({
         title: 'Validation Error',
         description: 'Please fill in all required fields',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -149,19 +158,18 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
       toast({
         title: 'Duplicate Member',
         description: 'This user is already on the team',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
 
     // Check for duplicate role (for unique roles)
     const uniqueRoles = ['project_lead', 'regulatory_lead', 'quality_lead'];
-    if (uniqueRoles.includes(newMember.role) && 
-        teamMembers.some(m => m.role === newMember.role)) {
+    if (uniqueRoles.includes(newMember.role) && teamMembers.some(m => m.role === newMember.role)) {
       toast({
         title: 'Role Already Assigned',
         description: 'This role has already been assigned to another team member',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -170,13 +178,13 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
       id: Date.now(), // Temporary ID
       ...newMember,
       addedAt: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending',
     };
 
     setTeamMembers([...teamMembers, member]);
     setNewMember({ name: '', email: '', role: '', phone: '', department: '' });
     setIsAddingMember(false);
-    
+
     toast({
       title: 'Team Member Added',
       description: `${member.name} has been added to the team`,
@@ -184,25 +192,23 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
   };
 
   // Remove team member
-  const handleRemoveMember = (memberId) => {
+  const handleRemoveMember = memberId => {
     setTeamMembers(teamMembers.filter(m => m.id !== memberId));
   };
 
   // Update member role
   const handleUpdateRole = (memberId, newRole) => {
-    setTeamMembers(teamMembers.map(m => 
-      m.id === memberId ? { ...m, role: newRole } : m
-    ));
+    setTeamMembers(teamMembers.map(m => (m.id === memberId ? { ...m, role: newRole } : m)));
   };
 
   // Save team mutation
   const saveTeamMutation = useMutation({
-    mutationFn: async (team) => {
+    mutationFn: async team => {
       const response = await apiRequest(`/api/510k/projects/${projectId}/team`, {
         method: 'PUT',
-        body: JSON.stringify({ teamMembers: team })
+        body: JSON.stringify({ teamMembers: team }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to save team');
       return response.json();
     },
@@ -214,13 +220,13 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
       });
       onComplete(teamMembers);
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Save Failed',
         description: error.message || 'Failed to save team',
         variant: 'destructive',
       });
-    }
+    },
   });
 
   const handleSubmit = () => {
@@ -236,12 +242,16 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
     saveTeamMutation.mutate(teamMembers);
   };
 
-  const getRoleInfo = (roleId) => {
+  const getRoleInfo = roleId => {
     return PROJECT_ROLES.find(r => r.id === roleId);
   };
 
-  const getInitials = (name) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const getInitials = name => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
@@ -298,7 +308,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
             </div>
           ) : (
             <div className="space-y-4">
-              {teamMembers.map((member) => {
+              {teamMembers.map(member => {
                 const roleInfo = getRoleInfo(member.role);
                 return (
                   <div
@@ -311,7 +321,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                         <AvatarImage src={member.avatar} />
                         <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                       </Avatar>
-                      
+
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{member.name}</p>
@@ -335,14 +345,10 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                           <div className="flex items-center gap-1">
                             {roleInfo.icon}
                             <span className="font-medium text-sm">{roleInfo.label}</span>
-                            {roleInfo.required && (
-                              <span className="text-red-500">*</span>
-                            )}
+                            {roleInfo.required && <span className="text-red-500">*</span>}
                           </div>
                         )}
-                        <p className="text-xs text-gray-500 mt-1">
-                          {roleInfo?.description}
-                        </p>
+                        <p className="text-xs text-gray-500 mt-1">{roleInfo?.description}</p>
                       </div>
 
                       <Button
@@ -377,7 +383,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                     id="memberName"
                     data-testid="input-member-name"
                     value={newMember.name}
-                    onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                    onChange={e => setNewMember({ ...newMember, name: e.target.value })}
                     placeholder="Full name"
                   />
                 </div>
@@ -389,7 +395,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                     data-testid="input-member-email"
                     type="email"
                     value={newMember.email}
-                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                    onChange={e => setNewMember({ ...newMember, email: e.target.value })}
                     placeholder="email@company.com"
                   />
                 </div>
@@ -400,7 +406,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                   <Label htmlFor="memberRole">Role *</Label>
                   <Select
                     value={newMember.role}
-                    onValueChange={(value) => setNewMember({ ...newMember, role: value })}
+                    onValueChange={value => setNewMember({ ...newMember, role: value })}
                     data-testid="select-member-role"
                   >
                     <SelectTrigger>
@@ -408,19 +414,20 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                     </SelectTrigger>
                     <SelectContent>
                       {PROJECT_ROLES.map(role => {
-                        const isAssigned = teamMembers.some(m => m.role === role.id) && 
-                                         ['project_lead', 'regulatory_lead', 'quality_lead'].includes(role.id);
+                        const isAssigned =
+                          teamMembers.some(m => m.role === role.id) &&
+                          ['project_lead', 'regulatory_lead', 'quality_lead'].includes(role.id);
                         return (
-                          <SelectItem 
-                            key={role.id} 
-                            value={role.id}
-                            disabled={isAssigned}
-                          >
+                          <SelectItem key={role.id} value={role.id} disabled={isAssigned}>
                             <div className="flex items-center gap-2">
                               {role.icon}
                               {role.label}
                               {role.required && <span className="text-red-500">*</span>}
-                              {isAssigned && <Badge variant="secondary" className="ml-2 text-xs">Assigned</Badge>}
+                              {isAssigned && (
+                                <Badge variant="secondary" className="ml-2 text-xs">
+                                  Assigned
+                                </Badge>
+                              )}
                             </div>
                           </SelectItem>
                         );
@@ -435,7 +442,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                     id="memberDepartment"
                     data-testid="input-member-department"
                     value={newMember.department}
-                    onChange={(e) => setNewMember({ ...newMember, department: e.target.value })}
+                    onChange={e => setNewMember({ ...newMember, department: e.target.value })}
                     placeholder="e.g., Regulatory Affairs"
                   />
                 </div>
@@ -447,7 +454,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                   id="memberPhone"
                   data-testid="input-member-phone"
                   value={newMember.phone}
-                  onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+                  onChange={e => setNewMember({ ...newMember, phone: e.target.value })}
                   placeholder="(555) 123-4567"
                 />
               </div>
@@ -476,9 +483,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Role Overview</CardTitle>
-          <CardDescription>
-            Understanding team roles and responsibilities
-          </CardDescription>
+          <CardDescription>Understanding team roles and responsibilities</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -508,9 +513,7 @@ export default function TeamAssignment({ projectId, onComplete, initialTeam = []
                         </div>
                       </div>
                     </div>
-                    {isAssigned && (
-                      <Check className="h-4 w-4 text-green-600" />
-                    )}
+                    {isAssigned && <Check className="h-4 w-4 text-green-600" />}
                   </div>
                 </div>
               );

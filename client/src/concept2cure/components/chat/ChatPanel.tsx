@@ -1,6 +1,6 @@
 /**
  * Concept2Cure - Chat Panel
- * 
+ *
  * Claude.ai-style chat interface with Lumen.
  * Left panel in the split-screen layout.
  * Now connected to real Lumen Cortex API.
@@ -39,12 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MESSAGE COMPONENT
@@ -132,9 +127,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 {isUser ? 'You' : 'AnA'}
               </span>
               <span className="text-xs text-gray-400">{formatTime(message.timestamp)}</span>
-              {message.edited && (
-                <span className="text-xs text-gray-400 italic">(edited)</span>
-              )}
+              {message.edited && <span className="text-xs text-gray-400 italic">(edited)</span>}
             </div>
 
             {/* Message body */}
@@ -143,7 +136,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 <textarea
                   ref={textareaRef}
                   value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
+                  onChange={e => setEditContent(e.target.value)}
                   className="w-full p-3 text-sm border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   rows={4}
                 />
@@ -167,7 +160,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
-                {message.attachments.map((attachment) => (
+                {message.attachments.map(attachment => (
                   <div
                     key={attachment.id}
                     className="flex items-center gap-2 px-2 py-1 bg-gray-100 rounded text-xs text-gray-600"
@@ -312,14 +305,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setAttachments((prev) => [...prev, ...files]);
+    setAttachments(prev => [...prev, ...files]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   // Auto-resize textarea
@@ -385,7 +378,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
@@ -427,8 +420,8 @@ const EmptyState: React.FC = () => {
         Hello! I'm AnA
       </h2>
       <p className="text-gray-500 max-w-md mb-8">
-        Your AI regulatory intelligence assistant. I can help you draft
-        documents, analyze risks, navigate FDA requirements, and more.
+        Your RI regulatory intelligence assistant. I can help you draft documents, analyze risks,
+        navigate FDA requirements, and more.
       </p>
       <div className="grid grid-cols-2 gap-3 max-w-lg">
         {[
@@ -436,7 +429,7 @@ const EmptyState: React.FC = () => {
           'Analyze my predicate device',
           'Check IFU consistency',
           'Generate risk heatmap',
-        ].map((suggestion) => (
+        ].map(suggestion => (
           <button
             key={suggestion}
             className="px-4 py-3 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 text-gray-700 transition-colors"
@@ -562,9 +555,7 @@ export const ChatPanel: React.FC = () => {
         <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-6">
           <Sparkles className="h-8 w-8 text-gray-400" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Select a Project
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Select a Project</h2>
         <p className="text-gray-500 max-w-md">
           Choose a project from the sidebar or create a new one to start
           working with AnA.
@@ -579,9 +570,7 @@ export const ChatPanel: React.FC = () => {
       <div className="flex-shrink-0 border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
           <div>
-            <h1 className="text-sm font-medium text-gray-900">
-              {activeProject.name}
-            </h1>
+            <h1 className="text-sm font-medium text-gray-900">{activeProject.name}</h1>
             <p className="text-xs text-gray-500">
               {activeConversation?.title || 'New conversation'}
             </p>
@@ -607,9 +596,7 @@ export const ChatPanel: React.FC = () => {
                 message={message}
                 isLast={index === messages.length - 1}
                 onCopy={handleCopyMessage}
-                onRegenerate={
-                  message.role === 'assistant' ? () => {} : undefined
-                }
+                onRegenerate={message.role === 'assistant' ? () => {} : undefined}
                 onEdit={handleEditMessage}
                 onFork={handleForkConversation}
               />

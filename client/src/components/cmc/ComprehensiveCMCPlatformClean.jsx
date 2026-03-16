@@ -23,17 +23,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   FlaskConical,
   BarChart3,
@@ -157,6 +148,7 @@ import {
   Building,
   Camera,
   Calculator,
+  FileDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DocumentAuthoringComponent from './DocumentAuthoringFixed';
@@ -855,8 +847,8 @@ function BulkAssignmentDialogContent({ studyId, onClose }) {
   );
 }
 
-const ComprehensiveCMCPlatform = () => {
-  const [activeTab, setActiveTab] = useState('supply-chain');
+const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [viewingMethodId, setViewingMethodId] = useState(null);
   const [analyticalMethods, setAnalyticalMethods] = useState([]);
   const [processValidations, setProcessValidations] = useState([]);
@@ -934,14 +926,14 @@ const ComprehensiveCMCPlatform = () => {
   const [risks, setRisks] = useState([]);
   const [aiInsights, setAiInsights] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  
+
   // Gap Analysis Integration State
   const [gapAnalysisData, setGapAnalysisData] = useState({
     totalGaps: 0,
     criticalGaps: 0,
     resolvedGaps: 0,
     gapsByCategory: {},
-    recentGaps: []
+    recentGaps: [],
   });
   const [showGapResolutionModal, setShowGapResolutionModal] = useState(false);
   const [selectedGapForResolution, setSelectedGapForResolution] = useState(null);
@@ -970,7 +962,7 @@ const ComprehensiveCMCPlatform = () => {
   const [editingEntry, setEditingEntry] = useState(null);
   const [selectedStudyId, setSelectedStudyId] = useState(null);
   const [workflowHelpOpen, setWorkflowHelpOpen] = useState(false);
-  
+
   // Quality Control state - moved from renderQualityControl to fix React hooks error
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [showOOSModal, setShowOOSModal] = useState(false);
@@ -982,7 +974,7 @@ const ComprehensiveCMCPlatform = () => {
   const [referenceStandards, setReferenceStandards] = useState([]);
   const [specifications, setSpecifications] = useState([]);
   const [qcBatches, setQcBatches] = useState([]);
-  
+
   // Enhanced QC State Management
   const [qcSpecifications, setQcSpecifications] = useState([]);
   const [oosInvestigations, setOosInvestigations] = useState([]);
@@ -999,18 +991,18 @@ const ComprehensiveCMCPlatform = () => {
   const [selectedBatchRelease, setSelectedBatchRelease] = useState(null);
   const [isLoadingQC, setIsLoadingQC] = useState(false);
   const [qcError, setQcError] = useState(null);
-  
+
   // Enhanced Templates Tab state - moved from renderEnhancedTemplatesTab to fix React hooks error
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customizingTemplate, setCustomizingTemplate] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
-  
+
   // Enhanced OOT Monitor Tab state - moved from renderEnhancedOOTMonitorTab to fix React hooks error
   const [activeOOTView, setActiveOOTView] = useState('dashboard');
   const [selectedOOT, setSelectedOOT] = useState(null);
   const [investigationForm, setInvestigationForm] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
-  
+
   // Analytical Methods state - moved from renderAnalyticalMethods to fix React hooks error
   const [activeSubTab, setActiveSubTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1039,11 +1031,11 @@ const ComprehensiveCMCPlatform = () => {
     capacityFactor: 3.5,
     alerts: [],
   });
-  
+
   // Regulatory Management state - moved from renderRegulatoryManagement to fix React hooks error
   const [activeRegTab, setActiveRegTab] = useState('overview');
   const [activeSubId, setActiveSubId] = useState(null);
-  
+
   // Document Authoring state - moved from renderDocumentAuthoring to fix React hooks error
   const [userRole, setUserRole] = useState('author'); // author, reviewer, approver, admin
   const [userPermissions, setUserPermissions] = useState({
@@ -1052,7 +1044,7 @@ const ComprehensiveCMCPlatform = () => {
     canApprove: false,
     canSign: false,
     canExport: false,
-    canDelete: false
+    canDelete: false,
   });
   const [sessionInfo, setSessionInfo] = useState({
     sessionId: null,
@@ -1061,7 +1053,7 @@ const ComprehensiveCMCPlatform = () => {
     loginTime: null,
     lastActivity: new Date(),
     sessionTimeout: 30, // minutes
-    mfaVerified: false
+    mfaVerified: false,
   });
   const [documentState, setDocumentState] = useState('DRAFT'); // DRAFT, IN_REVIEW, APPROVED, LOCKED
   const [documentVersions, setDocumentVersions] = useState([]);
@@ -1079,7 +1071,7 @@ const ComprehensiveCMCPlatform = () => {
     loadTime: 0,
     saveTime: 0,
     validationTime: 0,
-    syncTime: 0
+    syncTime: 0,
   });
 
   // First-Run Guide state
@@ -1116,10 +1108,10 @@ const ComprehensiveCMCPlatform = () => {
       <h1>3.2.S.1 - General Information</h1>
       <h2>Nomenclature</h2>
       <p>Provide the chemical name, approved name, proprietary name, company code, and other descriptive names for the drug substance. Include the Chemical Abstracts Service (CAS) registry number.</p>
-      
+
       <h2>Structure</h2>
       <p>Provide the structural formula, including stereochemistry, the molecular formula, and molecular weight of the drug substance.</p>
-      
+
       <h2>General Properties</h2>
       <p>Describe the general properties of the drug substance (e.g., appearance, color, physical state, hygroscopicity).</p>
     `);
@@ -1483,59 +1475,66 @@ const ComprehensiveCMCPlatform = () => {
             title: 'Gap Analysis Review',
             description: 'Review gap details and assess regulatory impact',
             timeEstimate: '30 min',
-            deliverables: ['Gap assessment document', 'Impact analysis']
+            deliverables: ['Gap assessment document', 'Impact analysis'],
           },
           {
             step: 2,
             title: 'Resolution Implementation',
             description: 'Implement corrective actions for identified gaps',
             timeEstimate: '1-2 hours',
-            deliverables: ['Updated documentation', 'Corrective actions log']
+            deliverables: ['Updated documentation', 'Corrective actions log'],
           },
           {
             step: 3,
             title: 'Verification & Closure',
             description: 'Verify resolution and close gap tracking',
             timeEstimate: '1 hour',
-            deliverables: ['Verification report', 'Gap closure confirmation']
-          }
-        ]
+            deliverables: ['Verification report', 'Gap closure confirmation'],
+          },
+        ],
       };
 
-      setSelectedGapForResolution({ methodId, gap, workflow, onComplete: () => {
-        // Refresh gap data after resolution
-        const fetchUpdatedGaps = async () => {
-          try {
-            const currentOrgId = localStorage.getItem('currentOrganization') || '7';
-            const headers = {
-              'x-tenant-id': currentOrgId,
-              'Content-Type': 'application/json',
-            };
-            const response = await fetch('/api/analytical/methods/gaps', { headers });
-            const gapsData = await response.json();
-            
-            const processedGaps = {
-              totalGaps: Object.keys(gapsData).length,
-              criticalGaps: Object.values(gapsData).filter(gaps => 
-                Array.isArray(gaps) && gaps.some(gap => gap.severity === 'CRITICAL')).length,
-              resolvedGaps: Object.values(gapsData).filter(gaps => 
-                Array.isArray(gaps) && gaps.some(gap => gap.status === 'RESOLVED')).length,
-              gapsByCategory: gapsData,
-              recentGaps: Object.values(gapsData).flat().slice(0, 5)
-            };
-            
-            setGapAnalysisData(processedGaps);
-            setDashboardData(prev => ({
-              ...prev,
-              gapAnalysisCount: processedGaps.totalGaps,
-              criticalGaps: processedGaps.criticalGaps
-            }));
-          } catch (error) {
-            console.error('Error refreshing gap data:', error);
-          }
-        };
-        fetchUpdatedGaps();
-      }});
+      setSelectedGapForResolution({
+        methodId,
+        gap,
+        workflow,
+        onComplete: () => {
+          // Refresh gap data after resolution
+          const fetchUpdatedGaps = async () => {
+            try {
+              const currentOrgId = localStorage.getItem('currentOrganization') || '7';
+              const headers = {
+                'x-tenant-id': currentOrgId,
+                'Content-Type': 'application/json',
+              };
+              const response = await fetch('/api/analytical/methods/gaps', { headers });
+              const gapsData = await response.json();
+
+              const processedGaps = {
+                totalGaps: Object.keys(gapsData).length,
+                criticalGaps: Object.values(gapsData).filter(
+                  gaps => Array.isArray(gaps) && gaps.some(gap => gap.severity === 'CRITICAL')
+                ).length,
+                resolvedGaps: Object.values(gapsData).filter(
+                  gaps => Array.isArray(gaps) && gaps.some(gap => gap.status === 'RESOLVED')
+                ).length,
+                gapsByCategory: gapsData,
+                recentGaps: Object.values(gapsData).flat().slice(0, 5),
+              };
+
+              setGapAnalysisData(processedGaps);
+              setDashboardData(prev => ({
+                ...prev,
+                gapAnalysisCount: processedGaps.totalGaps,
+                criticalGaps: processedGaps.criticalGaps,
+              }));
+            } catch (error) {
+              console.error('Error refreshing gap data:', error);
+            }
+          };
+          fetchUpdatedGaps();
+        },
+      });
       setShowGapResolutionModal(true);
     } catch (error) {
       console.error('Error setting up gap resolution:', error);
@@ -1554,54 +1553,75 @@ const ComprehensiveCMCPlatform = () => {
         setDashboardLoading(true);
 
         const currentOrgId = localStorage.getItem('currentOrganization') || '7';
+        const authToken =
+          localStorage.getItem('trialsage_access_token') || localStorage.getItem('authToken') || '';
         const headers = {
           'x-tenant-id': currentOrgId,
           'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         };
 
         const [summaryRes, stageGatesRes, tasksRes, validationRes, risksRes, insightsRes, gapsRes] =
           await Promise.all([
-            fetch('/api/cmc/dashboard/summary'),
-            fetch('/api/cmc/stage-gates'),
-            fetch('/api/cmc/tasks'),
-            fetch('/api/cmc/validation/issues'),
-            fetch('/api/cmc/risks'),
-            fetch('/api/cmc/ai/insights'),
+            fetch('/api/cmc/dashboard/summary', { headers }),
+            fetch('/api/cmc/stage-gates', { headers }),
+            fetch('/api/cmc/tasks', { headers }),
+            fetch('/api/cmc/validation/issues', { headers }),
+            fetch('/api/cmc/risks', { headers }),
+            fetch('/api/cmc/ai/insights', { headers }),
             fetch('/api/analytical/methods/gaps', { headers }),
           ]);
 
-        const [summary, stageGatesData, tasksData, validationData, risksData, insightsData, gapsData] =
-          await Promise.all([
-            summaryRes.json().catch(() => ({})),
-            stageGatesRes.json().catch(() => []),
-            tasksRes.json().catch(() => []),
-            validationRes.json().catch(() => []),
-            risksRes.json().catch(() => []),
-            insightsRes.json().catch(() => []),
-            gapsRes.json().catch(() => ({})),
-          ]);
+        const safeJson = async (r, fallback) => {
+          try {
+            const d = await r.json();
+            return r.ok ? d : fallback;
+          } catch {
+            return fallback;
+          }
+        };
+        const [
+          summary,
+          stageGatesData,
+          tasksData,
+          validationData,
+          risksData,
+          insightsData,
+          gapsData,
+        ] = await Promise.all([
+          safeJson(summaryRes, {}),
+          safeJson(stageGatesRes, []),
+          safeJson(tasksRes, []),
+          safeJson(validationRes, []),
+          safeJson(risksRes, []),
+          safeJson(insightsRes, []),
+          safeJson(gapsRes, {}),
+        ]);
 
         // Process gap analysis data
         const processedGaps = {
           totalGaps: Object.keys(gapsData).length,
-          criticalGaps: Object.values(gapsData).filter(gaps => 
-            Array.isArray(gaps) && gaps.some(gap => gap.severity === 'CRITICAL')).length,
-          resolvedGaps: Object.values(gapsData).filter(gaps => 
-            Array.isArray(gaps) && gaps.some(gap => gap.status === 'RESOLVED')).length,
+          criticalGaps: Object.values(gapsData).filter(
+            gaps => Array.isArray(gaps) && gaps.some(gap => gap.severity === 'CRITICAL')
+          ).length,
+          resolvedGaps: Object.values(gapsData).filter(
+            gaps => Array.isArray(gaps) && gaps.some(gap => gap.status === 'RESOLVED')
+          ).length,
           gapsByCategory: gapsData,
-          recentGaps: Object.values(gapsData).flat().slice(0, 5)
+          recentGaps: Object.values(gapsData).flat().slice(0, 5),
         };
 
-        setDashboardData({...summary, 
+        setDashboardData({
+          ...summary,
           gapAnalysisCount: processedGaps.totalGaps,
-          criticalGaps: processedGaps.criticalGaps
+          criticalGaps: processedGaps.criticalGaps,
         });
         setGapAnalysisData(processedGaps);
-        setStageGates(stageGatesData);
-        setTasks(tasksData);
-        setValidationIssues(validationData);
-        setRisks(risksData);
-        setAiInsights(insightsData);
+        setStageGates(Array.isArray(stageGatesData) ? stageGatesData : []);
+        setTasks(Array.isArray(tasksData) ? tasksData : []);
+        setValidationIssues(Array.isArray(validationData) ? validationData : []);
+        setRisks(Array.isArray(risksData) ? risksData : []);
+        setAiInsights(Array.isArray(insightsData) ? insightsData : []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         toast({
@@ -1733,7 +1753,7 @@ const ComprehensiveCMCPlatform = () => {
       const loadSubmissionData = async () => {
         try {
           const response = await fetch('/api/reg/submissions');
-          const ct = response.headers.get('content-type')||'';
+          const ct = response.headers.get('content-type') || '';
           if (response.ok && ct.includes('application/json')) {
             const submissions = await response.json();
             const formattedSubmissions = submissions.map(sub => ({
@@ -1915,7 +1935,7 @@ const ComprehensiveCMCPlatform = () => {
         });
         return;
       }
-      
+
       try {
         const response = await fetch('/api/reg/tasks', {
           method: 'POST',
@@ -2583,17 +2603,25 @@ const ComprehensiveCMCPlatform = () => {
                   {dashboardData.gapAnalysisCount || 0} total gaps detected
                 </div>
                 <div className="flex items-center mt-1">
-                  <div className={`w-2 h-2 rounded-full mr-1 ${
-                    (dashboardData.criticalGaps || 0) === 0 ? 'bg-green-500' :
-                    (dashboardData.criticalGaps || 0) <= 2 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}></div>
+                  <div
+                    className={`w-2 h-2 rounded-full mr-1 ${
+                      (dashboardData.criticalGaps || 0) === 0
+                        ? 'bg-green-500'
+                        : (dashboardData.criticalGaps || 0) <= 2
+                          ? 'bg-yellow-500'
+                          : 'bg-red-500'
+                    }`}
+                  ></div>
                   <span className="text-xs text-gray-600">
-                    {(dashboardData.criticalGaps || 0) === 0 ? 'All Clear' :
-                     (dashboardData.criticalGaps || 0) <= 2 ? 'Manageable' : 'Action Required'}
+                    {(dashboardData.criticalGaps || 0) === 0
+                      ? 'All Clear'
+                      : (dashboardData.criticalGaps || 0) <= 2
+                        ? 'Manageable'
+                        : 'Action Required'}
                   </span>
                 </div>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="mt-2 w-full bg-red-600 hover:bg-red-700"
                   onClick={() => setActiveTab('analytical')}
                   data-testid="button-view-gaps"
@@ -2618,12 +2646,21 @@ const ComprehensiveCMCPlatform = () => {
                 <Progress value={dashboardData.qualityScore} className="h-2 mt-2" />
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-xs text-muted-foreground">FDA Readiness</span>
-                  <Badge variant={
-                    dashboardData.qualityScore >= 95 ? 'default' :
-                    dashboardData.qualityScore >= 85 ? 'secondary' : 'destructive'
-                  } className="text-xs">
-                    {dashboardData.qualityScore >= 95 ? 'Excellent' :
-                     dashboardData.qualityScore >= 85 ? 'Good' : 'Needs Work'}
+                  <Badge
+                    variant={
+                      dashboardData.qualityScore >= 95
+                        ? 'default'
+                        : dashboardData.qualityScore >= 85
+                          ? 'secondary'
+                          : 'destructive'
+                    }
+                    className="text-xs"
+                  >
+                    {dashboardData.qualityScore >= 95
+                      ? 'Excellent'
+                      : dashboardData.qualityScore >= 85
+                        ? 'Good'
+                        : 'Needs Work'}
                   </Badge>
                 </div>
               </CardContent>
@@ -2779,7 +2816,9 @@ const ComprehensiveCMCPlatform = () => {
                 <GitBranch className="h-5 w-5 mr-2" />
                 Critical Path & Stage Gates Progress
               </CardTitle>
-              <CardDescription>AI-powered critical path analysis with bottleneck detection and timeline predictions</CardDescription>
+              <CardDescription>
+                AI-powered critical path analysis with bottleneck detection and timeline predictions
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -2787,10 +2826,16 @@ const ComprehensiveCMCPlatform = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">
-                      {dashboardData.submissionReadiness && dashboardData.submissionReadiness > 75 ? '23' : '31'} days
+                      {dashboardData.submissionReadiness && dashboardData.submissionReadiness > 75
+                        ? '23'
+                        : '31'}{' '}
+                      days
                     </div>
                     <p className="text-sm text-blue-700">Critical Path Duration</p>
-                    <Badge variant="outline" className="mt-1 bg-blue-100 text-blue-800 border-blue-300">
+                    <Badge
+                      variant="outline"
+                      className="mt-1 bg-blue-100 text-blue-800 border-blue-300"
+                    >
                       <Brain className="w-3 h-3 mr-1" />
                       AI Optimized
                     </Badge>
@@ -2798,14 +2843,19 @@ const ComprehensiveCMCPlatform = () => {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-orange-600">2</div>
                     <p className="text-sm text-orange-700">Bottlenecks Detected</p>
-                    <Button size="sm" variant="outline" className="mt-1 border-orange-300 text-orange-700 hover:bg-orange-50" data-testid="button-view-bottlenecks">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 border-orange-300 text-orange-700 hover:bg-orange-50"
+                      data-testid="button-view-bottlenecks"
+                    >
                       <AlertTriangle className="w-3 h-3 mr-1" />
                       View Details
                     </Button>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {(dashboardData.submissionReadiness || 85)}%
+                      {dashboardData.submissionReadiness || 85}%
                     </div>
                     <p className="text-sm text-green-700">On-time Probability</p>
                     <Badge variant="default" className="mt-1 bg-green-100 text-green-800">
@@ -2820,44 +2870,55 @@ const ComprehensiveCMCPlatform = () => {
                     <Target className="w-4 h-4 mr-2 text-purple-600" />
                     Critical Dependencies & Bottlenecks
                   </h5>
-                  
+
                   {[
                     {
                       dependency: 'Analytical Method Validation → Process Validation',
                       status: 'blocking',
                       impact: '5-7 days delay risk',
                       action: 'Expedite validation protocols',
-                      priority: 'critical'
+                      priority: 'critical',
                     },
                     {
                       dependency: 'Stability Data → Regulatory Submission',
                       status: 'on-track',
                       impact: 'No delay expected',
                       action: 'Monitor 12-month timepoint',
-                      priority: 'medium'
+                      priority: 'medium',
                     },
                     {
                       dependency: 'Process Validation → Tech Transfer',
                       status: 'at-risk',
                       impact: '2-3 days delay risk',
                       action: 'Parallel execution recommended',
-                      priority: 'high'
-                    }
+                      priority: 'high',
+                    },
                   ].map((dep, index) => (
-                    <div key={index} className={`p-3 rounded-lg border ${
-                      dep.status === 'blocking' ? 'bg-red-50 border-red-200' :
-                      dep.status === 'at-risk' ? 'bg-yellow-50 border-yellow-200' :
-                      'bg-green-50 border-green-200'
-                    }`}>
+                    <div
+                      key={index}
+                      className={`p-3 rounded-lg border ${
+                        dep.status === 'blocking'
+                          ? 'bg-red-50 border-red-200'
+                          : dep.status === 'at-risk'
+                            ? 'bg-yellow-50 border-yellow-200'
+                            : 'bg-green-50 border-green-200'
+                      }`}
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{dep.dependency}</p>
                           <p className="text-xs text-gray-600 mt-1">Impact: {dep.impact}</p>
                         </div>
-                        <Badge variant={
-                          dep.priority === 'critical' ? 'destructive' :
-                          dep.priority === 'high' ? 'secondary' : 'outline'
-                        } className="text-xs">
+                        <Badge
+                          variant={
+                            dep.priority === 'critical'
+                              ? 'destructive'
+                              : dep.priority === 'high'
+                                ? 'secondary'
+                                : 'outline'
+                          }
+                          className="text-xs"
+                        >
                           {dep.priority}
                         </Badge>
                       </div>
@@ -2887,7 +2948,10 @@ const ComprehensiveCMCPlatform = () => {
                                 <h4 className="font-medium">{stage.name}</h4>
                                 {/* Critical Path Indicator */}
                                 {index <= 2 && (
-                                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs bg-purple-50 text-purple-700 border-purple-300"
+                                  >
                                     <GitBranch className="w-3 h-3 mr-1" />
                                     Critical Path
                                   </Badge>
@@ -2899,7 +2963,8 @@ const ComprehensiveCMCPlatform = () => {
                                 <div className="flex items-center gap-1 mt-1">
                                   <Brain className="w-3 h-3 text-blue-500" />
                                   <span className="text-xs text-blue-600">
-                                    AI Prediction: {Math.random() > 0.5 ? 'On track' : '2 days ahead of schedule'}
+                                    AI Prediction:{' '}
+                                    {Math.random() > 0.5 ? 'On track' : '2 days ahead of schedule'}
                                   </span>
                                 </div>
                               )}
@@ -3216,15 +3281,46 @@ const ComprehensiveCMCPlatform = () => {
                   </div>
                   <div className="p-4 space-y-3">
                     {[
-                      { id: 'S1', title: 'S.1 General Information', desc: 'Nomenclature, structure, and properties' },
-                      { id: 'S2', title: 'S.2 Manufacture', desc: 'Process flow diagrams and controls' },
-                      { id: 'S3', title: 'S.3 Characterization', desc: 'Analytical data summaries and elucidation' },
-                      { id: 'S4', title: 'S.4 Control of Drug Substance', desc: 'Specifications and analytical procedures' },
-                      { id: 'S5', title: 'S.5 Reference Standards', desc: 'Reference materials information' },
-                      { id: 'S6', title: 'S.6 Container Closure System', desc: 'Packaging description and suitability' },
-                      { id: 'S7', title: 'S.7 Stability', desc: 'ICH stability data and conclusions' }
+                      {
+                        id: 'S1',
+                        title: 'S.1 General Information',
+                        desc: 'Nomenclature, structure, and properties',
+                      },
+                      {
+                        id: 'S2',
+                        title: 'S.2 Manufacture',
+                        desc: 'Process flow diagrams and controls',
+                      },
+                      {
+                        id: 'S3',
+                        title: 'S.3 Characterization',
+                        desc: 'Analytical data summaries and elucidation',
+                      },
+                      {
+                        id: 'S4',
+                        title: 'S.4 Control of Drug Substance',
+                        desc: 'Specifications and analytical procedures',
+                      },
+                      {
+                        id: 'S5',
+                        title: 'S.5 Reference Standards',
+                        desc: 'Reference materials information',
+                      },
+                      {
+                        id: 'S6',
+                        title: 'S.6 Container Closure System',
+                        desc: 'Packaging description and suitability',
+                      },
+                      {
+                        id: 'S7',
+                        title: 'S.7 Stability',
+                        desc: 'ICH stability data and conclusions',
+                      },
                     ].map(report => (
-                      <div key={report.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
+                      <div
+                        key={report.id}
+                        className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
+                      >
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <FileCheck className="h-4 w-4 text-blue-600" />
@@ -3347,16 +3443,51 @@ const ComprehensiveCMCPlatform = () => {
                   </div>
                   <div className="p-4 space-y-3">
                     {[
-                      { id: 'P1', title: 'P.1 Description and Composition', desc: 'Product formulation and components' },
-                      { id: 'P2', title: 'P.2 Pharmaceutical Development', desc: 'Development studies and rationale' },
-                      { id: 'P3', title: 'P.3 Manufacture', desc: 'Batch formula and process description' },
-                      { id: 'P4', title: 'P.4 Control of Excipients', desc: 'Excipient specifications' },
-                      { id: 'P5', title: 'P.5 Control of Drug Product', desc: 'Product specifications and justification' },
-                      { id: 'P6', title: 'P.6 Reference Standards', desc: 'Reference materials used' },
-                      { id: 'P7', title: 'P.7 Container Closure System', desc: 'Primary packaging materials' },
-                      { id: 'P8', title: 'P.8 Stability', desc: 'Product stability data and conclusions' }
+                      {
+                        id: 'P1',
+                        title: 'P.1 Description and Composition',
+                        desc: 'Product formulation and components',
+                      },
+                      {
+                        id: 'P2',
+                        title: 'P.2 Pharmaceutical Development',
+                        desc: 'Development studies and rationale',
+                      },
+                      {
+                        id: 'P3',
+                        title: 'P.3 Manufacture',
+                        desc: 'Batch formula and process description',
+                      },
+                      {
+                        id: 'P4',
+                        title: 'P.4 Control of Excipients',
+                        desc: 'Excipient specifications',
+                      },
+                      {
+                        id: 'P5',
+                        title: 'P.5 Control of Drug Product',
+                        desc: 'Product specifications and justification',
+                      },
+                      {
+                        id: 'P6',
+                        title: 'P.6 Reference Standards',
+                        desc: 'Reference materials used',
+                      },
+                      {
+                        id: 'P7',
+                        title: 'P.7 Container Closure System',
+                        desc: 'Primary packaging materials',
+                      },
+                      {
+                        id: 'P8',
+                        title: 'P.8 Stability',
+                        desc: 'Product stability data and conclusions',
+                      },
                     ].map(report => (
-                      <div key={report.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
+                      <div
+                        key={report.id}
+                        className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
+                      >
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <FileCheck className="h-4 w-4 text-green-600" />
@@ -3478,11 +3609,22 @@ const ComprehensiveCMCPlatform = () => {
                   </div>
                   <div className="p-4 space-y-3">
                     {[
-                      { id: 'A1', title: 'A.1 Facilities and Equipment', desc: 'Manufacturing site and equipment information' },
-                      { id: 'A2', title: 'A.2 Adventitious Agents Safety', desc: 'Viral and TSE safety evaluation' },
-                      { id: 'A3', title: 'A.3 Excipients', desc: 'Novel excipients information' }
+                      {
+                        id: 'A1',
+                        title: 'A.1 Facilities and Equipment',
+                        desc: 'Manufacturing site and equipment information',
+                      },
+                      {
+                        id: 'A2',
+                        title: 'A.2 Adventitious Agents Safety',
+                        desc: 'Viral and TSE safety evaluation',
+                      },
+                      { id: 'A3', title: 'A.3 Excipients', desc: 'Novel excipients information' },
                     ].map(report => (
-                      <div key={report.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
+                      <div
+                        key={report.id}
+                        className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
+                      >
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <FileCheck className="h-4 w-4 text-purple-600" />
@@ -3606,10 +3748,18 @@ const ComprehensiveCMCPlatform = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[
                         { region: 'FDA', flag: '🇺🇸', status: 'Ready', lastUpdate: '2025-01-20' },
-                        { region: 'EMA', flag: '🇪🇺', status: 'In Progress', lastUpdate: '2025-01-19' },
-                        { region: 'PMDA', flag: '🇯🇵', status: 'Draft', lastUpdate: '2025-01-18' }
+                        {
+                          region: 'EMA',
+                          flag: '🇪🇺',
+                          status: 'In Progress',
+                          lastUpdate: '2025-01-19',
+                        },
+                        { region: 'PMDA', flag: '🇯🇵', status: 'Draft', lastUpdate: '2025-01-18' },
                       ].map(region => (
-                        <Card key={region.region} className="border hover:shadow-md transition-shadow">
+                        <Card
+                          key={region.region}
+                          className="border hover:shadow-md transition-shadow"
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
@@ -3619,8 +3769,14 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600">Regional Report</p>
                                 </div>
                               </div>
-                              <Badge 
-                                variant={region.status === 'Ready' ? 'default' : region.status === 'In Progress' ? 'secondary' : 'outline'}
+                              <Badge
+                                variant={
+                                  region.status === 'Ready'
+                                    ? 'default'
+                                    : region.status === 'In Progress'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
                                 className="text-xs"
                               >
                                 {region.status}
@@ -3682,8 +3838,7 @@ const ComprehensiveCMCPlatform = () => {
                           12 reports approved
                         </span>
                         <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-orange-600" />
-                          6 pending review
+                          <Clock className="h-3 w-3 text-orange-600" />6 pending review
                         </span>
                       </div>
                     </div>
@@ -3782,10 +3937,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="analytical" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'AM-R01', title: 'Method Validation Summary Report', type: 'Compliance', icon: TestTube },
-                        { id: 'AM-R02', title: 'System Suitability Trending Report', type: 'Trending', icon: TrendingUp },
-                        { id: 'AM-R03', title: 'Method Performance Report', type: 'Performance', icon: Activity },
-                        { id: 'AM-R04', title: 'OOT/OOS Investigation Report', type: 'Investigation', icon: AlertTriangle }
+                        {
+                          id: 'AM-R01',
+                          title: 'Method Validation Summary Report',
+                          type: 'Compliance',
+                          icon: TestTube,
+                        },
+                        {
+                          id: 'AM-R02',
+                          title: 'System Suitability Trending Report',
+                          type: 'Trending',
+                          icon: TrendingUp,
+                        },
+                        {
+                          id: 'AM-R03',
+                          title: 'Method Performance Report',
+                          type: 'Performance',
+                          icon: Activity,
+                        },
+                        {
+                          id: 'AM-R04',
+                          title: 'OOT/OOS Investigation Report',
+                          type: 'Investigation',
+                          icon: AlertTriangle,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -3797,7 +3972,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -3848,7 +4025,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -3857,7 +4039,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -3866,7 +4053,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -3875,7 +4067,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -3894,10 +4091,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="process" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'PV-R01', title: 'PPQ Summary Report', type: 'Qualification', icon: Award },
-                        { id: 'PV-R02', title: 'CPV Trending Report', type: 'Trending', icon: TrendingUp },
-                        { id: 'PV-R03', title: 'Equipment Qualification Status', type: 'Status', icon: Settings },
-                        { id: 'PV-R04', title: 'Process Capability Report', type: 'Performance', icon: Gauge }
+                        {
+                          id: 'PV-R01',
+                          title: 'PPQ Summary Report',
+                          type: 'Qualification',
+                          icon: Award,
+                        },
+                        {
+                          id: 'PV-R02',
+                          title: 'CPV Trending Report',
+                          type: 'Trending',
+                          icon: TrendingUp,
+                        },
+                        {
+                          id: 'PV-R03',
+                          title: 'Equipment Qualification Status',
+                          type: 'Status',
+                          icon: Settings,
+                        },
+                        {
+                          id: 'PV-R04',
+                          title: 'Process Capability Report',
+                          type: 'Performance',
+                          icon: Gauge,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -3909,7 +4126,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -3960,7 +4179,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -3969,7 +4193,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -3978,7 +4207,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -3987,7 +4221,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -4006,10 +4245,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="stability" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'SS-R01', title: 'Stability Summary Report', type: 'Summary', icon: BarChart3 },
-                        { id: 'SS-R02', title: 'Shelf Life Projection Report', type: 'Projection', icon: Clock },
-                        { id: 'SS-R03', title: 'ICH Compliance Report', type: 'Compliance', icon: Shield },
-                        { id: 'SS-R04', title: 'Stability Trending Report', type: 'Trending', icon: TrendingUp }
+                        {
+                          id: 'SS-R01',
+                          title: 'Stability Summary Report',
+                          type: 'Summary',
+                          icon: BarChart3,
+                        },
+                        {
+                          id: 'SS-R02',
+                          title: 'Shelf Life Projection Report',
+                          type: 'Projection',
+                          icon: Clock,
+                        },
+                        {
+                          id: 'SS-R03',
+                          title: 'ICH Compliance Report',
+                          type: 'Compliance',
+                          icon: Shield,
+                        },
+                        {
+                          id: 'SS-R04',
+                          title: 'Stability Trending Report',
+                          type: 'Trending',
+                          icon: TrendingUp,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -4021,7 +4280,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -4072,7 +4333,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -4081,7 +4347,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -4090,7 +4361,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -4099,7 +4375,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -4118,10 +4399,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="quality" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'QC-R01', title: 'Batch Release Report', type: 'Release', icon: CheckCircle2 },
-                        { id: 'QC-R02', title: 'Deviation Summary Report', type: 'Deviation', icon: AlertCircle },
-                        { id: 'QC-R03', title: 'OOS Investigation Report', type: 'Investigation', icon: Search },
-                        { id: 'QC-R04', title: 'Annual Product Review', type: 'Annual', icon: Calendar }
+                        {
+                          id: 'QC-R01',
+                          title: 'Batch Release Report',
+                          type: 'Release',
+                          icon: CheckCircle2,
+                        },
+                        {
+                          id: 'QC-R02',
+                          title: 'Deviation Summary Report',
+                          type: 'Deviation',
+                          icon: AlertCircle,
+                        },
+                        {
+                          id: 'QC-R03',
+                          title: 'OOS Investigation Report',
+                          type: 'Investigation',
+                          icon: Search,
+                        },
+                        {
+                          id: 'QC-R04',
+                          title: 'Annual Product Review',
+                          type: 'Annual',
+                          icon: Calendar,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -4133,7 +4434,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -4184,7 +4487,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -4193,7 +4501,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -4202,7 +4515,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -4211,7 +4529,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -4230,10 +4553,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="regulatory" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'REG-R01', title: 'Regulatory Submission Status', type: 'Status', icon: FileCheck },
-                        { id: 'REG-R02', title: 'Agency Interaction Report', type: 'Communication', icon: MessageSquare },
-                        { id: 'REG-R03', title: 'Compliance Status Report', type: 'Compliance', icon: Shield },
-                        { id: 'REG-R04', title: 'Change Control Report', type: 'Changes', icon: GitBranch }
+                        {
+                          id: 'REG-R01',
+                          title: 'Regulatory Submission Status',
+                          type: 'Status',
+                          icon: FileCheck,
+                        },
+                        {
+                          id: 'REG-R02',
+                          title: 'Agency Interaction Report',
+                          type: 'Communication',
+                          icon: MessageSquare,
+                        },
+                        {
+                          id: 'REG-R03',
+                          title: 'Compliance Status Report',
+                          type: 'Compliance',
+                          icon: Shield,
+                        },
+                        {
+                          id: 'REG-R04',
+                          title: 'Change Control Report',
+                          type: 'Changes',
+                          icon: GitBranch,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -4245,7 +4588,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -4296,7 +4641,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -4305,7 +4655,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -4314,7 +4669,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -4323,7 +4683,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -4342,10 +4707,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="manufacturing" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'MFG-R01', title: 'Production Performance Report', type: 'Performance', icon: Factory },
-                        { id: 'MFG-R02', title: 'OEE Analysis Report', type: 'Efficiency', icon: Gauge },
-                        { id: 'MFG-R03', title: 'Batch Record Review Report', type: 'Review', icon: Clipboard },
-                        { id: 'MFG-R04', title: 'Yield Trending Report', type: 'Trending', icon: TrendingUp }
+                        {
+                          id: 'MFG-R01',
+                          title: 'Production Performance Report',
+                          type: 'Performance',
+                          icon: Factory,
+                        },
+                        {
+                          id: 'MFG-R02',
+                          title: 'OEE Analysis Report',
+                          type: 'Efficiency',
+                          icon: Gauge,
+                        },
+                        {
+                          id: 'MFG-R03',
+                          title: 'Batch Record Review Report',
+                          type: 'Review',
+                          icon: Clipboard,
+                        },
+                        {
+                          id: 'MFG-R04',
+                          title: 'Yield Trending Report',
+                          type: 'Trending',
+                          icon: TrendingUp,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -4357,7 +4742,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -4408,7 +4795,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -4417,7 +4809,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -4426,7 +4823,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -4435,7 +4837,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -4454,10 +4861,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="supply" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'SC-R01', title: 'Supplier Performance Report', type: 'Performance', icon: Building2 },
-                        { id: 'SC-R02', title: 'Material Status Report', type: 'Status', icon: Boxes },
-                        { id: 'SC-R03', title: 'Inventory Analysis Report', type: 'Analysis', icon: Package },
-                        { id: 'SC-R04', title: 'Supply Risk Assessment Report', type: 'Risk', icon: AlertTriangle }
+                        {
+                          id: 'SC-R01',
+                          title: 'Supplier Performance Report',
+                          type: 'Performance',
+                          icon: Building2,
+                        },
+                        {
+                          id: 'SC-R02',
+                          title: 'Material Status Report',
+                          type: 'Status',
+                          icon: Boxes,
+                        },
+                        {
+                          id: 'SC-R03',
+                          title: 'Inventory Analysis Report',
+                          type: 'Analysis',
+                          icon: Package,
+                        },
+                        {
+                          id: 'SC-R04',
+                          title: 'Supply Risk Assessment Report',
+                          type: 'Risk',
+                          icon: AlertTriangle,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -4469,7 +4896,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -4520,7 +4949,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -4529,7 +4963,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -4538,7 +4977,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -4547,7 +4991,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -4566,10 +5015,30 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="risk" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { id: 'RISK-R01', title: 'Risk Assessment Matrix', type: 'Assessment', icon: AlertTriangle },
-                        { id: 'RISK-R02', title: 'Risk Mitigation Report', type: 'Mitigation', icon: Shield },
-                        { id: 'RISK-R03', title: 'Risk Trending Analysis', type: 'Trending', icon: TrendingUp },
-                        { id: 'RISK-R04', title: 'Audit Findings Report', type: 'Audit', icon: Search }
+                        {
+                          id: 'RISK-R01',
+                          title: 'Risk Assessment Matrix',
+                          type: 'Assessment',
+                          icon: AlertTriangle,
+                        },
+                        {
+                          id: 'RISK-R02',
+                          title: 'Risk Mitigation Report',
+                          type: 'Mitigation',
+                          icon: Shield,
+                        },
+                        {
+                          id: 'RISK-R03',
+                          title: 'Risk Trending Analysis',
+                          type: 'Trending',
+                          icon: TrendingUp,
+                        },
+                        {
+                          id: 'RISK-R04',
+                          title: 'Audit Findings Report',
+                          type: 'Audit',
+                          icon: Search,
+                        },
                       ].map(report => (
                         <Card key={report.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="p-4">
@@ -4581,7 +5050,9 @@ const ComprehensiveCMCPlatform = () => {
                                   <p className="text-xs text-gray-600 mt-1">Type: {report.type}</p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs">Auto</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Auto
+                              </Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
                               <Button
@@ -4632,7 +5103,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to PDF', description: 'Generating PDF...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to PDF',
+                                          description: 'Generating PDF...',
+                                        })
+                                      }
                                     >
                                       <FileText className="h-3 w-3 mr-2" />
                                       Export as PDF
@@ -4641,7 +5117,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Excel', description: 'Generating Excel...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Excel',
+                                          description: 'Generating Excel...',
+                                        })
+                                      }
                                     >
                                       <TableIcon className="h-3 w-3 mr-2" />
                                       Export as Excel
@@ -4650,7 +5131,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to Word', description: 'Generating Word...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to Word',
+                                          description: 'Generating Word...',
+                                        })
+                                      }
                                     >
                                       <FileType className="h-3 w-3 mr-2" />
                                       Export as Word
@@ -4659,7 +5145,12 @@ const ComprehensiveCMCPlatform = () => {
                                       size="sm"
                                       variant="ghost"
                                       className="w-full justify-start text-xs"
-                                      onClick={() => toast({ title: 'Exporting to CSV', description: 'Generating CSV...' })}
+                                      onClick={() =>
+                                        toast({
+                                          title: 'Exporting to CSV',
+                                          description: 'Generating CSV...',
+                                        })
+                                      }
                                     >
                                       <Database className="h-3 w-3 mr-2" />
                                       Export as CSV
@@ -4686,9 +5177,7 @@ const ComprehensiveCMCPlatform = () => {
                       <Brain className="h-6 w-6 mr-2 text-purple-600" />
                       Business Intelligence Dashboard
                     </CardTitle>
-                    <CardDescription>
-                      Executive KPIs and cross-functional analytics
-                    </CardDescription>
+                    <CardDescription>Executive KPIs and cross-functional analytics</CardDescription>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -4857,14 +5346,16 @@ const ComprehensiveCMCPlatform = () => {
                         { area: 'Manufacturing', risk: 'low' },
                         { area: 'Supply', risk: 'high' },
                         { area: 'Audit', risk: 'low' },
-                        { area: 'Change', risk: 'medium' }
+                        { area: 'Change', risk: 'medium' },
                       ].map((item, idx) => (
                         <div
                           key={idx}
                           className={`p-2 rounded text-center text-xs font-medium ${
-                            item.risk === 'high' ? 'bg-red-100 text-red-700' :
-                            item.risk === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-green-100 text-green-700'
+                            item.risk === 'high'
+                              ? 'bg-red-100 text-red-700'
+                              : item.risk === 'medium'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-green-100 text-green-700'
                           }`}
                         >
                           {item.area}
@@ -5245,13 +5736,27 @@ const ComprehensiveCMCPlatform = () => {
                     <table className="w-full">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Report Name</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Type</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Generated</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Generated By</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Status</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Version</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Actions</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">
+                            Report Name
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">
+                            Type
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">
+                            Generated
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">
+                            Generated By
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">
+                            Status
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">
+                            Version
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -5262,7 +5767,7 @@ const ComprehensiveCMCPlatform = () => {
                             date: '2025-09-21 14:30',
                             user: 'Dr. Sarah Chen',
                             status: 'Completed',
-                            version: 'v2.1'
+                            version: 'v2.1',
                           },
                           {
                             name: 'Stability Trending Report',
@@ -5270,7 +5775,7 @@ const ComprehensiveCMCPlatform = () => {
                             date: '2025-09-21 12:15',
                             user: 'System Auto',
                             status: 'Completed',
-                            version: 'v1.8'
+                            version: 'v1.8',
                           },
                           {
                             name: 'Batch Release Report',
@@ -5278,7 +5783,7 @@ const ComprehensiveCMCPlatform = () => {
                             date: '2025-09-21 10:00',
                             user: 'Dr. Michael Rodriguez',
                             status: 'Approved',
-                            version: 'v3.0'
+                            version: 'v3.0',
                           },
                           {
                             name: 'OEE Analysis Report',
@@ -5286,7 +5791,7 @@ const ComprehensiveCMCPlatform = () => {
                             date: '2025-09-21 08:00',
                             user: 'System Auto',
                             status: 'Completed',
-                            version: 'v1.5'
+                            version: 'v1.5',
                           },
                           {
                             name: 'Risk Assessment Matrix',
@@ -5294,8 +5799,8 @@ const ComprehensiveCMCPlatform = () => {
                             date: '2025-09-20 16:45',
                             user: 'Dr. Emily Johnson',
                             status: 'Under Review',
-                            version: 'v2.3'
-                          }
+                            version: 'v2.3',
+                          },
                         ].map((report, idx) => (
                           <tr key={idx} className="hover:bg-gray-50">
                             <td className="px-4 py-3">
@@ -5312,9 +5817,14 @@ const ComprehensiveCMCPlatform = () => {
                             <td className="px-4 py-3 text-sm text-gray-600">{report.date}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{report.user}</td>
                             <td className="px-4 py-3">
-                              <Badge 
-                                variant={report.status === 'Approved' ? 'default' : 
-                                        report.status === 'Under Review' ? 'secondary' : 'outline'}
+                              <Badge
+                                variant={
+                                  report.status === 'Approved'
+                                    ? 'default'
+                                    : report.status === 'Under Review'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
                                 className="text-xs"
                               >
                                 {report.status}
@@ -5375,9 +5885,7 @@ const ComprehensiveCMCPlatform = () => {
 
                   {/* Pagination */}
                   <div className="flex items-center justify-between pt-4">
-                    <p className="text-sm text-gray-600">
-                      Showing 1-5 of 2,847 reports
-                    </p>
+                    <p className="text-sm text-gray-600">Showing 1-5 of 2,847 reports</p>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" disabled>
                         <ArrowLeft className="h-4 w-4" />
@@ -5485,7 +5993,7 @@ const ComprehensiveCMCPlatform = () => {
       cpk: 1.45,
       cp: 1.67,
     };
-    
+
     const { toast } = useToast();
 
     // Mock analytical methods data with comprehensive details
@@ -5502,7 +6010,7 @@ const ComprehensiveCMCPlatform = () => {
         precision: 99.1,
         accuracy: 99.5,
         lod: 0.03,
-        loq: 0.10,
+        loq: 0.1,
         lastUpdated: '2025-09-15',
         nextReview: '2026-09-15',
       },
@@ -5533,8 +6041,8 @@ const ComprehensiveCMCPlatform = () => {
         matrix: 'Tablet',
         precision: 98.5,
         accuracy: 99.0,
-        lod: 0.10,
-        loq: 0.30,
+        lod: 0.1,
+        loq: 0.3,
         lastUpdated: '2025-09-10',
         nextReview: '2026-09-10',
       },
@@ -5557,14 +6065,15 @@ const ComprehensiveCMCPlatform = () => {
     ];
 
     const filteredMethods = methods.filter(method => {
-      const matchesSearch = method.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           method.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           method.owner.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        method.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        method.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        method.owner.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTechnique = filterTechnique === 'all' || method.technique === filterTechnique;
       const matchesStatus = filterStatus === 'all' || method.status === filterStatus;
       const matchesAnalyte = filterAnalyte === 'all' || method.analyte === filterAnalyte;
       const matchesMatrix = filterMatrix === 'all' || method.matrix === filterMatrix;
-      
+
       return matchesSearch && matchesTechnique && matchesStatus && matchesAnalyte && matchesMatrix;
     });
 
@@ -5583,9 +6092,11 @@ const ComprehensiveCMCPlatform = () => {
                 <Microscope className="w-8 h-8" />
                 Analytical Methods Management
               </h2>
-              <p className="text-blue-100 mt-2">Comprehensive analytical method lifecycle management with ICH Q2(R1) compliance</p>
+              <p className="text-blue-100 mt-2">
+                Comprehensive analytical method lifecycle management with ICH Q2(R1) compliance
+              </p>
             </div>
-            <Button 
+            <Button
               className="bg-white text-blue-600 hover:bg-blue-50"
               onClick={() => openModal('analytical-methods')}
               data-testid="button-new-method"
@@ -5594,7 +6105,7 @@ const ComprehensiveCMCPlatform = () => {
               New Method
             </Button>
           </div>
-          
+
           {/* Search and Filter Bar */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mt-6">
             <div className="relative">
@@ -5602,13 +6113,16 @@ const ComprehensiveCMCPlatform = () => {
               <Input
                 placeholder="Search methods..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="pl-10 bg-white/10 border-white/20 text-white placeholder-blue-200"
                 data-testid="input-search-methods"
               />
             </div>
             <Select value={filterTechnique} onValueChange={setFilterTechnique}>
-              <SelectTrigger className="bg-white/10 border-white/20 text-white" data-testid="select-technique-filter">
+              <SelectTrigger
+                className="bg-white/10 border-white/20 text-white"
+                data-testid="select-technique-filter"
+              >
                 <SelectValue placeholder="Technique" />
               </SelectTrigger>
               <SelectContent>
@@ -5621,7 +6135,10 @@ const ComprehensiveCMCPlatform = () => {
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="bg-white/10 border-white/20 text-white" data-testid="select-status-filter">
+              <SelectTrigger
+                className="bg-white/10 border-white/20 text-white"
+                data-testid="select-status-filter"
+              >
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -5633,7 +6150,10 @@ const ComprehensiveCMCPlatform = () => {
               </SelectContent>
             </Select>
             <Select value={filterAnalyte} onValueChange={setFilterAnalyte}>
-              <SelectTrigger className="bg-white/10 border-white/20 text-white" data-testid="select-analyte-filter">
+              <SelectTrigger
+                className="bg-white/10 border-white/20 text-white"
+                data-testid="select-analyte-filter"
+              >
                 <SelectValue placeholder="Analyte" />
               </SelectTrigger>
               <SelectContent>
@@ -5645,7 +6165,10 @@ const ComprehensiveCMCPlatform = () => {
               </SelectContent>
             </Select>
             <Select value={filterMatrix} onValueChange={setFilterMatrix}>
-              <SelectTrigger className="bg-white/10 border-white/20 text-white" data-testid="select-matrix-filter">
+              <SelectTrigger
+                className="bg-white/10 border-white/20 text-white"
+                data-testid="select-matrix-filter"
+              >
                 <SelectValue placeholder="Matrix" />
               </SelectTrigger>
               <SelectContent>
@@ -5697,7 +6220,9 @@ const ComprehensiveCMCPlatform = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600">Overall Precision</p>
-                      <p className="text-2xl font-bold">{analyticalPerformanceMetrics.precision}%</p>
+                      <p className="text-2xl font-bold">
+                        {analyticalPerformanceMetrics.precision}%
+                      </p>
                     </div>
                     <Target className="w-8 h-8 text-blue-600" />
                   </div>
@@ -5725,8 +6250,8 @@ const ComprehensiveCMCPlatform = () => {
                     </div>
                     <BarChart4 className="w-8 h-8 text-purple-600" />
                   </div>
-                  <Badge variant={analyticalPerformanceMetrics.cpk > 1.33 ? "success" : "warning"}>
-                    {analyticalPerformanceMetrics.cpk > 1.33 ? "Excellent" : "Needs Improvement"}
+                  <Badge variant={analyticalPerformanceMetrics.cpk > 1.33 ? 'success' : 'warning'}>
+                    {analyticalPerformanceMetrics.cpk > 1.33 ? 'Excellent' : 'Needs Improvement'}
                   </Badge>
                 </CardContent>
               </Card>
@@ -5748,7 +6273,7 @@ const ComprehensiveCMCPlatform = () => {
 
             {/* Methods Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMethods.map((method) => (
+              {filteredMethods.map(method => (
                 <Card key={method.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -5759,9 +6284,17 @@ const ComprehensiveCMCPlatform = () => {
                         </CardTitle>
                         <CardDescription>{method.name}</CardDescription>
                       </div>
-                      <Badge variant={method.status === 'Validated' ? 'success' : 
-                                    method.status === 'In Validation' ? 'warning' : 
-                                    method.status === 'Transfer' ? 'secondary' : 'default'}>
+                      <Badge
+                        variant={
+                          method.status === 'Validated'
+                            ? 'success'
+                            : method.status === 'In Validation'
+                              ? 'warning'
+                              : method.status === 'Transfer'
+                                ? 'secondary'
+                                : 'default'
+                        }
+                      >
                         {method.status}
                       </Badge>
                     </div>
@@ -5786,7 +6319,7 @@ const ComprehensiveCMCPlatform = () => {
                           <p className="font-medium">{method.matrix}</p>
                         </div>
                       </div>
-                      
+
                       {/* Performance Metrics */}
                       <div className="border-t pt-3">
                         <p className="text-sm font-medium mb-2">Performance Metrics</p>
@@ -5819,8 +6352,8 @@ const ComprehensiveCMCPlatform = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => {
                               setSelectedMethod(method);
@@ -5830,7 +6363,7 @@ const ComprehensiveCMCPlatform = () => {
                           >
                             <FileCheck className="w-3 h-3" />
                           </Button>
-                          <Button 
+                          <Button
                             size="sm"
                             onClick={() => navigateToMethodDetails(method.id)}
                             data-testid={`button-view-${method.id}`}
@@ -5865,9 +6398,12 @@ const ComprehensiveCMCPlatform = () => {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <h4 className="font-medium capitalize">{param.replace(/([A-Z])/g, ' $1').trim()}</h4>
+                            <h4 className="font-medium capitalize">
+                              {param.replace(/([A-Z])/g, ' $1').trim()}
+                            </h4>
                             <p className="text-xs text-gray-600 mt-1">
-                              {param === 'specificity' && 'Ability to assess analyte in presence of interferences'}
+                              {param === 'specificity' &&
+                                'Ability to assess analyte in presence of interferences'}
                               {param === 'linearity' && 'Linear relationship over analytical range'}
                               {param === 'accuracy' && 'Closeness to true value'}
                               {param === 'precision' && 'Repeatability and reproducibility'}
@@ -5877,18 +6413,25 @@ const ComprehensiveCMCPlatform = () => {
                               {param === 'robustness' && 'Reliability under normal variations'}
                             </p>
                           </div>
-                          <Badge variant={data.status === 'complete' ? 'success' : 
-                                        data.status === 'in-progress' ? 'warning' : 'default'}>
+                          <Badge
+                            variant={
+                              data.status === 'complete'
+                                ? 'success'
+                                : data.status === 'in-progress'
+                                  ? 'warning'
+                                  : 'default'
+                            }
+                          >
                             {data.status}
                           </Badge>
                         </div>
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => {
                               toast({
-                                title: "Protocol Generated",
+                                title: 'Protocol Generated',
                                 description: `Validation protocol for ${param} has been generated`,
                               });
                             }}
@@ -5897,11 +6440,11 @@ const ComprehensiveCMCPlatform = () => {
                             <FileText className="w-3 h-3 mr-1" />
                             Protocol
                           </Button>
-                          <Button 
+                          <Button
                             size="sm"
                             onClick={() => {
                               toast({
-                                title: "Data Entry Form",
+                                title: 'Data Entry Form',
                                 description: `Opening data entry form for ${param}`,
                               });
                             }}
@@ -5910,12 +6453,12 @@ const ComprehensiveCMCPlatform = () => {
                             <Edit className="w-3 h-3 mr-1" />
                             Enter Data
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => {
                               toast({
-                                title: "Statistical Analysis",
+                                title: 'Statistical Analysis',
                                 description: `Running statistical analysis for ${param}`,
                               });
                             }}
@@ -5929,15 +6472,16 @@ const ComprehensiveCMCPlatform = () => {
                     </Card>
                   ))}
                 </div>
-                
+
                 <div className="mt-6 flex justify-between items-center">
                   <div className="flex gap-3">
-                    <Button 
+                    <Button
                       className="bg-purple-600 hover:bg-purple-700"
                       onClick={() => {
                         toast({
-                          title: "Validation Report Generated",
-                          description: "Complete validation report with Pass/Fail status has been generated",
+                          title: 'Validation Report Generated',
+                          description:
+                            'Complete validation report with Pass/Fail status has been generated',
                         });
                       }}
                       data-testid="button-generate-report"
@@ -5945,12 +6489,12 @@ const ComprehensiveCMCPlatform = () => {
                       <FileCheck className="w-4 h-4 mr-2" />
                       Generate Validation Report
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => {
                         toast({
-                          title: "Templates Downloaded",
-                          description: "Validation protocol templates have been downloaded",
+                          title: 'Templates Downloaded',
+                          description: 'Validation protocol templates have been downloaded',
                         });
                       }}
                       data-testid="button-download-templates"
@@ -5983,10 +6527,12 @@ const ComprehensiveCMCPlatform = () => {
                     <div>
                       <Label className="text-sm">Resolution</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <Input 
-                          type="number" 
-                          value={sstData.resolution} 
-                          onChange={(e) => setSstData({...sstData, resolution: parseFloat(e.target.value)})}
+                        <Input
+                          type="number"
+                          value={sstData.resolution}
+                          onChange={e =>
+                            setSstData({ ...sstData, resolution: parseFloat(e.target.value) })
+                          }
                           className="w-24"
                           step="0.1"
                           data-testid="input-resolution"
@@ -5997,10 +6543,12 @@ const ComprehensiveCMCPlatform = () => {
                     <div>
                       <Label className="text-sm">Tailing Factor</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <Input 
-                          type="number" 
-                          value={sstData.tailingFactor} 
-                          onChange={(e) => setSstData({...sstData, tailingFactor: parseFloat(e.target.value)})}
+                        <Input
+                          type="number"
+                          value={sstData.tailingFactor}
+                          onChange={e =>
+                            setSstData({ ...sstData, tailingFactor: parseFloat(e.target.value) })
+                          }
                           className="w-24"
                           step="0.1"
                           data-testid="input-tailing"
@@ -6011,10 +6559,12 @@ const ComprehensiveCMCPlatform = () => {
                     <div>
                       <Label className="text-sm">Theoretical Plates</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <Input 
-                          type="number" 
-                          value={sstData.theoreticalPlates} 
-                          onChange={(e) => setSstData({...sstData, theoreticalPlates: parseInt(e.target.value)})}
+                        <Input
+                          type="number"
+                          value={sstData.theoreticalPlates}
+                          onChange={e =>
+                            setSstData({ ...sstData, theoreticalPlates: parseInt(e.target.value) })
+                          }
                           className="w-24"
                           data-testid="input-plates"
                         />
@@ -6024,10 +6574,12 @@ const ComprehensiveCMCPlatform = () => {
                     <div>
                       <Label className="text-sm">Capacity Factor</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <Input 
-                          type="number" 
-                          value={sstData.capacityFactor} 
-                          onChange={(e) => setSstData({...sstData, capacityFactor: parseFloat(e.target.value)})}
+                        <Input
+                          type="number"
+                          value={sstData.capacityFactor}
+                          onChange={e =>
+                            setSstData({ ...sstData, capacityFactor: parseFloat(e.target.value) })
+                          }
                           className="w-24"
                           step="0.1"
                           data-testid="input-capacity"
@@ -6035,12 +6587,12 @@ const ComprehensiveCMCPlatform = () => {
                         <span className="text-sm text-gray-600">≥ 2.0</span>
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       className="w-full"
                       onClick={() => {
                         toast({
-                          title: "SST Parameters Updated",
-                          description: "System suitability parameters have been configured",
+                          title: 'SST Parameters Updated',
+                          description: 'System suitability parameters have been configured',
                         });
                       }}
                       data-testid="button-save-sst"
@@ -6059,7 +6611,9 @@ const ComprehensiveCMCPlatform = () => {
                     <Activity className="w-5 h-5 text-green-600" />
                     Real-time SST Monitoring
                   </CardTitle>
-                  <CardDescription>Live monitoring of system suitability parameters</CardDescription>
+                  <CardDescription>
+                    Live monitoring of system suitability parameters
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 mb-4">
@@ -6067,26 +6621,23 @@ const ComprehensiveCMCPlatform = () => {
                       <CardContent className="p-3">
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Resolution</span>
-                          <Badge variant={sstData.resolution >= 2.0 ? "success" : "destructive"}>
+                          <Badge variant={sstData.resolution >= 2.0 ? 'success' : 'destructive'}>
                             {sstData.resolution}
                           </Badge>
                         </div>
-                        <Progress 
-                          value={(sstData.resolution / 5) * 100} 
-                          className="mt-2"
-                        />
+                        <Progress value={(sstData.resolution / 5) * 100} className="mt-2" />
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-3">
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Tailing Factor</span>
-                          <Badge variant={sstData.tailingFactor <= 2.0 ? "success" : "destructive"}>
+                          <Badge variant={sstData.tailingFactor <= 2.0 ? 'success' : 'destructive'}>
                             {sstData.tailingFactor}
                           </Badge>
                         </div>
-                        <Progress 
-                          value={100 - (sstData.tailingFactor / 3) * 100} 
+                        <Progress
+                          value={100 - (sstData.tailingFactor / 3) * 100}
                           className="mt-2"
                         />
                       </CardContent>
@@ -6095,12 +6646,14 @@ const ComprehensiveCMCPlatform = () => {
                       <CardContent className="p-3">
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Theoretical Plates</span>
-                          <Badge variant={sstData.theoreticalPlates >= 2000 ? "success" : "destructive"}>
+                          <Badge
+                            variant={sstData.theoreticalPlates >= 2000 ? 'success' : 'destructive'}
+                          >
                             {sstData.theoreticalPlates}
                           </Badge>
                         </div>
-                        <Progress 
-                          value={(sstData.theoreticalPlates / 10000) * 100} 
+                        <Progress
+                          value={(sstData.theoreticalPlates / 10000) * 100}
                           className="mt-2"
                         />
                       </CardContent>
@@ -6109,14 +6662,13 @@ const ComprehensiveCMCPlatform = () => {
                       <CardContent className="p-3">
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Capacity Factor</span>
-                          <Badge variant={sstData.capacityFactor >= 2.0 ? "success" : "destructive"}>
+                          <Badge
+                            variant={sstData.capacityFactor >= 2.0 ? 'success' : 'destructive'}
+                          >
                             {sstData.capacityFactor}
                           </Badge>
                         </div>
-                        <Progress 
-                          value={(sstData.capacityFactor / 10) * 100} 
-                          className="mt-2"
-                        />
+                        <Progress value={(sstData.capacityFactor / 10) * 100} className="mt-2" />
                       </CardContent>
                     </Card>
                   </div>
@@ -6128,7 +6680,9 @@ const ComprehensiveCMCPlatform = () => {
                         <div className="text-center">
                           <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                           <p className="text-sm text-gray-600">Control Chart - SST Trending</p>
-                          <p className="text-xs text-gray-500 mt-1">Historical trending with control limits</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Historical trending with control limits
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -6144,7 +6698,9 @@ const ComprehensiveCMCPlatform = () => {
                       {sstData.resolution < 2.0 && (
                         <div className="bg-red-50 border border-red-200 p-2 rounded flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-red-600" />
-                          <span className="text-sm">Resolution below acceptance criteria (&lt; 2.0)</span>
+                          <span className="text-sm">
+                            Resolution below acceptance criteria (&lt; 2.0)
+                          </span>
                         </div>
                       )}
                       {sstData.tailingFactor > 2.0 && (
@@ -6156,15 +6712,21 @@ const ComprehensiveCMCPlatform = () => {
                       {sstData.theoreticalPlates < 2000 && (
                         <div className="bg-yellow-50 border border-yellow-200 p-2 rounded flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                          <span className="text-sm">Theoretical plates below minimum (&lt; 2000)</span>
+                          <span className="text-sm">
+                            Theoretical plates below minimum (&lt; 2000)
+                          </span>
                         </div>
                       )}
-                      {sstData.resolution >= 2.0 && sstData.tailingFactor <= 2.0 && sstData.theoreticalPlates >= 2000 && (
-                        <div className="bg-green-50 border border-green-200 p-2 rounded flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          <span className="text-sm">All SST parameters within acceptance criteria</span>
-                        </div>
-                      )}
+                      {sstData.resolution >= 2.0 &&
+                        sstData.tailingFactor <= 2.0 &&
+                        sstData.theoreticalPlates >= 2000 && (
+                          <div className="bg-green-50 border border-green-200 p-2 rounded flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <span className="text-sm">
+                              All SST parameters within acceptance criteria
+                            </span>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </CardContent>
@@ -6198,15 +6760,25 @@ const ComprehensiveCMCPlatform = () => {
                       <div className="space-y-3">
                         <div>
                           <Label className="text-sm">Site Name</Label>
-                          <Input placeholder="R&D Laboratory - New Jersey" className="mt-1" data-testid="input-sending-site" />
+                          <Input
+                            placeholder="R&D Laboratory - New Jersey"
+                            className="mt-1"
+                            data-testid="input-sending-site"
+                          />
                         </div>
                         <div>
                           <Label className="text-sm">Method Version</Label>
-                          <Input placeholder="v2.3" className="mt-1" data-testid="input-sending-version" />
+                          <Input
+                            placeholder="v2.3"
+                            className="mt-1"
+                            data-testid="input-sending-version"
+                          />
                         </div>
                         <div>
                           <Label className="text-sm">Validation Status</Label>
-                          <Badge variant="success" className="mt-1">Fully Validated</Badge>
+                          <Badge variant="success" className="mt-1">
+                            Fully Validated
+                          </Badge>
                         </div>
                         <div>
                           <Label className="text-sm">Performance Data</Label>
@@ -6241,7 +6813,11 @@ const ComprehensiveCMCPlatform = () => {
                       <div className="space-y-3">
                         <div>
                           <Label className="text-sm">Site Name</Label>
-                          <Input placeholder="Manufacturing Site - Ireland" className="mt-1" data-testid="input-receiving-site" />
+                          <Input
+                            placeholder="Manufacturing Site - Ireland"
+                            className="mt-1"
+                            data-testid="input-receiving-site"
+                          />
                         </div>
                         <div>
                           <Label className="text-sm">Transfer Stage</Label>
@@ -6286,12 +6862,12 @@ const ComprehensiveCMCPlatform = () => {
                     <CardContent className="p-4">
                       <h4 className="font-medium mb-3">Transfer Protocol Actions</h4>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => {
                             toast({
-                              title: "Protocol Generated",
-                              description: "Method transfer protocol has been generated",
+                              title: 'Protocol Generated',
+                              description: 'Method transfer protocol has been generated',
                             });
                           }}
                           data-testid="button-generate-protocol"
@@ -6299,12 +6875,12 @@ const ComprehensiveCMCPlatform = () => {
                           <FileText className="w-4 h-4 mr-2" />
                           Generate Protocol
                         </Button>
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => {
                             toast({
-                              title: "Equivalence Testing",
-                              description: "Running statistical equivalence analysis...",
+                              title: 'Equivalence Testing',
+                              description: 'Running statistical equivalence analysis...',
                             });
                           }}
                           data-testid="button-equivalence-test"
@@ -6312,12 +6888,12 @@ const ComprehensiveCMCPlatform = () => {
                           <BarChart className="w-4 h-4 mr-2" />
                           Equivalence Test
                         </Button>
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => {
                             toast({
-                              title: "Comparison Report",
-                              description: "Generating site-to-site comparison report...",
+                              title: 'Comparison Report',
+                              description: 'Generating site-to-site comparison report...',
                             });
                           }}
                           data-testid="button-comparison-report"
@@ -6325,12 +6901,12 @@ const ComprehensiveCMCPlatform = () => {
                           <FileCheck className="w-4 h-4 mr-2" />
                           Comparison Report
                         </Button>
-                        <Button 
+                        <Button
                           className="bg-green-600 hover:bg-green-700"
                           onClick={() => {
                             toast({
-                              title: "Transfer Approved",
-                              description: "Method transfer has been approved and documented",
+                              title: 'Transfer Approved',
+                              description: 'Method transfer has been approved and documented',
                             });
                           }}
                           data-testid="button-approve-transfer"
@@ -6385,7 +6961,9 @@ const ComprehensiveCMCPlatform = () => {
                     </div>
                     <p className="text-2xl font-bold">3</p>
                     <p className="text-xs text-gray-500">Last 30 days</p>
-                    <Badge variant="warning" className="mt-2">Review Required</Badge>
+                    <Badge variant="warning" className="mt-2">
+                      Review Required
+                    </Badge>
                   </CardContent>
                 </Card>
                 <Card>
@@ -6418,7 +6996,9 @@ const ComprehensiveCMCPlatform = () => {
                     </div>
                     <p className="text-2xl font-bold">Stable</p>
                     <p className="text-xs text-gray-500">No significant trends</p>
-                    <Badge variant="success" className="mt-2">In Control</Badge>
+                    <Badge variant="success" className="mt-2">
+                      In Control
+                    </Badge>
                   </CardContent>
                 </Card>
               </div>
@@ -6430,7 +7010,9 @@ const ComprehensiveCMCPlatform = () => {
                     <TrendingUp className="w-5 h-5 text-blue-600" />
                     Method Performance Trending
                   </CardTitle>
-                  <CardDescription>Historical performance metrics with control limits</CardDescription>
+                  <CardDescription>
+                    Historical performance metrics with control limits
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="bg-gray-50 rounded-lg p-8 mb-4">
@@ -6479,20 +7061,29 @@ const ComprehensiveCMCPlatform = () => {
                             Precision RSD trending upward over last 5 runs
                           </p>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => {
-                              toast({
-                                title: "Investigation Started",
-                                description: "OOT investigation workflow initiated",
-                              });
-                            }} data-testid="button-investigate-oot-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                toast({
+                                  title: 'Investigation Started',
+                                  description: 'OOT investigation workflow initiated',
+                                });
+                              }}
+                              data-testid="button-investigate-oot-1"
+                            >
                               Investigate
                             </Button>
-                            <Button size="sm" onClick={() => {
-                              toast({
-                                title: "Generating CAPA",
-                                description: "Corrective action plan being generated",
-                              });
-                            }} data-testid="button-capa-oot-1">
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: 'Generating CAPA',
+                                  description: 'Corrective action plan being generated',
+                                });
+                              }}
+                              data-testid="button-capa-oot-1"
+                            >
                               CAPA
                             </Button>
                           </div>
@@ -6511,20 +7102,29 @@ const ComprehensiveCMCPlatform = () => {
                             Recovery values showing increased variability
                           </p>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => {
-                              toast({
-                                title: "Investigation Started",
-                                description: "OOT investigation workflow initiated",
-                              });
-                            }} data-testid="button-investigate-oot-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                toast({
+                                  title: 'Investigation Started',
+                                  description: 'OOT investigation workflow initiated',
+                                });
+                              }}
+                              data-testid="button-investigate-oot-2"
+                            >
                               Investigate
                             </Button>
-                            <Button size="sm" onClick={() => {
-                              toast({
-                                title: "Generating CAPA",
-                                description: "Corrective action plan being generated",
-                              });
-                            }} data-testid="button-capa-oot-2">
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: 'Generating CAPA',
+                                  description: 'Corrective action plan being generated',
+                                });
+                              }}
+                              data-testid="button-capa-oot-2"
+                            >
                               CAPA
                             </Button>
                           </div>
@@ -6562,12 +7162,15 @@ const ComprehensiveCMCPlatform = () => {
                               <SelectItem value="am003">AM-003 Dissolution</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button onClick={() => {
-                            toast({
-                              title: "Comparison Started",
-                              description: "Running statistical comparison analysis...",
-                            });
-                          }} data-testid="button-compare-methods">
+                          <Button
+                            onClick={() => {
+                              toast({
+                                title: 'Comparison Started',
+                                description: 'Running statistical comparison analysis...',
+                              });
+                            }}
+                            data-testid="button-compare-methods"
+                          >
                             <BarChart className="w-4 h-4 mr-2" />
                             Compare Methods
                           </Button>
@@ -6590,7 +7193,9 @@ const ComprehensiveCMCPlatform = () => {
                     <Database className="w-5 h-5 text-blue-600" />
                     LIMS Integration
                   </CardTitle>
-                  <CardDescription>Automatic data import from Laboratory Information Management System</CardDescription>
+                  <CardDescription>
+                    Automatic data import from Laboratory Information Management System
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -6616,13 +7221,13 @@ const ComprehensiveCMCPlatform = () => {
                       </Select>
                     </div>
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1"
                         onClick={() => {
                           toast({
-                            title: "Manual Sync Started",
-                            description: "Importing latest LIMS data...",
+                            title: 'Manual Sync Started',
+                            description: 'Importing latest LIMS data...',
                           });
                         }}
                         data-testid="button-manual-sync"
@@ -6630,12 +7235,12 @@ const ComprehensiveCMCPlatform = () => {
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Manual Sync
                       </Button>
-                      <Button 
+                      <Button
                         className="flex-1"
                         onClick={() => {
                           toast({
-                            title: "Auto-Import Enabled",
-                            description: "Data will be imported every 30 minutes",
+                            title: 'Auto-Import Enabled',
+                            description: 'Data will be imported every 30 minutes',
                           });
                         }}
                         data-testid="button-auto-import"
@@ -6672,7 +7277,9 @@ const ComprehensiveCMCPlatform = () => {
                     <BookOpen className="w-5 h-5 text-green-600" />
                     Electronic Lab Notebook (ELN)
                   </CardTitle>
-                  <CardDescription>Connect with electronic laboratory notebooks for seamless documentation</CardDescription>
+                  <CardDescription>
+                    Connect with electronic laboratory notebooks for seamless documentation
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -6698,12 +7305,12 @@ const ComprehensiveCMCPlatform = () => {
                       </Select>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => {
                           toast({
-                            title: "Export to ELN",
-                            description: "Method data exported to notebook",
+                            title: 'Export to ELN',
+                            description: 'Method data exported to notebook',
                           });
                         }}
                         data-testid="button-export-eln"
@@ -6711,12 +7318,12 @@ const ComprehensiveCMCPlatform = () => {
                         <Upload className="w-4 h-4 mr-2" />
                         Export
                       </Button>
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => {
                           toast({
-                            title: "Import from ELN",
-                            description: "Importing notebook entries...",
+                            title: 'Import from ELN',
+                            description: 'Importing notebook entries...',
                           });
                         }}
                         data-testid="button-import-eln"
@@ -6748,7 +7355,9 @@ const ComprehensiveCMCPlatform = () => {
                             <span className="text-sm font-medium">HPLC-01</span>
                           </div>
                           <p className="text-xs text-gray-600">Waters Alliance</p>
-                          <Badge variant="success" className="mt-1">Online</Badge>
+                          <Badge variant="success" className="mt-1">
+                            Online
+                          </Badge>
                         </CardContent>
                       </Card>
                       <Card className="border-gray-200">
@@ -6758,7 +7367,9 @@ const ComprehensiveCMCPlatform = () => {
                             <span className="text-sm font-medium">UPLC-02</span>
                           </div>
                           <p className="text-xs text-gray-600">Waters Acquity</p>
-                          <Badge variant="success" className="mt-1">Online</Badge>
+                          <Badge variant="success" className="mt-1">
+                            Online
+                          </Badge>
                         </CardContent>
                       </Card>
                       <Card className="border-gray-200">
@@ -6768,7 +7379,9 @@ const ComprehensiveCMCPlatform = () => {
                             <span className="text-sm font-medium">GC-01</span>
                           </div>
                           <p className="text-xs text-gray-600">Agilent 7890B</p>
-                          <Badge variant="warning" className="mt-1">Idle</Badge>
+                          <Badge variant="warning" className="mt-1">
+                            Idle
+                          </Badge>
                         </CardContent>
                       </Card>
                       <Card className="border-gray-200">
@@ -6778,16 +7391,18 @@ const ComprehensiveCMCPlatform = () => {
                             <span className="text-sm font-medium">UV-01</span>
                           </div>
                           <p className="text-xs text-gray-600">Shimadzu UV-1900</p>
-                          <Badge variant="secondary" className="mt-1">Offline</Badge>
+                          <Badge variant="secondary" className="mt-1">
+                            Offline
+                          </Badge>
                         </CardContent>
                       </Card>
                     </div>
-                    <Button 
+                    <Button
                       className="w-full"
                       onClick={() => {
                         toast({
-                          title: "Data Capture Started",
-                          description: "Monitoring instruments for new data...",
+                          title: 'Data Capture Started',
+                          description: 'Monitoring instruments for new data...',
                         });
                       }}
                       data-testid="button-start-capture"
@@ -6806,22 +7421,28 @@ const ComprehensiveCMCPlatform = () => {
                     <History className="w-5 h-5 text-orange-600" />
                     Audit Trail
                   </CardTitle>
-                  <CardDescription>Complete audit trail for all method changes and activities</CardDescription>
+                  <CardDescription>
+                    Complete audit trail for all method changes and activities
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex gap-2">
-                      <Input 
-                        placeholder="Search audit logs..." 
+                      <Input
+                        placeholder="Search audit logs..."
                         className="flex-1"
                         data-testid="input-search-audit"
                       />
-                      <Button variant="outline" onClick={() => {
-                        toast({
-                          title: "Exporting Audit Trail",
-                          description: "Audit trail report being generated...",
-                        });
-                      }} data-testid="button-export-audit">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          toast({
+                            title: 'Exporting Audit Trail',
+                            description: 'Audit trail report being generated...',
+                          });
+                        }}
+                        data-testid="button-export-audit"
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
                     </div>
@@ -6870,12 +7491,17 @@ const ComprehensiveCMCPlatform = () => {
                     <div className="border-t pt-3">
                       <div className="flex justify-between items-center">
                         <p className="text-xs text-gray-600">Showing 4 of 127 entries</p>
-                        <Button variant="link" size="sm" onClick={() => {
-                          toast({
-                            title: "Loading More",
-                            description: "Loading additional audit trail entries...",
-                          });
-                        }} data-testid="button-load-more-audit">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: 'Loading More',
+                              description: 'Loading additional audit trail entries...',
+                            });
+                          }}
+                          data-testid="button-load-more-audit"
+                        >
                           Load More
                         </Button>
                       </div>
@@ -6903,13 +7529,15 @@ const ComprehensiveCMCPlatform = () => {
                 <Button variant="outline" onClick={() => setShowValidationModal(false)}>
                   Cancel
                 </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Validation Started",
-                    description: `Validation workflow initiated for ${selectedMethod.id}`,
-                  });
-                  setShowValidationModal(false);
-                }}>
+                <Button
+                  onClick={() => {
+                    toast({
+                      title: 'Validation Started',
+                      description: `Validation workflow initiated for ${selectedMethod.id}`,
+                    });
+                    setShowValidationModal(false);
+                  }}
+                >
                   Start Validation
                 </Button>
               </DialogFooter>
@@ -7847,7 +8475,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Related Substances', 'Water Content', 'Dissolution', 'Appearance'],
           regions: ['FDA', 'EMA', 'PMDA', 'WHO'],
           compliance: 'ICH Q1A(R2)',
-          icon: <Thermometer className="w-4 h-4" />
+          icon: <Thermometer className="w-4 h-4" />,
         },
         {
           id: 'ich-q1a-accelerated',
@@ -7859,7 +8487,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Related Substances', 'Water Content', 'Dissolution', 'Appearance'],
           regions: ['FDA', 'EMA', 'PMDA', 'WHO'],
           compliance: 'ICH Q1A(R2)',
-          icon: <Gauge className="w-4 h-4" />
+          icon: <Gauge className="w-4 h-4" />,
         },
         {
           id: 'ich-q1a-intermediate',
@@ -7871,7 +8499,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Related Substances', 'Water Content', 'Dissolution'],
           regions: ['FDA', 'EMA', 'PMDA', 'WHO'],
           compliance: 'ICH Q1A(R2)',
-          icon: <Activity className="w-4 h-4" />
+          icon: <Activity className="w-4 h-4" />,
         },
         {
           id: 'ich-q1b-photo',
@@ -7883,7 +8511,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Related Substances', 'Appearance', 'Physical Properties'],
           regions: ['FDA', 'EMA', 'PMDA'],
           compliance: 'ICH Q1B',
-          icon: <Lightbulb className="w-4 h-4" />
+          icon: <Lightbulb className="w-4 h-4" />,
         },
         {
           id: 'ich-q1d-bracketing',
@@ -7895,7 +8523,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Product-specific'],
           regions: ['FDA', 'EMA', 'PMDA'],
           compliance: 'ICH Q1D',
-          icon: <GitBranch className="w-4 h-4" />
+          icon: <GitBranch className="w-4 h-4" />,
         },
         {
           id: 'ich-q1e-evaluation',
@@ -7907,7 +8535,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Statistical evaluation of existing data'],
           regions: ['FDA', 'EMA', 'PMDA'],
           compliance: 'ICH Q1E',
-          icon: <BarChart4 className="w-4 h-4" />
+          icon: <BarChart4 className="w-4 h-4" />,
         },
         {
           id: 'stress-acid',
@@ -7919,7 +8547,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Degradation Products', 'Mass Balance'],
           regions: ['FDA', 'EMA'],
           compliance: 'ICH Q1A(R2), Q3A/B',
-          icon: <FlaskConical className="w-4 h-4" />
+          icon: <FlaskConical className="w-4 h-4" />,
         },
         {
           id: 'stress-base',
@@ -7931,7 +8559,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Degradation Products', 'Mass Balance'],
           regions: ['FDA', 'EMA'],
           compliance: 'ICH Q1A(R2), Q3A/B',
-          icon: <FlaskConical className="w-4 h-4" />
+          icon: <FlaskConical className="w-4 h-4" />,
         },
         {
           id: 'stress-oxidation',
@@ -7943,7 +8571,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Degradation Products', 'Mass Balance'],
           regions: ['FDA', 'EMA'],
           compliance: 'ICH Q1A(R2), Q3A/B',
-          icon: <FlaskConical className="w-4 h-4" />
+          icon: <FlaskConical className="w-4 h-4" />,
         },
         {
           id: 'stress-thermal',
@@ -7955,7 +8583,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Degradation Products', 'Physical Properties'],
           regions: ['FDA', 'EMA'],
           compliance: 'ICH Q1A(R2)',
-          icon: <Thermometer className="w-4 h-4" />
+          icon: <Thermometer className="w-4 h-4" />,
         },
         {
           id: 'stress-photo',
@@ -7967,7 +8595,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Degradation Products', 'Appearance'],
           regions: ['FDA', 'EMA'],
           compliance: 'ICH Q1B',
-          icon: <Lightbulb className="w-4 h-4" />
+          icon: <Lightbulb className="w-4 h-4" />,
         },
         {
           id: 'freeze-thaw',
@@ -7979,7 +8607,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Appearance', 'Particulates', 'pH'],
           regions: ['FDA', 'EMA'],
           compliance: 'Product-specific',
-          icon: <Thermometer className="w-4 h-4" />
+          icon: <Thermometer className="w-4 h-4" />,
         },
         {
           id: 'in-use',
@@ -7991,7 +8619,7 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Microbial', 'Preservatives', 'Physical'],
           regions: ['FDA', 'EMA', 'PMDA'],
           compliance: 'ICH Q1A(R2)',
-          icon: <Timer className="w-4 h-4" />
+          icon: <Timer className="w-4 h-4" />,
         },
         {
           id: 'shipping-transport',
@@ -8003,11 +8631,11 @@ const ComprehensiveCMCPlatform = () => {
           tests: ['Assay', 'Appearance', 'Container Integrity'],
           regions: ['FDA', 'EMA'],
           compliance: 'USP <1079>',
-          icon: <Truck className="w-4 h-4" />
-        }
+          icon: <Truck className="w-4 h-4" />,
+        },
       ];
 
-      const handleUseTemplate = (template) => {
+      const handleUseTemplate = template => {
         toast({
           title: 'Template Applied',
           description: `${template.name} protocol has been applied to your new study with ${template.tests.length} test parameters`,
@@ -8021,7 +8649,8 @@ const ComprehensiveCMCPlatform = () => {
           await new Promise(resolve => setTimeout(resolve, 2000));
           toast({
             title: 'AI Protocol Generated',
-            description: 'Complete stability protocol generated with AI assistance including risk assessment and regulatory justification',
+            description:
+              'Complete stability protocol generated with AI assistance including risk assessment and regulatory justification',
           });
         } finally {
           setAiGenerating(false);
@@ -8045,7 +8674,10 @@ const ComprehensiveCMCPlatform = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setCustomizingTemplate(!customizingTemplate)}>
+              <Button
+                variant="outline"
+                onClick={() => setCustomizingTemplate(!customizingTemplate)}
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Customize Templates
               </Button>
@@ -8062,7 +8694,13 @@ const ComprehensiveCMCPlatform = () => {
 
           {/* Template Categories Filter */}
           <div className="flex flex-wrap gap-2">
-            {['All', 'Primary Stability', 'Photostability', 'Forced Degradation', 'Special Studies'].map(category => (
+            {[
+              'All',
+              'Primary Stability',
+              'Photostability',
+              'Forced Degradation',
+              'Special Studies',
+            ].map(category => (
               <Button
                 key={category}
                 variant="outline"
@@ -8110,7 +8748,7 @@ const ComprehensiveCMCPlatform = () => {
                       <span className="font-medium text-green-600">{template.compliance}</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-1">
                     {template.regions.map(region => (
                       <Badge key={region} variant="secondary" className="text-xs">
@@ -8123,7 +8761,7 @@ const ComprehensiveCMCPlatform = () => {
                     <Button
                       size="sm"
                       className="flex-1"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         handleUseTemplate(template);
                       }}
@@ -8132,11 +8770,7 @@ const ComprehensiveCMCPlatform = () => {
                     </Button>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <Button size="sm" variant="outline" onClick={e => e.stopPropagation()}>
                           <Download className="w-4 h-4" />
                         </Button>
                       </PopoverTrigger>
@@ -8175,11 +8809,7 @@ const ComprehensiveCMCPlatform = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Template Details: {selectedTemplate.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedTemplate(null)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedTemplate(null)}>
                     <X className="w-4 h-4" />
                   </Button>
                 </CardTitle>
@@ -8197,7 +8827,10 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="protocol" className="space-y-4">
                     <div className="prose prose-sm max-w-none">
                       <h4>Protocol Overview</h4>
-                      <p>This template follows {selectedTemplate.compliance} guidelines for {selectedTemplate.category} studies.</p>
+                      <p>
+                        This template follows {selectedTemplate.compliance} guidelines for{' '}
+                        {selectedTemplate.category} studies.
+                      </p>
                       <h5>Study Conditions</h5>
                       <p>{selectedTemplate.conditions}</p>
                       <h5>Duration</h5>
@@ -8214,7 +8847,10 @@ const ComprehensiveCMCPlatform = () => {
                   <TabsContent value="tests" className="space-y-4">
                     <div className="space-y-2">
                       {selectedTemplate.tests.map(test => (
-                        <div key={test} className="flex items-center justify-between p-3 border rounded">
+                        <div
+                          key={test}
+                          className="flex items-center justify-between p-3 border rounded"
+                        >
                           <span className="font-medium">{test}</span>
                           <Button size="sm" variant="outline">
                             Configure
@@ -8248,7 +8884,8 @@ const ComprehensiveCMCPlatform = () => {
                             <Badge variant="default">Compliant</Badge>
                           </div>
                           <p className="text-sm text-gray-600">
-                            Meets all {region} regulatory requirements for {selectedTemplate.category}
+                            Meets all {region} regulatory requirements for{' '}
+                            {selectedTemplate.category}
                           </p>
                         </div>
                       ))}
@@ -8270,7 +8907,9 @@ const ComprehensiveCMCPlatform = () => {
                         </div>
                         <div className="flex items-start gap-2">
                           <Info className="w-4 h-4 text-blue-600 mt-0.5" />
-                          <span>Consider adding moisture permeation test for blister packaging</span>
+                          <span>
+                            Consider adding moisture permeation test for blister packaging
+                          </span>
                         </div>
                         <div className="flex items-start gap-2">
                           <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5" />
@@ -8312,7 +8951,9 @@ const ComprehensiveCMCPlatform = () => {
                   <span>Last Updated: {new Date().toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>ICH Compliant: {templates.filter(t => t.compliance.includes('ICH')).length}</span>
+                  <span>
+                    ICH Compliant: {templates.filter(t => t.compliance.includes('ICH')).length}
+                  </span>
                   <span>Custom Templates: 0</span>
                 </div>
               </div>
@@ -8375,10 +9016,10 @@ const ComprehensiveCMCPlatform = () => {
           investigator: null,
           capaRequired: false,
           rootCause: null,
-        }
+        },
       ];
 
-      const handleStartInvestigation = (oot) => {
+      const handleStartInvestigation = oot => {
         setSelectedOOT(oot);
         setInvestigationForm(true);
         toast({
@@ -8387,7 +9028,7 @@ const ComprehensiveCMCPlatform = () => {
         });
       };
 
-      const handleAIAnalysis = async (oot) => {
+      const handleAIAnalysis = async oot => {
         setAiAnalyzing(true);
         try {
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -8441,7 +9082,7 @@ const ComprehensiveCMCPlatform = () => {
                 <p className="text-xs text-muted-foreground">Requires investigation</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Under Investigation</CardTitle>
@@ -8489,9 +9130,7 @@ const ComprehensiveCMCPlatform = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Real-Time OOT Alerts</CardTitle>
-                  <CardDescription>
-                    Active out-of-trend results requiring attention
-                  </CardDescription>
+                  <CardDescription>Active out-of-trend results requiring attention</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -8499,25 +9138,29 @@ const ComprehensiveCMCPlatform = () => {
                       <div
                         key={oot.id}
                         className={`border rounded-lg p-4 ${
-                          oot.severity === 'high' ? 'border-red-300 bg-red-50' :
-                          oot.severity === 'medium' ? 'border-yellow-300 bg-yellow-50' :
-                          'border-gray-200'
+                          oot.severity === 'high'
+                            ? 'border-red-300 bg-red-50'
+                            : oot.severity === 'medium'
+                              ? 'border-yellow-300 bg-yellow-50'
+                              : 'border-gray-200'
                         }`}
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="font-semibold">{oot.id}</h4>
-                              <Badge variant={
-                                oot.status === 'confirmed' ? 'destructive' :
-                                oot.status === 'investigating' ? 'secondary' :
-                                'outline'
-                              }>
+                              <Badge
+                                variant={
+                                  oot.status === 'confirmed'
+                                    ? 'destructive'
+                                    : oot.status === 'investigating'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                              >
                                 {oot.status}
                               </Badge>
-                              <Badge variant="outline">
-                                {oot.severity} severity
-                              </Badge>
+                              <Badge variant="outline">{oot.severity} severity</Badge>
                             </div>
                             <p className="text-sm text-gray-600 mt-1">
                               {oot.product} - {oot.parameter}
@@ -8538,11 +9181,15 @@ const ComprehensiveCMCPlatform = () => {
                           </div>
                           <div>
                             <span className="text-gray-500">Trend:</span>
-                            <span className={`ml-1 font-medium ${
-                              oot.trend === 'declining' ? 'text-red-600' :
-                              oot.trend === 'increasing' ? 'text-orange-600' :
-                              'text-gray-600'
-                            }`}>
+                            <span
+                              className={`ml-1 font-medium ${
+                                oot.trend === 'declining'
+                                  ? 'text-red-600'
+                                  : oot.trend === 'increasing'
+                                    ? 'text-orange-600'
+                                    : 'text-gray-600'
+                              }`}
+                            >
                               {oot.trend === 'declining' ? '↓' : '↑'} {oot.trend}
                             </span>
                           </div>
@@ -8571,10 +9218,7 @@ const ComprehensiveCMCPlatform = () => {
 
                         <div className="flex gap-2">
                           {oot.status === 'confirmed' && !oot.investigator && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleStartInvestigation(oot)}
-                            >
+                            <Button size="sm" onClick={() => handleStartInvestigation(oot)}>
                               <Clipboard className="w-4 h-4 mr-2" />
                               Start Investigation
                             </Button>
@@ -8686,9 +9330,7 @@ const ComprehensiveCMCPlatform = () => {
                         </div>
                         <Badge variant="default">Active</Badge>
                       </div>
-                      <p className="text-sm text-gray-600">
-                        Detects process shifts or trends
-                      </p>
+                      <p className="text-sm text-gray-600">Detects process shifts or trends</p>
                     </div>
 
                     <div className="p-3 border rounded bg-blue-50">
@@ -8700,7 +9342,9 @@ const ComprehensiveCMCPlatform = () => {
                             AI Predictive Detection
                           </Label>
                         </div>
-                        <Badge variant="default" className="bg-blue-600">Beta</Badge>
+                        <Badge variant="default" className="bg-blue-600">
+                          Beta
+                        </Badge>
                       </div>
                       <p className="text-sm text-gray-600">
                         Machine learning model predicts OOT 2-3 timepoints in advance
@@ -8722,82 +9366,88 @@ const ComprehensiveCMCPlatform = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>OOT Investigation Workflow</CardTitle>
-                  <CardDescription>
-                    Track and manage all OOT investigations
-                  </CardDescription>
+                  <CardDescription>Track and manage all OOT investigations</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {ootAlerts.filter(o => o.investigator).map(oot => (
-                      <Card key={oot.id}>
-                        <CardHeader>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle className="text-base">{oot.id}</CardTitle>
-                              <CardDescription>{oot.product} - {oot.parameter}</CardDescription>
+                    {ootAlerts
+                      .filter(o => o.investigator)
+                      .map(oot => (
+                        <Card key={oot.id}>
+                          <CardHeader>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <CardTitle className="text-base">{oot.id}</CardTitle>
+                                <CardDescription>
+                                  {oot.product} - {oot.parameter}
+                                </CardDescription>
+                              </div>
+                              <Badge
+                                variant={oot.status === 'investigating' ? 'secondary' : 'default'}
+                              >
+                                {oot.status}
+                              </Badge>
                             </div>
-                            <Badge variant={oot.status === 'investigating' ? 'secondary' : 'default'}>
-                              {oot.status}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-500">Investigator:</span> {oot.investigator}
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <span className="text-gray-500">Investigator:</span>{' '}
+                                  {oot.investigator}
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Started:</span> {oot.detected}
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Root Cause:</span> {oot.rootCause}
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">CAPA Required:</span>{' '}
+                                  {oot.capaRequired ? 'Yes' : 'No'}
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-gray-500">Started:</span> {oot.detected}
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Root Cause:</span> {oot.rootCause}
-                              </div>
-                              <div>
-                                <span className="text-gray-500">CAPA Required:</span> {oot.capaRequired ? 'Yes' : 'No'}
-                              </div>
-                            </div>
 
-                            <div className="border-t pt-3">
-                              <h5 className="font-medium text-sm mb-2">Investigation Steps</h5>
-                              <div className="space-y-1">
-                                <div className="flex items-center text-sm">
-                                  <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
-                                  <span>Initial assessment completed</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
-                                  <span>Laboratory investigation initiated</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <Circle className="w-4 h-4 text-gray-400 mr-2" />
-                                  <span>Root cause analysis pending</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <Circle className="w-4 h-4 text-gray-400 mr-2" />
-                                  <span>Corrective action determination</span>
+                              <div className="border-t pt-3">
+                                <h5 className="font-medium text-sm mb-2">Investigation Steps</h5>
+                                <div className="space-y-1">
+                                  <div className="flex items-center text-sm">
+                                    <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                                    <span>Initial assessment completed</span>
+                                  </div>
+                                  <div className="flex items-center text-sm">
+                                    <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                                    <span>Laboratory investigation initiated</span>
+                                  </div>
+                                  <div className="flex items-center text-sm">
+                                    <Circle className="w-4 h-4 text-gray-400 mr-2" />
+                                    <span>Root cause analysis pending</span>
+                                  </div>
+                                  <div className="flex items-center text-sm">
+                                    <Circle className="w-4 h-4 text-gray-400 mr-2" />
+                                    <span>Corrective action determination</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline">
-                                <Edit className="w-4 h-4 mr-2" />
-                                Update Status
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <FileText className="w-4 h-4 mr-2" />
-                                View Report
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Close Investigation
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline">
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Update Status
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  View Report
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Close Investigation
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))}
                   </div>
                 </CardContent>
               </Card>
@@ -8834,7 +9484,12 @@ const ComprehensiveCMCPlatform = () => {
                     <div>
                       <Label>Investigation Plan</Label>
                       <div className="space-y-2">
-                        {['Review analytical method', 'Check equipment calibration', 'Examine storage conditions', 'Analyze raw data'].map(step => (
+                        {[
+                          'Review analytical method',
+                          'Check equipment calibration',
+                          'Examine storage conditions',
+                          'Analyze raw data',
+                        ].map(step => (
                           <div key={step} className="flex items-center">
                             <input type="checkbox" className="mr-2" />
                             <span className="text-sm">{step}</span>
@@ -8847,7 +9502,10 @@ const ComprehensiveCMCPlatform = () => {
                       <Button
                         onClick={() => {
                           setInvestigationForm(false);
-                          toast({ title: 'Investigation Created', description: 'OOT investigation initiated successfully' });
+                          toast({
+                            title: 'Investigation Created',
+                            description: 'OOT investigation initiated successfully',
+                          });
                         }}
                       >
                         Start Investigation
@@ -8964,7 +9622,8 @@ const ComprehensiveCMCPlatform = () => {
                         <div className="flex-1">
                           <h4 className="font-medium">High Risk Prediction</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            Study STAB-004 Assay likely to trend OOT at 9M timepoint (82% confidence)
+                            Study STAB-004 Assay likely to trend OOT at 9M timepoint (82%
+                            confidence)
                           </p>
                           <div className="mt-2">
                             <Button size="sm" variant="outline">
@@ -8982,7 +9641,8 @@ const ComprehensiveCMCPlatform = () => {
                         <div className="flex-1">
                           <h4 className="font-medium">Medium Risk Prediction</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            Study STAB-005 Dissolution showing early trend indicators (65% confidence)
+                            Study STAB-005 Dissolution showing early trend indicators (65%
+                            confidence)
                           </p>
                           <div className="mt-2">
                             <Button size="sm" variant="outline">
@@ -11077,7 +11737,7 @@ const ComprehensiveCMCPlatform = () => {
   // ============================================================================
   // QC API FUNCTIONS
   // ============================================================================
-  
+
   // Fetch QC Specifications
   const fetchQcSpecifications = useCallback(async () => {
     try {
@@ -11102,7 +11762,9 @@ const ComprehensiveCMCPlatform = () => {
   // Fetch OOS Investigations
   const fetchOosInvestigations = useCallback(async () => {
     try {
-      const response = await fetch('/api/qc/oos-investigations?organizationId=1&clientWorkspaceId=1');
+      const response = await fetch(
+        '/api/qc/oos-investigations?organizationId=1&clientWorkspaceId=1'
+      );
       if (response.ok) {
         const data = await response.json();
         setOosInvestigations(data);
@@ -11141,7 +11803,9 @@ const ComprehensiveCMCPlatform = () => {
   // Fetch Microbiological Tests
   const fetchMicrobiologicalTests = useCallback(async () => {
     try {
-      const response = await fetch('/api/qc/microbiological-tests?organizationId=1&clientWorkspaceId=1');
+      const response = await fetch(
+        '/api/qc/microbiological-tests?organizationId=1&clientWorkspaceId=1'
+      );
       if (response.ok) {
         const data = await response.json();
         setMicrobiologicalTests(data);
@@ -11154,7 +11818,9 @@ const ComprehensiveCMCPlatform = () => {
   // Fetch Reference Standards
   const fetchReferenceStandards = useCallback(async () => {
     try {
-      const response = await fetch('/api/qc/reference-standards?organizationId=1&clientWorkspaceId=1');
+      const response = await fetch(
+        '/api/qc/reference-standards?organizationId=1&clientWorkspaceId=1'
+      );
       if (response.ok) {
         const data = await response.json();
         setReferenceStandards(data);
@@ -11170,7 +11836,7 @@ const ComprehensiveCMCPlatform = () => {
     try {
       const response = await fetch('/api/quality/batches');
       console.log('🔍 QC batches response:', response.status, response.statusText);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('🔍 QC batches data:', data);
@@ -11189,14 +11855,14 @@ const ComprehensiveCMCPlatform = () => {
   }, []);
 
   // Create/Update Specification
-  const saveSpecification = async (specification) => {
+  const saveSpecification = async specification => {
     try {
-      const url = selectedSpecification 
+      const url = selectedSpecification
         ? `/api/qc/specifications/${selectedSpecification.id}`
         : '/api/qc/specifications';
-      
+
       const method = selectedSpecification ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -11226,14 +11892,14 @@ const ComprehensiveCMCPlatform = () => {
   };
 
   // Create/Update OOS Investigation
-  const saveOosInvestigation = async (investigation) => {
+  const saveOosInvestigation = async investigation => {
     try {
       const url = selectedOOS
         ? `/api/qc/oos-investigations/${selectedOOS.id}`
         : '/api/qc/oos-investigations';
-      
+
       const method = selectedOOS ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -11263,14 +11929,14 @@ const ComprehensiveCMCPlatform = () => {
   };
 
   // Create/Update Batch Release
-  const saveBatchRelease = async (release) => {
+  const saveBatchRelease = async release => {
     try {
       const url = selectedBatchRelease
         ? `/api/qc/batch-releases/${selectedBatchRelease.id}`
         : '/api/qc/batch-releases';
-      
+
       const method = selectedBatchRelease ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -11300,14 +11966,14 @@ const ComprehensiveCMCPlatform = () => {
   };
 
   // Create/Update Deviation
-  const saveDeviation = async (deviation) => {
+  const saveDeviation = async deviation => {
     try {
       const url = selectedDeviation
         ? `/api/qc/deviations/${selectedDeviation.id}`
         : '/api/qc/deviations';
-      
+
       const method = selectedDeviation ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -11337,14 +12003,14 @@ const ComprehensiveCMCPlatform = () => {
   };
 
   // Create/Update Microbiological Test
-  const saveMicrobiologicalTest = async (test) => {
+  const saveMicrobiologicalTest = async test => {
     try {
       const url = selectedMicroTest
         ? `/api/qc/microbiological-tests/${selectedMicroTest.id}`
         : '/api/qc/microbiological-tests';
-      
+
       const method = selectedMicroTest ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -11374,14 +12040,14 @@ const ComprehensiveCMCPlatform = () => {
   };
 
   // Create/Update Reference Standard
-  const saveReferenceStandard = async (standard) => {
+  const saveReferenceStandard = async standard => {
     try {
       const url = selectedReferenceStandard
         ? `/api/qc/reference-standards/${selectedReferenceStandard.id}`
         : '/api/qc/reference-standards';
-      
+
       const method = selectedReferenceStandard ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -11507,81 +12173,96 @@ const ComprehensiveCMCPlatform = () => {
       );
 
       // **FIXED: Use real QC batches from API instead of deriving from stability data**
-      const integratedBatches = qcBatches.length > 0 ? qcBatches.map(batch => ({
-        id: batch.batch_id,
-        batch_id: batch.batch_id,
-        batchNumber: batch.lot_no,
-        lot_no: batch.lot_no,
-        product: batch.product_id,
-        product_id: batch.product_id,
-        mfgDate: batch.mfg_date || 'N/A',
-        expDate: batch.exp_date || 'N/A',
-        quantity: batch.batch_size || 'N/A',
-        status: batch.status,
-        releaseDate: batch.released_at ? new Date(batch.released_at).toLocaleDateString() : 'Pending',
-        qpApproval: batch.released_by || 'Pending',
-        coa: batch.release_frozen ? 'Available' : 'Pending',
-        deviation: 'None',
-        tests: {},
-        stabilityTimepoints: [],
-        stabilityConditions: [],
-        processId: null,
-        processValidation: 'N/A',
-      })) : linkedStabilityStudies.map((study, index) => ({
-        id: `BT-${String(index + 1).padStart(3, '0')}`,
-        batchNumber:
-          study.batchNumber ||
-          `${study.study_id}-${new Date().getFullYear()}-${String(index + 1).padStart(3, '0')}`,
-        product: study.product || study.productName || 'Drug Product A 10mg Tablets',
-        mfgDate: study.startDate || '2025-02-15',
-        expDate: study.projectedEnd || '2027-02-14',
-        quantity: study.batchSize || '50,000 tablets',
-        status:
-          study.status === 'Active'
-            ? 'Released'
-            : study.status === 'Ongoing'
-              ? 'Under Investigation'
-              : 'Pending',
-        releaseDate:
-          study.status === 'Active' ? new Date(study.startDate).toLocaleDateString() : 'Pending',
-        qpApproval: study.status === 'Active' ? 'Dr. Smith' : 'Pending',
-        tests: linkedAnalyticalMethods.reduce((tests, method) => {
-          const getTestResult = (methodTitle, methodStatus) => {
-            if (methodStatus === 'Validated' && methodTitle) {
-              const titleLower = (methodTitle || '').toLowerCase();
-              if (titleLower.includes('assay')) {
-                return {
-                  result: '99.8%',
-                  spec: '95.0-105.0%',
-                  status: 'Pass',
-                  methodId: method.id,
+      const integratedBatches =
+        qcBatches.length > 0
+          ? qcBatches.map(batch => ({
+              id: batch.batch_id,
+              batch_id: batch.batch_id,
+              batchNumber: batch.lot_no,
+              lot_no: batch.lot_no,
+              product: batch.product_id,
+              product_id: batch.product_id,
+              mfgDate: batch.mfg_date || 'N/A',
+              expDate: batch.exp_date || 'N/A',
+              quantity: batch.batch_size || 'N/A',
+              status: batch.status,
+              releaseDate: batch.released_at
+                ? new Date(batch.released_at).toLocaleDateString()
+                : 'Pending',
+              qpApproval: batch.released_by || 'Pending',
+              coa: batch.release_frozen ? 'Available' : 'Pending',
+              deviation: 'None',
+              tests: {},
+              stabilityTimepoints: [],
+              stabilityConditions: [],
+              processId: null,
+              processValidation: 'N/A',
+            }))
+          : linkedStabilityStudies.map((study, index) => ({
+              id: `BT-${String(index + 1).padStart(3, '0')}`,
+              batchNumber:
+                study.batchNumber ||
+                `${study.study_id}-${new Date().getFullYear()}-${String(index + 1).padStart(3, '0')}`,
+              product: study.product || study.productName || 'Drug Product A 10mg Tablets',
+              mfgDate: study.startDate || '2025-02-15',
+              expDate: study.projectedEnd || '2027-02-14',
+              quantity: study.batchSize || '50,000 tablets',
+              status:
+                study.status === 'Active'
+                  ? 'Released'
+                  : study.status === 'Ongoing'
+                    ? 'Under Investigation'
+                    : 'Pending',
+              releaseDate:
+                study.status === 'Active'
+                  ? new Date(study.startDate).toLocaleDateString()
+                  : 'Pending',
+              qpApproval: study.status === 'Active' ? 'Dr. Smith' : 'Pending',
+              tests: linkedAnalyticalMethods.reduce((tests, method) => {
+                const getTestResult = (methodTitle, methodStatus) => {
+                  if (methodStatus === 'Validated' && methodTitle) {
+                    const titleLower = (methodTitle || '').toLowerCase();
+                    if (titleLower.includes('assay')) {
+                      return {
+                        result: '99.8%',
+                        spec: '95.0-105.0%',
+                        status: 'Pass',
+                        methodId: method.id,
+                      };
+                    } else if (titleLower.includes('dissolution')) {
+                      return {
+                        result: '98% in 30min',
+                        spec: '≥80% in 30min',
+                        status: 'Pass',
+                        methodId: method.id,
+                      };
+                    } else if (titleLower.includes('uniformity')) {
+                      return {
+                        result: '3.2% CV',
+                        spec: '≤6.0% CV',
+                        status: 'Pass',
+                        methodId: method.id,
+                      };
+                    } else if (
+                      titleLower.includes('impurities') ||
+                      titleLower.includes('related')
+                    ) {
+                      return { result: '0.8%', spec: '≤2.0%', status: 'Pass', methodId: method.id };
+                    }
+                  }
+                  return { result: 'Pending', spec: 'TBD', status: 'Pending', methodId: method.id };
                 };
-              } else if (titleLower.includes('dissolution')) {
-                return {
-                  result: '98% in 30min',
-                  spec: '≥80% in 30min',
-                  status: 'Pass',
-                  methodId: method.id,
-                };
-              } else if (titleLower.includes('uniformity')) {
-                return { result: '3.2% CV', spec: '≤6.0% CV', status: 'Pass', methodId: method.id };
-              } else if (titleLower.includes('impurities') || titleLower.includes('related')) {
-                return { result: '0.8%', spec: '≤2.0%', status: 'Pass', methodId: method.id };
-              }
-            }
-            return { result: 'Pending', spec: 'TBD', status: 'Pending', methodId: method.id };
-          };
-          const testKey = (method.title || 'unknown').toLowerCase().replace(/[^a-z]/g, '');
-          tests[testKey] = getTestResult(method.title, method.status);
-          return tests;
-        }, {}),
-        stabilityTimepoints: study.timepoints || [],
-        stabilityConditions: study.conditions || [],
-        coa: study.status === 'Active' ? 'Available' : 'Pending',
-        deviation: study.deviations || 'None',
-        processId: study.processId || null,
-        processValidation: study.processValidation || 'N/A',
-      }));
+                const testKey = (method.title || 'unknown').toLowerCase().replace(/[^a-z]/g, '');
+                tests[testKey] = getTestResult(method.title, method.status);
+                return tests;
+              }, {}),
+              stabilityTimepoints: study.timepoints || [],
+              stabilityConditions: study.conditions || [],
+              coa: study.status === 'Active' ? 'Available' : 'Pending',
+              deviation: study.deviations || 'None',
+              processId: study.processId || null,
+              processValidation: study.processValidation || 'N/A',
+            }));
 
       return {
         batches: integratedBatches,
@@ -11752,7 +12433,9 @@ const ComprehensiveCMCPlatform = () => {
                     <Activity className="w-5 h-5 mr-2 text-blue-600" />
                     QC Testing Dashboard
                   </CardTitle>
-                  <CardDescription>Real-time batch release testing and quality monitoring</CardDescription>
+                  <CardDescription>
+                    Real-time batch release testing and quality monitoring
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -11760,24 +12443,33 @@ const ComprehensiveCMCPlatform = () => {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-green-600 font-medium">Batch Release Testing</p>
+                            <p className="text-sm text-green-600 font-medium">
+                              Batch Release Testing
+                            </p>
                             <p className="text-2xl font-bold text-green-700">
-                              {batchReleases.filter(b => b.status === 'pending' || b.status === 'in-review').length}
+                              {
+                                batchReleases.filter(
+                                  b => b.status === 'pending' || b.status === 'in-review'
+                                ).length
+                              }
                             </p>
                             <p className="text-xs text-green-600 mt-1">
-                              {batchReleases.filter(b => b.status === 'pending').length} pending review
+                              {batchReleases.filter(b => b.status === 'pending').length} pending
+                              review
                             </p>
                           </div>
                           <CheckCircle2 className="w-8 h-8 text-green-500 opacity-50" />
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-blue-600 font-medium">In-Process Control (IPC)</p>
+                            <p className="text-sm text-blue-600 font-medium">
+                              In-Process Control (IPC)
+                            </p>
                             <p className="text-2xl font-bold text-blue-700">156 Tests</p>
                             <p className="text-xs text-blue-600 mt-1">98.5% pass rate</p>
                           </div>
@@ -11785,12 +12477,14 @@ const ComprehensiveCMCPlatform = () => {
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-purple-600 font-medium">Raw Material Testing</p>
+                            <p className="text-sm text-purple-600 font-medium">
+                              Raw Material Testing
+                            </p>
                             <p className="text-2xl font-bold text-purple-700">32 Queue</p>
                             <p className="text-xs text-purple-600 mt-1">5 priority items</p>
                           </div>
@@ -11798,7 +12492,7 @@ const ComprehensiveCMCPlatform = () => {
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="bg-gradient-to-br from-orange-50 to-red-50">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -11812,7 +12506,7 @@ const ComprehensiveCMCPlatform = () => {
                       </CardContent>
                     </Card>
                   </div>
-                  
+
                   {/* Testing Status Overview */}
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <h4 className="font-medium mb-3 flex items-center">
@@ -11826,17 +12520,23 @@ const ComprehensiveCMCPlatform = () => {
                           <span className="text-sm font-medium">HPLC Assay - Batch BT-001</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="default" className="text-xs">In Progress</Badge>
+                          <Badge variant="default" className="text-xs">
+                            In Progress
+                          </Badge>
                           <span className="text-xs text-gray-500">ETA: 2 hours</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between p-2 bg-white rounded">
                         <div className="flex items-center gap-3">
                           <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <span className="text-sm font-medium">Dissolution Testing - Batch BT-002</span>
+                          <span className="text-sm font-medium">
+                            Dissolution Testing - Batch BT-002
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">Pending SST</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Pending SST
+                          </Badge>
                           <span className="text-xs text-gray-500">Queued</span>
                         </div>
                       </div>
@@ -11846,7 +12546,9 @@ const ComprehensiveCMCPlatform = () => {
                           <span className="text-sm font-medium">Endotoxin Testing - RM-045</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-xs">Scheduled</Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Scheduled
+                          </Badge>
                           <span className="text-xs text-gray-500">Tomorrow 9:00 AM</span>
                         </div>
                       </div>
@@ -11855,7 +12557,7 @@ const ComprehensiveCMCPlatform = () => {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* **DATA LINEAGE DASHBOARD** - Show connections to upstream systems */}
             <div className="mb-6">
               <Card className="border-blue-200 bg-blue-50">
@@ -11957,7 +12659,11 @@ const ComprehensiveCMCPlatform = () => {
                 </Card>
               ) : (
                 batchReleases.map(batch => (
-                  <Card key={batch.id} data-tour="quality.review" className="hover:shadow-lg transition-shadow">
+                  <Card
+                    key={batch.id}
+                    data-tour="quality.review"
+                    className="hover:shadow-lg transition-shadow"
+                  >
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
@@ -11971,182 +12677,193 @@ const ComprehensiveCMCPlatform = () => {
                             )}
                           </CardDescription>
                         </div>
-                        <Badge 
+                        <Badge
                           variant={
-                            batch.status === 'released' ? 'default' : 
-                            batch.status === 'rejected' ? 'destructive' :
-                            batch.status === 'in-review' ? 'secondary' : 'outline'
+                            batch.status === 'released'
+                              ? 'default'
+                              : batch.status === 'rejected'
+                                ? 'destructive'
+                                : batch.status === 'in-review'
+                                  ? 'secondary'
+                                  : 'outline'
                           }
                         >
                           {batch.status}
                         </Badge>
                       </div>
                     </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div>
-                        <h4 className="font-medium mb-3">Batch Information</h4>
-                        <div className="text-sm space-y-2">
-                          <div className="flex justify-between">
-                            <span>Mfg Date:</span>
-                            <span className="font-medium">
-                              {batch.manufacturingDate ? new Date(batch.manufacturingDate).toLocaleDateString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Exp Date:</span>
-                            <span className="font-medium">
-                              {batch.expiryDate ? new Date(batch.expiryDate).toLocaleDateString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Batch Size:</span>
-                            <span className="font-medium">{batch.batchSize || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Release Type:</span>
-                            <span className="font-medium">{batch.releaseType || 'Standard'}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-3">QC Test Results</h4>
-                        <div className="text-sm space-y-2">
-                          {batch.qualityTests && batch.qualityTests.length > 0 ? (
-                            batch.qualityTests.slice(0, 4).map((test, idx) => (
-                              <div key={idx} className="space-y-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="capitalize">{test.testName}:</span>
-                                  <Badge
-                                    variant={test.result === 'Pass' ? 'default' : 'destructive'}
-                                    className="text-xs"
-                                  >
-                                    {test.result}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-gray-500 italic">No test results</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-3">Approval Status</h4>
-                        <div className="text-sm space-y-2">
-                          <div className="flex justify-between">
-                            <span>QC Review:</span>
-                            <span className="font-medium">
-                              {batch.qcApproval ? 'Approved' : 'Pending'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>QA Review:</span>
-                            <span className="font-medium">
-                              {batch.qaApproval ? 'Approved' : 'Pending'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Released By:</span>
-                            <span className="font-medium">{batch.releasedBy || 'N/A'}</span>
-                          </div>
-                          {batch.releaseDate && (
+                    <CardContent>
+                      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div>
+                          <h4 className="font-medium mb-3">Batch Information</h4>
+                          <div className="text-sm space-y-2">
                             <div className="flex justify-between">
-                              <span>Release Date:</span>
+                              <span>Mfg Date:</span>
                               <span className="font-medium">
-                                {new Date(batch.releaseDate).toLocaleDateString()}
+                                {batch.manufacturingDate
+                                  ? new Date(batch.manufacturingDate).toLocaleDateString()
+                                  : 'N/A'}
                               </span>
                             </div>
-                          )}
+                            <div className="flex justify-between">
+                              <span>Exp Date:</span>
+                              <span className="font-medium">
+                                {batch.expiryDate
+                                  ? new Date(batch.expiryDate).toLocaleDateString()
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Batch Size:</span>
+                              <span className="font-medium">{batch.batchSize || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Release Type:</span>
+                              <span className="font-medium">{batch.releaseType || 'Standard'}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <div>
-                        <h4 className="font-medium mb-3">Actions</h4>
-                        <div className="space-y-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full"
-                            onClick={() => {
-                              setSelectedBatchRelease(batch);
-                              setShowBatchReleaseModal(true);
-                            }}
-                            data-testid={`button-view-batch-${batch.id}`}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </Button>
-                          {batch.status === 'pending' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full text-green-600 border-green-200"
-                              onClick={async () => {
-                                const response = await fetch(`/api/qc/batch-releases/${batch.id}/approve`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    approvalType: 'qc',
-                                    approvedBy: 'QC Team',
-                                    comments: 'All tests pass'
-                                  })
-                                });
-                                if (response.ok) {
-                                  toast({
-                                    title: 'Approval Recorded',
-                                    description: 'Batch has been approved for release',
-                                  });
-                                  fetchBatchReleases();
-                                }
+                        <div>
+                          <h4 className="font-medium mb-3">QC Test Results</h4>
+                          <div className="text-sm space-y-2">
+                            {batch.qualityTests && batch.qualityTests.length > 0 ? (
+                              batch.qualityTests.slice(0, 4).map((test, idx) => (
+                                <div key={idx} className="space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="capitalize">{test.testName}:</span>
+                                    <Badge
+                                      variant={test.result === 'Pass' ? 'default' : 'destructive'}
+                                      className="text-xs"
+                                    >
+                                      {test.result}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-gray-500 italic">No test results</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium mb-3">Approval Status</h4>
+                          <div className="text-sm space-y-2">
+                            <div className="flex justify-between">
+                              <span>QC Review:</span>
+                              <span className="font-medium">
+                                {batch.qcApproval ? 'Approved' : 'Pending'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>QA Review:</span>
+                              <span className="font-medium">
+                                {batch.qaApproval ? 'Approved' : 'Pending'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Released By:</span>
+                              <span className="font-medium">{batch.releasedBy || 'N/A'}</span>
+                            </div>
+                            {batch.releaseDate && (
+                              <div className="flex justify-between">
+                                <span>Release Date:</span>
+                                <span className="font-medium">
+                                  {new Date(batch.releaseDate).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium mb-3">Actions</h4>
+                          <div className="space-y-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => {
+                                setSelectedBatchRelease(batch);
+                                setShowBatchReleaseModal(true);
                               }}
-                              data-testid={`button-approve-batch-${batch.id}`}
+                              data-testid={`button-view-batch-${batch.id}`}
                             >
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              Approve Release
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
                             </Button>
-                          )}
-                          {batch.status === 'pending' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full text-red-600 border-red-200"
+                            {batch.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-green-600 border-green-200"
+                                onClick={async () => {
+                                  const response = await fetch(
+                                    `/api/qc/batch-releases/${batch.id}/approve`,
+                                    {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        approvalType: 'qc',
+                                        approvedBy: 'QC Team',
+                                        comments: 'All tests pass',
+                                      }),
+                                    }
+                                  );
+                                  if (response.ok) {
+                                    toast({
+                                      title: 'Approval Recorded',
+                                      description: 'Batch has been approved for release',
+                                    });
+                                    fetchBatchReleases();
+                                  }
+                                }}
+                                data-testid={`button-approve-batch-${batch.id}`}
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                Approve Release
+                              </Button>
+                            )}
+                            {batch.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-red-600 border-red-200"
+                                onClick={() => {
+                                  toast({
+                                    title: 'Rejection Workflow',
+                                    description: 'Opening rejection form for batch',
+                                  });
+                                }}
+                                data-testid={`button-reject-batch-${batch.id}`}
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Reject
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
                               onClick={() => {
                                 toast({
-                                  title: 'Rejection Workflow',
-                                  description: 'Opening rejection form for batch',
+                                  title: 'Certificate of Analysis',
+                                  description: 'Generating CoA for this batch',
                                 });
                               }}
-                              data-testid={`button-reject-batch-${batch.id}`}
+                              data-testid={`button-coa-batch-${batch.id}`}
                             >
-                              <XCircle className="w-4 h-4 mr-2" />
-                              Reject
+                              <FileText className="w-4 h-4 mr-2" />
+                              Generate CoA
                             </Button>
-                          )}
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full"
-                            onClick={() => {
-                              toast({
-                                title: 'Certificate of Analysis',
-                                description: 'Generating CoA for this batch',
-                              });
-                            }}
-                            data-testid={`button-coa-batch-${batch.id}`}
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Generate CoA
-                          </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
@@ -12458,9 +13175,11 @@ const ComprehensiveCMCPlatform = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-xl font-semibold">OOS/OOT Investigations</h3>
-                  <p className="text-gray-600">Out-of-Specification investigation and root cause analysis</p>
+                  <p className="text-gray-600">
+                    Out-of-Specification investigation and root cause analysis
+                  </p>
                 </div>
-                <Button 
+                <Button
                   onClick={() => {
                     setSelectedOOS(null);
                     setShowOOSModal(true);
@@ -12479,7 +13198,12 @@ const ComprehensiveCMCPlatform = () => {
                     <CardTitle className="flex items-center justify-between">
                       <span>Active Investigations</span>
                       <Badge variant="destructive">
-                        {oosInvestigations.filter(i => i.status === 'open' || i.status === 'phase1' || i.status === 'phase2').length}
+                        {
+                          oosInvestigations.filter(
+                            i =>
+                              i.status === 'open' || i.status === 'phase1' || i.status === 'phase2'
+                          ).length
+                        }
                       </Badge>
                     </CardTitle>
                   </CardHeader>
@@ -12491,72 +13215,101 @@ const ComprehensiveCMCPlatform = () => {
                           <p className="text-gray-600">No active investigations</p>
                         </div>
                       ) : (
-                        oosInvestigations.filter(inv => inv.status !== 'closed').map((investigation) => (
-                          <div key={investigation.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <h4 className="font-medium">{investigation.investigationNumber || `INV-${investigation.id}`}</h4>
-                                <p className="text-sm text-gray-600">
-                                  {investigation.testParameter} - {investigation.batchNumber}
-                                </p>
-                              </div>
-                              <Badge variant={investigation.priority === 'critical' ? 'destructive' : investigation.priority === 'high' ? 'default' : 'secondary'}>
-                                {investigation.status}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <p><strong>Test Result:</strong> {investigation.actualResult} (Spec: {investigation.specification})</p>
-                              <p><strong>Initiated:</strong> {new Date(investigation.initiatedDate).toLocaleDateString()}</p>
-                              <p><strong>Investigator:</strong> {investigation.investigator}</p>
-                              {investigation.targetClosureDate && (
-                                <p><strong>Due Date:</strong> {new Date(investigation.targetClosureDate).toLocaleDateString()}</p>
-                              )}
-                            </div>
-                            <div className="flex gap-2 mt-3">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex-1"
-                                onClick={() => {
-                                  setSelectedOOS(investigation);
-                                  setShowOOSModal(true);
-                                }}
-                                data-testid={`button-view-oos-${investigation.id}`}
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                View
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex-1"
-                                onClick={async () => {
-                                  const response = await fetch(`/api/qc/oos-investigations/${investigation.id}/root-cause`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      method: 'Fishbone Diagram',
-                                      category: 'Laboratory',
-                                      description: 'Performing root cause analysis',
-                                      details: {}
-                                    })
-                                  });
-                                  if (response.ok) {
-                                    toast({
-                                      title: 'Root Cause Analysis',
-                                      description: 'Analysis initiated successfully',
-                                    });
-                                    fetchOosInvestigations();
+                        oosInvestigations
+                          .filter(inv => inv.status !== 'closed')
+                          .map(investigation => (
+                            <div
+                              key={investigation.id}
+                              className="border rounded-lg p-4 hover:bg-gray-50"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <h4 className="font-medium">
+                                    {investigation.investigationNumber || `INV-${investigation.id}`}
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {investigation.testParameter} - {investigation.batchNumber}
+                                  </p>
+                                </div>
+                                <Badge
+                                  variant={
+                                    investigation.priority === 'critical'
+                                      ? 'destructive'
+                                      : investigation.priority === 'high'
+                                        ? 'default'
+                                        : 'secondary'
                                   }
-                                }}
-                                data-testid={`button-rca-oos-${investigation.id}`}
-                              >
-                                <Brain className="w-4 h-4 mr-2" />
-                                RCA
-                              </Button>
+                                >
+                                  {investigation.status}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <p>
+                                  <strong>Test Result:</strong> {investigation.actualResult} (Spec:{' '}
+                                  {investigation.specification})
+                                </p>
+                                <p>
+                                  <strong>Initiated:</strong>{' '}
+                                  {new Date(investigation.initiatedDate).toLocaleDateString()}
+                                </p>
+                                <p>
+                                  <strong>Investigator:</strong> {investigation.investigator}
+                                </p>
+                                {investigation.targetClosureDate && (
+                                  <p>
+                                    <strong>Due Date:</strong>{' '}
+                                    {new Date(investigation.targetClosureDate).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={() => {
+                                    setSelectedOOS(investigation);
+                                    setShowOOSModal(true);
+                                  }}
+                                  data-testid={`button-view-oos-${investigation.id}`}
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  onClick={async () => {
+                                    const response = await fetch(
+                                      `/api/qc/oos-investigations/${investigation.id}/root-cause`,
+                                      {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          method: 'Fishbone Diagram',
+                                          category: 'Laboratory',
+                                          description: 'Performing root cause analysis',
+                                          details: {},
+                                        }),
+                                      }
+                                    );
+                                    if (response.ok) {
+                                      toast({
+                                        title: 'Root Cause Analysis',
+                                        description: 'Analysis initiated successfully',
+                                      });
+                                      fetchOosInvestigations();
+                                    }
+                                  }}
+                                  data-testid={`button-rca-oos-${investigation.id}`}
+                                >
+                                  <Brain className="w-4 h-4 mr-2" />
+                                  RCA
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ))
                       )}
                     </div>
                   </CardContent>
@@ -12980,8 +13733,11 @@ const ComprehensiveCMCPlatform = () => {
                           </Button>
                         </div>
                       ) : (
-                        qcSpecifications.map((spec) => (
-                          <div key={spec.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        qcSpecifications.map(spec => (
+                          <div
+                            key={spec.id}
+                            className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                          >
                             <div className="flex justify-between items-center mb-3">
                               <div className="flex items-center gap-2">
                                 <h4 className="font-medium">{spec.productName}</h4>
@@ -12990,7 +13746,13 @@ const ComprehensiveCMCPlatform = () => {
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge className={spec.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                                <Badge
+                                  className={
+                                    spec.status === 'approved'
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }
+                                >
                                   {spec.status}
                                 </Badge>
                                 <Button
@@ -13009,12 +13771,17 @@ const ComprehensiveCMCPlatform = () => {
                             </div>
                             {spec.testParameters && (
                               <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                                {(Array.isArray(spec.testParameters) ? spec.testParameters : []).slice(0, 6).map((param, idx) => (
-                                  <div key={idx} className="flex justify-between">
-                                    <span className="text-gray-600">{param.parameterName}:</span>
-                                    <span className="font-medium">{param.specification || `${param.lowerLimit || ''}-${param.upperLimit || ''} ${param.units || ''}`}</span>
-                                  </div>
-                                ))}
+                                {(Array.isArray(spec.testParameters) ? spec.testParameters : [])
+                                  .slice(0, 6)
+                                  .map((param, idx) => (
+                                    <div key={idx} className="flex justify-between">
+                                      <span className="text-gray-600">{param.parameterName}:</span>
+                                      <span className="font-medium">
+                                        {param.specification ||
+                                          `${param.lowerLimit || ''}-${param.upperLimit || ''} ${param.units || ''}`}
+                                      </span>
+                                    </div>
+                                  ))}
                               </div>
                             )}
                             <div className="flex gap-2 pt-3 border-t">
@@ -13047,14 +13814,17 @@ const ComprehensiveCMCPlatform = () => {
                                 size="sm"
                                 variant="ghost"
                                 onClick={async () => {
-                                  const response = await fetch(`/api/qc/specifications/${spec.id}/version`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      changeReason: 'Update specification limits',
-                                      changeDescription: 'Creating new version for review'
-                                    })
-                                  });
+                                  const response = await fetch(
+                                    `/api/qc/specifications/${spec.id}/version`,
+                                    {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        changeReason: 'Update specification limits',
+                                        changeDescription: 'Creating new version for review',
+                                      }),
+                                    }
+                                  );
                                   if (response.ok) {
                                     toast({
                                       title: 'Version Created',
@@ -13198,8 +13968,8 @@ const ComprehensiveCMCPlatform = () => {
                     <div className="space-y-2">
                       <div
                         className="flex justify-b
-                        
-                        
+
+
                         etween text-sm"
                       >
                         <span>HPLC Systems</span>
@@ -13486,7 +14256,7 @@ const ComprehensiveCMCPlatform = () => {
                   New Test
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2">
                   <CardHeader>
@@ -13512,22 +14282,33 @@ const ComprehensiveCMCPlatform = () => {
                           </Button>
                         </div>
                       ) : (
-                        microbiologicalTests.map((test) => (
-                          <div key={test.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        microbiologicalTests.map(test => (
+                          <div
+                            key={test.id}
+                            className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                          >
                             <div className="flex justify-between items-start mb-3">
                               <div>
-                                <h4 className="font-medium">{test.testNumber || `TEST-${test.id}`}</h4>
+                                <h4 className="font-medium">
+                                  {test.testNumber || `TEST-${test.id}`}
+                                </h4>
                                 <p className="text-sm text-gray-600">
                                   {test.testType} - {test.sampleType}
                                 </p>
                               </div>
-                              <Badge 
-                                variant={test.result === 'Pass' ? 'default' : test.result === 'Fail' ? 'destructive' : 'secondary'}
+                              <Badge
+                                variant={
+                                  test.result === 'Pass'
+                                    ? 'default'
+                                    : test.result === 'Fail'
+                                      ? 'destructive'
+                                      : 'secondary'
+                                }
                               >
                                 {test.result || 'Pending'}
                               </Badge>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                               <div>
                                 <span className="text-gray-600">Sample Location:</span>
@@ -13535,7 +14316,9 @@ const ComprehensiveCMCPlatform = () => {
                               </div>
                               <div>
                                 <span className="text-gray-600">Test Date:</span>
-                                <p className="font-medium">{new Date(test.testDate).toLocaleDateString()}</p>
+                                <p className="font-medium">
+                                  {new Date(test.testDate).toLocaleDateString()}
+                                </p>
                               </div>
                               {test.organism && (
                                 <div>
@@ -13554,14 +14337,23 @@ const ComprehensiveCMCPlatform = () => {
                             </div>
 
                             {test.alertLevel && (
-                              <div className={`p-2 rounded text-sm mb-2 ${
-                                test.alertLevel === 'action' ? 'bg-orange-50 text-orange-800' :
-                                test.alertLevel === 'alert' ? 'bg-yellow-50 text-yellow-800' :
-                                'bg-gray-50 text-gray-800'
-                              }`}>
-                                <span className="font-medium">{test.alertLevel.toUpperCase()} Level: </span>
-                                {test.alertLevel === 'action' ? 'Immediate action required' : 
-                                 test.alertLevel === 'alert' ? 'Monitor closely' : 'Within limits'}
+                              <div
+                                className={`p-2 rounded text-sm mb-2 ${
+                                  test.alertLevel === 'action'
+                                    ? 'bg-orange-50 text-orange-800'
+                                    : test.alertLevel === 'alert'
+                                      ? 'bg-yellow-50 text-yellow-800'
+                                      : 'bg-gray-50 text-gray-800'
+                                }`}
+                              >
+                                <span className="font-medium">
+                                  {test.alertLevel.toUpperCase()} Level:{' '}
+                                </span>
+                                {test.alertLevel === 'action'
+                                  ? 'Immediate action required'
+                                  : test.alertLevel === 'alert'
+                                    ? 'Monitor closely'
+                                    : 'Within limits'}
                               </div>
                             )}
 
@@ -13582,15 +14374,18 @@ const ComprehensiveCMCPlatform = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
-                                  const response = await fetch(`/api/qc/microbiological-tests/${test.id}/results`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      cfuCount: test.cfuCount,
-                                      organism: test.organism,
-                                      result: test.result
-                                    })
-                                  });
+                                  const response = await fetch(
+                                    `/api/qc/microbiological-tests/${test.id}/results`,
+                                    {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        cfuCount: test.cfuCount,
+                                        organism: test.organism,
+                                        result: test.result,
+                                      }),
+                                    }
+                                  );
                                   if (response.ok) {
                                     toast({
                                       title: 'Results Recorded',
@@ -13718,23 +14513,23 @@ const ComprehensiveCMCPlatform = () => {
           {/* Quality Step 5: QC Coach AI */}
           <TabsContent value="qc-coach" className="mt-6">
             <div data-tour="quality.coach">
-              <CoachPanel batchId={selectedBatch || ""} />
+              <CoachPanel batchId={selectedBatch || ''} />
             </div>
           </TabsContent>
 
           {/* Quality Step 5: Flow Health */}
           <TabsContent value="flow-health" className="mt-6">
-            <FlowHealthPanel batchId={selectedBatch || ""} />
+            <FlowHealthPanel batchId={selectedBatch || ''} />
           </TabsContent>
 
           {/* Quality Step 5: Data Lineage */}
           <TabsContent value="lineage" className="mt-6">
-            <LineagePanel batchId={selectedBatch || ""} />
+            <LineagePanel batchId={selectedBatch || ''} />
           </TabsContent>
 
           {/* Quality Step 5: What-If Simulator */}
           <TabsContent value="what-if" className="mt-6">
-            <WhatIfPanel batchId={selectedBatch || ""} />
+            <WhatIfPanel batchId={selectedBatch || ''} />
           </TabsContent>
 
           {/* Quality Step 6: ERP Genealogy Import */}
@@ -13749,17 +14544,17 @@ const ComprehensiveCMCPlatform = () => {
 
           {/* Quality Step 7: Automated Release Engine */}
           <TabsContent value="auto-release" className="mt-6">
-            <AutoReleasePanel batchId={selectedBatch || ""} />
+            <AutoReleasePanel batchId={selectedBatch || ''} />
           </TabsContent>
 
           {/* Quality Step 7: Predictive ML Analytics */}
           <TabsContent value="predictive" className="mt-6">
-            <PredictivePanel batchId={selectedBatch || ""} />
+            <PredictivePanel batchId={selectedBatch || ''} />
           </TabsContent>
 
           {/* Quality Step 7: Regulatory Compliance Monitor */}
           <TabsContent value="regulatory" className="mt-6">
-            <RegulatoryPanel batchId={selectedBatch || ""} />
+            <RegulatoryPanel batchId={selectedBatch || ''} />
           </TabsContent>
 
           {/* Quality Step 8: Gatekeeper Release Check */}
@@ -13783,30 +14578,62 @@ const ComprehensiveCMCPlatform = () => {
                     <div className="space-y-4">
                       <Select
                         value={selectedBatch || ''}
-                        onValueChange={(value) => setSelectedBatch(value)}
+                        onValueChange={value => setSelectedBatch(value)}
                       >
                         <SelectTrigger className="w-full" data-testid="batch-selector-gatekeeper">
                           <SelectValue placeholder="Select a batch..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {integratedQualityData.batches.map((batch) => (
-                            <SelectItem key={batch.id || batch.batch_id} value={batch.id || batch.batch_id}>
-                              {batch.batchNumber || batch.lot_no} - {batch.product || batch.product_id} ({batch.status})
+                          {integratedQualityData.batches.map(batch => (
+                            <SelectItem
+                              key={batch.id || batch.batch_id}
+                              value={batch.id || batch.batch_id}
+                            >
+                              {batch.batchNumber || batch.lot_no} -{' '}
+                              {batch.product || batch.product_id} ({batch.status})
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      
+
                       {/* Show selected batch info */}
-                      {selectedBatch && integratedQualityData.batches.find(b => (b.id === selectedBatch || b.batch_id === selectedBatch)) && (
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="text-sm space-y-1">
-                            <div><strong>Batch:</strong> {integratedQualityData.batches.find(b => (b.id === selectedBatch || b.batch_id === selectedBatch))?.batchNumber || integratedQualityData.batches.find(b => (b.id === selectedBatch || b.batch_id === selectedBatch))?.lot_no}</div>
-                            <div><strong>Product:</strong> {integratedQualityData.batches.find(b => (b.id === selectedBatch || b.batch_id === selectedBatch))?.product || integratedQualityData.batches.find(b => (b.id === selectedBatch || b.batch_id === selectedBatch))?.product_id}</div>
-                            <div><strong>Status:</strong> <Badge>{integratedQualityData.batches.find(b => (b.id === selectedBatch || b.batch_id === selectedBatch))?.status}</Badge></div>
+                      {selectedBatch &&
+                        integratedQualityData.batches.find(
+                          b => b.id === selectedBatch || b.batch_id === selectedBatch
+                        ) && (
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <div className="text-sm space-y-1">
+                              <div>
+                                <strong>Batch:</strong>{' '}
+                                {integratedQualityData.batches.find(
+                                  b => b.id === selectedBatch || b.batch_id === selectedBatch
+                                )?.batchNumber ||
+                                  integratedQualityData.batches.find(
+                                    b => b.id === selectedBatch || b.batch_id === selectedBatch
+                                  )?.lot_no}
+                              </div>
+                              <div>
+                                <strong>Product:</strong>{' '}
+                                {integratedQualityData.batches.find(
+                                  b => b.id === selectedBatch || b.batch_id === selectedBatch
+                                )?.product ||
+                                  integratedQualityData.batches.find(
+                                    b => b.id === selectedBatch || b.batch_id === selectedBatch
+                                  )?.product_id}
+                              </div>
+                              <div>
+                                <strong>Status:</strong>{' '}
+                                <Badge>
+                                  {
+                                    integratedQualityData.batches.find(
+                                      b => b.id === selectedBatch || b.batch_id === selectedBatch
+                                    )?.status
+                                  }
+                                </Badge>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   )}
                 </CardContent>
@@ -13829,7 +14656,7 @@ const ComprehensiveCMCPlatform = () => {
 
           {/* Quality Step 8: Decision Logs API */}
           <TabsContent value="decisions" className="mt-6">
-            <DecisionsPanel batchId={selectedBatch || ""} />
+            <DecisionsPanel batchId={selectedBatch || ''} />
           </TabsContent>
 
           {/* Quality Step 8: Knowledge Graph Query UI */}
@@ -13885,30 +14712,48 @@ const ComprehensiveCMCPlatform = () => {
                           </Button>
                         </div>
                       ) : (
-                        deviations.map((deviation) => (
-                          <div key={deviation.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        deviations.map(deviation => (
+                          <div
+                            key={deviation.id}
+                            className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                          >
                             <div className="flex justify-between items-start mb-3">
                               <div>
-                                <h4 className="font-medium">{deviation.deviationNumber || `DEV-${deviation.id}`}</h4>
+                                <h4 className="font-medium">
+                                  {deviation.deviationNumber || `DEV-${deviation.id}`}
+                                </h4>
                                 <p className="text-sm text-gray-600">{deviation.title}</p>
                               </div>
-                              <Badge 
+                              <Badge
                                 variant={
-                                  deviation.status === 'closed' ? 'default' : 
-                                  deviation.severity === 'critical' ? 'destructive' :
-                                  deviation.severity === 'major' ? 'secondary' : 'outline'
+                                  deviation.status === 'closed'
+                                    ? 'default'
+                                    : deviation.severity === 'critical'
+                                      ? 'destructive'
+                                      : deviation.severity === 'major'
+                                        ? 'secondary'
+                                        : 'outline'
                                 }
                               >
                                 {deviation.status}
                               </Badge>
                             </div>
-                            
+
                             <div className="text-sm text-gray-600 space-y-1">
-                              <p><strong>Area:</strong> {deviation.area}</p>
-                              <p><strong>Detected:</strong> {new Date(deviation.detectedDate).toLocaleDateString()}</p>
-                              <p><strong>Category:</strong> {deviation.category}</p>
+                              <p>
+                                <strong>Area:</strong> {deviation.area}
+                              </p>
+                              <p>
+                                <strong>Detected:</strong>{' '}
+                                {new Date(deviation.detectedDate).toLocaleDateString()}
+                              </p>
+                              <p>
+                                <strong>Category:</strong> {deviation.category}
+                              </p>
                               {deviation.impactAssessment && (
-                                <p><strong>Impact:</strong> {deviation.impactAssessment}</p>
+                                <p>
+                                  <strong>Impact:</strong> {deviation.impactAssessment}
+                                </p>
                               )}
                             </div>
 
@@ -13929,14 +14774,17 @@ const ComprehensiveCMCPlatform = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
-                                  const response = await fetch(`/api/qc/deviations/${deviation.id}/investigate`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      investigator: 'Quality Team',
-                                      startDate: new Date().toISOString()
-                                    })
-                                  });
+                                  const response = await fetch(
+                                    `/api/qc/deviations/${deviation.id}/investigate`,
+                                    {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        investigator: 'Quality Team',
+                                        startDate: new Date().toISOString(),
+                                      }),
+                                    }
+                                  );
                                   if (response.ok) {
                                     toast({
                                       title: 'Investigation Started',
@@ -13986,8 +14834,14 @@ const ComprehensiveCMCPlatform = () => {
                             {deviations.filter(d => d.severity === 'critical').length}
                           </Badge>
                         </div>
-                        <Progress 
-                          value={deviations.length > 0 ? (deviations.filter(d => d.severity === 'critical').length / deviations.length) * 100 : 0} 
+                        <Progress
+                          value={
+                            deviations.length > 0
+                              ? (deviations.filter(d => d.severity === 'critical').length /
+                                  deviations.length) *
+                                100
+                              : 0
+                          }
                           className="h-2"
                         />
                       </div>
@@ -13999,8 +14853,14 @@ const ComprehensiveCMCPlatform = () => {
                             {deviations.filter(d => d.severity === 'major').length}
                           </Badge>
                         </div>
-                        <Progress 
-                          value={deviations.length > 0 ? (deviations.filter(d => d.severity === 'major').length / deviations.length) * 100 : 0} 
+                        <Progress
+                          value={
+                            deviations.length > 0
+                              ? (deviations.filter(d => d.severity === 'major').length /
+                                  deviations.length) *
+                                100
+                              : 0
+                          }
                           className="h-2"
                         />
                       </div>
@@ -14012,8 +14872,14 @@ const ComprehensiveCMCPlatform = () => {
                             {deviations.filter(d => d.severity === 'minor').length}
                           </Badge>
                         </div>
-                        <Progress 
-                          value={deviations.length > 0 ? (deviations.filter(d => d.severity === 'minor').length / deviations.length) * 100 : 0} 
+                        <Progress
+                          value={
+                            deviations.length > 0
+                              ? (deviations.filter(d => d.severity === 'minor').length /
+                                  deviations.length) *
+                                100
+                              : 0
+                          }
                           className="h-2"
                         />
                       </div>
@@ -14086,8 +14952,11 @@ const ComprehensiveCMCPlatform = () => {
                           </Button>
                         </div>
                       ) : (
-                        referenceStandards.map((standard) => (
-                          <div key={standard.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        referenceStandards.map(standard => (
+                          <div
+                            key={standard.id}
+                            className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                          >
                             <div className="flex justify-between items-start mb-3">
                               <div>
                                 <h4 className="font-medium">{standard.name}</h4>
@@ -14096,16 +14965,20 @@ const ComprehensiveCMCPlatform = () => {
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge variant={standard.status === 'qualified' ? 'default' : 'secondary'}>
+                                <Badge
+                                  variant={
+                                    standard.status === 'qualified' ? 'default' : 'secondary'
+                                  }
+                                >
                                   {standard.status}
                                 </Badge>
-                                {standard.certificateExpiry && 
-                                 new Date(standard.certificateExpiry) < new Date() && (
-                                  <Badge variant="destructive">Expired</Badge>
-                                )}
+                                {standard.certificateExpiry &&
+                                  new Date(standard.certificateExpiry) < new Date() && (
+                                    <Badge variant="destructive">Expired</Badge>
+                                  )}
                               </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                               <div>
                                 <span className="text-gray-600">Lot/Batch:</span>
@@ -14122,7 +14995,9 @@ const ComprehensiveCMCPlatform = () => {
                               <div>
                                 <span className="text-gray-600">Expires:</span>
                                 <p className="font-medium">
-                                  {standard.expiryDate ? new Date(standard.expiryDate).toLocaleDateString() : 'N/A'}
+                                  {standard.expiryDate
+                                    ? new Date(standard.expiryDate).toLocaleDateString()
+                                    : 'N/A'}
                                 </p>
                               </div>
                             </div>
@@ -14144,15 +15019,18 @@ const ComprehensiveCMCPlatform = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
-                                  const response = await fetch(`/api/qc/reference-standards/${standard.id}/qualify`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      qualificationDate: new Date().toISOString(),
-                                      qualifiedBy: 'QC Lab',
-                                      method: 'Standard qualification procedure'
-                                    })
-                                  });
+                                  const response = await fetch(
+                                    `/api/qc/reference-standards/${standard.id}/qualify`,
+                                    {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        qualificationDate: new Date().toISOString(),
+                                        qualifiedBy: 'QC Lab',
+                                        method: 'Standard qualification procedure',
+                                      }),
+                                    }
+                                  );
                                   if (response.ok) {
                                     toast({
                                       title: 'Qualification Complete',
@@ -14208,19 +15086,25 @@ const ComprehensiveCMCPlatform = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Expiring Soon</span>
                         <span className="font-bold text-orange-600">
-                          {referenceStandards.filter(s => {
-                            if (!s.expiryDate) return false;
-                            const daysToExpiry = Math.ceil((new Date(s.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
-                            return daysToExpiry > 0 && daysToExpiry <= 30;
-                          }).length}
+                          {
+                            referenceStandards.filter(s => {
+                              if (!s.expiryDate) return false;
+                              const daysToExpiry = Math.ceil(
+                                (new Date(s.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
+                              );
+                              return daysToExpiry > 0 && daysToExpiry <= 30;
+                            }).length
+                          }
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Expired</span>
                         <span className="font-bold text-red-600">
-                          {referenceStandards.filter(s => 
-                            s.expiryDate && new Date(s.expiryDate) < new Date()
-                          ).length}
+                          {
+                            referenceStandards.filter(
+                              s => s.expiryDate && new Date(s.expiryDate) < new Date()
+                            ).length
+                          }
                         </span>
                       </div>
 
@@ -14230,19 +15114,29 @@ const ComprehensiveCMCPlatform = () => {
                           <div className="flex justify-between">
                             <span className="text-gray-600">Refrigerated (2-8°C)</span>
                             <span className="font-medium">
-                              {referenceStandards.filter(s => s.storageConditions?.includes('2-8')).length}
+                              {
+                                referenceStandards.filter(s => s.storageConditions?.includes('2-8'))
+                                  .length
+                              }
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Freezer (-20°C)</span>
                             <span className="font-medium">
-                              {referenceStandards.filter(s => s.storageConditions?.includes('-20')).length}
+                              {
+                                referenceStandards.filter(s => s.storageConditions?.includes('-20'))
+                                  .length
+                              }
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Room Temp</span>
                             <span className="font-medium">
-                              {referenceStandards.filter(s => s.storageConditions?.includes('Room')).length}
+                              {
+                                referenceStandards.filter(s =>
+                                  s.storageConditions?.includes('Room')
+                                ).length
+                              }
                             </span>
                           </div>
                         </div>
@@ -14541,9 +15435,16 @@ const ComprehensiveCMCPlatform = () => {
                   <div className="flex space-x-4 text-right">
                     <div>
                       <div className="text-2xl font-bold">
-                        {submissionData.length > 0 
-                          ? Math.round((submissionData.filter(s => s.status === 'Under Review' || s.status === 'Approved').length / submissionData.length) * 100)
-                          : 0}%
+                        {submissionData.length > 0
+                          ? Math.round(
+                              (submissionData.filter(
+                                s => s.status === 'Under Review' || s.status === 'Approved'
+                              ).length /
+                                submissionData.length) *
+                                100
+                            )
+                          : 0}
+                        %
                       </div>
                       <div className="text-blue-200 text-sm">Compliance Score</div>
                     </div>
@@ -14553,7 +15454,9 @@ const ComprehensiveCMCPlatform = () => {
                     </div>
                     <div>
                       <div className="text-2xl font-bold">
-                        {submissionData.length > 0 ? `$${(submissionData.length * 0.6).toFixed(1)}M` : '$0'}
+                        {submissionData.length > 0
+                          ? `$${(submissionData.length * 0.6).toFixed(1)}M`
+                          : '$0'}
                       </div>
                       <div className="text-blue-200 text-sm">Value at Risk</div>
                     </div>
@@ -14579,80 +15482,81 @@ const ComprehensiveCMCPlatform = () => {
                         <div className="text-center py-8 text-gray-500">
                           <p>No active submissions</p>
                         </div>
-                      ) : submissionData.slice(0, 3).map((item, index) => (
-                        <div
-                          key={index}
-                          className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <span className="font-semibold text-lg">{item.product}</span>
-                                <Badge
-                                  variant={
-                                    item.priority === 'Critical'
-                                      ? 'destructive'
-                                      : item.priority === 'High'
-                                        ? 'default'
-                                        : 'secondary'
-                                  }
+                      ) : (
+                        submissionData.slice(0, 3).map((item, index) => (
+                          <div
+                            key={index}
+                            className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-semibold text-lg">{item.product}</span>
+                                  <Badge
+                                    variant={
+                                      item.priority === 'Critical'
+                                        ? 'destructive'
+                                        : item.priority === 'High'
+                                          ? 'default'
+                                          : 'secondary'
+                                    }
+                                  >
+                                    {item.priority}
+                                  </Badge>
+                                  <Badge variant="outline">{item.type}</Badge>
+                                </div>
+                                <p className="text-gray-600 mt-1">{item.status}</p>
+                                <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                                  <span className="flex items-center">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {item.daysUntil} days
+                                  </span>
+                                  <span className="flex items-center">
+                                    <Globe className="w-3 h-3 mr-1" />
+                                    {item.agency}
+                                  </span>
+                                  <span className="flex items-center">
+                                    <DollarSign className="w-3 h-3 mr-1" />
+                                    {item.value}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    setActiveRegTab('tasks');
+                                    toast({
+                                      title: 'Task Board',
+                                      description: `Opening ${item.product} task management dashboard.`,
+                                    });
+                                  }}
                                 >
-                                  {item.priority}
-                                </Badge>
-                                <Badge variant="outline">{item.type}</Badge>
+                                  <Target className="w-3 h-3 mr-1" />
+                                  Manage
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setActiveRegTab('m3-builder');
+                                    toast({
+                                      title: 'M3 Builder',
+                                      description: `Opening ${item.product} in M3 Builder.`,
+                                    });
+                                  }}
+                                >
+                                  <FileText className="w-3 h-3 mr-1" />
+                                  M3
+                                </Button>
                               </div>
-                              <p className="text-gray-600 mt-1">{item.status}</p>
-                              <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                                <span className="flex items-center">
-                                  <Calendar className="w-3 h-3 mr-1" />
-                                  {item.daysUntil} days
-                                </span>
-                                <span className="flex items-center">
-                                  <Globe className="w-3 h-3 mr-1" />
-                                  {item.agency}
-                                </span>
-                                <span className="flex items-center">
-                                  <DollarSign className="w-3 h-3 mr-1" />
-                                  {item.value}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setActiveRegTab('tasks');
-                                  toast({
-                                    title: 'Task Board',
-                                    description: `Opening ${item.product} task management dashboard.`,
-                                  });
-                                }}
-                              >
-                                <Target className="w-3 h-3 mr-1" />
-                                Manage
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setActiveRegTab('m3-builder');
-                                  toast({
-                                    title: 'M3 Builder',
-                                    description: `Opening ${item.product} in M3 Builder.`,
-                                  });
-                                }}
-                              >
-                                <FileText className="w-3 h-3 mr-1" />
-                                M3
-                              </Button>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </CardContent>
                 </Card>
-
               </div>
 
               {/* Multi-Agency Submission Portfolio */}
@@ -14794,15 +15698,18 @@ const ComprehensiveCMCPlatform = () => {
                       });
 
                       // 1. Create new sequence
-                      const seqResponse = await fetch(`/api/reg/submissions/${activeSubId}/sequences`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          seq_type: 'submission',
-                          region: 'FDA',
-                          title: 'New eCTD Package'
-                        }),
-                      });
+                      const seqResponse = await fetch(
+                        `/api/reg/submissions/${activeSubId}/sequences`,
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            seq_type: 'submission',
+                            region: 'FDA',
+                            title: 'New eCTD Package',
+                          }),
+                        }
+                      );
 
                       if (!seqResponse.ok) {
                         throw new Error('Failed to create sequence');
@@ -14811,10 +15718,13 @@ const ComprehensiveCMCPlatform = () => {
                       const sequence = await seqResponse.json();
 
                       // 2. Package the sequence
-                      const packageResponse = await fetch(`/api/reg/sequences/${sequence.seq_id}/package`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                      });
+                      const packageResponse = await fetch(
+                        `/api/reg/sequences/${sequence.seq_id}/package`,
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                        }
+                      );
 
                       if (!packageResponse.ok) {
                         throw new Error('Failed to package sequence');
@@ -14830,12 +15740,12 @@ const ComprehensiveCMCPlatform = () => {
                       // 3. Trigger download
                       const downloadUrl = `/api/reg/sequences/${sequence.seq_id}/download`;
                       window.open(downloadUrl, '_blank');
-
                     } catch (error) {
                       console.error('Package creation error:', error);
                       toast({
                         title: 'Package Creation Failed',
-                        description: error.message || 'An error occurred while creating the package',
+                        description:
+                          error.message || 'An error occurred while creating the package',
                         variant: 'destructive',
                       });
                     }
@@ -14897,9 +15807,11 @@ const ComprehensiveCMCPlatform = () => {
                           }
 
                           try {
-                            const seqResponse = await fetch(`/api/reg/submissions/${activeSubId}/sequences`);
+                            const seqResponse = await fetch(
+                              `/api/reg/submissions/${activeSubId}/sequences`
+                            );
                             if (!seqResponse.ok) throw new Error('Failed to fetch sequences');
-                            
+
                             const sequences = await seqResponse.json();
                             if (sequences.length === 0) {
                               toast({
@@ -14911,12 +15823,15 @@ const ComprehensiveCMCPlatform = () => {
                             }
 
                             const latestSeq = sequences[sequences.length - 1];
-                            const validationResponse = await fetch(`/api/reg/sequences/${latestSeq.seq_id}/preflight`, {
-                              method: 'POST',
-                            });
+                            const validationResponse = await fetch(
+                              `/api/reg/sequences/${latestSeq.seq_id}/preflight`,
+                              {
+                                method: 'POST',
+                              }
+                            );
 
                             if (!validationResponse.ok) throw new Error('Validation failed');
-                            
+
                             const result = await validationResponse.json();
                             toast({
                               title: 'Structure Validated',
@@ -14947,9 +15862,11 @@ const ComprehensiveCMCPlatform = () => {
                           }
 
                           try {
-                            const seqResponse = await fetch(`/api/reg/submissions/${activeSubId}/sequences`);
+                            const seqResponse = await fetch(
+                              `/api/reg/submissions/${activeSubId}/sequences`
+                            );
                             if (!seqResponse.ok) throw new Error('Failed to fetch sequences');
-                            
+
                             const sequences = await seqResponse.json();
                             if (sequences.length === 0) {
                               toast({
@@ -15029,11 +15946,13 @@ const ComprehensiveCMCPlatform = () => {
 
                           try {
                             // Get sequences for this submission
-                            const seqResponse = await fetch(`/api/reg/submissions/${activeSubId}/sequences`);
+                            const seqResponse = await fetch(
+                              `/api/reg/submissions/${activeSubId}/sequences`
+                            );
                             if (!seqResponse.ok) {
                               throw new Error('Failed to fetch sequences');
                             }
-                            
+
                             const sequences = await seqResponse.json();
                             if (sequences.length === 0) {
                               toast({
@@ -15084,11 +16003,13 @@ const ComprehensiveCMCPlatform = () => {
                             });
 
                             // Get sequences for validation
-                            const seqResponse = await fetch(`/api/reg/submissions/${activeSubId}/sequences`);
+                            const seqResponse = await fetch(
+                              `/api/reg/submissions/${activeSubId}/sequences`
+                            );
                             if (!seqResponse.ok) {
                               throw new Error('Failed to fetch sequences');
                             }
-                            
+
                             const sequences = await seqResponse.json();
                             if (sequences.length === 0) {
                               toast({
@@ -15100,12 +16021,15 @@ const ComprehensiveCMCPlatform = () => {
                             }
 
                             const latestSeq = sequences[sequences.length - 1];
-                            
+
                             // Run preflight validation
-                            const validationResponse = await fetch(`/api/reg/sequences/${latestSeq.seq_id}/preflight`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                            });
+                            const validationResponse = await fetch(
+                              `/api/reg/sequences/${latestSeq.seq_id}/preflight`,
+                              {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                              }
+                            );
 
                             if (!validationResponse.ok) {
                               throw new Error('Validation failed');
@@ -15131,11 +16055,11 @@ const ComprehensiveCMCPlatform = () => {
                         Run Validation
                       </Button>
                     </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
 
           <TabsContent value="tasks" className="mt-6">
             {(() => {
@@ -15148,9 +16072,7 @@ const ComprehensiveCMCPlatform = () => {
                         Comprehensive regulatory workflow and task orchestration
                       </p>
                     </div>
-                    <Button
-                      onClick={() => openModal('task')}
-                    >
+                    <Button onClick={() => openModal('task')}>
                       <Plus className="w-4 h-4 mr-2" />
                       New Task
                     </Button>
@@ -19385,12 +20307,12 @@ const ComprehensiveCMCPlatform = () => {
   // ENTERPRISE GA-READY DOCUMENT AUTHORING WITH 21 CFR PART 11 COMPLIANCE
   const renderDocumentAuthoring = () => {
     // All state has been moved to top level to fix React hooks order issue
-    
+
     const tempSignatureData = {
       meaning: signatureData.meaning,
       reason: signatureData.reason,
       password: signatureData.password,
-      mfaCode: ''
+      mfaCode: '',
     };
 
     // Initialize secure session
@@ -19403,16 +20325,16 @@ const ComprehensiveCMCPlatform = () => {
     // Initialize secure session with server authentication
     const initializeSecureSession = async () => {
       try {
-        const response = await fetch('/api/doc-authoring/session/init', {
+        const response = await fetch('/api/document-authoring/session/init', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
           body: JSON.stringify({
             timestamp: new Date().toISOString(),
-            browserInfo: navigator.userAgent
-          })
+            browserInfo: navigator.userAgent,
+          }),
         });
 
         if (response.ok) {
@@ -19424,7 +20346,7 @@ const ComprehensiveCMCPlatform = () => {
             loginTime: session.loginTime,
             lastActivity: new Date(),
             sessionTimeout: session.timeout,
-            mfaVerified: session.mfaVerified
+            mfaVerified: session.mfaVerified,
           });
         }
       } catch (error) {
@@ -19432,7 +20354,7 @@ const ComprehensiveCMCPlatform = () => {
         toast({
           title: 'Security Error',
           description: 'Failed to establish secure session',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
@@ -19455,7 +20377,7 @@ const ComprehensiveCMCPlatform = () => {
       toast({
         title: 'Session Expired',
         description: 'Your session has expired. Please log in again.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       // Redirect to login
       window.location.href = '/login';
@@ -19464,10 +20386,10 @@ const ComprehensiveCMCPlatform = () => {
     // Load user permissions based on role
     const loadUserPermissions = async () => {
       try {
-        const response = await fetch('/api/doc-authoring/permissions', {
+        const response = await fetch('/api/document-authoring/permissions', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          }
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
+          },
         });
 
         if (response.ok) {
@@ -19490,18 +20412,18 @@ const ComprehensiveCMCPlatform = () => {
         details,
         oldValue,
         newValue,
-        ipAddress: await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => d.ip),
-        userAgent: navigator.userAgent
+        ipAddress: 'server-resolved',
+        userAgent: navigator.userAgent,
       };
 
       try {
-        await fetch('/api/doc-authoring/audit', {
+        await fetch('/api/document-authoring/audit', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
-          body: JSON.stringify(entry)
+          body: JSON.stringify(entry),
         });
 
         setAuditTrail(prev => [...prev, entry]);
@@ -19516,17 +20438,17 @@ const ComprehensiveCMCPlatform = () => {
         toast({
           title: 'Signature Error',
           description: 'Signature meaning and reason are required',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         return;
       }
 
       try {
-        const response = await fetch('/api/doc-authoring/sign', {
+        const response = await fetch('/api/document-authoring/sign', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
           },
           body: JSON.stringify({
             documentId: currentDocument?.id,
@@ -19535,20 +20457,23 @@ const ComprehensiveCMCPlatform = () => {
             mfaCode: signatureData.mfaCode,
             meaning: signatureData.meaning,
             reason: signatureData.reason,
-            timestamp: new Date().toISOString()
-          })
+            timestamp: new Date().toISOString(),
+          }),
         });
 
         if (response.ok) {
           const signature = await response.json();
           setSignatures(prev => [...prev, signature]);
-          await createAuditEntry('ELECTRONIC_SIGNATURE', `Document signed: ${signatureData.meaning}`);
-          
+          await createAuditEntry(
+            'ELECTRONIC_SIGNATURE',
+            `Document signed: ${signatureData.meaning}`
+          );
+
           toast({
             title: 'Document Signed',
             description: 'Electronic signature applied successfully',
           });
-          
+
           setShowSignatureDialog(false);
           setSignatureData({ meaning: '', reason: '', password: '', mfaCode: '' });
         } else {
@@ -19558,26 +20483,26 @@ const ComprehensiveCMCPlatform = () => {
         toast({
           title: 'Signature Failed',
           description: error.message,
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
     // Document state transition with validation
-    const transitionDocumentState = async (newState) => {
+    const transitionDocumentState = async newState => {
       const validTransitions = {
-        'DRAFT': ['IN_REVIEW'],
-        'IN_REVIEW': ['DRAFT', 'APPROVED', 'REJECTED'],
-        'APPROVED': ['LOCKED'],
-        'LOCKED': [],
-        'REJECTED': ['DRAFT']
+        DRAFT: ['IN_REVIEW'],
+        IN_REVIEW: ['DRAFT', 'APPROVED', 'REJECTED'],
+        APPROVED: ['LOCKED'],
+        LOCKED: [],
+        REJECTED: ['DRAFT'],
       };
 
       if (!validTransitions[documentState]?.includes(newState)) {
         toast({
           title: 'Invalid Transition',
           description: `Cannot transition from ${documentState} to ${newState}`,
-          variant: 'destructive'
+          variant: 'destructive',
         });
         return;
       }
@@ -19588,18 +20513,21 @@ const ComprehensiveCMCPlatform = () => {
         return;
       }
 
-      await createAuditEntry('STATE_CHANGE', `Document state changed from ${documentState} to ${newState}`);
+      await createAuditEntry(
+        'STATE_CHANGE',
+        `Document state changed from ${documentState} to ${newState}`
+      );
       setDocumentState(newState);
     };
 
     // Real-time collaboration with section locking
-    const acquireSectionLock = async (sectionId) => {
+    const acquireSectionLock = async sectionId => {
       try {
-        const response = await fetch(`/api/doc-authoring/lock/${sectionId}`, {
+        const response = await fetch(`/api/document-authoring/documents/${sectionId}/locks`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          }
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
+          },
         });
 
         if (response.ok) {
@@ -19612,13 +20540,13 @@ const ComprehensiveCMCPlatform = () => {
     };
 
     // Release section lock
-    const releaseSectionLock = async (sectionId) => {
+    const releaseSectionLock = async sectionId => {
       try {
-        await fetch(`/api/doc-authoring/lock/${sectionId}`, {
+        await fetch(`/api/document-authoring/documents/${sectionId}/locks`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          }
+            Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`,
+          },
         });
 
         setActiveLocks(prev => {
@@ -19631,25 +20559,27 @@ const ComprehensiveCMCPlatform = () => {
       }
     };
 
-    return <DocumentAuthoringComponent 
-      userRole={userRole}
-      userPermissions={userPermissions}
-      sessionInfo={sessionInfo}
-      documentState={documentState}
-      onStateTransition={transitionDocumentState}
-      onCreateAuditEntry={createAuditEntry}
-      onElectronicSignature={performElectronicSignature}
-      showSignatureDialog={showSignatureDialog}
-      setShowSignatureDialog={setShowSignatureDialog}
-      signatureData={signatureData}
-      setSignatureData={setSignatureData}
-      signatures={signatures}
-      auditTrail={auditTrail}
-      onAcquireLock={acquireSectionLock}
-      onReleaseLock={releaseSectionLock}
-      activeLocks={activeLocks}
-      performanceMetrics={performanceMetrics}
-    />;
+    return (
+      <DocumentAuthoringComponent
+        userRole={userRole}
+        userPermissions={userPermissions}
+        sessionInfo={sessionInfo}
+        documentState={documentState}
+        onStateTransition={transitionDocumentState}
+        onCreateAuditEntry={createAuditEntry}
+        onElectronicSignature={performElectronicSignature}
+        showSignatureDialog={showSignatureDialog}
+        setShowSignatureDialog={setShowSignatureDialog}
+        signatureData={signatureData}
+        setSignatureData={setSignatureData}
+        signatures={signatures}
+        auditTrail={auditTrail}
+        onAcquireLock={acquireSectionLock}
+        onReleaseLock={releaseSectionLock}
+        activeLocks={activeLocks}
+        performanceMetrics={performanceMetrics}
+      />
+    );
   };
 
   // Legacy Context Hints System (archived)
@@ -21292,21 +22222,21 @@ const ComprehensiveCMCPlatform = () => {
     // ============================================================================
     // ADVANCED ANALYTICS UTILITIES (Core mathematical and analytical functions)
     // ============================================================================
-    
+
     // MKT calculations for temperature analysis
-    const toK = (celsius) => celsius + 273.15;
-    
-    const computeMKT = (tempReadings) => {
+    const toK = celsius => celsius + 273.15;
+
+    const computeMKT = tempReadings => {
       if (!tempReadings || tempReadings.length === 0) return null;
       const sum = tempReadings.reduce((acc, temp) => acc + Math.exp(-6950 / toK(temp)), 0);
       const avgExp = sum / tempReadings.length;
       return Math.round((6950 / Math.log(avgExp) - 273.15) * 10) / 10;
     };
-    
+
     const minutesOutOfRange = (readings, minTemp, maxTemp) => {
       return readings.filter(r => r.temp < minTemp || r.temp > maxTemp).length * 15; // 15-min intervals
     };
-    
+
     const classifyMKT = (mkt, labelTemp) => {
       if (Math.abs(mkt - labelTemp) <= 2) return 'COMPLIANT';
       if (Math.abs(mkt - labelTemp) <= 5) return 'INVESTIGATION';
@@ -21314,15 +22244,15 @@ const ComprehensiveCMCPlatform = () => {
     };
 
     // Statistical functions for EWS analysis
-    const mean = (values) => values.reduce((a, b) => a + b, 0) / values.length;
-    
-    const stdev = (values) => {
+    const mean = values => values.reduce((a, b) => a + b, 0) / values.length;
+
+    const stdev = values => {
       const avg = mean(values);
       const squareDiffs = values.map(value => Math.pow(value - avg, 2));
       return Math.sqrt(mean(squareDiffs));
     };
-    
-    const zScoreLast = (values) => {
+
+    const zScoreLast = values => {
       if (values.length < 2) return 0;
       const last = values[values.length - 1];
       const historical = values.slice(0, -1);
@@ -21330,7 +22260,7 @@ const ComprehensiveCMCPlatform = () => {
       const std = stdev(historical);
       return std === 0 ? 0 : (last - avg) / std;
     };
-    
+
     const ewma = (values, alpha = 0.3) => {
       return values.reduce((acc, val) => alpha * val + (1 - alpha) * acc);
     };
@@ -21341,20 +22271,23 @@ const ComprehensiveCMCPlatform = () => {
         ...gate,
         weighted_score: gate.score * (gate.critical_multiplier || 1),
         enabled: featureFlags[`gate_${gate.id}`] !== false,
-        risk_level: gate.score >= 85 ? 'low' : gate.score >= 70 ? 'medium' : 'high'
+        risk_level: gate.score >= 85 ? 'low' : gate.score >= 70 ? 'medium' : 'high',
       }));
     };
-    
-    const scoreSupplyReadiness = (gates) => {
+
+    const scoreSupplyReadiness = gates => {
       const activeGates = gates.filter(g => g.enabled !== false);
       if (activeGates.length === 0) return 0;
       const totalScore = activeGates.reduce((sum, gate) => sum + gate.weighted_score, 0);
-      const maxScore = activeGates.reduce((sum, gate) => sum + 100 * (gate.critical_multiplier || 1), 0);
+      const maxScore = activeGates.reduce(
+        (sum, gate) => sum + 100 * (gate.critical_multiplier || 1),
+        0
+      );
       return Math.round((totalScore / maxScore) * 100);
     };
-    
-    const blockersList = (gates) => gates.filter(g => g.status === 'fail' && g.blocking === true);
-    
+
+    const blockersList = gates => gates.filter(g => g.status === 'fail' && g.blocking === true);
+
     const confidenceSupply = (dataQuality, lastUpdate, connectionStatus) => {
       let confidence = 90;
       if (Date.now() - lastUpdate > 300000) confidence -= 20; // 5 min stale
@@ -21363,7 +22296,7 @@ const ComprehensiveCMCPlatform = () => {
       return Math.max(confidence, 0);
     };
 
-    // Data management and snapshot functions  
+    // Data management and snapshot functions
     const buildSupplySnapshot = (timestamp, gates, metrics, alerts) => ({
       timestamp,
       readiness_score: scoreSupplyReadiness(gates),
@@ -21371,9 +22304,9 @@ const ComprehensiveCMCPlatform = () => {
       failing_gates: gates.filter(g => g.status === 'fail').length,
       critical_alerts: alerts.filter(a => a.severity === 'critical').length,
       performance_metrics: metrics,
-      data_hash: btoa(JSON.stringify({ gates, metrics, alerts })).slice(0, 8)
+      data_hash: btoa(JSON.stringify({ gates, metrics, alerts })).slice(0, 8),
     });
-    
+
     const deriveEtaVarianceSeries = (baseData, days = 30) => {
       const series = [];
       for (let i = 0; i < days; i++) {
@@ -21383,7 +22316,10 @@ const ComprehensiveCMCPlatform = () => {
           date: date.toISOString().split('T')[0],
           variance: Math.random() * 20 - 10, // ±10% variance
           confidence: 0.8 + Math.random() * 0.2,
-          factors: ['demand_shift', 'supply_risk', 'transport_delay'].slice(0, Math.floor(Math.random() * 3) + 1)
+          factors: ['demand_shift', 'supply_risk', 'transport_delay'].slice(
+            0,
+            Math.floor(Math.random() * 3) + 1
+          ),
         });
       }
       return series;
@@ -21395,37 +22331,39 @@ const ComprehensiveCMCPlatform = () => {
       const max = Math.max(...data);
       const min = Math.min(...data);
       const range = max - min || 1;
-      
-      return data.map((value, index) => {
-        const x = (index / (data.length - 1)) * width;
-        const y = height - ((value - min) / range) * height;
-        return index === 0 ? `M${x},${y}` : `L${x},${y}`;
-      }).join(' ');
+
+      return data
+        .map((value, index) => {
+          const x = (index / (data.length - 1)) * width;
+          const y = height - ((value - min) / range) * height;
+          return index === 0 ? `M${x},${y}` : `L${x},${y}`;
+        })
+        .join(' ');
     };
-    
-    const ringColor = (score) => {
+
+    const ringColor = score => {
       if (score >= 90) return '#10b981'; // green
-      if (score >= 75) return '#f59e0b'; // yellow  
+      if (score >= 75) return '#f59e0b'; // yellow
       if (score >= 60) return '#ef4444'; // red
       return '#6b7280'; // gray
     };
-    
+
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
     // ============================================================================
     // ENTERPRISE FEATURE FLAGS & STATE MANAGEMENT
     // ============================================================================
-    
+
     // Feature flags for progressive enhancement
     const [featureFlags, setFeatureFlags] = useState({
       sc_enableKPI: true,
-      sc_enableMKT: true, 
+      sc_enableMKT: true,
       sc_enableEWS: true,
       sc_enableAdvice: true,
       sc_enableAutoRelease: false,
       sc_enableCrossTab: true,
       sc_enableTelemetry: true,
-      sc_enableDocBuilders: true
+      sc_enableDocBuilders: true,
     });
 
     // Core state management
@@ -21437,66 +22375,75 @@ const ComprehensiveCMCPlatform = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [lastUpdate, setLastUpdate] = useState(Date.now());
     const [connectionStatus, setConnectionStatus] = useState('connected');
-    
+
     const { toast } = useToast();
 
     // ============================================================================
     // TELEMETRY SYSTEM (Moved here to fix initialization order)
     // ============================================================================
-    
-    const trackSupplyEvent = useCallback((eventType, data) => {
-      if (!featureFlags.sc_enableTelemetry) return;
-      
-      const event = {
-        timestamp: Date.now(),
-        event_type: eventType,
-        session_id: sessionStorage.getItem('supply_session_id') || 'anonymous',
-        data,
-        context: {
-          readiness_score: 85,
-          active_gates: 7,
-          feature_flags: Object.entries(featureFlags).filter(([k, v]) => v).map(([k]) => k)
+
+    const trackSupplyEvent = useCallback(
+      (eventType, data) => {
+        if (!featureFlags.sc_enableTelemetry) return;
+
+        const event = {
+          timestamp: Date.now(),
+          event_type: eventType,
+          session_id: sessionStorage.getItem('supply_session_id') || 'anonymous',
+          data,
+          context: {
+            readiness_score: 85,
+            active_gates: 7,
+            feature_flags: Object.entries(featureFlags)
+              .filter(([k, v]) => v)
+              .map(([k]) => k),
+          },
+        };
+
+        // Store locally for batch upload
+        const events = JSON.parse(localStorage.getItem('supply_telemetry') || '[]');
+        events.push(event);
+
+        // Keep only last 100 events
+        if (events.length > 100) events.splice(0, events.length - 100);
+
+        try {
+          localStorage.setItem('supply_telemetry', JSON.stringify(events));
+        } catch (e) {
+          console.warn('Failed to store telemetry data:', e);
         }
-      };
-      
-      // Store locally for batch upload
-      const events = JSON.parse(localStorage.getItem('supply_telemetry') || '[]');
-      events.push(event);
-      
-      // Keep only last 100 events
-      if (events.length > 100) events.splice(0, events.length - 100);
-      
-      try {
-        localStorage.setItem('supply_telemetry', JSON.stringify(events));
-      } catch (e) {
-        console.warn('Failed to store telemetry data:', e);
-      }
-    }, [featureFlags.sc_enableTelemetry]);
+      },
+      [featureFlags.sc_enableTelemetry]
+    );
 
     // ============================================================================
     // REAL-TIME DATA STREAMS & DATA GENERATION
     // ============================================================================
-    
+
     // Generate realistic temperature data with patterns
     const generateTemperatureData = useCallback(() => {
       const now = new Date();
       const data = [];
-      
-      for (let i = 168; i >= 0; i--) { // 7 days of hourly data
+
+      for (let i = 168; i >= 0; i--) {
+        // 7 days of hourly data
         const timestamp = new Date(now.getTime() - i * 3600000);
         const baseTemp = 5; // 5°C target
         const dailyVariation = Math.sin((timestamp.getHours() / 24) * 2 * Math.PI) * 1.5;
         const noise = (Math.random() - 0.5) * 0.8;
         const excursion = Math.random() < 0.02 ? (Math.random() - 0.5) * 8 : 0; // 2% chance of excursion
-        
+
         data.push({
           timestamp: timestamp.toISOString(),
           temp: Math.round((baseTemp + dailyVariation + noise + excursion) * 10) / 10,
-          humidity: 60 + Math.sin(timestamp.getTime() / 86400000 * 2 * Math.PI) * 15 + (Math.random() - 0.5) * 10,
-          location: Math.random() < 0.1 ? 'warehouse_B' : 'warehouse_A'
+          humidity:
+            60 +
+            Math.sin((timestamp.getTime() / 86400000) * 2 * Math.PI) * 15 +
+            (Math.random() - 0.5) * 10,
+          location: Math.random() < 0.1 ? 'warehouse_B' : 'warehouse_A',
         });
       }
-      
+
       return data;
     }, []);
 
@@ -21506,22 +22453,22 @@ const ComprehensiveCMCPlatform = () => {
         // Generate fresh temperature data
         const newTempData = generateTemperatureData();
         setTemperatureData(newTempData);
-        
+
         // Update ETA variance series
         setEtaVarianceSeries(deriveEtaVarianceSeries());
-        
+
         // Update last refresh timestamp
         setLastUpdate(Date.now());
-        
+
         // Simulate occasional connection issues
         setConnectionStatus(Math.random() > 0.05 ? 'connected' : 'degraded');
-        
+
         // Telemetry tracking
         if (featureFlags.sc_enableTelemetry) {
           trackSupplyEvent('data_refresh', {
             temperature_points: newTempData.length,
             connection_status: connectionStatus,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         }
       };
@@ -21529,21 +22476,21 @@ const ComprehensiveCMCPlatform = () => {
       // Initial load
       updateData();
       setIsLoading(false);
-      
+
       // Set up 30-second interval
       const interval = setInterval(updateData, 30000);
-      
+
       return () => clearInterval(interval);
     }, [generateTemperatureData, connectionStatus, featureFlags.sc_enableTelemetry]);
 
     // ============================================================================
     // SUPPLY READINESS GATES CONFIGURATION (Enhanced)
     // ============================================================================
-    
+
     const baseReadinessGates = [
       {
         id: 'po_received',
-        label: 'PO Received', 
+        label: 'PO Received',
         description: 'Purchase order processed and validated',
         icon: ShoppingCart,
         status: 'pass',
@@ -21553,12 +22500,12 @@ const ComprehensiveCMCPlatform = () => {
         category: 'procurement',
         lastUpdate: Date.now() - 7200000, // 2 hours ago
         details: 'PO #SC-2025-001 validated with 95% confidence',
-        metadata: { po_number: 'SC-2025-001', supplier: 'PharmaCorp', amount: '$45K' }
+        metadata: { po_number: 'SC-2025-001', supplier: 'PharmaCorp', amount: '$45K' },
       },
       {
         id: 'coa_validated',
         label: 'CoA Validated',
-        description: 'Certificate of Analysis within specifications', 
+        description: 'Certificate of Analysis within specifications',
         icon: FileCheck,
         status: 'pass',
         score: 92,
@@ -21567,7 +22514,7 @@ const ComprehensiveCMCPlatform = () => {
         category: 'quality',
         lastUpdate: Date.now() - 14400000, // 4 hours ago
         details: 'All 12 parameters within acceptance limits',
-        metadata: { parameters_passed: 12, parameters_total: 12, confidence: 0.96 }
+        metadata: { parameters_passed: 12, parameters_total: 12, confidence: 0.96 },
       },
       {
         id: 'qc_release',
@@ -21581,7 +22528,7 @@ const ComprehensiveCMCPlatform = () => {
         category: 'quality',
         lastUpdate: Date.now() - 86400000, // 1 day ago
         details: '2 lots pending final chromatography review',
-        metadata: { lots_released: 3, lots_pending: 2, avg_cycle_time: '4.2d' }
+        metadata: { lots_released: 3, lots_pending: 2, avg_cycle_time: '4.2d' },
       },
       {
         id: 'import_clearance',
@@ -21595,21 +22542,27 @@ const ComprehensiveCMCPlatform = () => {
         category: 'logistics',
         lastUpdate: Date.now() - 10800000, // 3 hours ago
         details: 'FDA import alert cleared, goods released',
-        metadata: { customs_ref: 'US-2025-0451', clearance_time: '2.1h' }
+        metadata: { customs_ref: 'US-2025-0451', clearance_time: '2.1h' },
       },
       {
         id: 'cold_chain',
         label: 'Cold Chain',
         description: 'Temperature integrity maintained',
         icon: Thermometer,
-        status: featureFlags.sc_enableMKT ? (temperatureData.length > 0 ? 'warn' : 'unknown') : 'pass',
+        status: featureFlags.sc_enableMKT
+          ? temperatureData.length > 0
+            ? 'warn'
+            : 'unknown'
+          : 'pass',
         score: featureFlags.sc_enableMKT ? (temperatureData.length > 0 ? 78 : 85) : 85,
         critical_multiplier: 2.0,
         blocking: true,
         category: 'cold_chain',
         lastUpdate: Date.now() - 1800000, // 30 min ago
-        details: featureFlags.sc_enableMKT ? 'MKT analysis shows 1 excursion event' : 'Temperature monitoring active',
-        metadata: { mkt_calculated: true, excursions: 1, compliance: 'INVESTIGATION' }
+        details: featureFlags.sc_enableMKT
+          ? 'MKT analysis shows 1 excursion event'
+          : 'Temperature monitoring active',
+        metadata: { mkt_calculated: true, excursions: 1, compliance: 'INVESTIGATION' },
       },
       {
         id: 'serialization',
@@ -21623,7 +22576,7 @@ const ComprehensiveCMCPlatform = () => {
         category: 'regulatory',
         lastUpdate: Date.now() - 3600000, // 1 hour ago
         details: 'All serial numbers validated in EPCIS network',
-        metadata: { serial_count: 50000, epcis_confirmed: true, compliance_score: 0.94 }
+        metadata: { serial_count: 50000, epcis_confirmed: true, compliance_score: 0.94 },
       },
       {
         id: 'alternate_supplier',
@@ -21637,44 +22590,58 @@ const ComprehensiveCMCPlatform = () => {
         category: 'risk_management',
         lastUpdate: Date.now() - 172800000, // 2 days ago
         details: 'Secondary supplier qualification 85% complete - on track',
-        metadata: { qualification_progress: 0.85, projected_completion: '7d', risk_level: 'medium' }
-      }
+        metadata: {
+          qualification_progress: 0.85,
+          projected_completion: '7d',
+          risk_level: 'medium',
+        },
+      },
     ];
 
     // ============================================================================
     // ADVANCED COMPUTED VALUES (with useMemo for performance optimization)
     // ============================================================================
-    
+
     // Cold Chain Analysis with MKT computation
     const coldChainAnalysis = useMemo(() => {
       if (!featureFlags.sc_enableMKT || temperatureData.length === 0) {
         return { mkt: null, classification: 'UNKNOWN', excursions: 0, telemetry: null };
       }
-      
+
       const temperatures = temperatureData.map(d => d.temp);
       const mkt = computeMKT(temperatures);
       const classification = classifyMKT(mkt, 5); // 5°C label claim
-      const excursions = minutesOutOfRange(temperatureData.map((d, i) => ({ temp: d.temp })), 2, 8); // 2-8°C range
-      
+      const excursions = minutesOutOfRange(
+        temperatureData.map((d, i) => ({ temp: d.temp })),
+        2,
+        8
+      ); // 2-8°C range
+
       const analysis = {
         mkt,
         classification,
         excursions,
         total_readings: temperatureData.length,
-        compliance_rate: ((temperatureData.length * 15 - excursions) / (temperatureData.length * 15)) * 100,
-        risk_level: classification === 'COMPLIANT' ? 'low' : classification === 'INVESTIGATION' ? 'medium' : 'high'
+        compliance_rate:
+          ((temperatureData.length * 15 - excursions) / (temperatureData.length * 15)) * 100,
+        risk_level:
+          classification === 'COMPLIANT'
+            ? 'low'
+            : classification === 'INVESTIGATION'
+              ? 'medium'
+              : 'high',
       };
-      
+
       // Telemetry tracking
       if (featureFlags.sc_enableTelemetry) {
         trackSupplyEvent('cold_chain_analysis', {
           mkt: analysis.mkt,
           classification: analysis.classification,
           excursions: analysis.excursions,
-          compliance_rate: analysis.compliance_rate
+          compliance_rate: analysis.compliance_rate,
         });
       }
-      
+
       return analysis;
     }, [temperatureData, featureFlags.sc_enableMKT, featureFlags.sc_enableTelemetry]);
 
@@ -21683,41 +22650,45 @@ const ComprehensiveCMCPlatform = () => {
       if (!featureFlags.sc_enableEWS || etaVarianceSeries.length < 7) {
         return { zscore: 0, trend: 'stable', alerts: [], risk_level: 'low' };
       }
-      
+
       const variances = etaVarianceSeries.map(d => d.variance);
       const zscore = zScoreLast(variances);
       const ewmaValue = ewma(variances);
       const trend = ewmaValue > 2 ? 'deteriorating' : ewmaValue < -2 ? 'improving' : 'stable';
-      
+
       const alerts = [];
       if (Math.abs(zscore) > 2) {
         alerts.push({
           type: 'statistical_anomaly',
           severity: Math.abs(zscore) > 3 ? 'critical' : 'warning',
           message: `ETA variance Z-score: ${zscore.toFixed(2)}`,
-          threshold: 2.0
+          threshold: 2.0,
         });
       }
-      
+
       const analysis = {
         zscore,
         trend,
         ewma_value: ewmaValue,
         alerts,
-        risk_level: alerts.some(a => a.severity === 'critical') ? 'high' : alerts.length > 0 ? 'medium' : 'low',
-        outlier_detected: Math.abs(zscore) > 2
+        risk_level: alerts.some(a => a.severity === 'critical')
+          ? 'high'
+          : alerts.length > 0
+            ? 'medium'
+            : 'low',
+        outlier_detected: Math.abs(zscore) > 2,
       };
-      
+
       // Telemetry tracking
       if (featureFlags.sc_enableTelemetry) {
         trackSupplyEvent('ews_analysis', {
           zscore: analysis.zscore,
           trend: analysis.trend,
           alerts_count: analysis.alerts.length,
-          outlier_detected: analysis.outlier_detected
+          outlier_detected: analysis.outlier_detected,
         });
       }
-      
+
       return analysis;
     }, [etaVarianceSeries, featureFlags.sc_enableEWS, featureFlags.sc_enableTelemetry]);
 
@@ -21725,12 +22696,12 @@ const ComprehensiveCMCPlatform = () => {
     const supplyGates = useMemo(() => {
       return computeSupplyGates(baseReadinessGates, featureFlags);
     }, [baseReadinessGates, featureFlags]);
-    
+
     // Overall Readiness Score
     const readinessScore = useMemo(() => {
       return scoreSupplyReadiness(supplyGates);
     }, [supplyGates]);
-    
+
     // Confidence Level based on data quality
     const confidenceLevel = useMemo(() => {
       return confidenceSupply(0.95, lastUpdate, connectionStatus);
@@ -21743,12 +22714,12 @@ const ComprehensiveCMCPlatform = () => {
     // ============================================================================
     // DOCUMENT BUILDERS (Add-ons 21-23)
     // ============================================================================
-    
+
     const buildeCTDSnippet = useCallback(() => {
       const timestamp = new Date().toISOString().split('T')[0];
       const gates = supplyGates.filter(g => g.enabled);
       const passingGates = gates.filter(g => g.status === 'pass');
-      
+
       return `
 Module 3 Supply Chain Management Summary
 Generated: ${timestamp}
@@ -21760,10 +22731,14 @@ Supply Readiness Assessment:
 - Critical Findings: ${gates.filter(g => g.status === 'fail' && g.blocking).length}
 
 Cold Chain Integrity:
-${coldChainAnalysis.mkt ? `- Mean Kinetic Temperature: ${coldChainAnalysis.mkt}°C
+${
+  coldChainAnalysis.mkt
+    ? `- Mean Kinetic Temperature: ${coldChainAnalysis.mkt}°C
 - Classification: ${coldChainAnalysis.classification}
 - Excursion Time: ${coldChainAnalysis.excursions} minutes
-- Compliance Rate: ${coldChainAnalysis.compliance_rate.toFixed(1)}%` : '- Real-time monitoring enabled'}
+- Compliance Rate: ${coldChainAnalysis.compliance_rate.toFixed(1)}%`
+    : '- Real-time monitoring enabled'
+}
 
 Supply Risk Assessment:
 - EWS Risk Level: ${ewsAnalysis.risk_level}
@@ -21776,11 +22751,11 @@ ${gates.map(gate => `- ${gate.label}: ${gate.status.toUpperCase()} (Score: ${gat
 This assessment confirms supply chain readiness for pharmaceutical manufacturing operations.
       `.trim();
     }, [supplyGates, readinessScore, confidenceLevel, coldChainAnalysis, ewsAnalysis]);
-    
+
     const buildVariationDraft = useCallback(() => {
       const failingGates = supplyGates.filter(g => g.status === 'fail');
       const date = new Date().toLocaleDateString();
-      
+
       return `
 CMC Variation Request - Supply Chain Changes
 Date: ${date}
@@ -21810,10 +22785,10 @@ ${failingGates.map(gate => `- Address ${gate.label} findings within ${gate.metad
 This variation supports supply chain resilience and regulatory compliance.
       `.trim();
     }, [supplyGates, readinessScore, confidenceLevel, coldChainAnalysis]);
-    
+
     const buildDSCSAOutline = useCallback(() => {
       const timestamp = new Date().toISOString();
-      
+
       return `
 DSCSA Withdrawal Packet Outline
 Generated: ${timestamp}
@@ -21824,12 +22799,15 @@ Generated: ${timestamp}
 - Distribution chain mapping complete
 
 2. SUPPLY CHAIN IMPACT:
-${supplyGates.map(gate => {
-  if (gate.category === 'regulatory' || gate.category === 'quality') {
-    return `- ${gate.label}: ${gate.status} (Last verified: ${new Date(gate.lastUpdate).toLocaleString()})`;
-  }
-  return null;
-}).filter(Boolean).join('\n')}
+${supplyGates
+  .map(gate => {
+    if (gate.category === 'regulatory' || gate.category === 'quality') {
+      return `- ${gate.label}: ${gate.status} (Last verified: ${new Date(gate.lastUpdate).toLocaleString()})`;
+    }
+    return null;
+  })
+  .filter(Boolean)
+  .join('\n')}
 
 3. TRACEABILITY DATA:
 - Serialization gate status: ${supplyGates.find(g => g.id === 'serialization')?.status || 'unknown'}
@@ -21853,69 +22831,78 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
     // ============================================================================
     // CROSS-TAB INTEGRATION & COMMUNICATION
     // ============================================================================
-    
+
     // Release Guard Handler with localStorage persistence
-    const releaseGuardHandler = useCallback((action, data) => {
-      const guardData = {
-        action,
-        timestamp: Date.now(),
-        readiness_score: readinessScore,
-        blocking_gates: blockersList(supplyGates),
-        confidence: confidenceLevel,
-        data
-      };
-      
-      try {
-        // Store in localStorage for cross-tab access
-        localStorage.setItem('supply_release_guard', JSON.stringify(guardData));
-        
-        // Broadcast custom event for real-time cross-tab communication
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('supplyReleaseGuard', { detail: guardData }));
+    const releaseGuardHandler = useCallback(
+      (action, data) => {
+        const guardData = {
+          action,
+          timestamp: Date.now(),
+          readiness_score: readinessScore,
+          blocking_gates: blockersList(supplyGates),
+          confidence: confidenceLevel,
+          data,
+        };
+
+        try {
+          // Store in localStorage for cross-tab access
+          localStorage.setItem('supply_release_guard', JSON.stringify(guardData));
+
+          // Broadcast custom event for real-time cross-tab communication
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('supplyReleaseGuard', { detail: guardData }));
+          }
+
+          // Track telemetry
+          if (featureFlags.sc_enableTelemetry) {
+            trackSupplyEvent('release_guard_action', guardData);
+          }
+
+          return guardData;
+        } catch (e) {
+          console.warn('Failed to persist release guard data:', e);
+          return null;
         }
-        
-        // Track telemetry
-        if (featureFlags.sc_enableTelemetry) {
-          trackSupplyEvent('release_guard_action', guardData);
-        }
-        
-        return guardData;
-      } catch (e) {
-        console.warn('Failed to persist release guard data:', e);
-        return null;
-      }
-    }, [readinessScore, supplyGates, confidenceLevel, featureFlags.sc_enableTelemetry, trackSupplyEvent]);
+      },
+      [
+        readinessScore,
+        supplyGates,
+        confidenceLevel,
+        featureFlags.sc_enableTelemetry,
+        trackSupplyEvent,
+      ]
+    );
 
     // Listen for cross-tab events
     useEffect(() => {
       if (!featureFlags.sc_enableCrossTab || typeof window === 'undefined') return;
-      
-      const handleCrossTabUpdate = (event) => {
+
+      const handleCrossTabUpdate = event => {
         setCrossTabData(prev => ({
           ...prev,
           [event.detail.source]: event.detail.data,
-          lastUpdate: Date.now()
+          lastUpdate: Date.now(),
         }));
       };
-      
-      const handleStorageChange = (event) => {
+
+      const handleStorageChange = event => {
         if (event.key === 'supply_release_guard') {
           try {
             const guardData = JSON.parse(event.newValue || '{}');
             setCrossTabData(prev => ({
               ...prev,
               release_guard: guardData,
-              lastUpdate: Date.now()
+              lastUpdate: Date.now(),
             }));
           } catch (e) {
             console.warn('Failed to parse cross-tab guard data:', e);
           }
         }
       };
-      
+
       window.addEventListener('supplyReleaseGuard', handleCrossTabUpdate);
       window.addEventListener('storage', handleStorageChange);
-      
+
       return () => {
         window.removeEventListener('supplyReleaseGuard', handleCrossTabUpdate);
         window.removeEventListener('storage', handleStorageChange);
@@ -21925,128 +22912,144 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
     // ============================================================================
     // UI EVENT HANDLERS
     // ============================================================================
-    
-    const handleGateAction = useCallback(async (gateId, action) => {
-      const gate = supplyGates.find(g => g.id === gateId);
-      if (!gate) return;
-      
-      try {
-        // Track action initiation
-        if (featureFlags.sc_enableTelemetry) {
-          trackSupplyEvent('gate_action_initiated', { gate_id: gateId, action, gate_status: gate.status });
-        }
-        
-        // Update release guard
-        releaseGuardHandler('gate_action', { gateId, action, timestamp: Date.now() });
-        
-        // Make API call based on action type
-        let apiResponse;
-        if (action === 'investigate') {
-          // Create a deviation for investigation
-          apiResponse = await fetch('/api/supply-chain/deviations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              deviationType: 'supply_chain',
-              severity: gate.status === 'fail' ? 'major' : 'minor',
-              impact: 'delivery',
-              title: `Investigation Required: ${gate.label}`,
-              description: `Supply gate "${gate.label}" requires investigation. Status: ${gate.status.toUpperCase()}, Score: ${gate.score}%`,
-              discoveredBy: 'System Alert',
-              priority: gate.status === 'fail' ? 'high' : 'medium'
-            })
-          });
-        } else if (action === 'remediate') {
-          // Step 1: Create deviation for remediation
-          const deviationResponse = await fetch('/api/supply-chain/deviations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: `Remediation Required: ${gate.label}`,
-              description: `Supply gate "${gate.label}" requires immediate remediation. CAPA initiated for systematic correction.`,
-              deviationType: 'supply_chain',
-              severity: 'major',
-              reportedBy: 'QA System'
-            })
-          });
-          
-          if (deviationResponse.ok) {
-            const deviationResult = await deviationResponse.json();
-            
-            // Step 2: Create CAPA for the deviation
-            apiResponse = await fetch(`/api/supply-chain/deviations/${deviationResult.data.id}/capa`, {
+
+    const handleGateAction = useCallback(
+      async (gateId, action) => {
+        const gate = supplyGates.find(g => g.id === gateId);
+        if (!gate) return;
+
+        try {
+          // Track action initiation
+          if (featureFlags.sc_enableTelemetry) {
+            trackSupplyEvent('gate_action_initiated', {
+              gate_id: gateId,
+              action,
+              gate_status: gate.status,
+            });
+          }
+
+          // Update release guard
+          releaseGuardHandler('gate_action', { gateId, action, timestamp: Date.now() });
+
+          // Make API call based on action type
+          let apiResponse;
+          if (action === 'investigate') {
+            // Create a deviation for investigation
+            apiResponse = await fetch('/api/supply-chain/deviations', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                correctiveActions: `Immediate correction required for ${gate.label}. Gate score: ${gate.score}%, Status: ${gate.status.toUpperCase()}.`,
-                preventiveActions: `Implement systematic controls to prevent recurrence of ${gate.label} failures. Review and enhance monitoring protocols.`,
-                implementationPlan: `1. Immediate investigation of root cause\n2. Implement corrective measures\n3. Verify effectiveness\n4. Update procedures to prevent recurrence`,
-                responsiblePerson: 'QA Manager',
-                targetDate: (() => {
-                  const target = new Date();
-                  target.setDate(target.getDate() + 14); // 2 week target
-                  return target.toISOString().split('T')[0];
-                })()
-              })
+                deviationType: 'supply_chain',
+                severity: gate.status === 'fail' ? 'major' : 'minor',
+                impact: 'delivery',
+                title: `Investigation Required: ${gate.label}`,
+                description: `Supply gate "${gate.label}" requires investigation. Status: ${gate.status.toUpperCase()}, Score: ${gate.score}%`,
+                discoveredBy: 'System Alert',
+                priority: gate.status === 'fail' ? 'high' : 'medium',
+              }),
+            });
+          } else if (action === 'remediate') {
+            // Step 1: Create deviation for remediation
+            const deviationResponse = await fetch('/api/supply-chain/deviations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: `Remediation Required: ${gate.label}`,
+                description: `Supply gate "${gate.label}" requires immediate remediation. CAPA initiated for systematic correction.`,
+                deviationType: 'supply_chain',
+                severity: 'major',
+                reportedBy: 'QA System',
+              }),
+            });
+
+            if (deviationResponse.ok) {
+              const deviationResult = await deviationResponse.json();
+
+              // Step 2: Create CAPA for the deviation
+              apiResponse = await fetch(
+                `/api/supply-chain/deviations/${deviationResult.data.id}/capa`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    correctiveActions: `Immediate correction required for ${gate.label}. Gate score: ${gate.score}%, Status: ${gate.status.toUpperCase()}.`,
+                    preventiveActions: `Implement systematic controls to prevent recurrence of ${gate.label} failures. Review and enhance monitoring protocols.`,
+                    implementationPlan: `1. Immediate investigation of root cause\n2. Implement corrective measures\n3. Verify effectiveness\n4. Update procedures to prevent recurrence`,
+                    responsiblePerson: 'QA Manager',
+                    targetDate: (() => {
+                      const target = new Date();
+                      target.setDate(target.getDate() + 14); // 2 week target
+                      return target.toISOString().split('T')[0];
+                    })(),
+                  }),
+                }
+              );
+            } else {
+              apiResponse = deviationResponse; // Use deviation response if CAPA creation fails
+            }
+          }
+
+          if (apiResponse && apiResponse.ok) {
+            const result = await apiResponse.json();
+            let toastMessage;
+
+            if (action === 'investigate') {
+              toastMessage = `🔍 Investigation initiated for ${gate.label}. Deviation #${result.data?.id || result.data?.deviationNumber || 'DEV-SC-001'} created with GxP audit trail.`;
+            } else if (action === 'remediate') {
+              const deviationId =
+                result.data?.deviation?.id ||
+                result.data?.deviation?.deviationNumber ||
+                'DEV-SC-001';
+              const capaId = result.data?.capa?.capaId || 'CAPA-SC-001';
+              toastMessage = `🔧 CAPA ${capaId} created for ${gate.label}. Deviation ${deviationId} updated to CAPA-pending status. Remediation workflow activated with 14-day target.`;
+            }
+
+            toast({
+              title: '✅ Supply Chain Action Complete',
+              description: `${toastMessage} Backend API connected successfully.`,
             });
           } else {
-            apiResponse = deviationResponse; // Use deviation response if CAPA creation fails
+            throw new Error('API call failed');
           }
-        }
-        
-        if (apiResponse && apiResponse.ok) {
-          const result = await apiResponse.json();
-          let toastMessage;
-          
-          if (action === 'investigate') {
-            toastMessage = `🔍 Investigation initiated for ${gate.label}. Deviation #${result.data?.id || result.data?.deviationNumber || 'DEV-SC-001'} created with GxP audit trail.`;
-          } else if (action === 'remediate') {
-            const deviationId = result.data?.deviation?.id || result.data?.deviation?.deviationNumber || 'DEV-SC-001';
-            const capaId = result.data?.capa?.capaId || 'CAPA-SC-001';
-            toastMessage = `🔧 CAPA ${capaId} created for ${gate.label}. Deviation ${deviationId} updated to CAPA-pending status. Remediation workflow activated with 14-day target.`;
-          }
-          
+        } catch (error) {
+          console.error('Gate action failed:', error);
           toast({
-            title: '✅ Supply Chain Action Complete',
-            description: `${toastMessage} Backend API connected successfully.`
+            title: 'Gate Action Initiated',
+            description: `${action} initiated for ${gate.label} (fallback mode)`,
           });
-        } else {
-          throw new Error('API call failed');
         }
-        
-      } catch (error) {
-        console.error('Gate action failed:', error);
-        toast({
-          title: 'Gate Action Initiated',
-          description: `${action} initiated for ${gate.label} (fallback mode)`,
-        });
-      }
-    }, [supplyGates, featureFlags.sc_enableTelemetry, trackSupplyEvent, releaseGuardHandler, toast]);
+      },
+      [supplyGates, featureFlags.sc_enableTelemetry, trackSupplyEvent, releaseGuardHandler, toast]
+    );
 
     const handleReleaseAction = useCallback(async () => {
       const blockers = blockersList(supplyGates);
-      
+
       // DEBUG: Console log to check blocker status
-      console.log('Release button clicked - Blockers:', blockers.length, blockers.map(g => g.id));
-      
+      console.log(
+        'Release button clicked - Blockers:',
+        blockers.length,
+        blockers.map(g => g.id)
+      );
+
       if (blockers.length > 0) {
         toast({
           title: 'Release Blocked',
           description: `${blockers.length} critical gates failing - resolve before release`,
-          variant: 'destructive'
+          variant: 'destructive',
         });
-        
+
         // Track blocked release attempt
         if (featureFlags.sc_enableTelemetry) {
-          trackSupplyEvent('release_blocked', { 
+          trackSupplyEvent('release_blocked', {
             blockers: blockers.map(g => g.id),
-            readiness_score: readinessScore 
+            readiness_score: readinessScore,
           });
         }
-        
+
         return;
       }
-      
+
       try {
         // Call the actual backend API to release a batch
         const response = await fetch('/api/supply-chain/batches/1/release', {
@@ -22054,90 +23057,105 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             qpUserId: 'QP-User-Supply-Chain',
-            notes: `Batch released via Supply Chain Management. Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}%. All ${supplyGates.filter(g => g.status === 'pass').length} gates passing.`
-          })
+            notes: `Batch released via Supply Chain Management. Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}%. All ${supplyGates.filter(g => g.status === 'pass').length} gates passing.`,
+          }),
         });
 
         if (response.ok) {
           const result = await response.json();
-          
+
           // Execute release guard
           releaseGuardHandler('release_authorized', {
             readiness_score: readinessScore,
             confidence: confidenceLevel,
             gates_status: supplyGates.map(g => ({ id: g.id, status: g.status, score: g.score })),
             batch_id: 1,
-            api_response: result
+            api_response: result,
           });
-          
+
           // IMMEDIATE TOAST - ALWAYS WORKS
           toast({
             title: '🎉 QP RELEASE AUTHORIZED',
-            description: `✅ Material OFFICIALLY RELEASED by Qualified Person | 📋 Batch: ${result.data?.batchNumber || 'API-001-2024-001'} | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🔗 Backend API: CONNECTED & WORKING`
+            description: `✅ Material OFFICIALLY RELEASED by Qualified Person | 📋 Batch: ${result.data?.batchNumber || 'API-001-2024-001'} | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🔗 Backend API: CONNECTED & WORKING`,
           });
-          
+
           if (featureFlags.sc_enableTelemetry) {
             trackSupplyEvent('release_authorized', {
               readiness_score: readinessScore,
               confidence: confidenceLevel,
               gates_count: supplyGates.length,
               batch_id: result.data?.id,
-              backend_connected: true
+              backend_connected: true,
             });
           }
         } else {
           throw new Error(`API call failed: ${response.status}`);
         }
-        
       } catch (error) {
         console.error('Release API call failed:', error);
-        
+
         // Fallback to local release
         releaseGuardHandler('release_authorized', {
           readiness_score: readinessScore,
           confidence: confidenceLevel,
-          gates_status: supplyGates.map(g => ({ id: g.id, status: g.status, score: g.score }))
+          gates_status: supplyGates.map(g => ({ id: g.id, status: g.status, score: g.score })),
         });
-        
+
         toast({
           title: '✅ QP RELEASE AUTHORIZED (SYSTEM)',
-          description: `✅ Material OFFICIALLY RELEASED | 📋 Batch: API-001-2024-001 | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🏭 Enterprise System Active`
+          description: `✅ Material OFFICIALLY RELEASED | 📋 Batch: API-001-2024-001 | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🏭 Enterprise System Active`,
         });
       }
-    }, [supplyGates, readinessScore, confidenceLevel, featureFlags.sc_enableTelemetry, trackSupplyEvent, releaseGuardHandler, toast]);
+    }, [
+      supplyGates,
+      readinessScore,
+      confidenceLevel,
+      featureFlags.sc_enableTelemetry,
+      trackSupplyEvent,
+      releaseGuardHandler,
+      toast,
+    ]);
 
-    const handleExportData = useCallback((format) => {
-      const exportData = {
-        timestamp: new Date().toISOString(),
-        readiness_score: readinessScore,
-        confidence_level: confidenceLevel,
-        supply_gates: supplyGates,
-        cold_chain_analysis: coldChainAnalysis,
-        ews_analysis: ewsAnalysis,
-        feature_flags: featureFlags
-      };
-      
-      let content, filename, mimeType;
-      
-      switch (format) {
-        case 'csv':
-          const csvRows = [
-            ['Gate ID', 'Label', 'Status', 'Score', 'Category', 'Last Update'],
-            ...supplyGates.map(g => [g.id, g.label, g.status, g.score, g.category, new Date(g.lastUpdate).toLocaleString()])
-          ];
-          content = csvRows.map(row => row.join(',')).join('\n');
-          filename = `supply-chain-gates-${Date.now()}.csv`;
-          mimeType = 'text/csv';
-          break;
-          
-        case 'json':
-          content = JSON.stringify(exportData, null, 2);
-          filename = `supply-chain-data-${Date.now()}.json`;
-          mimeType = 'application/json';
-          break;
-          
-        case 'narrative':
-          content = `Supply Chain Readiness Report
+    const handleExportData = useCallback(
+      format => {
+        const exportData = {
+          timestamp: new Date().toISOString(),
+          readiness_score: readinessScore,
+          confidence_level: confidenceLevel,
+          supply_gates: supplyGates,
+          cold_chain_analysis: coldChainAnalysis,
+          ews_analysis: ewsAnalysis,
+          feature_flags: featureFlags,
+        };
+
+        let content, filename, mimeType;
+
+        switch (format) {
+          case 'csv':
+            const csvRows = [
+              ['Gate ID', 'Label', 'Status', 'Score', 'Category', 'Last Update'],
+              ...supplyGates.map(g => [
+                g.id,
+                g.label,
+                g.status,
+                g.score,
+                g.category,
+                new Date(g.lastUpdate).toLocaleString(),
+              ]),
+            ];
+            content = csvRows.map(row => row.join(',')).join('\n');
+            filename = `supply-chain-gates-${Date.now()}.csv`;
+            mimeType = 'text/csv';
+            break;
+
+          case 'json':
+            content = JSON.stringify(exportData, null, 2);
+            filename = `supply-chain-data-${Date.now()}.json`;
+            mimeType = 'application/json';
+            break;
+
+          case 'narrative':
+            content = `Supply Chain Readiness Report
 Generated: ${new Date().toLocaleString()}
 
 Executive Summary:
@@ -22147,79 +23165,112 @@ Executive Summary:
 - Warning Gates: ${supplyGates.filter(g => g.status === 'warn').length}
 - Failing Gates: ${supplyGates.filter(g => g.status === 'fail').length}
 
-${coldChainAnalysis.mkt ? `Cold Chain Analysis:
+${
+  coldChainAnalysis.mkt
+    ? `Cold Chain Analysis:
 - Mean Kinetic Temperature: ${coldChainAnalysis.mkt}°C
 - Classification: ${coldChainAnalysis.classification}
-- Compliance Rate: ${coldChainAnalysis.compliance_rate.toFixed(1)}%` : ''}
+- Compliance Rate: ${coldChainAnalysis.compliance_rate.toFixed(1)}%`
+    : ''
+}
 
-${ewsAnalysis.alerts.length > 0 ? `Early Warning Alerts:
-${ewsAnalysis.alerts.map(alert => `- ${alert.severity.toUpperCase()}: ${alert.message}`).join('\n')}` : 'No active early warning alerts.'}
+${
+  ewsAnalysis.alerts.length > 0
+    ? `Early Warning Alerts:
+${ewsAnalysis.alerts.map(alert => `- ${alert.severity.toUpperCase()}: ${alert.message}`).join('\n')}`
+    : 'No active early warning alerts.'
+}
 
 Gate Status Detail:
-${supplyGates.map(gate => `
+${supplyGates
+  .map(
+    gate => `
 ${gate.label} (${gate.category})
 - Status: ${gate.status.toUpperCase()}
 - Score: ${gate.score}%
 - Details: ${gate.details}
 - Last Update: ${new Date(gate.lastUpdate).toLocaleString()}
-`).join('')}
+`
+  )
+  .join('')}
 
 This report confirms current supply chain operational status for regulatory and operational decision-making.`;
-          filename = `supply-chain-narrative-${Date.now()}.txt`;
-          mimeType = 'text/plain';
-          break;
-      }
-      
-      // Download file
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: 'Export Complete',
-        description: `Supply chain data exported as ${format.toUpperCase()}`,
-      });
-      
-      if (featureFlags.sc_enableTelemetry) {
-        trackSupplyEvent('data_export', { format, gates_count: supplyGates.length });
-      }
-    }, [readinessScore, confidenceLevel, supplyGates, coldChainAnalysis, ewsAnalysis, featureFlags, trackSupplyEvent, toast]);
+            filename = `supply-chain-narrative-${Date.now()}.txt`;
+            mimeType = 'text/plain';
+            break;
+        }
+
+        // Download file
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: 'Export Complete',
+          description: `Supply chain data exported as ${format.toUpperCase()}`,
+        });
+
+        if (featureFlags.sc_enableTelemetry) {
+          trackSupplyEvent('data_export', { format, gates_count: supplyGates.length });
+        }
+      },
+      [
+        readinessScore,
+        confidenceLevel,
+        supplyGates,
+        coldChainAnalysis,
+        ewsAnalysis,
+        featureFlags,
+        trackSupplyEvent,
+        toast,
+      ]
+    );
 
     // Copy document builders to clipboard
-    const handleCopyDocument = useCallback(async (docType) => {
-      let content;
-      switch (docType) {
-        case 'ectd': content = buildeCTDSnippet(); break;
-        case 'variation': content = buildVariationDraft(); break;
-        case 'dscsa': content = buildDSCSAOutline(); break;
-        default: return;
-      }
-      
-      try {
-        await navigator.clipboard.writeText(content);
-        toast({
-          title: 'Copied to Clipboard',
-          description: `${docType.toUpperCase()} document ready for use`,
-        });
-      } catch (e) {
-        console.warn('Clipboard write failed:', e);
-        toast({
-          title: 'Copy Ready',
-          description: `${docType.toUpperCase()} document generated (clipboard unavailable)`,
-        });
-      }
-    }, [buildeCTDSnippet, buildVariationDraft, buildDSCSAOutline, toast]);
+    const handleCopyDocument = useCallback(
+      async docType => {
+        let content;
+        switch (docType) {
+          case 'ectd':
+            content = buildeCTDSnippet();
+            break;
+          case 'variation':
+            content = buildVariationDraft();
+            break;
+          case 'dscsa':
+            content = buildDSCSAOutline();
+            break;
+          default:
+            return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(content);
+          toast({
+            title: 'Copied to Clipboard',
+            description: `${docType.toUpperCase()} document ready for use`,
+          });
+        } catch (e) {
+          console.warn('Clipboard write failed:', e);
+          toast({
+            title: 'Copy Ready',
+            description: `${docType.toUpperCase()} document generated (clipboard unavailable)`,
+          });
+        }
+      },
+      [buildeCTDSnippet, buildVariationDraft, buildDSCSAOutline, toast]
+    );
 
     // ============================================================================
     // LOADING STATE
     // ============================================================================
-    
+
     if (isLoading) {
       return (
         <div className="space-y-6" data-testid="supply-chain-loading">
@@ -22249,7 +23300,7 @@ This report confirms current supply chain operational status for regulatory and 
     // ============================================================================
     // MAIN RENDER - ENTERPRISE UI COMPONENTS
     // ============================================================================
-    
+
     return (
       <TooltipProvider>
         <div className="space-y-6" data-testid="supply-chain-dashboard">
@@ -22263,7 +23314,9 @@ This report confirms current supply chain operational status for regulatory and 
                 <span>•</span>
                 <span>Confidence: {confidenceLevel}%</span>
                 <span>•</span>
-                <span className={`px-2 py-1 rounded text-xs ${connectionStatus === 'connected' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                <span
+                  className={`px-2 py-1 rounded text-xs ${connectionStatus === 'connected' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
+                >
                   {connectionStatus}
                 </span>
                 <span>•</span>
@@ -22283,27 +23336,27 @@ This report confirms current supply chain operational status for regulatory and 
                     <div className="space-y-3">
                       <h4 className="font-medium">Document Builders</h4>
                       <div className="space-y-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="w-full justify-start"
                           onClick={() => handleCopyDocument('ectd')}
                         >
                           <FileText className="w-3 h-3 mr-2" />
                           eCTD Module 3 Snippet
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="w-full justify-start"
                           onClick={() => handleCopyDocument('variation')}
                         >
                           <Edit className="w-3 h-3 mr-2" />
                           CMC Variation Draft
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="w-full justify-start"
                           onClick={() => handleCopyDocument('dscsa')}
                         >
@@ -22315,7 +23368,7 @@ This report confirms current supply chain operational status for regulatory and 
                   </PopoverContent>
                 </Popover>
               )}
-              
+
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" data-testid="export-data">
@@ -22326,25 +23379,25 @@ This report confirms current supply chain operational status for regulatory and 
                 <PopoverContent className="w-48">
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm">Export Format</h4>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="w-full justify-start"
                       onClick={() => handleExportData('csv')}
                     >
                       CSV Data
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="w-full justify-start"
                       onClick={() => handleExportData('json')}
                     >
                       JSON Export
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="w-full justify-start"
                       onClick={() => handleExportData('narrative')}
                     >
@@ -22353,16 +23406,20 @@ This report confirms current supply chain operational status for regulatory and 
                   </div>
                 </PopoverContent>
               </Popover>
-              
-              <Button variant="outline" onClick={() => window.location.reload()} data-testid="refresh-data">
+
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+                data-testid="refresh-data"
+              >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
-              
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
-                    <Button 
+                    <Button
                       onClick={handleReleaseAction}
                       disabled={blockersList(supplyGates).length > 0}
                       className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
@@ -22376,8 +23433,7 @@ This report confirms current supply chain operational status for regulatory and 
                 <TooltipContent>
                   {blockersList(supplyGates).length > 0
                     ? `Release blocked - ${blockersList(supplyGates).length} critical gates failing`
-                    : `Ready for release - Score: ${readinessScore}%, Confidence: ${confidenceLevel}%`
-                  }
+                    : `Ready for release - Score: ${readinessScore}%, Confidence: ${confidenceLevel}%`}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -22415,9 +23471,12 @@ This report confirms current supply chain operational status for regulatory and 
                       className="transition-all duration-1000"
                     />
                   </svg>
-                  
+
                   {/* Inner confidence ring */}
-                  <svg className="absolute inset-4 w-32 h-32 transform -rotate-90" viewBox="0 0 128 128">
+                  <svg
+                    className="absolute inset-4 w-32 h-32 transform -rotate-90"
+                    viewBox="0 0 128 128"
+                  >
                     <circle
                       cx="64"
                       cy="64"
@@ -22439,18 +23498,19 @@ This report confirms current supply chain operational status for regulatory and 
                       className="transition-all duration-1000 opacity-60"
                     />
                   </svg>
-                  
+
                   {/* Center text */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-3xl font-bold" style={{ color: ringColor(readinessScore) }}>
+                    <div
+                      className="text-3xl font-bold"
+                      style={{ color: ringColor(readinessScore) }}
+                    >
                       {readinessScore}%
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {confidenceLevel}% conf.
-                    </div>
+                    <div className="text-xs text-gray-500">{confidenceLevel}% conf.</div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4 text-center w-full">
                   <div>
                     <div className="text-2xl font-bold text-green-600">
@@ -22480,23 +23540,34 @@ This report confirms current supply chain operational status for regulatory and 
                 <CardContent>
                   <div className="space-y-3">
                     <div className="text-center">
-                      <div className="text-2xl font-bold" style={{ 
-                        color: coldChainAnalysis.classification === 'COMPLIANT' ? '#10b981' : 
-                              coldChainAnalysis.classification === 'INVESTIGATION' ? '#f59e0b' : '#ef4444'
-                      }}>
+                      <div
+                        className="text-2xl font-bold"
+                        style={{
+                          color:
+                            coldChainAnalysis.classification === 'COMPLIANT'
+                              ? '#10b981'
+                              : coldChainAnalysis.classification === 'INVESTIGATION'
+                                ? '#f59e0b'
+                                : '#ef4444',
+                        }}
+                      >
                         {coldChainAnalysis.mkt}°C
                       </div>
                       <div className="text-xs text-gray-500">MKT Calculated</div>
                     </div>
-                    
-                    <div className={`px-3 py-2 rounded text-center text-xs font-medium ${
-                      coldChainAnalysis.classification === 'COMPLIANT' ? 'bg-green-100 text-green-800' :
-                      coldChainAnalysis.classification === 'INVESTIGATION' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
+
+                    <div
+                      className={`px-3 py-2 rounded text-center text-xs font-medium ${
+                        coldChainAnalysis.classification === 'COMPLIANT'
+                          ? 'bg-green-100 text-green-800'
+                          : coldChainAnalysis.classification === 'INVESTIGATION'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                      }`}
+                    >
                       {coldChainAnalysis.classification}
                     </div>
-                    
+
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between">
                         <span>Excursions</span>
@@ -22504,21 +23575,27 @@ This report confirms current supply chain operational status for regulatory and 
                       </div>
                       <div className="flex justify-between">
                         <span>Compliance</span>
-                        <span className="font-medium">{coldChainAnalysis.compliance_rate.toFixed(1)}%</span>
+                        <span className="font-medium">
+                          {coldChainAnalysis.compliance_rate.toFixed(1)}%
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Readings</span>
                         <span className="font-medium">{coldChainAnalysis.total_readings}</span>
                       </div>
                     </div>
-                    
+
                     {/* Temperature sparkline */}
                     {temperatureData.length > 0 && (
                       <div className="mt-3">
                         <div className="text-xs text-gray-500 mb-1">7-day trend</div>
                         <svg width="100%" height="30" className="border rounded">
                           <path
-                            d={sparklinePath(temperatureData.slice(-168).map(d => d.temp), 200, 20)}
+                            d={sparklinePath(
+                              temperatureData.slice(-168).map(d => d.temp),
+                              200,
+                              20
+                            )}
                             stroke={ringColor(coldChainAnalysis.compliance_rate)}
                             strokeWidth="1.5"
                             fill="none"
@@ -22543,42 +23620,58 @@ This report confirms current supply chain operational status for regulatory and 
                 <CardContent>
                   <div className="space-y-3">
                     <div className="text-center">
-                      <div className="text-lg font-bold" style={{ 
-                        color: Math.abs(ewsAnalysis.zscore) > 2 ? '#ef4444' : '#10b981'
-                      }}>
+                      <div
+                        className="text-lg font-bold"
+                        style={{
+                          color: Math.abs(ewsAnalysis.zscore) > 2 ? '#ef4444' : '#10b981',
+                        }}
+                      >
                         Z = {ewsAnalysis.zscore.toFixed(2)}
                       </div>
                       <div className="text-xs text-gray-500">Statistical Score</div>
                     </div>
-                    
-                    <div className={`px-3 py-2 rounded text-center text-xs font-medium ${
-                      ewsAnalysis.trend === 'improving' ? 'bg-green-100 text-green-800' :
-                      ewsAnalysis.trend === 'deteriorating' ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
+
+                    <div
+                      className={`px-3 py-2 rounded text-center text-xs font-medium ${
+                        ewsAnalysis.trend === 'improving'
+                          ? 'bg-green-100 text-green-800'
+                          : ewsAnalysis.trend === 'deteriorating'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-blue-100 text-blue-800'
+                      }`}
+                    >
                       {ewsAnalysis.trend}
                     </div>
-                    
+
                     {ewsAnalysis.alerts.length > 0 && (
                       <div className="space-y-1">
                         {ewsAnalysis.alerts.map((alert, idx) => (
-                          <div key={idx} className={`px-2 py-1 rounded text-xs ${
-                            alert.severity === 'critical' ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700'
-                          }`}>
+                          <div
+                            key={idx}
+                            className={`px-2 py-1 rounded text-xs ${
+                              alert.severity === 'critical'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-yellow-50 text-yellow-700'
+                            }`}
+                          >
                             <AlertTriangle className="w-3 h-3 inline mr-1" />
                             {alert.type.replace('_', ' ')}
                           </div>
                         ))}
                       </div>
                     )}
-                    
+
                     {/* EWS variance sparkline */}
                     {etaVarianceSeries.length > 0 && (
                       <div className="mt-3">
                         <div className="text-xs text-gray-500 mb-1">30-day variance</div>
                         <svg width="100%" height="30" className="border rounded">
                           <path
-                            d={sparklinePath(etaVarianceSeries.map(d => d.variance), 200, 20)}
+                            d={sparklinePath(
+                              etaVarianceSeries.map(d => d.variance),
+                              200,
+                              20
+                            )}
                             stroke={ewsAnalysis.outlier_detected ? '#ef4444' : '#6366f1'}
                             strokeWidth="1.5"
                             fill="none"
@@ -22609,7 +23702,9 @@ This report confirms current supply chain operational status for regulatory and 
                     {readinessScore >= 90 ? (
                       <div className="p-2 bg-green-50 border border-green-200 rounded">
                         <p className="text-green-700 font-medium">✓ Excellent Readiness</p>
-                        <p className="text-green-600 mt-1">All systems optimal. Consider batch release.</p>
+                        <p className="text-green-600 mt-1">
+                          All systems optimal. Consider batch release.
+                        </p>
                       </div>
                     ) : readinessScore >= 75 ? (
                       <div className="p-2 bg-yellow-50 border border-yellow-200 rounded">
@@ -22626,29 +23721,31 @@ This report confirms current supply chain operational status for regulatory and 
                         </p>
                       </div>
                     )}
-                    
+
                     {coldChainAnalysis.classification === 'DEVIATION' && (
                       <div className="p-2 bg-orange-50 border border-orange-200 rounded">
                         <p className="text-orange-700 font-medium">🌡 Cold Chain Alert</p>
                         <p className="text-orange-600 mt-1">Temperature deviation detected.</p>
                       </div>
                     )}
-                    
+
                     {ewsAnalysis.outlier_detected && (
                       <div className="p-2 bg-purple-50 border border-purple-200 rounded">
                         <p className="text-purple-700 font-medium">📊 Statistical Alert</p>
                         <p className="text-purple-600 mt-1">Supply variance anomaly detected.</p>
                       </div>
                     )}
-                    
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="w-full text-xs"
-                      onClick={() => toast({
-                        title: 'Detailed Analysis',
-                        description: 'Opening comprehensive supply chain analysis...'
-                      })}
+                      onClick={() =>
+                        toast({
+                          title: 'Detailed Analysis',
+                          description: 'Opening comprehensive supply chain analysis...',
+                        })
+                      }
                     >
                       <Brain className="w-3 h-3 mr-1" />
                       Detailed Analysis
@@ -22660,101 +23757,134 @@ This report confirms current supply chain operational status for regulatory and 
           </div>
 
           {/* Supply Gates with Risk Explanations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="supply-gates">
-            {supplyGates.filter(gate => gate.enabled).map((gate) => (
-              <Card key={gate.id} className={`border-2 transition-all duration-200 hover:shadow-md ${
-                gate.status === 'pass' ? 'border-green-200 bg-green-50/30' :
-                gate.status === 'warn' ? 'border-yellow-200 bg-yellow-50/30' :
-                'border-red-200 bg-red-50/30'
-              }`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <gate.icon className={`w-4 h-4 ${
-                        gate.status === 'pass' ? 'text-green-600' :
-                        gate.status === 'warn' ? 'text-yellow-600' :
-                        'text-red-600'
-                      }`} />
-                      <CardTitle className="text-sm font-medium">{gate.label}</CardTitle>
-                    </div>
-                    <Badge variant={gate.status === 'pass' ? 'default' : gate.status === 'warn' ? 'secondary' : 'destructive'} className="text-xs">
-                      {gate.score}%
-                    </Badge>
-                  </div>
-                  <CardDescription className="text-xs">{gate.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    {/* Gate status with risk level indicator */}
-                    <div className="flex items-center justify-between text-xs">
-                      <span>Status</span>
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            data-testid="supply-gates"
+          >
+            {supplyGates
+              .filter(gate => gate.enabled)
+              .map(gate => (
+                <Card
+                  key={gate.id}
+                  className={`border-2 transition-all duration-200 hover:shadow-md ${
+                    gate.status === 'pass'
+                      ? 'border-green-200 bg-green-50/30'
+                      : gate.status === 'warn'
+                        ? 'border-yellow-200 bg-yellow-50/30'
+                        : 'border-red-200 bg-red-50/30'
+                  }`}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Circle className={`w-2 h-2 fill-current ${
-                          gate.status === 'pass' ? 'text-green-500' :
-                          gate.status === 'warn' ? 'text-yellow-500' :
-                          'text-red-500'
-                        }`} />
-                        <span className="uppercase font-medium">{gate.status}</span>
-                        {gate.blocking && <Badge variant="outline" className="text-xs py-0 px-1">BLOCKING</Badge>}
+                        <gate.icon
+                          className={`w-4 h-4 ${
+                            gate.status === 'pass'
+                              ? 'text-green-600'
+                              : gate.status === 'warn'
+                                ? 'text-yellow-600'
+                                : 'text-red-600'
+                          }`}
+                        />
+                        <CardTitle className="text-sm font-medium">{gate.label}</CardTitle>
                       </div>
+                      <Badge
+                        variant={
+                          gate.status === 'pass'
+                            ? 'default'
+                            : gate.status === 'warn'
+                              ? 'secondary'
+                              : 'destructive'
+                        }
+                        className="text-xs"
+                      >
+                        {gate.score}%
+                      </Badge>
                     </div>
-                    
-                    {/* Progress bar for gate score */}
-                    <div>
-                      <Progress value={gate.score} className="h-1.5" />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>{gate.category}</span>
-                        <span>{new Date(gate.lastUpdate).toLocaleTimeString()}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Gate details */}
-                    <div className="text-xs text-gray-600 bg-white p-2 rounded border">
-                      {gate.details}
-                    </div>
-                    
-                    {/* Metadata if available */}
-                    {gate.metadata && Object.keys(gate.metadata).length > 0 && (
-                      <div className="text-xs">
-                        <div className="font-medium mb-1">Details:</div>
-                        <div className="space-y-1">
-                          {Object.entries(gate.metadata).slice(0, 2).map(([key, value]) => (
-                            <div key={key} className="flex justify-between">
-                              <span className="text-gray-500">{key.replace('_', ' ')}:</span>
-                              <span className="font-medium">{String(value)}</span>
-                            </div>
-                          ))}
+                    <CardDescription className="text-xs">{gate.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
+                      {/* Gate status with risk level indicator */}
+                      <div className="flex items-center justify-between text-xs">
+                        <span>Status</span>
+                        <div className="flex items-center space-x-2">
+                          <Circle
+                            className={`w-2 h-2 fill-current ${
+                              gate.status === 'pass'
+                                ? 'text-green-500'
+                                : gate.status === 'warn'
+                                  ? 'text-yellow-500'
+                                  : 'text-red-500'
+                            }`}
+                          />
+                          <span className="uppercase font-medium">{gate.status}</span>
+                          {gate.blocking && (
+                            <Badge variant="outline" className="text-xs py-0 px-1">
+                              BLOCKING
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    )}
-                    
-                    {/* Action buttons */}
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 text-xs"
-                        onClick={() => handleGateAction(gate.id, 'investigate')}
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        Investigate
-                      </Button>
-                      {gate.status === 'fail' && (
+
+                      {/* Progress bar for gate score */}
+                      <div>
+                        <Progress value={gate.score} className="h-1.5" />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>{gate.category}</span>
+                          <span>{new Date(gate.lastUpdate).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+
+                      {/* Gate details */}
+                      <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                        {gate.details}
+                      </div>
+
+                      {/* Metadata if available */}
+                      {gate.metadata && Object.keys(gate.metadata).length > 0 && (
+                        <div className="text-xs">
+                          <div className="font-medium mb-1">Details:</div>
+                          <div className="space-y-1">
+                            {Object.entries(gate.metadata)
+                              .slice(0, 2)
+                              .map(([key, value]) => (
+                                <div key={key} className="flex justify-between">
+                                  <span className="text-gray-500">{key.replace('_', ' ')}:</span>
+                                  <span className="font-medium">{String(value)}</span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="flex space-x-2">
                         <Button
                           size="sm"
                           variant="outline"
                           className="flex-1 text-xs"
-                          onClick={() => handleGateAction(gate.id, 'remediate')}
+                          onClick={() => handleGateAction(gate.id, 'investigate')}
                         >
-                          <Settings className="w-3 h-3 mr-1" />
-                          Fix
+                          <Eye className="w-3 h-3 mr-1" />
+                          Investigate
                         </Button>
-                      )}
+                        {gate.status === 'fail' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-xs"
+                            onClick={() => handleGateAction(gate.id, 'remediate')}
+                          >
+                            <Settings className="w-3 h-3 mr-1" />
+                            Fix
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
           </div>
 
           {/* SCN & DSCSA Compliance Tiles */}
@@ -22783,7 +23913,7 @@ This report confirms current supply chain operational status for regulatory and 
                       <div className="text-sm text-gray-500">Uptime</div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Network Health</span>
@@ -22791,7 +23921,7 @@ This report confirms current supply chain operational status for regulatory and 
                     </div>
                     <Progress value={97} className="h-2" />
                   </div>
-                  
+
                   <div className="text-xs space-y-1">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Data Integrity:</span>
@@ -22799,11 +23929,15 @@ This report confirms current supply chain operational status for regulatory and 
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Cross-validation:</span>
-                      <span className="font-medium">{crossTabData.lastUpdate ? 'ACTIVE' : 'STANDBY'}</span>
+                      <span className="font-medium">
+                        {crossTabData.lastUpdate ? 'ACTIVE' : 'STANDBY'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Last sync:</span>
-                      <span className="font-medium">{new Date(lastUpdate).toLocaleTimeString()}</span>
+                      <span className="font-medium">
+                        {new Date(lastUpdate).toLocaleTimeString()}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -22823,7 +23957,8 @@ This report confirms current supply chain operational status for regulatory and 
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-green-600">
-                        {supplyGates.find(g => g.id === 'serialization')?.metadata?.serial_count || '50K'}
+                        {supplyGates.find(g => g.id === 'serialization')?.metadata?.serial_count ||
+                          '50K'}
                       </div>
                       <div className="text-sm text-gray-500">Serial Units</div>
                     </div>
@@ -22833,22 +23968,34 @@ This report confirms current supply chain operational status for regulatory and 
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-purple-600">
-                        {supplyGates.find(g => g.id === 'serialization')?.metadata?.epcis_confirmed ? 'YES' : 'SYNC'}
+                        {supplyGates.find(g => g.id === 'serialization')?.metadata?.epcis_confirmed
+                          ? 'YES'
+                          : 'SYNC'}
                       </div>
                       <div className="text-sm text-gray-500">EPCIS</div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Compliance Status</span>
-                      <Badge variant={supplyGates.find(g => g.id === 'serialization')?.status === 'pass' ? 'default' : 'secondary'}>
-                        {supplyGates.find(g => g.id === 'serialization')?.status.toUpperCase() || 'UNKNOWN'}
+                      <Badge
+                        variant={
+                          supplyGates.find(g => g.id === 'serialization')?.status === 'pass'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                      >
+                        {supplyGates.find(g => g.id === 'serialization')?.status.toUpperCase() ||
+                          'UNKNOWN'}
                       </Badge>
                     </div>
-                    <Progress value={supplyGates.find(g => g.id === 'serialization')?.score || 0} className="h-2" />
+                    <Progress
+                      value={supplyGates.find(g => g.id === 'serialization')?.score || 0}
+                      className="h-2"
+                    />
                   </div>
-                  
+
                   <div className="text-xs space-y-1">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Traceability:</span>
@@ -22860,7 +24007,11 @@ This report confirms current supply chain operational status for regulatory and 
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Last audit:</span>
-                      <span className="font-medium">{new Date(supplyGates.find(g => g.id === 'serialization')?.lastUpdate || Date.now()).toLocaleDateString()}</span>
+                      <span className="font-medium">
+                        {new Date(
+                          supplyGates.find(g => g.id === 'serialization')?.lastUpdate || Date.now()
+                        ).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -22872,15 +24023,15 @@ This report confirms current supply chain operational status for regulatory and 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             {/* Supplier Management Interface */}
             <SupplierManagementPanel />
-            
+
             {/* Material Management Interface */}
             <MaterialManagementPanel />
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             {/* Shipment Tracking Interface */}
             <ShipmentTrackingPanel />
-            
+
             {/* Inventory Management Interface */}
             <InventoryManagementPanel />
           </div>
@@ -22894,7 +24045,10 @@ This report confirms current supply chain operational status for regulatory and 
               <CardContent>
                 <div className="grid grid-cols-4 gap-2 text-xs">
                   {Object.entries(featureFlags).map(([flag, enabled]) => (
-                    <div key={flag} className={`px-2 py-1 rounded ${enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                    <div
+                      key={flag}
+                      className={`px-2 py-1 rounded ${enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
+                    >
                       {flag.replace('sc_', '')}
                     </div>
                   ))}
@@ -22910,7 +24064,7 @@ This report confirms current supply chain operational status for regulatory and 
   // ============================================================================
   // ENTERPRISE DATA MANAGEMENT PANELS
   // ============================================================================
-  
+
   const SupplierManagementPanel = () => {
     const [suppliers, setSuppliers] = useState([]);
     const [isAddingSupplier, setIsAddingSupplier] = useState(false);
@@ -22922,7 +24076,7 @@ This report confirms current supply chain operational status for regulatory and 
       location: '',
       contact: '',
       qualificationStatus: 'pending',
-      certifications: []
+      certifications: [],
     });
 
     const { toast } = useToast();
@@ -22947,27 +24101,27 @@ This report confirms current supply chain operational status for regulatory and 
     const saveSupplier = async () => {
       try {
         const method = editingSupplier ? 'PUT' : 'POST';
-        const url = editingSupplier 
+        const url = editingSupplier
           ? `/api/supply-chain/suppliers/${editingSupplier.id}`
           : '/api/supply-chain/suppliers';
-        
+
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...supplierForm,
             organizationId: 7,
-            certifications: supplierForm.certifications.filter(c => c.trim())
-          })
+            certifications: supplierForm.certifications.filter(c => c.trim()),
+          }),
         });
 
         if (response.ok) {
           const result = await response.json();
           toast({
             title: '✅ Supplier Saved',
-            description: `${supplierForm.name} has been ${editingSupplier ? 'updated' : 'added'} successfully.`
+            description: `${supplierForm.name} has been ${editingSupplier ? 'updated' : 'added'} successfully.`,
           });
-          
+
           resetSupplierForm();
           fetchSuppliers();
         } else {
@@ -22977,23 +24131,23 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to save supplier. Please try again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const deleteSupplier = async (id) => {
+    const deleteSupplier = async id => {
       if (!confirm('Are you sure you want to delete this supplier?')) return;
-      
+
       try {
         const response = await fetch(`/api/supply-chain/suppliers/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
         });
 
         if (response.ok) {
           toast({
             title: '✅ Supplier Deleted',
-            description: 'Supplier has been removed from the system.'
+            description: 'Supplier has been removed from the system.',
           });
           fetchSuppliers();
         }
@@ -23001,12 +24155,12 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to delete supplier.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const editSupplier = (supplier) => {
+    const editSupplier = supplier => {
       setEditingSupplier(supplier);
       setSupplierForm({
         name: supplier.name || '',
@@ -23015,7 +24169,7 @@ This report confirms current supply chain operational status for regulatory and 
         location: supplier.location || '',
         contact: supplier.contact || '',
         qualificationStatus: supplier.qualificationStatus || 'pending',
-        certifications: supplier.certifications || []
+        certifications: supplier.certifications || [],
       });
       setIsAddingSupplier(true);
     };
@@ -23028,7 +24182,7 @@ This report confirms current supply chain operational status for regulatory and 
         location: '',
         contact: '',
         qualificationStatus: 'pending',
-        certifications: []
+        certifications: [],
       });
       setEditingSupplier(null);
       setIsAddingSupplier(false);
@@ -23066,7 +24220,7 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Supplier Name</Label>
                   <Input
                     value={supplierForm.name}
-                    onChange={(e) => setSupplierForm({...supplierForm, name: e.target.value})}
+                    onChange={e => setSupplierForm({ ...supplierForm, name: e.target.value })}
                     placeholder="e.g., BioChem Solutions Ltd."
                     data-testid="supplier-name-input"
                   />
@@ -23075,14 +24229,21 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Supplier Code</Label>
                   <Input
                     value={supplierForm.supplierCode}
-                    onChange={(e) => setSupplierForm({...supplierForm, supplierCode: e.target.value})}
+                    onChange={e =>
+                      setSupplierForm({ ...supplierForm, supplierCode: e.target.value })
+                    }
                     placeholder="e.g., SUP-001"
                     data-testid="supplier-code-input"
                   />
                 </div>
                 <div>
                   <Label className="text-sm">Type</Label>
-                  <Select value={supplierForm.supplierType} onValueChange={(value) => setSupplierForm({...supplierForm, supplierType: value})}>
+                  <Select
+                    value={supplierForm.supplierType}
+                    onValueChange={value =>
+                      setSupplierForm({ ...supplierForm, supplierType: value })
+                    }
+                  >
                     <SelectTrigger data-testid="supplier-type-select">
                       <SelectValue />
                     </SelectTrigger>
@@ -23098,7 +24259,7 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Location</Label>
                   <Input
                     value={supplierForm.location}
-                    onChange={(e) => setSupplierForm({...supplierForm, location: e.target.value})}
+                    onChange={e => setSupplierForm({ ...supplierForm, location: e.target.value })}
                     placeholder="e.g., Basel, Switzerland"
                     data-testid="supplier-location-input"
                   />
@@ -23107,14 +24268,19 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Contact Person</Label>
                   <Input
                     value={supplierForm.contact}
-                    onChange={(e) => setSupplierForm({...supplierForm, contact: e.target.value})}
+                    onChange={e => setSupplierForm({ ...supplierForm, contact: e.target.value })}
                     placeholder="e.g., Dr. Maria Weber"
                     data-testid="supplier-contact-input"
                   />
                 </div>
                 <div>
                   <Label className="text-sm">Qualification Status</Label>
-                  <Select value={supplierForm.qualificationStatus} onValueChange={(value) => setSupplierForm({...supplierForm, qualificationStatus: value})}>
+                  <Select
+                    value={supplierForm.qualificationStatus}
+                    onValueChange={value =>
+                      setSupplierForm({ ...supplierForm, qualificationStatus: value })
+                    }
+                  >
                     <SelectTrigger data-testid="qualification-status-select">
                       <SelectValue />
                     </SelectTrigger>
@@ -23146,24 +24312,46 @@ This report confirms current supply chain operational status for regulatory and 
                 <p>No suppliers added yet. Click "Add Supplier" to get started.</p>
               </div>
             ) : (
-              suppliers.map((supplier) => (
-                <div key={supplier.id} className="border rounded-lg p-3 hover:bg-gray-50" data-testid={`supplier-${supplier.id}`}>
+              suppliers.map(supplier => (
+                <div
+                  key={supplier.id}
+                  className="border rounded-lg p-3 hover:bg-gray-50"
+                  data-testid={`supplier-${supplier.id}`}
+                >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h4 className="font-medium">{supplier.name}</h4>
-                        <Badge variant={supplier.qualificationStatus === 'qualified' ? 'default' : 'secondary'}>
+                        <Badge
+                          variant={
+                            supplier.qualificationStatus === 'qualified' ? 'default' : 'secondary'
+                          }
+                        >
                           {supplier.qualificationStatus}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">{supplier.supplierType} • {supplier.location}</p>
-                      <p className="text-xs text-gray-500">Code: {supplier.supplierCode} • Contact: {supplier.contact}</p>
+                      <p className="text-sm text-gray-600">
+                        {supplier.supplierType} • {supplier.location}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Code: {supplier.supplierCode} • Contact: {supplier.contact}
+                      </p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => editSupplier(supplier)} data-testid={`edit-supplier-${supplier.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => editSupplier(supplier)}
+                        data-testid={`edit-supplier-${supplier.id}`}
+                      >
                         <Edit className="w-3 h-3" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => deleteSupplier(supplier.id)} data-testid={`delete-supplier-${supplier.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteSupplier(supplier.id)}
+                        data-testid={`delete-supplier-${supplier.id}`}
+                      >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
@@ -23189,7 +24377,7 @@ This report confirms current supply chain operational status for regulatory and 
       supplier: '',
       stockLevel: 0,
       minimumStock: 0,
-      status: 'active'
+      status: 'active',
     });
 
     const { toast } = useToast();
@@ -23213,10 +24401,10 @@ This report confirms current supply chain operational status for regulatory and 
     const saveMaterial = async () => {
       try {
         const method = editingMaterial ? 'PUT' : 'POST';
-        const url = editingMaterial 
+        const url = editingMaterial
           ? `/api/supply-chain/materials/${editingMaterial.id}`
           : '/api/supply-chain/materials';
-        
+
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
@@ -23224,16 +24412,16 @@ This report confirms current supply chain operational status for regulatory and 
             ...materialForm,
             organizationId: 7,
             stockLevel: parseFloat(materialForm.stockLevel) || 0,
-            minimumStock: parseFloat(materialForm.minimumStock) || 0
-          })
+            minimumStock: parseFloat(materialForm.minimumStock) || 0,
+          }),
         });
 
         if (response.ok) {
           toast({
             title: '✅ Material Saved',
-            description: `${materialForm.name} has been ${editingMaterial ? 'updated' : 'added'} successfully.`
+            description: `${materialForm.name} has been ${editingMaterial ? 'updated' : 'added'} successfully.`,
           });
-          
+
           resetMaterialForm();
           fetchMaterials();
         } else {
@@ -23243,23 +24431,23 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to save material. Please try again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const deleteMaterial = async (id) => {
+    const deleteMaterial = async id => {
       if (!confirm('Are you sure you want to delete this material?')) return;
-      
+
       try {
         const response = await fetch(`/api/supply-chain/materials/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
         });
 
         if (response.ok) {
           toast({
             title: '✅ Material Deleted',
-            description: 'Material has been removed from the system.'
+            description: 'Material has been removed from the system.',
           });
           fetchMaterials();
         }
@@ -23267,12 +24455,12 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to delete material.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const editMaterial = (material) => {
+    const editMaterial = material => {
       setEditingMaterial(material);
       setMaterialForm({
         name: material.name || '',
@@ -23282,7 +24470,7 @@ This report confirms current supply chain operational status for regulatory and 
         supplier: material.supplier || '',
         stockLevel: material.stockLevel || 0,
         minimumStock: material.minimumStock || 0,
-        status: material.status || 'active'
+        status: material.status || 'active',
       });
       setIsAddingMaterial(true);
     };
@@ -23296,7 +24484,7 @@ This report confirms current supply chain operational status for regulatory and 
         supplier: '',
         stockLevel: 0,
         minimumStock: 0,
-        status: 'active'
+        status: 'active',
       });
       setEditingMaterial(null);
       setIsAddingMaterial(false);
@@ -23334,7 +24522,7 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Material Name</Label>
                   <Input
                     value={materialForm.name}
-                    onChange={(e) => setMaterialForm({...materialForm, name: e.target.value})}
+                    onChange={e => setMaterialForm({ ...materialForm, name: e.target.value })}
                     placeholder="e.g., Compound ABC-123"
                     data-testid="material-name-input"
                   />
@@ -23343,14 +24531,21 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Material Code</Label>
                   <Input
                     value={materialForm.materialCode}
-                    onChange={(e) => setMaterialForm({...materialForm, materialCode: e.target.value})}
+                    onChange={e =>
+                      setMaterialForm({ ...materialForm, materialCode: e.target.value })
+                    }
                     placeholder="e.g., MAT-001"
                     data-testid="material-code-input"
                   />
                 </div>
                 <div>
                   <Label className="text-sm">Type</Label>
-                  <Select value={materialForm.materialType} onValueChange={(value) => setMaterialForm({...materialForm, materialType: value})}>
+                  <Select
+                    value={materialForm.materialType}
+                    onValueChange={value =>
+                      setMaterialForm({ ...materialForm, materialType: value })
+                    }
+                  >
                     <SelectTrigger data-testid="material-type-select">
                       <SelectValue />
                     </SelectTrigger>
@@ -23366,7 +24561,7 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Supplier</Label>
                   <Input
                     value={materialForm.supplier}
-                    onChange={(e) => setMaterialForm({...materialForm, supplier: e.target.value})}
+                    onChange={e => setMaterialForm({ ...materialForm, supplier: e.target.value })}
                     placeholder="e.g., BioChem Solutions"
                     data-testid="material-supplier-input"
                   />
@@ -23376,7 +24571,7 @@ This report confirms current supply chain operational status for regulatory and 
                   <Input
                     type="number"
                     value={materialForm.stockLevel}
-                    onChange={(e) => setMaterialForm({...materialForm, stockLevel: e.target.value})}
+                    onChange={e => setMaterialForm({ ...materialForm, stockLevel: e.target.value })}
                     placeholder="0"
                     data-testid="stock-level-input"
                   />
@@ -23386,7 +24581,9 @@ This report confirms current supply chain operational status for regulatory and 
                   <Input
                     type="number"
                     value={materialForm.minimumStock}
-                    onChange={(e) => setMaterialForm({...materialForm, minimumStock: e.target.value})}
+                    onChange={e =>
+                      setMaterialForm({ ...materialForm, minimumStock: e.target.value })
+                    }
                     placeholder="0"
                     data-testid="minimum-stock-input"
                   />
@@ -23397,7 +24594,9 @@ This report confirms current supply chain operational status for regulatory and 
                 <textarea
                   className="w-full border rounded px-3 py-2 text-sm"
                   value={materialForm.specification}
-                  onChange={(e) => setMaterialForm({...materialForm, specification: e.target.value})}
+                  onChange={e =>
+                    setMaterialForm({ ...materialForm, specification: e.target.value })
+                  }
                   placeholder="Material specifications and quality requirements..."
                   rows="3"
                   data-testid="material-specification-input"
@@ -23422,13 +24621,21 @@ This report confirms current supply chain operational status for regulatory and 
                 <p>No materials added yet. Click "Add Material" to get started.</p>
               </div>
             ) : (
-              materials.map((material) => (
-                <div key={material.id} className="border rounded-lg p-3 hover:bg-gray-50" data-testid={`material-${material.id}`}>
+              materials.map(material => (
+                <div
+                  key={material.id}
+                  className="border rounded-lg p-3 hover:bg-gray-50"
+                  data-testid={`material-${material.id}`}
+                >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h4 className="font-medium">{material.name}</h4>
-                        <Badge variant={material.stockLevel <= material.minimumStock ? 'destructive' : 'default'}>
+                        <Badge
+                          variant={
+                            material.stockLevel <= material.minimumStock ? 'destructive' : 'default'
+                          }
+                        >
                           {material.materialType}
                         </Badge>
                         {material.stockLevel <= material.minimumStock && (
@@ -23437,14 +24644,28 @@ This report confirms current supply chain operational status for regulatory and 
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600">Code: {material.materialCode} • Supplier: {material.supplier}</p>
-                      <p className="text-xs text-gray-500">Stock: {material.stockLevel}kg (Min: {material.minimumStock}kg)</p>
+                      <p className="text-sm text-gray-600">
+                        Code: {material.materialCode} • Supplier: {material.supplier}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Stock: {material.stockLevel}kg (Min: {material.minimumStock}kg)
+                      </p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => editMaterial(material)} data-testid={`edit-material-${material.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => editMaterial(material)}
+                        data-testid={`edit-material-${material.id}`}
+                      >
                         <Edit className="w-3 h-3" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => deleteMaterial(material.id)} data-testid={`delete-material-${material.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteMaterial(material.id)}
+                        data-testid={`delete-material-${material.id}`}
+                      >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
@@ -23470,7 +24691,7 @@ This report confirms current supply chain operational status for regulatory and 
       shipmentType: 'inbound',
       shipmentStatus: 'in_transit',
       expectedDelivery: '',
-      trackingNumber: ''
+      trackingNumber: '',
     });
 
     const { toast } = useToast();
@@ -23494,25 +24715,25 @@ This report confirms current supply chain operational status for regulatory and 
     const saveShipment = async () => {
       try {
         const method = editingShipment ? 'PUT' : 'POST';
-        const url = editingShipment 
+        const url = editingShipment
           ? `/api/supply-chain/shipments/${editingShipment.id}`
           : '/api/supply-chain/shipments';
-        
+
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...shipmentForm,
-            organizationId: 7
-          })
+            organizationId: 7,
+          }),
         });
 
         if (response.ok) {
           toast({
             title: '✅ Shipment Saved',
-            description: `Shipment ${shipmentForm.shipmentNumber} has been ${editingShipment ? 'updated' : 'added'} successfully.`
+            description: `Shipment ${shipmentForm.shipmentNumber} has been ${editingShipment ? 'updated' : 'added'} successfully.`,
           });
-          
+
           resetShipmentForm();
           fetchShipments();
         } else {
@@ -23522,23 +24743,23 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to save shipment. Please try again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const deleteShipment = async (id) => {
+    const deleteShipment = async id => {
       if (!confirm('Are you sure you want to delete this shipment?')) return;
-      
+
       try {
         const response = await fetch(`/api/supply-chain/shipments/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
         });
 
         if (response.ok) {
           toast({
             title: '✅ Shipment Deleted',
-            description: 'Shipment has been removed from the system.'
+            description: 'Shipment has been removed from the system.',
           });
           fetchShipments();
         }
@@ -23546,12 +24767,12 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to delete shipment.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const editShipment = (shipment) => {
+    const editShipment = shipment => {
       setEditingShipment(shipment);
       setShipmentForm({
         shipmentNumber: shipment.shipmentNumber || '',
@@ -23561,7 +24782,7 @@ This report confirms current supply chain operational status for regulatory and 
         shipmentType: shipment.shipmentType || 'inbound',
         shipmentStatus: shipment.shipmentStatus || 'in_transit',
         expectedDelivery: shipment.expectedDelivery || '',
-        trackingNumber: shipment.trackingNumber || ''
+        trackingNumber: shipment.trackingNumber || '',
       });
       setIsAddingShipment(true);
     };
@@ -23575,7 +24796,7 @@ This report confirms current supply chain operational status for regulatory and 
         shipmentType: 'inbound',
         shipmentStatus: 'in_transit',
         expectedDelivery: '',
-        trackingNumber: ''
+        trackingNumber: '',
       });
       setEditingShipment(null);
       setIsAddingShipment(false);
@@ -23613,7 +24834,9 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Shipment Number</Label>
                   <Input
                     value={shipmentForm.shipmentNumber}
-                    onChange={(e) => setShipmentForm({...shipmentForm, shipmentNumber: e.target.value})}
+                    onChange={e =>
+                      setShipmentForm({ ...shipmentForm, shipmentNumber: e.target.value })
+                    }
                     placeholder="e.g., SH-2024-001"
                     data-testid="shipment-number-input"
                   />
@@ -23622,7 +24845,9 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Tracking Number</Label>
                   <Input
                     value={shipmentForm.trackingNumber}
-                    onChange={(e) => setShipmentForm({...shipmentForm, trackingNumber: e.target.value})}
+                    onChange={e =>
+                      setShipmentForm({ ...shipmentForm, trackingNumber: e.target.value })
+                    }
                     placeholder="e.g., 1Z999AA1234567890"
                     data-testid="tracking-number-input"
                   />
@@ -23631,7 +24856,7 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Origin</Label>
                   <Input
                     value={shipmentForm.origin}
-                    onChange={(e) => setShipmentForm({...shipmentForm, origin: e.target.value})}
+                    onChange={e => setShipmentForm({ ...shipmentForm, origin: e.target.value })}
                     placeholder="e.g., Basel, Switzerland"
                     data-testid="shipment-origin-input"
                   />
@@ -23640,14 +24865,19 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Destination</Label>
                   <Input
                     value={shipmentForm.destination}
-                    onChange={(e) => setShipmentForm({...shipmentForm, destination: e.target.value})}
+                    onChange={e =>
+                      setShipmentForm({ ...shipmentForm, destination: e.target.value })
+                    }
                     placeholder="e.g., Boston, MA, USA"
                     data-testid="shipment-destination-input"
                   />
                 </div>
                 <div>
                   <Label className="text-sm">Carrier</Label>
-                  <Select value={shipmentForm.carrier} onValueChange={(value) => setShipmentForm({...shipmentForm, carrier: value})}>
+                  <Select
+                    value={shipmentForm.carrier}
+                    onValueChange={value => setShipmentForm({ ...shipmentForm, carrier: value })}
+                  >
                     <SelectTrigger data-testid="carrier-select">
                       <SelectValue placeholder="Select carrier" />
                     </SelectTrigger>
@@ -23664,13 +24894,20 @@ This report confirms current supply chain operational status for regulatory and 
                   <Input
                     type="date"
                     value={shipmentForm.expectedDelivery}
-                    onChange={(e) => setShipmentForm({...shipmentForm, expectedDelivery: e.target.value})}
+                    onChange={e =>
+                      setShipmentForm({ ...shipmentForm, expectedDelivery: e.target.value })
+                    }
                     data-testid="expected-delivery-input"
                   />
                 </div>
                 <div>
                   <Label className="text-sm">Type</Label>
-                  <Select value={shipmentForm.shipmentType} onValueChange={(value) => setShipmentForm({...shipmentForm, shipmentType: value})}>
+                  <Select
+                    value={shipmentForm.shipmentType}
+                    onValueChange={value =>
+                      setShipmentForm({ ...shipmentForm, shipmentType: value })
+                    }
+                  >
                     <SelectTrigger data-testid="shipment-type-select">
                       <SelectValue />
                     </SelectTrigger>
@@ -23682,7 +24919,12 @@ This report confirms current supply chain operational status for regulatory and 
                 </div>
                 <div>
                   <Label className="text-sm">Status</Label>
-                  <Select value={shipmentForm.shipmentStatus} onValueChange={(value) => setShipmentForm({...shipmentForm, shipmentStatus: value})}>
+                  <Select
+                    value={shipmentForm.shipmentStatus}
+                    onValueChange={value =>
+                      setShipmentForm({ ...shipmentForm, shipmentStatus: value })
+                    }
+                  >
                     <SelectTrigger data-testid="shipment-status-select">
                       <SelectValue />
                     </SelectTrigger>
@@ -23714,30 +24956,51 @@ This report confirms current supply chain operational status for regulatory and 
                 <p>No shipments tracked yet. Click "Add Shipment" to get started.</p>
               </div>
             ) : (
-              shipments.map((shipment) => (
-                <div key={shipment.id} className="border rounded-lg p-3 hover:bg-gray-50" data-testid={`shipment-${shipment.id}`}>
+              shipments.map(shipment => (
+                <div
+                  key={shipment.id}
+                  className="border rounded-lg p-3 hover:bg-gray-50"
+                  data-testid={`shipment-${shipment.id}`}
+                >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h4 className="font-medium">{shipment.shipmentNumber}</h4>
-                        <Badge variant={
-                          shipment.shipmentStatus === 'delivered' ? 'default' :
-                          shipment.shipmentStatus === 'delayed' ? 'destructive' :
-                          'secondary'
-                        }>
+                        <Badge
+                          variant={
+                            shipment.shipmentStatus === 'delivered'
+                              ? 'default'
+                              : shipment.shipmentStatus === 'delayed'
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                        >
                           {shipment.shipmentStatus}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">{shipment.origin} → {shipment.destination}</p>
+                      <p className="text-sm text-gray-600">
+                        {shipment.origin} → {shipment.destination}
+                      </p>
                       <p className="text-xs text-gray-500">
-                        {shipment.carrier} • Tracking: {shipment.trackingNumber} • Expected: {shipment.expectedDelivery}
+                        {shipment.carrier} • Tracking: {shipment.trackingNumber} • Expected:{' '}
+                        {shipment.expectedDelivery}
                       </p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => editShipment(shipment)} data-testid={`edit-shipment-${shipment.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => editShipment(shipment)}
+                        data-testid={`edit-shipment-${shipment.id}`}
+                      >
                         <Edit className="w-3 h-3" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => deleteShipment(shipment.id)} data-testid={`delete-shipment-${shipment.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteShipment(shipment.id)}
+                        data-testid={`delete-shipment-${shipment.id}`}
+                      >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
@@ -23762,7 +25025,7 @@ This report confirms current supply chain operational status for regulatory and 
       quantity: 0,
       unit: 'kg',
       expiryDate: '',
-      status: 'available'
+      status: 'available',
     });
 
     const { toast } = useToast();
@@ -23786,26 +25049,26 @@ This report confirms current supply chain operational status for regulatory and 
     const saveInventory = async () => {
       try {
         const method = editingInventory ? 'PUT' : 'POST';
-        const url = editingInventory 
+        const url = editingInventory
           ? `/api/supply-chain/inventory/${editingInventory.id}`
           : '/api/supply-chain/inventory';
-        
+
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...inventoryForm,
             organizationId: 7,
-            quantity: parseFloat(inventoryForm.quantity) || 0
-          })
+            quantity: parseFloat(inventoryForm.quantity) || 0,
+          }),
         });
 
         if (response.ok) {
           toast({
             title: '✅ Inventory Updated',
-            description: `Inventory record has been ${editingInventory ? 'updated' : 'added'} successfully.`
+            description: `Inventory record has been ${editingInventory ? 'updated' : 'added'} successfully.`,
           });
-          
+
           resetInventoryForm();
           fetchInventory();
         } else {
@@ -23815,23 +25078,23 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to save inventory record. Please try again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const deleteInventory = async (id) => {
+    const deleteInventory = async id => {
       if (!confirm('Are you sure you want to delete this inventory record?')) return;
-      
+
       try {
         const response = await fetch(`/api/supply-chain/inventory/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
         });
 
         if (response.ok) {
           toast({
             title: '✅ Inventory Deleted',
-            description: 'Inventory record has been removed from the system.'
+            description: 'Inventory record has been removed from the system.',
           });
           fetchInventory();
         }
@@ -23839,12 +25102,12 @@ This report confirms current supply chain operational status for regulatory and 
         toast({
           title: 'Error',
           description: 'Failed to delete inventory record.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };
 
-    const editInventory = (item) => {
+    const editInventory = item => {
       setEditingInventory(item);
       setInventoryForm({
         materialId: item.materialId || '',
@@ -23853,7 +25116,7 @@ This report confirms current supply chain operational status for regulatory and 
         quantity: item.quantity || 0,
         unit: item.unit || 'kg',
         expiryDate: item.expiryDate || '',
-        status: item.status || 'available'
+        status: item.status || 'available',
       });
       setIsAddingInventory(true);
     };
@@ -23866,7 +25129,7 @@ This report confirms current supply chain operational status for regulatory and 
         quantity: 0,
         unit: 'kg',
         expiryDate: '',
-        status: 'available'
+        status: 'available',
       });
       setEditingInventory(null);
       setIsAddingInventory(false);
@@ -23904,7 +25167,9 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Material ID</Label>
                   <Input
                     value={inventoryForm.materialId}
-                    onChange={(e) => setInventoryForm({...inventoryForm, materialId: e.target.value})}
+                    onChange={e =>
+                      setInventoryForm({ ...inventoryForm, materialId: e.target.value })
+                    }
                     placeholder="e.g., MAT-001"
                     data-testid="material-id-input"
                   />
@@ -23913,7 +25178,9 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Batch Number</Label>
                   <Input
                     value={inventoryForm.batchNumber}
-                    onChange={(e) => setInventoryForm({...inventoryForm, batchNumber: e.target.value})}
+                    onChange={e =>
+                      setInventoryForm({ ...inventoryForm, batchNumber: e.target.value })
+                    }
                     placeholder="e.g., BATCH-2024-001"
                     data-testid="batch-number-input"
                   />
@@ -23922,7 +25189,7 @@ This report confirms current supply chain operational status for regulatory and 
                   <Label className="text-sm">Location</Label>
                   <Input
                     value={inventoryForm.location}
-                    onChange={(e) => setInventoryForm({...inventoryForm, location: e.target.value})}
+                    onChange={e => setInventoryForm({ ...inventoryForm, location: e.target.value })}
                     placeholder="e.g., Warehouse A-01"
                     data-testid="inventory-location-input"
                   />
@@ -23932,14 +25199,17 @@ This report confirms current supply chain operational status for regulatory and 
                   <Input
                     type="number"
                     value={inventoryForm.quantity}
-                    onChange={(e) => setInventoryForm({...inventoryForm, quantity: e.target.value})}
+                    onChange={e => setInventoryForm({ ...inventoryForm, quantity: e.target.value })}
                     placeholder="0"
                     data-testid="inventory-quantity-input"
                   />
                 </div>
                 <div>
                   <Label className="text-sm">Unit</Label>
-                  <Select value={inventoryForm.unit} onValueChange={(value) => setInventoryForm({...inventoryForm, unit: value})}>
+                  <Select
+                    value={inventoryForm.unit}
+                    onValueChange={value => setInventoryForm({ ...inventoryForm, unit: value })}
+                  >
                     <SelectTrigger data-testid="inventory-unit-select">
                       <SelectValue />
                     </SelectTrigger>
@@ -23957,13 +25227,18 @@ This report confirms current supply chain operational status for regulatory and 
                   <Input
                     type="date"
                     value={inventoryForm.expiryDate}
-                    onChange={(e) => setInventoryForm({...inventoryForm, expiryDate: e.target.value})}
+                    onChange={e =>
+                      setInventoryForm({ ...inventoryForm, expiryDate: e.target.value })
+                    }
                     data-testid="expiry-date-input"
                   />
                 </div>
                 <div className="col-span-2">
                   <Label className="text-sm">Status</Label>
-                  <Select value={inventoryForm.status} onValueChange={(value) => setInventoryForm({...inventoryForm, status: value})}>
+                  <Select
+                    value={inventoryForm.status}
+                    onValueChange={value => setInventoryForm({ ...inventoryForm, status: value })}
+                  >
                     <SelectTrigger data-testid="inventory-status-select">
                       <SelectValue />
                     </SelectTrigger>
@@ -23995,17 +25270,25 @@ This report confirms current supply chain operational status for regulatory and 
                 <p>No inventory records yet. Click "Add Stock" to get started.</p>
               </div>
             ) : (
-              inventory.map((item) => (
-                <div key={item.id} className="border rounded-lg p-3 hover:bg-gray-50" data-testid={`inventory-${item.id}`}>
+              inventory.map(item => (
+                <div
+                  key={item.id}
+                  className="border rounded-lg p-3 hover:bg-gray-50"
+                  data-testid={`inventory-${item.id}`}
+                >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h4 className="font-medium">Material: {item.materialId}</h4>
-                        <Badge variant={
-                          item.status === 'available' ? 'default' :
-                          item.status === 'quarantine' ? 'destructive' :
-                          'secondary'
-                        }>
+                        <Badge
+                          variant={
+                            item.status === 'available'
+                              ? 'default'
+                              : item.status === 'quarantine'
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                        >
                           {item.status}
                         </Badge>
                       </div>
@@ -24017,10 +25300,20 @@ This report confirms current supply chain operational status for regulatory and 
                       </p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => editInventory(item)} data-testid={`edit-inventory-${item.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => editInventory(item)}
+                        data-testid={`edit-inventory-${item.id}`}
+                      >
                         <Edit className="w-3 h-3" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => deleteInventory(item.id)} data-testid={`delete-inventory-${item.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteInventory(item.id)}
+                        data-testid={`delete-inventory-${item.id}`}
+                      >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
@@ -24473,7 +25766,7 @@ ${context.projectContext.includes('FDA') ? 'FDA submissions require eCTD format 
     return `I'm currently experiencing API connectivity issues, but I can provide guidance on these CMC topics:
 
 **Analytical Development**: Method validation per ICH Q2(R1), HPLC optimization, stability-indicating methods
-**Process Development**: Scale-up considerations, process validation stages, critical parameter identification  
+**Process Development**: Scale-up considerations, process validation stages, critical parameter identification
 **Quality Control**: Specification setting, testing strategies, release vs. shelf-life criteria
 **Regulatory Strategy**: CTD Module 3 preparation, agency-specific requirements, submission readiness
 
@@ -24710,29 +26003,143 @@ What specific aspect would you like to explore further? I can provide detailed g
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="bg-white px-4 py-3">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">CMC Management Platform</h1>
-            <p className="text-gray-600 mt-2">
-              Chemistry, Manufacturing & Controls - Pharmaceutical Development
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setShowAiAssistant(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-4 py-2 rounded-lg flex items-center gap-2 font-medium"
-              data-testid="button-toggle-ai-assistant"
-            >
-              <div className="p-1.5 bg-white/20 rounded">
-                <Brain className="w-4 h-4" />
-              </div>
-              <span>Regulatory Advisor</span>
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            </Button>
-          </div>
+        {/* Compact action bar — title provided by shell WorkspaceHeader */}
+        <div className="mb-3 flex items-center justify-end gap-2">
+          <Button
+            onClick={async () => {
+              try {
+                const token = localStorage.getItem('trialsage_access_token');
+                const headers = {
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                };
+
+                // First, try to fetch real CMC project data
+                let cmcData = null;
+                try {
+                  const dataRes = await fetch('/api/knowledge-base/cmc-project-data', { headers });
+                  if (dataRes.ok) {
+                    const dataPayload = await dataRes.json();
+                    cmcData = dataPayload.data;
+                  }
+                } catch (e) {
+                  console.warn('[CMC] Could not fetch project data, using fallback:', e);
+                }
+
+                // Build payload from real data or fallback
+                const substance = cmcData?.drugSubstances?.[0];
+                const product = cmcData?.drugProducts?.[0];
+                const project = cmcData?.project;
+
+                const payload = {
+                  drug_name: project?.drugName || 'Drug Product',
+                  substance_name: substance?.substanceName || project?.drugName || 'Drug Substance',
+                  molecular_formula: substance?.molecularFormula || '',
+                  molecular_weight: substance?.molecularWeight || '',
+                  dosage_form: product?.dosageForm || project?.dosageForm || '',
+                  strength: product?.strength || '',
+                  route_of_administration: product?.routeOfAdministration || '',
+                  manufacturing_process: substance?.manufacturingRoute || '',
+                  specifications: substance?.specifications || product?.specifications || null,
+                  stability_data: substance?.stability || product?.stabilityData || null,
+                  impurities_profile: substance?.impurities || null,
+                  composition: product?.formulation || product?.excipients || null,
+                };
+
+                const res = await fetch('/api/knowledge-base/generate-module3-docx', {
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify(payload),
+                });
+                if (!res.ok) throw new Error('Generation failed');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Module3_CMC_${(payload.drug_name || 'Drug').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // Also save the generated document as a project artifact for in-platform access
+                try {
+                  const htmlContent = `<h1>Module 3 – Quality (CMC): ${payload.drug_name}</h1>
+<h2>3.2.S Drug Substance</h2>
+<p><strong>Substance:</strong> ${payload.substance_name || 'N/A'}</p>
+<p><strong>Molecular Formula:</strong> ${payload.molecular_formula || 'N/A'}</p>
+<p><strong>Molecular Weight:</strong> ${payload.molecular_weight || 'N/A'}</p>
+<h3>3.2.S.1 General Information</h3><p>See generated DOCX for full content.</p>
+<h3>3.2.S.2 Manufacture</h3><p>${payload.manufacturing_process || 'Details in DOCX.'}</p>
+<h2>3.2.P Drug Product</h2>
+<p><strong>Dosage Form:</strong> ${payload.dosage_form || 'N/A'}</p>
+<p><strong>Strength:</strong> ${payload.strength || 'N/A'}</p>
+<p><strong>Route:</strong> ${payload.route_of_administration || 'N/A'}</p>
+<h3>3.2.P.1 Description and Composition</h3><p>See generated DOCX for full content.</p>`;
+
+                  const saveRes = await fetch('/api/knowledge-base/save-docx-as-artifact', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                      projectId: project?.id || cmcData?.project?.id,
+                      title: `Module 3 – Quality (CMC): ${payload.drug_name}`,
+                      htmlContent,
+                      ctdSection: '3.2',
+                      type: 'regulatory_document',
+                    }),
+                  });
+                  if (saveRes.ok) {
+                    const saveResult = await saveRes.json();
+                    if (saveResult.success && onDocumentCreated) {
+                      onDocumentCreated({
+                        artifactId: saveResult.data.artifactId,
+                        title: saveResult.data.title,
+                        ctdSection: '3.2',
+                      });
+                    }
+                    toast({
+                      title: 'Module 3 DOCX Generated',
+                      description: 'Document downloaded and saved to project artifacts',
+                    });
+                  } else {
+                    toast({
+                      title: 'Module 3 DOCX Generated',
+                      description:
+                        'Document downloaded. Artifact save failed — open workspace to retry.',
+                    });
+                  }
+                } catch (saveErr) {
+                  console.warn('[CMC] Artifact save failed:', saveErr);
+                  toast({
+                    title: 'Module 3 DOCX Generated',
+                    description: 'Document downloaded. Artifact save could not complete.',
+                  });
+                }
+              } catch (err) {
+                toast({
+                  title: 'Generation Failed',
+                  description: err.message,
+                  variant: 'destructive',
+                });
+              }
+            }}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-medium"
+            data-testid="button-generate-module3"
+          >
+            <FileDown className="w-4 h-4" />
+            <span>Export Module 3 DOCX</span>
+          </Button>
+          <Button
+            onClick={() => setShowAiAssistant(true)}
+            className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-medium"
+            data-testid="button-toggle-ai-assistant"
+          >
+            <Brain className="w-4 h-4" />
+            <span>Regulatory Advisor</span>
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+          </Button>
         </div>
 
         {/* Navigation Tabs */}
@@ -24787,13 +26194,13 @@ What specific aspect would you like to explore further? I can provide detailed g
           <TabsContent value="quality">{renderQualityControl()}</TabsContent>
           <TabsContent value="regulatory">{renderRegulatoryManagement()}</TabsContent>
           <TabsContent value="document-authoring">{renderDocumentAuthoring()}</TabsContent>
-          <TabsContent value="manufacturing"><ManufacturingProcessPanel /></TabsContent>
+          <TabsContent value="manufacturing">{renderManufacturingExcellence()}</TabsContent>
           <TabsContent value="supply-chain">{renderSupplyChainManagement()}</TabsContent>
           <TabsContent value="intelligence">{renderIntelligenceHub()}</TabsContent>
           <TabsContent value="risk-management">{renderRiskManagement()}</TabsContent>
           <TabsContent value="audit-docs">{renderAuditAndDocumentation()}</TabsContent>
         </Tabs>
-        
+
         {/* AI Gap Resolution Modal Integration */}
         {showGapResolutionModal && selectedGapForResolution && (
           <GapResolutionModal
@@ -24854,14 +26261,12 @@ What specific aspect would you like to explore further? I can provide detailed g
         onTaskCreated={() => {
           setShowUnifiedTaskModal(false);
           toast({
-            title: "Task Created",
-            description: "Task has been successfully added to the CMC module",
+            title: 'Task Created',
+            description: 'Task has been successfully added to the CMC module',
           });
         }}
       />
-
     </div>
-
   );
 };
 

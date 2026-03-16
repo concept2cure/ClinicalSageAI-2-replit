@@ -12,6 +12,8 @@
  */
 
 import { randomUUID } from 'crypto';
+import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import type {
   GatewayRequest,
   GatewayResponse,
@@ -40,7 +42,15 @@ const DEFAULT_MODELS: ModelConfig[] = [
     qualityScore: 95,
     costPer1kInput: 0.005,
     costPer1kOutput: 0.015,
-    capabilities: ['chat', 'document_analysis', 'structured_output', 'regulatory_review', 'code_generation', 'summarization', 'general'],
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
     enabled: true,
   },
   {
@@ -62,7 +72,14 @@ const DEFAULT_MODELS: ModelConfig[] = [
     qualityScore: 97,
     costPer1kInput: 0.003,
     costPer1kOutput: 0.015,
-    capabilities: ['chat', 'document_analysis', 'regulatory_review', 'code_generation', 'summarization', 'general'],
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
     enabled: true,
   },
   {
@@ -118,13 +135,18 @@ const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
 
 const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
   chat: 'This is a deterministic response for testing. The AI Gateway is operating in deterministic mode.',
-  document_analysis: '## Document Analysis (Deterministic Mode)\n\nThe document has been analyzed. Key findings:\n- Section 1: Compliant\n- Section 2: Requires review\n- Section 3: Compliant\n\nOverall risk: Low.',
+  document_analysis:
+    '## Document Analysis (Deterministic Mode)\n\nThe document has been analyzed. Key findings:\n- Section 1: Compliant\n- Section 2: Requires review\n- Section 3: Compliant\n\nOverall risk: Low.',
   structured_output: '{"result": "deterministic", "status": "success", "data": {}}',
-  regulatory_review: '## Regulatory Review (Deterministic Mode)\n\n**Compliance Status**: Passed\n\n- 21 CFR Part 11: Compliant\n- ICH E6(R2): Compliant\n- FDA 510(k) Requirements: Met\n\nNo critical findings identified.',
-  code_generation: '// Deterministic mode — no code generated\nfunction placeholder() {\n  return "deterministic";\n}',
-  summarization: 'Summary (Deterministic Mode): The content covers regulatory requirements for medical device submissions. Key points include substantial equivalence demonstration, performance testing requirements, and labeling standards.',
+  regulatory_review:
+    '## Regulatory Review (Deterministic Mode)\n\n**Compliance Status**: Passed\n\n- 21 CFR Part 11: Compliant\n- ICH E6(R2): Compliant\n- FDA 510(k) Requirements: Met\n\nNo critical findings identified.',
+  code_generation:
+    '// Deterministic mode — no code generated\nfunction placeholder() {\n  return "deterministic";\n}',
+  summarization:
+    'Summary (Deterministic Mode): The content covers regulatory requirements for medical device submissions. Key points include substantial equivalence demonstration, performance testing requirements, and labeling standards.',
   embedding: '[]',
-  general: 'This is a deterministic response from the AI Gateway. Set DETERMINISTIC_MODE=false to enable live AI responses.',
+  general:
+    'This is a deterministic response from the AI Gateway. Set DETERMINISTIC_MODE=false to enable live AI responses.',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -155,7 +177,9 @@ export class AIGateway {
     this.initProviderHealth();
     this.initProviderClients();
 
-    console.log(`[AI Gateway] Initialized — providers: ${this.getEnabledProviders().join(', ')}, strategy: ${this.config.defaultStrategy}, deterministic: ${this.config.deterministicMode}`);
+    console.log(
+      `[AI Gateway] Initialized — providers: ${this.getEnabledProviders().join(', ')}, strategy: ${this.config.defaultStrategy}, deterministic: ${this.config.deterministicMode}`
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -202,7 +226,9 @@ export class AIGateway {
       lastError = error;
       triedProviders.push(selectedModel.provider);
       this.recordFailure(selectedModel.provider, error);
-      console.warn(`[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`);
+      console.warn(
+        `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
+      );
     }
 
     // Try fallback providers
@@ -218,7 +244,9 @@ export class AIGateway {
         lastError = error;
         triedProviders.push(fallback.provider);
         this.recordFailure(fallback.provider, error);
-        console.warn(`[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`);
+        console.warn(
+          `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
+        );
       }
     }
 
@@ -237,7 +265,7 @@ export class AIGateway {
     await this.logAudit(request, errorResponse, strategy, false, lastError?.message);
 
     throw new GatewayAllProvidersFailedError(
-      `All providers failed. Tried: ${triedProviders.join(', ')}. Last error: ${lastError?.message}`,
+      `All providers failed. Tried: ${triedProviders.join(', ')}. Last error: ${lastError?.message}`
     );
   }
 
@@ -259,7 +287,7 @@ export class AIGateway {
   async chat(
     systemPrompt: string,
     userMessage: string,
-    options?: Partial<GatewayRequest>,
+    options?: Partial<GatewayRequest>
   ): Promise<GatewayResponse> {
     return this.route({
       taskType: 'chat',
@@ -277,7 +305,7 @@ export class AIGateway {
   async structuredOutput<T = unknown>(
     prompt: string,
     schema?: Record<string, unknown>,
-    options?: Partial<GatewayRequest>,
+    options?: Partial<GatewayRequest>
   ): Promise<T> {
     const response = await this.route({
       taskType: 'structured_output',
@@ -291,7 +319,9 @@ export class AIGateway {
     try {
       return JSON.parse(response.content) as T;
     } catch {
-      throw new Error(`AI Gateway: Failed to parse structured output as JSON: ${response.content.slice(0, 200)}`);
+      throw new Error(
+        `AI Gateway: Failed to parse structured output as JSON: ${response.content.slice(0, 200)}`
+      );
     }
   }
 
@@ -306,9 +336,7 @@ export class AIGateway {
    * Get enabled providers.
    */
   getEnabledProviders(): ProviderName[] {
-    return this.config.providers
-      .filter(p => p.enabled)
-      .map(p => p.name);
+    return this.config.providers.filter(p => p.enabled).map(p => p.name);
   }
 
   /**
@@ -334,7 +362,7 @@ export class AIGateway {
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
-    startTime: number,
+    startTime: number
   ): Promise<GatewayResponse> {
     switch (modelConfig.provider) {
       case 'openai':
@@ -352,7 +380,7 @@ export class AIGateway {
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
-    startTime: number,
+    startTime: number
   ): Promise<GatewayResponse> {
     if (!this.openaiClient) {
       throw new Error('OpenAI client not initialized (missing OPENAI_API_KEY)');
@@ -394,7 +422,7 @@ export class AIGateway {
         estimatedCostUsd: this.estimateCost(
           modelConfig,
           completion.usage?.prompt_tokens || 0,
-          completion.usage?.completion_tokens || 0,
+          completion.usage?.completion_tokens || 0
         ),
       },
       latencyMs: Date.now() - startTime,
@@ -409,7 +437,7 @@ export class AIGateway {
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
-    startTime: number,
+    startTime: number
   ): Promise<GatewayResponse> {
     if (!this.anthropicClient) {
       throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
@@ -432,9 +460,9 @@ export class AIGateway {
 
     const response = await this.anthropicClient.messages.create(params);
 
-    const content = response.content
-      ?.map((block: any) => (block.type === 'text' ? block.text : ''))
-      .join('') || '';
+    const content =
+      response.content?.map((block: any) => (block.type === 'text' ? block.text : '')).join('') ||
+      '';
 
     return {
       content,
@@ -447,7 +475,7 @@ export class AIGateway {
         estimatedCostUsd: this.estimateCost(
           modelConfig,
           response.usage?.input_tokens || 0,
-          response.usage?.output_tokens || 0,
+          response.usage?.output_tokens || 0
         ),
       },
       latencyMs: Date.now() - startTime,
@@ -462,7 +490,7 @@ export class AIGateway {
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
-    startTime: number,
+    startTime: number
   ): Promise<GatewayResponse> {
     if (!this.moonshotClient) {
       throw new Error('Moonshot client not initialized (missing KIMI_API_KEY or MOONSHOT_API_KEY)');
@@ -493,7 +521,7 @@ export class AIGateway {
         estimatedCostUsd: this.estimateCost(
           modelConfig,
           completion.usage?.prompt_tokens || 0,
-          completion.usage?.completion_tokens || 0,
+          completion.usage?.completion_tokens || 0
         ),
       },
       latencyMs: Date.now() - startTime,
@@ -511,26 +539,26 @@ export class AIGateway {
   private selectModel(request: GatewayRequest, strategy: RoutingStrategy): ModelConfig | null {
     // Explicit provider/model override
     if (request.provider || request.model) {
-      const explicit = this.models.find(m =>
-        m.enabled &&
-        (!request.provider || m.provider === request.provider) &&
-        (!request.model || m.model === request.model || m.id === request.model),
+      const explicit = this.models.find(
+        m =>
+          m.enabled &&
+          (!request.provider || m.provider === request.provider) &&
+          (!request.model || m.model === request.model || m.id === request.model)
       );
       if (explicit && this.isProviderHealthy(explicit.provider)) return explicit;
       // Even if unhealthy, honor explicit if it's the only option
       if (explicit) return explicit;
     }
 
-    const eligible = this.models.filter(m =>
-      m.enabled &&
-      m.capabilities.includes(request.taskType) &&
-      this.isProviderHealthy(m.provider),
+    const eligible = this.models.filter(
+      m =>
+        m.enabled && m.capabilities.includes(request.taskType) && this.isProviderHealthy(m.provider)
     );
 
     if (eligible.length === 0) {
       // Relax health check
-      const relaxed = this.models.filter(m =>
-        m.enabled && m.capabilities.includes(request.taskType),
+      const relaxed = this.models.filter(
+        m => m.enabled && m.capabilities.includes(request.taskType)
       );
       return relaxed[0] || null;
     }
@@ -560,7 +588,11 @@ export class AIGateway {
       case 'task_based':
       default: {
         // Use task preference order
-        const preferred = TASK_PROVIDER_PREFERENCES[request.taskType] || ['openai', 'anthropic', 'moonshot'];
+        const preferred = TASK_PROVIDER_PREFERENCES[request.taskType] || [
+          'openai',
+          'anthropic',
+          'moonshot',
+        ];
         for (const providerName of preferred) {
           const model = eligible.find(m => m.provider === providerName);
           if (model) return model;
@@ -571,11 +603,11 @@ export class AIGateway {
   }
 
   private getFallbackModels(taskType: TaskType, triedProviders: ProviderName[]): ModelConfig[] {
-    return this.models.filter(m =>
-      m.enabled &&
-      m.capabilities.includes(taskType) &&
-      !triedProviders.includes(m.provider),
-    ).sort((a, b) => b.qualityScore - a.qualityScore);
+    return this.models
+      .filter(
+        m => m.enabled && m.capabilities.includes(taskType) && !triedProviders.includes(m.provider)
+      )
+      .sort((a, b) => b.qualityScore - a.qualityScore);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -585,7 +617,7 @@ export class AIGateway {
   private buildDeterministicResponse(
     request: GatewayRequest,
     requestId: string,
-    startTime: number,
+    startTime: number
   ): GatewayResponse {
     const content = DETERMINISTIC_RESPONSES[request.taskType] || DETERMINISTIC_RESPONSES.general;
     return {
@@ -640,9 +672,8 @@ export class AIGateway {
     health.healthy = true;
 
     // Exponential moving average for latency
-    health.avgLatencyMs = health.avgLatencyMs === 0
-      ? latencyMs
-      : health.avgLatencyMs * 0.8 + latencyMs * 0.2;
+    health.avgLatencyMs =
+      health.avgLatencyMs === 0 ? latencyMs : health.avgLatencyMs * 0.8 + latencyMs * 0.2;
 
     health.errorRate = Math.max(0, health.errorRate * 0.95);
   }
@@ -659,7 +690,9 @@ export class AIGateway {
     // Mark unhealthy after 3 consecutive failures
     if (health.consecutiveFailures >= 3) {
       health.healthy = false;
-      console.warn(`[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures`);
+      console.warn(
+        `[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures`
+      );
 
       // Auto-recover after 60 seconds
       setTimeout(() => {
@@ -677,7 +710,9 @@ export class AIGateway {
   // ─────────────────────────────────────────────────────────────────────────
 
   private estimateCost(model: ModelConfig, inputTokens: number, outputTokens: number): number {
-    return (inputTokens / 1000) * model.costPer1kInput + (outputTokens / 1000) * model.costPer1kOutput;
+    return (
+      (inputTokens / 1000) * model.costPer1kInput + (outputTokens / 1000) * model.costPer1kOutput
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -689,7 +724,7 @@ export class AIGateway {
     response: GatewayResponse,
     strategy: RoutingStrategy,
     success: boolean,
-    error?: string,
+    error?: string
   ): Promise<void> {
     if (!this.config.auditEnabled) return;
 
@@ -731,7 +766,10 @@ export class AIGateway {
     const moonshotKey = process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY;
 
     return {
-      deterministicMode: process.env.AI_GATEWAY_DETERMINISTIC === 'true' || process.env.DETERMINISTIC_MODE === 'true' || false,
+      deterministicMode:
+        process.env.AI_GATEWAY_DETERMINISTIC === 'true' ||
+        process.env.DETERMINISTIC_MODE === 'true' ||
+        false,
       defaultStrategy: (process.env.AI_GATEWAY_STRATEGY as RoutingStrategy) || 'task_based',
       providers: [
         {
@@ -771,9 +809,7 @@ export class AIGateway {
   }
 
   private buildModelRegistry(): ModelConfig[] {
-    const enabledProviders = new Set(
-      this.config.providers.filter(p => p.enabled).map(p => p.name),
-    );
+    const enabledProviders = new Set(this.config.providers.filter(p => p.enabled).map(p => p.name));
 
     return DEFAULT_MODELS.map(m => ({
       ...m,
@@ -786,7 +822,6 @@ export class AIGateway {
     const openaiConfig = this.config.providers.find(p => p.name === 'openai');
     if (openaiConfig?.enabled && openaiConfig.apiKey) {
       try {
-        const OpenAI = require('openai').default || require('openai');
         this.openaiClient = new OpenAI({ apiKey: openaiConfig.apiKey });
         console.log('  ✅ OpenAI provider ready');
       } catch (e: any) {
@@ -798,7 +833,6 @@ export class AIGateway {
     const anthropicConfig = this.config.providers.find(p => p.name === 'anthropic');
     if (anthropicConfig?.enabled && anthropicConfig.apiKey) {
       try {
-        const Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
         this.anthropicClient = new Anthropic({ apiKey: anthropicConfig.apiKey });
         console.log('  ✅ Anthropic provider ready');
       } catch (e: any) {
@@ -810,7 +844,6 @@ export class AIGateway {
     const moonshotConfig = this.config.providers.find(p => p.name === 'moonshot');
     if (moonshotConfig?.enabled && moonshotConfig.apiKey) {
       try {
-        const OpenAI = require('openai').default || require('openai');
         this.moonshotClient = new OpenAI({
           apiKey: moonshotConfig.apiKey,
           baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.cn/v1',

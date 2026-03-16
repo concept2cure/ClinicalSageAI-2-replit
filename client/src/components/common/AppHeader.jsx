@@ -44,7 +44,7 @@ const AppHeader = () => {
             <div className="flex-shrink-0 flex items-center">
               <Link href="/">
                 <a className="flex items-center">
-                  <span className="text-2xl font-bold text-pink-600">TrialSage</span>
+                  <span className="text-2xl font-bold text-pink-600">Concept2Cure</span>
                   <span className="text-xs bg-gray-800 text-white px-1.5 py-0.5 rounded ml-1 font-medium">
                     v1.0
                   </span>

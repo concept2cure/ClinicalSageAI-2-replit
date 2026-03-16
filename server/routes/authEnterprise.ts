@@ -33,7 +33,9 @@ import {
 const router = Router();
 
 const JWT_SECRET =
-  process.env.JWT_SECRET || process.env.SESSION_SECRET || 'trialsage-dev-secret-key';
+  process.env.JWT_SECRET ||
+  process.env.SESSION_SECRET ||
+  'trialsage-dev-secret-key-change-in-production';
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Dev user for testing

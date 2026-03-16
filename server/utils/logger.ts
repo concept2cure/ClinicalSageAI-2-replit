@@ -125,21 +125,14 @@ const baseLogger: Logger = {
  */
 export function createScopedLogger(scope: string): Logger {
   return {
-    info: (message: string, context: LogContext = {}) => {
-      baseLogger.info(`[${scope}] ${message}`, context);
-    },
-
-    error: (message: string, context: LogContext = {}) => {
-      baseLogger.error(`[${scope}] ${message}`, context);
-    },
-
-    warn: (message: string, context: LogContext = {}) => {
-      baseLogger.warn(`[${scope}] ${message}`, context);
-    },
-
-    debug: (message: string, context: LogContext = {}) => {
-      baseLogger.debug(`[${scope}] ${message}`, context);
-    },
+    info: (message: string, context?: Record<string, unknown>) =>
+      logger.info(`[${scope}] ${message}`, context || {}),
+    error: (message: string, context?: Record<string, unknown>) =>
+      logger.error(`[${scope}] ${message}`, context || {}),
+    warn: (message: string, context?: Record<string, unknown>) =>
+      logger.warn(`[${scope}] ${message}`, context || {}),
+    debug: (message: string, context?: Record<string, unknown>) =>
+      logger.debug(`[${scope}] ${message}`, context || {}),
   };
 }
 
@@ -153,7 +146,13 @@ const pinoLogger = pino({
   level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
   timestamp: pino.stdTimeFunctions.isoTime,
   redact: {
-    paths: ['context.password', 'context.passwordHash', 'context.token', 'context.apiKey', '*.authorization'],
+    paths: [
+      'context.password',
+      'context.passwordHash',
+      'context.token',
+      'context.apiKey',
+      '*.authorization',
+    ],
     remove: false,
   },
 });
@@ -166,4 +165,6 @@ const logger = {
   debug: (message: string, context: any = {}) => pinoLogger.debug({ context }, message),
 };
 
+// Named export so files can use: import { logger } from '../utils/logger.js'
+export { logger };
 export default logger;

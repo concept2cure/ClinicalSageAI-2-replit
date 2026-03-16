@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Send,
   Bot,
@@ -10,9 +11,18 @@ import {
   ListChecks,
   RefreshCw,
   ChevronDown,
+  ChevronUp,
   Code,
   Image,
   Copy,
+  AlertTriangle,
+  Link2,
+  ShieldCheck,
+  ShieldAlert,
+  Info,
+  Plus,
+  Eye,
+  X,
 } from 'lucide-react';
 import {
   Card,
@@ -22,61 +32,273 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card';
+import { CitationList, ConfidenceBadge } from '@/components/ai/AIResponseBlock';
 
-// Mock chat history
-const initialMessages = {
-  2.7: [
-    {
-      id: 1,
-      role: 'user',
-      content: 'What should I include in section 2.7?',
-      timestamp: new Date(Date.now() - 60000 * 60),
-    },
-    {
-      id: 2,
-      role: 'assistant',
-      content:
-        'Section 2.7 (Clinical Summary) should include a detailed yet concise analysis of all clinical data. Make sure to cover:\n\n1. Biopharmaceutic studies\n2. Clinical pharmacology studies\n3. Clinical efficacy studies\n4. Clinical safety findings\n5. Benefit-risk conclusions\n\nI recommend organizing this section with clear tables and graphs for the key efficacy and safety endpoints. Would you like me to help with a specific subsection?',
-      timestamp: new Date(Date.now() - 60000 * 59),
-    },
-  ],
-  3.2: [
-    {
-      id: 1,
-      role: 'user',
-      content: 'How should I structure the manufacturing information?',
-      timestamp: new Date(Date.now() - 60000 * 180),
-    },
-    {
-      id: 2,
-      role: 'assistant',
-      content:
-        'For Section 3.2, structure your manufacturing information as follows:\n\n1. Description of the manufacturing process and process controls\n2. Control of materials\n3. Control of critical steps and intermediates\n4. Process validation and/or evaluation\n5. Manufacturing process development\n\nEnsure you include flow diagrams of the manufacturing process and clearly identify critical process parameters (CPPs) and critical quality attributes (CQAs).',
-      timestamp: new Date(Date.now() - 60000 * 179),
-    },
-  ],
-};
-
-// Default messages for sections without specific history
+// Default welcome message
 const defaultMessages = [
   {
     id: 1,
     role: 'assistant',
     content:
-      "Hello! I'm AnA, your Audit & Narrative Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
-    timestamp: new Date(Date.now() - 60000 * 5),
+      "Hello! I'm your Lumen AI Regulatory Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
+    timestamp: new Date(),
+    source: 'system',
   },
 ];
 
-export default function LumenChatPane({ contextId }) {
-  const [messages, setMessages] = useState([]);
+// ── Claim Status UI ──────────────────────────────────────────────────────────
+
+const CLAIM_STATUS_CONFIG = {
+  SUPPORTED: {
+    label: 'Supported',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    border: 'border-l-emerald-500',
+    icon: ShieldCheck,
+  },
+  WEAK: {
+    label: 'Weak',
+    color: 'bg-amber-100 text-amber-800 border-amber-200',
+    border: 'border-l-amber-500',
+    icon: Info,
+  },
+  UNSUPPORTED: {
+    label: 'Unsupported',
+    color: 'bg-red-100 text-red-800 border-red-200',
+    border: 'border-l-red-500',
+    icon: ShieldAlert,
+  },
+};
+
+function ClaimStatusPill({ status }) {
+  const config = CLAIM_STATUS_CONFIG[status] || CLAIM_STATUS_CONFIG.UNSUPPORTED;
+  const Icon = config.icon;
+  return (
+    <Badge variant="outline" className={`${config.color} text-[10px] font-medium gap-1`}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </Badge>
+  );
+}
+
+function ClaimCard({ claim, onAddToBinder, binderLoading }) {
+  const [expanded, setExpanded] = useState(false);
+  const config = CLAIM_STATUS_CONFIG[claim.status] || CLAIM_STATUS_CONFIG.UNSUPPORTED;
+
+  return (
+    <div className={`border-l-4 ${config.border} bg-muted/30 rounded-r-md px-3 py-2 space-y-1.5`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="prose prose-sm whitespace-pre-line break-words text-sm">
+            {claim.claimText}
+          </div>
+        </div>
+        <ClaimStatusPill status={claim.status} />
+      </div>
+
+      {/* Citation count + expand toggle */}
+      {claim.citations && claim.citations.length > 0 && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <Link2 className="h-3 w-3" />
+            {claim.citations.length} citation{claim.citations.length !== 1 ? 's' : ''}
+            {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+        </div>
+      )}
+
+      {/* Expanded citations */}
+      {expanded && claim.citations && (
+        <div className="space-y-1 pl-2 border-l-2 border-blue-200">
+          {claim.citations.map((cit, i) => (
+            <div
+              key={cit.chunkId || i}
+              className="text-xs text-muted-foreground flex items-center gap-1.5"
+            >
+              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-0.5 text-[9px] font-bold bg-blue-100 text-blue-700 rounded-sm">
+                {i + 1}
+              </span>
+              <span className="truncate">{cit.title || 'Unknown source'}</span>
+              <span className="text-[10px] text-muted-foreground/60 shrink-0">
+                {Math.round((cit.score || 0) * 100)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Verifier flags */}
+      {claim.verifierFlags && claim.verifierFlags.length > 0 && (
+        <div className="space-y-1 pt-0.5">
+          {claim.verifierFlags.map((flag, i) => (
+            <div
+              key={flag.rule || i}
+              className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1"
+            >
+              <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+              <span>{flag.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add to Binder button */}
+      {onAddToBinder && claim.status !== 'UNSUPPORTED' && claim.claimId && (
+        <div className="pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 text-[10px] px-2"
+            disabled={binderLoading}
+            onClick={() => onAddToBinder(claim.claimId)}
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Add to Binder
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChainDrawer({ chain, onClose }) {
+  if (!chain) return null;
+
+  return (
+    <div className="fixed inset-y-0 right-0 w-80 bg-background border-l shadow-lg z-50 flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <Eye className="h-4 w-4" />
+          Provenance Chain
+        </h3>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 text-xs">
+        {/* Retrieval */}
+        <div className="space-y-1">
+          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+            Retrieval
+          </div>
+          <div className="bg-muted/50 rounded-md p-2 space-y-1 font-mono">
+            <div>
+              <span className="text-muted-foreground">runId: </span>
+              <span className="break-all">{chain.retrievalRunId || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">snapshotHash: </span>
+              <span className="break-all">{chain.snapshotHashSha256 || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">sources: </span>
+              {chain.retrievalMeta?.retrievedCount ?? 0} retrieved,{' '}
+              {chain.retrievalMeta?.citedCount ?? 0} cited
+            </div>
+            <div>
+              <span className="text-muted-foreground">orgScoped: </span>
+              {chain.retrievalMeta?.orgScoped ? 'true' : 'false'}
+            </div>
+            <div>
+              <span className="text-muted-foreground">citationCoverage: </span>
+              {Math.round((chain.retrievalMeta?.citationCoverage ?? 0) * 100)}%
+            </div>
+            <div>
+              <span className="text-muted-foreground">supportedClaimRate: </span>
+              {Math.round((chain.retrievalMeta?.supportedClaimRate ?? 0) * 100)}%
+            </div>
+          </div>
+        </div>
+
+        {/* Generation */}
+        <div className="space-y-1">
+          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+            Generation
+          </div>
+          <div className="bg-muted/50 rounded-md p-2 space-y-1 font-mono">
+            <div>
+              <span className="text-muted-foreground">runId: </span>
+              <span className="break-all">{chain.generationRunId || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">model: </span>
+              {chain.model || 'unknown'}
+            </div>
+            <div>
+              <span className="text-muted-foreground">tokens: </span>
+              {chain.usage?.total_tokens ?? 0}
+            </div>
+          </div>
+        </div>
+
+        {/* Claims summary */}
+        {chain.claims && chain.claims.length > 0 && (
+          <div className="space-y-1">
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+              Claims ({chain.claims.length})
+            </div>
+            <div className="space-y-1">
+              {chain.claims.map((c, i) => (
+                <div key={i} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1">
+                  <span className="text-muted-foreground">#{i + 1}</span>
+                  <ClaimStatusPill status={c.status} />
+                  <span className="text-[10px] text-muted-foreground">
+                    {c.citations?.length || 0} cit.
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Sources */}
+        {chain.sources && chain.sources.length > 0 && (
+          <div className="space-y-1">
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+              Retrieved Sources
+            </div>
+            {chain.sources.map((s, i) => (
+              <div key={s.id || i} className="bg-muted/50 rounded-md p-2">
+                <div className="font-medium">
+                  [SRC-{i + 1}] {s.title}
+                </div>
+                <div className="text-[10px] text-muted-foreground/70 mt-0.5">
+                  Source Type: {(s.sourceType || 'atom').toUpperCase()}
+                </div>
+                <div className="text-muted-foreground mt-0.5 line-clamp-2">
+                  {s.content?.substring(0, 150)}...
+                </div>
+                <div className="text-muted-foreground mt-0.5">
+                  Score: {Math.round((s.score || 0) * 100)}%
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function LumenChatPane({ contextId, projectId }) {
+  const [messages, setMessages] = useState(defaultMessages);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [threadId, setThreadId] = useState(null);
+  const [aiModel, setAiModel] = useState(null);
+  const [error, setError] = useState(null);
+  const [chainDrawerData, setChainDrawerData] = useState(null);
+  const [binderLoading, setBinderLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Load section-specific chat history
+  // Reset chat when context changes
   useEffect(() => {
-    setMessages(initialMessages[contextId] || defaultMessages);
+    setMessages(defaultMessages);
+    setThreadId(null);
+    setAiModel(null);
+    setError(null);
   }, [contextId]);
 
   // Auto-scroll to bottom of messages
@@ -84,10 +306,9 @@ export default function LumenChatPane({ contextId }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async () => {
+    if (!input.trim() || isTyping) return;
 
-    // Add user message
     const userMessage = {
       id: messages.length + 1,
       role: 'user',
@@ -96,35 +317,76 @@ export default function LumenChatPane({ contextId }) {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsTyping(true);
+    setError(null);
 
-    // Simulate AI response after a delay
-    setTimeout(() => {
-      const aiResponses = {
-        1.1: 'For this administrative section, make sure to include all required contact information for the sponsor and investigators. Also, ensure Form FDA 356h is properly completed and signed. Would you like me to help with anything specific about this form?',
-        1.2: "In the cover letter, you should clearly state the purpose of the submission, reference any prior communications with the FDA, and provide a high-level overview of what's included. Consider adding a table of contents for the submission package.",
-        2.1: 'The ToC should follow the exact structure defined in ICH M4. Make sure all section numbering is correct and hyperlinks are working properly if submitting electronically.',
-        2.5: 'Your Clinical Overview should focus on the benefit-risk assessment, integrating all relevant data from Module 5. Make sure to address any safety concerns identified in nonclinical studies and how the clinical program addressed them.',
-        2.7: "Based on your current content, I'd recommend strengthening the efficacy summary with more quantitative data. The primary endpoint results should be presented with confidence intervals and p-values. Would you like me to suggest a table format for this data?",
-        3.2: 'Your quality information appears comprehensive, but you might need to add more details on batch analysis. Regulatory authorities typically expect at least 3 batches of data. Also, consider adding a risk assessment for critical process parameters.',
-        4.2: 'For the pharmacology section, make sure to clearly link the mechanism of action to the proposed indication. Include a summary table of all major nonclinical findings and their clinical relevance.',
-        5.3: 'Clinical study reports should follow ICH E3 guidelines. Each CSR should include a protocol and statistical analysis plan as appendices. For pivotal studies, include patient narratives for serious adverse events and discontinuations due to adverse events.',
-      };
+    try {
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userInput,
+          thread_id: threadId,
+          project_id: projectId || undefined,
+          system_prompt: contextId
+            ? `You are a regulatory affairs AI assistant helping with eCTD section ${contextId}. Provide specific, actionable guidance for this regulatory document section. Include ICH guideline references where applicable.`
+            : undefined,
+        }),
+      });
 
-      const defaultResponse =
-        "I've analyzed this section and it appears to follow regulatory guidelines. To enhance it further, consider adding more cross-references to supporting data in other modules. Is there any specific regulatory requirement you're concerned about?";
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(
+          errBody.code === 'AI_PROVIDER_UNAVAILABLE'
+            ? 'AI providers are unavailable. Please configure OPENAI_API_KEY.'
+            : `Server returned ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.thread_id) setThreadId(data.thread_id);
+      if (data.model) setAiModel(data.model);
 
       const aiMessage = {
         id: messages.length + 2,
         role: 'assistant',
-        content: aiResponses[contextId] || defaultResponse,
+        content: data.answer || 'I was unable to generate a response. Please try again.',
         timestamp: new Date(),
+        model: data.model,
+        source: 'api',
+        citations: data.citations || data.sources || [],
+        confidence: typeof data.confidence === 'number' ? data.confidence : null,
+        // Provenance chain
+        claims: data.claims || null,
+        retrievalRunId: data.retrievalRunId || null,
+        snapshotHashSha256: data.snapshotHashSha256 || null,
+        generationRunId: data.generationRunId || null,
+        retrievalMeta: data.retrievalMeta || null,
+        sources: data.sources || [],
+        usage: data.usage || null,
       };
 
       setMessages(prev => [...prev, aiMessage]);
+    } catch (err) {
+      console.error('LumenChatPane: Failed to get AI response:', err);
+      setError('Failed to reach the AI service. Please try again.');
+
+      const errorMessage = {
+        id: messages.length + 2,
+        role: 'assistant',
+        content:
+          'I encountered an error connecting to the AI service. Please check your connection and try again.',
+        timestamp: new Date(),
+        source: 'error',
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = e => {
@@ -138,12 +400,50 @@ export default function LumenChatPane({ contextId }) {
     return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const handleAddToBinder = useCallback(
+    async claimId => {
+      if (!projectId) {
+        setError('No project selected — cannot add to binder.');
+        return;
+      }
+      setBinderLoading(true);
+      try {
+        const resp = await fetch(`/api/ai/claims/${claimId}/add-to-binder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId }),
+        });
+        if (!resp.ok) {
+          const errBody = await resp.json().catch(() => ({}));
+          throw new Error(errBody.error || `Server returned ${resp.status}`);
+        }
+        const result = await resp.json();
+        // Brief success indicator
+        setError(null);
+        alert(
+          `Claim added to binder (${result.claimKey}, ${result.evidenceCount} evidence attached)`
+        );
+      } catch (err) {
+        console.error('Add to binder failed:', err);
+        setError(`Failed to add claim to binder: ${err.message}`);
+      } finally {
+        setBinderLoading(false);
+      }
+    },
+    [projectId]
+  );
+
   return (
     <Card className="border shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center">
           <Bot className="h-5 w-5 mr-2 text-primary" />
           Lumen AI Assistant
+          {contextId && (
+            <span className="ml-2 text-xs text-muted-foreground font-normal">
+              Section {contextId}
+            </span>
+          )}
         </CardTitle>
         <CardDescription>
           Ask me about regulatory requirements, content suggestions, or compliance issues
@@ -165,21 +465,65 @@ export default function LumenChatPane({ contextId }) {
                 </Avatar>
               )}
               <div
-                className={`max-w-[80%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'} rounded-xl px-4 py-2.5`}
+                className={`max-w-[80%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : message.source === 'error' ? 'bg-destructive/10 border border-destructive/20' : 'bg-muted'} rounded-xl px-4 py-2.5`}
               >
                 <div className="space-y-2">
-                  <div className="prose prose-sm whitespace-pre-line break-words">
-                    {message.content}
-                  </div>
+                  {/* Claim cards rendering (provenance-tracked) */}
+                  {message.role === 'assistant' &&
+                  message.source === 'api' &&
+                  message.claims &&
+                  message.claims.length > 0 ? (
+                    <div className="space-y-2">
+                      {message.claims.map(claim => (
+                        <ClaimCard
+                          key={claim.claimIndex}
+                          claim={claim}
+                          onAddToBinder={projectId ? handleAddToBinder : null}
+                          binderLoading={binderLoading}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="prose prose-sm whitespace-pre-line break-words">
+                      {message.source === 'error' && (
+                        <AlertTriangle className="h-4 w-4 inline mr-1 text-destructive" />
+                      )}
+                      {message.content}
+                    </div>
+                  )}
+                  {/* Citation / Source rendering — regulatory traceability */}
+                  {message.role === 'assistant' && message.source === 'api' && (
+                    <div className="mt-2">
+                      {message.confidence !== null && message.confidence !== undefined && (
+                        <div className="mb-1">
+                          <ConfidenceBadge score={message.confidence} />
+                        </div>
+                      )}
+                      <CitationList citations={message.citations || []} />
+                      {/* Show Chain button */}
+                      {(message.retrievalRunId || message.generationRunId) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 mt-1"
+                          onClick={() => setChainDrawerData(message)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Show Chain
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   <div
                     className={`text-xs ${message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'} justify-between flex`}
                   >
                     <span>{formatTime(message.timestamp)}</span>
-                    {message.role === 'assistant' && (
+                    {message.role === 'assistant' && message.source !== 'error' && (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-4 w-4 text-muted-foreground hover:text-foreground"
+                        onClick={() => navigator.clipboard?.writeText(message.content)}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -222,6 +566,14 @@ export default function LumenChatPane({ contextId }) {
 
           <div ref={messagesEndRef} />
         </div>
+
+        {error && (
+          <div className="text-xs text-destructive mb-2 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            {error}
+          </div>
+        )}
+
         <div className="flex space-x-2">
           <Button variant="outline" size="icon" className="flex-shrink-0">
             <Paperclip className="h-4 w-4" />
@@ -246,7 +598,7 @@ export default function LumenChatPane({ contextId }) {
         </div>
       </CardContent>
       <CardFooter className="pt-0 px-4 pb-4 border-t flex justify-between items-center text-xs text-muted-foreground">
-        <span>Powered by GPT-4o & Regulatory Knowledge Base</span>
+        <span>{aiModel ? `Powered by ${aiModel}` : 'Powered by Lumen Cortex AI'}</span>
         <div className="flex space-x-2">
           <Button variant="ghost" size="sm" className="h-7 px-2">
             <Image className="h-3 w-3 mr-1" />
@@ -262,6 +614,11 @@ export default function LumenChatPane({ contextId }) {
           </Button>
         </div>
       </CardFooter>
+
+      {/* Provenance Chain Drawer */}
+      {chainDrawerData && (
+        <ChainDrawer chain={chainDrawerData} onClose={() => setChainDrawerData(null)} />
+      )}
     </Card>
   );
 }
