@@ -111,7 +111,7 @@ const LumenAIAssistantContainer = () => {
               color: '#0B6E4F',
             }}
           >
-            AnA — RI Co-pilot
+            AnA v1.0 — RI Co-pilot
           </h2>
           <p
             style={{

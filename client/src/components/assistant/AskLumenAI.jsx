@@ -373,7 +373,7 @@ Would you like me to:
           <div className="flex items-center">
             <Bot size={18} className="mr-2" />
             <h3 className="font-medium">
-              AnA — RI Co-pilot
+              AnA v1.0 — RI Co-pilot
               {isLoading && <span className="ml-2 text-xs opacity-70">(Loading context...)</span>}
             </h3>
           </div>

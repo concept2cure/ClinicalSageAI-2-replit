@@ -227,7 +227,7 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
             <span className="text-sm font-semibold text-primary">A</span>
           </div>
           <div>
-            <h3 className="font-medium text-sm">AnA</h3>
+            <h3 className="font-medium text-sm">AnA v1.0</h3>
             <p className="text-xs text-muted-foreground">RI Co-pilot</p>
           </div>
         </div>

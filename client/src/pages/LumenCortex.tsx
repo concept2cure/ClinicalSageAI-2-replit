@@ -33,7 +33,7 @@ export default function LumenCortex() {
                   <Brain className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-slate-900">AnA</h1>
+                  <h1 className="text-lg font-semibold text-slate-900">AnA <span className="text-xs font-normal text-slate-400">v1.0</span></h1>
                   <p className="text-xs text-slate-500">Audit & Narrative Assistant — RI Co-pilot</p>
                 </div>
               </div>

@@ -120,7 +120,7 @@ export default function LumenAssistant() {
       <div className="flex items-center justify-between bg-primary/10 p-3 border-b">
         <div className="flex items-center">
           <MessageSquare className="h-5 w-5 text-primary mr-2" />
-          <h3 className="font-semibold">AnA — RI Co-pilot</h3>
+          <h3 className="font-semibold">AnA v1.0 — RI Co-pilot</h3>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setIsAssistantOpen(false)}>
           <X className="h-4 w-4" />

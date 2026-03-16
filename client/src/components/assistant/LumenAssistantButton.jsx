@@ -125,7 +125,7 @@ export default function LumenAssistantButton({
           <div className="bg-indigo-600 text-white p-3 flex justify-between items-center">
             <div className="flex items-center">
               <MessageSquare className="h-5 w-5 mr-2" />
-              <h3 className="font-medium">AnA — RI Co-pilot</h3>
+              <h3 className="font-medium">AnA v1.0 — RI Co-pilot</h3>
             </div>
             <div className="flex space-x-1">
               <button

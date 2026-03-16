@@ -344,7 +344,7 @@ export const MODULE_REGISTRY: Record<ModuleId, PortalModule> = {
   ask_lumen: {
     id: 'ask_lumen',
     name: 'Ask AnA',
-    description: 'RI Co-pilot — Audit & Narrative Assistant',
+    description: 'RI Co-pilot — Audit & Narrative Assistant v1.0',
     icon: 'message-circle',
     route: '/portal/ask-lumen',
     category: 'intelligence',

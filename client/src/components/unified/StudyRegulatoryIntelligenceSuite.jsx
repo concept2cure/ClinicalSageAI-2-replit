@@ -618,7 +618,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
                     <Bot className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">AnA — RI Co-pilot</h3>
+                    <h3 className="font-semibold">AnA v1.0 — RI Co-pilot</h3>
                     <p className="text-xs text-muted-foreground">
                       Context: {contextAwareness.currentModule}
                     </p>

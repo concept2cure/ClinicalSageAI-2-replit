@@ -336,7 +336,7 @@ const AIAssistantPanel = ({ isOpen, onClose, activeModule }) => {
       <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center">
           <Bot size={24} className="text-primary mr-2" />
-          <h2 className="text-lg font-semibold">AnA — RI Co-pilot</h2>
+          <h2 className="text-lg font-semibold">AnA v1.0 — RI Co-pilot</h2>
         </div>
         <div className="flex gap-2">
           <button
