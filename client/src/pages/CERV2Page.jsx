@@ -183,14 +183,9 @@ export default function CERV2Page({ initialDocumentType, initialActiveTab }) {
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
   const { toast } = useToast();
 
-  // Organization and workspace IDs for project management
-  const organizationId = '6'; // Default organization ID
-  const clientWorkspaceId = '26'; // Default workspace ID
-
-  // Set organization ID in localStorage for API interceptor
-  useEffect(() => {
-    localStorage.setItem('currentOrganizationId', organizationId);
-  }, [organizationId]);
+  // Organization and workspace IDs — read from tenant context or localStorage
+  const organizationId = localStorage.getItem('currentOrganizationId') || '1';
+  const clientWorkspaceId = localStorage.getItem('currentWorkspaceId') || '1';
 
   // Multi-Project Management State
   const [allProjects, setAllProjects] = useState([]);
