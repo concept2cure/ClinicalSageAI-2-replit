@@ -42,10 +42,10 @@ export default function RegulatoryDashboard() {
         )}
       </div>
 
-      {/* Floating Ask Lumen AI Co-Pilot - Only visible when not on AskLumenAI tab */}
+      {/* Floating Ask AnA RI Co-Pilot - Only visible when not on AskLumenAI tab */}
       {activeTab !== 'AskLumenAI' && (
         <div className="fixed bottom-8 right-8 z-50">
-          <LumenAssistantButton variant="default" size="lg" tooltip="Ask Regulatory AI" />
+          <LumenAssistantButton variant="default" size="lg" tooltip="Ask AnA — RI Co-pilot" />
         </div>
       )}
     </div>

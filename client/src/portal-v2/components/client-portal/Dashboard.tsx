@@ -62,7 +62,7 @@ export const Dashboard = () => {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-indigo-50 text-indigo-700">
-            Powered by Concept2Cure AI
+            Powered by AnA — RI Co-pilot
           </Badge>
           <Button
             variant={showChat ? 'default' : 'outline'}

@@ -18,7 +18,7 @@ export default function LumenChatPane({ contextId }) {
     {
       id: 0,
       from: 'lumen',
-      text: "Hello! I'm Lumen AI, your regulatory assistant. How can I help you today?",
+      text: "Hello! I'm AnA, your Audit & Narrative Assistant. How can I help you today?",
       timestamp: new Date(),
     },
   ]);

@@ -1,8 +1,8 @@
 /**
- * WebSocket Utility for Replit Environment
+ * WebSocket Utility
  *
  * This module handles WebSocket connections with proper protocol detection
- * and error handling specifically designed for Replit's environment.
+ * and error handling for production environments.
  */
 
 export interface WebSocketConfig {
@@ -48,7 +48,7 @@ export class EnhancedWebSocket {
 
     // Determine the correct protocol (ws/wss) based on the current page protocol
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use the current host (important for Replit environment)
+    // Use the current host
     const wsUrl = `${protocol}//${window.location.host}${this.path}`;
 
     console.log(`Attempting WebSocket connection to: ${wsUrl}`);
@@ -123,7 +123,7 @@ export class EnhancedWebSocket {
 }
 
 /**
- * Create a WebSocket connection with proper configuration for Replit
+ * Create a WebSocket connection with proper configuration
  */
 export function createWebSocketConnection(config: WebSocketConfig): EnhancedWebSocket {
   const ws = new EnhancedWebSocket(config);

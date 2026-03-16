@@ -1162,7 +1162,7 @@ export function CAPAManagement() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI CAPA Intelligence</h3>
+              <h3 className="font-semibold text-purple-900">AnA CAPA Intelligence</h3>
               <p className="text-sm text-purple-700">
                 Analyze CAPA trends, identify recurring issues, and get AI-powered recommendations
                 for root cause analysis and preventive actions.

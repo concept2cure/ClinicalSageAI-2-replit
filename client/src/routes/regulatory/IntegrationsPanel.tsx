@@ -237,8 +237,8 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
                   <p className="text-blue-700 mt-1">
                     Set <code className="bg-blue-100 px-1 rounded">GMAIL_OAUTH_JSON</code>,
                     <code className="bg-blue-100 px-1 rounded ml-1">GMAIL_USER_EMAIL</code>, and
-                    <code className="bg-blue-100 px-1 rounded ml-1">GMAIL_QUERY</code> in Replit
-                    Secrets.
+                    <code className="bg-blue-100 px-1 rounded ml-1">GMAIL_QUERY</code> in
+                    environment variables.
                   </p>
                 </div>
               </div>
@@ -345,7 +345,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
                     Set <code className="bg-green-100 px-1 rounded">GCAL_JSON</code> (service
                     account) and
                     <code className="bg-green-100 px-1 rounded ml-1">GOOGLE_CALENDAR_ID</code> in
-                    Replit Secrets.
+                    environment variables.
                   </p>
                 </div>
               </div>

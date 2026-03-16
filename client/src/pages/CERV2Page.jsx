@@ -169,7 +169,7 @@ const safeAssistantHook = () => {
   } catch (e) {
     console.warn('LumenAiAssistant context not available, using fallback');
     return {
-      openAssistant: () => console.log('Opening Lumen AI Assistant...'),
+      openAssistant: () => console.log('Opening AnA Assistant...'),
       setModuleContext: () => {},
       isOpen: false,
       closeAssistant: () => {},

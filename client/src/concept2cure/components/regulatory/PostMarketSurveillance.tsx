@@ -620,7 +620,7 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI Signal Detection</h3>
+              <h3 className="font-semibold text-purple-900">AnA Signal Detection</h3>
               <p className="text-sm text-purple-700">
                 Automated signal detection using disproportionality analysis, machine learning,
                 and natural language processing of case narratives.
@@ -991,7 +991,7 @@ function RiskBenefitTab() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI Risk-Benefit Analysis</h3>
+              <h3 className="font-semibold text-purple-900">AnA Risk-Benefit Analysis</h3>
               <p className="text-sm text-purple-700">
                 Generate structured benefit-risk analysis using the PrOACT-URL framework,
                 incorporating latest safety data and literature evidence.

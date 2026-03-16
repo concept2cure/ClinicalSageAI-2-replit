@@ -302,7 +302,7 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
                   </div>
                   <div>
                     <p className="text-xs font-medium mb-1">
-                      {message.role === 'user' ? 'You' : 'Lumen AI'}
+                      {message.role === 'user' ? 'You' : 'AnA'}
                     </p>
                     <p className="text-sm xl:text-sm 2xl:text-base whitespace-pre-line leading-relaxed">
                       {message.content}

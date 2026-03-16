@@ -499,7 +499,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Lumen anything..."
+            placeholder="Ask AnA anything..."
             rows={1}
             className={cn(
               'flex-1 bg-transparent resize-none text-sm',

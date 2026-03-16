@@ -523,7 +523,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </h1>
         <p className="text-sm text-zinc-500 max-w-md">
           {greeting?.subtitle
-            ? `${greeting.subtitle} · Concept2Cure AI is ready`
+            ? `${greeting.subtitle} · AnA is ready`
             : "I'm Lumen, your regulatory intelligence assistant."}
         </p>
       </div>
@@ -930,7 +930,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       {!isConnected && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
-          <span>Connecting to Concept2Cure AI...</span>
+          <span>Connecting to AnA...</span>
         </div>
       )}
 
@@ -988,7 +988,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onSend={handleSend}
         onStop={handleStop}
         isGenerating={isLoading || isStreaming}
-        placeholder={isConnected ? 'Message Concept2Cure AI...' : 'Connecting...'}
+        placeholder={isConnected ? 'Ask AnA anything...' : 'Connecting...'}
       />
     </div>
   );

@@ -224,11 +224,11 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-sm font-semibold text-primary">L</span>
+            <span className="text-sm font-semibold text-primary">A</span>
           </div>
           <div>
-            <h3 className="font-medium text-sm">Lumen AI</h3>
-            <p className="text-xs text-muted-foreground">Regulatory Assistant</p>
+            <h3 className="font-medium text-sm">AnA</h3>
+            <p className="text-xs text-muted-foreground">RI Co-pilot</p>
           </div>
         </div>
         <button
@@ -256,7 +256,7 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
               <path d="M9 13v2" />
             </svg>
           </div>
-          <h4 className="font-medium mb-2">Ask Lumen Anything</h4>
+          <h4 className="font-medium mb-2">Ask AnA Anything</h4>
           <p className="text-sm text-muted-foreground max-w-[240px]">
             Get instant regulatory guidance, document analysis, and submission assistance.
           </p>

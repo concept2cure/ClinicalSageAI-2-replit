@@ -157,7 +157,7 @@ const SUBMISSION_TYPES = [
 const TOUR_FEATURES = [
   {
     title: 'AI-Powered Drafting',
-    description: 'Lumen AI assists with regulatory document creation, citing relevant guidance and precedents.',
+    description: 'AnA assists with regulatory document creation, citing relevant guidance and precedents.',
     icon: '🤖',
   },
   {
@@ -431,7 +431,7 @@ export const ZenOnboarding: React.FC = () => {
           {
             key: 'aiSuggestions',
             label: 'AI Suggestions',
-            description: 'Lumen AI will proactively suggest improvements',
+            description: 'AnA will proactively suggest improvements',
           },
           {
             key: 'compactMode',

@@ -24,7 +24,7 @@ export default function AskLumenAI() {
     {
       role: 'assistant',
       content:
-        "I'm Lumen, your regulatory intelligence advisor. I have access to your submission readiness data and can help with strategic planning. What would you like to know about your regulatory strategy today?",
+        "I'm AnA, your Audit & Narrative Assistant. I have access to your submission readiness data and can help with strategic planning. What would you like to know about your regulatory strategy today?",
     },
   ]);
   const [input, setInput] = useState('');
@@ -355,7 +355,7 @@ Would you like me to:
       <button
         onClick={togglePanel}
         className="fixed bottom-8 right-8 z-40 bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg flex items-center justify-center"
-        title="Ask Lumen AI"
+        title="Ask AnA"
       >
         <Bot size={24} />
       </button>
@@ -373,7 +373,7 @@ Would you like me to:
           <div className="flex items-center">
             <Bot size={18} className="mr-2" />
             <h3 className="font-medium">
-              Lumen AI Assistant
+              AnA — RI Co-pilot
               {isLoading && <span className="ml-2 text-xs opacity-70">(Loading context...)</span>}
             </h3>
           </div>
@@ -456,7 +456,7 @@ Would you like me to:
                 </div>
                 <div>
                   <p className="text-xs font-medium mb-1">
-                    {message.role === 'user' ? 'You' : `Lumen (${modes[activeMode].label})`}
+                    {message.role === 'user' ? 'You' : `AnA (${modes[activeMode].label})`}
                   </p>
                   <p className="text-sm whitespace-pre-line">{message.content}</p>
                 </div>

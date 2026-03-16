@@ -147,7 +147,7 @@ export function DashboardOverview() {
                   icon="check-circle"
                 />
                 <QuickActionCard
-                  title="Ask Lumen AI"
+                  title="Ask AnA"
                   description="Get regulatory guidance"
                   href="/ask-lumen"
                   icon="message-circle"

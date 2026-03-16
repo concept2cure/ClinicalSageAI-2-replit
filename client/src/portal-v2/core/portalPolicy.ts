@@ -43,7 +43,7 @@ const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
 const DEFAULT_BRANDING: BrandingConfig = {
   theme: 'light',
   accentColor: '#0d6efd',
-  companyName: 'TrialSage',
+  companyName: 'Concept2Cure',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

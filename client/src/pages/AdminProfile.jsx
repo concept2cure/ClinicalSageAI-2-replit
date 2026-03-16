@@ -77,7 +77,7 @@ export default function AdminProfile() {
       { id: 2, name: 'CSR Intelligence', access: 'Full' },
       { id: 3, name: 'Document Vault', access: 'Full' },
       { id: 4, name: 'CMC Blueprint', access: 'Full' },
-      { id: 5, name: 'Ask Lumen', access: 'Full' },
+      { id: 5, name: 'Ask AnA', access: 'Full' },
     ],
     clientInfo: {
       companyName: 'MediNova Therapeutics',
@@ -90,7 +90,7 @@ export default function AdminProfile() {
         'CSR Intelligence',
         'Document Vault',
         'CMC Blueprint',
-        'Ask Lumen',
+        'Ask AnA',
         'Analytics',
       ],
     },
@@ -923,7 +923,7 @@ export default function AdminProfile() {
                                   <div className="flex justify-between">
                                     <div className="flex items-center">
                                       <div className="w-3 h-3 rounded-full bg-[#ff9500] mr-2"></div>
-                                      <span>Ask Lumen</span>
+                                      <span>Ask AnA</span>
                                     </div>
                                     <span className="font-medium">15%</span>
                                   </div>
@@ -986,7 +986,7 @@ export default function AdminProfile() {
                               <div>
                                 <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
                               </div>
-                              <div>Ask Lumen</div>
+                              <div>Ask AnA</div>
                               <div>8 documents, 36 queries</div>
                               <div className="text-[#86868b]">Yesterday, 2:30 PM</div>
                             </div>

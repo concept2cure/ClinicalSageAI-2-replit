@@ -5067,7 +5067,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           <ectd:submission-unit>initial</ectd:submission-unit>
         </ectd:submission-information>
         <ectd:applicant-information>
-          <ectd:applicant-name>${metadata.sponsor || 'TrialSage Pharmaceuticals'}</ectd:applicant-name>
+          <ectd:applicant-name>${metadata.sponsor || 'Concept2Cure'}</ectd:applicant-name>
         </ectd:applicant-information>
         <ectd:product-information>
           <ectd:product-name>${metadata.productName || metadata.title}</ectd:product-name>
@@ -5133,7 +5133,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
               status: 'Complete',
               metadata: {
                 title: documentMetadata.title,
-                sponsor: documentMetadata.sponsor || 'TrialSage Pharmaceuticals',
+                sponsor: documentMetadata.sponsor || 'Concept2Cure',
                 product: documentMetadata.productName || documentMetadata.title,
               },
             };

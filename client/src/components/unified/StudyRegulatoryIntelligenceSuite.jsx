@@ -618,7 +618,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
                     <Bot className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Lumen AI Assistant</h3>
+                    <h3 className="font-semibold">AnA — RI Co-pilot</h3>
                     <p className="text-xs text-muted-foreground">
                       Context: {contextAwareness.currentModule}
                     </p>
@@ -695,7 +695,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
                 <Input
                   value={lumenQuery}
                   onChange={e => setLumenQuery(e.target.value)}
-                  placeholder="Ask Lumen AI anything..."
+                  placeholder="Ask AnA anything..."
                   className="rounded-lg"
                   onKeyPress={e => e.key === 'Enter' && handleLumenQuery()}
                   data-testid="input-lumen-query"
@@ -717,7 +717,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
                         )}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Send to Lumen AI</TooltipContent>
+                    <TooltipContent>Send to AnA</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>

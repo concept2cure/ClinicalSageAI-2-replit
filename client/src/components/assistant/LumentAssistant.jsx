@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 /**
- * Lument ASSISTANT Component
+ * AnA — RI Co-pilot Component
  *
  * An AI assistant that provides context-aware help for regulatory documents and workflows.
  * This component can be used in both a collapsed sidebar mode and an expanded full view mode.
@@ -27,7 +27,7 @@ const LumentAssistant = ({ context = {}, active = false }) => {
     {
       type: 'system',
       content:
-        "I'm Lument ASSISTANT, your regulatory AI guide. I can help with document creation, regulatory requirements, and workflow guidance. How can I assist you today?",
+        "I'm AnA, your Audit & Narrative Assistant. I can help with document creation, regulatory requirements, and workflow guidance. How can I assist you today?",
     },
   ]);
 
@@ -95,7 +95,7 @@ const LumentAssistant = ({ context = {}, active = false }) => {
             <div className="flex items-center">
               <Sparkles className="h-5 w-5 mr-2 text-indigo-600" />
               <CardTitle className="text-lg font-medium text-indigo-800">
-                Lument ASSISTANT
+                AnA — RI Co-pilot
               </CardTitle>
             </div>
             <Button variant="ghost" size="icon" onClick={toggleExpanded}>
@@ -127,7 +127,7 @@ const LumentAssistant = ({ context = {}, active = false }) => {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Sparkles className="h-5 w-5 mr-2 text-indigo-600" />
-            <CardTitle className="text-lg font-medium text-indigo-800">Lument ASSISTANT</CardTitle>
+            <CardTitle className="text-lg font-medium text-indigo-800">AnA — RI Co-pilot</CardTitle>
           </div>
           <Button variant="ghost" size="icon" onClick={toggleExpanded} className="h-8 w-8">
             <X size={16} />
@@ -148,7 +148,7 @@ const LumentAssistant = ({ context = {}, active = false }) => {
               {message.type !== 'user' && (
                 <Avatar className="h-8 w-8 mr-2">
                   <AvatarImage src="/avatars/ai-assistant.png" />
-                  <AvatarFallback className="bg-indigo-100 text-indigo-800">AI</AvatarFallback>
+                  <AvatarFallback className="bg-indigo-100 text-indigo-800">AnA</AvatarFallback>
                 </Avatar>
               )}
 
@@ -205,7 +205,7 @@ const LumentAssistant = ({ context = {}, active = false }) => {
       <CardFooter className="p-3 border-t border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
         <form onSubmit={handleSubmit} className="flex w-full items-center space-x-2">
           <Input
-            placeholder="Ask Lument ASSISTANT..."
+            placeholder="Ask AnA anything..."
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             className="flex-1 border-indigo-200 focus:border-indigo-400"

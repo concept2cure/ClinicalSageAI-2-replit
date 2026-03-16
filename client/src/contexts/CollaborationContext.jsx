@@ -192,7 +192,7 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
         content:
           'I notice that for the current phase, you might need to verify the device classification according to FDA guidelines. Would you like me to provide more information on this?',
         timestamp: new Date().toISOString(),
-        sender: { id: 'ai', name: 'Concept2Cure AI', avatar: '/ai-avatar.png' },
+        sender: { id: 'ai', name: 'AnA', avatar: '/ai-avatar.png' },
         confidence: 0.91,
         actions: [
           { id: `action-${Date.now()}-1`, label: 'Get More Info', action: 'get-info' },
@@ -433,7 +433,7 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
         content:
           "I noticed you're working on device equivalence. The FDA recommends including a detailed comparison table for key parameters including physical characteristics, performance, and electrical safety features.",
         timestamp: new Date(baseDate.getTime() + 20 * 60000).toISOString(),
-        sender: { id: 'ai', name: 'Concept2Cure AI', avatar: '/ai-avatar.png' },
+        sender: { id: 'ai', name: 'AnA', avatar: '/ai-avatar.png' },
         confidence: 0.89,
         actions: [
           { id: 'action-1', label: 'Show Template', action: 'show-template' },

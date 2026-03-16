@@ -274,7 +274,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         <button
           onClick={onConnectionClick}
           className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
-          title={`Lumen Cortex: ${connConfig.label}${lastSyncTime ? ` • Last sync: ${lastSyncTime}` : ''}`}
+          title={`AnA Cortex: ${connConfig.label}${lastSyncTime ? ` • Last sync: ${lastSyncTime}` : ''}`}
         >
           <Zap className="w-3.5 h-3.5 text-blue-600" />
           <span className="text-[10px] font-bold text-slate-500 tracking-wider">CORTEX</span>

@@ -289,7 +289,7 @@ interface ChatInputProps {
 const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
   disabled = false,
-  placeholder = 'Ask Lumen to draft documents, analyze risks, or answer regulatory questions...',
+  placeholder = 'Ask AnA to draft documents, analyze risks, or answer regulatory questions...',
 }) => {
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);

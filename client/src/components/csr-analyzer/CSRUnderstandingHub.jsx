@@ -173,7 +173,7 @@ const CSRUnderstandingHub = () => {
               </Button>
               <Button className="h-9 gap-1 bg-emerald-600 hover:bg-emerald-700">
                 <MessageSquare className="h-4 w-4" />
-                <span className="hidden md:inline">Ask Lumen</span>
+                <span className="hidden md:inline">Ask AnA</span>
               </Button>
             </div>
           </div>

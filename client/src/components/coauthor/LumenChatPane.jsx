@@ -63,7 +63,7 @@ const defaultMessages = [
     id: 1,
     role: 'assistant',
     content:
-      "Hello! I'm your Lumen AI Regulatory Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
+      "Hello! I'm AnA, your Audit & Narrative Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
     timestamp: new Date(Date.now() - 60000 * 5),
   },
 ];

@@ -1,7 +1,7 @@
 /**
  * Server Pre-warming Controller
  *
- * This controller handles the logic for pre-warming the server to prevent Replit hibernation.
+ * This controller handles the logic for pre-warming the server to prevent hibernation.
  */
 
 /**

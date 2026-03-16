@@ -810,7 +810,7 @@ export function RegulatoryIntelligence() {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">Lumen AI Intelligence</h3>
+              <h3 className="font-semibold text-purple-900">AnA Regulatory Intelligence</h3>
               <p className="text-sm text-purple-700">
                 Get AI-powered analysis of regulatory trends, impact assessments for your products,
                 and automated summaries of new guidance documents.
@@ -820,7 +820,7 @@ export function RegulatoryIntelligence() {
               Impact Analysis
             </Button>
             <Button className="bg-purple-600 hover:bg-purple-700">
-              Ask Lumen
+              Ask AnA
             </Button>
           </div>
         </CardContent>

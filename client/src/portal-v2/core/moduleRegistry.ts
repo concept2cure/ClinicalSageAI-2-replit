@@ -240,8 +240,8 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleConfig> = {
   },
   lumen_cortex: {
     id: 'lumen_cortex',
-    label: 'Lumen Cortex',
-    description: 'Advanced AI analytics engine with deep regulatory insights',
+    label: 'AnA Cortex',
+    description: 'Advanced RI Co-pilot analytics engine with deep regulatory insights',
     icon: 'Brain',
     route: '/portal/lumen-cortex',
     category: 'intelligence',

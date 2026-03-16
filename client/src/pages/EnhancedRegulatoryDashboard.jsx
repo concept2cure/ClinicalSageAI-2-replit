@@ -413,7 +413,7 @@ export default function EnhancedRegulatoryDashboard() {
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            Ask Lumen AI
+            Ask AnA
           </button>
         </nav>
       </div>
@@ -539,7 +539,7 @@ export default function EnhancedRegulatoryDashboard() {
         <p className="text-xs text-slate-600">
           This intelligent regulatory dashboard combines AI prediction, strategic simulation, and
           real-time risk analysis to provide a comprehensive view of your submission readiness. Use
-          the Timeline Simulator to model different completion scenarios and Ask Lumen AI for
+          the Timeline Simulator to model different completion scenarios and Ask AnA for
           strategic regulatory guidance.
         </p>
       </div>
