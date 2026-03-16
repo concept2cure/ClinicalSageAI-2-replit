@@ -90,6 +90,12 @@ const INDWorkspace = lazy(() =>
   import('./pages/INDWorkspace').then(m => ({ default: m.INDWorkspace }))
 );
 
+// Lazy load AnA Intelligence Features
+const RegulatoryIntelligenceFeed = lazy(() => import('./pages/RegulatoryIntelligenceFeed'));
+const SubmissionGapAnalysis = lazy(() => import('./pages/SubmissionGapAnalysis'));
+const DocumentChangeImpact = lazy(() => import('./pages/DocumentChangeImpact'));
+const AnAMemory = lazy(() => import('./pages/AnAMemory'));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -115,7 +121,11 @@ type LayoutMode =
   | 'mission-control'
   | 'rules'
   | 'ind-workspace'
-  | 'submission-workspace';
+  | 'submission-workspace'
+  | 'intelligence-feed'
+  | 'gap-analysis'
+  | 'change-impact'
+  | 'ana-memory';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -629,6 +639,10 @@ export const ZenApp: React.FC = () => {
     { id: 'ctd', label: 'CTD' },
     { id: 'mission-control' as LayoutMode, label: 'Mission Control', icon: Target },
     { id: 'ind-workspace' as LayoutMode, label: submissionWorkspaceLabel, icon: FileText },
+    { id: 'intelligence-feed' as LayoutMode, label: 'RI Feed', icon: Globe },
+    { id: 'gap-analysis' as LayoutMode, label: 'Gap Analysis', icon: ClipboardCheck },
+    { id: 'change-impact' as LayoutMode, label: 'Change Impact', icon: AlertTriangle },
+    { id: 'ana-memory' as LayoutMode, label: 'AnA Memory', icon: Zap },
   ];
 
   // Filter layout modes by license — only show modes the org has access to
@@ -1427,6 +1441,28 @@ export const ZenApp: React.FC = () => {
                 }}
                 onNavigateToCoAuthor={() => setLayoutMode('editor')}
               />
+            </Suspense>
+          )}
+
+          {/* AnA Intelligence Features */}
+          {layoutMode === 'intelligence-feed' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><RegulatoryIntelligenceFeed /></div>
+            </Suspense>
+          )}
+          {layoutMode === 'gap-analysis' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><SubmissionGapAnalysis /></div>
+            </Suspense>
+          )}
+          {layoutMode === 'change-impact' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><DocumentChangeImpact /></div>
+            </Suspense>
+          )}
+          {layoutMode === 'ana-memory' && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[#FAFAF9]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+              <div className="flex-1 overflow-y-auto"><AnAMemory /></div>
             </Suspense>
           )}
 

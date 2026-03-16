@@ -21,6 +21,7 @@ import concept2cureRoutes from './concept2cure';
 import productAuditRoutes from './product-audit';
 import workflowRoutes from './workflow';
 import cmcDashboardRoutes from './cmc-dashboard';
+import anaFeaturesRoutes from './ana-features';
 import { authMiddleware } from '../auth';
 
 const router = Router();
@@ -62,6 +63,9 @@ router.use('/workflow', workflowRoutes);
 
 // CMC Dashboard (base API)
 router.use('/cmc', cmcDashboardRoutes);
+
+// AnA Intelligence Features (Feed, Gap Analysis, Change Impact, Memory)
+router.use('/ana', anaFeaturesRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {
