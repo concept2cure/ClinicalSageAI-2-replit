@@ -75,6 +75,18 @@ function logProvenance(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// SEED DATA — Rich demo data for testers
+// ═══════════════════════════════════════════════════════════════════════════════
+let seedScheduled = false;
+
+function scheduleSeedAfterEnginesLoaded() {
+  if (seedScheduled) return;
+  seedScheduled = true;
+  // Defer seeding until after engine simulation functions are defined below
+  setTimeout(() => seedSnowGlobeDemo(), 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ENGINE DEFINITIONS & SIMULATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -722,6 +734,111 @@ function executeRun(
     description: `Prediction run completed with ${engines.length} engines, ${allFindings.length} findings`,
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEED DATA IMPLEMENTATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function seedSnowGlobeDemo() {
+  if (store.scenarios.size > 0) return;
+
+  const DEMO_PROGRAM_ID = 1; // Matches mission-control seed program
+  const orgId = 1;
+
+  // Create baseline scenario
+  const scenarioId = nextId();
+  store.scenarios.set(scenarioId, {
+    id: scenarioId, organizationId: orgId, programId: DEMO_PROGRAM_ID,
+    name: 'Baseline — Current State', description: 'Baseline scenario reflecting current program state',
+    isBaseline: true, isArchived: false, createdById: 1,
+    createdAt: new Date(Date.now() - 7 * 86400000), updatedAt: new Date(),
+  });
+
+  // Create alternate scenario
+  const altScenarioId = nextId();
+  store.scenarios.set(altScenarioId, {
+    id: altScenarioId, organizationId: orgId, programId: DEMO_PROGRAM_ID,
+    name: 'Alternate — Accelerated Filing', description: 'What-if scenario with rolling submission strategy',
+    isBaseline: false, isArchived: false, createdById: 1,
+    createdAt: new Date(Date.now() - 2 * 86400000), updatedAt: new Date(),
+  });
+
+  // Simulate a full stress test run
+  const runId = nextId();
+  store.runs.set(runId, {
+    id: runId, organizationId: orgId, programId: DEMO_PROGRAM_ID,
+    scenarioId, runType: 'full_stress_test', status: 'completed',
+    triggeredById: 1, enginesRun: ALL_ENGINES,
+    startedAt: new Date(Date.now() - 86400000),
+    completedAt: new Date(Date.now() - 86400000 + 45000),
+    durationMs: 45000,
+  });
+
+  // Generate findings from all engines
+  const allResults: EngineResult[] = [
+    simulateAgencyScreen(runId),
+    simulateReviewerAttack(runId),
+    simulateAuditInspection(runId),
+    simulateRouteTiming(runId),
+    simulateEvidenceSufficiency(runId),
+    simulateCollaborationFragility(runId),
+  ];
+
+  // Store results
+  const resultId = nextId();
+  store.results.set(resultId, {
+    id: resultId, runId, results: allResults,
+    createdAt: new Date(Date.now() - 86400000),
+  });
+
+  // Store findings with program/org scope (matching how routes store them)
+  allResults.forEach(r => {
+    r.findings.forEach(f => {
+      store.findings.set(f.id, { ...f, programId: DEMO_PROGRAM_ID, organizationId: orgId });
+    });
+  });
+
+  // Compute and store composite scores
+  const scoreMap: Record<string, number> = {};
+  allResults.forEach(r => {
+    const meta = r.metadata as any;
+    if (meta?.scoreType) {
+      scoreMap[meta.scoreType] = r.score;
+    }
+  });
+  // Fill composites
+  if (!scoreMap.submissionSurvival) scoreMap.submissionSurvival = 100 - (scoreMap.preTechnicalRejection || 50);
+  if (!scoreMap.traceabilityIntegrity) scoreMap.traceabilityIntegrity = 100 - (scoreMap.auditExposure || 50);
+
+  const compositeId = nextId();
+  store.scores.set(compositeId, {
+    id: compositeId, organizationId: orgId, programId: DEMO_PROGRAM_ID,
+    runId, scores: scoreMap, computedAt: new Date(Date.now() - 86400000),
+  });
+
+  // Generate remediation plan (single object with actions array, matching route format)
+  const sortedFindings = Array.from(store.findings.values())
+    .sort((a, b) => {
+      const sev: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+      return (sev[a.severity] || 3) - (sev[b.severity] || 3);
+    })
+    .slice(0, 10);
+
+  const remPlanId = nextId();
+  store.remediationPlans.set(remPlanId, {
+    id: remPlanId, programId: DEMO_PROGRAM_ID, organizationId: orgId,
+    actions: sortedFindings.map((f, idx) => ({
+      priority: idx + 1, findingId: f.id, engine: f.engine, severity: f.severity,
+      title: f.title, action: f.suggestedRemediation,
+      estimatedEffort: f.severity === 'critical' ? 'high' : f.severity === 'high' ? 'medium' : 'low',
+      status: 'pending', blastRadius: f.blastRadius,
+    })),
+    generatedAt: new Date(Date.now() - 86400000),
+  });
+}
+
+// Execute seed (engine functions are already defined above)
+scheduleSeedAfterEnginesLoaded();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SCENARIO MANAGEMENT

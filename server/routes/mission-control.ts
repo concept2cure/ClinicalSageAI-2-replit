@@ -52,6 +52,123 @@ function nextId(): number {
   return store.nextId++;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEED DATA — Provides a rich demo experience for testers
+// ═══════════════════════════════════════════════════════════════════════════════
+function seedDemoData() {
+  if (store.programs.size > 0) return; // Already seeded
+
+  // Demo program
+  const p1 = nextId();
+  store.programs.set(p1, {
+    id: p1, organizationId: 1, name: 'Nexavar-2 NDA', code: 'PRG-001',
+    description: 'Phase III oncology program targeting advanced hepatocellular carcinoma',
+    customerTrack: 'pharma', developmentStage: 'pre-submission',
+    status: 'active', createdById: 1, createdAt: new Date('2025-09-01'), updatedAt: new Date(),
+  });
+
+  const p2 = nextId();
+  store.programs.set(p2, {
+    id: p2, organizationId: 1, name: 'CardioGuard 510(k)', code: 'PRG-002',
+    description: 'Class II cardiovascular monitoring device with AI-assisted diagnostics',
+    customerTrack: 'device', developmentStage: 'regulatory-strategy',
+    status: 'active', createdById: 1, createdAt: new Date('2025-11-15'), updatedAt: new Date(),
+  });
+
+  // Destinations
+  const d1 = nextId();
+  store.destinations.set(d1, {
+    id: d1, organizationId: 1, programId: p1, destinationType: 'NDA',
+    authority: 'FDA CDER', region: 'US', targetDate: '2026-06-15',
+    status: 'planned', createdAt: new Date(),
+  });
+
+  const d2 = nextId();
+  store.destinations.set(d2, {
+    id: d2, organizationId: 1, programId: p2, destinationType: '510K',
+    authority: 'FDA CDRH', region: 'US', targetDate: '2026-09-01',
+    status: 'planned', createdAt: new Date(),
+  });
+
+  // Artifacts for program 1
+  const artifactTemplates = [
+    { title: 'Module 1.0 Cover Letter', code: 'ART-001', artifactType: 'document', dossierModule: 'Module 1', lifecycleState: 'approved', requirementLevel: 'required', version: '2.1' },
+    { title: 'Module 2.3 Quality Overall Summary', code: 'ART-002', artifactType: 'document', dossierModule: 'Module 2', lifecycleState: 'in_review', requirementLevel: 'required', version: '1.3' },
+    { title: 'Module 2.5 Clinical Overview', code: 'ART-003', artifactType: 'document', dossierModule: 'Module 2', lifecycleState: 'drafting', requirementLevel: 'required', version: '0.8' },
+    { title: 'Module 2.7 Clinical Summary', code: 'ART-004', artifactType: 'document', dossierModule: 'Module 2', lifecycleState: 'drafting', requirementLevel: 'required', version: '0.5' },
+    { title: 'Module 3.2.S Drug Substance', code: 'ART-005', artifactType: 'document', dossierModule: 'Module 3', lifecycleState: 'approved', requirementLevel: 'required', version: '3.0' },
+    { title: 'Module 3.2.P Drug Product', code: 'ART-006', artifactType: 'document', dossierModule: 'Module 3', lifecycleState: 'in_review', requirementLevel: 'required', version: '2.0' },
+    { title: 'Study 301 CSR', code: 'ART-007', artifactType: 'report', dossierModule: 'Module 5', lifecycleState: 'approved', requirementLevel: 'required', version: '1.0' },
+    { title: 'Study 201 CSR', code: 'ART-008', artifactType: 'report', dossierModule: 'Module 5', lifecycleState: 'approved', requirementLevel: 'required', version: '1.0' },
+    { title: 'Statistical Analysis Plan', code: 'ART-009', artifactType: 'document', dossierModule: 'Module 5', lifecycleState: 'approved', requirementLevel: 'required', version: '2.0' },
+    { title: 'Investigators Brochure', code: 'ART-010', artifactType: 'document', dossierModule: 'Module 5', lifecycleState: 'in_review', requirementLevel: 'required', version: '4.2' },
+    { title: 'Nonclinical Overview', code: 'ART-011', artifactType: 'document', dossierModule: 'Module 4', lifecycleState: 'planned', requirementLevel: 'required', version: '0.0' },
+    { title: 'Risk Management Plan', code: 'ART-012', artifactType: 'document', dossierModule: 'Module 1', lifecycleState: 'drafting', requirementLevel: 'conditional', version: '0.3' },
+  ];
+
+  artifactTemplates.forEach(tpl => {
+    const aid = nextId();
+    store.artifacts.set(aid, {
+      id: aid, organizationId: 1, programId: p1, ...tpl,
+      ownerId: 1, createdAt: new Date(), updatedAt: new Date(),
+    });
+  });
+
+  // Risk signals
+  const riskTemplates = [
+    { dimension: 'evidence', severity: 'high', title: 'Module 2.7 Clinical Summary incomplete', description: 'Clinical summary not yet drafted — 60% of safety narrative missing', status: 'open' },
+    { dimension: 'timeline', severity: 'critical', title: 'NDA target date at risk', description: 'Module 4 Nonclinical Overview not started, 90 days to target submission', status: 'open' },
+    { dimension: 'review', severity: 'medium', title: 'IB review cycle extended', description: 'Investigators Brochure v4.2 has been in review for 18 days (target: 10)', status: 'open' },
+    { dimension: 'compliance', severity: 'high', title: 'Risk Management Plan gap', description: 'RMP requires REMS strategy section which has not been initiated', status: 'open' },
+    { dimension: 'consistency', severity: 'medium', title: 'Product naming variance', description: 'Three naming variants detected across Modules 1, 2, and 3', status: 'mitigated' },
+  ];
+
+  riskTemplates.forEach(tpl => {
+    const rid = nextId();
+    store.riskSignals.set(rid, {
+      id: rid, organizationId: 1, programId: p1, ...tpl,
+      detectedAt: new Date(), createdAt: new Date(),
+    });
+  });
+
+  // Decisions
+  const decisionTemplates = [
+    { title: 'Adopt 505(b)(2) regulatory pathway', category: 'regulatory-strategy', status: 'approved', rationale: 'Leveraging existing reference-listed drug data reduces clinical burden by approximately 40%', decisionDate: '2025-10-15' },
+    { title: 'Include real-world evidence supplement', category: 'evidence-strategy', status: 'approved', rationale: 'RWE from Optum claims database strengthens safety signal characterization in elderly subgroup', decisionDate: '2025-11-20' },
+    { title: 'Request pre-submission meeting with Division', category: 'regulatory-engagement', status: 'pending', rationale: 'Type B meeting needed to align on primary endpoint acceptability before NDA assembly', decisionDate: '2026-01-10' },
+  ];
+
+  decisionTemplates.forEach(tpl => {
+    const did = nextId();
+    store.decisionRecords.set(did, {
+      id: did, organizationId: 1, programId: p1, ...tpl,
+      createdById: 1, createdAt: new Date(), updatedAt: new Date(),
+    });
+  });
+
+  // Provenance entries
+  const provenanceEntries = [
+    { entityType: 'artifact', action: 'approved', changeDescription: 'Module 1.0 Cover Letter approved by Regulatory Lead' },
+    { entityType: 'artifact', action: 'updated', changeDescription: 'Module 2.3 Quality Overall Summary updated — CMC narrative revised' },
+    { entityType: 'decision', action: 'approved', changeDescription: 'Decision: Adopt 505(b)(2) pathway approved by Regulatory Committee' },
+    { entityType: 'risk', action: 'created', changeDescription: 'Risk detected: NDA target date at risk — Module 4 not started' },
+    { entityType: 'artifact', action: 'created', changeDescription: 'Study 301 CSR uploaded and approved' },
+    { entityType: 'review', action: 'started', changeDescription: 'IB v4.2 review cycle initiated with 3 reviewers' },
+  ];
+
+  provenanceEntries.forEach((entry, i) => {
+    store.provenance.push({
+      id: nextId(), organizationId: 1, programId: p1,
+      ...entry, entityId: i + 1,
+      actorType: 'user', actorId: 1,
+      createdAt: new Date(Date.now() - (i * 3600000 * 12)),
+    });
+  });
+}
+
+// Run seed on module load
+seedDemoData();
+
 function logProvenance(orgId: number, programId: number | null, entityType: string, entityId: number, action: string, actorId: number, details?: any) {
   store.provenance.push({
     id: nextId(),
