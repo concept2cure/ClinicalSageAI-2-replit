@@ -79,8 +79,8 @@ import {
 // ConvergentCanvas removed — replaced with inline ProjectOverview in sherpa mode
 
 // Lazy load Phase 7 Mission Control components
-const MissionControl = lazy(() =>
-  import('./pages/MissionControl').then(m => ({ default: m.MissionControl }))
+const MissionControlHome = lazy(() =>
+  import('./pages/MissionControl/MissionControlHome')
 );
 const RulesManager = lazy(() =>
   import('./pages/MissionControl/RulesManager').then(m => ({ default: m.RulesManager }))
@@ -623,7 +623,8 @@ export const ZenApp: React.FC = () => {
       };
     }
     // Deadline days from project target date
-    const targetDate = activeProject.targetDate ? new Date(activeProject.targetDate) : null;
+    const targetDateStr = activeProject.metadata?.targetSubmissionDate || (activeProject as any).targetEndDate;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
     const deadlineDays = targetDate
       ? Math.max(0, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
       : '—';
@@ -1422,7 +1423,7 @@ export const ZenApp: React.FC = () => {
                 </div>
               }
             >
-              <MissionControl projectId={activeProjectId} />
+              <MissionControlHome projectId={activeProjectId} projectName={activeProject?.name} submissionType={activeProject?.type} />
             </Suspense>
           )}
 

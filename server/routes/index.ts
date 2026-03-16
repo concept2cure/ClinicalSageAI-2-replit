@@ -18,6 +18,7 @@ import foresightFeedbackRoutes from './foresight-feedback';
 import regulatoryIntelligenceRoutes from './regulatory-intelligence-api';
 import medicalDeviceRoutes from './medical-device-api';
 import concept2cureRoutes from './concept2cure';
+import missionControlRoutes from './mission-control';
 import productAuditRoutes from './product-audit';
 import workflowRoutes from './workflow';
 import cmcDashboardRoutes from './cmc-dashboard';
@@ -57,6 +58,7 @@ router.use('/medical-device', medicalDeviceRoutes);
 
 // Concept2Cure Core Routes
 router.use('/concept2cure', concept2cureRoutes);
+router.use('/mission-control', missionControlRoutes);
 router.use('/product-audit', productAuditRoutes);
 
 // Workflow & Proofs
