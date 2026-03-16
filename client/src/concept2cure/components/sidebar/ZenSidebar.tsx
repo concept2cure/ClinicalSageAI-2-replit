@@ -25,6 +25,7 @@ import {
   PenLine,
   ClipboardList,
   Shield,
+  Globe,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -385,7 +386,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <WorkspaceGroup label="Workspaces">
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
-              label="RI Copilot"
+              label="AnA RI Copilot"
               active={activeNavId === 'ai-copilot'}
               accentColor="blue"
               onClick={() => onNavigate?.('ai-copilot')}
@@ -438,6 +439,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 />
               </>
             )}
+          </WorkspaceGroup>
+
+          {/* ── Intelligence ────────────────────────────────────── */}
+          <WorkspaceGroup label="Intelligence">
+            <NavItem
+              icon={<Globe className="w-3.5 h-3.5" />}
+              label="Snow Globe"
+              active={activeNavId === 'snowglobe'}
+              onClick={() => onNavigate?.('snowglobe')}
+            />
           </WorkspaceGroup>
 
           {/* ── Evidence ────────────────────────────────────────── */}

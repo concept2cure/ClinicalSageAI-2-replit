@@ -1325,6 +1325,9 @@ export const ZenApp: React.FC = () => {
             case 'mission-control':
               setLayoutMode('mission-control');
               break;
+            case 'snowglobe':
+              setLayoutMode('snowglobe');
+              break;
             case 'submission-workspace':
               setLayoutMode('submission-workspace');
               break;

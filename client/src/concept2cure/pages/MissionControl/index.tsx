@@ -524,35 +524,81 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
   }, [triggerScan]);
 
   // ── Render ──────────────────────────────────────────────────────────────
+  const hasData = portfolioMetrics.totalPrograms > 0 || findings.length > 0 || totalRules > 0;
+
   return (
     <div className="flex-1 h-full overflow-y-auto bg-[#FAFAF9]">
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
-              <Target className="w-5 h-5 text-blue-600" />
+
+        {/* ── Hero Welcome Section (Claude.AI-style) ──────────────────── */}
+        <div className="mb-8">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-violet-200/50">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-zinc-900 mb-2">
               Mission Control
             </h1>
-            <p className="text-sm text-zinc-500 mt-0.5">
-              Portfolio health, risk monitoring, and automation dashboard
+            <p className="text-base text-zinc-500 leading-relaxed">
+              Your portfolio command center for regulatory intelligence.
+              Monitor program health, track AI-powered risk findings, and manage
+              automation rules — all in one place.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleScan}
-              disabled={triggerScan.isPending}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors',
-                triggerScan.isPending
-                  ? 'border-zinc-200 text-zinc-400 cursor-wait'
-                  : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-400'
-              )}
-            >
-              <Bot className={cn('w-4 h-4', triggerScan.isPending && 'animate-spin')} />
-              {triggerScan.isPending ? 'Scanning...' : 'Run Sentinel Scan'}
-            </button>
+
+          {/* How It Works — 3-column explainer */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
+                <Eye className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-zinc-900 mb-1">AI Sentinel Monitoring</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Continuously scans your regulatory submissions for compliance gaps,
+                inconsistencies, and risk signals using AI-powered analysis.
+              </p>
+            </div>
+            <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center mx-auto mb-3">
+                <Zap className="w-5 h-5 text-violet-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-zinc-900 mb-1">Automation Rules Engine</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Configure rules that automatically trigger actions — quality checks,
+                cross-reference validation, and submission readiness assessments.
+              </p>
+            </div>
+            <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                <Layers className="w-5 h-5 text-emerald-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-zinc-900 mb-1">Portfolio Oversight</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Track all your regulatory programs from a single dashboard.
+                See progress, budget health, and rollup summaries across projects.
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* ── Action Bar ──────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-zinc-900">
+            Portfolio Dashboard
+          </h2>
+          <button
+            onClick={handleScan}
+            disabled={triggerScan.isPending}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors',
+              triggerScan.isPending
+                ? 'border-zinc-200 text-zinc-400 cursor-wait'
+                : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-400'
+            )}
+          >
+            <Bot className={cn('w-4 h-4', triggerScan.isPending && 'animate-spin')} />
+            {triggerScan.isPending ? 'Scanning...' : 'Run Sentinel Scan'}
+          </button>
         </div>
 
         {/* Metric Strip */}
@@ -773,6 +819,53 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
             </div>
           </div>
         </div>
+
+        {/* ── Getting Started Tips (when portfolio is empty) ───────── */}
+        {!hasData && (
+          <div className="mt-8 bg-white rounded-xl border border-zinc-200 p-8 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center mx-auto mb-4">
+                <Target className="w-7 h-7 text-violet-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900 mb-2">
+                Ready to get started?
+              </h3>
+              <p className="text-sm text-zinc-500 mb-6 leading-relaxed">
+                Create your first regulatory program to unlock AI-powered monitoring,
+                automated compliance checks, and portfolio-wide risk intelligence.
+              </p>
+              <div className="flex flex-col gap-3 text-left max-w-sm mx-auto">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-blue-600">1</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-800">Create a program</p>
+                    <p className="text-xs text-zinc-500">Define your submission type, indication, and regulatory pathway.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50">
+                  <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-violet-600">2</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-800">Run a Sentinel scan</p>
+                    <p className="text-xs text-zinc-500">AI analyzes your artifacts for compliance gaps and risks automatically.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-emerald-600">3</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-800">Configure automation rules</p>
+                    <p className="text-xs text-zinc-500">Set up triggers for quality checks, reviews, and readiness assessments.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
