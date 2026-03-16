@@ -180,8 +180,8 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove document?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove "{document.name}" from the project knowledge. RI will no longer have
-              access to this document's content.
+              This will remove "{document.name}" from the project knowledge.
+              AnA will no longer have access to this document's content.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -313,8 +313,8 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
               Project Knowledge
             </SheetTitle>
             <SheetDescription>
-              Upload documents and configure custom instructions for this project. RI will use this
-              context when assisting you.
+              Upload documents and configure custom instructions for this project.
+              AnA will use this context when assisting you.
             </SheetDescription>
           </SheetHeader>
 

@@ -5,7 +5,7 @@
     "target": "ES2020",
     "module": "esnext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["node", "react", "react-dom"],
+    "types": ["node", "react", "react-dom", "jest"],
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

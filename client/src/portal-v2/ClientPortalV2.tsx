@@ -5,8 +5,8 @@
  * This component serves as the root of the portal module system.
  */
 
-import React, { Suspense, lazy } from 'react';
-import { Route, Switch } from 'wouter';
+import React, { Suspense, lazy, useState, useCallback } from 'react';
+import { Route, Switch, useLocation } from 'wouter';
 import { PortalProvider } from './core/portalContext';
 import { PortalFrame } from './layouts/PortalFrame';
 import { MobileNav } from './layouts/MobileNav';
@@ -89,6 +89,129 @@ const ModulePage: React.FC<{
   </div>
 );
 
+// Wrapper for modules that link to the Concept2Cure copilot
+const CopilotPreviewPage: React.FC<{
+  title: string;
+  description: string;
+  icon?: string;
+  copilotLabel?: string;
+}> = ({ title, description, icon, copilotLabel = 'Launch in RI Copilot' }) => {
+  const [, navigate] = useLocation();
+  return (
+    <div className="p-6">
+      <div className="mb-6 flex items-center gap-3">
+        {icon && <span className="text-3xl">{icon}</span>}
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+              Preview
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-gray-500">{description}</p>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500">Status</h3>
+          <p className="mt-2 text-lg font-semibold text-gray-900">👁️ Preview Mode</p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500">Module</h3>
+          <p className="mt-2 text-lg font-semibold text-gray-900">{title}</p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
+          <p className="mt-2 text-lg font-semibold text-gray-900">
+            {new Date().toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+      <div className="mt-6">
+        <button
+          onClick={() => navigate('/concept2cure')}
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          {copilotLabel}
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Search page with vault search input
+const SearchPage: React.FC = () => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  const handleSearch = useCallback(async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setSearched(true);
+    try {
+      const res = await fetch(`/api/vault/search/?q=${encodeURIComponent(query.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data : data.results || []);
+      } else {
+        setResults([]);
+      }
+    } catch {
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [query]);
+
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">🔍</span>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Search Results</h1>
+            <p className="mt-1 text-sm text-gray-500">Full-text search across all documents, reports and project artifacts</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            placeholder="Search documents, reports, protocols..."
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Searching...' : 'Search'}
+          </button>
+        </div>
+      </div>
+      {searched && !loading && results.length === 0 && (
+        <p className="text-sm text-gray-500">No results found for "{query}".</p>
+      )}
+      {results.length > 0 && (
+        <div className="space-y-3">
+          {results.map((item: any, i: number) => (
+            <div key={i} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+              <h3 className="font-medium text-gray-900">{item.title || item.name || `Result ${i + 1}`}</h3>
+              {item.description && <p className="mt-1 text-sm text-gray-500">{item.description}</p>}
+              {item.snippet && <p className="mt-1 text-sm text-gray-600">{item.snippet}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /**
  * ClientPortalV2 - Main portal application component
  *
@@ -134,11 +257,11 @@ export const ClientPortalV2: React.FC = () => {
 
             {/* Regulatory Intelligence */}
             <Route path="/client-portal/regulatory-intel">
-              <ModulePage
+              <CopilotPreviewPage
                 title="Regulatory Intelligence"
-                description="AI-powered regulatory landscape monitoring and advisory alerts"
+                description="AI-powered regulatory landscape monitoring and advisory alerts. Full RI analysis is available in the Concept2Cure copilot."
                 icon="📊"
-                status="beta"
+                copilotLabel="Launch in RI Copilot"
               />
             </Route>
 
@@ -149,11 +272,11 @@ export const ClientPortalV2: React.FC = () => {
 
             {/* Study Architect / Clinical Trials */}
             <Route path="/client-portal/study-architect">
-              <ModulePage
+              <CopilotPreviewPage
                 title="Study Architect"
-                description="Clinical trial protocol design and optimization engine"
+                description="Clinical trial protocol design and optimization engine. Launch the Concept2Cure copilot for full study design capabilities."
                 icon="🔬"
-                status="beta"
+                copilotLabel="Launch Study Design Copilot"
               />
             </Route>
 
@@ -188,22 +311,18 @@ export const ClientPortalV2: React.FC = () => {
               <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
             </Route>
 
-            {/* Protocol Designer */}
+            {/* Protocol Designer → eCTD CoAuthor */}
             <Route path="/client-portal/protocol-designer">
-              <ModulePage
-                title="Protocol Designer"
-                description="Clinical protocol authoring with ICH-GCP compliance checking"
-                icon="📋"
-                status="beta"
-              />
+              <FulleCTDCoAuthor />
             </Route>
 
             {/* Safety Database */}
             <Route path="/client-portal/safety">
               <ModulePage
                 title="Safety Database"
-                description="Adverse event tracking, FAERS integration and safety signal detection"
+                description="Adverse event tracking and safety signal detection. Connects to FDA FAERS data for real-world pharmacovigilance analysis."
                 icon="🛡️"
+                status="preview"
               />
             </Route>
 
@@ -217,24 +336,14 @@ export const ClientPortalV2: React.FC = () => {
               />
             </Route>
 
-            {/* Medical Writing */}
+            {/* Medical Writing → eCTD CoAuthor */}
             <Route path="/client-portal/medical-writing">
-              <ModulePage
-                title="Medical Writing"
-                description="AI-assisted regulatory document authoring with template library"
-                icon="✍️"
-                status="beta"
-              />
+              <FulleCTDCoAuthor />
             </Route>
 
-            {/* Dossier Builder */}
+            {/* Dossier Builder → eCTD CoAuthor */}
             <Route path="/client-portal/dossier">
-              <ModulePage
-                title="Dossier Builder"
-                description="eCTD dossier assembly with module structure validation"
-                icon="📑"
-                status="beta"
-              />
+              <FulleCTDCoAuthor />
             </Route>
 
             {/* Submission Tracker */}
@@ -243,6 +352,7 @@ export const ClientPortalV2: React.FC = () => {
                 title="Submission Tracker"
                 description="Track regulatory submissions across FDA, EMA and global health authorities"
                 icon="🚀"
+                status="beta"
               />
             </Route>
 
@@ -277,11 +387,7 @@ export const ClientPortalV2: React.FC = () => {
 
             {/* Search */}
             <Route path="/client-portal/search">
-              <ModulePage
-                title="Search Results"
-                description="Full-text search across all documents, reports and project artifacts"
-                icon="🔍"
-              />
+              <SearchPage />
             </Route>
 
             {/* Notifications */}

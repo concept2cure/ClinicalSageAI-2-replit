@@ -101,7 +101,8 @@ export async function getAssistantResponse(threadId: string, userMessage: string
     }
 
     const latestMessage = assistantMessages[0];
-    return latestMessage.content[0].text.value;
+    const block = latestMessage.content[0] as { type: string; text: { value: string } };
+    return block.text.value;
   } catch (error) {
     console.error('Error getting assistant response:', error);
     throw error;

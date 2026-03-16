@@ -224,7 +224,7 @@ function AiAssistantPanel({ onClose }: AiAssistantPanelProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-sm font-semibold text-primary">L</span>
+            <span className="text-sm font-semibold text-primary">A</span>
           </div>
           <div>
             <h3 className="font-medium text-sm">RI Copilot</h3>

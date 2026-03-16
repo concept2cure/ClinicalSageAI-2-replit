@@ -1041,7 +1041,7 @@ const CsrIntelligenceInsights = () => {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">CSR Similarity Visualization</CardTitle>
                   <CardDescription>
-                    Showing relevance and impact scores for CSRs most similar to Lumen Bio programs
+                    Showing relevance and impact scores for CSRs most similar to Concept2Cure programs
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

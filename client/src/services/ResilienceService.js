@@ -1,7 +1,7 @@
 /**
- * Resilience Service for Replit
+ * Resilience Service
  *
- * This service improves reliability on Replit by:
+ * This service improves reliability by:
  * 1. Pre-warming the server before authentication attempts
  * 2. Adding fallback authentication with multiple retries
  * 3. Implementing a local storage backup for auth state
@@ -17,7 +17,7 @@ class ResilienceService {
 
   /**
    * Pre-warm the server before attempting authentication
-   * This sends a simple request to wake up the Replit server
+   * This sends a simple request to wake up the server
    */
   async warmupServer() {
     if (this.isWarming) {

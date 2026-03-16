@@ -462,10 +462,14 @@ function countSeverities(findings: SentinelFinding[]): Record<SentinelSeverity, 
 export interface MissionControlProps {
   /** Org-level override (for admin views) */
   organizationId?: number;
+  /** Active project from ZenApp context */
+  projectId?: string;
 }
 
-export const MissionControl: React.FC<MissionControlProps> = () => {
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => {
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    projectId ? parseInt(projectId, 10) || null : null
+  );
 
   // ── Pillar 1: Hierarchy ─────────────────────────────────────────────────
   const { data: programs, isLoading: programsLoading } = usePrograms();

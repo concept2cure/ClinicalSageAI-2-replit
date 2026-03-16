@@ -9,7 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   cortexService,
   cortexQueryKeys,
@@ -77,7 +77,36 @@ interface UseCortexChatReturn {
 }
 
 /**
- * Hook for AI chat with Lumen Cortex
+ * Fetch project context for AI enrichment
+ */
+function useProjectContext(projectId?: string) {
+  const [context, setContext] = useState<{
+    name?: string;
+    description?: string;
+    status?: string;
+    taskSummary?: { total: number; completed: number; overdue: number; blocked: number };
+    cmcDrugSubstance?: Record<string, string>;
+    cmcDrugProduct?: Record<string, string>;
+    customInstructions?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!projectId) { setContext(null); return; }
+    const token = sessionStorage.getItem('concept2cure_token') || localStorage.getItem('concept2cure_token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    fetch(`/api/concept2cure/projects/${projectId}/context`, { headers })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setContext(data); })
+      .catch(() => {});
+  }, [projectId]);
+
+  return context;
+}
+
+/**
+ * Hook for AI chat with AnA Cortex
  */
 export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChatReturn {
   const [messages, setMessages] = useState<CortexMessage[]>([]);
@@ -86,6 +115,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
   const [error, setError] = useState<Error | null>(null);
   const streamingMessageRef = useRef<string>('');
   const queryClient = useQueryClient();
+  const projectContext = useProjectContext(options.projectId);
 
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -96,6 +126,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         submissionType: options.submissionType,
         systemPrompt: options.systemPrompt,
         sectionCode: options.sectionCode,
+        projectContext: projectContext || undefined,
       });
     },
     onMutate: async content => {
@@ -183,6 +214,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         submissionType: options.submissionType,
         systemPrompt: options.systemPrompt,
         sectionCode: options.sectionCode,
+        projectContext: projectContext || undefined,
         onChunk: chunk => {
           streamingMessageRef.current += chunk;
           setMessages(prev =>

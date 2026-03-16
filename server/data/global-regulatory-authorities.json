@@ -1,0 +1,755 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-16",
+    "description": "Concept2Cure proprietary Global Regulatory Authority Knowledge Base — comprehensive intelligence on 30+ regulatory agencies worldwide, submission requirements, timelines, and regional nuances.",
+    "copyright": "Concept2Cure Inc. Proprietary and Confidential."
+  },
+  "authorities": {
+    "FDA": {
+      "fullName": "U.S. Food and Drug Administration",
+      "country": "United States",
+      "region": "North America",
+      "website": "https://www.fda.gov",
+      "submissionFormat": "eCTD 4.0",
+      "language": ["en"],
+      "currency": "USD",
+      "centers": {
+        "CDER": { "fullName": "Center for Drug Evaluation and Research", "scope": "drugs" },
+        "CBER": { "fullName": "Center for Biologics Evaluation and Research", "scope": "biologics" },
+        "CDRH": { "fullName": "Center for Devices and Radiological Health", "scope": "devices" },
+        "CFSAN": { "fullName": "Center for Food Safety and Applied Nutrition", "scope": "food_supplements" },
+        "CVM": { "fullName": "Center for Veterinary Medicine", "scope": "veterinary" },
+        "ORA": { "fullName": "Office of Regulatory Affairs", "scope": "enforcement_inspections" }
+      },
+      "submissionTypes": {
+        "drugs": {
+          "IND": { "fullName": "Investigational New Drug Application", "cfr": "21 CFR 312", "reviewTimeline": "30 days (safety review)", "fees": false },
+          "NDA": { "fullName": "New Drug Application", "cfr": "21 CFR 314", "reviewTimeline": "10-12 months (standard), 6-8 months (priority)", "fees": true },
+          "ANDA": { "fullName": "Abbreviated New Drug Application", "cfr": "21 CFR 314.94", "reviewTimeline": "10 months (GDUFA)", "fees": true },
+          "sNDA": { "fullName": "Supplemental New Drug Application", "cfr": "21 CFR 314.70", "reviewTimeline": "varies by category", "fees": true },
+          "DMF": { "fullName": "Drug Master File", "types": ["I_Manufacturing", "II_DrugSubstance", "III_Packaging", "IV_Excipient", "V_FDAAccepted"], "cfr": "21 CFR 314.420" }
+        },
+        "biologics": {
+          "IND": { "fullName": "Investigational New Drug Application (Biologics)", "cfr": "21 CFR 312" },
+          "BLA": { "fullName": "Biologics License Application", "cfr": "21 CFR 601", "reviewTimeline": "10-12 months (standard), 6-8 months (priority)", "fees": true },
+          "sBLA": { "fullName": "Supplemental BLA", "cfr": "21 CFR 601.12" },
+          "351k": { "fullName": "Biosimilar Application", "cfr": "42 USC 262(k)", "reviewTimeline": "10-12 months", "fees": true }
+        },
+        "devices": {
+          "510k": { "fullName": "Premarket Notification", "cfr": "21 CFR 807", "reviewTimeline": "90 days (FDA goal: 3-6 months)", "fees": true },
+          "PMA": { "fullName": "Premarket Approval Application", "cfr": "21 CFR 814", "reviewTimeline": "180 days (FDA goal: 12-18 months)", "fees": true },
+          "DeNovo": { "fullName": "De Novo Classification Request", "cfr": "21 CFR 860", "reviewTimeline": "150 days review", "fees": true },
+          "HDE": { "fullName": "Humanitarian Device Exemption", "cfr": "21 CFR 814 Subpart H", "reviewTimeline": "75 days", "fees": false },
+          "IDE": { "fullName": "Investigational Device Exemption", "cfr": "21 CFR 812", "reviewTimeline": "30 days" },
+          "eSTAR": { "fullName": "Electronic Submission Template and Resource", "required": true, "since": "2023-10-01" }
+        }
+      },
+      "expeditedPrograms": {
+        "FastTrack": { "criteria": "Serious condition + unmet need", "benefits": ["Rolling review", "More frequent FDA meetings"], "cfr": "21 CFR 312 Subpart E" },
+        "BreakthroughTherapy": { "criteria": "Substantial improvement over existing treatments", "benefits": ["Intensive FDA guidance", "Rolling review", "Priority review eligible"] },
+        "AcceleratedApproval": { "criteria": "Surrogate endpoint reasonably likely to predict clinical benefit", "benefits": ["Earlier approval", "Confirmatory trial required post-approval"], "cfr": "21 CFR 314 Subpart H" },
+        "PriorityReview": { "criteria": "Significant improvement in safety/efficacy", "benefits": ["6-month review vs 10-month"], "fee": "Priority Review Voucher" },
+        "RMAT": { "fullName": "Regenerative Medicine Advanced Therapy", "criteria": "Regenerative medicine treating serious condition", "benefits": ["Rolling review", "Priority review", "Accelerated approval eligible"] },
+        "RealTimeOncologyReview": { "criteria": "Select oncology submissions", "benefits": ["Shortened review timelines"] }
+      },
+      "electronicSubmission": {
+        "gateway": "FDA ESG (Electronic Submissions Gateway)",
+        "format": "eCTD v4.0 (required since May 2023 for new NDAs/BLAs)",
+        "legacyFormat": "eCTD v3.2.2 (lifecycle sequences only)",
+        "technicalRequirements": {
+          "pdfVersion": "1.4-1.7",
+          "maxFileSize": "100MB per file",
+          "fonts": "embedded",
+          "security": "no encryption, no passwords",
+          "bookmarks": "required for documents >5 pages",
+          "hyperlinks": "relative paths only"
+        }
+      },
+      "inspectionAuthority": true,
+      "gmpRequirements": "21 CFR Parts 210/211 (drugs), 21 CFR Part 820 (QSR for devices)",
+      "pharmacovigilance": {
+        "regulation": "21 CFR 312.32 (IND safety), 21 CFR 314.80 (post-market)",
+        "seriousAETimeline": "15 calendar days (ICSRs), 7 days (fatal/life-threatening)",
+        "PSURRequired": false,
+        "PBRERAccepted": true,
+        "signalDetection": "FDA Sentinel System"
+      },
+      "clinicalTrialRequirements": {
+        "registration": "ClinicalTrials.gov (mandatory)",
+        "irbApproval": "21 CFR Part 56",
+        "informedConsent": "21 CFR Part 50",
+        "dataIntegrity": "21 CFR Part 11",
+        "bioequivalenceGuidance": "Product-specific BE guidance"
+      },
+      "feesFramework": "PDUFA VII (2023-2027), GDUFA III, MDUFA V, BsUFA III",
+      "mutualRecognitionAgreements": ["EU (GMP inspections)", "Australia (TGA)", "Canada", "Japan", "UK", "Switzerland"]
+    },
+
+    "EMA": {
+      "fullName": "European Medicines Agency",
+      "country": "European Union (27 member states + EEA)",
+      "region": "Europe",
+      "website": "https://www.ema.europa.eu",
+      "submissionFormat": "eCTD 4.0",
+      "language": ["en"],
+      "localLanguageRequired": true,
+      "localLanguageNote": "Product information in all 24 EU official languages; Module 1 in language of RMS for national procedures",
+      "currency": "EUR",
+      "procedures": {
+        "Centralised": { "scope": "Mandatory for biotech, orphan, HIV, cancer, neurodegenerative, diabetes, autoimmune, viral; optional for significant innovation", "reviewTimeline": "210 days (active review) + clock stops", "committee": "CHMP" },
+        "Decentralised": { "scope": "Product not yet authorized in any EU member state", "reviewTimeline": "210 days", "rmsRequired": true },
+        "MutualRecognition": { "scope": "Product authorized in at least one member state", "reviewTimeline": "90 days" },
+        "National": { "scope": "Single member state only" }
+      },
+      "submissionTypes": {
+        "drugs": {
+          "CTA": { "fullName": "Clinical Trial Application", "regulation": "EU CTR 536/2014", "portal": "CTIS", "reviewTimeline": "Part I: 45 days, Part II: varies by member state" },
+          "MAA": { "fullName": "Marketing Authorisation Application", "reviewTimeline": "210 active days" },
+          "IMPD": { "fullName": "Investigational Medicinal Product Dossier", "scope": "Required with CTA" },
+          "TypeII_Variation": { "fullName": "Type II Variation", "reviewTimeline": "60 days" },
+          "TypeIB_Variation": { "fullName": "Type IB Variation", "reviewTimeline": "30 days" },
+          "TypeIA_Variation": { "fullName": "Type IA Variation", "reviewTimeline": "Do and tell / Tell, wait and do" },
+          "PSUR": { "fullName": "Periodic Safety Update Report", "regulation": "ICH E2C(R2)" },
+          "RMP": { "fullName": "Risk Management Plan", "required": true },
+          "ASMF": { "fullName": "Active Substance Master File", "equivalent": "DMF Type II" },
+          "PIP": { "fullName": "Paediatric Investigation Plan", "committee": "PDCO", "required": "Mandatory unless waiver/deferral granted" },
+          "OrphanDesignation": { "committee": "COMP", "criteria": "Prevalence <5 in 10,000 in EU", "marketExclusivity": "10 years" }
+        },
+        "devices": {
+          "MDR": { "fullName": "Medical Device Regulation (EU) 2017/745", "database": "EUDAMED", "notifiedBodies": true },
+          "IVDR": { "fullName": "In Vitro Diagnostic Regulation (EU) 2017/746" }
+        }
+      },
+      "electronicSubmission": {
+        "gateway": "eSubmission Gateway / Web Client",
+        "format": "eCTD (EU Module 1 specifications)",
+        "eAF": "Electronic Application Form (required)",
+        "CESP": "Common European Submission Portal"
+      },
+      "pharmacovigilance": {
+        "regulation": "Directive 2001/83/EC, Regulation 726/2004",
+        "database": "EudraVigilance",
+        "QPPV": "Qualified Person for Pharmacovigilance (mandatory, EU-resident)",
+        "PSURFrequency": "Per EURD list",
+        "signalDetection": "EudraVigilance signal management"
+      },
+      "gmpRequirements": "EU GMP (EudraLex Volume 4), PIC/S compliant",
+      "mutualRecognitionAgreements": ["USA", "Australia", "Canada", "Japan", "Switzerland", "Israel", "UK"]
+    },
+
+    "PMDA": {
+      "fullName": "Pharmaceuticals and Medical Devices Agency",
+      "country": "Japan",
+      "region": "Asia-Pacific",
+      "regulatoryAuthority": "MHLW (Ministry of Health, Labour and Welfare) — PMDA conducts reviews",
+      "website": "https://www.pmda.go.jp",
+      "submissionFormat": "eCTD (JP Module 1)",
+      "language": ["ja"],
+      "languageNote": "All Module 1 documents in Japanese; CTD Modules 2-5 accepted in English with Japanese summaries",
+      "currency": "JPY",
+      "submissionTypes": {
+        "CTN": { "fullName": "Clinical Trial Notification", "reviewTimeline": "30 days", "regulation": "PAL Article 80-2" },
+        "JNDA": { "fullName": "Japanese New Drug Application (Shonin)", "reviewTimeline": "12 months standard", "regulation": "PAL Article 14" },
+        "PartialChange": { "fullName": "Partial Change Approval Application", "scope": "Post-approval changes" },
+        "ReexaminationApplication": { "fullName": "Re-examination Application", "scope": "Post-market re-evaluation after 4-10 years" },
+        "SAKIGAKE": { "fullName": "SAKIGAKE Designation", "criteria": "First-in-world, Japan-developed or Japan-first application", "benefits": ["Priority consultation", "Pre-application assessment", "6-month review target"] },
+        "CondApproval": { "fullName": "Conditional Early Approval", "criteria": "Serious disease, exploratory clinical trial data sufficient" }
+      },
+      "uniqueRequirements": {
+        "bridgingStudy": "Required if foreign clinical data extrapolation not justified (ICH E5)",
+        "japanesePatientData": "PK/PD data in Japanese subjects generally required",
+        "stabilityData": "ICH Q1A + long-term Japanese conditions (25°C/60%RH or 30°C/65%RH per zone IVa)",
+        "gaitouYakuhin": "Foreign manufactured drugs require additional documentation",
+        "CTDJPAnnex": "Japan-specific M1 sections (M1.2 JP-specific administrative docs)"
+      },
+      "electronicSubmission": {
+        "gateway": "PMDA Gateway",
+        "format": "eCTD (JP regional Module 1)",
+        "fileNaming": "Japanese file naming conventions apply"
+      },
+      "pharmacovigilance": {
+        "regulation": "GVP (Good Vigilance Practice) — Japan MHLW Ordinance",
+        "seriousAETimeline": "15 days (known), 15 days (unknown serious), 30 days (non-serious unknown)",
+        "PSUREquivalent": "PSUR/PBRER accepted under ICH E2C(R2)",
+        "signalDetection": "PMDA MIHARI Project"
+      },
+      "gmpRequirements": "Japanese GMP (J-GMP), PIC/S member since 2014",
+      "mutualRecognitionAgreements": ["EU (GMP)", "USA (GMP inspections)", "PIC/S member"]
+    },
+
+    "HealthCanada": {
+      "fullName": "Health Canada — Health Products and Food Branch (HPFB)",
+      "country": "Canada",
+      "region": "North America",
+      "website": "https://www.canada.ca/en/health-canada.html",
+      "submissionFormat": "eCTD",
+      "language": ["en", "fr"],
+      "languageNote": "Product monograph required in both English and French",
+      "currency": "CAD",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Application", "regulation": "Food and Drug Regulations C.05", "reviewTimeline": "30 days (no objection letter)" },
+        "NDS": { "fullName": "New Drug Submission", "reviewTimeline": "300 days target (standard), 180 days (priority)" },
+        "ANDS": { "fullName": "Abbreviated New Drug Submission", "scope": "Generics", "reviewTimeline": "180 days" },
+        "SNDS": { "fullName": "Supplemental New Drug Submission" },
+        "DIN": { "fullName": "Drug Identification Number" },
+        "NHP_NPN": { "fullName": "Natural Health Product Number" },
+        "MDEL": { "fullName": "Medical Device Establishment Licence" },
+        "MDL": { "fullName": "Medical Device Licence", "classes": ["I", "II", "III", "IV"] }
+      },
+      "expeditedPrograms": {
+        "PriorityReview": { "criteria": "Serious/life-threatening/severely debilitating condition", "reviewTimeline": "180 days" },
+        "NOCc": { "fullName": "Notice of Compliance with conditions", "scope": "Promising evidence, confirmatory studies required" },
+        "SANDS": { "fullName": "Submission relying on foreign review", "scope": "Project Orbis, Access Consortium" }
+      },
+      "pharmacovigilance": {
+        "database": "Canada Vigilance",
+        "seriousAETimeline": "15 days",
+        "annualReport": "Annual Drug Safety Update Report"
+      },
+      "gmpRequirements": "GUI-0001 (Drug GMP), PIC/S member"
+    },
+
+    "MHRA": {
+      "fullName": "Medicines and Healthcare products Regulatory Agency",
+      "country": "United Kingdom",
+      "region": "Europe",
+      "website": "https://www.gov.uk/government/organisations/mhra",
+      "submissionFormat": "eCTD",
+      "language": ["en"],
+      "currency": "GBP",
+      "postBrexit": true,
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Authorisation", "reviewTimeline": "30 days + ethics" },
+        "MAA_National": { "fullName": "Marketing Authorisation Application (national)", "reviewTimeline": "210 days" },
+        "ILAP": { "fullName": "Innovative Licensing and Access Pathway", "benefits": ["Target Development Profile", "Rolling review possible"] },
+        "ECAP": { "fullName": "Early Access to Medicines Scheme", "scope": "Pre-licence access for serious conditions" }
+      },
+      "uniqueFeatures": {
+        "relyProcedure": "Recognition of decisions from trusted regulators (FDA, EMA, TGA, Health Canada, Swissmedic, Singapore HSA)",
+        "internationalRecognition": "Access Consortium member",
+        "ukSpecificModule1": "UK-specific Module 1 (post-Brexit divergence from EU)"
+      },
+      "pharmacovigilance": {
+        "database": "Yellow Card Scheme",
+        "QPPV": "Required (UK-based)",
+        "signalDetection": "CPRD and Yellow Card data mining"
+      }
+    },
+
+    "TGA": {
+      "fullName": "Therapeutic Goods Administration",
+      "country": "Australia",
+      "region": "Asia-Pacific",
+      "parentBody": "Department of Health and Aged Care",
+      "website": "https://www.tga.gov.au",
+      "submissionFormat": "eCTD",
+      "language": ["en"],
+      "currency": "AUD",
+      "submissionTypes": {
+        "CTN": { "fullName": "Clinical Trial Notification", "reviewTimeline": "No TGA review; HREC approval required" },
+        "CTX": { "fullName": "Clinical Trial Exemption", "reviewTimeline": "30 working days TGA review" },
+        "Category1": { "fullName": "New Chemical Entity registration", "reviewTimeline": "255 working days" },
+        "Category3": { "fullName": "Bioequivalent / biosimilar", "reviewTimeline": "255 working days" },
+        "SAS": { "fullName": "Special Access Scheme", "scope": "Unapproved therapeutic goods" },
+        "ProvisionalApproval": { "criteria": "Promising preliminary data, serious condition", "duration": "2 years initial, renewable" }
+      },
+      "deviceRegulation": {
+        "framework": "Therapeutic Goods Act 1989",
+        "classes": ["I", "IIa", "IIb", "III", "AIMD"],
+        "ARTG": "Australian Register of Therapeutic Goods (mandatory listing)"
+      },
+      "pharmacovigilance": {
+        "database": "DAEN (Database of Adverse Event Notifications)",
+        "seriousAETimeline": "15 calendar days",
+        "PSURRequirement": "PSUR or PBRER accepted"
+      },
+      "mutualRecognitionAgreements": ["EU (GMP)", "PIC/S member", "Access Consortium (Project Orbis)"]
+    },
+
+    "Swissmedic": {
+      "fullName": "Swiss Agency for Therapeutic Products",
+      "country": "Switzerland",
+      "region": "Europe",
+      "website": "https://www.swissmedic.ch",
+      "submissionFormat": "eCTD",
+      "language": ["de", "fr", "it", "en"],
+      "languageNote": "Modules 2-5 in English accepted; Module 1 and product information in official Swiss languages",
+      "currency": "CHF",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Authorisation", "reviewTimeline": "30 days" },
+        "MAA": { "fullName": "Marketing Authorisation Application", "reviewTimeline": "330 days (standard), 140 days (fast-track)" },
+        "MHFA": { "fullName": "Marketing Authorisation for Human Medicines with Known Active Substance" }
+      },
+      "expeditedPrograms": {
+        "FastTrack": { "criteria": "Promising therapeutic candidates for serious conditions", "benefits": ["Rolling submission", "140-day review"] },
+        "TemporaryAuthorisation": { "scope": "Emergency use (e.g. pandemic)" }
+      },
+      "uniqueFeatures": {
+        "notEU": "Switzerland is NOT an EU/EEA member; independent regulatory decisions",
+        "accessConsortium": "Access Consortium member",
+        "relyProcedure": "Can consider prior FDA/EMA assessments"
+      }
+    },
+
+    "NMPA": {
+      "fullName": "National Medical Products Administration",
+      "country": "China",
+      "region": "Asia-Pacific",
+      "formerName": "CFDA (China Food and Drug Administration)",
+      "website": "https://www.nmpa.gov.cn",
+      "submissionFormat": "eCTD (transitioning)",
+      "language": ["zh"],
+      "languageNote": "ALL documents must be in Chinese (Mandarin). Foreign documents require certified translation.",
+      "currency": "CNY",
+      "submissionTypes": {
+        "IND": { "fullName": "Investigational New Drug Application", "reviewTimeline": "60 working days (implied consent)" },
+        "NDA": { "fullName": "New Drug Application (注册申请)", "reviewTimeline": "200 working days (standard), 130 days (priority)" },
+        "ANDA": { "fullName": "Abbreviated NDA (generic)", "reviewTimeline": "200 working days" },
+        "BLA": { "fullName": "Biologics License Application" },
+        "ImportDrugLicense": { "scope": "Foreign-manufactured drugs for Chinese market" }
+      },
+      "expeditedPrograms": {
+        "BreakthroughTherapy": { "benefits": ["Rolling submission", "Priority review", "Conditional approval possible"] },
+        "ConditionalApproval": { "scope": "Serious conditions, unmet need, limited data" },
+        "PriorityReview": { "reviewTimeline": "130 working days" },
+        "SpecialApproval": { "scope": "Public health emergencies" }
+      },
+      "uniqueRequirements": {
+        "chinesePatientData": "Phase III clinical trials in Chinese patients generally required (minimum proportion varies)",
+        "dataLocalization": "Clinical trial data must be stored on servers in mainland China",
+        "ICHMember": "China became ICH member in 2017 — ICH guidelines being adopted progressively",
+        "referenceStandards": "Chinese Pharmacopoeia (ChP) standards apply",
+        "stabilityConditions": "Zone IVa/IVb conditions apply",
+        "MAH_System": "Marketing Authorization Holder system (2019) — separates manufacturing from MAH"
+      },
+      "deviceRegulation": {
+        "classes": ["I", "II", "III"],
+        "registrationBody": "NMPA for Class III; provincial for Class I-II"
+      }
+    },
+
+    "ANVISA": {
+      "fullName": "Agência Nacional de Vigilância Sanitária",
+      "country": "Brazil",
+      "region": "Latin America",
+      "website": "https://www.gov.br/anvisa",
+      "submissionFormat": "CTD (paper + electronic)",
+      "language": ["pt"],
+      "languageNote": "All documents in Brazilian Portuguese; Module 2-5 summaries in Portuguese, source data in English accepted with sworn translation",
+      "currency": "BRL",
+      "submissionTypes": {
+        "CEDP": { "fullName": "Clinical Trial Authorization (Comunicação Especial)", "reviewTimeline": "90 days" },
+        "NewDrugRegistration": { "fullName": "Registro de Medicamento Novo", "reviewTimeline": "365 days (standard), 120 days (priority)" },
+        "GenericRegistration": { "fullName": "Registro de Medicamento Genérico" },
+        "SimilarRegistration": { "fullName": "Registro de Medicamento Similar" },
+        "BiologicalRegistration": { "fullName": "Registro de Produto Biológico" }
+      },
+      "expeditedPrograms": {
+        "PriorityReview": { "criteria": "Serious conditions, public health priority" },
+        "FastTrack": { "since": "RDC 204/2017" }
+      },
+      "uniqueRequirements": {
+        "GMP_Certification": "ANVISA GMP certificate required for ALL manufacturers (domestic and foreign) before registration",
+        "foreignInspection": "ANVISA conducts on-site GMP inspections of foreign manufacturing facilities",
+        "renewalRequired": "Registration must be renewed every 5 years",
+        "priceRegulation": "CMED (Câmara de Regulação do Mercado de Medicamentos) drug pricing approval required"
+      }
+    },
+
+    "MFDS": {
+      "fullName": "Ministry of Food and Drug Safety",
+      "country": "South Korea",
+      "region": "Asia-Pacific",
+      "website": "https://www.mfds.go.kr",
+      "submissionFormat": "eCTD (Korean Module 1)",
+      "language": ["ko"],
+      "languageNote": "Module 1 in Korean; Modules 2-5 in English accepted",
+      "currency": "KRW",
+      "submissionTypes": {
+        "IND": { "fullName": "Investigational New Drug Application", "reviewTimeline": "30 days" },
+        "NDA": { "fullName": "New Drug Application (품목허가)", "reviewTimeline": "120 days (standard), 100 days (priority)" },
+        "GenericApproval": { "fullName": "Generic Drug Approval", "reviewTimeline": "120 days" },
+        "BLA": { "fullName": "Biologics License Application" }
+      },
+      "expeditedPrograms": {
+        "ConditionalApproval": { "criteria": "Serious disease, Phase II data acceptable" },
+        "PriorityReview": { "reviewTimeline": "100 working days" },
+        "FastTrack": { "since": "2019", "criteria": "First-in-class, urgent public health need" },
+        "BreakthroughTherapy": { "since": "2020" }
+      },
+      "uniqueRequirements": {
+        "KoreanBridgingStudy": "PK bridging data in Korean subjects may be required (ICH E5 applied)",
+        "koreanPharmacopoeia": "Korean Pharmacopoeia (KP) standards",
+        "KGMP": "Korean GMP (KGMP) certification required; PIC/S member since 2014",
+        "DMF_Filing": "Korean DMF system separate from FDA DMF"
+      }
+    },
+
+    "CDSCO": {
+      "fullName": "Central Drugs Standard Control Organisation",
+      "country": "India",
+      "region": "South Asia",
+      "regulatoryHead": "DCGI (Drug Controller General of India)",
+      "website": "https://cdsco.gov.in",
+      "submissionFormat": "CTD (transitioning to eCTD)",
+      "language": ["en"],
+      "currency": "INR",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Permission", "regulation": "New Drugs and Clinical Trials Rules, 2019", "reviewTimeline": "30 working days (new chemical), 45 working days (others)" },
+        "NDA": { "fullName": "New Drug Application", "reviewTimeline": "6-9 months" },
+        "ANDA": { "fullName": "Abbreviated NDA (generics)" },
+        "Import_Registration": { "fullName": "Import Registration Certificate" },
+        "FDC": { "fullName": "Fixed Dose Combination Application" }
+      },
+      "expeditedPrograms": {
+        "AcceleratedApproval": { "regulation": "Rule 101, New Drugs Rules 2019" },
+        "AdaptiveLicensing": { "scope": "Conditional approval for serious conditions" }
+      },
+      "uniqueRequirements": {
+        "localClinicalTrials": "Phase III clinical trial data in Indian patients generally required",
+        "localPhaseI": "Phase I studies in India may be required for first-in-human",
+        "indianPharmacopoeia": "IP (Indian Pharmacopoeia) standards",
+        "tropicalStability": "Zone IVa stability data required (30°C/65%RH)",
+        "Form44": "Form 44 for import drug registration",
+        "SUGAM": "SUGAM online portal for submissions"
+      }
+    },
+
+    "HSA": {
+      "fullName": "Health Sciences Authority",
+      "country": "Singapore",
+      "region": "Southeast Asia",
+      "website": "https://www.hsa.gov.sg",
+      "submissionFormat": "eCTD (ACTD format also accepted)",
+      "language": ["en"],
+      "currency": "SGD",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Certificate / Clinical Trial Notification", "reviewTimeline": "30-45 working days" },
+        "NDA_Full": { "fullName": "New Drug Application (Full)", "reviewTimeline": "270 working days" },
+        "NDA_Abridged": { "fullName": "New Drug Application (Abridged — relies on reference agency)", "reviewTimeline": "180 working days" },
+        "NDA_Verification": { "fullName": "Verification Route (fast-track for products approved by reference agencies)", "reviewTimeline": "60 working days", "referenceAgencies": ["FDA", "EMA", "Health Canada", "TGA", "MHRA", "Swissmedic"] },
+        "GenericApplication": { "fullName": "Generic Drug Application (Abridged)", "reviewTimeline": "180 working days" }
+      },
+      "uniqueFeatures": {
+        "PRISM": "Pharmaceutical Regulatory Information System (electronic submission portal)",
+        "accessConsortium": "Founding member of Access Consortium",
+        "projectOrbis": "Participant in FDA Project Orbis",
+        "referenceAgencyReliance": "Strong verification/reliance framework — leverages reference agency decisions"
+      }
+    },
+
+    "SFDA": {
+      "fullName": "Saudi Food and Drug Authority",
+      "country": "Saudi Arabia",
+      "region": "Middle East",
+      "website": "https://www.sfda.gov.sa",
+      "submissionFormat": "CTD/eCTD",
+      "language": ["ar", "en"],
+      "languageNote": "Module 1 in Arabic; Modules 2-5 in English accepted",
+      "currency": "SAR",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Application" },
+        "MAA": { "fullName": "Marketing Authorization Application", "reviewTimeline": "180-270 days" },
+        "FastTrackMAA": { "scope": "Products approved by recognized reference agencies", "referenceAgencies": ["FDA", "EMA", "Health Canada", "TGA", "Swissmedic"] }
+      },
+      "uniqueRequirements": {
+        "stabilityRequirements": "Zone IVa/IVb — real-time stability data at 30°C/65%RH or 30°C/75%RH",
+        "halalCertification": "Halal certification may be required for products containing animal-derived ingredients",
+        "localAgent": "Local authorized agent/distributor required",
+        "GCC_Harmonization": "GCC centralized registration procedure available"
+      }
+    },
+
+    "MOHAP": {
+      "fullName": "Ministry of Health and Prevention",
+      "country": "United Arab Emirates",
+      "region": "Middle East",
+      "website": "https://www.mohap.gov.ae",
+      "submissionFormat": "CTD",
+      "language": ["ar", "en"],
+      "currency": "AED",
+      "submissionTypes": {
+        "Registration": { "fullName": "Drug Registration Application", "reviewTimeline": "60-90 days (recognized reference, fast-track)" },
+        "GCC_Centralised": { "fullName": "GCC Centralised Registration" }
+      },
+      "uniqueRequirements": {
+        "referenceAgencyReliance": "Strong reliance on FDA, EMA, Health Canada, TGA, Swissmedic decisions",
+        "DOH_AbuDhabi": "Abu Dhabi DOH has separate regulatory pathway",
+        "DHA_Dubai": "Dubai Health Authority has separate pathway",
+        "localBatchTesting": "Batch testing by local authorized lab may be required"
+      }
+    },
+
+    "Medsafe": {
+      "fullName": "New Zealand Medicines and Medical Devices Safety Authority",
+      "country": "New Zealand",
+      "region": "Asia-Pacific",
+      "website": "https://www.medsafe.govt.nz",
+      "submissionFormat": "eCTD (ACTD format accepted)",
+      "language": ["en"],
+      "currency": "NZD",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Application (SCOTT Committee)" },
+        "NMA": { "fullName": "New Medicine Application", "reviewTimeline": "200 working days" },
+        "ChangedMedicine": { "fullName": "Changed Medicine Notification" },
+        "AbbreviatedApplication": { "fullName": "Abbreviated application (generic)", "reviewTimeline": "200 working days" }
+      },
+      "uniqueFeatures": {
+        "accessConsortium": "Access Consortium member",
+        "ANZSMRAs": "Trans-Tasman recognition with TGA (Australia)"
+      }
+    },
+
+    "TFDA": {
+      "fullName": "Taiwan Food and Drug Administration",
+      "country": "Taiwan",
+      "region": "Asia-Pacific",
+      "parentBody": "Ministry of Health and Welfare (MOHW)",
+      "website": "https://www.fda.gov.tw",
+      "submissionFormat": "CTD",
+      "language": ["zh-TW", "en"],
+      "currency": "TWD",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Application", "reviewTimeline": "45 working days" },
+        "NDA": { "fullName": "New Drug Application", "reviewTimeline": "360 days (standard), 200 days (priority)" },
+        "BLA": { "fullName": "Biologics License Application" },
+        "GenericApplication": { "fullName": "Generic Drug Application" }
+      },
+      "uniqueRequirements": {
+        "bridgingStudy": "PK bridging in Taiwanese patients often required",
+        "ICH_Aligned": "Follows ICH guidelines though not ICH member",
+        "localRepresentative": "Local representative required for foreign companies"
+      }
+    },
+
+    "SAHPRA": {
+      "fullName": "South African Health Products Regulatory Authority",
+      "country": "South Africa",
+      "region": "Africa",
+      "formerName": "MCC (Medicines Control Council)",
+      "website": "https://www.sahpra.org.za",
+      "submissionFormat": "eCTD/CTD",
+      "language": ["en"],
+      "currency": "ZAR",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Application" },
+        "Section21": { "fullName": "Registration Application (Medicines Act Section 21)" },
+        "RelyRoute": { "fullName": "Reliance/Recognition pathway", "referenceAgencies": ["FDA", "EMA", "TGA", "Health Canada", "WHO PQ"] }
+      },
+      "uniqueFeatures": {
+        "WHO_AfricanMedicinesAgency": "Aligned with African Medicines Agency (AMA) treaty",
+        "ZaZiBoNa": "Collaborative registration initiative (Zimbabwe, Zambia, Botswana, Namibia, South Africa)",
+        "hiv_tb_priority": "Priority review for HIV, TB, malaria products"
+      }
+    },
+
+    "COFEPRIS": {
+      "fullName": "Federal Commission for the Protection against Sanitary Risk",
+      "country": "Mexico",
+      "region": "Latin America",
+      "website": "https://www.gob.mx/cofepris",
+      "submissionFormat": "CTD",
+      "language": ["es"],
+      "languageNote": "All documents in Spanish; CTD modules accepted in English with Spanish summaries for some pathways",
+      "currency": "MXN",
+      "submissionTypes": {
+        "CTA": { "fullName": "Clinical Trial Authorization" },
+        "RegistroSanitario": { "fullName": "Sanitary Registration", "reviewTimeline": "180 working days (standard), 60 days (equivalence)" }
+      },
+      "uniqueRequirements": {
+        "referenceCountry": "Expedited pathway for products approved by FDA, EMA, Health Canada, TGA",
+        "localClinicalData": "May accept foreign clinical data with bridging justification",
+        "GMP": "COFEPRIS GMP certificate required; conducts foreign facility inspections"
+      }
+    },
+
+    "AEMPS": {
+      "fullName": "Agencia Española de Medicamentos y Productos Sanitarios",
+      "country": "Spain",
+      "region": "Europe (EU)",
+      "scope": "National authority under EU framework",
+      "submissionFormat": "eCTD (EU Module 1 — Spanish specifics)",
+      "language": ["es"],
+      "note": "Operates within EU regulatory framework; acts as RMS for decentralised/mutual recognition procedures"
+    },
+
+    "BfArM": {
+      "fullName": "Bundesinstitut für Arzneimittel und Medizinprodukte",
+      "country": "Germany",
+      "region": "Europe (EU)",
+      "scope": "Drugs and medical devices (national procedures)",
+      "submissionFormat": "eCTD (EU Module 1 — German specifics)",
+      "language": ["de"],
+      "note": "Frequently acts as RMS/CMS for EU procedures"
+    },
+
+    "PEI": {
+      "fullName": "Paul-Ehrlich-Institut",
+      "country": "Germany",
+      "region": "Europe (EU)",
+      "scope": "Vaccines, blood products, sera, allergens, ATMPs, biologics",
+      "submissionFormat": "eCTD",
+      "language": ["de", "en"],
+      "note": "Separate from BfArM; handles biologics and ATMPs in Germany"
+    },
+
+    "ANSM": {
+      "fullName": "Agence nationale de sécurité du médicament et des produits de santé",
+      "country": "France",
+      "region": "Europe (EU)",
+      "submissionFormat": "eCTD (EU Module 1 — French specifics)",
+      "language": ["fr"],
+      "note": "Major EU reference authority; frequently acts as rapporteur at CHMP"
+    },
+
+    "AIFA": {
+      "fullName": "Agenzia Italiana del Farmaco",
+      "country": "Italy",
+      "region": "Europe (EU)",
+      "submissionFormat": "eCTD",
+      "language": ["it"],
+      "uniqueFeatures": {
+        "managedEntry": "Managed entry agreements (MEAs) and outcome-based contracts for innovative drugs",
+        "AIFA_Registries": "Mandatory AIFA monitoring registries for high-cost drugs"
+      }
+    },
+
+    "MHRA_Japan_Bridge": {
+      "_comment": "Placeholder for bilateral reliance agreements data"
+    },
+
+    "WHO_PQ": {
+      "fullName": "WHO Prequalification Programme",
+      "scope": "International — Prequalification of medicines, vaccines, diagnostics for UN procurement",
+      "website": "https://extranet.who.int/pqweb/",
+      "submissionFormat": "CTD/eCTD",
+      "language": ["en"],
+      "submissionTypes": {
+        "PQ_FPP": { "fullName": "Prequalification of Finished Pharmaceutical Product" },
+        "PQ_API": { "fullName": "Prequalification of Active Pharmaceutical Ingredient" },
+        "PQ_Vaccine": { "fullName": "Prequalification of Vaccine" },
+        "EUL": { "fullName": "Emergency Use Listing", "scope": "Pandemic/epidemic products" }
+      },
+      "requirements": {
+        "comparatorProduct": "WHO comparator product required",
+        "GMP": "WHO GMP compliance (inspected by WHO or SRA)",
+        "SRA_Reliance": "Products approved by SRA (Stringent Regulatory Authority) have expedited review"
+      },
+      "importance": "Required for procurement by UNICEF, Global Fund, GAVI, PEPFAR"
+    },
+
+    "NAFDAC": {
+      "fullName": "National Agency for Food and Drug Administration and Control",
+      "country": "Nigeria",
+      "region": "Africa",
+      "website": "https://www.nafdac.gov.ng",
+      "submissionFormat": "CTD",
+      "language": ["en"],
+      "currency": "NGN",
+      "submissionTypes": {
+        "DrugRegistration": { "fullName": "Drug Registration Application", "reviewTimeline": "6-12 months" },
+        "CTA": { "fullName": "Clinical Trial Application" }
+      },
+      "uniqueRequirements": {
+        "WHO_PQ_Reliance": "Expedited review for WHO-prequalified products",
+        "localRepresentative": "Local agent required"
+      }
+    },
+
+    "PPB": {
+      "fullName": "Pharmacy and Poisons Board",
+      "country": "Kenya",
+      "region": "Africa",
+      "submissionFormat": "CTD",
+      "language": ["en"],
+      "uniqueFeatures": {
+        "EAC_Harmonization": "East African Community harmonization initiative",
+        "WHO_Collaborative": "WHO collaborative registration pathway"
+      }
+    },
+
+    "ANVISA_Note": {
+      "_comment": "ANVISA fully defined above under 'ANVISA'"
+    },
+
+    "INVIMA": {
+      "fullName": "Instituto Nacional de Vigilancia de Medicamentos y Alimentos",
+      "country": "Colombia",
+      "region": "Latin America",
+      "submissionFormat": "CTD",
+      "language": ["es"],
+      "currency": "COP",
+      "submissionTypes": {
+        "RegistroSanitario": { "fullName": "Sanitary Registration", "reviewTimeline": "180 days" }
+      }
+    },
+
+    "ANMAT": {
+      "fullName": "Administración Nacional de Medicamentos, Alimentos y Tecnología Médica",
+      "country": "Argentina",
+      "region": "Latin America",
+      "submissionFormat": "CTD",
+      "language": ["es"],
+      "currency": "ARS"
+    },
+
+    "ISP": {
+      "fullName": "Instituto de Salud Pública",
+      "country": "Chile",
+      "region": "Latin America",
+      "submissionFormat": "CTD",
+      "language": ["es"],
+      "currency": "CLP",
+      "uniqueFeatures": {
+        "PICS_Member": "PIC/S member since 2018"
+      }
+    },
+
+    "DIGEMID": {
+      "fullName": "Dirección General de Medicamentos, Insumos y Drogas",
+      "country": "Peru",
+      "region": "Latin America",
+      "submissionFormat": "CTD",
+      "language": ["es"],
+      "currency": "PEN"
+    }
+  },
+
+  "internationalFrameworks": {
+    "ICH": {
+      "fullName": "International Council for Harmonisation of Technical Requirements for Pharmaceuticals for Human Use",
+      "members": ["FDA", "EMA", "PMDA", "Health Canada", "Swissmedic", "NMPA", "MFDS", "ANVISA", "TFDA", "HSA", "SAHPRA", "MHRA"],
+      "observers": ["WHO", "IFPMA", "IGBA"],
+      "scope": "Harmonization of pharmaceutical regulatory requirements",
+      "guidelines": "See ich-guidelines-comprehensive.json for complete database"
+    },
+    "PIC_S": {
+      "fullName": "Pharmaceutical Inspection Co-operation Scheme",
+      "scope": "GMP inspection harmonization",
+      "memberCount": "54 participating authorities"
+    },
+    "AccessConsortium": {
+      "members": ["TGA", "Health Canada", "HSA", "Swissmedic", "MHRA"],
+      "scope": "Work-sharing, simultaneous submissions, joint assessments",
+      "projectOrbis": "Collaborative review for oncology products (FDA-led)"
+    },
+    "ICDRA": {
+      "fullName": "International Conference of Drug Regulatory Authorities",
+      "scope": "Forum for regulatory authorities worldwide"
+    },
+    "WHO_SRA": {
+      "fullName": "WHO Listed Authorities (formerly Stringent Regulatory Authorities)",
+      "members": ["FDA", "EMA", "PMDA", "Health Canada", "TGA", "Swissmedic", "MHRA"],
+      "significance": "SRA approval enables expedited pathways in many developing countries"
+    }
+  },
+
+  "globalStabilityZones": {
+    "ZoneI": { "conditions": "21°C/45%RH", "regions": ["Northern Europe", "Canada", "Russia"] },
+    "ZoneII": { "conditions": "25°C/60%RH", "regions": ["USA", "Japan", "Southern Europe"] },
+    "ZoneIII": { "conditions": "30°C/35%RH", "regions": ["Hot/dry regions"] },
+    "ZoneIVa": { "conditions": "30°C/65%RH", "regions": ["Brazil", "India", "Southeast Asia"] },
+    "ZoneIVb": { "conditions": "30°C/75%RH", "regions": ["Tropical — Nigeria", "Philippines", "Panama"] }
+  }
+}

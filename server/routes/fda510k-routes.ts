@@ -1743,6 +1743,16 @@ router.delete('/cache/clear', async (req: Request, res: Response, next: NextFunc
   }
 });
 
+/**
+ * POST /search-predicates-literature
+ * Alias for /predicate-search — consumed by client FDA510kService.searchPredicateDevices()
+ */
+router.post('/search-predicates-literature', async (req: Request, res: Response, next: NextFunction) => {
+  // Forward to predicate-search by rewriting the URL internally
+  req.url = '/predicate-search';
+  router.handle(req, res, next);
+});
+
 // Apply error handler to all routes
 router.use(errorHandler);
 

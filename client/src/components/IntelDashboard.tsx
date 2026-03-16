@@ -321,7 +321,7 @@ export default function IntelDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 text-transparent bg-clip-text mb-1">
-            TrialSage Intelligence Dashboard
+            Concept2Cure Intelligence Dashboard
           </h1>
           <p className="text-muted-foreground">
             Powered by OpenAI GPT-4o with thread memory for continuous refinement

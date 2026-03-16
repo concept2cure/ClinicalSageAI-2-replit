@@ -15,6 +15,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
+import { FloatingMenu } from '@tiptap/extension-floating-menu';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';

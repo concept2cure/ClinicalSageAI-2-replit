@@ -1,8 +1,8 @@
 /**
  * Server Keep-Alive Module
  *
- * This module implements a self-pinging mechanism to prevent Replit
- * from hibernating the server due to inactivity.
+ * This module implements a self-pinging mechanism to prevent
+ * the server from hibernating due to inactivity.
  */
 
 const https = require('https');
@@ -10,7 +10,7 @@ const http = require('http');
 
 class ServerKeepAlive {
   constructor(options = {}) {
-    this.interval = options.interval || 4 * 60 * 1000; // Default: ping every 4 minutes (Replit hibernates after 5)
+    this.interval = options.interval || 4 * 60 * 1000; // Default: ping every 4 minutes
     this.target = options.target || null; // Target URL to ping
     this.silent = options.silent || false; // Whether to log pings
     this.pingTimer = null;
@@ -100,20 +100,9 @@ class ServerKeepAlive {
    * Attempt to determine the server's own URL
    */
   getSelfUrl() {
-    // Check for Replit deployment URL in environment variables
-    if (process.env.REPL_SLUG && process.env.REPL_ID && process.env.REPL_OWNER) {
-      // New Replit URL format (recent change)
-      return `${process.env.REPL_ID}-00-${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
-    }
-
-    // Legacy Replit URL format
-    if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-      return `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
-    }
-
-    // Try to get from Replit-specific environment variables (another format)
-    if (process.env.REPL_ID) {
-      return `${process.env.REPL_ID}.id.repl.co`;
+    // Check for deployment URL in environment variables
+    if (process.env.APP_URL) {
+      return process.env.APP_URL;
     }
 
     // Get hostname from any request headers if available

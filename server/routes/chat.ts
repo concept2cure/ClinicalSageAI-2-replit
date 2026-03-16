@@ -1,5 +1,5 @@
 /**
- * Chat API Routes - Lumen Cortex AI Chat Interface
+ * Chat API Routes - AnA AI Chat Interface
  *
  * 9-step provenance-tracked RAG pipeline for regulatory guidance.
  * Connects to OpenAI GPT-4 via AI Gateway with org-scoped retrieval.
@@ -29,14 +29,14 @@ function ensureGateway() {
     try {
       gateway = getGateway();
     } catch (e) {
-      console.warn('[Lumen Cortex] AI Gateway initialization failed, using demo mode');
+      console.warn('[AnA] AI Gateway initialization failed, using demo mode');
     }
   }
   return gateway;
 }
 
 // System prompt for regulatory AI assistant
-const REGULATORY_SYSTEM_PROMPT = `You are Lumen Cortex, an expert AI assistant for regulatory affairs in the life sciences industry. You specialize in:
+const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), an expert RI Co-pilot for regulatory affairs in the life sciences industry. You specialize in:
 
 - FDA 510(k) medical device submissions
 - IND (Investigational New Drug) applications
@@ -160,6 +160,51 @@ function verifyClaim(
 
   const shouldDowngrade = flags.some(f => f.severity === 'downgrade');
   return { flags, shouldDowngrade };
+}
+
+/**
+ * Generates a default demo response for when no AI provider is available.
+ */
+function generateDemoResponse(_message: string): string {
+  return `## AnA v1.0 — RI Co-pilot
+
+Thank you for your query. I'm AnA (Audit & Narrative Assistant), your RI Co-pilot for regulatory affairs. I can help with:
+
+### My Capabilities
+
+**🏥 Medical Devices**
+- FDA 510(k) submissions
+- De Novo classification requests
+- PMA applications
+- EU MDR compliance & CER preparation
+
+**💊 Pharmaceuticals**
+- IND applications
+- NDA/ANDA submissions
+- CMC documentation
+- Clinical trial design
+
+**📋 Compliance**
+- 21 CFR Part 11 (electronic records)
+- GxP requirements (GMP, GLP, GCP)
+- ISO 13485 quality management
+- Risk management (ISO 14971)
+
+**📄 Documentation**
+- eCTD structure and formatting
+- Regulatory strategy development
+- Gap analysis and remediation
+- Submission timeline planning
+
+### How I Can Help
+
+1. **Ask specific questions** about regulatory requirements
+2. **Request document reviews** for compliance gaps
+3. **Get submission checklists** for your product type
+4. **Explore predicate devices** for 510(k) submissions
+5. **Understand timelines** for different submission pathways
+
+What regulatory challenge can I help you with today?`;
 }
 
 /**
@@ -626,7 +671,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
       claims,
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Chat error:', error);
+    console.error('[AnA] Chat error:', error);
 
     // Rule 6: no raw error.message leak
     res.status(500).json({
@@ -665,7 +710,7 @@ router.post('/upload', async (req: Request, res: Response) => {
       fileName,
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Upload error:', error);
+    console.error('[AnA] Upload error:', error);
     res.status(500).json({
       error: 'Failed to upload file',
       code: 'UPLOAD_ERROR',
@@ -699,7 +744,7 @@ router.get('/thread/:threadId', async (req: Request, res: Response) => {
       created_at: threadResult.rows[0].created_at,
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Thread retrieval error:', error);
+    console.error('[AnA] Thread retrieval error:', error);
     res.status(500).json({
       error: 'Failed to retrieve thread',
       code: 'THREAD_RETRIEVAL_ERROR',
@@ -722,7 +767,7 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
       message: deleted ? 'Thread deleted' : 'Thread not found',
     });
   } catch (error: any) {
-    console.error('[Lumen Cortex] Thread deletion error:', error);
+    console.error('[AnA] Thread deletion error:', error);
     res.status(500).json({
       error: 'Failed to delete thread',
       code: 'THREAD_DELETE_ERROR',
@@ -747,7 +792,7 @@ router.get('/health', async (req: Request, res: Response) => {
 
   res.json({
     status: hasApiKey ? 'healthy' : 'degraded',
-    service: 'Lumen Cortex Chat',
+    service: 'AnA Chat',
     openai_configured: hasApiKey,
     active_threads: threadCount,
     persistence: 'postgresql',

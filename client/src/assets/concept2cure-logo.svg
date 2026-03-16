@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" fill="none">
+  <defs>
+    <!-- Background gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#7EC8F8" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#3B9FD9" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#1B6CA8" stop-opacity="0"/>
+    </radialGradient>
+    <!-- DNA helix gold gradient -->
+    <linearGradient id="dnaGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5D76E"/>
+      <stop offset="30%" stop-color="#E8A317"/>
+      <stop offset="60%" stop-color="#D4820C"/>
+      <stop offset="100%" stop-color="#C67800"/>
+    </linearGradient>
+    <linearGradient id="dnaGoldLight" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="40%" stop-color="#F5C518"/>
+      <stop offset="100%" stop-color="#E8A317"/>
+    </linearGradient>
+    <!-- Glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#FFD700" flood-opacity="0.3"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Background gradient for full bg -->
+    <linearGradient id="bgMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A7BC4"/>
+      <stop offset="50%" stop-color="#2196D4"/>
+      <stop offset="100%" stop-color="#1565A0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="240" rx="12" fill="url(#bgMain)"/>
+  <rect width="400" height="240" rx="12" fill="url(#bgGlow)"/>
+
+  <!-- DNA Double Helix - centered -->
+  <g transform="translate(200, 120)" filter="url(#glow)">
+    <!-- Left strand -->
+    <path d="M-12,-65 C-18,-50 -18,-35 -12,-20 C-6,-5 -6,10 -12,25 C-18,40 -18,55 -12,65"
+          stroke="url(#dnaGold)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <!-- Right strand -->
+    <path d="M12,-65 C18,-50 18,-35 12,-20 C6,-5 6,10 12,25 C18,40 18,55 12,65"
+          stroke="url(#dnaGoldLight)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <!-- Rungs -->
+    <line x1="-11" y1="-58" x2="11" y2="-58" stroke="#F5D76E" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+    <line x1="-16" y1="-42" x2="16" y2="-42" stroke="#E8A317" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+    <line x1="-14" y1="-28" x2="14" y2="-28" stroke="#F5D76E" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+    <line x1="-8" y1="-13" x2="8" y2="-13" stroke="#E8A317" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+    <line x1="-6" y1="2" x2="6" y2="2" stroke="#F5D76E" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+    <line x1="-10" y1="17" x2="10" y2="17" stroke="#E8A317" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+    <line x1="-15" y1="32" x2="15" y2="32" stroke="#F5D76E" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+    <line x1="-16" y1="47" x2="16" y2="47" stroke="#E8A317" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+    <line x1="-11" y1="60" x2="11" y2="60" stroke="#F5D76E" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+  </g>
+
+  <!-- Brand Text -->
+  <text x="200" y="210" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="28" font-weight="700" fill="white" letter-spacing="0.5">
+    Concept2Cure
+  </text>
+</svg>

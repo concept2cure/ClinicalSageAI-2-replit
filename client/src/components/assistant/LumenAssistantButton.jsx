@@ -6,7 +6,7 @@ import { MessageSquare, X, Maximize2, Minimize2, Send } from 'lucide-react';
 export default function LumenAssistantButton({
   variant = 'default',
   size = 'md',
-  tooltip = 'Ask Lumen',
+  tooltip = 'Ask AnA',
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -14,7 +14,7 @@ export default function LumenAssistantButton({
     {
       role: 'assistant',
       content:
-        "Hello, I'm Lumen, your regulatory AI assistant. How can I help you with your submission today?",
+        "Hello, I'm AnA, your Audit & Narrative Assistant. How can I help you with your submission today?",
     },
   ]);
   const [input, setInput] = useState('');
@@ -125,7 +125,7 @@ export default function LumenAssistantButton({
           <div className="bg-indigo-600 text-white p-3 flex justify-between items-center">
             <div className="flex items-center">
               <MessageSquare className="h-5 w-5 mr-2" />
-              <h3 className="font-medium">Lumen Regulatory AI</h3>
+              <h3 className="font-medium">AnA v1.0 — RI Co-pilot</h3>
             </div>
             <div className="flex space-x-1">
               <button

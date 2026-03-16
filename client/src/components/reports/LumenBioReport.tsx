@@ -121,9 +121,9 @@ export function LumenBioReport() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Lumen Bio Pipeline Analysis</h2>
+          <h2 className="text-2xl font-bold text-slate-800">Concept2Cure Pipeline Analysis</h2>
           <p className="text-slate-600">
-            Analysis of Lumen Bio's therapeutic pipeline with comparative analytics
+            Analysis of Concept2Cure's therapeutic pipeline with comparative analytics
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export function LumenBioReport() {
                 Preclinical to Clinical Success Rates
               </CardTitle>
               <CardDescription>
-                Comparison of Lumen Bio's pipeline progress vs industry averages
+                Comparison of Concept2Cure's pipeline progress vs industry averages
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -271,7 +271,7 @@ export function LumenBioReport() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-primary mr-2"></div>
-                    <span className="text-sm">Lumen Bio</span>
+                    <span className="text-sm">Concept2Cure</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-gray-300 mr-2"></div>
@@ -432,7 +432,7 @@ export function LumenBioReport() {
                 Recent Clinical Trial Activity
               </CardTitle>
               <CardDescription>
-                Latest updates from Lumen Bio's active clinical trials
+                Latest updates from Concept2Cure's active clinical trials
               </CardDescription>
             </CardHeader>
             <CardContent>

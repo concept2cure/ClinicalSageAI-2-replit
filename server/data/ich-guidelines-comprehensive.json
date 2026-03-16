@@ -1,0 +1,899 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-16",
+    "description": "Concept2Cure proprietary Comprehensive ICH Guidelines Database — all ICH guidelines with detailed requirements, CTD mapping, and regulatory impact analysis.",
+    "copyright": "Concept2Cure Inc. Proprietary and Confidential.",
+    "totalGuidelines": 65
+  },
+  "guidelines": {
+    "Q_Quality": {
+      "Q1A_R2": {
+        "title": "Stability Testing of New Drug Substances and Products",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.8 / 3.2.S.7",
+        "scope": "Long-term, accelerated, and intermediate stability testing conditions and requirements",
+        "keyRequirements": [
+          "Long-term: 25°C±2°C / 60%RH±5%RH (12 months minimum at submission)",
+          "Accelerated: 40°C±2°C / 75%RH±5%RH (6 months)",
+          "Intermediate: 30°C±2°C / 65%RH±5%RH (triggered if significant change at accelerated)",
+          "Minimum 3 batches of drug substance and drug product",
+          "Photostability testing per Q1B",
+          "Shelf life extrapolation: maximum 2x available long-term data"
+        ],
+        "criticalForSubmission": true,
+        "agencies": ["FDA", "EMA", "PMDA", "Health Canada", "TGA", "Swissmedic", "NMPA", "MFDS"]
+      },
+      "Q1B": {
+        "title": "Stability Testing: Photostability Testing of New Drug Substances and Products",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.8 / 3.2.S.7",
+        "keyRequirements": [
+          "Expose to ≥1.2 million lux hours visible + ≥200 W·h/m² UV",
+          "Sequential design: drug substance → drug product → drug product in container",
+          "If protected from light needed, demonstrate container closure protection"
+        ]
+      },
+      "Q1C": {
+        "title": "Stability Testing for New Dosage Forms",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.8",
+        "scope": "Reduced stability data package for new dosage forms of already approved drug substances"
+      },
+      "Q1D": {
+        "title": "Bracketing and Matrixing Designs for Stability Testing",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.8",
+        "keyRequirements": [
+          "Bracketing: testing only extremes of design factors (e.g., strength, container size)",
+          "Matrixing: statistical fractional factorial design",
+          "Risk-based justification required"
+        ]
+      },
+      "Q1E": {
+        "title": "Evaluation for Stability Data",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.8",
+        "keyRequirements": [
+          "Statistical analysis approaches for shelf life determination",
+          "Pooling rules for batches",
+          "Extrapolation guidelines (2x available data, max 2x)",
+          "Regression analysis requirements"
+        ]
+      },
+      "Q1F": {
+        "title": "Stability Data Package for Registration Applications in Climatic Zones III and IV",
+        "status": "Withdrawn (2006)",
+        "note": "Replaced by WHO guidelines for zones III/IV. Individual agencies define local conditions."
+      },
+      "Q2_R2": {
+        "title": "Validation of Analytical Procedures",
+        "status": "Step 4 (revised 2023)",
+        "ctdSection": "3.2.P.5 / 3.2.S.4",
+        "keyRequirements": [
+          "Specificity, linearity, range, accuracy, precision (repeatability + intermediate)",
+          "Detection limit (DL) and quantitation limit (QL)",
+          "Robustness assessment",
+          "NEW in R2: Lifecycle approach to analytical procedure management",
+          "NEW in R2: Analytical Target Profile (ATP) concept",
+          "NEW in R2: Enhanced change management and continuous verification",
+          "Integration with Q14 (Analytical Procedure Development)"
+        ],
+        "criticalForSubmission": true
+      },
+      "Q3A_R2": {
+        "title": "Impurities in New Drug Substances",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.3",
+        "keyRequirements": [
+          "Reporting threshold: ≥0.05% (dose ≤2g/day) or ≥0.03% (dose >2g/day)",
+          "Identification threshold: ≥0.10% or ≥0.05% (dose >2g/day)",
+          "Qualification threshold: ≥0.15% or ≥0.05% (dose >2g/day)",
+          "Structure elucidation for impurities above identification threshold",
+          "Qualification via safety studies or literature for impurities above qualification threshold"
+        ],
+        "criticalForSubmission": true
+      },
+      "Q3B_R2": {
+        "title": "Impurities in New Drug Products",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.5",
+        "keyRequirements": [
+          "Degradation product reporting/identification/qualification thresholds (dose-dependent)",
+          "Max daily dose ≤1mg: reporting 1.0%, identification 1.0%, qualification 1.0%",
+          "Max daily dose 1mg-10mg: reporting 0.5%, identification 0.5%, qualification 1.0%",
+          "Max daily dose >10mg-2g: reporting 0.2%, identification 0.2%, qualification 0.5%",
+          "Max daily dose >2g: reporting 0.1%, identification 0.1%, qualification 0.2%"
+        ],
+        "criticalForSubmission": true
+      },
+      "Q3C_R8": {
+        "title": "Residual Solvents",
+        "status": "Step 4 (R8 — 2021)",
+        "ctdSection": "3.2.S.3 / 3.2.P.5",
+        "keyRequirements": [
+          "Class 1 solvents: AVOID (carcinogenic) — benzene, carbon tetrachloride, etc.",
+          "Class 2 solvents: LIMIT — acetonitrile ≤410ppm, methanol ≤3000ppm, DCM ≤600ppm, etc.",
+          "Class 3 solvents: LOW risk — ≤5000ppm (e.g., acetone, ethanol, ethyl acetate)",
+          "PDE-based limits for Class 1 and 2"
+        ]
+      },
+      "Q3D_R2": {
+        "title": "Elemental Impurities",
+        "status": "Step 4 (R2 — 2022)",
+        "ctdSection": "3.2.P.5 / 3.2.S.3",
+        "keyRequirements": [
+          "Class 1 (Cd, Pb, As, Hg): Always evaluated — human toxicants with limited/no use",
+          "Class 2A (Co, Ni, V): Evaluated for all routes — high probability of occurrence",
+          "Class 2B (Ag, Au, Ir, Os, Pd, Pt, Rh, Ru, Se, Tl): Evaluated based on process",
+          "Class 3 (Ba, Cr, Cu, Li, Mo, Sb, Sn): Low toxicity, oral PDE ≥500μg/day",
+          "Route-specific PDE values (oral, parenteral, inhalation)",
+          "Risk assessment approach: identify, evaluate, control, review"
+        ]
+      },
+      "Q3E": {
+        "title": "Extractables and Leachables",
+        "status": "Step 2b (2024)",
+        "ctdSection": "3.2.P.2 / 3.2.P.7 / 3.2.P.8",
+        "keyRequirements": [
+          "Risk-based approach for container closure and manufacturing equipment",
+          "Analytical Evaluation Threshold (AET) based on Safety Concern Threshold",
+          "Applies to packaging, delivery devices, manufacturing equipment",
+          "Correlation of extractables to leachables required"
+        ]
+      },
+      "Q5A_R2": {
+        "title": "Viral Safety Evaluation of Biotechnology Products Derived from Cell Lines of Human or Animal Origin",
+        "status": "Step 4 (R2 — 2023)",
+        "ctdSection": "3.2.S.2 / 3.2.A.2",
+        "keyRequirements": [
+          "Cell line characterization for adventitious viruses",
+          "Testing of unprocessed bulk harvest",
+          "Viral clearance validation studies (minimum 2 orthogonal steps)",
+          "Log reduction values (LRV) for model viruses",
+          "NEW in R2: Updated for modern analytical methods, NGS for virus detection"
+        ]
+      },
+      "Q5B_R1": {
+        "title": "Analysis of the Expression Construct in Cells Used for Production of r-DNA Derived Protein Products",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.2"
+      },
+      "Q5C": {
+        "title": "Stability Testing of Biotechnological/Biological Products",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.7 / 3.2.P.8",
+        "keyRequirements": [
+          "Potency testing required (activity-based)",
+          "Molecular size variants (aggregation, fragmentation)",
+          "Charge variants",
+          "Storage conditions specific to biologics (often 2-8°C)"
+        ]
+      },
+      "Q5D": {
+        "title": "Derivation and Characterisation of Cell Substrates",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.2",
+        "keyRequirements": [
+          "Cell bank system: Master Cell Bank (MCB) and Working Cell Bank (WCB)",
+          "Identity, purity, stability of cell banks",
+          "Karyology, isoenzyme analysis, genetic characterization"
+        ]
+      },
+      "Q5E": {
+        "title": "Comparability of Biotechnological/Biological Products Subject to Changes in Their Manufacturing Process",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.2 / 3.2.P.2",
+        "keyRequirements": [
+          "Quality comparability exercise (analytical + functional)",
+          "Non-clinical and clinical comparability may be needed depending on significance of change",
+          "Risk-based approach to evaluating process changes"
+        ]
+      },
+      "Q6A": {
+        "title": "Specifications: Test Procedures and Acceptance Criteria for New Drug Substances and New Drug Products: Chemical Substances",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.4 / 3.2.P.5",
+        "keyRequirements": [
+          "Universal tests: appearance, identity, assay, impurities",
+          "Specific tests: dissolution, hardness, friability, water content, etc.",
+          "Decision trees for setting acceptance criteria",
+          "Justification based on manufacturing, stability, clinical experience"
+        ],
+        "criticalForSubmission": true
+      },
+      "Q6B": {
+        "title": "Specifications: Test Procedures and Acceptance Criteria for Biotechnological/Biological Products",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.4 / 3.2.P.5",
+        "keyRequirements": [
+          "Potency (biological activity)",
+          "Identity (immunochemical, electrophoretic, chromatographic)",
+          "Purity and impurities (process-related + product-related)",
+          "Quantity (protein content)",
+          "Sterility, endotoxin, bioburden"
+        ]
+      },
+      "Q7": {
+        "title": "Good Manufacturing Practice Guide for Active Pharmaceutical Ingredients",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.2 (referenced)",
+        "keyRequirements": [
+          "Starting material definition and justification",
+          "Process validation for API manufacturing",
+          "Impurity control strategy from starting material onward",
+          "Change control, CAPA, deviation management",
+          "Applies from defined starting material to final API"
+        ]
+      },
+      "Q8_R2": {
+        "title": "Pharmaceutical Development",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.2",
+        "keyRequirements": [
+          "Quality Target Product Profile (QTPP)",
+          "Critical Quality Attributes (CQAs) identification",
+          "Design Space establishment",
+          "Control Strategy development",
+          "Risk assessment (ICH Q9 integration)",
+          "Enhanced approach vs traditional approach",
+          "Links to process understanding and lifecycle management"
+        ],
+        "criticalForSubmission": true
+      },
+      "Q9_R1": {
+        "title": "Quality Risk Management",
+        "status": "Step 4 (R1 — 2023)",
+        "ctdSection": "Cross-cutting (all quality sections)",
+        "keyRequirements": [
+          "Risk assessment tools: FMEA, FTA, HACCP, PHA",
+          "Risk identification → analysis → evaluation → control → review → communication",
+          "NEW in R1: Formality of QRM based on risk level",
+          "NEW in R1: Caution against subjectivity and bias in risk assessments",
+          "NEW in R1: Risk-based decision making must be science-based"
+        ]
+      },
+      "Q10": {
+        "title": "Pharmaceutical Quality System",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.2 (referenced in pharmaceutical development)",
+        "keyRequirements": [
+          "Management responsibilities and commitment",
+          "Continual improvement of process performance and product quality",
+          "Knowledge management system",
+          "Change management enablers",
+          "Lifecycle stages: development → technology transfer → manufacturing → discontinuation"
+        ]
+      },
+      "Q11": {
+        "title": "Development and Manufacture of Drug Substances (Chemical Entities and Biotechnological/Biological Entities)",
+        "status": "Step 4",
+        "ctdSection": "3.2.S.2",
+        "keyRequirements": [
+          "Starting material selection and justification",
+          "Process development approaches (traditional vs enhanced)",
+          "Design space for drug substance manufacturing",
+          "Control strategy linking to drug substance CQAs",
+          "Biotechnology-specific considerations (cell culture, purification)"
+        ]
+      },
+      "Q12": {
+        "title": "Technical and Regulatory Considerations for Pharmaceutical Product Lifecycle Management",
+        "status": "Step 4",
+        "ctdSection": "Cross-cutting",
+        "keyRequirements": [
+          "Established Conditions (ECs): what requires regulatory notification",
+          "Post-Approval Change Management Protocol (PACMP)",
+          "Product Lifecycle Management (PLCM) document",
+          "Categorization of changes and reporting requirements",
+          "Reduces post-approval change burden"
+        ]
+      },
+      "Q13": {
+        "title": "Continuous Manufacturing of Drug Substances and Drug Products",
+        "status": "Step 4 (2023)",
+        "ctdSection": "3.2.S.2 / 3.2.P.3",
+        "keyRequirements": [
+          "Batch definition for continuous processes",
+          "Process dynamics and disturbance management",
+          "Real-time release testing (RTRT) integration",
+          "Control strategy for continuous manufacturing",
+          "Process validation approaches specific to CM",
+          "Start-up and shutdown procedures"
+        ]
+      },
+      "Q14": {
+        "title": "Analytical Procedure Development",
+        "status": "Step 4 (2023)",
+        "ctdSection": "3.2.P.5 / 3.2.S.4",
+        "keyRequirements": [
+          "Analytical Target Profile (ATP)",
+          "Minimal vs enhanced approach to development",
+          "Method Operable Design Region (MODR)",
+          "Multivariate analytical procedures (NIR, Raman)",
+          "Knowledge management for analytical procedures",
+          "Links to Q2(R2) for validation"
+        ]
+      }
+    },
+
+    "S_Safety": {
+      "S1A_R1": {
+        "title": "Regulatory Need for Carcinogenicity Studies of Pharmaceuticals",
+        "status": "Step 4",
+        "ctdSection": "2.6 / 4.2.3.4",
+        "keyRequirements": [
+          "Required for drugs administered ≥6 months continuously",
+          "Required for drugs with cause for concern (genotoxicity, structure-activity)",
+          "Waived for unequivocally genotoxic compounds (already classified as carcinogens)",
+          "Weight-of-evidence approach introduced in R1"
+        ]
+      },
+      "S1B_R1": {
+        "title": "Testing for Carcinogenicity of Pharmaceuticals",
+        "status": "Step 4 (R1 — 2022)",
+        "ctdSection": "4.2.3.4",
+        "keyRequirements": [
+          "NEW R1: Weight-of-evidence (WoE) assessment may reduce need for 2-year bioassay",
+          "Integrative approach: genotoxicity, chronic tox, pharmacology, clinical data",
+          "Rasopathy models (Tg.rasH2) as alternatives to traditional 2-year studies",
+          "Reduces animal use where scientifically justified"
+        ]
+      },
+      "S2_R1": {
+        "title": "Genotoxicity Testing and Data Interpretation for Pharmaceuticals Intended for Human Use",
+        "status": "Step 4",
+        "ctdSection": "2.6 / 4.2.3.3",
+        "keyRequirements": [
+          "Standard battery: Ames test (bacterial reverse mutation) + in vitro chromosomal aberration/micronucleus + in vivo test",
+          "Option 1: Ames + in vitro MN (human lymphocytes or mammalian cells) + in vivo MN",
+          "Option 2: Ames + in vivo MN (with 2 tissue exposure assessment)",
+          "Follow-up strategies for positive in vitro results",
+          "Qualification of impurities (link to M7)"
+        ],
+        "criticalForSubmission": true
+      },
+      "S3A": {
+        "title": "Note for Guidance on Toxicokinetics",
+        "status": "Step 4",
+        "ctdSection": "4.2.3",
+        "scope": "Assessment of systemic exposure in toxicology studies"
+      },
+      "S3B": {
+        "title": "Pharmacokinetics: Guidance for Repeated Dose Tissue Distribution Studies",
+        "status": "Step 4",
+        "ctdSection": "4.2.2"
+      },
+      "S4": {
+        "title": "Duration of Chronic Toxicity Testing in Animals (Rodent and Non-Rodent Toxicity Testing)",
+        "status": "Step 4",
+        "ctdSection": "4.2.3.2",
+        "keyRequirements": [
+          "Rodent: 6 months for drugs indicated ≥6 months",
+          "Non-rodent: 9 months for drugs indicated ≥6 months",
+          "Species selection: one rodent + one non-rodent (usually rat + dog or monkey)"
+        ]
+      },
+      "S5_R3": {
+        "title": "Detection of Toxicity to Reproduction for Human Pharmaceuticals",
+        "status": "Step 4",
+        "ctdSection": "4.2.3.5",
+        "keyRequirements": [
+          "Fertility and early embryonic development (Segment I)",
+          "Embryo-fetal development (Segment II) — 2 species (rodent + rabbit)",
+          "Pre- and postnatal development (Segment III)",
+          "Integration of male fertility with general toxicity studies possible"
+        ],
+        "criticalForSubmission": true
+      },
+      "S6_R1": {
+        "title": "Preclinical Safety Evaluation of Biotechnology-Derived Pharmaceuticals",
+        "status": "Step 4",
+        "ctdSection": "4.2.3",
+        "keyRequirements": [
+          "Species selection based on pharmacological relevance",
+          "In vitro tissue cross-reactivity studies for monoclonal antibodies",
+          "Reproductive toxicity considerations for biotherapeutics",
+          "Recovery period in chronic studies",
+          "Immunogenicity assessment (anti-drug antibodies)"
+        ]
+      },
+      "S7A": {
+        "title": "Safety Pharmacology Studies for Human Pharmaceuticals",
+        "status": "Step 4",
+        "ctdSection": "4.2.1.3",
+        "keyRequirements": [
+          "Core battery: CNS, cardiovascular, respiratory",
+          "hERG assay for QT prolongation risk",
+          "Supplemental studies: renal, GI, other organ systems"
+        ],
+        "criticalForSubmission": true
+      },
+      "S7B_R1": {
+        "title": "Nonclinical Evaluation of the Potential for Delayed Ventricular Repolarization (QT Interval Prolongation)",
+        "status": "Step 4",
+        "ctdSection": "4.2.1.3",
+        "keyRequirements": [
+          "In vitro hERG assay",
+          "In vivo QT study in non-rodent species",
+          "NEW R1: Best practices, integrated risk assessment with E14",
+          "Concentration-response analysis for proarrhythmic risk"
+        ]
+      },
+      "S8": {
+        "title": "Immunotoxicity Studies for Human Pharmaceuticals",
+        "status": "Step 4",
+        "ctdSection": "4.2.3",
+        "keyRequirements": [
+          "Weight-of-evidence approach for immunotoxicity evaluation",
+          "Standard toxicity studies can provide initial immunotoxicity data",
+          "Additional studies (T-cell dependent antibody response) if WoE indicates concern"
+        ]
+      },
+      "S9": {
+        "title": "Nonclinical Evaluation for Anticancer Pharmaceuticals",
+        "status": "Step 4",
+        "ctdSection": "4.2.3",
+        "keyRequirements": [
+          "Reduced nonclinical package for advanced cancer indications",
+          "Genotoxicity: Ames test sufficient for initial FIH",
+          "Chronic toxicity may not be needed for advanced cancer",
+          "Reproductive toxicity may be deferred"
+        ]
+      },
+      "S10": {
+        "title": "Photosafety Evaluation of Pharmaceuticals",
+        "status": "Step 4",
+        "ctdSection": "4.2.3.7",
+        "keyRequirements": [
+          "UV-Vis absorption spectrum assessment (initial screen)",
+          "Reactive oxygen species (ROS) assay",
+          "3T3 NRU phototoxicity test (in vitro)",
+          "In vivo study only if in vitro equivocal"
+        ]
+      },
+      "S11": {
+        "title": "Nonclinical Safety Testing in Support of Development of Paediatric Medicines",
+        "status": "Step 4",
+        "ctdSection": "4.2.3",
+        "keyRequirements": [
+          "Juvenile animal studies when needed",
+          "Species and age selection rationale",
+          "Integration with existing adult toxicology data",
+          "Study design considerations for developing organisms"
+        ]
+      },
+      "S12": {
+        "title": "Nonclinical Biodistribution Considerations for Gene Therapy Products",
+        "status": "Step 4 (2023)",
+        "ctdSection": "4.2.3",
+        "keyRequirements": [
+          "Biodistribution study design for gene therapy vectors",
+          "Tissue tropism characterization",
+          "Shedding studies",
+          "Integration with pharmacokinetics of gene therapy products"
+        ]
+      }
+    },
+
+    "E_Efficacy": {
+      "E1": {
+        "title": "The Extent of Population Exposure to Assess Clinical Safety",
+        "status": "Step 4",
+        "ctdSection": "2.7.4 / 5.3.5",
+        "keyRequirements": [
+          "Minimum 1500 patients exposed for non-life-threatening conditions",
+          "At least 300-600 for 6 months, 100 for 12 months",
+          "Safety database requirements scale with indication severity"
+        ],
+        "criticalForSubmission": true
+      },
+      "E2A": {
+        "title": "Clinical Safety Data Management: Definitions and Standards for Expedited Reporting",
+        "status": "Step 4",
+        "ctdSection": "2.7.4",
+        "keyRequirements": [
+          "Definitions: adverse event, adverse drug reaction, unexpected ADR, serious AE",
+          "Serious: death, life-threatening, hospitalization, disability, congenital anomaly",
+          "Expedited reporting criteria and timelines"
+        ],
+        "criticalForSubmission": true
+      },
+      "E2B_R3": {
+        "title": "Individual Case Safety Report (ICSR) — Electronic Transmission",
+        "status": "Step 4",
+        "ctdSection": "N/A (pharmacovigilance transmission standard)",
+        "keyRequirements": [
+          "XML-based ICSR transmission format",
+          "MedDRA coding for adverse events",
+          "E2B(R3) message structure and data elements",
+          "Gateway compatibility: EudraVigilance, FDA FAERS, PMDA"
+        ]
+      },
+      "E2C_R2": {
+        "title": "Periodic Benefit-Risk Evaluation Report (PBRER)",
+        "status": "Step 4",
+        "ctdSection": "Module 1 (periodic reports)",
+        "keyRequirements": [
+          "Replaces PSUR as international standard",
+          "Benefit-risk evaluation framework",
+          "International birth date (IBD) and data lock point (DLP)",
+          "Interval PBRER requirements"
+        ]
+      },
+      "E2D": {
+        "title": "Post-Approval Safety Data Management",
+        "status": "Step 4",
+        "ctdSection": "Module 1",
+        "scope": "Post-marketing safety reporting standards and responsibilities"
+      },
+      "E2E": {
+        "title": "Pharmacovigilance Planning",
+        "status": "Step 4",
+        "ctdSection": "Module 1 (RMP/pharmacovigilance plan)",
+        "keyRequirements": [
+          "Safety specification development",
+          "Pharmacovigilance plan",
+          "Risk minimization strategies",
+          "Safety specification: important identified/potential risks, missing information"
+        ]
+      },
+      "E2F": {
+        "title": "Development Safety Update Report (DSUR)",
+        "status": "Step 4",
+        "ctdSection": "Module 1",
+        "keyRequirements": [
+          "Annual DSUR during clinical development",
+          "Executive summary of safety findings",
+          "Comprehensive safety evaluation",
+          "Risk-benefit assessment for ongoing trials"
+        ]
+      },
+      "E3": {
+        "title": "Structure and Content of Clinical Study Reports",
+        "status": "Step 4",
+        "ctdSection": "5.3",
+        "keyRequirements": [
+          "16-section CSR structure (synopsis through appendices)",
+          "Individual patient data listings",
+          "Statistical analysis integration",
+          "Safety tables and narratives for SAEs/deaths",
+          "Efficacy results presentation"
+        ],
+        "criticalForSubmission": true
+      },
+      "E4": {
+        "title": "Dose-Response Information to Support Drug Registration",
+        "status": "Step 4",
+        "ctdSection": "2.7.2 / 5.3.5",
+        "scope": "Design and conduct of dose-response studies"
+      },
+      "E5_R1": {
+        "title": "Ethnic Factors in the Acceptability of Foreign Clinical Data",
+        "status": "Step 4",
+        "ctdSection": "2.7 / 5.3",
+        "keyRequirements": [
+          "Intrinsic and extrinsic ethnic factors assessment",
+          "Bridging study design when foreign data extrapolation not justified",
+          "Critical for PMDA submissions (Japanese bridging requirement)",
+          "PK/PD ethnic sensitivity evaluation"
+        ],
+        "criticalForSubmission": true
+      },
+      "E6_R2_R3": {
+        "title": "Good Clinical Practice",
+        "status": "Step 4 (R2); Annex 1+2 Step 4 (2023)",
+        "ctdSection": "Cross-cutting (all clinical sections)",
+        "keyRequirements": [
+          "13 principles of GCP",
+          "IRB/IEC responsibilities and review requirements",
+          "Investigator responsibilities",
+          "Sponsor responsibilities",
+          "Protocol and protocol amendment requirements",
+          "Investigator's Brochure requirements",
+          "Essential documents for clinical trials",
+          "NEW R3 Annex 1: Proportionate approaches to trial management",
+          "NEW R3 Annex 2: Use of technological innovations and decentralized trials"
+        ],
+        "criticalForSubmission": true
+      },
+      "E7": {
+        "title": "Studies in Support of Special Populations: Geriatrics",
+        "status": "Step 4",
+        "ctdSection": "2.7.2",
+        "keyRequirements": [
+          "Minimum geriatric patient representation in database",
+          "PK studies in elderly",
+          "Age-specific safety and efficacy considerations"
+        ]
+      },
+      "E8_R1": {
+        "title": "General Considerations for Clinical Studies",
+        "status": "Step 4",
+        "ctdSection": "2.7",
+        "keyRequirements": [
+          "Quality by Design (QbD) for clinical trials",
+          "Critical to Quality (CtQ) factors",
+          "Fit-for-purpose study design",
+          "Stakeholder engagement",
+          "NEW R1: Modernized clinical trial design concepts"
+        ]
+      },
+      "E9_R1": {
+        "title": "Statistical Principles for Clinical Trials",
+        "status": "Step 4 (R1 Addendum — Estimands)",
+        "ctdSection": "2.7 / 5.3.5",
+        "keyRequirements": [
+          "Trial design: superiority, non-inferiority, equivalence",
+          "Sample size calculation and power",
+          "Multiplicity adjustments",
+          "Missing data handling",
+          "NEW R1: Estimand framework — population, variable, intercurrent events, summary measure",
+          "Strategies for intercurrent events: treatment policy, composite, hypothetical, principal stratum, while on treatment"
+        ],
+        "criticalForSubmission": true
+      },
+      "E10": {
+        "title": "Choice of Control Group and Related Issues in Clinical Trials",
+        "status": "Step 4",
+        "ctdSection": "2.7.3",
+        "scope": "Guidance on placebo control, active control, no-treatment control, dose-response control"
+      },
+      "E11_R1": {
+        "title": "Clinical Investigation of Medicinal Products in the Paediatric Population",
+        "status": "Step 4 (R1 Addendum — 2017)",
+        "ctdSection": "2.7",
+        "keyRequirements": [
+          "Age-appropriate formulations",
+          "Extrapolation of efficacy from adults to pediatric",
+          "Ethical considerations for pediatric trials",
+          "PK modeling and simulation approaches",
+          "NEW R1: Expanded extrapolation framework"
+        ]
+      },
+      "E12": {
+        "title": "Clinical Evaluation by Therapeutic Category (multiple guidelines)",
+        "status": "Step 4",
+        "scope": "Therapeutic area-specific guidance for cardiovascular, oncology, etc."
+      },
+      "E14_R3": {
+        "title": "Clinical Evaluation of QT/QTc Interval Prolongation and Proarrhythmic Potential for Non-Antiarrhythmic Drugs",
+        "status": "Step 4 (R3 — 2022)",
+        "ctdSection": "2.7.2 / 5.3.4",
+        "keyRequirements": [
+          "Thorough QT (TQT) study design or concentration-QT analysis",
+          "NEW R3: C-QTc modeling can replace standalone TQT study",
+          "Exposure-response analysis for QT prolongation",
+          "Integration with S7B in vitro hERG data"
+        ]
+      },
+      "E15": {
+        "title": "Definitions for Genomic Biomarkers, Pharmacogenomics, Pharmacogenetics, Genomic Data and Sample Coding Categories",
+        "status": "Step 4",
+        "ctdSection": "2.7",
+        "scope": "Harmonized terminology for genomics in drug development"
+      },
+      "E16": {
+        "title": "Biomarkers Related to Drug or Biotechnology Product Development: Context of Use",
+        "status": "Step 4",
+        "ctdSection": "2.7",
+        "scope": "Framework for qualifying biomarkers"
+      },
+      "E17": {
+        "title": "General Principles for Planning and Design of Multi-Regional Clinical Trials",
+        "status": "Step 4",
+        "ctdSection": "2.7 / 5.3.5",
+        "keyRequirements": [
+          "Sample size considerations for multi-regional consistency",
+          "Evaluation of treatment effect consistency across regions",
+          "Regulatory acceptance of MRCT data across ICH regions",
+          "Statistical methods for regional subgroup analysis"
+        ]
+      },
+      "E18": {
+        "title": "Genomic Sampling and Management of Genomic Data",
+        "status": "Step 4",
+        "ctdSection": "5.3",
+        "scope": "Collection, storage, and use of genomic samples and data in clinical trials"
+      },
+      "E19": {
+        "title": "Optimization of Safety Data Collection",
+        "status": "Step 4 (2023)",
+        "ctdSection": "2.7.4 / 5.3.5",
+        "keyRequirements": [
+          "Targeted (focused) safety data collection approaches",
+          "Reduced burden of AE collection where scientifically justified",
+          "Prespecified events of interest vs comprehensive AE capture",
+          "Applicable to certain late-stage and post-approval studies"
+        ]
+      },
+      "E20": {
+        "title": "Adaptive Clinical Trials",
+        "status": "Step 2b (2024)",
+        "ctdSection": "2.7 / 5.3.5",
+        "keyRequirements": [
+          "Interim analyses and pre-planned modifications",
+          "Type I error control",
+          "Operational bias mitigation",
+          "Regulatory communication requirements for adaptive designs",
+          "Bayesian and frequentist adaptive approaches"
+        ]
+      }
+    },
+
+    "M_Multidisciplinary": {
+      "M1": {
+        "title": "CTD Module 1 — Administrative Information and Prescribing Information",
+        "status": "Step 4 (region-specific)",
+        "scope": "Each region has own Module 1 specifications (FDA, EMA, PMDA, etc.)",
+        "note": "NOT harmonized — region-specific requirements"
+      },
+      "M2": {
+        "title": "CTD Module 2 — Common Technical Document Summaries",
+        "status": "Step 4",
+        "ctdSection": "2.1-2.7",
+        "keyRequirements": [
+          "2.2: Introduction",
+          "2.3: Quality Overall Summary (QOS)",
+          "2.4: Nonclinical Overview",
+          "2.5: Clinical Overview",
+          "2.6: Nonclinical Written and Tabulated Summaries",
+          "2.7: Clinical Summary (clinical pharmacology, efficacy, safety)"
+        ],
+        "criticalForSubmission": true
+      },
+      "M3_R2": {
+        "title": "Nonclinical Safety Studies for the Conduct of Human Clinical Trials and Marketing Authorization",
+        "status": "Step 4",
+        "ctdSection": "Module 4 (nonclinical)",
+        "keyRequirements": [
+          "Timing of nonclinical studies relative to clinical development phase",
+          "Phase I requirements: GLP tox (2 species), genotoxicity (Ames + in vitro), safety pharmacology core battery",
+          "Phase II requirements: repeat-dose tox ≥ clinical duration",
+          "Phase III requirements: chronic tox, repro tox, carcinogenicity assessment",
+          "NDA/MAA requirements: complete nonclinical package"
+        ],
+        "criticalForSubmission": true
+      },
+      "M4_R4": {
+        "title": "Common Technical Document (CTD) Organisation",
+        "status": "Step 4 (R4)",
+        "keyRequirements": [
+          "Module 1: Regional administrative information (not harmonized)",
+          "Module 2: Summaries (QOS, nonclinical overview, clinical overview)",
+          "Module 3: Quality (drug substance + drug product)",
+          "Module 4: Nonclinical study reports",
+          "Module 5: Clinical study reports",
+          "Granularity document for eCTD organization"
+        ],
+        "criticalForSubmission": true
+      },
+      "M4_Q_R1": {
+        "title": "CTD — Quality (M4Q R1)",
+        "ctdSection": "Module 3",
+        "keyRequirements": [
+          "3.2.S: Drug Substance (nomenclature, manufacture, characterization, control, standards, container, stability)",
+          "3.2.P: Drug Product (description, composition, development, manufacture, control, standards, container, stability)",
+          "3.2.A: Appendices (facilities, adventitious agents, novel excipients)",
+          "3.2.R: Regional information"
+        ]
+      },
+      "M4_S": {
+        "title": "CTD — Safety (M4S)",
+        "ctdSection": "Module 4",
+        "keyRequirements": [
+          "4.2.1: Pharmacology (primary PD, secondary PD, safety pharmacology)",
+          "4.2.2: Pharmacokinetics (ADME)",
+          "4.2.3: Toxicology (single dose, repeat dose, genotox, carcinogenicity, repro tox, local tolerance)"
+        ]
+      },
+      "M4_E": {
+        "title": "CTD — Efficacy (M4E)",
+        "ctdSection": "Module 5",
+        "keyRequirements": [
+          "5.3.1: Biopharmaceutic studies (BA/BE)",
+          "5.3.2: PK using human biomaterials",
+          "5.3.3: PK/PD studies",
+          "5.3.4: Pharmacokinetic studies in patients",
+          "5.3.5: Efficacy and safety studies (controlled, uncontrolled, analyses)",
+          "5.3.6: Post-marketing experience",
+          "5.3.7: Case report forms and individual patient listings"
+        ]
+      },
+      "M5": {
+        "title": "eCTD — Data Elements and Message Specification",
+        "status": "Step 4",
+        "scope": "Technical specification for electronic CTD submission",
+        "keyRequirements": [
+          "XML backbone structure",
+          "Lifecycle management (append, replace, delete)",
+          "Envelope and message specifications",
+          "PDF technical requirements for leaf documents"
+        ]
+      },
+      "M7_R2": {
+        "title": "Assessment and Control of DNA Reactive (Mutagenic) Impurities in Pharmaceuticals to Limit Potential Carcinogenic Risk",
+        "status": "Step 4 (R2 — 2023)",
+        "ctdSection": "3.2.S.3 / 3.2.P.5",
+        "keyRequirements": [
+          "Threshold of Toxicological Concern (TTC): 1.5 μg/day",
+          "Compound-specific risk assessment for known mutagens",
+          "In silico (QSAR) assessment: two complementary methods (expert rule + statistical)",
+          "Class 1-5 classification system for mutagenic impurities",
+          "Less-than-Lifetime (LTL) exposure limits for clinical trials",
+          "Purge factor analysis for process control"
+        ],
+        "criticalForSubmission": true
+      },
+      "M8": {
+        "title": "eCTD v4.0",
+        "status": "Step 4 (implementation ongoing)",
+        "scope": "Next-generation electronic submission standard using HL7 RPS",
+        "keyRequirements": [
+          "HL7 Regulated Product Submission (RPS) standard",
+          "FHIR-based document references",
+          "Enhanced lifecycle management",
+          "Cross-regional harmonization of Module 1"
+        ]
+      },
+      "M9": {
+        "title": "Biopharmaceutics Classification System (BCS)-Based Biowaivers",
+        "status": "Step 4",
+        "ctdSection": "3.2.P.2 / 5.3.1",
+        "keyRequirements": [
+          "BCS Class I: High solubility, high permeability — biowaiver eligible",
+          "BCS Class III: High solubility, low permeability — biowaiver eligible (with rapid dissolution)",
+          "Dissolution testing: 85% in ≤30 minutes (BCS I) or ≤15 minutes (BCS III)",
+          "Excipient similarity requirements for biowaivers"
+        ]
+      },
+      "M10": {
+        "title": "Bioanalytical Method Validation and Study Sample Analysis",
+        "status": "Step 4 (2022)",
+        "ctdSection": "5.3.1",
+        "keyRequirements": [
+          "Full validation parameters: selectivity, LLOQ, calibration curve, accuracy, precision, matrix effect, carryover, stability",
+          "Partial validation and cross-validation criteria",
+          "Incurred sample reanalysis (ISR): ≥67% within ±20% for small molecules, ±30% for large molecules",
+          "Ligand binding assay (LBA) specific requirements",
+          "LC-MS/MS method validation specifics"
+        ]
+      },
+      "M11": {
+        "title": "Clinical Electronic Structured Harmonised Protocol (CeSHarP)",
+        "status": "Step 2b (2024)",
+        "ctdSection": "5.3.5 (protocol document)",
+        "keyRequirements": [
+          "Harmonized clinical trial protocol template",
+          "Structured data elements for machine-readable protocols",
+          "Alignment with TransCelerate Common Protocol Template",
+          "Digital protocol concept"
+        ]
+      },
+      "M12": {
+        "title": "Drug Interaction Studies",
+        "status": "Step 4 (2024)",
+        "ctdSection": "2.7.2 / 5.3.3",
+        "keyRequirements": [
+          "In vitro DDI evaluation: CYP enzymes, transporters",
+          "Clinical DDI study design",
+          "PBPK modeling for DDI prediction and dose adjustment",
+          "Labeling recommendations based on DDI data",
+          "Harmonization across FDA/EMA/PMDA DDI guidance"
+        ]
+      },
+      "M13A": {
+        "title": "Bioequivalence for Immediate-Release Solid Oral Dosage Forms",
+        "status": "Step 4 (2024)",
+        "ctdSection": "5.3.1",
+        "keyRequirements": [
+          "Crossover and parallel BE study designs",
+          "PK endpoints: AUC0-t, AUC0-∞, Cmax",
+          "Acceptance criteria: 80-125% (90% CI for geometric mean ratio)",
+          "Highly variable drugs: reference-scaled approach",
+          "Narrow therapeutic index drugs: tightened criteria"
+        ]
+      }
+    }
+  }
+}

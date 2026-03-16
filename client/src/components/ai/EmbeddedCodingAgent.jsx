@@ -988,7 +988,7 @@ const EmbeddedCodingAgent = () => {
               }}
               className="text-white hover:text-white bg-red-500 hover:bg-red-600 p-2 rounded-lg transition-all duration-200 flex items-center justify-center w-10 h-10 text-2xl font-bold shadow-lg"
               title="Close Assistant"
-              aria-label="Close Lumen AI Assistant"
+              aria-label="Close AnA Assistant"
             >
               ✕
             </button>

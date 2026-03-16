@@ -63,7 +63,7 @@ export default function UnifiedTopNav({ activeTab, onTabChange }) {
               : 'text-gray-600 hover:text-indigo-600'
           }`}
         >
-          Ask Lumen AI
+          Ask AnA
         </button>
       </div>
     </div>

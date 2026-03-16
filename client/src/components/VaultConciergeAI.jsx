@@ -40,7 +40,7 @@ export default function VaultConciergeAI() {
     const greeting = getTimeBasedGreeting();
     const initialMessage = {
       role: 'assistant',
-      content: `${greeting} Welcome to TrialSage Vault™ — your intelligent Clinical Document Concierge. How can I help you today?`,
+      content: `${greeting} Welcome to Concept2Cure Vault™ — your intelligent Clinical Document Concierge. How can I help you today?`,
     };
     setMessages([initialMessage]);
 
