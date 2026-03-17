@@ -298,7 +298,8 @@ type LayoutMode =
   | 'author'
   | 'intelligence-hub'
   | 'review-readiness'
-  | 'command-center';
+  | 'command-center'
+  | 'templates';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1910,6 +1911,42 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* ── Templates Library — browse and use regulatory templates ── */}
+          {!embeddedModule && layoutMode === 'templates' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-templates">
+              <WorkspaceHeader
+                title="Template Library"
+                subtitle="Browse, search, and use regulatory document templates for your submission type"
+                onBack={() => setLayoutMode('author')}
+              />
+              <div className="flex-1 overflow-auto p-6">
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center bg-white h-full">
+                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      </div>
+                    }
+                  >
+                    <TemplateLibraryInline
+                      projectId={activeProjectId}
+                      onUseTemplate={(ctdSection) => {
+                        if (ctdSection) {
+                          setPendingEditorContent({
+                            content: `<h1>${ctdSection.toUpperCase()} — Draft</h1><p>Template content for ${activeProject?.name || 'Application'}.</p>`,
+                            title: `${ctdSection.toUpperCase()} — ${activeProject?.name || 'Application'}`,
+                            ctdSection: ctdSection.replace(/^m/, ''),
+                          });
+                        }
+                        setLayoutMode('ectd-coauthor');
+                      }}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+            </div>
+          )}
+
           {/* Dossier Navigator — disabled (consolidated into IND Workspace) */}
 
           {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
@@ -2023,6 +2060,7 @@ export const ZenApp: React.FC = () => {
                       { key: 'ectd-coauthor', label: 'Co-Author' },
                       { key: 'cmc', label: 'CMC' },
                       { key: 'clinical-trial', label: 'Clinical' },
+                      { key: 'templates', label: 'Templates' },
                     ].map(tab => (
                       <button
                         key={tab.key}

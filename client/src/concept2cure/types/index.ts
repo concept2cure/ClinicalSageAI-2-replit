@@ -273,7 +273,7 @@ export interface Citation {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type ArtifactType =
-  // Document artifacts
+  // ── MedTech / Device Document Artifacts ──
   | 'cover_letter'
   | 'device_description'
   | 'ifu_statement'
@@ -285,7 +285,34 @@ export type ArtifactType =
   | 'biocompatibility_summary'
   | 'software_documentation'
   | 'sterilization_summary'
-  // Interactive artifacts
+  // ── Pharma / Biotech Document Artifacts ──
+  | 'ind_cover_letter'
+  | 'investigators_brochure'
+  | 'clinical_protocol'
+  | 'statistical_analysis_plan'
+  | 'clinical_study_report'
+  | 'clinical_overview'
+  | 'nonclinical_overview'
+  | 'quality_overall_summary'
+  | 'drug_substance'
+  | 'drug_product'
+  | 'pharmacology_summary'
+  | 'toxicology_summary'
+  | 'pharmacokinetics_summary'
+  | 'clinical_pharmacology'
+  | 'cmc_overview'
+  | 'sop'
+  | 'dsur'
+  | 'psur'
+  | 'regulatory_response'
+  | 'briefing_document'
+  | 'nda_summary'
+  // ── EU / International Document Artifacts ──
+  | 'cer_report'
+  | 'ivdr_technical_file'
+  | 'maa_cover_letter'
+  | 'impd'
+  // ── Interactive artifacts ──
   | 'pyramid_gantt'
   | 'risk_heatmap'
   | 'traceability_matrix'
@@ -293,11 +320,11 @@ export type ArtifactType =
   | 'ifu_checker'
   | 'predicate_search'
   | 'timeline_planner'
-  // Visualization artifacts
+  // ── Visualization artifacts ──
   | 'knowledge_graph'
   | 'compliance_dashboard'
   | 'submission_progress'
-  // Generic
+  // ── Generic ──
   | 'document'
   | 'code'
   | 'table'

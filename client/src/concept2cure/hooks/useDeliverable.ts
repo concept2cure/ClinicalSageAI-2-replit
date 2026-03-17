@@ -24,6 +24,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +55,10 @@ export interface DeliverableRequest {
   title: string;
   /** If true, save to DB only (no file download). Toast confirms creation. */
   saveOnly?: boolean;
+  /** Project ID to auto-register artifact in vault and project management */
+  projectId?: string;
+  /** CTD section code for eCTD mapping */
+  ctdSection?: string;
 }
 
 export interface DeliverableResult {
@@ -96,8 +101,63 @@ function triggerDownload(blob: Blob, filename: string) {
 // Hook
 // ---------------------------------------------------------------------------
 
+/**
+ * Register a generated artifact in the vault and project management system.
+ * This ensures every deliverable is tracked: stored in vault, linked to project,
+ * and creates a task completion record in the collaboration module.
+ */
+async function registerInVaultAndPM(
+  request: DeliverableRequest,
+  result: DeliverableResult,
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  const { projectId, title, filename, format, ctdSection } = request;
+  if (!projectId) return; // Skip if no project context
+
+  try {
+    // 1. Register artifact in vault
+    await apiRequest('POST', '/api/concept2cure/vault/artifacts', {
+      projectId,
+      title,
+      filename,
+      format,
+      ctdSection: ctdSection || null,
+      recordId: result.recordId || null,
+      downloadUrl: result.downloadUrl || null,
+      generatedAt: new Date().toISOString(),
+      source: request.endpoint,
+    }).catch(() => {
+      // Vault registration is best-effort — log but don't block
+    });
+
+    // 2. Create task completion in project management
+    await apiRequest('POST', '/api/concept2cure/projects/tasks', {
+      projectId,
+      type: 'deliverable_generated',
+      title: `Generated: ${title}`,
+      description: `${filename} (${format.toUpperCase()}) generated via ${request.endpoint}`,
+      status: 'completed',
+      completedAt: new Date().toISOString(),
+      metadata: {
+        artifactType: format,
+        ctdSection,
+        filename,
+      },
+    }).catch(() => {
+      // PM registration is best-effort
+    });
+
+    // 3. Invalidate project queries so vault and task lists refresh
+    queryClient.invalidateQueries({ queryKey: ['concept2cure-project-artifacts', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['concept2cure-project-tasks', projectId] });
+  } catch {
+    // Silent failure — vault/PM registration should never block deliverable flow
+  }
+}
+
 export function useDeliverable() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastResult, setLastResult] = useState<DeliverableResult | null>(null);
 
@@ -129,6 +189,9 @@ export function useDeliverable() {
           const result: DeliverableResult = { success: true };
           setLastResult(result);
 
+          // Auto-register in vault and project management
+          registerInVaultAndPM(request, result, queryClient);
+
           toast({
             title: `${title} ready`,
             description: `${filename} has been downloaded.`,
@@ -156,6 +219,9 @@ export function useDeliverable() {
           };
           setLastResult(result);
 
+          // Auto-register in vault and project management
+          registerInVaultAndPM(request, result, queryClient);
+
           toast({
             title: `${title} ready`,
             description: saveOnly
@@ -173,6 +239,9 @@ export function useDeliverable() {
           data,
         };
         setLastResult(result);
+
+        // Auto-register in vault and project management
+        registerInVaultAndPM(request, result, queryClient);
 
         toast({
           title: saveOnly ? `${title} saved` : `${title} generated`,
@@ -209,7 +278,7 @@ export function useDeliverable() {
         setIsGenerating(false);
       }
     },
-    [toast]
+    [toast, queryClient]
   );
 
   return { generate, isGenerating, lastResult };
