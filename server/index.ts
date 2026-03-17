@@ -433,7 +433,8 @@ try {
 }
 
 // ── Global Auth Middleware ──────────────────────────────────────────────
-// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects)
+// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects).
+// Uses segment-boundary matching to prevent bypass via crafted paths like /api/auth-evil.
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
   const openPrefixes = [
     '/api/auth',
@@ -444,7 +445,12 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     '/api/cortex/health',
   ];
   const fullPath = req.baseUrl + req.path;
-  if (openPrefixes.some(p => fullPath.startsWith(p))) return next();
+  const isOpen = openPrefixes.some(p => {
+    if (fullPath === p) return true;
+    // Only match if prefix is followed by '/' or query string boundary
+    return fullPath.startsWith(p + '/');
+  });
+  if (isOpen) return next();
   return authMiddleware(req, res, next);
 });
 console.log(
@@ -858,19 +864,20 @@ try {
 // Mount Lumen Cortex (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
-  const markDeprecated = (req: Request, res: Response, next: () => void) => {
+  // Shared deprecation middleware for all Foresight/Lumen legacy routes
+  const foresightDeprecation = (req: Request, res: Response, next: () => void) => {
     res.setHeader('Deprecation', 'true');
     res.setHeader('Sunset', '2026-04-01');
     res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
     next();
   };
 
-  app.use('/api/foresight', markDeprecated, foresightApiRoutes);
-  app.use('/api/foresight-ai', markDeprecated, foresightAIAdvancedRoutes);
-  app.use('/api/foresight-feedback', markDeprecated, foresightFeedbackRoutes);
+  app.use('/api/foresight', foresightDeprecation, foresightApiRoutes);
+  app.use('/api/foresight-ai', foresightDeprecation, foresightAIAdvancedRoutes);
+  app.use('/api/foresight-feedback', foresightDeprecation, foresightFeedbackRoutes);
   app.use(
     '/api/foresight-ai/feedback',
-    markDeprecated,
+    foresightDeprecation,
     (req, _res, next) => {
       req.url = `/feedback${req.url}`;
       next();
@@ -878,8 +885,8 @@ try {
     foresightFeedbackRoutes
   );
   // New Lumen Cortex aliases
-  app.use('/api/lumen', markDeprecated, foresightApiRoutes);
-  app.use('/api/lumen-ai', markDeprecated, foresightAIAdvancedRoutes);
+  app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
+  app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
   console.log('✅ Lumen Cortex™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
   console.error('Failed to mount Lumen Cortex routes:', error);
@@ -888,14 +895,14 @@ try {
 // Mount Lumen Cortex RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
-  const markDeprecated = (req: Request, res: Response, next: () => void) => {
+  const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
     res.setHeader('Deprecation', 'true');
     res.setHeader('Sunset', '2026-04-01');
     res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
     next();
   };
-  app.use('/api/foresight/rag', markDeprecated, foresightRagRoutes.default);
-  app.use('/api/lumen/rag', markDeprecated, foresightRagRoutes.default); // New alias
+  app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
+  app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
   console.log('✅ Lumen Cortex RAG API routes mounted successfully');
 } catch (error) {
   console.error('Failed to mount Lumen Cortex RAG routes:', error);

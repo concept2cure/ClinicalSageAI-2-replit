@@ -254,6 +254,10 @@ export class QueryBatcher {
     this.batchDelay = options.batchDelay || 50; // 50ms
   }
 
+  private queryKey(sql: string, params: any[]): string {
+    return `${sql}::${JSON.stringify(params)}`;
+  }
+
   async query(sql: string, params: any[] = []): Promise<any> {
     return new Promise((resolve, reject) => {
       this.queue.push({
@@ -284,11 +288,28 @@ export class QueryBatcher {
 
     const batch = this.queue.splice(0, this.batchSize);
 
-    try {
-      const results = await this.executor(batch.map(q => ({ sql: q.sql, params: q.params })));
+    // Deduplicate identical queries within the batch
+    const uniqueMap = new Map<string, { query: { sql: string; params: any[] }; indices: number[] }>();
+    batch.forEach((q, index) => {
+      const key = this.queryKey(q.sql, q.params);
+      const existing = uniqueMap.get(key);
+      if (existing) {
+        existing.indices.push(index);
+      } else {
+        uniqueMap.set(key, { query: { sql: q.sql, params: q.params }, indices: [index] });
+      }
+    });
 
-      batch.forEach((query, index) => {
-        query.resolve(results[index]);
+    const uniqueQueries = Array.from(uniqueMap.values());
+
+    try {
+      const results = await this.executor(uniqueQueries.map(u => u.query));
+
+      // Fan out deduplicated results to all original callers
+      uniqueQueries.forEach((unique, resultIndex) => {
+        unique.indices.forEach(batchIndex => {
+          batch[batchIndex].resolve(results[resultIndex]);
+        });
       });
     } catch (error) {
       batch.forEach(query => {
@@ -467,42 +488,27 @@ export function stopMemoryMonitoring(): void {
 // ============================================================================
 
 /**
- * Execute promises in parallel with concurrency limit
+ * Execute promises in parallel with concurrency limit.
+ * Uses a properly tracked pool of in-flight promises.
  */
 export async function parallelLimit<T, R>(
   items: T[],
   limit: number,
   fn: (item: T, index: number) => Promise<R>
 ): Promise<R[]> {
-  const results: R[] = [];
-  const executing: Promise<void>[] = [];
+  const results: R[] = new Array(items.length);
+  const executing = new Set<Promise<void>>();
 
   for (let i = 0; i < items.length; i++) {
-    const promise = Promise.resolve()
-      .then(() => fn(items[i], i))
-      .then(result => {
-        results[i] = result;
-      });
+    const promise = fn(items[i], i).then(result => {
+      results[i] = result;
+    });
 
-    executing.push(promise as any);
+    const tracked = promise.finally(() => executing.delete(tracked));
+    executing.add(tracked);
 
-    if (executing.length >= limit) {
+    if (executing.size >= limit) {
       await Promise.race(executing);
-      // Remove completed promises
-      const completed = executing.filter(p => {
-        // Check if promise is settled
-        let settled = false;
-        p.then(() => {
-          settled = true;
-        }).catch(() => {
-          settled = true;
-        });
-        return settled;
-      });
-      completed.forEach(p => {
-        const idx = executing.indexOf(p);
-        if (idx > -1) executing.splice(idx, 1);
-      });
     }
   }
 
