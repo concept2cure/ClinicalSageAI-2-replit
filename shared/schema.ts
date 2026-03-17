@@ -15178,6 +15178,340 @@ export const documentVersionsRelations = relations(documentVersions, ({ one }) =
   }),
 }));
 
+// ============================================================
+// CLIENT INTELLIGENCE MEMORY SYSTEM
+// ============================================================
+
+/**
+ * Client Intelligence Profiles — Company persona & learned identity.
+ * Each client workspace can have one active intelligence profile
+ * that captures who they are, what they do, and how we serve them.
+ */
+export const clientIntelligenceProfiles = pgTable(
+  'client_intelligence_profiles',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    clientWorkspaceId: integer('client_workspace_id')
+      .references(() => clientWorkspaces.id),
+
+    // ── Company Identity ───────────────────────────────────────
+    companyName: text('company_name').notNull(),
+    companySlug: text('company_slug'),
+    industry: text('industry'), // pharma, biotech, medtech, cro, academic
+    subIndustry: text('sub_industry'), // oncology, rare-disease, biosimilars, etc.
+    companySize: text('company_size'), // startup, small, mid, large, enterprise
+    headquarters: text('headquarters'),
+    website: text('website'),
+    yearFounded: integer('year_founded'),
+
+    // ── Regulatory Identity ─────────────────────────────────────
+    primarySubmissionTypes: json('primary_submission_types'), // ['IND', 'NDA', '510(k)']
+    regulatoryMarkets: json('regulatory_markets'), // ['US-FDA', 'EU-EMA', 'JP-PMDA']
+    therapeuticAreas: json('therapeutic_areas'), // ['Oncology', 'CNS', 'Cardiovascular']
+    technologyPlatforms: json('technology_platforms'), // ['mRNA', 'ADC', 'Cell Therapy']
+    pipelineAssets: json('pipeline_assets'), // Array of drug/device info
+
+    // ── Company Persona (Free-text SKILL.md style) ─────────────
+    companyPersona: text('company_persona'), // Rich text: mission, values, culture, communication style
+    regulatoryPhilosophy: text('regulatory_philosophy'), // How they approach regulatory strategy
+    communicationPreferences: text('communication_preferences'), // Formal/casual, detail level, etc.
+    keyStakeholders: json('key_stakeholders'), // [{name, title, role, preferences}]
+
+    // ── AI-Learned Intelligence ─────────────────────────────────
+    learnedInsights: json('learned_insights'), // AI-extracted patterns from uploaded docs
+    strengthsAndGaps: json('strengths_and_gaps'), // Identified strengths & weaknesses
+    commonChallenges: json('common_challenges'), // Recurring issues we've noticed
+    preferredTemplates: json('preferred_templates'), // Templates they gravitate toward
+    historicalPatterns: json('historical_patterns'), // Submission patterns, timelines, etc.
+
+    // ── Document Intelligence Summary ───────────────────────────
+    totalDocumentsIngested: integer('total_documents_ingested').default(0),
+    totalTokensProcessed: integer('total_tokens_processed').default(0),
+    lastDocumentIngestedAt: timestamp('last_document_ingested_at'),
+    knowledgeSnapshotVersion: integer('knowledge_snapshot_version').default(1),
+
+    // ── Status ──────────────────────────────────────────────────
+    profileStatus: text('profile_status').default('draft'), // draft, active, archived
+    lastEnrichedAt: timestamp('last_enriched_at'),
+    lastEnrichedBy: integer('last_enriched_by').references(() => users.id),
+
+    // ── Metadata ────────────────────────────────────────────────
+    createdBy: integer('created_by').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgProfileIdx: index('client_intel_profiles_org_idx').on(table.organizationId),
+    workspaceProfileIdx: index('client_intel_profiles_workspace_idx').on(table.clientWorkspaceId),
+    slugIdx: index('client_intel_profiles_slug_idx').on(table.companySlug),
+  })
+);
+
+export type ClientIntelligenceProfile = InferSelectModel<typeof clientIntelligenceProfiles>;
+export const insertClientIntelligenceProfileSchema = createInsertSchemaOmit(
+  clientIntelligenceProfiles,
+  { id: true, createdAt: true, updatedAt: true }
+);
+
+/**
+ * Client Memory Entries — Individual knowledge atoms extracted from documents.
+ * Each entry represents one piece of learned intelligence about the client.
+ */
+export const clientMemoryEntries = pgTable(
+  'client_memory_entries',
+  {
+    id: serial('id').primaryKey(),
+    profileId: integer('profile_id')
+      .notNull()
+      .references(() => clientIntelligenceProfiles.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── Memory Content ──────────────────────────────────────────
+    category: text('category').notNull(), // persona, regulatory, pipeline, competitive, operational, preference, history
+    subcategory: text('subcategory'), // e.g., 'submission_history', 'org_chart', 'filing_patterns'
+    title: text('title').notNull(), // Short label: "FDA prefers rolling submissions"
+    content: text('content').notNull(), // Full extracted knowledge
+    sourceDocumentName: text('source_document_name'), // Original filename
+    sourceDocumentType: text('source_document_type'), // pdf, docx, xlsx, csv
+    sourcePageOrSection: text('source_page_or_section'), // Page/section reference
+
+    // ── Intelligence Metadata ────────────────────────────────────
+    confidenceScore: real('confidence_score').default(0.8), // 0.0 - 1.0
+    importanceLevel: text('importance_level').default('medium'), // low, medium, high, critical
+    isVerifiedByUser: boolean('is_verified_by_user').default(false),
+    verifiedAt: timestamp('verified_at'),
+    verifiedBy: integer('verified_by').references(() => users.id),
+
+    // ── Vector Embedding (for semantic search) ──────────────────
+    embedding: vector('embedding', { dimensions: 1536 }),
+
+    // ── Status ──────────────────────────────────────────────────
+    status: text('status').default('active'), // active, superseded, archived, rejected
+    supersededById: integer('superseded_by_id'),
+
+    // ── Metadata ────────────────────────────────────────────────
+    extractedAt: timestamp('extracted_at').defaultNow(),
+    extractedBy: text('extracted_by').default('ai'), // 'ai' | 'manual' | 'import'
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    profileMemoryIdx: index('client_memory_entries_profile_idx').on(table.profileId),
+    orgMemoryIdx: index('client_memory_entries_org_idx').on(table.organizationId),
+    categoryIdx: index('client_memory_entries_category_idx').on(table.category),
+    importanceIdx: index('client_memory_entries_importance_idx').on(table.importanceLevel),
+  })
+);
+
+export type ClientMemoryEntry = InferSelectModel<typeof clientMemoryEntries>;
+export const insertClientMemoryEntrySchema = createInsertSchemaOmit(clientMemoryEntries, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Client Ingested Documents — Track every file uploaded to the intelligence system.
+ */
+export const clientIngestedDocuments = pgTable(
+  'client_ingested_documents',
+  {
+    id: serial('id').primaryKey(),
+    profileId: integer('profile_id')
+      .notNull()
+      .references(() => clientIntelligenceProfiles.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── File Info ────────────────────────────────────────────────
+    fileName: text('file_name').notNull(),
+    fileType: text('file_type').notNull(), // pdf, docx, xlsx, csv, txt, md
+    fileSizeBytes: integer('file_size_bytes'),
+    mimeType: text('mime_type'),
+
+    // ── Processing ──────────────────────────────────────────────
+    extractedText: text('extracted_text'), // Raw extracted text
+    tokenCount: integer('token_count'),
+    pageCount: integer('page_count'),
+    processingStatus: text('processing_status').default('pending'), // pending, processing, completed, failed
+    processingError: text('processing_error'),
+    memoryEntriesGenerated: integer('memory_entries_generated').default(0),
+
+    // ── Metadata ────────────────────────────────────────────────
+    uploadedBy: integer('uploaded_by').references(() => users.id),
+    uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+    processedAt: timestamp('processed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    profileDocIdx: index('client_ingested_docs_profile_idx').on(table.profileId),
+    orgDocIdx: index('client_ingested_docs_org_idx').on(table.organizationId),
+    statusIdx: index('client_ingested_docs_status_idx').on(table.processingStatus),
+  })
+);
+
+export type ClientIngestedDocument = InferSelectModel<typeof clientIngestedDocuments>;
+
+// ============================================================
+// PROJECT-LEVEL INTELLIGENCE
+// ============================================================
+
+/**
+ * Project Intelligence Profiles — Per-project learned intelligence.
+ * Each project can have its own intelligence profile that captures
+ * project-specific regulatory strategy, clinical data, and decisions.
+ */
+export const projectIntelligenceProfiles = pgTable(
+  'project_intelligence_profiles',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── Project-Specific Regulatory Context ─────────────────────
+    regulatoryStrategy: text('regulatory_strategy'), // How this project approaches FDA/EMA
+    targetIndication: text('target_indication'),
+    targetPopulation: text('target_population'),
+    primaryEndpoints: json('primary_endpoints'), // [{endpoint, type, measurement}]
+    comparatorDevicesOrDrugs: json('comparator_devices_or_drugs'), // Predicate/reference products
+    keyConstraints: text('key_constraints'), // Regulatory constraints, timelines, etc.
+    submissionTimeline: json('submission_timeline'), // [{milestone, targetDate, status}]
+
+    // ── Learned Project Intelligence ────────────────────────────
+    learnedInsights: json('learned_insights'), // AI-extracted patterns from project docs
+    keyDecisions: json('key_decisions'), // [{decision, rationale, date, source}]
+    openQuestions: json('open_questions'), // [{question, context, priority}]
+    riskFactors: json('risk_factors'), // [{risk, likelihood, impact, mitigation}]
+
+    // ── Document Intelligence ───────────────────────────────────
+    totalDocumentsIngested: integer('total_documents_ingested').default(0),
+    totalTokensProcessed: integer('total_tokens_processed').default(0),
+    lastDocumentIngestedAt: timestamp('last_document_ingested_at'),
+
+    // ── Custom Instructions ─────────────────────────────────────
+    projectPersona: text('project_persona'), // SKILL.md for this project
+    customInstructions: text('custom_instructions'), // Freeform AI instructions
+
+    // ── Status ──────────────────────────────────────────────────
+    profileStatus: text('profile_status').default('active'),
+    lastEnrichedAt: timestamp('last_enriched_at'),
+    lastEnrichedBy: integer('last_enriched_by').references(() => users.id),
+
+    createdBy: integer('created_by').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    projectIntelIdx: index('project_intel_profiles_project_idx').on(table.projectId),
+    orgIntelIdx: index('project_intel_profiles_org_idx').on(table.organizationId),
+  })
+);
+
+export type ProjectIntelligenceProfile = InferSelectModel<typeof projectIntelligenceProfiles>;
+
+/**
+ * Project Memory Entries — Knowledge atoms learned from project documents.
+ */
+export const projectMemoryEntries = pgTable(
+  'project_memory_entries',
+  {
+    id: serial('id').primaryKey(),
+    projectProfileId: integer('project_profile_id')
+      .notNull()
+      .references(() => projectIntelligenceProfiles.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── Memory Content ──────────────────────────────────────────
+    category: text('category').notNull(), // strategy, clinical, regulatory, design, risk, decision, endpoint, manufacturing
+    subcategory: text('subcategory'),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    sourceDocumentName: text('source_document_name'),
+    sourceDocumentType: text('source_document_type'),
+
+    // ── Intelligence Metadata ───────────────────────────────────
+    confidenceScore: real('confidence_score').default(0.8),
+    importanceLevel: text('importance_level').default('medium'),
+    isVerifiedByUser: boolean('is_verified_by_user').default(false),
+
+    // ── Vector Embedding ────────────────────────────────────────
+    embedding: vector('embedding', { dimensions: 1536 }),
+
+    status: text('status').default('active'),
+    extractedBy: text('extracted_by').default('ai'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    profileIdx: index('project_memory_entries_profile_idx').on(table.projectProfileId),
+    projectIdx: index('project_memory_entries_project_idx').on(table.projectId),
+    categoryIdx: index('project_memory_entries_category_idx').on(table.category),
+  })
+);
+
+export type ProjectMemoryEntry = InferSelectModel<typeof projectMemoryEntries>;
+
+/**
+ * Project Ingested Documents — Track files uploaded to project intelligence.
+ */
+export const projectIngestedDocuments = pgTable(
+  'project_ingested_documents',
+  {
+    id: serial('id').primaryKey(),
+    projectProfileId: integer('project_profile_id')
+      .notNull()
+      .references(() => projectIntelligenceProfiles.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    fileName: text('file_name').notNull(),
+    fileType: text('file_type').notNull(),
+    fileSizeBytes: integer('file_size_bytes'),
+    mimeType: text('mime_type'),
+
+    extractedText: text('extracted_text'),
+    tokenCount: integer('token_count'),
+    pageCount: integer('page_count'),
+    processingStatus: text('processing_status').default('pending'),
+    processingError: text('processing_error'),
+    memoryEntriesGenerated: integer('memory_entries_generated').default(0),
+
+    uploadedBy: integer('uploaded_by').references(() => users.id),
+    uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+    processedAt: timestamp('processed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    profileDocIdx: index('project_ingested_docs_profile_idx').on(table.projectProfileId),
+    projectDocIdx: index('project_ingested_docs_project_idx').on(table.projectId),
+  })
+);
+
+export type ProjectIngestedDocument = InferSelectModel<typeof projectIngestedDocuments>;
+
+// ============================================================
+// END CLIENT & PROJECT INTELLIGENCE MEMORY SYSTEM
+// ============================================================
+
 export const concept2cureArtifactsRelations = relations(concept2cureArtifacts, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [concept2cureArtifacts.organizationId],

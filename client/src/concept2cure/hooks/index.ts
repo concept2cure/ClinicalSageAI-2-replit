@@ -39,3 +39,5 @@ export * from './useSessionRestore';
 export * from './useTemplates';
 export * from './useZenActions';
 export * from './useLicense';
+export * from './useDeliverable';
+export * from './useReports';
