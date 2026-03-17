@@ -1,6 +1,12 @@
 /**
- * @fileoverview Lumen Sidebar — Claude.ai-style, regulatory-focused
+ * @fileoverview Zen Sidebar — Claude.ai-style, intent-organized navigation
  * @module concept2cure/components/sidebar/ZenSidebar
+ *
+ * Navigation restructured around user intent:
+ *   WORK     → Copilot, Author
+ *   RESEARCH → Intelligence, ForesightAI (coming soon via Intelligence sub-tab)
+ *   ASSURE   → Review & Readiness
+ *   MANAGE   → Command Center, Academy
  */
 
 import React, { useState } from 'react';
@@ -15,16 +21,11 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
-  FileText,
-  Beaker,
-  FlaskConical,
-  Search,
-  ShieldAlert,
   Brain,
-  Archive,
   PenLine,
-  ClipboardList,
-  Shield,
+  Search,
+  ShieldCheck,
+  BarChart3,
   GraduationCap,
 } from 'lucide-react';
 
@@ -64,9 +65,7 @@ export interface ZenSidebarProps {
   onNavigate?: (id: string) => void;
   userName?: string;
   userEmail?: string;
-  /** Which product nav item is currently active */
   activeNavId?: string;
-  /** Organization industry mode — drives which nav items are shown */
   industryMode?: string;
 }
 
@@ -106,8 +105,9 @@ const NavItem: React.FC<{
   active?: boolean;
   accentColor?: 'blue' | 'violet' | 'emerald';
   badge?: string;
+  subtitle?: string;
   onClick: () => void;
-}> = ({ icon, label, active, accentColor, badge, onClick }) => {
+}> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
   const accentMap = {
     blue: { bg: 'bg-blue-50', text: 'text-blue-700', iconColor: 'text-blue-500' },
     violet: { bg: 'bg-violet-50', text: 'text-violet-700', iconColor: 'text-violet-500' },
@@ -143,7 +143,12 @@ const NavItem: React.FC<{
       >
         {icon}
       </span>
-      <span className="flex-1 text-left truncate">{label}</span>
+      <div className="flex-1 min-w-0 text-left">
+        <span className="block truncate">{label}</span>
+        {subtitle && (
+          <span className="block text-[10px] text-zinc-400 truncate leading-tight">{subtitle}</span>
+        )}
+      </div>
       {badge && (
         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
           {badge}
@@ -228,43 +233,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   userName,
   userEmail,
   activeNavId,
-  industryMode = 'biotech',
 }) => {
   const displayName = userName || 'My Account';
   const avatarInitial = displayName[0].toUpperCase();
 
-  const isBiotech = industryMode === 'biotech' || industryMode === 'pharma';
-
-  // Track-aware workspace label based on industry mode and current URL
-  const workspaceLabel = (() => {
-    if (isBiotech) {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');
-        const labels: Record<string, string> = {
-          nda: 'NDA Workspace',
-          bla: 'BLA Workspace',
-          ind: 'IND Workspace',
-        };
-        return labels[mode || ''] || 'IND Workspace';
-      } catch {
-        return 'IND Workspace';
-      }
-    }
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const mode = params.get('mode');
-      const labels: Record<string, string> = {
-        pma: 'PMA Workspace',
-        de_novo: 'De Novo Workspace',
-        hde: 'HDE Workspace',
-        cer: 'CER Workspace',
-      };
-      return labels[mode || ''] || '510(k) Workspace';
-    } catch {
-      return '510(k) Workspace';
-    }
-  })();
   // Group conversations by time
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -377,109 +349,63 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-2 border-t border-zinc-100 flex-shrink-0" />
 
-        {/* ── Grouped product navigation ──────────────────────────────── */}
+        {/* ── Intent-organized navigation ──────────────────────────────── */}
         <div
           className="flex-1 overflow-y-auto min-h-0 zen-scroll py-1"
           style={{ scrollbarWidth: 'thin' }}
         >
-          {/* ── Workspaces ──────────────────────────────────────── */}
-          <WorkspaceGroup label="Workspaces">
+          {/* ── WORK — what I'm building ─────────────────────────── */}
+          <WorkspaceGroup label="Work">
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
-              label="RI Copilot"
+              label="Copilot"
               active={activeNavId === 'ai-copilot'}
               accentColor="blue"
               onClick={() => onNavigate?.('ai-copilot')}
             />
-            {isBiotech ? (
-              <>
-                <NavItem
-                  icon={<ShieldAlert className="w-3.5 h-3.5" />}
-                  label={workspaceLabel}
-                  active={activeNavId === 'ind-workspace'}
-                  onClick={() => onNavigate?.('ind-workspace')}
-                />
-                <NavItem
-                  icon={<PenLine className="w-3.5 h-3.5" />}
-                  label="eCTD Co-Author"
-                  active={activeNavId === 'ectd-coauthor'}
-                  onClick={() => onNavigate?.('ectd-coauthor')}
-                />
-                <NavItem
-                  icon={<Beaker className="w-3.5 h-3.5" />}
-                  label="CMC Platform"
-                  active={activeNavId === 'cmc'}
-                  onClick={() => onNavigate?.('cmc')}
-                />
-                <NavItem
-                  icon={<FlaskConical className="w-3.5 h-3.5" />}
-                  label="Clinical Trial Hub"
-                  active={activeNavId === 'clinical-trial'}
-                  onClick={() => onNavigate?.('clinical-trial')}
-                />
-              </>
-            ) : (
-              <>
-                <NavItem
-                  icon={<ShieldAlert className="w-3.5 h-3.5" />}
-                  label={workspaceLabel}
-                  onClick={() => onNavigate?.('510k-workspace')}
-                />
-                <NavItem
-                  icon={<FileText className="w-3.5 h-3.5" />}
-                  label="CER Generator"
-                  onClick={() => onNavigate?.('cer-generator')}
-                />
-                <NavItem
-                  icon={<PenLine className="w-3.5 h-3.5" />}
-                  label="eCTD Co-Author"
-                  active={activeNavId === 'ectd-coauthor'}
-                  badge="Early Access"
-                  onClick={() => onNavigate?.('ectd-coauthor')}
-                />
-              </>
-            )}
+            <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Author"
+              subtitle="Dossier · Co-Author · CMC · Clinical"
+              active={activeNavId === 'author'}
+              onClick={() => onNavigate?.('author')}
+            />
           </WorkspaceGroup>
 
-          {/* ── Evidence ────────────────────────────────────────── */}
-          <WorkspaceGroup label="Evidence">
+          {/* ── RESEARCH — what I need to know ───────────────────── */}
+          <WorkspaceGroup label="Research">
             <NavItem
               icon={<Search className="w-3.5 h-3.5" />}
-              label="Evidence Search"
-              onClick={() => onNavigate?.('evidence-search')}
+              label="Intelligence"
+              subtitle="Alerts · Evidence · Precedents · ForesightAI"
+              active={activeNavId === 'intelligence-hub'}
+              onClick={() => onNavigate?.('intelligence-hub')}
             />
           </WorkspaceGroup>
 
-          {/* ── Documents ───────────────────────────────────────── */}
-          <WorkspaceGroup label="Documents">
+          {/* ── ASSURE — quality & compliance ─────────────────────── */}
+          <WorkspaceGroup label="Assure">
             <NavItem
-              icon={<Archive className="w-3.5 h-3.5" />}
-              label="Document Vault"
-              active={activeNavId === 'document-vault'}
-              onClick={() => onNavigate?.('document-vault')}
+              icon={<ShieldCheck className="w-3.5 h-3.5" />}
+              label="Review & Readiness"
+              subtitle="Quality · Compliance · SnowGlobe"
+              active={activeNavId === 'review-readiness'}
+              onClick={() => onNavigate?.('review-readiness')}
             />
           </WorkspaceGroup>
 
-          {/* ── Governance ──────────────────────────────────────── */}
-          <WorkspaceGroup label="Governance" defaultOpen={false}>
+          {/* ── MANAGE — operations & governance ──────────────────── */}
+          <WorkspaceGroup label="Manage">
             <NavItem
-              icon={<ClipboardList className="w-3.5 h-3.5" />}
-              label="Mission Control"
-              onClick={() => onNavigate?.('mission-control')}
+              icon={<BarChart3 className="w-3.5 h-3.5" />}
+              label="Command Center"
+              subtitle="Dashboard · Submissions · Workflows"
+              active={activeNavId === 'command-center'}
+              onClick={() => onNavigate?.('command-center')}
             />
-            <NavItem
-              icon={<Shield className="w-3.5 h-3.5" />}
-              label="Submission Ops"
-              active={activeNavId === 'submission-workspace'}
-              onClick={() => onNavigate?.('submission-workspace')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── Enablement ────────────────────────────────────── */}
-          <WorkspaceGroup label="Enablement" defaultOpen={false}>
             <NavItem
               icon={<GraduationCap className="w-3.5 h-3.5" />}
-              label="Dr. Sage Academy"
+              label="Academy"
               active={activeNavId === 'enablement-center'}
               onClick={() => onNavigate?.('enablement-center')}
             />

@@ -213,6 +213,17 @@ const StudyArchitectModuleStandalone = lazy(() =>
   }))
 );
 
+// ─── New intent-organized workspace lazy loads ──────────────────────────────
+const IntelligenceHub = lazy(() =>
+  import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
+);
+const ReviewReadiness = lazy(() =>
+  import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
+);
+const CommandCenterHub = lazy(() =>
+  import('./pages/CommandCenterHub').then(m => ({ default: m.CommandCenterHub }))
+);
+
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   capa: CAPAManagementPanel,
@@ -282,7 +293,12 @@ type LayoutMode =
   | 'clinical-trial'
   | 'snowglobe'
   | 'snowglobe-chambers'
-  | 'enablement-center';
+  | 'enablement-center'
+  // ── New intent-organized workspaces ──
+  | 'author'
+  | 'intelligence-hub'
+  | 'review-readiness'
+  | 'command-center';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1233,14 +1249,19 @@ export const ZenApp: React.FC = () => {
           (
             {
               'regulatory-workspace': 'ai-copilot',
-              'ind-workspace': 'ind-workspace',
-              'ectd-coauthor': 'ectd-coauthor',
-              cmc: 'cmc',
-              'document-vault': 'document-vault',
-              'clinical-trial': 'clinical-trial',
-              'submission-workspace': 'submission-workspace',
-              snowglobe: 'snowglobe',
-              'snowglobe-chambers': 'snowglobe',
+              'ind-workspace': 'author',
+              'ectd-coauthor': 'author',
+              cmc: 'author',
+              'clinical-trial': 'author',
+              author: 'author',
+              'intelligence-hub': 'intelligence-hub',
+              'review-readiness': 'review-readiness',
+              snowglobe: 'review-readiness',
+              'snowglobe-chambers': 'review-readiness',
+              'command-center': 'command-center',
+              'mission-control': 'command-center',
+              'submission-workspace': 'command-center',
+              'document-vault': 'command-center',
               'enablement-center': 'enablement-center',
             } as Record<string, string>
           )[layoutMode] ?? undefined
@@ -1327,6 +1348,19 @@ export const ZenApp: React.FC = () => {
               break;
             case 'enablement-center':
               setLayoutMode('enablement-center');
+              break;
+            // ── New intent-organized workspaces ──
+            case 'author':
+              setLayoutMode('author');
+              break;
+            case 'intelligence-hub':
+              setLayoutMode('intelligence-hub');
+              break;
+            case 'review-readiness':
+              setLayoutMode('review-readiness');
+              break;
+            case 'command-center':
+              setLayoutMode('command-center');
               break;
             default:
               break;
@@ -1962,7 +1996,135 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* Precedent Intelligence — disabled (consolidated into RI Copilot) */}
+          {/* ── Author Workspace — unified submission authoring ── */}
+          {!embeddedModule && layoutMode === 'author' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-author">
+              {/* Author workspace routes to IND/eCTD/CMC/Clinical based on context */}
+              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Projects</span>
+                </button>
+                <div className="w-px h-4 bg-zinc-200" />
+                <PenLine className="w-4 h-4 text-zinc-500" />
+                <span className="text-sm font-medium text-zinc-900">Author</span>
+                {activeProject && (
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+                <div className="ml-auto flex items-center gap-1">
+                  <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
+                    {[
+                      { key: 'ind-workspace', label: 'Dossier' },
+                      { key: 'ectd-coauthor', label: 'Co-Author' },
+                      { key: 'cmc', label: 'CMC' },
+                      { key: 'clinical-trial', label: 'Clinical' },
+                    ].map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setLayoutMode(tab.key as LayoutMode)}
+                        className={cn(
+                          'px-2.5 py-1 text-[11px] font-medium transition-colors',
+                          layoutMode === tab.key
+                            ? 'bg-zinc-100 text-zinc-900'
+                            : 'text-zinc-500 hover:bg-zinc-50'
+                        )}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Default: show IND workspace */}
+              <div className="flex-1 flex min-h-0 overflow-auto">
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center bg-white">
+                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      </div>
+                    }
+                  >
+                    <INDWorkspace
+                      projectId={activeProjectId}
+                      projectName={activeProject?.name || 'Untitled Project'}
+                      submissionType={activeProject?.type || 'IND'}
+                      onOpenSection={sectionCode => {
+                        setPendingEditorContent({
+                          content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'Application'}.</p>`,
+                          title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'Application'}`,
+                          ctdSection: sectionCode.replace(/^m/, ''),
+                        });
+                        setLayoutMode('ectd-coauthor');
+                      }}
+                      onDraftWithAI={sectionCode => {
+                        setLayoutMode('ectd-coauthor');
+                      }}
+                      onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+            </div>
+          )}
+
+          {/* ── Intelligence Hub — research, evidence, predictions ── */}
+          {!embeddedModule && layoutMode === 'intelligence-hub' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-intelligence-hub">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <IntelligenceHub onClose={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
+          {!embeddedModule && layoutMode === 'review-readiness' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-readiness">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <ReviewReadiness onClose={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Command Center — operations, submissions, governance ── */}
+          {!embeddedModule && layoutMode === 'command-center' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-command-center">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <CommandCenterHub onClose={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Precedent Intelligence — disabled (consolidated into Intelligence Hub) */}
 
           {/* Redirect deprecated routes to unified workspace */}
           {['workspace', 'medtech-dashboard', 'dossier', 'precedent-intelligence'].includes(
