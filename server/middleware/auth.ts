@@ -12,7 +12,7 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/environment';
 
-const isDev = process.env.NODE_ENV !== 'production';
+// SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
 // JWT token payload interface
 interface JWTPayload {
@@ -62,19 +62,8 @@ declare global {
  * Authenticate JWT token from Authorization header
  */
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  // In dev mode, auto-authenticate with dev user (requires explicit opt-in)
-  if (isDev && process.env.DEV_AUTO_AUTH === 'true' && !req.headers.authorization) {
-    req.user = {
-      id: 1,
-      userId: 1,
-      email: 'developer@trialsage.ai',
-      role: 'admin',
-      roles: ['admin', 'user'],
-      organizationId: '2',
-      permissions: ['*'],
-    };
-    return next();
-  }
+  // SECURITY FIX: Dev auto-auth removed. All requests must provide a valid JWT.
+  // To test locally, create a user via POST /api/auth/signup then login normally.
 
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
@@ -125,10 +114,7 @@ export const requireAuth = authenticateToken;
  */
 export const requireRole = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    // In dev mode, allow all roles
-    if (isDev) {
-      return next();
-    }
+    // SECURITY FIX: Dev-mode role bypass removed. Roles are always enforced.
 
     if (!req.user) {
       return res.status(401).json({
@@ -154,10 +140,7 @@ export const requireRole = (...allowedRoles: string[]) => {
  * Ensures user belongs to the requested organization
  */
 export const requireOrgAccess = (req: Request, res: Response, next: NextFunction) => {
-  // In dev mode, allow all org access
-  if (isDev) {
-    return next();
-  }
+  // SECURITY FIX: Dev-mode org bypass removed. Org access is always enforced.
 
   if (!req.user) {
     return res.status(401).json({
@@ -196,10 +179,7 @@ export const requireSameOrganization = requireOrgAccess;
  */
 export const requirePermission = (resource: string, action: string) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    // In dev mode, allow all permissions
-    if (isDev) {
-      return next();
-    }
+    // SECURITY FIX: Dev-mode permission bypass removed. Permissions are always enforced.
 
     if (!req.user) {
       return res.status(401).json({
@@ -233,18 +213,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   const token = authHeader?.replace('Bearer ', '');
 
   if (!token) {
-    // In dev mode, attach dev user anyway (requires explicit opt-in)
-    if (isDev && process.env.DEV_AUTO_AUTH === 'true') {
-      req.user = {
-        id: 1,
-        userId: 1,
-        email: 'developer@trialsage.ai',
-        role: 'admin',
-        roles: ['admin', 'user'],
-        organizationId: '2',
-        permissions: ['*'],
-      };
-    }
+    // SECURITY FIX: Dev auto-auth removed from optional auth path.
     return next();
   }
 
@@ -261,17 +230,6 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
     };
   } catch {
     // Token invalid but that's okay for optional auth
-    if (isDev && process.env.DEV_AUTO_AUTH === 'true') {
-      req.user = {
-        id: 1,
-        userId: 1,
-        email: 'developer@trialsage.ai',
-        role: 'admin',
-        roles: ['admin', 'user'],
-        organizationId: '2',
-        permissions: ['*'],
-      };
-    }
   }
 
   next();

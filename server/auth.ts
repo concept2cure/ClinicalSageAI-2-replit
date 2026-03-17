@@ -247,12 +247,12 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
   try {
     const bcrypt = await import('bcryptjs');
 
-    // Handle legacy temp_ prefix passwords — compare after stripping prefix
+    // SECURITY FIX: Reject legacy temp_ prefix passwords entirely.
+    // Plaintext comparison was a security hole. Users with temp_ passwords
+    // must reset their password via the forgot-password flow.
     if (hash.startsWith('temp_')) {
-      // Temporary passwords should still be bcrypt-compared when re-hashed
-      // For migration: accept plaintext temp passwords but log deprecation warning
-      logger.warn('Legacy temp_ password detected — scheduling for bcrypt migration');
-      return password === hash.substring(5);
+      logger.warn('Legacy temp_ password rejected — user must reset password via forgot-password flow');
+      return false;
     }
 
     // Standard bcrypt comparison

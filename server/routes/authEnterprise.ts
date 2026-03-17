@@ -33,16 +33,7 @@ import {
 import { config } from '../config/environment';
 
 const router = Router();
-const isDev = process.env.NODE_ENV !== 'production';
-
-// Dev user for testing
-const devUser = {
-  id: 1,
-  email: 'developer@trialsage.ai',
-  firstName: 'Dev',
-  lastName: 'User',
-  role: 'admin',
-};
+// SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
 
 /**
  * GET /check-sso-domain
@@ -77,16 +68,7 @@ router.post('/check-email', async (req: Request, res: Response) => {
     const normalizedEmail = email.trim().toLowerCase();
     console.log('[Enterprise Auth] Checking email:', normalizedEmail);
 
-    // In dev mode, always allow password auth
-    if (isDev) {
-      return res.json({
-        exists: true,
-        authFlow: 'password',
-        mfaRequired: false,
-        passwordSet: true,
-        email: normalizedEmail,
-      });
-    }
+    // SECURITY FIX: Dev-mode bypass removed. Always check database.
 
     // Check if user exists in database
     const userResult = await db
@@ -118,17 +100,6 @@ router.post('/check-email', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Enterprise Auth] check-email error:', error);
 
-    // In dev mode, still succeed
-    if (isDev) {
-      return res.json({
-        exists: true,
-        authFlow: 'password',
-        mfaRequired: false,
-        passwordSet: true,
-        email: req.body.email,
-      });
-    }
-
     res.status(500).json({
       error: 'INTERNAL_ERROR',
       message: 'Failed to verify email',
@@ -154,37 +125,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
     const normalizedEmail = email.trim().toLowerCase();
     console.log('[Enterprise Auth] Verifying password for:', normalizedEmail);
 
-    // In dev mode, accept any password
-    if (isDev) {
-      // Generate JWT token
-      const token = jwt.sign(
-        {
-          userId: '1',
-          email: normalizedEmail,
-          organizationId: '2',
-          role: 'admin',
-        },
-        config.jwt.secret,
-        { expiresIn: '24h' }
-      );
-
-      return res.json({
-        success: true,
-        requiresMfa: false,
-        requiresOrgSelection: false,
-        token,
-        user: {
-          id: 1,
-          email: normalizedEmail,
-          firstName: 'Dev',
-          lastName: 'User',
-          displayName: 'Dev User',
-          role: 'admin',
-          organizationId: '2',
-          organizationName: 'Concept2Cure',
-        },
-      });
-    }
+    // SECURITY FIX: Dev-mode any-password bypass removed. Always validate against database.
 
     // Look up user in database
     const userResult = await db
@@ -300,32 +241,6 @@ router.post('/verify-password', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Enterprise Auth] verify-password error:', error);
 
-    // In dev mode, still succeed
-    if (isDev) {
-      const token = jwt.sign(
-        { userId: '1', email: req.body.email, organizationId: '2', role: 'admin' },
-        config.jwt.secret,
-        { expiresIn: '24h' }
-      );
-
-      return res.json({
-        success: true,
-        requiresMfa: false,
-        requiresOrgSelection: false,
-        token,
-        user: {
-          id: 1,
-          email: req.body.email,
-          firstName: 'Dev',
-          lastName: 'User',
-          displayName: 'Dev User',
-          role: 'admin',
-          organizationId: '2',
-          organizationName: 'Concept2Cure',
-        },
-      });
-    }
-
     res.status(500).json({
       error: 'INTERNAL_ERROR',
       message: 'Authentication failed',
@@ -348,29 +263,7 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
       });
     }
 
-    // In dev mode, always succeed
-    if (isDev) {
-      const token = jwt.sign(
-        { userId: '1', email, organizationId: '2', role: 'admin' },
-        config.jwt.secret,
-        { expiresIn: '24h' }
-      );
-
-      return res.json({
-        success: true,
-        token,
-        user: {
-          id: 1,
-          email,
-          firstName: 'Dev',
-          lastName: 'User',
-          displayName: 'Dev User',
-          role: 'admin',
-          organizationId: '2',
-          organizationName: 'Concept2Cure',
-        },
-      });
-    }
+    // SECURITY FIX: Dev-mode MFA bypass removed. MFA is always enforced.
 
     // Verify the partial token to get user identity
     let decoded: any;
@@ -614,50 +507,39 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     const existingToken = authHeader?.replace('Bearer ', '');
 
-    if (!existingToken && !isDev) {
+    if (!existingToken) {
       return res.status(401).json({
         error: 'AUTH_REQUIRED',
         message: 'Authentication required to select organization',
       });
     }
 
-    let userId: string;
-    let email: string;
-
-    if (existingToken) {
-      const decoded = jwt.verify(existingToken, config.jwt.secret) as any;
-      userId = decoded.userId;
-      email = decoded.email;
-    } else {
-      // Dev fallback (only reachable when isDev is true)
-      userId = '1';
-      email = 'developer@trialsage.ai';
-    }
+    const decoded = jwt.verify(existingToken, config.jwt.secret) as any;
+    const userId: string = decoded.userId;
+    const email: string = decoded.email;
 
     // SECURITY: Validate that the user actually belongs to the requested organization.
     // Without this check, any authenticated user could switch to any org.
-    if (!isDev) {
-      const membership = await db
-        .select({ organizationId: organizationUsers.organizationId })
-        .from(organizationUsers)
-        .where(
-          and(
-            eq(organizationUsers.userId, parseInt(userId)),
-            eq(organizationUsers.organizationId, parseInt(organizationId))
-          )
+    const membership = await db
+      .select({ organizationId: organizationUsers.organizationId })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.userId, parseInt(userId)),
+          eq(organizationUsers.organizationId, parseInt(organizationId))
         )
-        .limit(1);
+      )
+      .limit(1);
 
-      if (!membership.length) {
-        console.warn(
-          `[SECURITY] select-organization: user ${userId} attempted to switch to ` +
-          `org ${organizationId} without membership`
-        );
-        return res.status(403).json({
-          error: 'ORG_ACCESS_DENIED',
-          message: 'You do not have access to this organization',
-        });
-      }
+    if (!membership.length) {
+      console.warn(
+        `[SECURITY] select-organization: user ${userId} attempted to switch to ` +
+        `org ${organizationId} without membership`
+      );
+      return res.status(403).json({
+        error: 'ORG_ACCESS_DENIED',
+        message: 'You do not have access to this organization',
+      });
     }
 
     // Look up org details
@@ -709,7 +591,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const oldToken = authHeader?.replace('Bearer ', '');
 
-  if (!oldToken && !isDev) {
+  if (!oldToken) {
     return res.status(401).json({
       error: 'NO_TOKEN',
       message: 'No token provided',
@@ -717,16 +599,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 
   try {
-    let decoded: any = {
-      userId: '1',
-      email: 'developer@trialsage.ai',
-      organizationId: '2',
-      role: 'admin',
-    };
-
-    if (oldToken) {
-      decoded = jwt.verify(oldToken, config.jwt.secret) as any;
-    }
+    const decoded = jwt.verify(oldToken, config.jwt.secret) as any;
 
     const newToken = jwt.sign(
       {
@@ -744,15 +617,6 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       token: newToken,
     });
   } catch (error) {
-    if (isDev) {
-      const newToken = jwt.sign(
-        { userId: '1', email: 'developer@trialsage.ai', organizationId: '2', role: 'admin' },
-        config.jwt.secret,
-        { expiresIn: '24h' }
-      );
-      return res.json({ success: true, token: newToken });
-    }
-
     res.status(401).json({
       error: 'TOKEN_EXPIRED',
       message: 'Token expired or invalid',
