@@ -15,9 +15,16 @@ import {
   clientIntelligenceProfiles,
   clientMemoryEntries,
   clientIngestedDocuments,
+  projectIntelligenceProfiles,
+  projectMemoryEntries,
+  projectIngestedDocuments,
+  projects,
   type ClientIntelligenceProfile,
   type ClientMemoryEntry,
   type ClientIngestedDocument,
+  type ProjectIntelligenceProfile,
+  type ProjectMemoryEntry,
+  type ProjectIngestedDocument,
 } from 'shared/schema';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
 
@@ -832,4 +839,440 @@ export async function verifyMemoryEntry(entryId: number, userId: number): Promis
       updatedAt: new Date(),
     })
     .where(eq(clientMemoryEntries.id, entryId));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT-LEVEL INTELLIGENCE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface ProjectIntelligenceInput {
+  regulatoryStrategy?: string;
+  targetIndication?: string;
+  targetPopulation?: string;
+  primaryEndpoints?: Array<{ endpoint: string; type: string; measurement: string }>;
+  comparatorDevicesOrDrugs?: Array<{ name: string; type: string; reference: string }>;
+  keyConstraints?: string;
+  submissionTimeline?: Array<{ milestone: string; targetDate: string; status: string }>;
+  projectPersona?: string;
+  customInstructions?: string;
+}
+
+/**
+ * Create or update a project intelligence profile.
+ */
+export async function upsertProjectIntelligence(
+  projectId: number,
+  organizationId: number,
+  input: ProjectIntelligenceInput,
+  userId: number
+): Promise<ProjectIntelligenceProfile> {
+  const existing = await db
+    .select()
+    .from(projectIntelligenceProfiles)
+    .where(eq(projectIntelligenceProfiles.projectId, projectId))
+    .limit(1);
+
+  const profileData = {
+    projectId,
+    organizationId,
+    regulatoryStrategy: input.regulatoryStrategy || null,
+    targetIndication: input.targetIndication || null,
+    targetPopulation: input.targetPopulation || null,
+    primaryEndpoints: input.primaryEndpoints || [],
+    comparatorDevicesOrDrugs: input.comparatorDevicesOrDrugs || [],
+    keyConstraints: input.keyConstraints || null,
+    submissionTimeline: input.submissionTimeline || [],
+    projectPersona: input.projectPersona || null,
+    customInstructions: input.customInstructions || null,
+    lastEnrichedBy: userId,
+    lastEnrichedAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  if (existing.length > 0) {
+    const [updated] = await db
+      .update(projectIntelligenceProfiles)
+      .set(profileData)
+      .where(eq(projectIntelligenceProfiles.id, existing[0].id))
+      .returning();
+    return updated;
+  }
+
+  const [created] = await db
+    .insert(projectIntelligenceProfiles)
+    .values({ ...profileData, createdBy: userId, profileStatus: 'active' })
+    .returning();
+  return created;
+}
+
+/**
+ * Get project intelligence profile.
+ */
+export async function getProjectIntelligence(
+  projectId: number
+): Promise<ProjectIntelligenceProfile | null> {
+  const rows = await db
+    .select()
+    .from(projectIntelligenceProfiles)
+    .where(eq(projectIntelligenceProfiles.projectId, projectId))
+    .limit(1);
+  return rows[0] || null;
+}
+
+/**
+ * Ingest a document into project-level intelligence.
+ */
+export async function ingestProjectDocument(
+  projectProfileId: number,
+  projectId: number,
+  organizationId: number,
+  file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
+  userId: number
+): Promise<DocumentIngestionResult> {
+  const [docRecord] = await db
+    .insert(projectIngestedDocuments)
+    .values({
+      projectProfileId,
+      projectId,
+      organizationId,
+      fileName: file.originalname,
+      fileType: file.originalname.split('.').pop() || 'unknown',
+      fileSizeBytes: file.size,
+      mimeType: file.mimetype,
+      processingStatus: 'processing',
+      uploadedBy: userId,
+    })
+    .returning();
+
+  try {
+    const { text, pageCount } = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);
+    const tokenCount = estimateTokens(text);
+
+    // Get project name for context
+    const proj = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    const projectName = proj[0]?.name || 'Unknown Project';
+
+    // Extract project-specific memory entries
+    const extractedEntries = extractProjectMemoryEntries(text, file.originalname, projectName);
+
+    if (extractedEntries.length > 0) {
+      await db.insert(projectMemoryEntries).values(
+        extractedEntries.map(entry => ({
+          projectProfileId,
+          projectId,
+          organizationId,
+          category: entry.category,
+          subcategory: entry.subcategory,
+          title: entry.title,
+          content: entry.content,
+          sourceDocumentName: file.originalname,
+          sourceDocumentType: file.originalname.split('.').pop() || 'unknown',
+          confidenceScore: entry.confidenceScore,
+          importanceLevel: entry.importanceLevel,
+          extractedBy: 'ai' as const,
+        }))
+      );
+    }
+
+    await db
+      .update(projectIngestedDocuments)
+      .set({
+        extractedText: text.slice(0, 100000),
+        tokenCount,
+        pageCount: pageCount || null,
+        processingStatus: 'completed',
+        memoryEntriesGenerated: extractedEntries.length,
+        processedAt: new Date(),
+      })
+      .where(eq(projectIngestedDocuments.id, docRecord.id));
+
+    await db
+      .update(projectIntelligenceProfiles)
+      .set({
+        totalDocumentsIngested: sql`${projectIntelligenceProfiles.totalDocumentsIngested} + 1`,
+        totalTokensProcessed: sql`${projectIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
+        lastDocumentIngestedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectIntelligenceProfiles.id, projectProfileId));
+
+    return {
+      documentId: docRecord.id,
+      fileName: file.originalname,
+      extractedText: text.slice(0, 2000),
+      tokenCount,
+      memoryEntriesCreated: extractedEntries.length,
+      status: 'completed',
+    };
+  } catch (err: any) {
+    await db
+      .update(projectIngestedDocuments)
+      .set({ processingStatus: 'failed', processingError: err.message })
+      .where(eq(projectIngestedDocuments.id, docRecord.id));
+
+    return {
+      documentId: docRecord.id,
+      fileName: file.originalname,
+      extractedText: '',
+      tokenCount: 0,
+      memoryEntriesCreated: 0,
+      status: 'failed',
+      error: err.message,
+    };
+  }
+}
+
+/**
+ * Extract project-specific memory entries from document text.
+ */
+function extractProjectMemoryEntries(
+  text: string,
+  fileName: string,
+  projectName: string
+): Array<{
+  category: string;
+  subcategory: string;
+  title: string;
+  content: string;
+  confidenceScore: number;
+  importanceLevel: string;
+}> {
+  const entries: Array<{
+    category: string;
+    subcategory: string;
+    title: string;
+    content: string;
+    confidenceScore: number;
+    importanceLevel: string;
+  }> = [];
+
+  const analysisText = text.slice(0, 50000);
+  const lowerText = analysisText.toLowerCase();
+
+  // ── Endpoint extraction ────────────────────────────────────────
+  const endpointPatterns = analysisText.match(
+    /(?:primary|secondary|exploratory)\s*(?:endpoint|outcome)[s]?\s*(?:include|are|:)?\s*([^\n.]{10,300})/gi
+  );
+  if (endpointPatterns) {
+    entries.push({
+      category: 'endpoint',
+      subcategory: 'primary_endpoints',
+      title: `${projectName} Clinical Endpoints`,
+      content: endpointPatterns.slice(0, 3).join('; ').trim(),
+      confidenceScore: 0.85,
+      importanceLevel: 'high',
+    });
+  }
+
+  // ── Patient population extraction ──────────────────────────────
+  const populationMatch = analysisText.match(
+    /(?:patient|subject|participant)\s*(?:population|cohort|group)[s]?\s*(?:include|consist|comprise)[s]?\s*([^\n.]{10,300})/i
+  );
+  if (populationMatch) {
+    entries.push({
+      category: 'clinical',
+      subcategory: 'patient_population',
+      title: `${projectName} Patient Population`,
+      content: populationMatch[1].trim(),
+      confidenceScore: 0.8,
+      importanceLevel: 'high',
+    });
+  }
+
+  // ── Study design extraction ────────────────────────────────────
+  const designPatterns = [
+    'randomized', 'double-blind', 'placebo-controlled', 'open-label',
+    'single-arm', 'crossover', 'parallel-group', 'dose-escalation',
+    'adaptive', 'basket', 'umbrella', 'platform',
+  ];
+  const foundDesigns = designPatterns.filter(d => lowerText.includes(d));
+  if (foundDesigns.length > 0) {
+    entries.push({
+      category: 'strategy',
+      subcategory: 'study_design',
+      title: `${projectName} Study Design Elements`,
+      content: `Study design characteristics: ${foundDesigns.join(', ')}. Source: ${fileName}`,
+      confidenceScore: 0.8,
+      importanceLevel: 'medium',
+    });
+  }
+
+  // ── Risk factors extraction ────────────────────────────────────
+  const riskMatch = analysisText.match(
+    /(?:risk|safety|adverse|concern|limitation)[s]?\s*(?:include|are|:)?\s*([^\n.]{15,300})/gi
+  );
+  if (riskMatch) {
+    entries.push({
+      category: 'risk',
+      subcategory: 'identified_risks',
+      title: `${projectName} Risk/Safety Signals`,
+      content: riskMatch.slice(0, 3).join('; ').trim(),
+      confidenceScore: 0.75,
+      importanceLevel: 'high',
+    });
+  }
+
+  // ── Manufacturing/CMC signals ──────────────────────────────────
+  const cmcPatterns = ['drug substance', 'drug product', 'formulation', 'stability',
+    'manufacturing process', 'excipient', 'packaging', 'shelf life', 'GMP'];
+  const foundCMC = cmcPatterns.filter(p => lowerText.includes(p));
+  if (foundCMC.length >= 2) {
+    entries.push({
+      category: 'manufacturing',
+      subcategory: 'cmc_signals',
+      title: `${projectName} CMC References`,
+      content: `CMC topics referenced: ${foundCMC.join(', ')}. Source: ${fileName}`,
+      confidenceScore: 0.7,
+      importanceLevel: 'medium',
+    });
+  }
+
+  // ── Regulatory decision extraction ─────────────────────────────
+  const decisionMatch = analysisText.match(
+    /(?:FDA|EMA|PMDA|agency)\s*(?:recommended|required|requested|approved|denied|suggested)\s*([^\n.]{10,200})/gi
+  );
+  if (decisionMatch) {
+    entries.push({
+      category: 'decision',
+      subcategory: 'agency_feedback',
+      title: `${projectName} Regulatory Agency Feedback`,
+      content: decisionMatch.slice(0, 3).join('; ').trim(),
+      confidenceScore: 0.85,
+      importanceLevel: 'critical',
+    });
+  }
+
+  // ── Document summary ───────────────────────────────────────────
+  const firstParagraph = analysisText.slice(0, 400).replace(/\s+/g, ' ').trim();
+  entries.push({
+    category: 'strategy',
+    subcategory: 'document_ingestion',
+    title: `Ingested: ${fileName}`,
+    content: `Document "${fileName}" ingested for project "${projectName}". Content preview: ${firstParagraph}...`,
+    confidenceScore: 1.0,
+    importanceLevel: 'low',
+  });
+
+  return entries;
+}
+
+/**
+ * Get project memory entries.
+ */
+export async function getProjectMemoryEntries(
+  projectProfileId: number,
+  options?: { category?: string; limit?: number }
+): Promise<{ entries: ProjectMemoryEntry[]; totalCount: number }> {
+  const conditions = [
+    eq(projectMemoryEntries.projectProfileId, projectProfileId),
+    eq(projectMemoryEntries.status, 'active'),
+  ];
+  if (options?.category) {
+    conditions.push(eq(projectMemoryEntries.category, options.category));
+  }
+
+  const [entries, countResult] = await Promise.all([
+    db.select().from(projectMemoryEntries)
+      .where(and(...conditions))
+      .orderBy(desc(projectMemoryEntries.createdAt))
+      .limit(options?.limit || 100),
+    db.select({ count: sql<number>`count(*)` })
+      .from(projectMemoryEntries)
+      .where(and(...conditions)),
+  ]);
+
+  return { entries, totalCount: Number(countResult[0]?.count || 0) };
+}
+
+/**
+ * Get project ingested documents.
+ */
+export async function getProjectIngestedDocuments(
+  projectProfileId: number
+): Promise<ProjectIngestedDocument[]> {
+  return db.select().from(projectIngestedDocuments)
+    .where(eq(projectIngestedDocuments.projectProfileId, projectProfileId))
+    .orderBy(desc(projectIngestedDocuments.uploadedAt));
+}
+
+/**
+ * Build project intelligence context for the Lumen system prompt.
+ */
+export async function buildProjectIntelligenceContext(
+  projectId: number
+): Promise<string | null> {
+  const profile = await getProjectIntelligence(projectId);
+  if (!profile || profile.profileStatus !== 'active') return null;
+
+  const { entries } = await getProjectMemoryEntries(profile.id, { limit: 30 });
+  const parts: string[] = [];
+
+  parts.push(`
+## Project Intelligence — Deep Knowledge for This Submission
+You have studied this project's documents and strategy in detail. Use this intelligence to guide every recommendation.`);
+
+  if (profile.regulatoryStrategy) {
+    parts.push(`
+### Regulatory Strategy
+${profile.regulatoryStrategy}`);
+  }
+
+  if (profile.targetIndication || profile.targetPopulation) {
+    parts.push(`
+### Clinical Target${profile.targetIndication ? `\n- **Indication**: ${profile.targetIndication}` : ''}${profile.targetPopulation ? `\n- **Population**: ${profile.targetPopulation}` : ''}`);
+  }
+
+  const endpoints = profile.primaryEndpoints as Array<{ endpoint: string; type: string }> | null;
+  if (endpoints?.length) {
+    parts.push(`
+### Primary Endpoints
+${endpoints.map(e => `- **${e.endpoint}** (${e.type})`).join('\n')}`);
+  }
+
+  const comparators = profile.comparatorDevicesOrDrugs as Array<{ name: string; type: string }> | null;
+  if (comparators?.length) {
+    parts.push(`
+### Comparator Products
+${comparators.map(c => `- **${c.name}** (${c.type})`).join('\n')}`);
+  }
+
+  if (profile.keyConstraints) {
+    parts.push(`
+### Key Constraints & Considerations
+${profile.keyConstraints}`);
+  }
+
+  if (profile.projectPersona) {
+    parts.push(`
+### Project-Specific Instructions
+${profile.projectPersona}`);
+  }
+
+  if (profile.customInstructions) {
+    parts.push(`
+### Custom Instructions
+${profile.customInstructions}`);
+  }
+
+  // Add learned entries grouped by category
+  if (entries.length > 0) {
+    const grouped: Record<string, ProjectMemoryEntry[]> = {};
+    for (const entry of entries) {
+      if (!grouped[entry.category]) grouped[entry.category] = [];
+      grouped[entry.category].push(entry);
+    }
+
+    parts.push(`
+### Learned Project Intelligence (${entries.length} knowledge atoms from ${profile.totalDocumentsIngested || 0} documents)`);
+
+    for (const [cat, catEntries] of Object.entries(grouped)) {
+      const highPriority = catEntries.filter(e => e.importanceLevel === 'high' || e.importanceLevel === 'critical');
+      const items = highPriority.length > 0 ? highPriority : catEntries.slice(0, 3);
+      parts.push(`
+#### ${cat.charAt(0).toUpperCase() + cat.slice(1)}
+${items.map(e => `- ${e.title}: ${e.content.slice(0, 200)}`).join('\n')}`);
+    }
+  }
+
+  return parts.join('\n');
 }

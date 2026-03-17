@@ -18,6 +18,13 @@ import {
   ingestDocument,
   getMemoryEntries,
   getIngestedDocuments,
+  // Project-level intelligence
+  upsertProjectIntelligence,
+  getProjectIntelligence,
+  ingestProjectDocument,
+  getProjectMemoryEntries,
+  getProjectIngestedDocuments,
+  buildProjectIntelligenceContext,
   getDocumentChecklist,
   archiveMemoryEntry,
   verifyMemoryEntry,
@@ -283,6 +290,132 @@ router.get('/context', async (req: Request, res: Response) => {
     return res.json({ success: true, context });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /context error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT-LEVEL INTELLIGENCE ENDPOINTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/client-intelligence/project/:projectId/profile
+ * Get project intelligence profile.
+ */
+router.get('/project/:projectId/profile', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    const profile = await getProjectIntelligence(projectId);
+    return res.json({ success: true, profile });
+  } catch (err: any) {
+    console.error('[ProjectIntelligence] GET profile error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/client-intelligence/project/:projectId/profile
+ * Create or update project intelligence profile.
+ */
+router.post('/project/:projectId/profile', async (req: Request, res: Response) => {
+  try {
+    const { organizationId, userId } = getRequestContext(req);
+    const projectId = parseInt(req.params.projectId, 10);
+    const profile = await upsertProjectIntelligence(projectId, organizationId, req.body, userId);
+    return res.json({ success: true, profile });
+  } catch (err: any) {
+    console.error('[ProjectIntelligence] POST profile error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/client-intelligence/project/:projectId/documents/upload
+ * Upload a document to project intelligence.
+ */
+router.post(
+  '/project/:projectId/documents/upload',
+  upload.single('file'),
+  async (req: Request, res: Response) => {
+    try {
+      const { organizationId, userId } = getRequestContext(req);
+      const projectId = parseInt(req.params.projectId, 10);
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ success: false, error: 'No file provided' });
+      }
+
+      // Get or create project profile
+      let profile = await getProjectIntelligence(projectId);
+      if (!profile) {
+        profile = await upsertProjectIntelligence(projectId, organizationId, {}, userId);
+      }
+
+      const result = await ingestProjectDocument(
+        profile.id,
+        projectId,
+        organizationId,
+        { buffer: file.buffer, originalname: file.originalname, mimetype: file.mimetype, size: file.size },
+        userId
+      );
+
+      return res.json({ success: true, result });
+    } catch (err: any) {
+      console.error('[ProjectIntelligence] POST documents/upload error:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+);
+
+/**
+ * GET /api/client-intelligence/project/:projectId/documents
+ * List project ingested documents.
+ */
+router.get('/project/:projectId/documents', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    const profile = await getProjectIntelligence(projectId);
+    if (!profile) return res.json({ success: true, documents: [] });
+
+    const documents = await getProjectIngestedDocuments(profile.id);
+    return res.json({ success: true, documents });
+  } catch (err: any) {
+    console.error('[ProjectIntelligence] GET documents error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/project/:projectId/memory
+ * Get project memory entries.
+ */
+router.get('/project/:projectId/memory', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    const profile = await getProjectIntelligence(projectId);
+    if (!profile) return res.json({ success: true, entries: [], totalCount: 0 });
+
+    const category = req.query.category as string | undefined;
+    const result = await getProjectMemoryEntries(profile.id, { category });
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('[ProjectIntelligence] GET memory error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/project/:projectId/context
+ * Preview the project intelligence context string.
+ */
+router.get('/project/:projectId/context', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    const context = await buildProjectIntelligenceContext(projectId);
+    return res.json({ success: true, context });
+  } catch (err: any) {
+    console.error('[ProjectIntelligence] GET context error:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -27,7 +27,7 @@ import {
   detectActiveModule,
 } from './module-intelligence.js';
 import { assembleInstructionEnginePrompt } from './lumen-instruction-engine.js';
-import { buildClientIntelligenceContext } from './client-intelligence-memory.js';
+import { buildClientIntelligenceContext, buildProjectIntelligenceContext } from './client-intelligence-memory.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -85,6 +85,7 @@ export interface LumenContext {
   organizationName: string | null;
   userIntelligence: UserIntelligence | null;
   clientIntelligence: string | null;
+  projectIntelligence: string | null;
   timestamp: string;
 }
 
@@ -423,7 +424,7 @@ export async function buildLumenContext(params: {
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
   // Load all context in parallel for speed — including full user intelligence & client intelligence
-  const [project, documents, conversation, userInfo, orgName, userIntelligence, clientIntelligence] = await Promise.all(
+  const [project, documents, conversation, userInfo, orgName, userIntelligence, clientIntelligence, projectIntelligence] = await Promise.all(
     [
       projectId && organizationId
         ? loadProjectContext(projectId, organizationId)
@@ -446,6 +447,10 @@ export async function buildLumenContext(params: {
       // Client Intelligence Memory — deep knowledge of the client organization
       organizationId
         ? buildClientIntelligenceContext(organizationId).catch(() => null)
+        : Promise.resolve(null),
+      // Project Intelligence Memory — deep knowledge specific to the active project
+      projectId
+        ? buildProjectIntelligenceContext(projectId).catch(() => null)
         : Promise.resolve(null),
     ]
   );
@@ -470,6 +475,7 @@ export async function buildLumenContext(params: {
     organizationName: orgName,
     userIntelligence,
     clientIntelligence,
+    projectIntelligence,
     timestamp: new Date().toISOString(),
   };
 }
@@ -618,6 +624,12 @@ Use conversation history to avoid re-asking for information the user has already
   // Deep knowledge of the client organization, learned from ingested documents
   if (context.clientIntelligence) {
     parts.push(context.clientIntelligence);
+  }
+
+  // ── Project Intelligence Memory ───────────────────────────────────────
+  // Deep knowledge specific to the active project, learned from project documents
+  if (context.projectIntelligence) {
+    parts.push(context.projectIntelligence);
   }
 
   // ── Document Context ─────────────────────────────────────────────────────

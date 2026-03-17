@@ -2879,6 +2879,11 @@ import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);
 console.log('✅ Client Intelligence Memory API routes mounted successfully');
 
+// Mount Universal Packager routes
+import universalPackagerRoutes from './routes/universal-packager';
+app.use('/api/packager', universalPackagerRoutes);
+console.log('✅ Universal Packager API routes mounted successfully');
+
 // Mount Regulatory Precedent Engine
 import precedentEngineRoutes from './routes/precedent-engine';
 app.use('/api/precedent-engine', precedentEngineRoutes);
