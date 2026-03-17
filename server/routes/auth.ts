@@ -489,8 +489,55 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
+    // SECURITY FIX: Look up the user's actual organization from the database
+    // instead of hardcoding organizationId: '2'. This prevents a refresh token
+    // from granting access to an arbitrary tenant.
+    if (!requireDb(res)) return;
+    const refreshUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, parseInt(decoded.userId)))
+      .limit(1);
+
+    if (!refreshUser.length) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'User not found' },
+      });
+    }
+
+    const refreshUserData = refreshUser[0];
+    let refreshOrgId = refreshUserData.defaultOrganizationId;
+    if (!refreshOrgId) {
+      const [refreshMembership] = await db
+        .select({ organizationId: organizationUsers.organizationId })
+        .from(organizationUsers)
+        .where(eq(organizationUsers.userId, refreshUserData.id))
+        .limit(1);
+      refreshOrgId = refreshMembership?.organizationId || null;
+    }
+
+    if (!refreshOrgId) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'No organization assigned' },
+      });
+    }
+
+    // Get the user's role for the JWT
+    const [refreshMembershipRole] = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, refreshUserData.id))
+      .limit(1);
+
     const accessToken = jwt.sign(
-      { userId: decoded.userId, email: decoded.email, organizationId: '2' },
+      {
+        userId: decoded.userId,
+        email: decoded.email,
+        organizationId: refreshOrgId.toString(),
+        role: refreshMembershipRole?.role || 'user',
+      },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );

@@ -1247,6 +1247,16 @@ try {
   console.error('❌ Failed to mount Module Subscriptions routes:', error);
 }
 
+// Mount Billing routes (Stripe Checkout + Link, webhooks, customer portal)
+try {
+  const billingModule = await import('./routes/billing.js');
+  const billingRouter = billingModule.default;
+  app.use('/api/billing', billingRouter);
+  console.log('✅ Billing API routes mounted (Stripe Checkout + Link, Customer Portal, Webhooks)');
+} catch (error) {
+  console.error('❌ Failed to mount Billing routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');

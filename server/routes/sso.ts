@@ -28,10 +28,13 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
 
   // For dev mode, accept the mock code and return a token + user info
   if (isDev) {
-    // Create a simple JWT token
-    const token = jwt.sign({ userId: '1', email: 'sso-user@example.com', provider }, config.jwt.secret, {
-      expiresIn: '24h',
-    });
+    // SECURITY: JWT must include organizationId so downstream tenant middleware
+    // derives the org context from the token, not from user-supplied headers.
+    const token = jwt.sign(
+      { userId: '1', email: 'sso-user@example.com', organizationId: '2', role: 'client_user', provider },
+      config.jwt.secret,
+      { expiresIn: '24h' }
+    );
 
     return res.json({
       success: true,

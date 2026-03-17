@@ -83,6 +83,16 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         req.userRole = decoded.role || 'user';
         req.userEmail = decoded.email;
         req.tenantId = parseInt(decoded.organizationId || '1') || 1;
+        // SECURITY: Set req.user with organizationId from JWT so that
+        // downstream tenant middleware (tenantContextMiddleware,
+        // tenantIsolationMiddleware) derives org context from the token.
+        req.user = {
+          id: req.userId,
+          userId: req.userId,
+          email: decoded.email,
+          role: decoded.role || 'user',
+          organizationId: decoded.organizationId || '1',
+        };
         req.tenantContext = {
           organizationId: parseInt(decoded.organizationId || '1') || 1,
           userId: req.userId,
@@ -101,6 +111,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       req.userRole = 'admin';
       req.userEmail = 'dev@example.com';
       req.tenantId = 1;
+      req.user = {
+        id: 1,
+        userId: 1,
+        email: 'dev@example.com',
+        role: 'admin',
+        organizationId: '1',
+      };
       req.tenantContext = {
         organizationId: 1,
         userId: 1,

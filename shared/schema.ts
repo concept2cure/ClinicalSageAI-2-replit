@@ -143,6 +143,12 @@ export const organizations = pgTable('organizations', {
   logo: text('logo'),
   industryMode: text('industry_mode'),
   stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  billingCycle: text('billing_cycle').default('monthly'), // monthly, annual
+  paymentStatus: text('payment_status').default('incomplete'), // incomplete, active, past_due, canceled, trialing
+  trialEndsAt: timestamp('trial_ends_at'),
+  nextBillingDate: timestamp('next_billing_date'),
+  seatsPurchased: integer('seats_purchased').default(5),
   settings: json('settings'),
   apiKey: text('api_key').unique(),
   tier: text('tier').default('standard').notNull(), // free, standard, professional, enterprise
@@ -164,6 +170,23 @@ export const insertOrganizationSchema = createInsertSchemaOmit(organizations, {
 // Organization Types
 export type Organization = InferSelectModel<typeof organizations>;
 export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+
+// ============================================================
+// STRIPE EVENTS (idempotent webhook processing)
+// ============================================================
+
+export const stripeEvents = pgTable('stripe_events', {
+  id: serial('id').primaryKey(),
+  eventId: text('event_id').notNull().unique(), // Stripe event ID (evt_...)
+  eventType: text('event_type').notNull(), // e.g. checkout.session.completed
+  organizationId: integer('organization_id').references(() => organizations.id),
+  payload: json('payload'), // Full Stripe event JSON
+  processed: boolean('processed').default(false).notNull(),
+  error: text('error'), // Processing error message if any
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type StripeEvent = InferSelectModel<typeof stripeEvents>;
 
 /**
  * Audit Logs

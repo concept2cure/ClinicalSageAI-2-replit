@@ -14,7 +14,7 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
-import { users, organizations, userOrganizations } from '../../shared/schema';
+import { users, organizations, organizationUsers } from '../../shared/schema';
 import {
   validatePasswordPolicy,
   isAccountLocked,
@@ -594,24 +594,111 @@ router.get('/electronic-signature/:id/verify', async (req: Request, res: Respons
 /**
  * POST /select-organization
  * Step 4: Select organization (for multi-org users)
+ *
+ * SECURITY: The user must already be authenticated (valid JWT in Authorization
+ * header). The selected organizationId is validated against the user's actual
+ * organization memberships to prevent tenant impersonation.
  */
 router.post('/select-organization', async (req: Request, res: Response) => {
-  const { email, organizationId } = req.body;
+  try {
+    const { organizationId } = req.body;
 
-  const token = jwt.sign(
-    { userId: '1', email, organizationId: organizationId || '2', role: 'admin' },
-    config.jwt.secret,
-    { expiresIn: '24h' }
-  );
+    if (!organizationId) {
+      return res.status(400).json({
+        error: 'ORG_REQUIRED',
+        message: 'Organization ID is required',
+      });
+    }
 
-  res.json({
-    success: true,
-    token,
-    organization: {
-      id: organizationId || '2',
-      name: 'Concept2Cure',
-    },
-  });
+    // Verify the caller's identity from the existing JWT
+    const authHeader = req.headers.authorization;
+    const existingToken = authHeader?.replace('Bearer ', '');
+
+    if (!existingToken && !isDev) {
+      return res.status(401).json({
+        error: 'AUTH_REQUIRED',
+        message: 'Authentication required to select organization',
+      });
+    }
+
+    let userId: string;
+    let email: string;
+
+    if (existingToken) {
+      const decoded = jwt.verify(existingToken, config.jwt.secret) as any;
+      userId = decoded.userId;
+      email = decoded.email;
+    } else {
+      // Dev fallback (only reachable when isDev is true)
+      userId = '1';
+      email = 'developer@trialsage.ai';
+    }
+
+    // SECURITY: Validate that the user actually belongs to the requested organization.
+    // Without this check, any authenticated user could switch to any org.
+    if (!isDev) {
+      const membership = await db
+        .select({ organizationId: organizationUsers.organizationId })
+        .from(organizationUsers)
+        .where(
+          and(
+            eq(organizationUsers.userId, parseInt(userId)),
+            eq(organizationUsers.organizationId, parseInt(organizationId))
+          )
+        )
+        .limit(1);
+
+      if (!membership.length) {
+        console.warn(
+          `[SECURITY] select-organization: user ${userId} attempted to switch to ` +
+          `org ${organizationId} without membership`
+        );
+        return res.status(403).json({
+          error: 'ORG_ACCESS_DENIED',
+          message: 'You do not have access to this organization',
+        });
+      }
+    }
+
+    // Look up org details
+    const [org] = await db
+      .select({ id: organizations.id, name: organizations.name })
+      .from(organizations)
+      .where(eq(organizations.id, parseInt(organizationId)))
+      .limit(1);
+
+    const orgName = org?.name || 'Organization';
+
+    // Issue new JWT scoped to the selected organization
+    const token = jwt.sign(
+      { userId, email, organizationId: String(organizationId), role: 'admin' },
+      config.jwt.secret,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      token,
+      organization: {
+        id: String(organizationId),
+        name: orgName,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Enterprise Auth] select-organization error:', error);
+
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        error: 'TOKEN_EXPIRED',
+        message: 'Session expired. Please log in again.',
+      });
+    }
+
+    res.status(500).json({
+      error: 'INTERNAL_ERROR',
+      message: 'Failed to select organization',
+    });
+  }
 });
 
 /**
