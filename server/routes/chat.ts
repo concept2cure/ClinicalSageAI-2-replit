@@ -18,6 +18,7 @@ import {
   saveChatMessage as saveMessage,
 } from '../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
+import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { createHash } from 'crypto';
 
 const router = Router();
@@ -409,7 +410,9 @@ router.post('/send-message', async (req: Request, res: Response) => {
     }
 
     try {
-      const systemPrompt = (system_prompt || REGULATORY_SYSTEM_PROMPT) + evidenceBlock;
+      // Inject client/project intelligence so AnA reads SKILL/.MD context
+      const intelligencePrefix = await getIntelligencePrefix(numericOrgId ?? undefined, project_id);
+      const systemPrompt = intelligencePrefix + (system_prompt || REGULATORY_SYSTEM_PROMPT) + evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },

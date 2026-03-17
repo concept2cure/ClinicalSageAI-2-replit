@@ -7,6 +7,7 @@
 import OpenAI from 'openai';
 import { v4 as uuid } from 'uuid';
 import { pool } from '../../db';
+import { getIntelligencePrefix } from '../lumen-context-builder.js';
 
 // Initialize OpenAI with production settings
 const openai = new OpenAI({
@@ -131,15 +132,21 @@ export async function responsesJson<T>(args: {
   tools?: any[];
   fileSearch?: { max_results?: number };
   webSearch?: { enable?: boolean };
+  organizationId?: number;
+  projectId?: number | string;
 }): Promise<T> {
   const { system, user, jsonSchemaName, jsonSchema, tools = [], fileSearch } = args;
 
   try {
+    // Inject client/project intelligence so orchestrator reads SKILL/.MD context
+    const intelligencePrefix = await getIntelligencePrefix(args.organizationId, args.projectId);
+    const enrichedSystem = intelligencePrefix + system;
+
     // Use chat.completions with response_format for structured outputs
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
-        { role: 'system', content: system },
+        { role: 'system', content: enrichedSystem },
         { role: 'user', content: user },
       ],
       response_format: {

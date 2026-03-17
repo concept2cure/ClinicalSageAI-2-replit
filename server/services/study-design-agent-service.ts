@@ -7,6 +7,7 @@ import { academicKnowledgeService } from './academic-knowledge-service';
 import { semanticSearchService } from './semantic-search-service';
 import { RegulatoryIntelligenceService } from './regulatory-intelligence-service';
 import { academicDocumentProcessor } from './academic-document-processor';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 
 // Create a singleton instance of the regulatory intelligence service
 const regulatoryIntelligenceService = new RegulatoryIntelligenceService();
@@ -99,9 +100,11 @@ export class StudyDesignAgentService {
       // Create the conversation if it doesn't exist
       let conversation = memoryService.getConversation(conversationId);
       if (!conversation) {
+        // Inject client/project intelligence so study design agent reads SKILL/.MD context
+        const intelligencePrefix = await getIntelligencePrefix();
         conversationId = memoryService.createConversation(
           conversationId,
-          `You are TrialSage's Study Design Agent, a specialized clinical trial advisor with deep expertise in protocol design and optimization.`,
+          `${intelligencePrefix}You are TrialSage's Study Design Agent, a specialized clinical trial advisor with deep expertise in protocol design and optimization.`,
           {
             indication: queryData.indication,
             phase: queryData.phase,

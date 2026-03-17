@@ -8,6 +8,7 @@ const Ajv = require('ajv');
 
 // Import OpenAI
 import OpenAI from 'openai';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -1037,10 +1038,12 @@ export class eSTARPlusBuilder {
         statement about the device type and intended use.
       `;
       
+      // Inject client/project intelligence so eSTAR reads SKILL/.MD context
+      const intelligencePrefix = await getIntelligencePrefix();
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert in FDA regulatory submissions.' },
+          { role: 'system', content: intelligencePrefix + 'You are an expert in FDA regulatory submissions.' },
           { role: 'user', content: coverPrompt }
         ],
         max_tokens: 700
@@ -1266,10 +1269,12 @@ ${meta.manufacturer}
         Format the report in a professional, well-structured manner suitable for a regulatory context.
       `;
       
+      // Inject client/project intelligence so compliance report reads SKILL/.MD context
+      const intelligencePrefix = await getIntelligencePrefix();
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert FDA regulatory consultant specializing in 510(k) submissions.' },
+          { role: 'system', content: intelligencePrefix + 'You are an expert FDA regulatory consultant specializing in 510(k) submissions.' },
           { role: 'user', content: prompt }
         ],
         max_tokens: 1000

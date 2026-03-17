@@ -21,6 +21,7 @@
  */
 
 import { getGateway } from './ai-gateway/index.js';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 import { pool } from '../db';
 
 // AI Gateway instance (replaces direct OpenAI client)
@@ -728,7 +729,12 @@ async function generateAISuggestions(
   }
 
   try {
-    const systemPrompt = `You are a senior regulatory affairs expert with 20+ years of FDA experience.
+    // Inject client/project intelligence so the advisory reads SKILL/.MD context
+    const intelligencePrefix = await getIntelligencePrefix(
+      context.id ? parseInt(String(context.id), 10) : undefined
+    );
+
+    const systemPrompt = `${intelligencePrefix}You are a senior regulatory affairs expert with 20+ years of FDA experience.
 You specialize in ${context.submissionType.toUpperCase()} submissions for ${context.therapeuticArea}.
 Your role is to provide proactive, actionable guidance to prevent regulatory rejections.
 
