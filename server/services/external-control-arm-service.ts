@@ -672,7 +672,7 @@ export class ExternalControlArmService {
       // Without a propensity model, assess overlap via sample-size heterogeneity
       const sampleSizes = sourceArms.map(a => a.n ?? 0).filter(n => n > 0);
       const maxN = Math.max(...sampleSizes, 1);
-      const minN = Math.min(...sampleSizes, 0);
+      const minN = Math.min(...sampleSizes);
       const ratio = minN / maxN;
       overlapAssessment = {
         trimmedPercent: 0,

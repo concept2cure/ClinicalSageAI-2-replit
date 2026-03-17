@@ -211,41 +211,6 @@ export class StatisticalContinuumService {
     }
 
     // Use AI to generate analysis dataset specifications
-    const aiResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
-Generate specifications for ADSL (Subject Level), ADAE (Adverse Events), and ADTTE (Time to Event) datasets.
-For each dataset, provide:
-1. datasetName (e.g., "ADSL")
-2. datasetLabel (descriptive label)
-3. variables: array of objects with {name, label, type, derivationRule, coreVariable}
-4. derivationRules: key rules for complex variables
-5. analysisMethod: primary statistical method
-6. population: analysis population
-
-Return a JSON object with key "datasets" containing an array of 3 dataset specs.`,
-        },
-        {
-          role: 'user',
-          content: `Generate ADaM dataset specifications for this trial:
-Indication: ${protocol?.indication || 'Not specified'}
-Phase: ${protocol?.phase || 'Not specified'}
-Primary Endpoint: ${protocol?.primaryEndpoint || 'Not specified'}
-Secondary Endpoints: ${protocol?.secondaryEndpoints?.join(', ') || 'Not specified'}
-Sample Size: ${protocol?.sampleSize || 'Not specified'}
-Duration: ${protocol?.durationWeeks || 24} weeks
-
-SAP Summary:
-${sapContent.substring(0, 3000)}`,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-    });
-
     let datasetsPayload: {
       datasets: Array<{
         datasetName: string;
@@ -258,8 +223,44 @@ ${sapContent.substring(0, 3000)}`,
     };
 
     try {
+      const aiResponse = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
+Generate specifications for ADSL (Subject Level), ADAE (Adverse Events), and ADTTE (Time to Event) datasets.
+For each dataset, provide:
+1. datasetName (e.g., "ADSL")
+2. datasetLabel (descriptive label)
+3. variables: array of objects with {name, label, type, derivationRule, coreVariable}
+4. derivationRules: key rules for complex variables
+5. analysisMethod: primary statistical method
+6. population: analysis population
+
+Return a JSON object with key "datasets" containing an array of 3 dataset specs.`,
+          },
+          {
+            role: 'user',
+            content: `Generate ADaM dataset specifications for this trial:
+Indication: ${protocol?.indication || 'Not specified'}
+Phase: ${protocol?.phase || 'Not specified'}
+Primary Endpoint: ${protocol?.primaryEndpoint || 'Not specified'}
+Secondary Endpoints: ${protocol?.secondaryEndpoints?.join(', ') || 'Not specified'}
+Sample Size: ${protocol?.sampleSize || 'Not specified'}
+Duration: ${protocol?.durationWeeks || 24} weeks
+
+SAP Summary:
+${sapContent.substring(0, 3000)}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      });
+
       datasetsPayload = JSON.parse(aiResponse.choices[0]?.message?.content || '{"datasets":[]}');
-    } catch {
+    } catch (aiError) {
+      console.error('[StatisticalContinuum] OpenAI analysis spec generation failed, using fallback:', aiError);
       datasetsPayload = { datasets: [] };
     }
 
