@@ -15,6 +15,8 @@ import {
   Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
+import { ActionButton, GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -356,11 +358,27 @@ function SeverityLabel({ severity }: { severity: string }) {
 }
 
 function RegulatoryAlerts() {
+  const { generate, isGenerating } = useDeliverable();
   return (
     <motion.div {...fade} className="space-y-1">
-      <p className="text-sm text-zinc-400 mb-6">
-        What changed that affects your submission? Powered by Regulatory Delta Radar and Regulatory Intelligence Service.
-      </p>
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-sm text-zinc-400">
+          What changed that affects your submission? Powered by Regulatory Delta Radar and Regulatory Intelligence Service.
+        </p>
+        <ExportButton
+          label="Export Watch Report"
+          produces="Regulatory Watch Report (PDF)"
+          isLoading={isGenerating}
+          onClick={() => generate({
+            endpoint: '/api/concept2cure/reports/regulatory-watch',
+            method: 'POST',
+            body: {},
+            filename: 'Regulatory_Watch_Report.pdf',
+            format: 'pdf',
+            title: 'Regulatory Watch Report',
+          })}
+        />
+      </div>
       <div className="space-y-4">
         {alerts.map((alert) => (
           <div key={alert.id} className="bg-white rounded-lg border border-zinc-100 p-5">
@@ -380,10 +398,20 @@ function RegulatoryAlerts() {
             </div>
             <h3 className="text-sm font-medium text-zinc-900 mb-1">{alert.title}</h3>
             <p className="text-sm text-zinc-600 leading-relaxed mb-3">{alert.description}</p>
-            <button className="text-sm text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
-              View details
-              <ExternalLink className="w-3 h-3" />
-            </button>
+            <GenerateButton
+              label="Impact Assessment"
+              produces="Regulatory Impact Assessment (PDF)"
+              size="sm"
+              isLoading={isGenerating}
+              onClick={() => generate({
+                endpoint: '/api/concept2cure/reports/alert-impact',
+                method: 'POST',
+                body: { alertId: alert.id },
+                filename: `Impact_Assessment_Alert_${alert.id}.pdf`,
+                format: 'pdf',
+                title: 'Impact Assessment',
+              })}
+            />
           </div>
         ))}
       </div>
@@ -394,6 +422,7 @@ function RegulatoryAlerts() {
 function EvidenceHub() {
   const [query, setQuery] = useState('');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const { generate, isGenerating } = useDeliverable();
 
   const sources = ['all', 'PubMed', 'FDA', 'Internal'];
   const filtered = evidenceItems.filter(
@@ -437,6 +466,35 @@ function EvidenceHub() {
         </div>
       </div>
 
+      <div className="flex items-center gap-2">
+        <GenerateButton
+          label="Build Evidence Package"
+          produces="Evidence Dossier (DOCX)"
+          isLoading={isGenerating}
+          onClick={() => generate({
+            endpoint: '/api/concept2cure/reports/evidence-dossier',
+            method: 'POST',
+            body: {},
+            filename: 'Evidence_Dossier.docx',
+            format: 'docx',
+            title: 'Evidence Dossier',
+          })}
+        />
+        <GenerateButton
+          label="Literature Review"
+          produces="Systematic Literature Review (PDF)"
+          isLoading={isGenerating}
+          onClick={() => generate({
+            endpoint: '/api/concept2cure/reports/literature-review',
+            method: 'POST',
+            body: {},
+            filename: 'Literature_Review.pdf',
+            format: 'pdf',
+            title: 'Systematic Literature Review',
+          })}
+        />
+      </div>
+
       <div className="space-y-3">
         {filtered.map((item) => (
           <div key={item.id} className="bg-white rounded-lg border border-zinc-100 p-5">
@@ -466,6 +524,7 @@ function EvidenceHub() {
 
 function PrecedentFinder() {
   const [searchQuery, setSearchQuery] = useState('');
+  const { generate, isGenerating } = useDeliverable();
 
   const outcomeLabel = (o: string) => {
     if (o === 'approved') return 'Approved';
@@ -475,9 +534,39 @@ function PrecedentFinder() {
 
   return (
     <motion.div {...fade} className="space-y-6">
-      <p className="text-sm text-zinc-400">
-        What happened with similar products? Powered by Precedent Engine, Predicate Intelligence, and Knowledge Graph.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-zinc-400">
+          What happened with similar products? Powered by Precedent Engine, Predicate Intelligence, and Knowledge Graph.
+        </p>
+        <div className="flex items-center gap-2 shrink-0 ml-4">
+          <GenerateButton
+            label="Generate Comparison Table"
+            produces="Predicate Comparison Table (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/predicate-comparison',
+              method: 'POST',
+              body: {},
+              filename: 'Predicate_Comparison.docx',
+              format: 'docx',
+              title: 'Predicate Comparison Table',
+            })}
+          />
+          <ExportButton
+            label="Export Precedent Brief"
+            produces="Regulatory Precedent Brief (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/precedent-brief',
+              method: 'POST',
+              body: {},
+              filename: 'Precedent_Brief.pdf',
+              format: 'pdf',
+              title: 'Regulatory Precedent Brief',
+            })}
+          />
+        </div>
+      </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -529,12 +618,43 @@ function PrecedentFinder() {
 
 function PathwayAdvisor() {
   const [selectedAgency, setSelectedAgency] = useState('fda');
+  const { generate, isGenerating } = useDeliverable();
 
   return (
     <motion.div {...fade} className="space-y-6">
-      <p className="text-sm text-zinc-400">
-        What's the optimal regulatory strategy? Powered by Regulatory Pathway Intelligence — 30+ agencies, 65+ guidelines.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-zinc-400">
+          What's the optimal regulatory strategy? Powered by Regulatory Pathway Intelligence — 30+ agencies, 65+ guidelines.
+        </p>
+        <div className="flex items-center gap-2 shrink-0 ml-4">
+          <GenerateButton
+            label="Generate Strategy Document"
+            produces="Regulatory Strategy Document (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/regulatory-strategy',
+              method: 'POST',
+              body: {},
+              filename: 'Regulatory_Strategy.docx',
+              format: 'docx',
+              title: 'Regulatory Strategy Document',
+            })}
+          />
+          <GenerateButton
+            label="Draft Designation Request"
+            produces="Expedited Designation Request Letter (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/designation-request',
+              method: 'POST',
+              body: {},
+              filename: 'Expedited_Designation_Request.docx',
+              format: 'docx',
+              title: 'Expedited Designation Request',
+            })}
+          />
+        </div>
+      </div>
 
       <div className="flex items-center gap-2">
         {agencies.map((a) => (
@@ -605,12 +725,56 @@ function PathwayAdvisor() {
 
 function ForesightAI() {
   const pred = foresightPrediction;
+  const { generate, isGenerating } = useDeliverable();
 
   return (
     <motion.div {...fade} className="space-y-6">
-      <p className="text-sm text-zinc-400">
-        What will happen if...? Powered by ForesightAI Engine, Monte Carlo, Study Design Agent, and Endpoint Recommender.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-zinc-400">
+          What will happen if...? Powered by ForesightAI Engine, Monte Carlo, Study Design Agent, and Endpoint Recommender.
+        </p>
+        <div className="flex items-center gap-2 shrink-0 ml-4">
+          <GenerateButton
+            label="Generate Feasibility Report"
+            produces="Trial Feasibility Report (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/foresight/report',
+              method: 'POST',
+              body: {},
+              filename: 'Trial_Feasibility_Report.pdf',
+              format: 'pdf',
+              title: 'Trial Feasibility Report',
+            })}
+          />
+          <GenerateButton
+            label="Generate SAP Draft"
+            produces="Statistical Analysis Plan (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/sap-draft',
+              method: 'POST',
+              body: {},
+              filename: 'Statistical_Analysis_Plan.docx',
+              format: 'docx',
+              title: 'Statistical Analysis Plan',
+            })}
+          />
+          <ExportButton
+            label="Export Endpoint Analysis"
+            produces="Endpoint Recommendation Report (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/endpoint-analysis',
+              method: 'POST',
+              body: {},
+              filename: 'Endpoint_Recommendation.pdf',
+              format: 'pdf',
+              title: 'Endpoint Recommendation Report',
+            })}
+          />
+        </div>
+      </div>
 
       <div className="bg-white rounded-lg border border-zinc-100 p-5">
         <h3 className="text-sm font-medium text-zinc-900 mb-1">{pred.trialName}</h3>
@@ -698,11 +862,43 @@ function ForesightAI() {
 }
 
 function StrategicView() {
+  const { generate, isGenerating } = useDeliverable();
+
   return (
     <motion.div {...fade} className="space-y-6">
-      <p className="text-sm text-zinc-400">
-        Market intelligence, competitive landscape, and therapeutic area trends. Powered by Strategic Intelligence and Clinical Intelligence.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-zinc-400">
+          Market intelligence, competitive landscape, and therapeutic area trends. Powered by Strategic Intelligence and Clinical Intelligence.
+        </p>
+        <div className="flex items-center gap-2 shrink-0 ml-4">
+          <ExportButton
+            label="Export Intelligence Brief"
+            produces="Competitive Intelligence Brief (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/competitive-intelligence',
+              method: 'POST',
+              body: {},
+              filename: 'Competitive_Intelligence_Brief.pdf',
+              format: 'pdf',
+              title: 'Competitive Intelligence Brief',
+            })}
+          />
+          <GenerateButton
+            label="Generate Market Report"
+            produces="Market Access Report (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/market-access',
+              method: 'POST',
+              body: {},
+              filename: 'Market_Access_Report.pdf',
+              format: 'pdf',
+              title: 'Market Access Report',
+            })}
+          />
+        </div>
+      </div>
 
       {/* Therapeutic Area Trends */}
       <div>

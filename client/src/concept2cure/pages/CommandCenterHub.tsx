@@ -8,6 +8,8 @@
  */
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
+import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 import {
   Activity,
   AlertTriangle,
@@ -191,6 +193,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function DashboardView() {
+  const { generate, isGenerating } = useDeliverable();
   const metrics = [
     { label: 'Active Submissions', value: '4', icon: Package },
     { label: 'Overall Readiness', value: '76%', icon: Target },
@@ -200,6 +203,15 @@ function DashboardView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between">
+        <SectionLabel>Mission Control Overview</SectionLabel>
+        <div className="flex items-center gap-2">
+          <ExportButton label="Export Executive Summary" produces="Executive Dashboard Report (PDF)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/executive-dashboard', method: 'POST', body: {}, filename: 'Executive_Dashboard.pdf', format: 'pdf', title: 'Executive Dashboard' })} />
+          <GenerateButton label="Generate Risk Report" produces="Risk Escalation Report (PDF)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/risk-escalation', method: 'POST', body: {}, filename: 'Risk_Escalation_Report.pdf', format: 'pdf', title: 'Risk Escalation Report' })} />
+        </div>
+      </div>
+
       <div className="grid grid-cols-4 gap-4">
         {metrics.map((m) => (
           <Card key={m.label}>
@@ -266,12 +278,21 @@ function DashboardView() {
 }
 
 function SubmissionsView() {
+  const { generate, isGenerating } = useDeliverable();
   const [selected, setSelected] = useState(0);
   const sub = SUBMISSIONS[selected];
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
-      <SectionLabel>Submission Packages</SectionLabel>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between">
+        <SectionLabel>Submission Packages</SectionLabel>
+        <div className="flex items-center gap-2">
+          <GenerateButton label="Generate Submission Checklist" produces="Filing Checklist (DOCX)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/submission-checklist', method: 'POST', body: {}, filename: 'Submission_Checklist.docx', format: 'docx', title: 'Submission Checklist' })} />
+          <GenerateButton label="Generate Gap Closure Plan" produces="Gap Closure Action Plan (DOCX)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/gap-closure', method: 'POST', body: {}, filename: 'Gap_Closure_Plan.docx', format: 'docx', title: 'Gap Closure Plan' })} />
+          <RunButton label="Compile eCTD Package" produces="eCTD Submission Package (ZIP)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/ectd/compile', method: 'POST', body: {}, filename: 'eCTD_Package.zip', format: 'zip', title: 'eCTD Package' })} />
+        </div>
+      </div>
       <Card className="p-0 divide-y divide-zinc-50">
         {SUBMISSIONS.map((s, i) => (
           <button
@@ -339,13 +360,20 @@ function SubmissionsView() {
 }
 
 function WorkflowsView() {
+  const { generate, isGenerating } = useDeliverable();
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
       <div className="flex items-center justify-between">
         <SectionLabel>Task Board</SectionLabel>
-        <div className="flex items-center gap-2 text-xs text-zinc-400">
-          <Zap className="w-3 h-3" />
-          <span>Last automation sweep: 12 min ago · 3 actions taken</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
+            <Zap className="w-3 h-3" />
+            <span>Last automation sweep: 12 min ago · 3 actions taken</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ExportButton label="Export Status Report" produces="Workflow Status Report (PDF)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/workflow-status', method: 'POST', body: {}, filename: 'Workflow_Status_Report.pdf', format: 'pdf', title: 'Workflow Status Report' })} />
+            <RunButton label="Run Automation Sweep" produces="Automated task execution" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/automation/sweep', method: 'POST', body: {}, filename: 'sweep.json', format: 'json', title: 'Automation Sweep', saveOnly: true })} />
+          </div>
         </div>
       </div>
 
@@ -398,16 +426,20 @@ function WorkflowsView() {
 }
 
 function VaultView() {
+  const { generate, isGenerating } = useDeliverable();
   const [selected, setSelected] = useState<number | null>(null);
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
       <div className="flex items-center justify-between">
         <SectionLabel>Document Library</SectionLabel>
-        <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700">
-          <Upload className="w-3 h-3" />
-          Upload
-        </button>
+        <div className="flex items-center gap-2">
+          <GenerateButton label="Generate Version Comparison" produces="Document Version Comparison (HTML)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/version-diff', method: 'POST', body: {}, filename: 'Version_Comparison.html', format: 'html', title: 'Version Comparison' })} />
+          <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700">
+            <Upload className="w-3 h-3" />
+            Upload
+          </button>
+        </div>
       </div>
 
       <Card className="p-0">
@@ -471,12 +503,19 @@ function VaultView() {
 }
 
 function NegotiationsView() {
+  const { generate, isGenerating } = useDeliverable();
   const [selected, setSelected] = useState(0);
   const meeting = MEETINGS[selected];
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
-      <SectionLabel>FDA Meeting Timeline</SectionLabel>
+      <div className="flex items-center justify-between">
+        <SectionLabel>FDA Meeting Timeline</SectionLabel>
+        <div className="flex items-center gap-2">
+          <GenerateButton label="Generate Meeting Package" produces="FDA Meeting Request + Briefing Document (DOCX)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/meeting-package', method: 'POST', body: {}, filename: 'FDA_Meeting_Package.docx', format: 'docx', title: 'FDA Meeting Package' })} />
+          <ExportButton label="Export Commitments" produces="Commitment Tracker (XLSX)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/commitments-export', method: 'POST', body: {}, filename: 'FDA_Commitments_Tracker.xlsx', format: 'xlsx', title: 'FDA Commitments Tracker' })} />
+        </div>
+      </div>
       <Card className="p-0 divide-y divide-zinc-50">
         {MEETINGS.map((m, i) => (
           <button
@@ -541,6 +580,7 @@ function NegotiationsView() {
 }
 
 function TeamView() {
+  const { generate, isGenerating } = useDeliverable();
   const activities = [
     { time: '10 min ago', user: 'Dr. Patel', action: 'approved Module 2.5 Risk-Benefit Analysis' },
     { time: '25 min ago', user: 'S. Williams', action: 'uploaded revised Clinical Study Report v2.0' },
@@ -550,7 +590,13 @@ function TeamView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
-      <SectionLabel>Team Members</SectionLabel>
+      <div className="flex items-center justify-between">
+        <SectionLabel>Team Members</SectionLabel>
+        <div className="flex items-center gap-2">
+          <ExportButton label="Export Capacity Report" produces="Team Capacity Report (PDF)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/team-capacity', method: 'POST', body: {}, filename: 'Team_Capacity_Report.pdf', format: 'pdf', title: 'Team Capacity Report' })} />
+          <ExportButton label="Export Activity Log" produces="Activity Log (CSV)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/activity-log', method: 'POST', body: {}, filename: 'Activity_Log.csv', format: 'csv', title: 'Activity Log' })} />
+        </div>
+      </div>
       <Card className="p-0">
         <div className="grid grid-cols-[1fr_140px_80px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
           <span>Name</span><span>Role</span><span>Tasks</span><span>Availability</span>
@@ -614,11 +660,17 @@ function TeamView() {
 }
 
 function AnalyticsView() {
+  const { generate, isGenerating } = useDeliverable();
   const { cycleTime, quality, portfolio } = ANALYTICS_DATA;
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
-      <SectionLabel>Portfolio Overview</SectionLabel>
+      <div className="flex items-center justify-between">
+        <SectionLabel>Portfolio Overview</SectionLabel>
+        <div className="flex items-center gap-2">
+          <ExportButton label="Export Analytics Report" produces="Program Analytics Report (PDF)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/program-analytics', method: 'POST', body: {}, filename: 'Program_Analytics.pdf', format: 'pdf', title: 'Program Analytics' })} />
+        </div>
+      </div>
       <div className="grid grid-cols-5 gap-4">
         {[
           { label: 'Total Programs', value: portfolio.totalPrograms },

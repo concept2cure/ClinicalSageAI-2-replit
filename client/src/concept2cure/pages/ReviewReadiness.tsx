@@ -32,6 +32,8 @@ import {
   Filter,
   FileText,
 } from 'lucide-react';
+import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
+import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -285,16 +287,48 @@ function riskColor(score: number): string {
 // ---------------------------------------------------------------------------
 
 function QualityCenterView() {
+  const { generate, isGenerating } = useDeliverable();
   const totalIssues = MOCK_QC_SECTIONS.reduce((sum, s) => sum + s.issuesFound, 0);
   const critical = MOCK_QC_SECTIONS.filter((s) => s.status === 'fail').length;
 
   return (
     <div className="px-8 py-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-zinc-900">Quality Center</h2>
-        <p className="text-sm text-zinc-600 mt-1">
-          Does this pass quality checks? Section-by-section QC results across the submission.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-zinc-900">Quality Center</h2>
+          <p className="text-sm text-zinc-600 mt-1">
+            Does this pass quality checks? Section-by-section QC results across the submission.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <GenerateButton
+            label="Generate QC Report"
+            produces="Quality Assessment Report (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/quality-assessment',
+              method: 'POST',
+              body: { sections: 'all' },
+              filename: 'Quality_Assessment_Report.pdf',
+              format: 'pdf',
+              title: 'Quality Assessment Report',
+            })}
+          />
+          <RunButton
+            label="Fix Issues with AI"
+            produces="AI-corrected section drafts"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/ai/fix-quality-issues',
+              method: 'POST',
+              body: { sections: 'all' },
+              filename: 'fixes.json',
+              format: 'json',
+              title: 'AI Quality Fixes',
+              saveOnly: true,
+            })}
+          />
+        </div>
       </div>
 
       {/* Summary */}
@@ -352,16 +386,47 @@ function QualityCenterView() {
 // ---------------------------------------------------------------------------
 
 function ComplianceView() {
+  const { generate, isGenerating } = useDeliverable();
   const passed = MOCK_COMPLIANCE_RULES.filter((r) => r.status === 'passed').length;
   const warnings = MOCK_COMPLIANCE_RULES.filter((r) => r.status === 'warning').length;
 
   return (
     <div className="px-8 py-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-zinc-900">Compliance</h2>
-        <p className="text-sm text-zinc-600 mt-1">
-          Is this compliant? 21 CFR Part 11, multi-agency requirements, and guardrail results.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-zinc-900">Compliance</h2>
+          <p className="text-sm text-zinc-600 mt-1">
+            Is this compliant? 21 CFR Part 11, multi-agency requirements, and guardrail results.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <GenerateButton
+            label="Export Compliance Certificate"
+            produces="Part 11 Compliance Certificate (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/compliance-certificate',
+              method: 'POST',
+              body: { sections: 'all' },
+              filename: 'Compliance_Certificate.pdf',
+              format: 'pdf',
+              title: 'Part 11 Compliance Certificate',
+            })}
+          />
+          <ExportButton
+            label="Export Gap Analysis"
+            produces="Multi-Agency Gap Analysis (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/compliance-gaps',
+              method: 'POST',
+              body: { agencies: ['fda', 'ema', 'pmda'] },
+              filename: 'Multi_Agency_Gap_Analysis.docx',
+              format: 'docx',
+              title: 'Multi-Agency Gap Analysis',
+            })}
+          />
+        </div>
       </div>
 
       {/* Summary */}
@@ -458,6 +523,7 @@ function ComplianceView() {
 // ---------------------------------------------------------------------------
 
 function SnowGlobeView() {
+  const { generate, isGenerating } = useDeliverable();
   const [simulations, setSimulations] = useState(MOCK_SIMULATIONS);
   const avgRisk = Math.round(simulations.reduce((s, e) => s + e.riskScore, 0) / simulations.length);
 
@@ -471,11 +537,28 @@ function SnowGlobeView() {
 
   return (
     <div className="px-8 py-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-zinc-900">SnowGlobe</h2>
-        <p className="text-sm text-zinc-600 mt-1">
-          Stress-test your submission. Six simulation engines model agency, reviewer, and operational risks.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-zinc-900">SnowGlobe</h2>
+          <p className="text-sm text-zinc-600 mt-1">
+            Stress-test your submission. Six simulation engines model agency, reviewer, and operational risks.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <GenerateButton
+            label="Generate Full Report"
+            produces="SnowGlobe Simulation Report (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/snowglobe/report',
+              method: 'POST',
+              body: { engines: 'all' },
+              filename: 'SnowGlobe_Simulation_Report.pdf',
+              format: 'pdf',
+              title: 'SnowGlobe Simulation Report',
+            })}
+          />
+        </div>
       </div>
 
       {/* Aggregate Summary */}
@@ -537,6 +620,7 @@ function SnowGlobeView() {
 // ---------------------------------------------------------------------------
 
 function ReadinessScoreView() {
+  const { generate, isGenerating } = useDeliverable();
   const overallReadiness = 78;
   const approvalProbability = 72;
   const predictedReviewWeeks = 44;
@@ -544,11 +628,41 @@ function ReadinessScoreView() {
 
   return (
     <div className="px-8 py-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-zinc-900">Readiness Score</h2>
-        <p className="text-sm text-zinc-600 mt-1">
-          Are we ready to file? Comprehensive readiness assessment with approval probability modeling.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-zinc-900">Readiness Score</h2>
+          <p className="text-sm text-zinc-600 mt-1">
+            Are we ready to file? Comprehensive readiness assessment with approval probability modeling.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <GenerateButton
+            label="Generate Readiness Certificate"
+            produces="Submission Readiness Certificate (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/readiness-certificate',
+              method: 'POST',
+              body: { modules: 'all' },
+              filename: 'Submission_Readiness_Certificate.pdf',
+              format: 'pdf',
+              title: 'Submission Readiness Certificate',
+            })}
+          />
+          <GenerateButton
+            label="Generate Filing Decision Memo"
+            produces="Filing Decision Memo (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/filing-decision',
+              method: 'POST',
+              body: { modules: 'all' },
+              filename: 'Filing_Decision_Memo.docx',
+              format: 'docx',
+              title: 'Filing Decision Memo',
+            })}
+          />
+        </div>
       </div>
 
       {/* Main Score */}
@@ -648,13 +762,46 @@ function ReadinessScoreView() {
 // ---------------------------------------------------------------------------
 
 function EvidenceConfidenceView() {
+  const { generate, isGenerating } = useDeliverable();
+
   return (
     <div className="px-8 py-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-zinc-900">Evidence Confidence</h2>
-        <p className="text-sm text-zinc-600 mt-1">
-          Claim-to-citation coverage. Are key regulatory claims backed by sufficient, traceable evidence?
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-zinc-900">Evidence Confidence</h2>
+          <p className="text-sm text-zinc-600 mt-1">
+            Claim-to-citation coverage. Are key regulatory claims backed by sufficient, traceable evidence?
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <GenerateButton
+            label="Export Evidence Gap Report"
+            produces="Evidence Gap Report (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/evidence-gaps',
+              method: 'POST',
+              body: { sections: 'all' },
+              filename: 'Evidence_Gap_Report.docx',
+              format: 'docx',
+              title: 'Evidence Gap Report',
+            })}
+          />
+          <RunButton
+            label="Auto-fill Citations"
+            produces="AI-recommended citations for gaps"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/ai/auto-cite',
+              method: 'POST',
+              body: { sections: 'all' },
+              filename: 'auto_citations.json',
+              format: 'json',
+              title: 'AI Auto-Citations',
+              saveOnly: true,
+            })}
+          />
+        </div>
       </div>
 
       {/* Powered By */}
@@ -719,6 +866,7 @@ function EvidenceConfidenceView() {
 // ---------------------------------------------------------------------------
 
 function AuditTrailView() {
+  const { generate, isGenerating } = useDeliverable();
   const [filterUser, setFilterUser] = useState('');
   const [filterAction, setFilterAction] = useState('');
 
@@ -735,11 +883,28 @@ function AuditTrailView() {
 
   return (
     <div className="px-8 py-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-zinc-900">Audit Trail</h2>
-        <p className="text-sm text-zinc-600 mt-1">
-          Full compliance history. Immutable, chronological record of all system actions.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-zinc-900">Audit Trail</h2>
+          <p className="text-sm text-zinc-600 mt-1">
+            Full compliance history. Immutable, chronological record of all system actions.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ExportButton
+            label="Export Audit Trail"
+            produces="Part 11 Audit Record (CSV)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/audit-trail',
+              method: 'POST',
+              body: { filters: { user: filterUser || 'all', action: filterAction || 'all' } },
+              filename: 'Part_11_Audit_Record.csv',
+              format: 'csv',
+              title: 'Part 11 Audit Record',
+            })}
+          />
+        </div>
       </div>
 
       {/* Powered By */}
@@ -822,6 +987,7 @@ function AuditTrailView() {
 // ---------------------------------------------------------------------------
 
 function TraceabilityView() {
+  const { generate, isGenerating } = useDeliverable();
   const traced = MOCK_TRACEABILITY.filter((c) => c.traced).length;
   const total = MOCK_TRACEABILITY.length;
   const coverage = Math.round((traced / total) * 100);
@@ -829,11 +995,42 @@ function TraceabilityView() {
 
   return (
     <div className="px-8 py-8 space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-zinc-900">Traceability</h2>
-        <p className="text-sm text-zinc-600 mt-1">
-          Is every claim backed by evidence? Full traceability matrix from requirements to claims to evidence.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-zinc-900">Traceability</h2>
+          <p className="text-sm text-zinc-600 mt-1">
+            Is every claim backed by evidence? Full traceability matrix from requirements to claims to evidence.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ExportButton
+            label="Export RTM"
+            produces="Requirements Traceability Matrix (XLSX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/traceability-matrix',
+              method: 'POST',
+              body: { claims: 'all' },
+              filename: 'Requirements_Traceability_Matrix.xlsx',
+              format: 'xlsx',
+              title: 'Requirements Traceability Matrix',
+            })}
+          />
+          <RunButton
+            label="Resolve Orphaned Claims"
+            produces="AI evidence recommendations for orphaned claims"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/ai/resolve-orphans',
+              method: 'POST',
+              body: { claims: orphaned.map((c) => c.id) },
+              filename: 'orphan_resolutions.json',
+              format: 'json',
+              title: 'AI Orphan Resolution',
+              saveOnly: true,
+            })}
+          />
+        </div>
       </div>
 
       {/* Summary */}
