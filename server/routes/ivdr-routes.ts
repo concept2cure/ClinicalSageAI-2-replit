@@ -257,7 +257,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
+        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
         [orgId]
       );
       return res.json({ classifications: result.rows });
@@ -275,7 +275,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       const { id } = req.params;
       const orgId = getServerOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM ivdr_classifications WHERE id = $1 AND organization_id = $2`,
+        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE id = $1 AND organization_id = $2`,
         [id, orgId]
       );
       if (result.rows.length === 0) {

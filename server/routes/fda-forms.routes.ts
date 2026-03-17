@@ -661,7 +661,8 @@ async function fetchProjectData(projectId: number) {
 
     // Fetch initial data forms using SQL
     const initialForms = await db.execute(sql`
-      SELECT * FROM fda_510k_initial_data_forms 
+      SELECT id, project_id, form_type, form_data
+      FROM fda_510k_initial_data_forms
       WHERE project_id = ${projectId}
     `);
 

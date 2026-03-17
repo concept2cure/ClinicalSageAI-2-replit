@@ -48,6 +48,21 @@ export default defineConfig({
           if (id.includes('/d3') || id.includes('/recharts')) {
             return 'vendor-charts';
           }
+
+          // Radix UI components — split from main bundle
+          if (id.includes('/@radix-ui/')) {
+            return 'vendor-ui';
+          }
+
+          // Animation / motion libraries
+          if (id.includes('/framer-motion')) {
+            return 'vendor-motion';
+          }
+
+          // PDF generation libraries (heavy, used on-demand)
+          if (id.includes('/pdfmake') || id.includes('/pdf-lib') || id.includes('jspdf')) {
+            return 'vendor-pdf';
+          }
         },
       },
     },

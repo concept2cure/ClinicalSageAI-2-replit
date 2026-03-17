@@ -401,7 +401,10 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `
-      SELECT * FROM electronic_signatures
+      SELECT id, document_id, document_version, signer_id, signer_name, signer_title,
+             signer_organization, meaning, signature_hash, password_verified, mfa_verified,
+             timestamp, ip_address, user_agent
+      FROM electronic_signatures
       WHERE document_id = $1
       ORDER BY timestamp DESC
     `,
@@ -461,8 +464,8 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response) => {
 
   try {
     const query = entityType
-      ? `SELECT * FROM audit_trail WHERE entity_id = $1 AND entity_type = $2 ORDER BY created_at DESC LIMIT 500`
-      : `SELECT * FROM audit_trail WHERE entity_id = $1 ORDER BY created_at DESC LIMIT 500`;
+      ? `SELECT id, entity_type, entity_id, action, user_id, user_name, user_role, previous_value, new_value, change_reason, created_at, ip_address, session_id, record_hash FROM audit_trail WHERE entity_id = $1 AND entity_type = $2 ORDER BY created_at DESC LIMIT 500`
+      : `SELECT id, entity_type, entity_id, action, user_id, user_name, user_role, previous_value, new_value, change_reason, created_at, ip_address, session_id, record_hash FROM audit_trail WHERE entity_id = $1 ORDER BY created_at DESC LIMIT 500`;
 
     const params = entityType ? [entityId, entityType] : [entityId];
     const result = await pool.query(query, params);

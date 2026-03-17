@@ -31,7 +31,11 @@ router.get('/notifications', async (req: Request, res: Response) => {
   if (tableExists && userId) {
     const where = filter === 'unread' ? 'WHERE user_id=$1 AND read=false' : 'WHERE user_id=$1';
     const rows = await safeQuery(
-      `SELECT * FROM notifications ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${(page-1)*limit}`,
+      `SELECT id, notification_id, organization_id, recipient_id, type, category, priority,
+              title, message, icon, action_url, activity_id,
+              is_read, read_at, is_dismissed, dismissed_at,
+              email_sent, email_sent_at, metadata, created_at
+       FROM notifications ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${(page-1)*limit}`,
       [userId]
     );
     const counts = await safeQuery(

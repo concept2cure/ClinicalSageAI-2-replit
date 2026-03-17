@@ -131,21 +131,32 @@ export async function closeRedisRateLimiter(): Promise<void> {
 // IN-MEMORY FALLBACK
 // ─────────────────────────────────────────────────────────────────────────────
 
+const MEMORY_STORE_MAX_SIZE = 10_000;
 const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
 /**
  * Clean up expired entries from memory store periodically.
+ * Interval is unref'd so it doesn't prevent process exit.
+ * Also enforces a hard cap to prevent unbounded growth when Redis is down.
  */
-setInterval(() => {
+const memoryStoreCleanup = setInterval(() => {
   const now = Date.now();
-  const keys = Array.from(memoryStore.keys());
-  for (const key of keys) {
-    const entry = memoryStore.get(key);
-    if (entry && entry.resetAt < now) {
+  for (const [key, entry] of memoryStore) {
+    if (entry.resetAt < now) {
       memoryStore.delete(key);
     }
   }
-}, 60000); // Clean every minute
+  // Hard cap: if still over limit after expiry cleanup, evict oldest entries
+  if (memoryStore.size > MEMORY_STORE_MAX_SIZE) {
+    const excess = memoryStore.size - MEMORY_STORE_MAX_SIZE;
+    const iter = memoryStore.keys();
+    for (let i = 0; i < excess; i++) {
+      const key = iter.next().value;
+      if (key) memoryStore.delete(key);
+    }
+  }
+}, 60000);
+memoryStoreCleanup.unref();
 
 /**
  * Check rate limit using in-memory store (fallback).

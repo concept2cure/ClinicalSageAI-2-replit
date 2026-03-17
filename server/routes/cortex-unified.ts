@@ -786,7 +786,7 @@ router.get('/threads', async (req: Request, res: Response) => {
 router.get('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const threadResult = await pool.query('SELECT * FROM chat_threads WHERE id = $1', [threadId]);
+    const threadResult = await pool.query('SELECT id, title, model, created_at, updated_at, user_id, metadata FROM chat_threads WHERE id = $1', [threadId]);
     if (!threadResult.rows.length) {
       return res.status(404).json({ success: false, error: 'Thread not found' });
     }

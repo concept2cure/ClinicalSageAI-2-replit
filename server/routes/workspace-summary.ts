@@ -134,7 +134,7 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
 
     // ── 10. Most recent project (for "continue where you left off") ─────────
     const lastProjectRes = await sq(
-      `SELECT * FROM (
+      `SELECT id, name, source, submission_type, updated_at FROM (
          SELECT id, name, 'ind' AS source, submission_type, updated_at FROM ind_projects
          UNION ALL
          SELECT id, title AS name, 'cer' AS source, 'CER' AS submission_type, updated_at FROM cer_projects

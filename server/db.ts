@@ -29,12 +29,15 @@ try {
   // Check if database URL is available
   if (databaseUrl) {
     logger.info('Initializing PostgreSQL connection pool');
+    const isProduction = process.env.NODE_ENV === 'production';
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
-      max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-      connectionTimeoutMillis: 5000, // How long to wait for a connection to become available
+      max: isProduction ? 40 : 20, // Scale pool for production concurrency
+      idleTimeoutMillis: 15000, // Release idle connections faster (was 30s)
+      connectionTimeoutMillis: 5000,
+      statement_timeout: 30000, // Kill queries running longer than 30s
+      idle_in_transaction_session_timeout: 60000, // Kill idle-in-transaction after 60s
     });
 
     // Test connection with retry mechanism
@@ -282,8 +285,10 @@ export async function query(text: string, params: any[] = []): Promise<any> {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
 
-    // Log slow queries (>100ms)
-    if (duration > 100) {
+    // Log slow queries (configurable, default 250ms prod / 100ms dev)
+    const slowThreshold = parseInt(process.env.SLOW_QUERY_THRESHOLD_MS || '', 10)
+      || (process.env.NODE_ENV === 'production' ? 250 : 100);
+    if (duration > slowThreshold) {
       logger.warn('Slow query detected', {
         duration,
         query: text,
