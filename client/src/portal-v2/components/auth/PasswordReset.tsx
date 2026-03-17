@@ -697,23 +697,29 @@ export const PasswordResetFlow: React.FC<{
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise(r => setTimeout(r, 1000));
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.email }),
+      });
 
-      // Simulate API response
-      const requiresMfa = false; // Set based on account settings
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error?.message || 'Failed to send reset email');
+      }
 
       setState(prev => ({
         ...prev,
         step: 'sent',
         isLoading: false,
-        requiresMfa,
+        requiresMfa: false,
       }));
-    } catch (error) {
+    } catch (error: any) {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: 'Failed to send reset email. Please try again.',
+        error: error.message || 'Failed to send reset email. Please try again.',
       }));
     }
   }, [state.email]);
@@ -746,19 +752,31 @@ export const PasswordResetFlow: React.FC<{
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise(r => setTimeout(r, 1200));
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: state.token,
+          newPassword: state.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error?.message || 'Failed to reset password');
+      }
 
       setState(prev => ({
         ...prev,
         step: 'complete',
         isLoading: false,
       }));
-    } catch (error) {
+    } catch (error: any) {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: 'Failed to reset password. The link may have expired.',
+        error: error.message || 'Failed to reset password. The link may have expired.',
       }));
     }
   }, [state.newPassword, state.token]);
@@ -766,9 +784,19 @@ export const PasswordResetFlow: React.FC<{
   // Handle resend
   const handleResend = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true }));
-    await new Promise(r => setTimeout(r, 1000));
+
+    try {
+      await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.email }),
+      });
+    } catch {
+      // Silently fail — user can try again
+    }
+
     setState(prev => ({ ...prev, isLoading: false }));
-  }, []);
+  }, [state.email]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
@@ -870,4 +898,28 @@ export const PasswordResetFlow: React.FC<{
   );
 };
 
-export default PasswordResetFlow;
+/**
+ * Default export reads the ?token= query parameter from the URL so that
+ * clicking the email link lands directly on the new-password step.
+ */
+const PasswordResetPage: React.FC = () => {
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get('token') || undefined;
+
+  return (
+    <PasswordResetFlow
+      resetToken={tokenFromUrl}
+      onComplete={() => {
+        window.location.href = '/portal/login';
+      }}
+      onBack={() => {
+        window.location.href = '/portal/login';
+      }}
+      onContactSupport={() => {
+        window.location.href = 'mailto:support@concept2cure.pro';
+      }}
+    />
+  );
+};
+
+export default PasswordResetPage;

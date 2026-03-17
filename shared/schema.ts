@@ -2402,6 +2402,9 @@ export const users = pgTable('users', {
   passwordChangedAt: timestamp('password_changed_at'),
   passwordHistory: json('password_history'), // array of previous password hashes
   mustChangePassword: boolean('must_change_password').default(false),
+  // Password reset fields
+  resetToken: text('reset_token'),
+  resetTokenExpiresAt: timestamp('reset_token_expires_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

@@ -10,6 +10,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
@@ -17,11 +18,8 @@ import {
   users,
   organizations,
   organizationUsers,
-  authRefreshTokens,
-  roles,
-  userRoles,
-  permissions,
 } from '../../shared/schema';
+import { sendPasswordResetEmail } from '../services/emailService';
 
 import { config } from '../config/environment';
 
@@ -664,5 +662,174 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
     error: { code: 'MFA_NOT_IMPLEMENTED', message: 'MFA not implemented in this version' },
   });
 });
+
+// ---------------------------------------------------------------------------
+// Password Reset Flow
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/auth/forgot-password
+ * Also mounted at /api/auth/password/reset-request for v2 client compat
+ *
+ * Generates a reset token, stores it on the user row, and sends an email.
+ */
+async function handleForgotPassword(req: Request, res: Response) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Email is required' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    // Always return the same response to prevent email enumeration
+    const successResponse = {
+      success: true,
+      message: 'If the email exists, a password reset link will be sent',
+    };
+
+    const user = await db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (!user.length) {
+      // Don't reveal whether the email exists
+      return res.json(successResponse);
+    }
+
+    // Generate secure reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Store hashed token on the user row
+    await db
+      .update(users)
+      .set({
+        resetToken: resetTokenHash,
+        resetTokenExpiresAt: expiresAt,
+      })
+      .where(eq(users.id, user[0].id));
+
+    // Build the reset URL (frontend route)
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const resetUrl = `${baseUrl}/concept2cure/password-reset?token=${resetToken}`;
+
+    // Send the email (or log in dev)
+    await sendPasswordResetEmail(user[0].email, resetToken, resetUrl);
+
+    return res.json(successResponse);
+  } catch (error: any) {
+    console.error('[auth] Forgot password error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Password reset request failed' },
+    });
+  }
+}
+
+/**
+ * POST /api/auth/reset-password
+ * Also mounted at /api/auth/password/reset-confirm for v2 client compat
+ *
+ * Validates the reset token and updates the user's password.
+ */
+async function handleResetPassword(req: Request, res: Response) {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Reset token and new password are required' },
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Password must be at least 8 characters' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    // Hash the incoming token to compare against stored hash
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await db
+      .select({
+        id: users.id,
+        resetToken: users.resetToken,
+        resetTokenExpiresAt: users.resetTokenExpiresAt,
+      })
+      .from(users)
+      .where(eq(users.resetToken, tokenHash))
+      .limit(1);
+
+    if (!user.length) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
+      });
+    }
+
+    const userData = user[0];
+
+    // Check expiry
+    if (!userData.resetTokenExpiresAt || new Date() > userData.resetTokenExpiresAt) {
+      // Clear the expired token
+      await db
+        .update(users)
+        .set({ resetToken: null, resetTokenExpiresAt: null })
+        .where(eq(users.id, userData.id));
+
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Reset token has expired. Please request a new one.' },
+      });
+    }
+
+    // Hash new password and clear reset token
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await db
+      .update(users)
+      .set({
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+        passwordChangedAt: new Date(),
+        mustChangePassword: false,
+      })
+      .where(eq(users.id, userData.id));
+
+    console.log(`[auth] Password reset completed for user ${userData.id}`);
+
+    return res.json({
+      success: true,
+      message: 'Password reset successfully',
+    });
+  } catch (error: any) {
+    console.error('[auth] Reset password error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Password reset failed' },
+    });
+  }
+}
+
+// Register both legacy and v2 paths
+router.post('/forgot-password', handleForgotPassword);
+router.post('/password/reset-request', handleForgotPassword);
+
+router.post('/reset-password', handleResetPassword);
+router.post('/password/reset-confirm', handleResetPassword);
 
 export default router;
