@@ -125,6 +125,11 @@ const EnablementCenter = lazy(() =>
 // Dr. Sage Global Layer — persistent help/guide/copilot presence
 import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
+// First-run onboarding experience
+const FirstRunExperience = lazy(() =>
+  import('./components/enablement/FirstRunExperience')
+);
+
 // Snow Globe — Cross-platform prediction & intelligence
 const SnowGlobeHome = lazy(() =>
   import('./pages/SnowGlobe/SnowGlobeHome')
@@ -557,6 +562,11 @@ export const ZenApp: React.FC = () => {
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
+  const [showFirstRun, setShowFirstRun] = useState(() => {
+    try {
+      return !localStorage.getItem('concept2cure_first_run_complete');
+    } catch { return false; }
+  });
 
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
@@ -2907,6 +2917,30 @@ export const ZenApp: React.FC = () => {
         }}
         onSave={handleEditProject}
       />
+
+      {/* First-run onboarding experience */}
+      {showFirstRun && (
+        <Suspense fallback={null}>
+          <FirstRunExperience
+            onComplete={(selectedRole) => {
+              setShowFirstRun(false);
+              try { localStorage.setItem('concept2cure_first_run_complete', 'true'); } catch {}
+              if (selectedRole) {
+                try {
+                  const profile = JSON.parse(localStorage.getItem('concept2cure_user_profile') || '{}');
+                  profile.role = selectedRole;
+                  localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+                  setUserProfile(profile);
+                } catch {}
+              }
+            }}
+            onSkip={() => {
+              setShowFirstRun(false);
+              try { localStorage.setItem('concept2cure_first_run_complete', 'true'); } catch {}
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

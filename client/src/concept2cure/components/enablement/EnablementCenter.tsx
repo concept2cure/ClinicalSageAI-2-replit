@@ -57,6 +57,10 @@ import {
   WORKFLOW_SCENARIOS,
   COMING_SOON_FEATURES,
 } from './enablement-data';
+import { DualAITheater, THEATER_SCENARIOS } from './DualAITheater';
+import { BeforeAfterSlider, COMPARISON_PRESETS } from './BeforeAfterSlider';
+import { CapabilityConstellation } from './CapabilityConstellation';
+import { MissionBrowser } from './MicroMissions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1677,6 +1681,59 @@ function AiInActionView() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Live Dual-AI Theater ── */}
+      <div className="mt-16 mb-12">
+        <SectionHeader
+          icon={Play}
+          title="Watch Them Work — Live"
+          subtitle="See Dr. Sage and AnA 1.0 collaborate in real time with visible reasoning"
+        />
+        <Card className="bg-slate-900/80 border-slate-700 overflow-hidden">
+          <CardContent className="p-0">
+            <DualAITheater
+              scenario={THEATER_SCENARIOS['evidence-review']}
+              autoPlay
+              speed="normal"
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── Before / After Comparison ── */}
+      <div className="mb-12">
+        <SectionHeader
+          icon={Eye}
+          title="See the Difference"
+          subtitle="Drag the slider to compare legacy workflows with Concept2Cure"
+        />
+        <BeforeAfterSlider />
+      </div>
+
+      {/* ── Capability Constellation ── */}
+      <div className="mb-12">
+        <SectionHeader
+          icon={Globe}
+          title="Platform Capability Map"
+          subtitle="Explore the full constellation of interconnected capabilities"
+        />
+        <div className="rounded-2xl overflow-hidden border border-slate-700" style={{ height: 500 }}>
+          <CapabilityConstellation interactive />
+        </div>
+      </div>
+
+      {/* ── Quick-Win Micro-Missions ── */}
+      <div className="mb-12">
+        <SectionHeader
+          icon={Rocket}
+          title="Try It Now — 60-Second Missions"
+          subtitle="Hands-on challenges to experience the platform in action"
+        />
+        <MissionBrowser
+          onStartMission={() => {}}
+          userRole="regulatory-writer"
+        />
+      </div>
     </div>
   );
 }

@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { DrSageGreeting, QuickAction, getGreetingMessage } from "./DrSagePersonality";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -962,6 +963,18 @@ export function DrSagePanel({
               >
                 <X className="h-4 w-4" />
               </Button>
+            </div>
+
+            {/* Contextual greeting */}
+            <div className="px-4 pt-2 pb-1 shrink-0">
+              <DrSageGreeting
+                currentContext={{
+                  screenName: contextProfile?.screenName,
+                  productType: contextProfile?.productType,
+                  projectName: contextProfile?.activeProject,
+                }}
+                className="text-xs"
+              />
             </div>
 
             {/* Tab navigation */}
