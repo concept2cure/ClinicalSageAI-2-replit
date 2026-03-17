@@ -87,14 +87,8 @@ router.get('/continuum/threads', authMiddleware, async (req: Request, res: Respo
     const orgId = resolveOrganizationId(req);
     const { status, phase, limit, offset } = req.query;
 
-    const result = {
-      threads: [],
-      total: 0,
-      organizationId: orgId,
-      filters: { status, phase, limit: Number(limit) || 50, offset: Number(offset) || 0 },
-    };
-
-    res.json({ success: true, data: result });
+    const threads = await statisticalContinuumService.listThreads(orgId);
+    res.json({ success: true, data: threads });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -109,13 +103,10 @@ router.get('/continuum/:threadId', authMiddleware, async (req: Request, res: Res
     const orgId = resolveOrganizationId(req);
     const threadId = Number(req.params.threadId);
 
-    const result = {
-      threadId,
-      organizationId: orgId,
-      status: 'active',
-      message: `Thread ${threadId} details`,
-    };
-
+    const result = await statisticalContinuumService.getThread(threadId, orgId);
+    if (!result) {
+      return res.status(404).json({ success: false, error: 'Thread not found' });
+    }
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -133,13 +124,7 @@ router.put('/continuum/:threadId/sap', authMiddleware, async (req: Request, res:
     const threadId = Number(req.params.threadId);
     const { sapContent, sections } = req.body;
 
-    const result = {
-      threadId,
-      sapUpdated: true,
-      updatedBy: userId,
-      updatedAt: new Date().toISOString(),
-    };
-
+    const result = await statisticalContinuumService.generateSAP(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -157,13 +142,7 @@ router.put('/continuum/:threadId/analysis-specs', authMiddleware, async (req: Re
     const threadId = Number(req.params.threadId);
     const { analysisSpecs } = req.body;
 
-    const result = {
-      threadId,
-      analysisSpecsUpdated: true,
-      updatedBy: userId,
-      updatedAt: new Date().toISOString(),
-    };
-
+    const result = await statisticalContinuumService.generateAnalysisSpecs(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -181,13 +160,7 @@ router.put('/continuum/:threadId/tlf-shells', authMiddleware, async (req: Reques
     const threadId = Number(req.params.threadId);
     const { tlfShells } = req.body;
 
-    const result = {
-      threadId,
-      tlfShellsUpdated: true,
-      updatedBy: userId,
-      updatedAt: new Date().toISOString(),
-    };
-
+    const result = await statisticalContinuumService.generateTLFShells(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -205,13 +178,7 @@ router.post('/continuum/:threadId/results', authMiddleware, async (req: Request,
     const threadId = Number(req.params.threadId);
     const { results, analysisOutputs } = req.body;
 
-    const result = {
-      threadId,
-      resultsSubmitted: true,
-      submittedBy: userId,
-      submittedAt: new Date().toISOString(),
-    };
-
+    const result = await statisticalContinuumService.ingestResults(threadId, req.body, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -227,10 +194,8 @@ router.get('/continuum/:threadId/csr-sections', authMiddleware, async (req: Requ
     const orgId = resolveOrganizationId(req);
     const threadId = Number(req.params.threadId);
 
-    const result = {
-      threadId,
-      csrSections: [],
-      generatedAt: new Date().toISOString(),
+    const result = await statisticalContinuumService.generateCSRSections(threadId, orgId);
+    res.json({ success: true, data: result });
     };
 
     res.json({ success: true, data: result });
@@ -253,14 +218,10 @@ router.post('/design-optimizer/recommend', authMiddleware, async (req: Request, 
     const userId = resolveUserId(req);
     const { indication, phase, endpoints, constraints, regulatoryAgencies } = req.body;
 
-    const result = {
-      recommendations: [],
-      indication,
-      phase,
-      organizationId: orgId,
-      generatedAt: new Date().toISOString(),
-    };
-
+    const result = await regulatoryOutcomeOptimizerService.recommendDesign(
+      { indication, phase, endpoints, constraints },
+      orgId
+    );
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -277,12 +238,7 @@ router.get('/design-optimizer/regulatory-precedents/:indication', authMiddleware
     const indication = req.params.indication;
     const { agency, phase, year } = req.query;
 
-    const result = {
-      indication,
-      precedents: [],
-      filters: { agency, phase, year },
-    };
-
+    const result = await regulatoryOutcomeOptimizerService.getRegulatoryPrecedents(indication, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -298,13 +254,7 @@ router.post('/design-optimizer/sensitivity', authMiddleware, async (req: Request
     const orgId = resolveOrganizationId(req);
     const { designId, parameters, ranges } = req.body;
 
-    const result = {
-      designId,
-      sensitivityResults: [],
-      organizationId: orgId,
-      computedAt: new Date().toISOString(),
-    };
-
+    const result = await regulatoryOutcomeOptimizerService.runSensitivityAnalysis(req.body, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -325,19 +275,15 @@ router.post('/estimand/define', authMiddleware, async (req: Request, res: Respon
     const userId = resolveUserId(req);
     const { population, treatment, endpoint, intercurrentEvents, summaryMeasure, threadId } = req.body;
 
-    const result = {
-      estimandId: Date.now(),
-      population,
-      treatment,
-      endpoint,
-      intercurrentEvents,
-      summaryMeasure,
+    const result = await estimandEngineService.defineEstimand({
       threadId,
-      organizationId: orgId,
-      createdBy: userId,
-      createdAt: new Date().toISOString(),
-    };
-
+      endpointName: endpoint,
+      population,
+      variable: treatment || endpoint,
+      summaryMeasure: summaryMeasure || 'difference_in_means',
+      intercurrentEvents: intercurrentEvents || [],
+      strategy: req.body.strategy || 'treatment_policy',
+    }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -354,12 +300,7 @@ router.post('/estimand/:estimandId/methods', authMiddleware, async (req: Request
     const estimandId = Number(req.params.estimandId);
     const { constraints, preferences } = req.body;
 
-    const result = {
-      estimandId,
-      recommendedMethods: [],
-      organizationId: orgId,
-    };
-
+    const result = await estimandEngineService.recommendMethods(estimandId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -376,21 +317,12 @@ router.post('/multiplicity/design', authMiddleware, async (req: Request, res: Re
     const userId = resolveUserId(req);
     const { hypotheses, familyStructure, method, alpha, weights } = req.body;
 
-    const result = {
-      multiplicityDesign: {
-        hypotheses,
-        familyStructure,
-        method,
-        alpha: alpha ?? 0.025,
-        weights,
-        adjustedThresholds: [],
-        graphicalProcedure: null,
-      },
-      organizationId: orgId,
-      createdBy: userId,
-      createdAt: new Date().toISOString(),
-    };
-
+    const result = await estimandEngineService.designMultiplicityStrategy({
+      threadId: req.body.threadId,
+      hypotheses: hypotheses || [],
+      overallAlpha: alpha ?? 0.025,
+      approach: method || 'graphical',
+    }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -407,12 +339,8 @@ router.get('/estimand/regulatory-examples/:indication', authMiddleware, async (r
     const indication = req.params.indication;
     const { agency, phase } = req.query;
 
-    const result = {
-      indication,
-      examples: [],
-      filters: { agency, phase },
-    };
-
+    const strategy = req.query.strategy as string | undefined;
+    const result = await estimandEngineService.getRegulatoryExamples(indication, strategy, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -429,17 +357,7 @@ router.post('/estimand/:estimandId/validate', authMiddleware, async (req: Reques
     const estimandId = Number(req.params.estimandId);
     const { regulatoryFramework } = req.body;
 
-    const result = {
-      estimandId,
-      validationResults: {
-        isValid: true,
-        warnings: [],
-        recommendations: [],
-        complianceScore: 0,
-      },
-      organizationId: orgId,
-    };
-
+    const result = await estimandEngineService.validateEstimand(estimandId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -460,18 +378,9 @@ router.post('/sap/create', authMiddleware, async (req: Request, res: Response) =
     const userId = resolveUserId(req);
     const { threadId, title, sections, templateId } = req.body;
 
-    const result = {
-      sapVersionId: Date.now(),
-      threadId,
-      title: title || 'Statistical Analysis Plan v1.0',
-      version: '1.0',
-      status: 'draft',
-      sections: sections || [],
-      organizationId: orgId,
-      createdBy: userId,
-      createdAt: new Date().toISOString(),
-    };
-
+    const result = await collaborativeSapService.createSapVersion(
+      threadId, sections || {}, orgId, userId
+    );
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -490,14 +399,9 @@ router.put('/sap/:sapVersionId/section/:sectionId', authMiddleware, async (req: 
     const sectionId = req.params.sectionId;
     const { content, trackChanges } = req.body;
 
-    const result = {
-      sapVersionId,
-      sectionId,
-      updated: true,
-      updatedBy: userId,
-      updatedAt: new Date().toISOString(),
-    };
-
+    const result = await collaborativeSapService.updateSection(
+      sapVersionId, sectionId, content, orgId, userId
+    );
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -515,17 +419,9 @@ router.post('/sap/:sapVersionId/comment', authMiddleware, async (req: Request, r
     const sapVersionId = Number(req.params.sapVersionId);
     const { sectionId, content, parentCommentId } = req.body;
 
-    const result = {
-      commentId: Date.now(),
-      sapVersionId,
-      sectionId,
-      content,
-      parentCommentId,
-      author: userId,
-      createdAt: new Date().toISOString(),
-      resolved: false,
-    };
-
+    const result = await collaborativeSapService.addComment(
+      sapVersionId, sectionId, content, orgId, userId, parentCommentId
+    );
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -544,15 +440,7 @@ router.post('/sap/:sapVersionId/resolve-comment/:commentId', authMiddleware, asy
     const commentId = Number(req.params.commentId);
     const { resolution } = req.body;
 
-    const result = {
-      commentId,
-      sapVersionId,
-      resolved: true,
-      resolvedBy: userId,
-      resolution,
-      resolvedAt: new Date().toISOString(),
-    };
-
+    const result = await collaborativeSapService.resolveComment(commentId, orgId, userId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -569,17 +457,9 @@ router.post('/sap/amendment', authMiddleware, async (req: Request, res: Response
     const userId = resolveUserId(req);
     const { previousVersionId, reason, changes } = req.body;
 
-    const result = {
-      sapVersionId: Date.now(),
-      previousVersionId,
-      version: '2.0',
-      amendmentReason: reason,
-      status: 'draft',
-      organizationId: orgId,
-      createdBy: userId,
-      createdAt: new Date().toISOString(),
-    };
-
+    const result = await collaborativeSapService.createAmendment(
+      req.body.threadId, reason, changes, req.body.sectionsAffected || [], orgId, userId
+    );
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -597,14 +477,7 @@ router.post('/sap/:sapVersionId/sign', authMiddleware, async (req: Request, res:
     const sapVersionId = Number(req.params.sapVersionId);
     const { role, signatureType } = req.body;
 
-    const result = {
-      sapVersionId,
-      signedBy: userId,
-      role: role || 'biostatistician',
-      signatureType: signatureType || 'approval',
-      signedAt: new Date().toISOString(),
-    };
-
+    const result = await collaborativeSapService.signVersion(sapVersionId, req.body, orgId, userId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -621,13 +494,7 @@ router.post('/sap/:sapVersionId/lock', authMiddleware, async (req: Request, res:
     const userId = resolveUserId(req);
     const sapVersionId = Number(req.params.sapVersionId);
 
-    const result = {
-      sapVersionId,
-      locked: true,
-      lockedBy: userId,
-      lockedAt: new Date().toISOString(),
-    };
-
+    const result = await collaborativeSapService.lockVersion(sapVersionId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -643,12 +510,7 @@ router.get('/sap/:threadId/audit-trail', authMiddleware, async (req: Request, re
     const orgId = resolveOrganizationId(req);
     const threadId = Number(req.params.threadId);
 
-    const result = {
-      threadId,
-      auditTrail: [],
-      organizationId: orgId,
-    };
-
+    const result = await collaborativeSapService.getAuditTrail(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -664,11 +526,7 @@ router.get('/sap/version/:sapVersionId', authMiddleware, async (req: Request, re
     const orgId = resolveOrganizationId(req);
     const sapVersionId = Number(req.params.sapVersionId);
 
-    const result = {
-      sapVersionId,
-      organizationId: orgId,
-    };
-
+    const result = await collaborativeSapService.getSapVersion(sapVersionId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -684,12 +542,7 @@ router.get('/sap/:threadId/versions', authMiddleware, async (req: Request, res: 
     const orgId = resolveOrganizationId(req);
     const threadId = Number(req.params.threadId);
 
-    const result = {
-      threadId,
-      versions: [],
-      organizationId: orgId,
-    };
-
+    const result = await collaborativeSapService.listVersions(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -709,14 +562,11 @@ router.post('/external-control/search', authMiddleware, async (req: Request, res
     const orgId = resolveOrganizationId(req);
     const { indication, endpoints, population, dataSources } = req.body;
 
-    const result = {
-      matches: [],
-      indication,
-      searchCriteria: { endpoints, population, dataSources },
-      organizationId: orgId,
-    };
-
-    res.json({ success: true, data: result });
+    const result = await externalControlArmService.searchHistoricalArms(
+      { indication, endpoint: endpoints?.[0], phase: req.body.phase, armType: req.body.armType },
+      orgId
+    );
+    res.json({ success: true, data: { arms: result } });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -732,18 +582,17 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
     const userId = resolveUserId(req);
     const { sourceIds, method, matchingVariables, threadId } = req.body;
 
-    const result = {
-      controlId: Date.now(),
-      sourceIds,
-      method: method || 'propensity_score_matching',
-      matchingVariables,
-      threadId,
-      status: 'synthesizing',
-      organizationId: orgId,
-      createdBy: userId,
-      createdAt: new Date().toISOString(),
-    };
-
+    const result = await externalControlArmService.synthesizeControl(
+      {
+        name: req.body.name || `${req.body.indication || 'External'} Control`,
+        indication: req.body.indication || '',
+        endpoint: req.body.endpoint || '',
+        method: method || 'propensity_score',
+        sourceArmIds: sourceIds || [],
+      },
+      orgId,
+      userId
+    );
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -760,16 +609,7 @@ router.post('/external-control/:controlId/validate', authMiddleware, async (req:
     const controlId = Number(req.params.controlId);
     const { validationMethods } = req.body;
 
-    const result = {
-      controlId,
-      validationResults: {
-        balanceDiagnostics: [],
-        sensitivityAnalysis: [],
-        overallAssessment: 'pending',
-      },
-      organizationId: orgId,
-    };
-
+    const result = await externalControlArmService.validateControl(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -785,16 +625,7 @@ router.get('/external-control/:controlId/regulatory-package', authMiddleware, as
     const orgId = resolveOrganizationId(req);
     const controlId = Number(req.params.controlId);
 
-    const result = {
-      controlId,
-      regulatoryPackage: {
-        sections: [],
-        appendices: [],
-        generatedAt: new Date().toISOString(),
-      },
-      organizationId: orgId,
-    };
-
+    const result = await externalControlArmService.generateRegulatoryPackage(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -811,17 +642,7 @@ router.post('/external-control/ingest-arm', authMiddleware, async (req: Request,
     const userId = resolveUserId(req);
     const { dataFormat, source, data, metadata } = req.body;
 
-    const result = {
-      armId: Date.now(),
-      dataFormat: dataFormat || 'summary',
-      source,
-      recordCount: Array.isArray(data) ? data.length : 0,
-      status: 'ingested',
-      organizationId: orgId,
-      createdBy: userId,
-      createdAt: new Date().toISOString(),
-    };
-
+    const result = await externalControlArmService.ingestArmData(req.body, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -837,11 +658,7 @@ router.get('/external-control/:controlId', authMiddleware, async (req: Request, 
     const orgId = resolveOrganizationId(req);
     const controlId = Number(req.params.controlId);
 
-    const result = {
-      controlId,
-      organizationId: orgId,
-    };
-
+    const result = await externalControlArmService.getControl(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -1020,14 +837,7 @@ router.post('/knowledge/query', authMiddleware, async (req: Request, res: Respon
     const orgId = resolveOrganizationId(req);
     const { query, nodeTypes, maxDepth, limit } = req.body;
 
-    const result = {
-      query,
-      nodes: [],
-      edges: [],
-      totalResults: 0,
-      organizationId: orgId,
-    };
-
+    const result = await biostatKnowledgeGraphService.queryGraph(query, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -1044,14 +854,7 @@ router.get('/knowledge/method-landscape/:indication', authMiddleware, async (req
     const indication = req.params.indication;
     const { phase, agency } = req.query;
 
-    const result = {
-      indication,
-      methods: [],
-      regulatoryOutcomes: [],
-      filters: { phase, agency },
-      organizationId: orgId,
-    };
-
+    const result = await biostatKnowledgeGraphService.getMethodLandscape(indication, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -1067,14 +870,11 @@ router.get('/knowledge/endpoint-method-matrix', authMiddleware, async (req: Requ
     const orgId = resolveOrganizationId(req);
     const { indication, phase } = req.query;
 
-    const result = {
-      matrix: [],
-      endpoints: [],
-      methods: [],
-      filters: { indication, phase },
-      organizationId: orgId,
+    const filters = {
+      indication: indication as string | undefined,
+      phase: phase as string | undefined,
     };
-
+    const result = await biostatKnowledgeGraphService.getEndpointMethodMatrix(orgId, filters);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -1091,17 +891,7 @@ router.post('/knowledge/ingest-csr', authMiddleware, async (req: Request, res: R
     const userId = resolveUserId(req);
     const { csrId, sections, metadata } = req.body;
 
-    const result = {
-      ingestionId: Date.now(),
-      csrId,
-      status: 'processing',
-      nodesCreated: 0,
-      edgesCreated: 0,
-      organizationId: orgId,
-      initiatedBy: userId,
-      startedAt: new Date().toISOString(),
-    };
-
+    const result = await biostatKnowledgeGraphService.ingestFromCSR(csrId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -1118,17 +908,7 @@ router.get('/knowledge/trend/:concept', authMiddleware, async (req: Request, res
     const concept = req.params.concept;
     const { startYear, endYear, granularity } = req.query;
 
-    const result = {
-      concept,
-      trend: [],
-      timeRange: {
-        start: startYear || '2015',
-        end: endYear || '2026',
-        granularity: granularity || 'year',
-      },
-      organizationId: orgId,
-    };
-
+    const result = await biostatKnowledgeGraphService.getMethodTrend(concept, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

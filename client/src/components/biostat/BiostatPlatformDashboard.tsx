@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import {
   Card,
   CardHeader,
@@ -14,6 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -24,11 +27,59 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 // ============================================================
+// Shared Components
+// ============================================================
+
+function ErrorAlert({ error, title = 'Error' }: { error: any; title?: string }) {
+  const message = error?.message || error?.error || 'An unexpected error occurred. Please try again.';
+  return (
+    <Alert variant="destructive" className="my-4">
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
+  );
+}
+
+function LoadingSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="space-y-3" role="status" aria-label="Loading">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center space-x-4">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ title, description, actionLabel, onAction }: {
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="text-center py-12" role="status">
+      <h3 className="text-lg font-semibold text-muted-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground mb-4">{description}</p>
+      {actionLabel && onAction && (
+        <Button onClick={onAction} variant="outline">{actionLabel}</Button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Statistical Continuum Workspace (Capability 1)
 // ============================================================
 
 function StatisticalContinuumTab() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [newThread, setNewThread] = useState({
     title: '',
     indication: '',
@@ -37,16 +88,24 @@ function StatisticalContinuumTab() {
     sampleSize: '',
   });
 
-  const { data: threads, isLoading } = useQuery({
+  const { data: threads, isLoading, error: threadsError } = useQuery({
     queryKey: ['/api/biostat/continuum/threads'],
   });
 
   const initMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest('POST', '/api/biostat/continuum/initialize', data);
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to create thread');
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/biostat/continuum/threads'] }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/biostat/continuum/threads'] });
+      toast({ title: 'Thread Created', description: `Statistical thread "${data?.data?.title || newThread.title}" initialized successfully.` });
+      setNewThread({ title: '', indication: '', phase: '', primaryEndpoint: '', sampleSize: '' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Failed to Create Thread', description: err.message, variant: 'destructive' });
+    },
   });
 
   return (
@@ -102,7 +161,12 @@ function StatisticalContinuumTab() {
             </div>
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex justify-between items-center">
+          <div className="text-sm text-muted-foreground">
+            {!newThread.title && !newThread.indication ? 'Fill in trial details to begin' : ''}
+            {newThread.title && !newThread.indication ? 'Add indication to continue' : ''}
+            {newThread.title && newThread.indication && !newThread.phase ? 'Select a trial phase' : ''}
+          </div>
           <Button
             onClick={() => initMutation.mutate({
               title: newThread.title,
@@ -113,7 +177,8 @@ function StatisticalContinuumTab() {
                 sample_size: parseInt(newThread.sampleSize) || 200,
               },
             })}
-            disabled={initMutation.isPending}
+            disabled={initMutation.isPending || !newThread.title || !newThread.indication || !newThread.phase}
+            aria-label="Initialize new statistical thread"
           >
             {initMutation.isPending ? 'Creating...' : 'Initialize Thread'}
           </Button>
@@ -127,12 +192,19 @@ function StatisticalContinuumTab() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <LoadingSkeleton rows={3} />
+          ) : threadsError ? (
+            <ErrorAlert error={threadsError} title="Failed to load threads" />
+          ) : !(threads as any[])?.length ? (
+            <EmptyState
+              title="No Statistical Threads"
+              description="Create your first protocol-to-submission statistical workflow above."
+            />
           ) : (
             <div className="space-y-3">
-              {(threads as any[])?.map((thread: any) => (
+              {(threads as any[]).map((thread: any) => (
                 <ThreadCard key={thread.id} thread={thread} />
-              )) || <p className="text-muted-foreground">No threads yet</p>}
+              ))}
             </div>
           )}
         </CardContent>
@@ -208,6 +280,7 @@ function ThreadCard({ thread }: { thread: any }) {
 // ============================================================
 
 function DesignOptimizerTab() {
+  const { toast } = useToast();
   const [params, setParams] = useState({
     indication: '',
     phase: '',
@@ -218,7 +291,15 @@ function DesignOptimizerTab() {
   const recommendMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest('POST', '/api/biostat/design-optimizer/recommend', data);
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to get recommendations');
       return res.json();
+    },
+    onSuccess: (data) => {
+      const count = (data as any)?.recommendations?.length || 0;
+      toast({ title: 'Analysis Complete', description: `${count} design options ranked by regulatory approval probability.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Analysis Failed', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -281,6 +362,10 @@ function DesignOptimizerTab() {
         </CardContent>
       </Card>
 
+      {recommendMutation.error && (
+        <ErrorAlert error={recommendMutation.error} title="Design analysis failed" />
+      )}
+
       {recommendMutation.data && (
         <Card>
           <CardHeader>
@@ -321,6 +406,7 @@ function DesignOptimizerTab() {
 // ============================================================
 
 function EstimandEngineTab() {
+  const { toast } = useToast();
   const [estimand, setEstimand] = useState({
     endpointName: '',
     population: '',
@@ -333,7 +419,21 @@ function EstimandEngineTab() {
   const defineMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest('POST', '/api/biostat/estimand/define', data);
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to define estimand');
       return res.json();
+    },
+    onSuccess: (data) => {
+      const compliant = (data as any)?.ichE9R1Compliant;
+      toast({
+        title: compliant ? 'Estimand Defined - Compliant' : 'Estimand Defined - Review Needed',
+        description: compliant
+          ? 'ICH E9(R1) compliant estimand created with method recommendations.'
+          : 'Estimand created but has compliance issues. Review the validation results.',
+        variant: compliant ? 'default' : 'destructive',
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Estimand Definition Failed', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -486,13 +586,18 @@ function EstimandEngineTab() {
 // ============================================================
 
 function KnowledgeGraphTab() {
+  const { toast } = useToast();
   const [query, setQuery] = useState('');
   const [indication, setIndication] = useState('');
 
   const queryMutation = useMutation({
     mutationFn: async (q: string) => {
       const res = await apiRequest('POST', '/api/biostat/knowledge/query', { query: q });
+      if (!res.ok) throw new Error((await res.json()).error || 'Query failed');
       return res.json();
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Knowledge Query Failed', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -631,6 +736,7 @@ function KnowledgeGraphTab() {
 // ============================================================
 
 function AdaptiveTrialTab() {
+  const { toast } = useToast();
   const [planForm, setPlanForm] = useState({
     title: '',
     designType: '',
@@ -641,7 +747,14 @@ function AdaptiveTrialTab() {
   const createPlanMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest('POST', '/api/biostat/adaptive/plan', data);
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to create plan');
       return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Adaptive Plan Created', description: 'Operating characteristics computed via Monte Carlo simulation.' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Plan Creation Failed', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -767,6 +880,7 @@ function AdaptiveTrialTab() {
 // ============================================================
 
 function ExternalControlTab() {
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useState({
     indication: '',
     endpoint: '',
@@ -777,14 +891,29 @@ function ExternalControlTab() {
   const searchMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest('POST', '/api/biostat/external-control/search', data);
+      if (!res.ok) throw new Error((await res.json()).error || 'Search failed');
       return res.json();
+    },
+    onSuccess: (data) => {
+      const count = (data as any)?.arms?.length || 0;
+      toast({ title: 'Search Complete', description: `Found ${count} matching historical arms.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Search Failed', description: err.message, variant: 'destructive' });
     },
   });
 
   const synthesizeMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest('POST', '/api/biostat/external-control/synthesize', data);
+      if (!res.ok) throw new Error((await res.json()).error || 'Synthesis failed');
       return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Control Arm Synthesized', description: 'External control arm created with diagnostics.' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Synthesis Failed', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -852,6 +981,10 @@ function ExternalControlTab() {
           </Button>
         </CardContent>
       </Card>
+
+      {searchMutation.error && (
+        <ErrorAlert error={searchMutation.error} title="Search failed" />
+      )}
 
       {searchMutation.data && (
         <Card>
