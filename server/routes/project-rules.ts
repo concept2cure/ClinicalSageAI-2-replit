@@ -23,6 +23,7 @@ import { getPool } from '../db';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { getRulesEngine } from '../services/rules-engine';
 import type { RuleTriggerEvent } from '../services/rules-engine/types';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 const pool = getPool();

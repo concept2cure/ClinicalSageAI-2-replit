@@ -381,38 +381,33 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 // Update project team assignments
-router.post('/:projectId/team', async (req: Request, res: Response) => {
+router.post('/:projectId/team', asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { assignments } = req.body;
 
-  try {
-    // Delete existing assignments using SQL
-    await db.execute(sql`
-      DELETE FROM fda_510k_team_assignments
-      WHERE project_id = ${parseInt(projectId)}
-    `);
+  // Delete existing assignments using SQL
+  await db.execute(sql`
+    DELETE FROM fda_510k_team_assignments
+    WHERE project_id = ${parseInt(projectId)}
+  `);
 
-    // Insert new assignments
-    if (assignments && assignments.length > 0) {
-      for (const assignment of assignments) {
-        await db.execute(sql`
-          INSERT INTO fda_510k_team_assignments (project_id, user_id, role, permissions, assigned_sections)
-          VALUES (
-            ${parseInt(projectId)},
-            ${assignment.userId},
-            ${assignment.role},
-            ${JSON.stringify(assignment.permissions || {})},
-            ${JSON.stringify(assignment.assignedSections || [])}
-          )
-        `);
-      }
+  // Insert new assignments
+  if (assignments && assignments.length > 0) {
+    for (const assignment of assignments) {
+      await db.execute(sql`
+        INSERT INTO fda_510k_team_assignments (project_id, user_id, role, permissions, assigned_sections)
+        VALUES (
+          ${parseInt(projectId)},
+          ${assignment.userId},
+          ${assignment.role},
+          ${JSON.stringify(assignment.permissions || {})},
+          ${JSON.stringify(assignment.assignedSections || [])}
+        )
+      `);
     }
-
-    res.json({ success: true, message: 'Team assignments updated' });
-  } catch (error) {
-    console.error('Error updating team:', error);
-    res.status(500).json({ error: 'Failed to update team assignments' });
   }
-});
+
+  res.json({ success: true, message: 'Team assignments updated' });
+}));
 
 export default router;
