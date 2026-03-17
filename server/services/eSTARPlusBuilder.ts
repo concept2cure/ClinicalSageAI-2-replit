@@ -1039,7 +1039,7 @@ export class eSTARPlusBuilder {
       `;
       
       // Inject client/project intelligence so eSTAR reads SKILL/.MD context
-      const intelligencePrefix = await getIntelligencePrefix();
+      const intelligencePrefix = await getIntelligencePrefix().catch(() => '');
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -1270,11 +1270,11 @@ ${meta.manufacturer}
       `;
       
       // Inject client/project intelligence so compliance report reads SKILL/.MD context
-      const intelligencePrefix = await getIntelligencePrefix();
+      const intelligencePrefix2 = await getIntelligencePrefix().catch(() => '');
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: intelligencePrefix + 'You are an expert FDA regulatory consultant specializing in 510(k) submissions.' },
+          { role: 'system', content: intelligencePrefix2 + 'You are an expert FDA regulatory consultant specializing in 510(k) submissions.' },
           { role: 'user', content: prompt }
         ],
         max_tokens: 1000

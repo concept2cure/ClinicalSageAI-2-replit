@@ -56,6 +56,7 @@ export interface ExportManifest {
   queryFilters: Record<string, any>;
   format: string;
   rowCount: number;
+  truncated: boolean;
   dataHash: string;          // SHA-256 of the raw data payload
   hashAlgorithm: string;
   chainIntegrity: {
@@ -76,11 +77,16 @@ export interface ExportManifest {
 // ---------------------------------------------------------------------------
 
 function getSigningKey(): string {
-  // Use a dedicated key if available, fall back to JWT secret
-  return process.env.AUDIT_EXPORT_SIGNING_KEY
+  const key = process.env.AUDIT_EXPORT_SIGNING_KEY
     || process.env.JWT_SECRET_PROD
-    || process.env.JWT_SECRET
-    || 'concept2cure-audit-signing-key-change-in-production';
+    || process.env.JWT_SECRET;
+  if (!key) {
+    throw new Error(
+      'No signing key configured. Set AUDIT_EXPORT_SIGNING_KEY, JWT_SECRET_PROD, or JWT_SECRET. ' +
+      'Refusing to sign with a default key per 21 CFR Part 11 §11.10(e).'
+    );
+  }
+  return key;
 }
 
 function hmacSign(data: string): string {
@@ -182,16 +188,30 @@ async function queryAuditData(pool: Pool, req: AuditExportRequest) {
             record_hash, previous_hash, sequence_number, created_at
      FROM audit_events ${where}
      ORDER BY timestamp ASC
-     LIMIT 50000`,
+     LIMIT 50001`,
     params
   );
 
-  return rows;
+  const truncated = rows.length > 50000;
+  if (truncated) {
+    rows.length = 50000; // trim to exact limit
+  }
+
+  return { rows, truncated };
 }
 
 // ---------------------------------------------------------------------------
 // FORMAT DATA
 // ---------------------------------------------------------------------------
+
+function sanitizeCsvValue(val: unknown): string {
+  const str = String(val ?? '');
+  // Prevent CSV injection: prefix formula-triggering characters with a single quote
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `"'${str.replace(/"/g, '""')}"`;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
+}
 
 function formatCSV(rows: any[]): string {
   const headers = [
@@ -202,10 +222,7 @@ function formatCSV(rows: any[]): string {
   ];
 
   const csvRows = rows.map(row =>
-    headers.map(h => {
-      const val = row[h] ?? '';
-      return `"${String(val).replace(/"/g, '""')}"`;
-    }).join(',')
+    headers.map(h => sanitizeCsvValue(row[h])).join(',')
   );
 
   return [headers.join(','), ...csvRows].join('\n');
@@ -231,7 +248,7 @@ export async function generateSignedAuditExport(
   request: AuditExportRequest
 ): Promise<SignedAuditExport> {
   // 1. Query data
-  const rows = await queryAuditData(pool, request);
+  const { rows, truncated } = await queryAuditData(pool, request);
 
   // 2. Format
   const data = request.format === 'csv' ? formatCSV(rows) : formatJSON(rows);
@@ -257,6 +274,7 @@ export async function generateSignedAuditExport(
     },
     format: request.format,
     rowCount: rows.length,
+    truncated,
     dataHash,
     hashAlgorithm: 'SHA-256',
     chainIntegrity,
@@ -283,7 +301,7 @@ export async function generateSignedAuditExport(
          user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
        VALUES ($1, 'audit.export', 'audit_export', $2, $3, $4, $5, $6, NOW(), $7, $8, true, true)`,
       [
-        request.organizationId || 1,
+        request.organizationId ?? null,
         exportId,
         request.exportedBy,
         request.exportedBy,

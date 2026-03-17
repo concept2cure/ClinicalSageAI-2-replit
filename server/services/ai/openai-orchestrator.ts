@@ -139,7 +139,7 @@ export async function responsesJson<T>(args: {
 
   try {
     // Inject client/project intelligence so orchestrator reads SKILL/.MD context
-    const intelligencePrefix = await getIntelligencePrefix(args.organizationId, args.projectId);
+    const intelligencePrefix = await getIntelligencePrefix(args.organizationId, args.projectId).catch(() => '');
     const enrichedSystem = intelligencePrefix + system;
 
     // Use chat.completions with response_format for structured outputs

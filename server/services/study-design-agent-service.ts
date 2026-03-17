@@ -101,7 +101,7 @@ export class StudyDesignAgentService {
       let conversation = memoryService.getConversation(conversationId);
       if (!conversation) {
         // Inject client/project intelligence so study design agent reads SKILL/.MD context
-        const intelligencePrefix = await getIntelligencePrefix();
+        const intelligencePrefix = await getIntelligencePrefix().catch(() => '');
         conversationId = memoryService.createConversation(
           conversationId,
           `${intelligencePrefix}You are TrialSage's Study Design Agent, a specialized clinical trial advisor with deep expertise in protocol design and optimization.`,

@@ -965,7 +965,7 @@ function mapRowToPeriodicReport(row: any): PeriodicSafetyReport {
     periodStart: new Date(row.period_start),
     periodEnd: new Date(row.period_end),
     status: row.status,
-    submittedTo: typeof row.submitted_to === 'string' ? JSON.parse(row.submitted_to) : row.submitted_to || [],
+    submittedTo: typeof row.submitted_to === 'string' ? (() => { try { return JSON.parse(row.submitted_to); } catch { return []; } })() : row.submitted_to || [],
     dueDate: new Date(row.due_date),
     submittedAt: row.submitted_at ? new Date(row.submitted_at) : null,
   };

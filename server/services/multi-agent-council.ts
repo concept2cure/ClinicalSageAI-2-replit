@@ -189,7 +189,7 @@ export class MultiAgentCouncilService {
   ): Promise<LLMResponse> {
     // Inject client/project intelligence so council agents read SKILL/.MD context
     if (options?.organizationId || options?.projectId) {
-      const intelligencePrefix = await getIntelligencePrefix(options.organizationId, options.projectId);
+      const intelligencePrefix = await getIntelligencePrefix(options.organizationId, options.projectId).catch(() => '');
       if (intelligencePrefix && messages.length > 0 && messages[0].role === 'system') {
         messages = [...messages];
         messages[0] = { ...messages[0], content: intelligencePrefix + messages[0].content };

@@ -202,7 +202,7 @@ async function generateWithRAG(
   organizationId?: number
 ): Promise<{ text: string; source: string; ragSources: any[] }> {
   // Inject client/project intelligence so CERV2 reads SKILL/.MD context
-  const intelligencePrefix = await getIntelligencePrefix(organizationId);
+  const intelligencePrefix = await getIntelligencePrefix(organizationId).catch(() => '');
   systemPrompt = intelligencePrefix + systemPrompt;
   // Step 1: Retrieve relevant context from RAG
   let ragContext = '';

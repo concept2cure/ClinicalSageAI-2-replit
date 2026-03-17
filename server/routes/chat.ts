@@ -411,7 +411,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
 
     try {
       // Inject client/project intelligence so AnA reads SKILL/.MD context
-      const intelligencePrefix = await getIntelligencePrefix(numericOrgId ?? undefined, project_id);
+      const intelligencePrefix = await getIntelligencePrefix(numericOrgId ?? undefined, project_id).catch(() => '');
       const systemPrompt = intelligencePrefix + (system_prompt || REGULATORY_SYSTEM_PROMPT) + evidenceBlock;
 
       const gwMessages = [

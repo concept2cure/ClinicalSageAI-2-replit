@@ -249,7 +249,7 @@ const ENSURE_TABLES_SQL = `
  */
 async function ensureTables(): Promise<void> {
   try {
-    await pool!.query(ENSURE_TABLES_SQL);
+    await pool.query(ENSURE_TABLES_SQL);
   } catch (error) {
     console.error('[GDPR] Failed to ensure tables:', error);
     throw error;
@@ -273,7 +273,7 @@ export async function createProcessingActivity(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `INSERT INTO gdpr_processing_activities
         (name, purpose, lawful_basis, data_categories, data_subject_categories,
          recipients, third_country_transfers, retention_period,
@@ -318,7 +318,7 @@ export async function getProcessingActivities(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `SELECT * FROM gdpr_processing_activities
        WHERE organization_id = $1
        ORDER BY created_at DESC`,
@@ -391,7 +391,7 @@ export async function updateProcessingActivity(
     setClauses.push(`updated_at = NOW()`);
     values.push(id);
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `UPDATE gdpr_processing_activities
        SET ${setClauses.join(', ')}
        WHERE id = $${paramIndex}
@@ -430,7 +430,7 @@ export async function createDPIA(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `INSERT INTO gdpr_dpias
         (processing_activity_id, description, necessity_assessment,
          risk_assessment, dpo_opinion, supervisory_authority_consulted,
@@ -469,7 +469,7 @@ export async function getDPIAsForActivity(activityId: string): Promise<DPIA[]> {
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `SELECT * FROM gdpr_dpias
        WHERE processing_activity_id = $1
        ORDER BY id DESC`,
@@ -500,7 +500,7 @@ export async function recordConsent(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `INSERT INTO gdpr_consent_records
         (data_subject_id, purpose, consent_given, consent_method,
          lawful_basis, organization_id)
@@ -539,7 +539,7 @@ export async function withdrawConsent(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `UPDATE gdpr_consent_records
        SET consent_given = FALSE,
            withdrawal_timestamp = NOW()
@@ -575,7 +575,7 @@ export async function getConsentStatus(dataSubjectId: string): Promise<ConsentRe
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `SELECT * FROM gdpr_consent_records
        WHERE data_subject_id = $1
        ORDER BY consent_timestamp DESC`,
@@ -611,7 +611,7 @@ export async function createDataSubjectRequest(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `INSERT INTO gdpr_data_subject_requests
         (data_subject_id, request_type, status, received_at,
          response_deadline, response_details, organization_id)
@@ -649,7 +649,7 @@ export async function completeDataSubjectRequest(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `UPDATE gdpr_data_subject_requests
        SET status = 'completed',
            completed_at = NOW(),
@@ -686,7 +686,7 @@ export async function getOverdueRequests(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `SELECT * FROM gdpr_data_subject_requests
        WHERE organization_id = $1
          AND status IN ('received', 'in_progress')
@@ -720,7 +720,7 @@ export async function assessTransfer(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `INSERT INTO gdpr_transfer_assessments
         (source_region, destination_region, transfer_mechanism,
          legal_basis, risk_level, tia_completed,
@@ -759,7 +759,7 @@ export async function getTransfersForOrg(
   try {
     await ensureTables();
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `SELECT * FROM gdpr_transfer_assessments
        WHERE organization_id = $1
        ORDER BY id DESC`,
@@ -798,7 +798,7 @@ export async function reportBreach(
 
     const withinWindow = isWithinNotificationWindow(breach.detectedAt);
 
-    const result = await pool!.query(
+    const result = await pool.query(
       `INSERT INTO gdpr_data_breaches
         (description, data_affected, subjects_affected, detected_at,
          reported_to_authority_at, reported_to_subjects_at, severity,

@@ -197,7 +197,8 @@ function setAuditPool(pool: Pool) {
 }
 
 function appendAuditEntry(
-  params: Omit<AuditTrailEntry, 'id' | 'hash' | 'previousHash'>
+  params: Omit<AuditTrailEntry, 'id' | 'hash' | 'previousHash'>,
+  organizationId?: number
 ): AuditTrailEntry {
   const entry: AuditTrailEntry = {
     ...params,
@@ -208,7 +209,7 @@ function appendAuditEntry(
   entry.hash = computeAuditChainHash(entry, lastAuditHash);
   lastAuditHash = entry.hash;
 
-  // Persist to audit_events table (fire-and-forget but log errors loudly)
+  // Persist to audit_events table — awaited where possible, logged on failure
   if (_part11Pool) {
     _part11Pool.query(
       `INSERT INTO audit_events
@@ -216,7 +217,7 @@ function appendAuditEntry(
          user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, true, true)`,
       [
-        1, // default org — callers should pass org context where available
+        organizationId ?? null,
         entry.action,
         entry.entityType,
         entry.entityId,
@@ -238,7 +239,7 @@ function appendAuditEntry(
       console.error('[Part11] Entry data:', JSON.stringify({ id: entry.id, action: entry.action, entityId: entry.entityId }));
     });
   } else {
-    console.warn('[Part11] WARNING: No DB pool available — audit entry stored in-memory only:', entry.id);
+    console.warn('[Part11] WARNING: No DB pool available -- audit entry stored in-memory only:', entry.id);
   }
 
   return entry;
@@ -282,7 +283,7 @@ router.post('/signatures', async (req: Request, res: Response) => {
 
   // §11.100(a): Verify identity before signing
   // In production, this would verify against LDAP/AD/bcrypt hash
-  if (!password || password.length < 1) {
+  if (!password || typeof password !== 'string' || password.length < 8) {
     // Log failed attempt
     appendAuditEntry({
       entityType: 'signature',

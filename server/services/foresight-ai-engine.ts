@@ -66,7 +66,7 @@ export class ForesightAIEngine {
     // Inject client/project intelligence so the engine reads SKILL/.MD context
     const intelligencePrefix = await getIntelligencePrefix(
       organizationId ? parseInt(String(organizationId), 10) : undefined
-    );
+    ).catch(() => '');
 
     // Use GPT-5 for advanced prediction
     const predictionResponse = await openai.chat.completions.create({

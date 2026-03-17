@@ -37,6 +37,7 @@ const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 let _monitorTimer: ReturnType<typeof setInterval> | null = null;
 let _pool: Pool | null = null;
+let _checkInProgress = false;
 let _status: ChainMonitorStatus = {
   lastCheckAt: null,
   status: 'unchecked',
@@ -50,6 +51,12 @@ let _status: ChainMonitorStatus = {
  * Run a single integrity check.
  */
 async function runCheck(): Promise<ChainMonitorStatus> {
+  // Prevent overlapping checks
+  if (_checkInProgress) {
+    console.log('[ChainMonitor] Previous check still running, skipping this cycle');
+    return _status;
+  }
+  _checkInProgress = true;
   if (!_pool) {
     _status.status = 'error';
     return _status;
@@ -120,7 +127,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
         console.error('[ChainMonitor] Failed to log integrity failure event:', logErr.message);
       }
     } else {
-      console.log(`[ChainMonitor] ✅ Chain integrity verified: ${rows.length} entries, all links intact`);
+      console.log(`[ChainMonitor] Chain integrity verified: ${rows.length} entries, all links intact`);
     }
 
     return _status;
@@ -128,6 +135,8 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     console.error('[ChainMonitor] Check failed:', err.message);
     _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
     return _status;
+  } finally {
+    _checkInProgress = false;
   }
 }
 
