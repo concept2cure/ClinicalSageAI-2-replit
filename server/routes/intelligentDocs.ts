@@ -379,93 +379,78 @@ router.post('/links/:id/verify', requireOrganization, asyncHandler(async (req: A
  * GET /api/intelligent-docs/propagation-events
  * List change propagation events
  */
-router.get('/propagation-events', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { status, sourceId, limit = '50' } = req.query;
+router.get('/propagation-events', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { status, sourceId, limit = '50' } = req.query;
 
-    let query = `
-      SELECT cpe.*, sd.title as source_title,
-             (SELECT COUNT(*) FROM intelligent_docs.impacted_sections WHERE propagation_event_id = cpe.id) as impacted_count
-      FROM intelligent_docs.change_propagation_events cpe
-      JOIN intelligent_docs.source_documents sd ON sd.id = cpe.source_document_id
-      WHERE cpe.organization_id = $1
-    `;
-    const params: unknown[] = [req.organizationId];
-    let paramIndex = 2;
+  let query = `
+    SELECT cpe.*, sd.title as source_title,
+           (SELECT COUNT(*) FROM intelligent_docs.impacted_sections WHERE propagation_event_id = cpe.id) as impacted_count
+    FROM intelligent_docs.change_propagation_events cpe
+    JOIN intelligent_docs.source_documents sd ON sd.id = cpe.source_document_id
+    WHERE cpe.organization_id = $1
+  `;
+  const params: unknown[] = [req.organizationId];
+  let paramIndex = 2;
 
-    if (status) {
-      query += ` AND cpe.status = $${paramIndex}`;
-      params.push(status);
-      paramIndex++;
-    }
-
-    if (sourceId) {
-      query += ` AND cpe.source_document_id = $${paramIndex}`;
-      params.push(sourceId);
-      paramIndex++;
-    }
-
-    query += ` ORDER BY cpe.created_at DESC LIMIT $${paramIndex}`;
-    params.push(parseInt(limit as string, 10));
-
-    const result = await db.execute(sql.raw(query, ...params));
-    res.json({ events: result.rows });
-  } catch (error) {
-    console.error('Error fetching propagation events:', error);
-    res.status(500).json({ error: 'Failed to fetch propagation events' });
+  if (status) {
+    query += ` AND cpe.status = $${paramIndex}`;
+    params.push(status);
+    paramIndex++;
   }
-});
+
+  if (sourceId) {
+    query += ` AND cpe.source_document_id = $${paramIndex}`;
+    params.push(sourceId);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY cpe.created_at DESC LIMIT $${paramIndex}`;
+  params.push(parseInt(limit as string, 10));
+
+  const result = await db.execute(sql.raw(query, ...params));
+  res.json({ events: result.rows });
+}));
 
 /**
  * GET /api/intelligent-docs/propagation-events/:id/impacted
  * Get impacted sections for a propagation event
  */
-router.get('/propagation-events/:id/impacted', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
+router.get('/propagation-events/:id/impacted', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
 
-    const result = await db.execute(sql`
-      SELECT id, propagation_event_id, document_id, section_id, linked_text, link_id,
-             severity, reason, suggested_action, suggested_patch_text, patch_confidence,
-             resolution_status, resolved_at, resolved_by, resolution_note, created_at
-      FROM intelligent_docs.impacted_sections
-      WHERE propagation_event_id = ${id}
-      ORDER BY
-        CASE severity
-          WHEN 'critical' THEN 1
-          WHEN 'high' THEN 2
-          WHEN 'medium' THEN 3
-          ELSE 4
-        END
-    `);
+  const result = await db.execute(sql`
+    SELECT id, propagation_event_id, document_id, section_id, linked_text, link_id,
+           severity, reason, suggested_action, suggested_patch_text, patch_confidence,
+           resolution_status, resolved_at, resolved_by, resolution_note, created_at
+    FROM intelligent_docs.impacted_sections
+    WHERE propagation_event_id = ${id}
+    ORDER BY
+      CASE severity
+        WHEN 'critical' THEN 1
+        WHEN 'high' THEN 2
+        WHEN 'medium' THEN 3
+        ELSE 4
+      END
+  `);
 
-    res.json({ impactedSections: result.rows });
-  } catch (error) {
-    console.error('Error fetching impacted sections:', error);
-    res.status(500).json({ error: 'Failed to fetch impacted sections' });
-  }
-});
+  res.json({ impactedSections: result.rows });
+}));
 
 /**
  * PUT /api/intelligent-docs/propagation-events/:id/resolve
  * Resolve a propagation event
  */
-router.put('/propagation-events/:id/resolve', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
+router.put('/propagation-events/:id/resolve', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
 
-    await db.execute(sql`
-      UPDATE intelligent_docs.change_propagation_events
-      SET status = 'resolved', resolved_at = NOW(), resolved_by = ${req.userId}
-      WHERE id = ${id} AND organization_id = ${req.organizationId}
-    `);
+  await db.execute(sql`
+    UPDATE intelligent_docs.change_propagation_events
+    SET status = 'resolved', resolved_at = NOW(), resolved_by = ${req.userId}
+    WHERE id = ${id} AND organization_id = ${req.organizationId}
+  `);
 
-    res.json({ success: true, eventId: id, status: 'resolved' });
-  } catch (error) {
-    console.error('Error resolving event:', error);
-    res.status(500).json({ error: 'Failed to resolve propagation event' });
-  }
-});
+  res.json({ success: true, eventId: id, status: 'resolved' });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPLIANCE SCORING
@@ -475,7 +460,7 @@ router.put('/propagation-events/:id/resolve', requireOrganization, async (req: A
  * POST /api/intelligent-docs/compliance/calculate
  * Calculate compliance score for a document
  */
-router.post('/compliance/calculate', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/compliance/calculate', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = CalculateComplianceSchema.parse(req.body);
 
@@ -523,81 +508,70 @@ router.post('/compliance/calculate', requireOrganization, async (req: Authentica
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors });
     }
-    console.error('Error calculating compliance:', error);
-    res.status(500).json({ error: 'Failed to calculate compliance score' });
+    throw error;
   }
-});
+}));
 
 /**
  * GET /api/intelligent-docs/compliance/history
  * Get compliance score history for a document
  */
-router.get('/compliance/history', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { documentId, limit = '30' } = req.query;
+router.get('/compliance/history', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { documentId, limit = '30' } = req.query;
 
-    if (!documentId) {
-      return res.status(400).json({ error: 'Document ID required' });
-    }
-
-    const result = await db.execute(sql`
-      SELECT id, organization_id, document_id, submission_type, overall_score,
-             structure_score, content_score, citations_score, format_score,
-             completeness_score, regulatory_score, data_integrity_score, signature_score,
-             passed_rules, total_rules, violations, calculated_by, calculated_at
-      FROM intelligent_docs.compliance_scores
-      WHERE document_id = ${documentId as string}
-        AND organization_id = ${req.organizationId}
-      ORDER BY calculated_at DESC
-      LIMIT ${parseInt(limit as string, 10)}
-    `);
-
-    res.json({ history: result.rows });
-  } catch (error) {
-    console.error('Error fetching compliance history:', error);
-    res.status(500).json({ error: 'Failed to fetch compliance history' });
+  if (!documentId) {
+    return res.status(400).json({ error: 'Document ID required' });
   }
-});
+
+  const result = await db.execute(sql`
+    SELECT id, organization_id, document_id, submission_type, overall_score,
+           structure_score, content_score, citations_score, format_score,
+           completeness_score, regulatory_score, data_integrity_score, signature_score,
+           passed_rules, total_rules, violations, calculated_by, calculated_at
+    FROM intelligent_docs.compliance_scores
+    WHERE document_id = ${documentId as string}
+      AND organization_id = ${req.organizationId}
+    ORDER BY calculated_at DESC
+    LIMIT ${parseInt(limit as string, 10)}
+  `);
+
+  res.json({ history: result.rows });
+}));
 
 /**
  * GET /api/intelligent-docs/compliance/rules
  * Get compliance rules
  */
-router.get('/compliance/rules', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { submissionType, category } = req.query;
+router.get('/compliance/rules', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { submissionType, category } = req.query;
 
-    let query = `
-      SELECT id, organization_id, rule_id, name, description, category, severity,
-             applicable_submissions, validation_config, regulatory_reference,
-             is_active, created_at, updated_at
-      FROM intelligent_docs.compliance_rules
-      WHERE is_active = TRUE
-        AND (organization_id IS NULL OR organization_id = $1)
-    `;
-    const params: unknown[] = [req.organizationId];
-    let paramIndex = 2;
+  let query = `
+    SELECT id, organization_id, rule_id, name, description, category, severity,
+           applicable_submissions, validation_config, regulatory_reference,
+           is_active, created_at, updated_at
+    FROM intelligent_docs.compliance_rules
+    WHERE is_active = TRUE
+      AND (organization_id IS NULL OR organization_id = $1)
+  `;
+  const params: unknown[] = [req.organizationId];
+  let paramIndex = 2;
 
-    if (submissionType) {
-      query += ` AND $${paramIndex} = ANY(applicable_submissions)`;
-      params.push(submissionType);
-      paramIndex++;
-    }
-
-    if (category) {
-      query += ` AND category = $${paramIndex}`;
-      params.push(category);
-    }
-
-    query += ` ORDER BY category, rule_id`;
-
-    const result = await db.execute(sql.raw(query, ...params));
-    res.json({ rules: result.rows });
-  } catch (error) {
-    console.error('Error fetching rules:', error);
-    res.status(500).json({ error: 'Failed to fetch compliance rules' });
+  if (submissionType) {
+    query += ` AND $${paramIndex} = ANY(applicable_submissions)`;
+    params.push(submissionType);
+    paramIndex++;
   }
-});
+
+  if (category) {
+    query += ` AND category = $${paramIndex}`;
+    params.push(category);
+  }
+
+  query += ` ORDER BY category, rule_id`;
+
+  const result = await db.execute(sql.raw(query, ...params));
+  res.json({ rules: result.rows });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions
