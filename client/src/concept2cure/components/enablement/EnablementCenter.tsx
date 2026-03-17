@@ -1,19 +1,12 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronRight, Check, Clock } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   LEARNING_PATHS,
   LEARNING_MODULES,
   CERTIFICATIONS,
-  RELEASE_NOTES,
-  WORKFLOW_SCENARIOS,
-  COMING_SOON_FEATURES,
 } from './enablement-data';
-import { DualAITheater, THEATER_SCENARIOS } from './DualAITheater';
-import { BeforeAfterSlider } from './BeforeAfterSlider';
-import { CapabilityConstellation } from './CapabilityConstellation';
-import { MissionBrowser } from './MicroMissions';
 
 // Lazy-load agent components to keep bundle lean
 const AgentShowcase = React.lazy(() => import('./AgentShowcase'));
@@ -38,10 +31,8 @@ type ViewKey =
   | 'learning-paths'
   | 'all-modules'
   | 'certifications'
-  | 'whats-new'
-  | 'about'
-  | 'ai-in-action'
-  | 'ai-agents';
+  | 'ai-agents'
+  | 'about';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -51,10 +42,8 @@ const TAB_LABELS: { key: ViewKey; label: string }[] = [
   { key: 'learning-paths', label: 'Learning Paths' },
   { key: 'all-modules', label: 'Modules' },
   { key: 'certifications', label: 'Certifications' },
-  { key: 'whats-new', label: "What's New" },
-  { key: 'about', label: 'About' },
-  { key: 'ai-in-action', label: 'In Action' },
   { key: 'ai-agents', label: 'AI Agents' },
+  { key: 'about', label: 'About' },
 ];
 
 const MODULE_CATEGORIES = [
@@ -96,12 +85,6 @@ function focusLabel(focus?: string): string {
   if (focus === 'dr-sage') return 'Dr. Sage';
   if (focus === 'ana') return 'AnA 1.0';
   return 'Combined: Dr. Sage + AnA 1.0';
-}
-
-function actorLabel(actor?: string): string {
-  if (actor === 'dr-sage') return 'Dr. Sage';
-  if (actor === 'ana') return 'AnA 1.0';
-  return 'Dr. Sage + AnA 1.0';
 }
 
 function formatCategory(cat: string): string {
@@ -424,94 +407,6 @@ function CertificationsView() {
 }
 
 // ---------------------------------------------------------------------------
-// View: What's New
-// ---------------------------------------------------------------------------
-
-function WhatsNewView() {
-  const featured = RELEASE_NOTES.length > 0 ? RELEASE_NOTES[0] : null;
-  const timeline = RELEASE_NOTES.slice(1);
-
-  return (
-    <div className="px-8 py-8">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-1">
-        What&apos;s New
-      </h2>
-      <p className="text-sm text-zinc-600 mb-10">
-        Latest features, improvements, and announcements
-      </p>
-
-      {/* Featured item */}
-      {featured && (
-        <motion.div className="mb-12" {...fade}>
-          <p className="text-xs text-zinc-400 mb-2">{featured.date}</p>
-          <h3 className="text-xl font-semibold text-zinc-900 mb-2">
-            {featured.title}
-          </h3>
-          <p className="text-sm text-zinc-600 leading-relaxed max-w-2xl mb-3">
-            {featured.description}
-          </p>
-          {featured.ctaLabel && (
-            <button className="text-sm text-blue-600 hover:underline">
-              {featured.ctaLabel} &rarr;
-            </button>
-          )}
-        </motion.div>
-      )}
-
-      {/* Timeline */}
-      <div className="relative mb-12">
-        <div className="absolute left-[3px] top-2 bottom-2 w-px bg-zinc-100" />
-
-        {timeline.map((note, idx) => (
-          <motion.div
-            key={note.id || idx}
-            className="relative pl-8 pb-8"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.15, delay: idx * 0.04 }}
-          >
-            {/* Dot */}
-            <div className="absolute left-0 top-2 h-[7px] w-[7px] rounded-full bg-zinc-300" />
-
-            <p className="text-xs text-zinc-400 mb-1">{note.date}</p>
-            <h4 className="text-sm font-semibold text-zinc-900 mb-1">
-              {note.title}
-            </h4>
-            <p className="text-sm text-zinc-600 leading-relaxed">
-              {note.description}
-            </p>
-            {note.ctaLabel && (
-              <button className="text-sm text-blue-600 hover:underline mt-1 inline-block">
-                {note.ctaLabel} &rarr;
-              </button>
-            )}
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Coming Soon */}
-      {COMING_SOON_FEATURES.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-4">
-            Coming Soon
-          </h3>
-          {COMING_SOON_FEATURES.map((feature, idx) => (
-            <div key={feature.id || idx} className="mb-4">
-              <p className="text-sm text-zinc-400">
-                {feature.title}{' '}
-                <span className="text-zinc-300">
-                  &middot; {feature.expectedDate}
-                </span>
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // View: About
 // ---------------------------------------------------------------------------
 
@@ -625,160 +520,6 @@ function AboutView() {
 }
 
 // ---------------------------------------------------------------------------
-// View: In Action
-// ---------------------------------------------------------------------------
-
-function AiInActionView() {
-  const [selectedScenario, setSelectedScenario] = useState<number>(0);
-
-  const scenario =
-    WORKFLOW_SCENARIOS.length > 0 ? WORKFLOW_SCENARIOS[selectedScenario] : null;
-
-  return (
-    <div className="px-8 py-8">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-1">
-        Dr. Sage + AnA 1.0 in Action
-      </h2>
-      <p className="text-sm text-zinc-600 mb-8">
-        See how our dual-AI system transforms real regulatory workflows
-      </p>
-
-      {/* Scenario selector — text links */}
-      <div className="flex flex-wrap gap-x-4 gap-y-2 mb-10">
-        {WORKFLOW_SCENARIOS.map((sc, idx) => (
-          <button
-            key={sc.id || idx}
-            onClick={() => setSelectedScenario(idx)}
-            className={cn(
-              'text-sm transition-colors',
-              selectedScenario === idx
-                ? 'font-medium text-zinc-900 underline underline-offset-4'
-                : 'text-zinc-400 hover:text-zinc-600'
-            )}
-          >
-            {sc.title}
-          </button>
-        ))}
-      </div>
-
-      {/* Selected scenario detail */}
-      <AnimatePresence mode="wait">
-        {scenario && (
-          <motion.div
-            key={selectedScenario}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <p className="text-sm text-zinc-600 leading-relaxed mb-8 max-w-2xl">
-              {scenario.description}
-            </p>
-
-            {/* Workflow steps — numbered list */}
-            <ol className="space-y-3 mb-10 max-w-2xl">
-              {(scenario.steps || []).map((step: any, idx: number) => {
-                const status = step.status || 'pending';
-                const isComplete = status === 'complete';
-                const isActive = status === 'running';
-
-                return (
-                  <li
-                    key={step.id || idx}
-                    className={cn(
-                      'text-sm leading-relaxed',
-                      isComplete && 'text-zinc-400 line-through',
-                      isActive && 'font-medium text-zinc-900',
-                      !isComplete && !isActive && 'text-zinc-600'
-                    )}
-                  >
-                    <span className="text-zinc-400 mr-2">{idx + 1}.</span>
-                    {step.title}{' '}
-                    <span className="text-zinc-400">
-                      ({actorLabel(step.actor)})
-                    </span>
-                    {isComplete && (
-                      <Check className="inline h-3.5 w-3.5 ml-1.5 text-zinc-400" />
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-
-            {/* Why this is better — quiet italic paragraph */}
-            <p className="text-sm text-zinc-500 italic max-w-2xl leading-relaxed mb-12">
-              Without Concept2Cure, this workflow requires manual coordination
-              across multiple teams, days of effort, and inconsistent quality.
-              With the dual-AI system, Dr. Sage orchestrates each step while AnA
-              1.0 provides real-time intelligence, reducing cycle time from weeks
-              to hours with higher confidence in outcomes.
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Live components — wrapped minimally */}
-      <div className="space-y-12 mt-4">
-        <section>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-            Watch them work
-          </h3>
-          <p className="text-sm text-zinc-600 mb-4">
-            See Dr. Sage and AnA 1.0 collaborate in real time with visible
-            reasoning
-          </p>
-          <div className="rounded-lg border border-zinc-100 overflow-hidden">
-            <DualAITheater
-              scenario={THEATER_SCENARIOS['evidence-review']}
-              autoPlay
-              speed="normal"
-            />
-          </div>
-        </section>
-
-        <section>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-            See the difference
-          </h3>
-          <p className="text-sm text-zinc-600 mb-4">
-            Drag the slider to compare legacy workflows with Concept2Cure
-          </p>
-          <BeforeAfterSlider />
-        </section>
-
-        <section>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-            Platform capability map
-          </h3>
-          <p className="text-sm text-zinc-600 mb-4">
-            Explore the full constellation of interconnected capabilities
-          </p>
-          <div
-            className="rounded-lg overflow-hidden border border-zinc-100"
-            style={{ height: 500 }}
-          >
-            <CapabilityConstellation interactive />
-          </div>
-        </section>
-
-        <section>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-            Try it now — 60-second missions
-          </h3>
-          <p className="text-sm text-zinc-600 mb-4">
-            Hands-on challenges to experience the platform in action
-          </p>
-          <MissionBrowser
-            onStartMission={() => {}}
-            userRole="regulatory-writer"
-          />
-        </section>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // View: AI Agents
 // ---------------------------------------------------------------------------
 
@@ -868,12 +609,8 @@ export function EnablementCenter({
         return <AllModulesView />;
       case 'certifications':
         return <CertificationsView />;
-      case 'whats-new':
-        return <WhatsNewView />;
       case 'about':
         return <AboutView />;
-      case 'ai-in-action':
-        return <AiInActionView />;
       case 'ai-agents':
         return <AiAgentsView />;
       default:

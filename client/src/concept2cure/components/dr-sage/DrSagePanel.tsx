@@ -42,9 +42,6 @@ const TABS: TabDef[] = [
   { id: "doit", label: "Walk-through" },
   { id: "ana", label: "Ask AnA" },
   { id: "fix", label: "Fix" },
-  { id: "learn", label: "Learn" },
-  { id: "whatelse", label: "Discover" },
-  { id: "agents", label: "Agents" },
 ];
 
 const FADE_IN = {
@@ -181,34 +178,6 @@ const MOCK_ISSUES = [
     description:
       "The QA sign-off step was skipped for the stability report. The document can proceed, but the audit trail is incomplete.",
     resolved: false,
-  },
-];
-
-const MOCK_DISCOVERY_ITEMS = [
-  {
-    title: "Generate deeper RI insight with AnA 1.0",
-    description:
-      "Run a comprehensive regulatory intelligence scan across your entire submission package.",
-  },
-  {
-    title: "Inspect provenance",
-    description:
-      "Trace the full lineage of any artefact from source data through every transformation.",
-  },
-  {
-    title: "Place into dossier",
-    description:
-      "Directly place validated artefacts into the correct eCTD module with auto-classification.",
-  },
-  {
-    title: "Compare versions",
-    description:
-      "Side-by-side diff of any two document versions with AI-highlighted semantic changes.",
-  },
-  {
-    title: "Run automated QC checks",
-    description:
-      "Execute the full quality control suite against your submission package before filing.",
   },
 ];
 
@@ -497,177 +466,6 @@ function FixContent() {
   );
 }
 
-function LearnContent({
-  onOpenEnablementCenter,
-}: {
-  onOpenEnablementCenter?: () => void;
-}) {
-  const completed = 4;
-  const total = 12;
-  const pct = Math.round((completed / total) * 100);
-
-  return (
-    <div className="py-6 px-5 space-y-4">
-      <div>
-        <p className="text-sm text-zinc-600">
-          {completed} of {total} modules complete
-        </p>
-        <div className="mt-2 h-1 w-full rounded-full bg-zinc-100">
-          <div
-            className="h-1 rounded-full bg-zinc-900 transition-all"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="border-t border-zinc-100 pt-4">
-        <p className="text-xs uppercase tracking-wider text-zinc-400 mb-2">
-          Up next
-        </p>
-        <p className="text-sm font-semibold text-zinc-900">
-          Advanced Gap Analysis Techniques
-        </p>
-        <p className="text-sm text-zinc-500 mt-1 leading-relaxed">
-          Learn how to leverage AnA 1.0 for automated gap detection and
-          resolution workflows.
-        </p>
-        <button className="flex items-center gap-1 text-sm text-blue-600 hover:underline mt-2">
-          Start module <ArrowRight className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      <div className="border-t border-zinc-100 pt-4">
-        <button
-          onClick={onOpenEnablementCenter}
-          className="text-sm text-zinc-400 hover:text-zinc-600"
-        >
-          Open Enablement Center
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function DiscoverContent() {
-  return (
-    <div className="py-6 px-5 space-y-4">
-      <p className="text-sm text-zinc-600 leading-relaxed">
-        Based on your current context, here are some capabilities you might find
-        useful.
-      </p>
-
-      <div className="space-y-0">
-        {MOCK_DISCOVERY_ITEMS.map((item, idx) => (
-          <button
-            key={item.title}
-            className={cn(
-              "w-full flex items-start justify-between gap-3 py-4 text-left",
-              idx < MOCK_DISCOVERY_ITEMS.length - 1 &&
-                "border-b border-zinc-100"
-            )}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-zinc-900">
-                {item.title}
-              </p>
-              <p className="text-sm text-zinc-500 mt-0.5 leading-relaxed">
-                {item.description}
-              </p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-zinc-300 shrink-0 mt-0.5" />
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// AgentsContent — live agent status and quick access
-// ---------------------------------------------------------------------------
-
-const AGENT_STATUS_ITEMS = [
-  {
-    system: 'Agent Swarm',
-    agents: '10 specialized agents',
-    status: 'Active',
-    description: 'Coordinator, Drafter, Researcher, QC, Compliance, Reviewer, Compiler, Validator, Evidence, Translator',
-  },
-  {
-    system: 'Multi-Agent Council',
-    agents: '4-stage pipeline',
-    status: 'Active',
-    description: 'Drafter → Statistician → Critic → Synthesizer quality pipeline',
-  },
-  {
-    system: 'Cognitive Ecosystem',
-    agents: '6 services',
-    status: 'Active',
-    description: 'Agent Runtime, Digital Twin, FHIR Validation, Global Dossier, Federated Learning, Cognitive Audit',
-  },
-  {
-    system: 'Innovation Platform',
-    agents: '8 services',
-    status: 'Active',
-    description: 'Delta Radar, Evidence Heatmap, Readiness Twin, Auto-Traceability, Adaptive Reviewer, Template Learning, Negotiation Logbook, Guardrails SDK',
-  },
-  {
-    system: 'ForesightAI',
-    agents: '5 engines',
-    status: 'Active',
-    description: 'Prediction Engine, Monte Carlo, Protocol Analyzer, Knowledge Graph, CSR Integration',
-  },
-  {
-    system: 'Intelligence',
-    agents: '6 services',
-    status: 'Active',
-    description: 'Pathway Intelligence (30+ agencies), Precedent Engine, Knowledge Graph, Confidence Scoring, Clinical & Strategic Intelligence',
-  },
-];
-
-function AgentsContent({ onOpenEnablementCenter }: { onOpenEnablementCenter?: () => void }) {
-  return (
-    <div className="py-6 px-5 space-y-4">
-      <p className="text-sm text-zinc-600 leading-relaxed">
-        35 AI agents and services are available for your workflows.
-      </p>
-
-      <div className="space-y-0">
-        {AGENT_STATUS_ITEMS.map((item, idx) => (
-          <div
-            key={item.system}
-            className={cn(
-              'py-4',
-              idx < AGENT_STATUS_ITEMS.length - 1 && 'border-b border-zinc-100'
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-zinc-900">{item.system}</p>
-              <span className="text-xs text-zinc-400">{item.status}</span>
-            </div>
-            <p className="text-xs text-zinc-400 mt-0.5">{item.agents}</p>
-            <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{item.description}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="border-t border-zinc-100 pt-4 space-y-2">
-        {onOpenEnablementCenter && (
-          <button
-            onClick={onOpenEnablementCenter}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Open AI Agents in Enablement Center
-          </button>
-        )}
-        <p className="text-xs text-zinc-400">
-          Configure agents, run setup wizard, or monitor active workflows.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // DrSageButton
 // ---------------------------------------------------------------------------
@@ -718,14 +516,6 @@ export function DrSagePanel({
         return <AnaContent />;
       case "fix":
         return <FixContent />;
-      case "learn":
-        return (
-          <LearnContent onOpenEnablementCenter={onOpenEnablementCenter} />
-        );
-      case "whatelse":
-        return <DiscoverContent />;
-      case "agents":
-        return <AgentsContent onOpenEnablementCenter={onOpenEnablementCenter} />;
       default:
         return <HelpContent />;
     }

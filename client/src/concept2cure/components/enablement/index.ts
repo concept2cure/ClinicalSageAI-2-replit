@@ -31,10 +31,6 @@ export {
   MODULE_FILTERS,
 } from './enablement-data';
 
-// Dual-AI Theater — live collaboration showcase
-export { DualAITheater, THEATER_SCENARIOS } from './DualAITheater';
-export type { TheaterMessage, TheaterScenario, DualAITheaterProps } from './DualAITheater';
-
 // First-Run Onboarding Experience
 export { default as FirstRunExperience } from './FirstRunExperience';
 
@@ -47,10 +43,6 @@ export {
 
 // Before/After Interactive Comparison
 export { BeforeAfterSlider, COMPARISON_PRESETS } from './BeforeAfterSlider';
-
-// Capability Constellation Map
-export { CapabilityConstellation, CAPABILITY_NODES } from './CapabilityConstellation';
-export type { CapabilityNode, CapabilityConstellationProps } from './CapabilityConstellation';
 
 // Micro-Missions
 export { MissionCard, MissionRunner, MissionBrowser, MICRO_MISSIONS } from './MicroMissions';
