@@ -301,6 +301,14 @@ const PlatformHome = lazy(() =>
   import('./components/home/PlatformHome')
 );
 
+// Artifacts Gallery — Claude.ai-style browsable artifact gallery
+const ArtifactsGalleryPage = lazy(() =>
+  import('./pages/ArtifactsGallery')
+);
+
+// Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
+import { ProjectSidebar } from './components/workspace/ProjectSidebar';
+
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   capa: CAPAManagementPanel,
@@ -386,7 +394,8 @@ type LayoutMode =
   | 'client-onboarding'
   | 'knowledge-base'
   | 'project-knowledge'
-  | 'legal-center';
+  | 'legal-center'
+  | 'artifacts';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1436,6 +1445,7 @@ export const ZenApp: React.FC = () => {
               'project-knowledge': 'project-knowledge',
               'legal-center': 'legal-center',
               'snowglobe': 'snowglobe',
+              'artifacts': 'artifacts',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1570,6 +1580,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'legal-center':
               setLayoutMode('legal-center');
+              break;
+            case 'artifacts':
+              setLayoutMode('artifacts');
               break;
             default:
               break;
@@ -2638,6 +2651,15 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Legal Center — IP, contracts, regulatory law ── */}
+          {/* Artifacts Gallery — browsable outputs and templates */}
+          {!embeddedModule && layoutMode === 'artifacts' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-artifacts">
+              <Suspense fallback={<ModuleLoadingFallback />}>
+                <ArtifactsGalleryPage />
+              </Suspense>
+            </div>
+          )}
+
           {!embeddedModule && layoutMode === 'legal-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
@@ -2787,129 +2809,48 @@ export const ZenApp: React.FC = () => {
             </Suspense>
           )}
 
-          {/* ── Project Workspace — entered by clicking a project card ──────── */}
+          {/* ── Project Workspace — Claude.ai-style project view ──────── */}
           {!embeddedModule && layoutMode === 'workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
-              {/* ── Project Header Strip (two-line) ────────────────────── */}
-              <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-4 py-2">
-                {/* Row 1: nav + name + type + panel toggles */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-zinc-400 hover:text-zinc-700 transition-colors text-xs mr-1 flex-shrink-0"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Projects</span>
-                  </button>
-                  <div className="w-px h-4 bg-zinc-200 flex-shrink-0" />
+              {/* ── Project Header — Claude.ai style: breadcrumb + title + star ── */}
+              <div className="flex-shrink-0 bg-white px-6 pt-6 pb-4">
+                {/* Breadcrumb */}
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 transition-colors mb-3"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  All projects
+                </button>
 
-                  {/* Type badge */}
-                  {activeProject &&
-                    (() => {
-                      const typeColors: Record<string, { bg: string; text: string }> = {
-                        '510K': { bg: 'bg-blue-50', text: 'text-blue-700' },
-                        IND: { bg: 'bg-violet-50', text: 'text-violet-700' },
-                        NDA: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                        BLA: { bg: 'bg-teal-50', text: 'text-teal-700' },
-                        PMA: { bg: 'bg-orange-50', text: 'text-orange-700' },
-                        CER: { bg: 'bg-pink-50', text: 'text-pink-700' },
-                        MAA: { bg: 'bg-indigo-50', text: 'text-indigo-700' },
-                      };
-                      const tc = typeColors[activeProject.type] ?? {
-                        bg: 'bg-zinc-50',
-                        text: 'text-zinc-600',
-                      };
-                      return (
-                        <span
-                          className={cn(
-                            'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide flex-shrink-0',
-                            tc.bg,
-                            tc.text
-                          )}
-                        >
-                          {activeProject.type}
-                        </span>
-                      );
-                    })()}
-
-                  {/* Project name */}
-                  <h2 className="font-semibold text-zinc-900 text-sm truncate min-w-0 flex-1">
-                    {activeProject?.name || 'Untitled Project'}
-                  </h2>
-
-                  {/* Edit project button */}
-                  {activeProject && (
-                    <button
-                      onClick={() => setEditProjectOpen(true)}
-                      title="Edit project metadata"
-                      className="flex-shrink-0 p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-                    >
-                      <PenLine className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-
-                  <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
-                    {(['files', 'outputs', 'instructions'] as const).map(tab => {
-                      const cfg = {
-                        files: { icon: Upload, label: 'Files', active: 'bg-blue-50 text-blue-700' },
-                        outputs: {
-                          icon: Layers,
-                          label: 'Outputs',
-                          active: 'bg-violet-50 text-violet-700',
-                        },
-                        instructions: {
-                          icon: PenLine,
-                          label: 'Instructions',
-                          active: 'bg-amber-50 text-amber-700',
-                        },
-                      }[tab];
-                      const Icon = cfg.icon;
-                      const isActive = workspacePanelOpen && workspacePanelTab === tab;
-                      return (
-                        <button
-                          key={tab}
-                          onClick={() => {
-                            if (isActive) {
-                              setWorkspacePanelOpen(false);
-                            } else {
-                              setWorkspacePanelTab(tab);
-                              setWorkspacePanelOpen(true);
-                            }
-                          }}
-                          className={cn(
-                            'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
-                            isActive
-                              ? cfg.active
-                              : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
-                          )}
-                        >
-                          <Icon className="w-3 h-3" />
-                          <span className="hidden sm:inline">{cfg.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Row 2: sponsor · product · region (only when present) */}
-                {(activeProject?.sponsor || activeProject?.product || activeProject?.region) && (
-                  <div className="flex items-center gap-1.5 mt-0.5 pl-[calc(3.5rem)] text-xs text-zinc-400">
-                    {[activeProject?.sponsor, activeProject?.product]
-                      .filter(Boolean)
-                      .map((v, i) => (
-                        <React.Fragment key={i}>
-                          {i > 0 && <span className="text-zinc-200">·</span>}
-                          <span className="truncate max-w-[140px]">{v}</span>
-                        </React.Fragment>
-                      ))}
-                    {activeProject?.region && (
-                      <span className="ml-0.5 inline-flex items-center px-1.5 py-0 rounded border border-zinc-200 text-zinc-400 bg-zinc-50 text-[10px]">
-                        {activeProject.region}
-                      </span>
+                {/* Project title + actions */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-xl font-semibold text-zinc-900 truncate">
+                      {activeProject?.name || 'Untitled Project'}
+                    </h1>
+                    {activeProject?.description && (
+                      <p className="text-sm text-zinc-500 mt-1 line-clamp-2">{activeProject.description}</p>
                     )}
                   </div>
-                )}
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-4">
+                    <button
+                      onClick={() => setEditProjectOpen(true)}
+                      title="Project settings"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                    >
+                      <PenLine className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-1.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                      title="Star project"
+                    >
+                      <Star className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
+              {/* Removed old tab toggles — ProjectSidebar now handles Context/Instructions/Files */}
 
               {/* ── Workspace body: AnA chat + right panel ───────────── */}
               <div className="flex-1 flex min-h-0">
@@ -2933,186 +2874,13 @@ export const ZenApp: React.FC = () => {
                   }
                 />
 
-                {/* Right panel: Files / Outputs / Instructions */}
-                {workspacePanelOpen && (
-                  <div className="w-72 xl:w-80 border-l border-zinc-100 bg-zinc-50/30 flex flex-col flex-shrink-0">
-                    {/* Tab bar */}
-                    <div className="flex items-center border-b border-zinc-100 flex-shrink-0 bg-white">
-                      {(['files', 'outputs', 'instructions'] as const).map(tab => {
-                        const cfg = {
-                          files: {
-                            icon: Upload,
-                            label: 'Files',
-                            active: 'border-blue-500 text-blue-700',
-                          },
-                          outputs: {
-                            icon: Layers,
-                            label: 'Outputs',
-                            active: 'border-violet-500 text-violet-700',
-                          },
-                          instructions: {
-                            icon: PenLine,
-                            label: 'Instructions',
-                            active: 'border-amber-500 text-amber-700',
-                          },
-                        }[tab];
-                        const Icon = cfg.icon;
-                        return (
-                          <button
-                            key={tab}
-                            onClick={() => setWorkspacePanelTab(tab)}
-                            className={cn(
-                              'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors border-b-2',
-                              workspacePanelTab === tab
-                                ? cfg.active
-                                : 'border-transparent text-zinc-400 hover:text-zinc-600'
-                            )}
-                          >
-                            <Icon className="w-3 h-3" />
-                            {cfg.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* ── Files tab ── */}
-                    {workspacePanelTab === 'files' && (
-                      <div className="flex-1 flex flex-col min-h-0">
-                        <ProjectFilesCompact projectId={activeProjectId ?? null} />
-                      </div>
-                    )}
-
-                    {/* ── Outputs + Run Log tab ── */}
-                    {workspacePanelTab === 'outputs' && (
-                      <div className="flex-1 overflow-y-auto zen-scroll">
-                        {/* Run log — in-flight and recent actions */}
-                        {runLog.length > 0 && (
-                          <div className="p-3 border-b border-zinc-100">
-                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                              Activity
-                            </p>
-                            <div className="space-y-1.5">
-                              {runLog.slice(0, 8).map(entry => (
-                                <div
-                                  key={entry.id}
-                                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white border border-zinc-100"
-                                >
-                                  {entry.status === 'running' ? (
-                                    <Loader2 className="w-3 h-3 text-blue-500 animate-spin flex-shrink-0" />
-                                  ) : entry.status === 'done' ? (
-                                    <div className="w-3 h-3 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    </div>
-                                  ) : (
-                                    <div className="w-3 h-3 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-medium text-zinc-700 truncate">
-                                      {entry.label}
-                                    </p>
-                                    <p className="text-[10px] text-zinc-400 capitalize">
-                                      {entry.status}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Artifacts */}
-                        {projectArtifacts.length === 0 &&
-                        (workspaceSummary?.recent?.artifacts?.length ?? 0) === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                            <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center mb-3">
-                              <Layers className="w-4 h-4 text-zinc-400" />
-                            </div>
-                            <p className="text-xs font-medium text-zinc-600 mb-1">No outputs yet</p>
-                            <p className="text-[11px] text-zinc-400 max-w-[160px] leading-relaxed">
-                              Run a workflow or ask RI to draft a document.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="p-3 space-y-1.5">
-                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider px-1 mb-2">
-                              Generated
-                            </p>
-                            {[...projectArtifacts, ...(workspaceSummary?.recent?.artifacts ?? [])]
-                              .filter(
-                                (a: any, i: number, arr: any[]) =>
-                                  arr.findIndex((x: any) => x.id === a.id) === i
-                              )
-                              .slice(0, 15)
-                              .map((a: any) => (
-                                <div
-                                  key={a.id}
-                                  className="flex items-start gap-2 p-2.5 rounded-xl border border-zinc-100 bg-white hover:border-zinc-200 transition-all cursor-default"
-                                >
-                                  <div className="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <FileText className="w-3 h-3 text-violet-600" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-medium text-zinc-900 truncate leading-tight">
-                                      {a.title || a.type}
-                                    </p>
-                                    <p className="text-[10px] text-zinc-400 truncate">
-                                      {a.type}
-                                      {a.status ? ` · ${a.status}` : ''}
-                                    </p>
-                                  </div>
-                                  <a
-                                    href={a.downloadUrl || a.url || '#'}
-                                    download={a.title || a.type}
-                                    onClick={e => {
-                                      if (!a.downloadUrl && !a.url) e.preventDefault();
-                                    }}
-                                    className="flex-shrink-0 p-1 rounded text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
-                                    title="Download"
-                                  >
-                                    <Download className="w-3.5 h-3.5" />
-                                  </a>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ── Instructions tab ── */}
-                    {workspacePanelTab === 'instructions' && (
-                      <div className="flex-1 overflow-y-auto zen-scroll">
-                        {workspaceKnowledge.isLoading ? (
-                          <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-5 h-5 text-zinc-300 animate-spin" />
-                          </div>
-                        ) : (
-                          <div className="p-3">
-                            <div className="mb-3">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                <p className="text-xs font-semibold text-zinc-700">
-                                  Project Instructions
-                                </p>
-                              </div>
-                              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                                These instructions guide Regulatory Intelligence for every
-                                conversation in this project.
-                              </p>
-                            </div>
-                            <CustomInstructions
-                              value={workspaceKnowledge.knowledge?.customInstructions || ''}
-                              onChange={workspaceKnowledge.updateCustomInstructions}
-                              projectType={activeProject?.type}
-                              defaultOpen={!!workspaceKnowledge.knowledge?.customInstructions}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Right sidebar: Claude.ai-style (Context, Instructions, Files) */}
+                <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
+                  <ProjectSidebar
+                    projectId={activeProjectId ?? null}
+                    projectType={activeProject?.type}
+                  />
+                </div>
               </div>
             </div>
           )}

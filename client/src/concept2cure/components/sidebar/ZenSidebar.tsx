@@ -40,6 +40,7 @@ import {
   Scale,
   Rocket,
   Beaker,
+  Layers,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -327,6 +328,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <Users className="w-4 h-4" />
         </button>
         <button
+          onClick={() => onNavigate?.('artifacts')}
+          aria-label="Artifacts"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'artifacts' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Layers className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => onNavigate?.('knowledge-base')}
           aria-label="Knowledge Base"
           className={cn(
@@ -532,6 +543,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Submissions · Workflows · Ops"
               active={activeNavId === 'command-center'}
               onClick={() => onNavigate?.('command-center')}
+            />
+            <NavItem
+              icon={<Layers className="w-3.5 h-3.5" />}
+              label="Artifacts"
+              subtitle="Outputs · Documents · Templates"
+              active={activeNavId === 'artifacts'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('artifacts')}
             />
             <NavItem
               icon={<Upload className="w-3.5 h-3.5" />}
