@@ -6168,6 +6168,14 @@ async function startServer() {
   }
 
   try {
+    const globalComplianceRoutes = await import('./routes/global-compliance.js');
+    app.use('/api/compliance', globalComplianceRoutes.default);
+    console.log('✅ Global Regulatory Compliance routes mounted at /api/compliance');
+  } catch (error) {
+    console.error('❌ Failed to mount Global Compliance routes:', error);
+  }
+
+  try {
     const docUnderstandingRoutes = await import('./routes/document-understanding.ts');
     app.use('/api/document-understanding', docUnderstandingRoutes.default);
     console.log('✅ Document Understanding routes mounted at /api/document-understanding');
