@@ -6,22 +6,52 @@ interface GetQueryFnOptions {
   on401?: 'throw' | 'returnNull';
 }
 
+// Cache localStorage reads to avoid repeated lookups on every API call.
+// Invalidated on storage events (other tabs) and re-read lazily.
+let _cachedOrgId: string | null = null;
+let _cachedAuthToken: string | null = null;
+
+function getCachedOrgId(): string {
+  if (!_cachedOrgId) {
+    _cachedOrgId =
+      localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+  }
+  return _cachedOrgId;
+}
+
+function getCachedAuthToken(): string | null {
+  if (_cachedAuthToken === null) {
+    _cachedAuthToken =
+      localStorage.getItem('token') ||
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('auth_token') ||
+      '';
+  }
+  return _cachedAuthToken || null;
+}
+
+// Invalidate cache when localStorage changes (login/logout/org switch)
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', () => {
+    _cachedOrgId = null;
+    _cachedAuthToken = null;
+  });
+}
+
+/** Force-refresh the cached org/auth values (call after login or org switch). */
+export function invalidateApiCache() {
+  _cachedOrgId = null;
+  _cachedAuthToken = null;
+}
+
 export const apiRequest = async (
   method: ApiRequestMethod,
   url: string,
   body?: any,
   customHeaders?: Record<string, string>
 ): Promise<Response> => {
-  // Module-level: cannot use React hooks here. Reads from localStorage
-  // which is synced by TenantProvider. Components should use useTenantContext() directly.
-  const organizationId =
-    localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-
-  // Get auth token from localStorage (stored by authService on login)
-  const authToken =
-    localStorage.getItem('token') ||
-    localStorage.getItem('authToken') ||
-    localStorage.getItem('auth_token');
+  const organizationId = getCachedOrgId();
+  const authToken = getCachedAuthToken();
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -59,13 +89,8 @@ export const apiRequest = async (
 export const getQueryFn = (options: GetQueryFnOptions = {}) => {
   return async ({ queryKey }: { queryKey: string[] }) => {
     const [url] = queryKey;
-    // Module-level: cannot use React hooks. Synced by TenantProvider.
-    const organizationId =
-      localStorage.getItem('organizationId') ||
-      localStorage.getItem('currentOrganizationId') ||
-      '1';
     const response = await apiRequest('GET', url, undefined, {
-      'x-organization-id': organizationId,
+      'x-organization-id': getCachedOrgId(),
     });
 
     if (response.status === 401) {
@@ -89,7 +114,13 @@ export const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // Keep unused data for 10 minutes before GC
+      refetchOnWindowFocus: false, // Avoid unnecessary refetches on tab switch
+      refetchOnReconnect: true, // Refetch after network recovery
       queryFn: getQueryFn(),
+    },
+    mutations: {
+      retry: 0, // Don't auto-retry mutations
     },
   },
 });

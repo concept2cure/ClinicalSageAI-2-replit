@@ -12,6 +12,7 @@
 
 import express from 'express';
 import { pool } from '../db';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
 
@@ -258,14 +259,14 @@ const DEVICE_510K_SECTIONS = {
  * GET /api/cortex/advisory/:projectId
  * Get comprehensive advisory analysis for a project
  */
-router.get('/advisory/:projectId', async (req, res) => {
-  try {
-    const { projectId } = req.params;
+router.get('/advisory/:projectId', asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
 
     // Get project context
     const projectResult = await pool.query(
       `
-      SELECT * FROM projects WHERE id = $1
+      SELECT id, name, submission_type, therapeutic_area, phase, current_stage, metadata
+      FROM projects WHERE id = $1
     `,
       [projectId]
     );
@@ -280,7 +281,8 @@ router.get('/advisory/:projectId', async (req, res) => {
     // Get project memory
     const memoryResult = await pool.query(
       `
-      SELECT * FROM lumen_data_atoms
+      SELECT id, atom_type, content, created_at
+      FROM lumen_data_atoms
       WHERE source_type = 'project_memory'
         AND source_id LIKE $1
       ORDER BY created_at DESC
@@ -292,7 +294,8 @@ router.get('/advisory/:projectId', async (req, res) => {
     // Query Cortex for relevant patterns
     const patternsResult = await pool.query(
       `
-      SELECT * FROM lumen_data_atoms
+      SELECT id, atom_type, title, content, structured_data, confidence
+      FROM lumen_data_atoms
       WHERE atom_type IN ('rejection_pattern', 'proactive_guidance')
         AND (tags @> $1::text[] OR tags @> $2::text[])
       ORDER BY confidence DESC
@@ -405,11 +408,7 @@ router.get('/advisory/:projectId', async (req, res) => {
       })),
       confidence: 85,
     });
-  } catch (error) {
-    console.error('Advisory error:', error);
-    res.status(500).json({ error: 'Failed to generate advisory' });
-  }
-});
+}));
 
 /**
  * GET /api/cortex/pyramid/:submissionType
@@ -435,117 +434,109 @@ router.get('/pyramid/:submissionType', async (req, res) => {
  * GET /api/cortex/patterns
  * Get rejection patterns from the knowledge base
  */
-router.get('/patterns', async (req, res) => {
-  try {
-    const { submissionType, category, limit = 50 } = req.query;
+router.get('/patterns', asyncHandler(async (req, res) => {
+  const { submissionType, category, limit = 50 } = req.query;
 
-    let query = `
-      SELECT * FROM lumen_data_atoms
-      WHERE atom_type = 'rejection_pattern'
-    `;
-    const params = [];
-    let paramIndex = 1;
+  let query = `
+    SELECT id, title, content, structured_data, confidence
+    FROM lumen_data_atoms
+    WHERE atom_type = 'rejection_pattern'
+  `;
+  const params = [];
+  let paramIndex = 1;
 
-    if (submissionType) {
-      query += ` AND tags @> $${paramIndex}::text[]`;
-      params.push([submissionType]);
-      paramIndex++;
-    }
-
-    if (category) {
-      query += ` AND structured_data->>'category' = $${paramIndex}`;
-      params.push(category);
-      paramIndex++;
-    }
-
-    query += ` ORDER BY confidence DESC LIMIT $${paramIndex}`;
-    params.push(parseInt(limit as string, 10));
-
-    const result = await pool.query(query, params);
-
-    res.json({
-      patterns: result.rows.map(r => ({
-        id: r.id,
-        submissionType: r.structured_data?.submission_type,
-        category: r.structured_data?.category,
-        reason: r.content,
-        severity: r.structured_data?.severity,
-        pyramidLevel: r.structured_data?.pyramid_level,
-        guidance: r.structured_data?.guidance,
-        sourceDocument: r.structured_data?.source_document,
-        confidence: r.confidence,
-      })),
-      total: result.rows.length,
-    });
-  } catch (error) {
-    console.error('Patterns error:', error);
-    res.status(500).json({ error: 'Failed to fetch patterns' });
+  if (submissionType) {
+    query += ` AND tags @> $${paramIndex}::text[]`;
+    params.push([submissionType]);
+    paramIndex++;
   }
-});
+
+  if (category) {
+    query += ` AND structured_data->>'category' = $${paramIndex}`;
+    params.push(category);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY confidence DESC LIMIT $${paramIndex}`;
+  params.push(parseInt(limit as string, 10));
+
+  const result = await pool.query(query, params);
+
+  res.json({
+    patterns: result.rows.map(r => ({
+      id: r.id,
+      submissionType: r.structured_data?.submission_type,
+      category: r.structured_data?.category,
+      reason: r.content,
+      severity: r.structured_data?.severity,
+      pyramidLevel: r.structured_data?.pyramid_level,
+      guidance: r.structured_data?.guidance,
+      sourceDocument: r.structured_data?.source_document,
+      confidence: r.confidence,
+    })),
+    total: result.rows.length,
+  });
+}));
 
 /**
  * GET /api/cortex/guidance
  * Get proactive guidance from the knowledge base
  */
-router.get('/guidance', async (req, res) => {
-  try {
-    const { submissionType, pyramidLevel, limit = 20 } = req.query;
+router.get('/guidance', asyncHandler(async (req, res) => {
+  const { submissionType, pyramidLevel, limit = 20 } = req.query;
 
-    let query = `
-      SELECT * FROM lumen_data_atoms
-      WHERE atom_type = 'proactive_guidance'
-    `;
-    const params = [];
-    let paramIndex = 1;
+  let query = `
+    SELECT id, title, content, structured_data, confidence
+    FROM lumen_data_atoms
+    WHERE atom_type = 'proactive_guidance'
+  `;
+  const params = [];
+  let paramIndex = 1;
 
-    if (submissionType) {
-      query += ` AND tags @> $${paramIndex}::text[]`;
-      params.push([submissionType]);
-      paramIndex++;
-    }
-
-    if (pyramidLevel) {
-      query += ` AND tags @> $${paramIndex}::text[]`;
-      params.push([pyramidLevel]);
-      paramIndex++;
-    }
-
-    query += ` ORDER BY confidence DESC LIMIT $${paramIndex}`;
-    params.push(parseInt(limit as string, 10));
-
-    const result = await pool.query(query, params);
-
-    res.json({
-      guidance: result.rows.map(r => ({
-        id: r.id,
-        title: r.title,
-        content: r.content,
-        submissionType: r.structured_data?.submission_type,
-        pyramidLevel: r.structured_data?.pyramid_level,
-        preventionSteps: r.structured_data?.prevention_steps,
-        references: r.structured_data?.references,
-        confidence: r.confidence,
-      })),
-      total: result.rows.length,
-    });
-  } catch (error) {
-    console.error('Guidance error:', error);
-    res.status(500).json({ error: 'Failed to fetch guidance' });
+  if (submissionType) {
+    query += ` AND tags @> $${paramIndex}::text[]`;
+    params.push([submissionType]);
+    paramIndex++;
   }
-});
+
+  if (pyramidLevel) {
+    query += ` AND tags @> $${paramIndex}::text[]`;
+    params.push([pyramidLevel]);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY confidence DESC LIMIT $${paramIndex}`;
+  params.push(parseInt(limit as string, 10));
+
+  const result = await pool.query(query, params);
+
+  res.json({
+    guidance: result.rows.map(r => ({
+      id: r.id,
+      title: r.title,
+      content: r.content,
+      submissionType: r.structured_data?.submission_type,
+      pyramidLevel: r.structured_data?.pyramid_level,
+      preventionSteps: r.structured_data?.prevention_steps,
+      references: r.structured_data?.references,
+      confidence: r.confidence,
+    })),
+    total: result.rows.length,
+  });
+}));
 
 /**
  * POST /api/cortex/assess
  * Assess a specific action for regulatory risks
  */
-router.post('/assess', async (req, res) => {
-  try {
-    const { projectId, actionType, actionDetails } = req.body;
+router.post('/assess', asyncHandler(async (req, res) => {
+  const { projectId, actionType, actionDetails } = req.body;
 
     // Query for relevant rejection patterns
     const patternsResult = await pool.query(
       `
-      SELECT * FROM lumen_data_atoms
+      SELECT id, title, content, structured_data, confidence
+      FROM lumen_data_atoms
       WHERE atom_type = 'rejection_pattern'
         AND (
           content ILIKE $1 OR
@@ -598,122 +589,103 @@ router.post('/assess', async (req, res) => {
       concerns: concerns.slice(0, 5),
       recommendations: recommendations.slice(0, 3),
     });
-  } catch (error) {
-    console.error('Assessment error:', error);
-    res.status(500).json({ error: 'Failed to assess action' });
-  }
-});
+}));
 
 /**
  * POST /api/cortex/memory
  * Record a project event in memory
  */
-router.post('/memory', async (req, res) => {
-  try {
-    const { projectId, eventType, description, learnings = [], metadata = {} } = req.body;
+router.post('/memory', asyncHandler(async (req, res) => {
+  const { projectId, eventType, description, learnings = [], metadata = {} } = req.body;
 
-    if (!projectId || !eventType || !description) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const result = await pool.query(
-      `
-      INSERT INTO lumen_data_atoms
-      (id, organization_id, source_type, source_id, atom_type, title, content,
-       structured_data, tags, confidence, status, created_at, updated_at)
-      VALUES (gen_random_uuid(), 1, 'project_memory', $1, $2, $3, $4, $5, $6, 0.85, 'active', NOW(), NOW())
-      RETURNING id
-    `,
-      [
-        `PROJ:${projectId}:${Date.now()}`,
-        eventType,
-        `${eventType}: ${description.substring(0, 100)}`,
-        description,
-        JSON.stringify({ learnings, metadata }),
-        ['project_memory', eventType],
-      ]
-    );
-
-    res.json({
-      success: true,
-      memoryId: result.rows[0].id,
-    });
-  } catch (error) {
-    console.error('Memory error:', error);
-    res.status(500).json({ error: 'Failed to record memory' });
+  if (!projectId || !eventType || !description) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
-});
+
+  const result = await pool.query(
+    `
+    INSERT INTO lumen_data_atoms
+    (id, organization_id, source_type, source_id, atom_type, title, content,
+     structured_data, tags, confidence, status, created_at, updated_at)
+    VALUES (gen_random_uuid(), 1, 'project_memory', $1, $2, $3, $4, $5, $6, 0.85, 'active', NOW(), NOW())
+    RETURNING id
+  `,
+    [
+      `PROJ:${projectId}:${Date.now()}`,
+      eventType,
+      `${eventType}: ${description.substring(0, 100)}`,
+      description,
+      JSON.stringify({ learnings, metadata }),
+      ['project_memory', eventType],
+    ]
+  );
+
+  res.json({
+    success: true,
+    memoryId: result.rows[0].id,
+  });
+}));
 
 /**
  * GET /api/cortex/stats
  * Get Cortex intelligence statistics
  */
-router.get('/stats', async (req, res) => {
-  try {
-    const stats = await Promise.all([
-      pool.query(`SELECT COUNT(*) as count FROM lumen_data_atoms`),
-      pool.query(
-        `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE atom_type = 'rejection_pattern'`
-      ),
-      pool.query(
-        `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE atom_type = 'proactive_guidance'`
-      ),
-      pool.query(
-        `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE source_type = 'project_memory'`
-      ),
-      pool.query(`SELECT COUNT(*) as count FROM rag_knowledge_graph`),
-      pool.query(
-        `SELECT atom_type, COUNT(*) as count FROM lumen_data_atoms GROUP BY atom_type ORDER BY count DESC LIMIT 10`
-      ),
-    ]);
+router.get('/stats', asyncHandler(async (req, res) => {
+  const stats = await Promise.all([
+    pool.query(`SELECT COUNT(*) as count FROM lumen_data_atoms`),
+    pool.query(
+      `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE atom_type = 'rejection_pattern'`
+    ),
+    pool.query(
+      `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE atom_type = 'proactive_guidance'`
+    ),
+    pool.query(
+      `SELECT COUNT(*) as count FROM lumen_data_atoms WHERE source_type = 'project_memory'`
+    ),
+    pool.query(`SELECT COUNT(*) as count FROM rag_knowledge_graph`),
+    pool.query(
+      `SELECT atom_type, COUNT(*) as count FROM lumen_data_atoms GROUP BY atom_type ORDER BY count DESC LIMIT 10`
+    ),
+  ]);
 
-    res.json({
-      totalAtoms: parseInt(stats[0].rows[0].count),
-      rejectionPatterns: parseInt(stats[1].rows[0].count),
-      guidanceAtoms: parseInt(stats[2].rows[0].count),
-      projectMemoryEvents: parseInt(stats[3].rows[0].count),
-      knowledgeEdges: parseInt(stats[4].rows[0].count),
-      atomTypeDistribution: stats[5].rows,
-    });
-  } catch (error) {
-    console.error('Stats error:', error);
-    res.status(500).json({ error: 'Failed to fetch stats' });
-  }
-});
+  res.json({
+    totalAtoms: parseInt(stats[0].rows[0].count),
+    rejectionPatterns: parseInt(stats[1].rows[0].count),
+    guidanceAtoms: parseInt(stats[2].rows[0].count),
+    projectMemoryEvents: parseInt(stats[3].rows[0].count),
+    knowledgeEdges: parseInt(stats[4].rows[0].count),
+    atomTypeDistribution: stats[5].rows,
+  });
+}));
 
 /**
  * GET /api/cortex/similar-learnings
  * Get learnings from similar projects
  */
-router.get('/similar-learnings', async (req, res) => {
-  try {
-    const { submissionType, therapeuticArea } = req.query;
+router.get('/similar-learnings', asyncHandler(async (req, res) => {
+  const { submissionType, therapeuticArea } = req.query;
 
-    const result = await pool.query(
-      `
-      SELECT DISTINCT ON (source_id)
-        source_id, content, structured_data, created_at
-      FROM lumen_data_atoms
-      WHERE source_type = 'project_memory'
-        AND (tags @> $1::text[] OR tags @> $2::text[])
-      ORDER BY source_id, created_at DESC
-      LIMIT 20
-    `,
-      [[submissionType || 'ind'], [therapeuticArea || 'oncology']]
-    );
+  const result = await pool.query(
+    `
+    SELECT DISTINCT ON (source_id)
+      source_id, content, structured_data, created_at
+    FROM lumen_data_atoms
+    WHERE source_type = 'project_memory'
+      AND (tags @> $1::text[] OR tags @> $2::text[])
+    ORDER BY source_id, created_at DESC
+    LIMIT 20
+  `,
+    [[submissionType || 'ind'], [therapeuticArea || 'oncology']]
+  );
 
-    res.json({
-      learnings: result.rows.map(r => ({
-        projectId: r.source_id.split(':')[1],
-        learning: r.content,
-        outcome: r.structured_data?.outcome || 'unknown',
-        timestamp: r.created_at,
-      })),
-    });
-  } catch (error) {
-    console.error('Similar learnings error:', error);
-    res.status(500).json({ error: 'Failed to fetch learnings' });
-  }
-});
+  res.json({
+    learnings: result.rows.map(r => ({
+      projectId: r.source_id.split(':')[1],
+      learning: r.content,
+      outcome: r.structured_data?.outcome || 'unknown',
+      timestamp: r.created_at,
+    })),
+  });
+}));
 
 export default router;

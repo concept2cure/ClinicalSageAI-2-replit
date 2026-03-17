@@ -66,8 +66,9 @@ export class CircuitBreaker {
     // Register in global registry
     circuitBreakers[name] = this;
 
-    // Start monitoring
+    // Start monitoring (unref so it doesn't prevent process exit)
     this.monitorTimer = setInterval(() => this.monitor(), this.options.monitorInterval);
+    this.monitorTimer.unref();
 
     this.logger.info('Circuit breaker initialized', {
       failureThreshold: this.options.failureThreshold,
@@ -179,7 +180,7 @@ export class CircuitBreaker {
   /**
    * Record a failure and open circuit if threshold reached
    */
-  private recordFailure(error: any) {
+  recordFailure(error: any) {
     this.failures++;
 
     this.logger.warn('Request failed', {
@@ -203,10 +204,11 @@ export class CircuitBreaker {
 
       this.logger.warn('Circuit opened due to failures');
 
-      // Schedule reset to HALF_OPEN state
+      // Schedule reset to HALF_OPEN state (unref so it doesn't prevent process exit)
       this.resetTimer = setTimeout(() => {
         this.halfOpen();
       }, this.options.resetTimeout);
+      this.resetTimer.unref();
     }
   }
 
@@ -336,28 +338,13 @@ export function createCircuitBreakerMiddleware(
       return;
     }
 
-    // Override res.send/json to track failures
-    const originalSend = res.send;
-    res.send = function (...args: any[]): Response {
-      // Check if response indicates failure (5xx)
-      if (res.statusCode >= 500) {
-        // Count as a circuit failure
-        logger.warn(`Circuit breaker detected server error: ${res.statusCode}`);
-        // Can't call private recordFailure method directly
-      }
-
-      return originalSend.apply(res, args);
-    };
-
+    // Track 5xx responses as circuit breaker failures
+    const originalJson = res.json.bind(res);
     res.json = function (body?: any): Response {
-      // Check if response indicates failure (5xx)
       if (res.statusCode >= 500) {
-        // Count as a circuit failure
-        logger.warn(`Circuit breaker detected server error in JSON response: ${res.statusCode}`);
-        // Can't call private recordFailure method directly
+        breaker.recordFailure(new Error(`Server error ${res.statusCode} on ${req.method} ${req.path}`));
       }
-
-      return res.send(JSON.stringify(body));
+      return originalJson(body);
     };
 
     next();

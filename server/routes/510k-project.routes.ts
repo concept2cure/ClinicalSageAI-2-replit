@@ -13,6 +13,7 @@ import { db } from '../db';
 import { fda510kProjects, fda510kStageProgress, projects } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -20,23 +21,18 @@ const router = Router();
 router.use(create510kDeprecationNotice('/projects'));
 
 // Get available project templates
-router.get('/templates', async (req: Request, res: Response) => {
-  try {
-    const templates = await db.execute(sql`
-      SELECT * FROM fda_510k_project_templates
-      WHERE is_active = true
-      ORDER BY device_classification, template_name
-    `);
+router.get('/templates', asyncHandler(async (req: Request, res: Response) => {
+  const templates = await db.execute(sql`
+    SELECT id, template_name, device_classification, required_sections, optional_sections, testing_requirements, documentation_checklist, default_settings, is_active, created_at, updated_at FROM fda_510k_project_templates
+    WHERE is_active = true
+    ORDER BY device_classification, template_name
+  `);
 
-    res.json(templates.rows);
-  } catch (error) {
-    console.error('Error fetching templates:', error);
-    res.status(500).json({ error: 'Failed to fetch project templates' });
-  }
-});
+  res.json(templates.rows);
+}));
 
 // Create a new project with wizard data
-router.post('/create', async (req: Request, res: Response) => {
+router.post('/create', asyncHandler(async (req: Request, res: Response) => {
   const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
   const {
     projectName,
@@ -75,9 +71,8 @@ router.post('/create', async (req: Request, res: Response) => {
     });
   }
 
-  try {
-    // 1. First create the base project in projects table
-    const [baseProject] = await db
+  // 1. First create the base project in projects table
+  const [baseProject] = await db
       .insert(projects)
       .values({
         organizationId: organizationId,
@@ -239,7 +234,7 @@ router.post('/create', async (req: Request, res: Response) => {
     // 5. If template was selected, populate initial data from template
     if (templateId && templateId !== '' && !isNaN(parseInt(templateId))) {
       const templateResult = await db.execute(sql`
-        SELECT * FROM fda_510k_project_templates
+        SELECT id, template_name, required_sections, optional_sections, testing_requirements, documentation_checklist, default_settings FROM fda_510k_project_templates
         WHERE id = ${parseInt(templateId)}
       `);
 
@@ -268,170 +263,151 @@ router.post('/create', async (req: Request, res: Response) => {
       }
     }
 
-    res.json({
-      success: true,
-      projectId: baseProject.id,
-      message: 'Project created successfully',
-    });
-  } catch (error) {
-    console.error('Error creating project:', error);
-    res.status(500).json({ error: 'Failed to create project' });
-  }
-});
+  res.json({
+    success: true,
+    projectId: baseProject.id,
+    message: 'Project created successfully',
+  });
+}));
 
 // Get project stage data
-router.get('/:projectId/stage', async (req: Request, res: Response) => {
+router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
 
-  try {
-    // Get FDA 510k project stage information
-    const projectResult = await db.execute(sql`
-      SELECT
-        p.id,
-        p.project_id,
-        p.device_name,
-        p.current_stage,
-        p.current_stage_progress,
-        p.overall_progress,
-        p.status,
-        p.has_software,
-        p.has_biocompatibility,
-        p.has_clinical_data,
-        p.metadata
-      FROM fda_510k_projects p
-      WHERE p.project_id = ${parseInt(projectId)}
-      AND p.organization_id = ${organizationId}
-      LIMIT 1
-    `);
+  // Get FDA 510k project stage information
+  const projectResult = await db.execute(sql`
+    SELECT
+      p.id,
+      p.project_id,
+      p.device_name,
+      p.current_stage,
+      p.current_stage_progress,
+      p.overall_progress,
+      p.status,
+      p.has_software,
+      p.has_biocompatibility,
+      p.has_clinical_data,
+      p.metadata
+    FROM fda_510k_projects p
+    WHERE p.project_id = ${parseInt(projectId)}
+    AND p.organization_id = ${organizationId}
+    LIMIT 1
+  `);
 
-    if (!projectResult.rows || projectResult.rows.length === 0) {
-      return res.status(404).json({ error: 'FDA 510(k) project not found' });
-    }
-
-    const project = projectResult.rows[0] as any;
-
-    // Check for eSTAR and RTA status in metadata or settings
-    let estarStatus = 'not_started';
-    let rtaStatus = 'not_started';
-
-    // Check if this is the AeroSpire project (Stage 5)
-    if (project.current_stage === 5) {
-      estarStatus = 'in_progress';
-      rtaStatus = 'ready';
-    }
-
-    // Check project settings for eSTAR/RTA status
-    const settingsResult = await db.execute(sql`
-      SELECT settings
-      FROM projects
-      WHERE id = ${parseInt(projectId)}
-    `);
-
-    if (settingsResult.rows && settingsResult.rows.length > 0) {
-      const settings = (settingsResult.rows[0] as any).settings;
-      if (settings && typeof settings === 'object') {
-        estarStatus = settings.eSTARStatus || estarStatus;
-        rtaStatus = settings.rtaStatus || rtaStatus;
-      }
-    }
-
-    res.json({
-      id: project.id,
-      project_id: project.project_id,
-      device_name: project.device_name,
-      current_stage: project.current_stage,
-      current_stage_progress: project.current_stage_progress,
-      overall_progress: project.overall_progress,
-      status: project.status,
-      estar_status: estarStatus,
-      rta_status: rtaStatus,
-      has_software: project.has_software,
-      has_biocompatibility: project.has_biocompatibility,
-      has_clinical_data: project.has_clinical_data,
-    });
-  } catch (error) {
-    console.error('Error fetching project stage:', error);
-    res.status(500).json({ error: 'Failed to fetch project stage data' });
+  if (!projectResult.rows || projectResult.rows.length === 0) {
+    return res.status(404).json({ error: 'FDA 510(k) project not found' });
   }
-});
+
+  const project = projectResult.rows[0] as any;
+
+  // Check for eSTAR and RTA status in metadata or settings
+  let estarStatus = 'not_started';
+  let rtaStatus = 'not_started';
+
+  // Check if this is the AeroSpire project (Stage 5)
+  if (project.current_stage === 5) {
+    estarStatus = 'in_progress';
+    rtaStatus = 'ready';
+  }
+
+  // Check project settings for eSTAR/RTA status
+  const settingsResult = await db.execute(sql`
+    SELECT settings
+    FROM projects
+    WHERE id = ${parseInt(projectId)}
+  `);
+
+  if (settingsResult.rows && settingsResult.rows.length > 0) {
+    const settings = (settingsResult.rows[0] as any).settings;
+    if (settings && typeof settings === 'object') {
+      estarStatus = settings.eSTARStatus || estarStatus;
+      rtaStatus = settings.rtaStatus || rtaStatus;
+    }
+  }
+
+  res.json({
+    id: project.id,
+    project_id: project.project_id,
+    device_name: project.device_name,
+    current_stage: project.current_stage,
+    current_stage_progress: project.current_stage_progress,
+    overall_progress: project.overall_progress,
+    status: project.status,
+    estar_status: estarStatus,
+    rta_status: rtaStatus,
+    has_software: project.has_software,
+    has_biocompatibility: project.has_biocompatibility,
+    has_clinical_data: project.has_clinical_data,
+  });
+}));
 
 // Get project details
-router.get('/:projectId', async (req: Request, res: Response) => {
+router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
 
-  try {
-    const [project] = await db
-      .select()
-      .from(fda510kProjects)
-      .where(
-        and(
-          eq(fda510kProjects.id, parseInt(projectId)),
-          eq(fda510kProjects.organizationId, organizationId)
-        )
-      );
+  const [project] = await db
+    .select()
+    .from(fda510kProjects)
+    .where(
+      and(
+        eq(fda510kProjects.id, parseInt(projectId)),
+        eq(fda510kProjects.organizationId, organizationId)
+      )
+    );
 
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    // Get team assignments using SQL
-    const teamAssignments = await db.execute(sql`
-      SELECT * FROM fda_510k_team_assignments
-      WHERE project_id = ${parseInt(projectId)}
-    `);
-
-    // Get initial data forms using SQL
-    const dataForms = await db.execute(sql`
-      SELECT * FROM fda_510k_initial_data_forms
-      WHERE project_id = ${parseInt(projectId)}
-    `);
-
-    res.json({
-      project,
-      teamAssignments: teamAssignments.rows,
-      dataForms: dataForms.rows,
-    });
-  } catch (error) {
-    console.error('Error fetching project:', error);
-    res.status(500).json({ error: 'Failed to fetch project details' });
+  if (!project) {
+    return res.status(404).json({ error: 'Project not found' });
   }
-});
+
+  // Get team assignments using SQL
+  const teamAssignments = await db.execute(sql`
+    SELECT id, project_id, user_id, role, permissions, assigned_sections, created_at, updated_at FROM fda_510k_team_assignments
+    WHERE project_id = ${parseInt(projectId)}
+  `);
+
+  // Get initial data forms using SQL
+  const dataForms = await db.execute(sql`
+    SELECT id, project_id, form_type, form_data, is_complete, completed_at, created_at, updated_at FROM fda_510k_initial_data_forms
+    WHERE project_id = ${parseInt(projectId)}
+  `);
+
+  res.json({
+    project,
+    teamAssignments: teamAssignments.rows,
+    dataForms: dataForms.rows,
+  });
+}));
 
 // Update project team assignments
-router.post('/:projectId/team', async (req: Request, res: Response) => {
+router.post('/:projectId/team', asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { assignments } = req.body;
 
-  try {
-    // Delete existing assignments using SQL
-    await db.execute(sql`
-      DELETE FROM fda_510k_team_assignments
-      WHERE project_id = ${parseInt(projectId)}
-    `);
+  // Delete existing assignments using SQL
+  await db.execute(sql`
+    DELETE FROM fda_510k_team_assignments
+    WHERE project_id = ${parseInt(projectId)}
+  `);
 
-    // Insert new assignments
-    if (assignments && assignments.length > 0) {
-      for (const assignment of assignments) {
-        await db.execute(sql`
-          INSERT INTO fda_510k_team_assignments (project_id, user_id, role, permissions, assigned_sections)
-          VALUES (
-            ${parseInt(projectId)},
-            ${assignment.userId},
-            ${assignment.role},
-            ${JSON.stringify(assignment.permissions || {})},
-            ${JSON.stringify(assignment.assignedSections || [])}
-          )
-        `);
-      }
+  // Insert new assignments
+  if (assignments && assignments.length > 0) {
+    for (const assignment of assignments) {
+      await db.execute(sql`
+        INSERT INTO fda_510k_team_assignments (project_id, user_id, role, permissions, assigned_sections)
+        VALUES (
+          ${parseInt(projectId)},
+          ${assignment.userId},
+          ${assignment.role},
+          ${JSON.stringify(assignment.permissions || {})},
+          ${JSON.stringify(assignment.assignedSections || [])}
+        )
+      `);
     }
-
-    res.json({ success: true, message: 'Team assignments updated' });
-  } catch (error) {
-    console.error('Error updating team:', error);
-    res.status(500).json({ error: 'Failed to update team assignments' });
   }
-});
+
+  res.json({ success: true, message: 'Team assignments updated' });
+}));
 
 export default router;

@@ -56,7 +56,11 @@ router.get('/regions/:orgId/config', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.orgId, 10);
     const result = await pool.query(
-      `SELECT * FROM regional_compliance_config WHERE organization_id = $1 ORDER BY region_code`,
+      `SELECT id, organization_id, region_code, framework_id, enabled, configuration,
+              audit_retention_years, required_languages, timezone_rule,
+              data_residency_required, data_residency_region, e_signature_required,
+              hash_algorithm, export_formats, created_at, updated_at
+       FROM regional_compliance_config WHERE organization_id = $1 ORDER BY region_code`,
       [orgId]
     );
     res.json({ success: true, data: result.rows });
@@ -136,7 +140,11 @@ router.post('/gap-analysis/:orgId', async (req: Request, res: Response) => {
     let currentConfig: any = {};
     try {
       const result = await pool.query(
-        `SELECT * FROM regional_compliance_config WHERE organization_id = $1 AND enabled = true`,
+        `SELECT id, organization_id, region_code, framework_id, enabled, configuration,
+                audit_retention_years, required_languages, timezone_rule,
+                data_residency_required, data_residency_region, e_signature_required,
+                hash_algorithm, export_formats, created_at, updated_at
+         FROM regional_compliance_config WHERE organization_id = $1 AND enabled = true`,
         [orgId]
       );
       currentConfig = {
@@ -176,7 +184,11 @@ router.get('/gdpr/:orgId/ropa', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.orgId, 10);
     const result = await pool.query(
-      `SELECT * FROM gdpr_processing_activities WHERE organization_id = $1 ORDER BY created_at DESC`,
+      `SELECT id, organization_id, name, purpose, lawful_basis, data_categories,
+              data_subject_categories, recipients, third_country_transfers,
+              retention_period_months, technical_measures, organizational_measures,
+              dpia_conducted, dpa_contact_info, created_at, updated_at
+       FROM gdpr_processing_activities WHERE organization_id = $1 ORDER BY created_at DESC`,
       [orgId]
     );
     res.json({ success: true, data: result.rows });
@@ -304,7 +316,10 @@ router.get('/gdpr/:orgId/dsr/overdue', async (req: Request, res: Response) => {
   try {
     const orgId = parseInt(req.params.orgId, 10);
     const result = await pool.query(
-      `SELECT * FROM gdpr_data_subject_requests
+      `SELECT id, organization_id, data_subject_id, request_type, status,
+              received_at, response_deadline, completed_at, response_details,
+              denial_reason, created_at
+       FROM gdpr_data_subject_requests
        WHERE organization_id = $1
          AND status NOT IN ('completed', 'denied')
          AND response_deadline < NOW()
@@ -454,7 +469,12 @@ router.get('/pharmacovigilance/:orgId/adverse-events', async (req: Request, res:
     const eventType = req.query.eventType;
     const projectId = req.query.projectId;
 
-    let query = `SELECT * FROM pv_adverse_events WHERE organization_id = $1`;
+    let query = `SELECT id, organization_id, project_id, event_type, patient_id,
+                        event_description, onset_date, report_date, seriousness_criteria,
+                        causality, outcome, reporter_type, country_of_occurrence,
+                        regulatory_reporting_deadline, reported_to_authorities,
+                        expedited_report_required, created_at
+                 FROM pv_adverse_events WHERE organization_id = $1`;
     const params: any[] = [orgId];
 
     if (eventType) {
@@ -482,7 +502,12 @@ router.get('/pharmacovigilance/:orgId/overdue-reports', async (req: Request, res
   try {
     const orgId = parseInt(req.params.orgId, 10);
     const result = await pool.query(
-      `SELECT * FROM pv_adverse_events
+      `SELECT id, organization_id, project_id, event_type, patient_id,
+              event_description, onset_date, report_date, seriousness_criteria,
+              causality, outcome, reporter_type, country_of_occurrence,
+              regulatory_reporting_deadline, reported_to_authorities,
+              expedited_report_required, created_at
+       FROM pv_adverse_events
        WHERE organization_id = $1
          AND reported_to_authorities = FALSE
          AND regulatory_reporting_deadline < NOW()

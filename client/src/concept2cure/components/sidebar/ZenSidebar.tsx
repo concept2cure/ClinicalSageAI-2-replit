@@ -28,6 +28,9 @@ import {
   BarChart3,
   GraduationCap,
   Building2,
+  Users,
+  FlaskConical,
+  BookOpen,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -281,6 +284,40 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         >
           <FolderOpen className="w-4 h-4" />
         </button>
+
+        {/* Core module icons */}
+        <div className="w-8 border-t border-zinc-200 my-1" />
+        <button
+          onClick={() => onNavigate?.('collaboration-hub')}
+          aria-label="Collaboration Hub"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'collaboration-hub' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Users className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('biostatistics')}
+          aria-label="Biostatistics"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'biostatistics' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <FlaskConical className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('training-center')}
+          aria-label="Training Center"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'training-center' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <BookOpen className="w-4 h-4" />
+        </button>
+
         <button
           onClick={onToggleCollapse}
           aria-label="Expand sidebar"
@@ -367,9 +404,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<PenLine className="w-3.5 h-3.5" />}
               label="Author"
-              subtitle="Dossier · Co-Author · CMC · Clinical"
+              subtitle="Dossier · eCTD · CMC"
               active={activeNavId === 'author'}
               onClick={() => onNavigate?.('author')}
+            />
+            <NavItem
+              icon={<Users className="w-3.5 h-3.5" />}
+              label="Collaboration"
+              subtitle="Threads · Reviews · Decisions"
+              active={activeNavId === 'collaboration-hub'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('collaboration-hub')}
             />
           </WorkspaceGroup>
 
@@ -378,9 +423,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<Search className="w-3.5 h-3.5" />}
               label="Intelligence"
-              subtitle="Alerts · Evidence · Precedents · Pathways"
+              subtitle="Evidence · Precedents · Alerts"
               active={activeNavId === 'intelligence-hub'}
               onClick={() => onNavigate?.('intelligence-hub')}
+            />
+            <NavItem
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="Biostatistics"
+              subtitle="Power · Endpoints · Design"
+              active={activeNavId === 'biostatistics'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('biostatistics')}
             />
           </WorkspaceGroup>
 
@@ -389,7 +442,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
               label="Review & Readiness"
-              subtitle="Quality · Compliance · SnowGlobe"
+              subtitle="Quality · Compliance · Audit"
               active={activeNavId === 'review-readiness'}
               onClick={() => onNavigate?.('review-readiness')}
             />
@@ -400,7 +453,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<Building2 className="w-3.5 h-3.5" />}
               label="Client Intelligence"
-              subtitle="Persona · Memory · Documents"
+              subtitle="Persona · Memory · Context"
               active={activeNavId === 'client-intelligence'}
               accentColor="violet"
               onClick={() => onNavigate?.('client-intelligence')}
@@ -408,7 +461,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<BarChart3 className="w-3.5 h-3.5" />}
               label="Command Center"
-              subtitle="Dashboard · Submissions · Workflows"
+              subtitle="Submissions · Workflows · Ops"
               active={activeNavId === 'command-center'}
               onClick={() => onNavigate?.('command-center')}
             />
@@ -417,6 +470,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="Academy"
               active={activeNavId === 'enablement-center'}
               onClick={() => onNavigate?.('enablement-center')}
+            />
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="Training Center"
+              subtitle="Onboarding · Courses · Guides"
+              active={activeNavId === 'training-center'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('training-center')}
             />
           </WorkspaceGroup>
 

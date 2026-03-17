@@ -341,7 +341,14 @@ router.get('/dose-escalation/studies', async (req, res) => {
         try {
           // Fetch cohorts using raw SQL to avoid schema mismatch
           const cohortsResult = await db!.execute(sql`
-            SELECT * FROM dose_cohorts 
+            SELECT id, study_id, dose_level_id, cohort_number, patient_id,
+                   enrollment_date, first_dose_date, last_dose_date,
+                   dlt_evaluation_start_date, dlt_evaluation_end_date,
+                   evaluable_for_dlt, dlt_occurred, dlt_details,
+                   discontinuation_date, discontinuation_reason, best_response,
+                   adverse_events, concomitant_medications, pk_samples,
+                   biomarker_results, metadata, created_at, updated_at
+            FROM dose_cohorts
             WHERE study_id = ${study.id}
             ORDER BY cohort_number
           `);
@@ -352,7 +359,13 @@ router.get('/dose-escalation/studies', async (req, res) => {
           const cohortsWithDlts = await Promise.all(
             cohorts.map(async (cohort: any) => {
               const dltResult = await db!.execute(sql`
-                SELECT * FROM dlt_events
+                SELECT id, study_id, cohort_id, patient_id, event_date,
+                       ctcae_grade, system_organ_class, preferred_term,
+                       description, relatedness, seriousness, outcome,
+                       action_taken, dose_modification, rechallenge,
+                       rechallenge_outcome, reported_to_fda, reported_to_irb,
+                       metadata, created_at, updated_at
+                FROM dlt_events
                 WHERE cohort_id = ${cohort.id}
                 ORDER BY reported_date DESC
               `);
@@ -411,7 +424,12 @@ router.get('/ind-narratives', async (req, res) => {
       narratives.map(async (narrative) => {
         try {
           const sectionsResult = await db!.execute(sql`
-            SELECT * FROM ind_narrative_sections
+            SELECT id, narrative_id, section_number, section_title, section_type,
+                   template_id, content, html_content, word_count, data_source,
+                   citations, tables, figures, review_status, review_comments,
+                   compliance_flags, version, previous_version_id,
+                   created_by, last_modified_by, created_at, updated_at
+            FROM ind_narrative_sections
             WHERE narrative_id = ${narrative.id}
             ORDER BY section_number
           `);
@@ -520,7 +538,13 @@ router.get('/cross-species/analyses', async (req, res) => {
       analyses.map(async (analysis) => {
         try {
           const comparisonsResult = await db!.execute(sql`
-            SELECT * FROM species_comparisons
+            SELECT id, analysis_id, species, body_weight, dose_administered,
+                   dose_unit, route, cmax_value, tmax, auc0_inf, auc0_last,
+                   t12, clearance, volume_distribution, bioavailability,
+                   protein_binding, metabolites, tissue_distribution,
+                   toxicology_findings, efficacy_endpoints, data_source,
+                   study_references, created_at, updated_at
+            FROM species_comparisons
             WHERE analysis_id = ${analysis.id}
             ORDER BY species
           `);

@@ -103,7 +103,7 @@ async function validateProjectExistence(
   projectId: string
 ): Promise<{ valid: boolean; project?: any; error?: string }> {
   try {
-    const { rows } = await db.query(`SELECT * FROM device_profiles WHERE id = $1`, [projectId]);
+    const { rows } = await db.query(`SELECT id, device_name, manufacturer_name, device_description, intended_use, indications_for_use, device_class, product_code, regulation_number, created_at, updated_at FROM device_profiles WHERE id = $1`, [projectId]);
 
     if (rows.length === 0) {
       return { valid: false, error: 'Project not found' };
@@ -143,13 +143,13 @@ router.post('/validate', async (req, res) => {
 
     // Get predicate device selections
     const { rows: predicateRows } = await db.query(
-      `SELECT * FROM predicate_devices WHERE device_id = $1`,
+      `SELECT id, device_id, predicate_device_name, predicate_510k_number, predicate_product_code, predicate_device_description, created_at FROM predicate_devices WHERE device_id = $1`,
       [projectId]
     );
 
     // Get substantial equivalence data
     const { rows: equivalenceRows } = await db.query(
-      `SELECT * FROM equivalence_analyses WHERE device_id = $1`,
+      `SELECT id, device_id, comparison_features, conclusion, equivalence_determination, created_at FROM equivalence_analyses WHERE device_id = $1`,
       [projectId]
     );
 
@@ -306,13 +306,13 @@ router.post('/build', async (req, res) => {
 
       // Get predicate device selections
       const { rows: predicateRows } = await db.query(
-        `SELECT * FROM predicate_devices WHERE device_id = $1`,
+        `SELECT id, device_id, predicate_device_name, predicate_510k_number, predicate_product_code, predicate_device_description, created_at FROM predicate_devices WHERE device_id = $1`,
         [projectId]
       );
 
       // Get substantial equivalence data
       const { rows: equivalenceRows } = await db.query(
-        `SELECT * FROM equivalence_analyses WHERE device_id = $1`,
+        `SELECT id, device_id, comparison_features, conclusion, equivalence_determination, created_at FROM equivalence_analyses WHERE device_id = $1`,
         [projectId]
       );
 
@@ -361,7 +361,7 @@ router.post('/build', async (req, res) => {
 
     // Proceed with building eSTAR package
     const project = await db
-      .query(`SELECT * FROM device_profiles WHERE id = $1`, [projectId])
+      .query(`SELECT id, device_name, manufacturer_name, device_description, intended_use, indications_for_use, device_class, product_code, regulation_number, created_at, updated_at FROM device_profiles WHERE id = $1`, [projectId])
       .then(result => result.rows[0]);
 
     if (!project) {
@@ -432,7 +432,7 @@ router.get('/download/:packageId', async (req, res) => {
 
   try {
     // Get package metadata from database
-    const { rows } = await db.query(`SELECT * FROM estar_packages WHERE id = $1`, [packageId]);
+    const { rows } = await db.query(`SELECT id, device_id, metadata, status, created_at FROM estar_packages WHERE id = $1`, [packageId]);
 
     if (rows.length === 0) {
       return res.status(404).json({
