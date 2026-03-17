@@ -4,7 +4,7 @@
  * Production-ready service for pharmaceutical companies
  */
 
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { db } from '../db';
 import { 
   foresightPredictions, 
@@ -25,9 +25,7 @@ import { ForesightKnowledgeGraph } from './foresight-knowledge-graph';
 import { getIntelligencePrefix } from './lumen-context-builder.js';
 
 // Initialize OpenAI with GPT-5 capabilities
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+const openai = getOpenAIClient();
 
 // Advanced model selection for different tasks
 const AI_MODELS = {

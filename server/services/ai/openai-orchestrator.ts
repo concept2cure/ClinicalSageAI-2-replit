@@ -4,16 +4,13 @@
  * For Facts Graph, CMC integration, and eCTD Co-Author
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../openai-client';
 import { v4 as uuid } from 'uuid';
 import { pool } from '../../db';
 import { getIntelligencePrefix } from '../lumen-context-builder.js';
 
 // Initialize OpenAI with production settings
-const openai = new OpenAI({
-  apiKey: process.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-  organization: process.env.OPENAI_ORG_ID,
-});
+const openai = getOpenAIClient();
 
 // Database pool for Facts Graph
 const db = pool;

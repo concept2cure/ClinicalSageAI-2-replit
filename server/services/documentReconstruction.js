@@ -1,5 +1,5 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableCell, TableRow, HeadingLevel, AlignmentType } from 'docx';
-import { db } from '../db/index.js';
+import { db } from '../db.js';
 import { 
   coauthorDocuments, 
   documentComponents, 

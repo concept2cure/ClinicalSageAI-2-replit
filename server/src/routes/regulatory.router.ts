@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 import { gatherUpstream, computeLinks } from '../services/reg/upstream';
 import { aiDraftSection } from '../services/ai/secDraft';
 import { aiClassifyChange, aiExtractQuestions, aiDraftResponse } from '../services/ai/regulatory';

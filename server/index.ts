@@ -128,7 +128,7 @@ process.on('SIGTERM', async () => {
   cleanupPerformance();
   // Graceful DB shutdown
   try {
-    await pool.end();
+    if (pool) await pool.end();
     console.log('✅ Database connections closed');
   } catch (error: any) {
     console.error('❌ Error closing database:', error.message);
@@ -152,7 +152,7 @@ process.on('SIGINT', async () => {
   cleanupPerformance();
   // Graceful DB shutdown
   try {
-    await pool.end();
+    if (pool) await pool.end();
     console.log('✅ Database connections closed');
   } catch (error: any) {
     console.error('❌ Error closing database:', error.message);
@@ -166,13 +166,9 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit - log and continue for client stability
 });
 
-process.on('uncaughtException', error => {
-  console.error('🚨 Uncaught Exception:', error);
-  // For uncaught exceptions, we should exit gracefully after logging
-  setTimeout(() => {
-    console.error('🔄 Graceful restart due to uncaught exception...');
-    process.exit(1);
-  }, 1000);
+process.on('uncaughtException', (error) => {
+  console.error('UNCAUGHT EXCEPTION:', error);
+  process.exit(1);
 });
 // --- End Python FastAPI Backend Logic ---
 
@@ -257,7 +253,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Use centralized database pool
-import { getPool } from './db/pool';
+import { getPool } from './db';
 const pool = getPool();
 
 // Import enterprise table enforcement
@@ -805,6 +801,9 @@ app.use('/api/enterprise/rbac', rbacRoutes);
 
 // Mount CMC Module routes (Chemistry, Manufacturing & Controls)
 try {
+  // Both routers share /api/cmc but define non-overlapping sub-routes:
+  //   cmcAggregatorRoutes: /blueprint-generator, /change-impact-simulator, /manufacturing-tuner, etc.
+  //   cmcProjectRoutes:    /projects, /projects/:id, /projects/:projectId/substances, etc.
   app.use('/api/cmc', cmcAggregatorRoutes);
   app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
@@ -818,6 +817,11 @@ try {
 // Mount AI Assistance routes
 try {
   app.use('/api/ai-assistance', aiAssistanceRoutes);
+  // Initialize the AI provider router and inject into AI assistance module
+  aiProviderRouter = getAIRouter(pool);
+  if (aiProviderRouter) {
+    setAIService(aiProviderRouter);
+  }
   console.log('✅ AI Assistance API routes mounted');
 } catch (error) {
   console.error('❌ Failed to mount AI Assistance routes:', error);
@@ -968,6 +972,7 @@ try {
 try {
   const esgSubmissionModule = await import('./routes/esgSubmissionRoutes.js');
   const esgSubmissionRoutes = esgSubmissionModule.default;
+  // Routes define absolute paths internally (e.g., /api/510k/:projectId/esg/submit, ...)
   app.use(esgSubmissionRoutes);
   console.log('✅ ESG Submission API routes mounted successfully (FDA gateway integration)');
 } catch (error) {
@@ -1225,6 +1230,7 @@ try {
 try {
   const licenseModule = await import('./routes/license-routes.js');
   const licenseRoutes = licenseModule.default;
+  // Routes define absolute paths internally (e.g., /api/licenses/:id, /api/licenses/client/:clientId, ...)
   app.use('/', licenseRoutes);
   console.log('✅ License Management API routes mounted successfully');
 } catch (error) {
@@ -5738,7 +5744,9 @@ async function startServer() {
     console.log('   Proof system will operate with in-memory audit (not compliant for production)');
   }
 
-  // Ensure auth tables have the columns auth routes expect (idempotent)
+  // Ensure auth tables have the columns auth routes expect (idempotent).
+  // IMPORTANT: This must complete before app.listen() so that auth routes
+  // (mounted earlier at top level) never handle requests against missing columns.
   try {
     const { ensureAuthTables } = await import('./db.js');
     await ensureAuthTables();

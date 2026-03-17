@@ -15,7 +15,8 @@
  */
 
 import { Pool } from 'pg';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../openai-client';
+import type OpenAI from 'openai';
 import crypto from 'crypto';
 
 // Types
@@ -132,7 +133,7 @@ export class SubmissionReadinessTwinService {
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+    this.openai = getOpenAIClient();
   }
 
   /**

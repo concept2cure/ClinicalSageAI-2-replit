@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../../db.js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../../services/openai-client';
 
 const router = Router();
 
@@ -23,9 +23,7 @@ interface TaskTemplate {
 }
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // ===== CMC PLAYBOOK WORKFLOWS =====
 

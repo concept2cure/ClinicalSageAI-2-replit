@@ -11,7 +11,7 @@
  * Critical for Clinical Regulatory documents where 50%+ of data is in tables
  * (Adverse Events, PK Parameters, Survival Curves).
  */
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from '../db';
 import {
@@ -82,9 +82,7 @@ const CONFIG = {
 };
 
 // OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 /**
  * Layout-Aware Ingestion Worker

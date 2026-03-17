@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { db } from '../db';
 import { projects, auditEvents } from '@shared/schema';
 import { and, eq, isNull, sql, asc, desc } from 'drizzle-orm';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { ProjectRollupService } from '../services/project-rollup-service';
 

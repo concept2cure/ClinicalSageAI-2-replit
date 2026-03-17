@@ -4,7 +4,8 @@
  * Production-ready service for pharmaceutical companies
  */
 
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './openai-client';
+import type { OpenAI } from 'openai';
 import { db } from '../db';
 import { 
   clinicalFeedback,
@@ -55,14 +56,7 @@ export class ForesightFeedbackOrchestrator {
 
   constructor() {
     // Initialize OpenAI with GPT-5 capabilities
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || '',
-      // Using advanced models for feedback processing
-      defaultHeaders: {
-        'X-Model-Version': 'gpt-5-turbo',
-        'X-Feature-Flags': 'adaptive-learning,continuous-improvement'
-      }
-    });
+    this.openai = getOpenAIClient();
 
     this.knowledgeGraph = new ForesightKnowledgeGraph();
   }

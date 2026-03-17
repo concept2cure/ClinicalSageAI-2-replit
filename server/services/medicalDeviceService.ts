@@ -13,7 +13,7 @@
  * - FDA integration readiness
  */
 
-import { db } from '../db/index';
+import { db } from '../db';
 import {
   medicalDevices,
   fda510kSubmissions,

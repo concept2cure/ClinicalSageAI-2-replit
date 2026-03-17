@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
+import type OpenAI from 'openai';
 
 /**
  * Lumen Insights Service
@@ -58,9 +59,7 @@ export class LumenInsightsService {
 
   constructor(config: LumenInsightsConfig) {
     this.config = config;
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    this.openai = getOpenAIClient();
   }
 
   /**

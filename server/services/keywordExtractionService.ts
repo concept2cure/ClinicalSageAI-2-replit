@@ -17,7 +17,7 @@
  */
 
 import { pool } from '../db.js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import crypto from 'crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -95,7 +95,7 @@ export interface KeywordConsistencyCheck {
 // KEYWORD EXTRACTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 /**
  * Extract domain-specific keywords from regulatory content.
