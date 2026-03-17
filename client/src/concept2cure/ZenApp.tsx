@@ -944,6 +944,13 @@ export const ZenApp: React.FC = () => {
     }
   }, [layoutMode, activeProjectId, embeddedModule]);
 
+  // Clear stale pending state when switching layout modes
+  useEffect(() => {
+    if (layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace') {
+      setPendingDraftSection(null);
+    }
+  }, [layoutMode]);
+
   const handleNewChat = useCallback(() => {
     // Clear active conversation/thread
     setActiveConversationId(undefined);
@@ -1419,15 +1426,18 @@ export const ZenApp: React.FC = () => {
           (
             {
               'regulatory-workspace': 'ai-copilot',
+              workspace: 'ai-copilot',
               'ind-workspace': 'author',
               'ectd-coauthor': 'author',
               cmc: 'cmc',
               'clinical-trial': 'author',
               author: 'author',
+              editor: 'author',
+              templates: 'author',
               'intelligence-hub': 'intelligence-hub',
               'review-readiness': 'review-readiness',
-              snowglobe: 'review-readiness',
-              'snowglobe-chambers': 'review-readiness',
+              snowglobe: 'snowglobe',
+              'snowglobe-chambers': 'snowglobe',
               'command-center': 'command-center',
               'mission-control': 'command-center',
               'submission-workspace': 'command-center',
@@ -1444,8 +1454,11 @@ export const ZenApp: React.FC = () => {
               'knowledge-base': 'knowledge-base',
               'project-knowledge': 'project-knowledge',
               'legal-center': 'legal-center',
-              'snowglobe': 'snowglobe',
-              'artifacts': 'artifacts',
+              sherpa: 'ai-copilot',
+              audit: 'review-readiness',
+              timeline: 'command-center',
+              analytics: 'command-center',
+              artifacts: 'artifacts',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -2875,12 +2888,39 @@ export const ZenApp: React.FC = () => {
                 />
 
                 {/* Right sidebar: Claude.ai-style (Context, Instructions, Files) */}
+                {/* Desktop: static panel */}
                 <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
                   <ProjectSidebar
                     projectId={activeProjectId ?? null}
                     projectType={activeProject?.type}
                   />
                 </div>
+                {/* Mobile/Tablet: floating toggle + slide-over drawer */}
+                {workspacePanelOpen && (
+                  <>
+                    <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setWorkspacePanelOpen(false)} />
+                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-xl z-50 lg:hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+                        <span className="text-sm font-medium text-zinc-700">Project Context</span>
+                        <button onClick={() => setWorkspacePanelOpen(false)} className="p-1 hover:bg-zinc-100 rounded">
+                          <X className="w-4 h-4 text-zinc-400" />
+                        </button>
+                      </div>
+                      <ProjectSidebar
+                        projectId={activeProjectId ?? null}
+                        projectType={activeProject?.type}
+                      />
+                    </div>
+                  </>
+                )}
+                {/* Mobile toggle button */}
+                <button
+                  onClick={() => setWorkspacePanelOpen(true)}
+                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                  title="Project context"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
               </div>
             </div>
           )}

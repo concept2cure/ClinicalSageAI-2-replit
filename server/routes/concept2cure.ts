@@ -708,7 +708,10 @@ function getOrganizationId(req: Request): number {
  * Get the current user ID from the request.
  */
 function getUserId(req: Request): number {
-  return req.userId || 1; // Default to 1 for development
+  if (!req.userId) {
+    throw new Error('Authentication required: userId not set on request');
+  }
+  return req.userId;
 }
 
 /**
@@ -1897,6 +1900,56 @@ router.post(
 // ─────────────────────────────────────────────────────────────────────────────
 // ARTIFACT ROUTES (DATABASE-BACKED WITH VERSION CONTROL)
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/artifacts
+ * Returns all artifacts across all projects for the organization (gallery view).
+ * Includes project name for display in the cross-project artifacts gallery.
+ */
+router.get('/artifacts', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+
+    const allArtifacts = await db
+      .select({
+        artifactId: concept2cureArtifacts.artifactId,
+        projectId: concept2cureArtifacts.projectId,
+        type: concept2cureArtifacts.type,
+        category: concept2cureArtifacts.category,
+        title: concept2cureArtifacts.title,
+        status: concept2cureArtifacts.status,
+        ctdSection: concept2cureArtifacts.ctdSection,
+        version: concept2cureArtifacts.version,
+        createdAt: concept2cureArtifacts.createdAt,
+        updatedAt: concept2cureArtifacts.updatedAt,
+        projectName: projects.name,
+      })
+      .from(concept2cureArtifacts)
+      .leftJoin(projects, eq(concept2cureArtifacts.projectId, projects.id))
+      .where(eq(concept2cureArtifacts.organizationId, organizationId))
+      .orderBy(desc(concept2cureArtifacts.updatedAt))
+      .limit(200);
+
+    const result = allArtifacts.map(a => ({
+      id: a.artifactId,
+      projectId: `proj_${a.projectId}`,
+      title: a.title,
+      type: a.type,
+      category: a.category,
+      status: a.status || 'draft',
+      ctdSection: a.ctdSection,
+      version: a.version,
+      projectName: a.projectName || 'Unknown Project',
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+    }));
+
+    return sendSuccess(res, result);
+  } catch (error: any) {
+    logger.error('Failed to fetch all artifacts', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch artifacts');
+  }
+});
 
 /**
  * GET /api/concept2cure/projects/all/artifacts-summary
@@ -5746,6 +5799,40 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('Failed to export PDF', { error: error.message });
     return sendError(res, 500, 'Failed to generate PDF');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PPTX EXPORT FOR CHAT ARTIFACTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/artifacts/export-pptx
+ * Generate a PowerPoint presentation from title + content and return as a download.
+ * Used by AnA to export AI-generated presentations, training decks, and briefings.
+ */
+router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({
+      title: z.string().min(1).max(500),
+      content: z.string().min(1).max(1000000),
+    });
+    const { title, content } = schema.parse(req.body);
+
+    const { generatePptxBuffer } = await import('../services/pptxGenerator');
+    const buffer = await generatePptxBuffer(title, content);
+
+    const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
+    res.setHeader('Content-Length', buffer.length);
+    return res.send(buffer);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to export PPTX', { error: error.message });
+    return sendError(res, 500, 'Failed to export PPTX');
   }
 });
 
