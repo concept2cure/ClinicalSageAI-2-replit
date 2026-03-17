@@ -218,7 +218,7 @@ router.get('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
 // PATCH /api/project-rules/:ruleId — Update rule
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.patch('/:ruleId', async (req: Request, res: Response) => {
+router.patch('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
   try {
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
@@ -294,13 +294,12 @@ router.patch('/:ruleId', async (req: Request, res: Response) => {
     console.log(`[ProjectRules] Updated rule ${req.params.ruleId}`);
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('[ProjectRules] Error updating rule:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid rule data', details: error.errors });
     }
-    res.status(500).json({ error: 'Failed to update rule' });
+    throw error;
   }
-});
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DELETE /api/project-rules/:ruleId — Delete (or soft-deactivate built-in)
