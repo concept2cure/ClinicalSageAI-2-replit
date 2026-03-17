@@ -24,7 +24,7 @@ import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
 import { pool as dbPool } from '../utils/database.js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 // import PDFParser from 'pdf-parse';
 // import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
@@ -256,7 +256,7 @@ const REGULATORY_CONFIG = {
 };
 
 // Initialize services
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 const textProcessor = new TextProcessor();
 
 const ALLOWED_MIME_TYPES = new Set([

@@ -6,12 +6,10 @@
  * from FAERS, literature sources, and user-provided device information.
  */
 
-const { OpenAI } = require('openai');
+const { getOpenAIClient } = require('../../services/openai-client');
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 /**
  * Calculate initial compliance score based on section content

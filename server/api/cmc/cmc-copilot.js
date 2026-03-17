@@ -9,7 +9,7 @@
 import express from 'express';
 import { checkForOpenAIKey } from '../../utils/api-security.js';
 import { rateLimit } from 'express-rate-limit';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../../services/openai-client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -28,7 +28,7 @@ const copilotLimiter = rateLimit({
 const router = express.Router();
 
 // Get OpenAI client
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

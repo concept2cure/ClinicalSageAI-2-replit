@@ -5,15 +5,13 @@
  * using OpenAI's GPT models and returns structured validation results.
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 
 // Initialize OpenAI client
 let openai;
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-} else {
+try {
+  openai = getOpenAIClient();
+} catch {
   console.warn('OPENAI_API_KEY not found in environment variables');
 }
 

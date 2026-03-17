@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 import multer from 'multer';
 import path from 'path';
 import { promises as fs } from 'fs';
@@ -54,9 +54,7 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Rate limiter specific to blueprint generation (stricter limits due to high resource usage)
 const blueprintRateLimiter = createRateLimiter({

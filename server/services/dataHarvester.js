@@ -13,7 +13,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import fs from 'fs/promises';
@@ -33,9 +33,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // const supabase = createClient(supabaseUrl, supabaseKey);
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // PDF extraction utility
 const pdfExtract = new PDFExtract();

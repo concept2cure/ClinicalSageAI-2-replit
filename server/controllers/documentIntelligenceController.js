@@ -262,8 +262,8 @@ async function extractStructuredData(content, documentType) {
       return mockExtractedData(documentType);
     }
 
-    const { OpenAI } = require('openai');
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const { getOpenAIClient } = require('../services/openai-client');
+    const openai = getOpenAIClient();
 
     // If content is very large, truncate it (OpenAI has token limits)
     let processedContent = content;

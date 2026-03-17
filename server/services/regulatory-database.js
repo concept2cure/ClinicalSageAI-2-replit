@@ -7,12 +7,10 @@
  */
 
 import { db } from '../db.js';
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './openai-client';
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Cache for regulatory data
 const regulationCache = new Map();

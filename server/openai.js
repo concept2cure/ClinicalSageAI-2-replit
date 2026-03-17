@@ -5,19 +5,12 @@
  * It implements proper validation, error handling, rate limiting, and audit logging.
  */
 
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './services/openai-client';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 
-// Validate that OpenAI API key is configured
-if (!process.env.OPENAI_API_KEY) {
-  console.error('OPENAI_API_KEY is not configured. OpenAI functionality will not work.');
-}
-
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Create rate limiter
 const apiRateLimiter = rateLimit({

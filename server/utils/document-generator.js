@@ -8,15 +8,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 /**
  * Generate CMC documentation based on molecular structure and process data
