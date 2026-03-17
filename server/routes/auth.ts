@@ -20,6 +20,7 @@ import {
   organizationUsers,
 } from '../../shared/schema';
 import { sendPasswordResetEmail } from '../services/emailService';
+import * as mfaService from '../services/mfaService';
 
 import { config } from '../config/environment';
 
@@ -262,6 +263,42 @@ router.post('/login', async (req: Request, res: Response) => {
       .limit(1);
     const jwtRole = membershipRoleForJwt?.role || 'user';
 
+    // Extract firstName/lastName from the name field (users table has name, not firstName/lastName)
+    const nameParts = (userData.name || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const displayName = (userData.name || '').trim() || userData.email;
+
+    // Reuse the role already fetched above for JWT
+    const userRole = jwtRole;
+    const roles =
+      userRole === 'admin'
+        ? ['admin', 'user']
+        : [userRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+
+    // ── MFA Check ──────────────────────────────────────────────────────
+    // If the user has MFA enabled, return a short-lived challenge token
+    // instead of the full JWT. The client must complete /mfa/verify first.
+    const userHasMfa = userData.mfaEnabled === true;
+
+    if (userHasMfa) {
+      const challengeToken = mfaService.createMfaChallengeToken(
+        userData.id,
+        userData.email,
+        organizationId.toString(),
+        organization?.uuid || null,
+        jwtRole,
+      );
+
+      return res.json({
+        success: true,
+        mfaRequired: true,
+        challengeId: challengeToken,
+        mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
+      });
+    }
+
+    // ── No MFA — issue full tokens ─────────────────────────────────────
     const accessToken = jwt.sign(
       {
         userId: userData.id.toString(),
@@ -279,19 +316,6 @@ router.post('/login', async (req: Request, res: Response) => {
       config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
-
-    // Extract firstName/lastName from the name field (users table has name, not firstName/lastName)
-    const nameParts = (userData.name || '').trim().split(/\s+/);
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-    const displayName = (userData.name || '').trim() || userData.email;
-
-    // Reuse the role already fetched above for JWT
-    const userRole = jwtRole;
-    const roles =
-      userRole === 'admin'
-        ? ['admin', 'user']
-        : [userRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
 
     res.json({
       success: true,
@@ -652,15 +676,293 @@ router.get('/me', async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/mfa/verify
- * Verify MFA code (placeholder for dev mode)
+ * Complete MFA verification during login.
+ * Accepts the challenge token (from login response) + TOTP code,
+ * and returns the real JWT access/refresh tokens.
  */
 router.post('/mfa/verify', async (req: Request, res: Response) => {
-  // CRIT-02g FIX: Removed unconditional dev-mode MFA bypass
-  // MFA verification placeholder — returns 501 until MFA service is implemented
-  res.status(501).json({
-    success: false,
-    error: { code: 'MFA_NOT_IMPLEMENTED', message: 'MFA not implemented in this version' },
-  });
+  try {
+    const { challengeId, code, method } = req.body;
+
+    if (!challengeId || !code) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Challenge token and verification code are required' },
+      });
+    }
+
+    // Verify the challenge token
+    const challenge = mfaService.verifyMfaChallengeToken(challengeId);
+    if (!challenge) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'MFA_002', message: 'Invalid or expired MFA challenge. Please log in again.' },
+      });
+    }
+
+    const userId = parseInt(challenge.userId);
+
+    // Verify the TOTP code
+    const isValid = await mfaService.verifyToken(userId, code);
+    if (!isValid) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_004', message: 'Invalid verification code' },
+      });
+    }
+
+    // MFA verified — issue full tokens
+    if (!requireDb(res)) return;
+
+    const [userData] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!userData) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'User not found' },
+      });
+    }
+
+    const accessToken = jwt.sign(
+      {
+        userId: challenge.userId,
+        email: challenge.email,
+        organizationId: challenge.organizationId,
+        organizationUuid: challenge.organizationUuid,
+        role: challenge.role,
+      },
+      config.jwt.secret,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: challenge.userId, email: challenge.email, type: 'refresh' },
+      config.jwt.secret,
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    );
+
+    // Build user response object
+    const mfaNameParts = (userData.name || '').trim().split(/\s+/);
+    const mfaFirstName = mfaNameParts[0] || '';
+    const mfaLastName = mfaNameParts.slice(1).join(' ') || '';
+    const mfaDisplayName = (userData.name || '').trim() || userData.email;
+    const mfaRole = challenge.role;
+    const mfaRoles =
+      mfaRole === 'admin'
+        ? ['admin', 'user']
+        : [mfaRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+
+    // Fetch org name
+    let mfaOrgName = 'Organization';
+    if (challenge.organizationId) {
+      const [org] = await db
+        .select({ name: organizations.name })
+        .from(organizations)
+        .where(eq(organizations.id, parseInt(challenge.organizationId)))
+        .limit(1);
+      mfaOrgName = org?.name || 'Organization';
+    }
+
+    res.json({
+      success: true,
+      accessToken,
+      refreshToken,
+      expiresIn: 86400,
+      user: {
+        id: challenge.userId,
+        email: challenge.email,
+        firstName: mfaFirstName,
+        lastName: mfaLastName,
+        displayName: mfaDisplayName,
+        roles: mfaRoles,
+        permissions: [],
+        organizationId: challenge.organizationId,
+        organizationName: mfaOrgName,
+        organizationUuid: challenge.organizationUuid,
+        mfaEnabled: true,
+        mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
+        mustChangePassword: false,
+      },
+      mfaRequired: false,
+    });
+  } catch (error: any) {
+    console.error('[auth] MFA verify error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'MFA verification failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/setup
+ * Generate a TOTP secret and QR code URL for the authenticated user.
+ * Requires a valid JWT (user must be logged in).
+ */
+router.post('/mfa/setup', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as {
+      userId: string;
+      email: string;
+    };
+
+    if (!requireDb(res)) return;
+
+    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+
+    res.json({
+      success: true,
+      secret: result.secret,
+      otpauthUrl: result.otpauthUrl,
+      qrCode: result.qrCodeDataUrl,
+    });
+  } catch (error: any) {
+    console.error('[auth] MFA setup error:', error);
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'MFA setup failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/enable
+ * Confirm MFA setup by verifying the initial TOTP code from the authenticator app.
+ * Returns backup codes on success.
+ */
+router.post('/mfa/enable', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as {
+      userId: string;
+      email: string;
+    };
+
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Verification code is required' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
+
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_004', message: 'Invalid verification code. Ensure your authenticator app is synced.' },
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'MFA has been enabled successfully',
+      backupCodes: result.backupCodes,
+    });
+  } catch (error: any) {
+    console.error('[auth] MFA enable error:', error);
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Failed to enable MFA' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/disable
+ * Disable MFA for the authenticated user. Requires current TOTP code.
+ */
+router.post('/mfa/disable', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as {
+      userId: string;
+      email: string;
+    };
+
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Current verification code is required to disable MFA' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
+
+    if (!disabled) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_004', message: 'Invalid verification code' },
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'MFA has been disabled',
+    });
+  } catch (error: any) {
+    console.error('[auth] MFA disable error:', error);
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Failed to disable MFA' },
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------
