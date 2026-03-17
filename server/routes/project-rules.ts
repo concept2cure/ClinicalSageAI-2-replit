@@ -305,39 +305,34 @@ router.patch('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
 // DELETE /api/project-rules/:ruleId — Delete (or soft-deactivate built-in)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.delete('/:ruleId', async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
+router.delete('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
 
-    const existing = await pool.query(
-      `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
-      [req.params.ruleId, organizationId]
+  const existing = await pool.query(
+    `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+    [req.params.ruleId, organizationId]
+  );
+  if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+
+  if (existing.rows[0].is_built_in) {
+    // Soft deactivate built-in rules
+    await pool.query(
+      `UPDATE project_rules SET is_active = false, updated_at = NOW() WHERE rule_id = $1`,
+      [req.params.ruleId]
     );
-    if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
-
-    if (existing.rows[0].is_built_in) {
-      // Soft deactivate built-in rules
-      await pool.query(
-        `UPDATE project_rules SET is_active = false, updated_at = NOW() WHERE rule_id = $1`,
-        [req.params.ruleId]
-      );
-      return res.json({ message: 'Built-in rule deactivated', ruleId: req.params.ruleId });
-    }
-
-    await pool.query(`DELETE FROM project_rules WHERE rule_id = $1 AND organization_id = $2`, [
-      req.params.ruleId,
-      organizationId,
-    ]);
-
-    console.log(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
-    res.json({ message: 'Rule deleted', ruleId: req.params.ruleId });
-  } catch (error) {
-    console.error('[ProjectRules] Error deleting rule:', error);
-    res.status(500).json({ error: 'Failed to delete rule' });
+    return res.json({ message: 'Built-in rule deactivated', ruleId: req.params.ruleId });
   }
-});
+
+  await pool.query(`DELETE FROM project_rules WHERE rule_id = $1 AND organization_id = $2`, [
+    req.params.ruleId,
+    organizationId,
+  ]);
+
+  console.log(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
+  res.json({ message: 'Rule deleted', ruleId: req.params.ruleId });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/project-rules/:ruleId/test — Dry-run a rule
