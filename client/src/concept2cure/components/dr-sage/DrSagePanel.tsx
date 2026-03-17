@@ -44,6 +44,7 @@ const TABS: TabDef[] = [
   { id: "fix", label: "Fix" },
   { id: "learn", label: "Learn" },
   { id: "whatelse", label: "Discover" },
+  { id: "agents", label: "Agents" },
 ];
 
 const FADE_IN = {
@@ -582,6 +583,92 @@ function DiscoverContent() {
 }
 
 // ---------------------------------------------------------------------------
+// AgentsContent — live agent status and quick access
+// ---------------------------------------------------------------------------
+
+const AGENT_STATUS_ITEMS = [
+  {
+    system: 'Agent Swarm',
+    agents: '10 specialized agents',
+    status: 'Active',
+    description: 'Coordinator, Drafter, Researcher, QC, Compliance, Reviewer, Compiler, Validator, Evidence, Translator',
+  },
+  {
+    system: 'Multi-Agent Council',
+    agents: '4-stage pipeline',
+    status: 'Active',
+    description: 'Drafter → Statistician → Critic → Synthesizer quality pipeline',
+  },
+  {
+    system: 'Cognitive Ecosystem',
+    agents: '6 services',
+    status: 'Active',
+    description: 'Agent Runtime, Digital Twin, FHIR Validation, Global Dossier, Federated Learning, Cognitive Audit',
+  },
+  {
+    system: 'Innovation Platform',
+    agents: '8 services',
+    status: 'Active',
+    description: 'Delta Radar, Evidence Heatmap, Readiness Twin, Auto-Traceability, Adaptive Reviewer, Template Learning, Negotiation Logbook, Guardrails SDK',
+  },
+  {
+    system: 'ForesightAI',
+    agents: '5 engines',
+    status: 'Active',
+    description: 'Prediction Engine, Monte Carlo, Protocol Analyzer, Knowledge Graph, CSR Integration',
+  },
+  {
+    system: 'Intelligence',
+    agents: '6 services',
+    status: 'Active',
+    description: 'Pathway Intelligence (30+ agencies), Precedent Engine, Knowledge Graph, Confidence Scoring, Clinical & Strategic Intelligence',
+  },
+];
+
+function AgentsContent({ onOpenEnablementCenter }: { onOpenEnablementCenter?: () => void }) {
+  return (
+    <div className="py-6 px-5 space-y-4">
+      <p className="text-sm text-zinc-600 leading-relaxed">
+        35 AI agents and services are available for your workflows.
+      </p>
+
+      <div className="space-y-0">
+        {AGENT_STATUS_ITEMS.map((item, idx) => (
+          <div
+            key={item.system}
+            className={cn(
+              'py-4',
+              idx < AGENT_STATUS_ITEMS.length - 1 && 'border-b border-zinc-100'
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-zinc-900">{item.system}</p>
+              <span className="text-xs text-zinc-400">{item.status}</span>
+            </div>
+            <p className="text-xs text-zinc-400 mt-0.5">{item.agents}</p>
+            <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{item.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-zinc-100 pt-4 space-y-2">
+        {onOpenEnablementCenter && (
+          <button
+            onClick={onOpenEnablementCenter}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Open AI Agents in Enablement Center
+          </button>
+        )}
+        <p className="text-xs text-zinc-400">
+          Configure agents, run setup wizard, or monitor active workflows.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // DrSageButton
 // ---------------------------------------------------------------------------
 
@@ -637,6 +724,8 @@ export function DrSagePanel({
         );
       case "whatelse":
         return <DiscoverContent />;
+      case "agents":
+        return <AgentsContent onOpenEnablementCenter={onOpenEnablementCenter} />;
       default:
         return <HelpContent />;
     }

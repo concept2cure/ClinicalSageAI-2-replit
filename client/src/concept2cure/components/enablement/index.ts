@@ -55,3 +55,8 @@ export type { CapabilityNode, CapabilityConstellationProps } from './CapabilityC
 // Micro-Missions
 export { MissionCard, MissionRunner, MissionBrowser, MICRO_MISSIONS } from './MicroMissions';
 export type { MicroMission, MissionStep } from './MicroMissions';
+
+// AI Agent Modules (lazy-loaded from EnablementCenter)
+export { default as AgentShowcase } from './AgentShowcase';
+export { default as AgentSetupWizard } from './AgentSetupWizard';
+export { default as AgentWorkflowMonitor } from './AgentWorkflowMonitor';

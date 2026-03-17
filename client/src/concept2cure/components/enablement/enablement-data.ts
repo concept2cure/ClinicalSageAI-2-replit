@@ -599,6 +599,124 @@ export const LEARNING_MODULES: LearningModule[] = [
     status: 'coming-soon',
     relatedCertificationId: 'cert-platform-expert',
   },
+
+  // ── AI Agents Modules ─────────────────────────────────────────────────────
+
+  {
+    id: 'mod-agents-overview',
+    title: 'AI Agents Overview',
+    description:
+      'Understand the 35+ specialized AI agents that power Concept2Cure — how they collaborate, when they activate, and how to monitor their work.',
+    category: 'ai-agents',
+    roles: ['writer', 'strategist', 'quality', 'clinical-ops', 'executive'],
+    clientTypes: ['pharma', 'biotech', 'meddevice', 'cro'],
+    workflows: ['all'],
+    productAreas: ['agent-swarm', 'cognitive-ecosystem'],
+    certificationTrack: 'cert-agent-specialist',
+    maturityLevel: 1,
+    aiMode: 'both',
+    estimatedMinutes: 20,
+    lessons: [
+      { title: 'The Agent Architecture', description: 'How 10 specialized agents form an AI swarm that mirrors a regulatory team.' },
+      { title: 'Agent Roles Explained', description: 'Coordinator, Drafter, Researcher, QC, Compliance, Reviewer, Compiler, Validator, Evidence, Translator.' },
+      { title: 'Multi-Agent Council', description: 'The Drafter→Statistician→Critic→Synthesizer quality pipeline.' },
+      { title: 'Human-in-the-Loop', description: 'How and when agents pause for your review at critical decision points.' },
+    ],
+    status: 'available',
+    relatedCertificationId: 'cert-agent-specialist',
+  },
+  {
+    id: 'mod-agents-configuration',
+    title: 'Configuring Your AI Team',
+    description:
+      'Select which agents activate for your submission type, set automation levels, configure review gates, and tune agent behavior to your workflow.',
+    category: 'ai-agents',
+    roles: ['strategist', 'quality', 'clinical-ops'],
+    clientTypes: ['pharma', 'biotech', 'meddevice', 'cro'],
+    workflows: ['510k', 'ind', 'nda', 'pma', 'cer'],
+    productAreas: ['agent-swarm', 'agent-runtime'],
+    certificationTrack: 'cert-agent-specialist',
+    maturityLevel: 2,
+    aiMode: 'both',
+    estimatedMinutes: 25,
+    lessons: [
+      { title: 'Submission-Type Agent Mapping', description: 'Which agents activate for 510(k), IND, NDA, PMA, and CER workflows.' },
+      { title: 'Automation Levels', description: 'Supervised, Guided, and Autonomous modes — what each means for your workflow.' },
+      { title: 'Review Gate Configuration', description: 'Set mandatory human review points at critical workflow stages.' },
+      { title: 'Agent Preferences', description: 'Fine-tune agent behavior, evidence thresholds, and compliance strictness.' },
+    ],
+    status: 'available',
+    relatedCertificationId: 'cert-agent-specialist',
+  },
+  {
+    id: 'mod-agents-monitoring',
+    title: 'Monitoring Agent Workflows',
+    description:
+      'Use the Workflow Monitor to observe agent execution in real-time, review reasoning traces, manage HITL breakpoints, and audit agent decisions.',
+    category: 'ai-agents',
+    roles: ['writer', 'strategist', 'quality', 'clinical-ops'],
+    clientTypes: ['pharma', 'biotech', 'meddevice', 'cro'],
+    workflows: ['all'],
+    productAreas: ['agent-runtime', 'cognitive-audit'],
+    certificationTrack: 'cert-agent-specialist',
+    maturityLevel: 2,
+    aiMode: 'both',
+    estimatedMinutes: 20,
+    lessons: [
+      { title: 'The Workflow Monitor', description: 'Real-time visibility into what each agent is doing, thinking, and producing.' },
+      { title: 'Reasoning Traces', description: 'How to read and evaluate the reasoning behind every agent decision.' },
+      { title: 'HITL Breakpoints', description: 'Approve, revise, or reject agent work at human review gates.' },
+      { title: 'Audit Trail', description: '21 CFR Part 11 compliant record of every agent action for regulatory audits.' },
+    ],
+    status: 'available',
+    relatedCertificationId: 'cert-agent-specialist',
+  },
+  {
+    id: 'mod-agents-innovation',
+    title: 'Innovation Platform Services',
+    description:
+      'Master the 8 innovation services: Regulatory Delta Radar, Evidence Confidence Heatmap, Submission Readiness Twin, Auto-Traceability, and more.',
+    category: 'ai-agents',
+    roles: ['strategist', 'quality', 'executive'],
+    clientTypes: ['pharma', 'biotech', 'meddevice'],
+    workflows: ['all'],
+    productAreas: ['innovation-platform'],
+    certificationTrack: 'cert-agent-specialist',
+    maturityLevel: 3,
+    aiMode: 'both',
+    estimatedMinutes: 30,
+    lessons: [
+      { title: 'Regulatory Delta Radar', description: 'How the platform monitors regulatory changes across 30+ agencies and alerts you to impacts.' },
+      { title: 'Evidence Confidence Heatmap', description: 'Visual confidence scoring that shows where your evidence is strong or thin.' },
+      { title: 'Submission Readiness Twin', description: 'A digital twin of your submission that predicts readiness before you file.' },
+      { title: 'Auto-Traceability & Compliance Guardrails', description: 'Automatic evidence-to-claim tracing and programmable compliance rules.' },
+    ],
+    status: 'available',
+    relatedCertificationId: 'cert-agent-specialist',
+  },
+  {
+    id: 'mod-agents-foresight',
+    title: 'ForesightAI Predictive Intelligence',
+    description:
+      'Leverage multi-modal clinical prediction, Monte Carlo simulation, protocol analysis, and the knowledge graph for data-driven regulatory strategy.',
+    category: 'ai-agents',
+    roles: ['strategist', 'clinical-ops', 'executive'],
+    clientTypes: ['pharma', 'biotech'],
+    workflows: ['ind', 'nda', 'pma'],
+    productAreas: ['foresight-ai'],
+    certificationTrack: 'cert-agent-specialist',
+    maturityLevel: 3,
+    aiMode: 'ana',
+    estimatedMinutes: 25,
+    lessons: [
+      { title: 'Predictive Analytics', description: 'Multi-modal outcome prediction using clinical, genomic, and biomarker data.' },
+      { title: 'Monte Carlo Simulation', description: 'Probabilistic modeling for timeline risk and submission success rates.' },
+      { title: 'Protocol Intelligence', description: 'NLP-based protocol analysis with therapeutic area benchmarking.' },
+      { title: 'Knowledge Graph', description: 'Semantic relationships across regulatory data, precedents, and outcomes.' },
+    ],
+    status: 'available',
+    relatedCertificationId: 'cert-agent-specialist',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -674,6 +792,23 @@ export const CERTIFICATIONS: Certification[] = [
     ],
     badge: { from: '#f59e0b', to: '#fbbf24' },
     unlockCriteria: 'Complete all platform mastery modules, hold at least two other certifications, and pass the capstone assessment.',
+  },
+  {
+    id: 'cert-agent-specialist',
+    title: 'AI Agent Specialist',
+    description:
+      'Certifies expertise in configuring, monitoring, and optimizing the 35+ specialized AI agents across the Agent Swarm, Innovation Platform, Cognitive Ecosystem, and ForesightAI.',
+    competence: 'AI Agent Configuration, Monitoring & Optimization',
+    focus: 'combined',
+    requiredModuleIds: [
+      'mod-agents-overview',
+      'mod-agents-configuration',
+      'mod-agents-monitoring',
+      'mod-agents-innovation',
+      'mod-agents-foresight',
+    ],
+    badge: { from: '#18181B', to: '#3f3f46' },
+    unlockCriteria: 'Complete all five AI agent modules, configure agents for at least one project, and run a monitored workflow.',
   },
 ];
 
@@ -1224,6 +1359,7 @@ export const MODULE_CATEGORIES: { id: string; label: string; description: string
   { id: 'export-readiness', label: 'Export Readiness', description: 'Prepare, validate, and export submission packages' },
   { id: 'dual-ai-workflows', label: 'Dual-AI Workflows', description: 'Orchestrate Dr. Sage and AnA 1.0 for maximum impact' },
   { id: 'platform-mastery', label: 'Platform Mastery', description: 'Advanced configuration, integrations, and executive analytics' },
+  { id: 'ai-agents', label: 'AI Agents', description: 'Configure, monitor, and optimize the 35+ specialized AI agents powering your workflows' },
 ];
 
 export const MODULE_FILTERS = {

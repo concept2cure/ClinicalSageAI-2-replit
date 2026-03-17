@@ -15,6 +15,11 @@ import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { CapabilityConstellation } from './CapabilityConstellation';
 import { MissionBrowser } from './MicroMissions';
 
+// Lazy-load agent components to keep bundle lean
+const AgentShowcase = React.lazy(() => import('./AgentShowcase'));
+const AgentSetupWizard = React.lazy(() => import('./AgentSetupWizard'));
+const AgentWorkflowMonitor = React.lazy(() => import('./AgentWorkflowMonitor'));
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -35,7 +40,8 @@ type ViewKey =
   | 'certifications'
   | 'whats-new'
   | 'about'
-  | 'ai-in-action';
+  | 'ai-in-action'
+  | 'ai-agents';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -48,6 +54,7 @@ const TAB_LABELS: { key: ViewKey; label: string }[] = [
   { key: 'whats-new', label: "What's New" },
   { key: 'about', label: 'About' },
   { key: 'ai-in-action', label: 'In Action' },
+  { key: 'ai-agents', label: 'AI Agents' },
 ];
 
 const MODULE_CATEGORIES = [
@@ -61,6 +68,7 @@ const MODULE_CATEGORIES = [
   'export-readiness',
   'dual-ai-workflows',
   'platform-mastery',
+  'ai-agents',
 ];
 
 // ---------------------------------------------------------------------------
@@ -771,6 +779,72 @@ function AiInActionView() {
 }
 
 // ---------------------------------------------------------------------------
+// View: AI Agents
+// ---------------------------------------------------------------------------
+
+function AiAgentsView() {
+  const [subView, setSubView] = useState<'showcase' | 'setup' | 'monitor'>('showcase');
+
+  return (
+    <div className="py-12 px-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h2 className="text-3xl font-semibold text-zinc-900 tracking-tight">
+          AI Agents
+        </h2>
+        <p className="text-base text-zinc-500 mt-2 max-w-2xl leading-relaxed">
+          35 specialized AI agents and services power your regulatory workflows.
+          Explore capabilities, configure your AI team, and monitor agent execution in real time.
+        </p>
+      </div>
+
+      {/* Sub-navigation */}
+      <div className="flex items-center gap-6 mb-8 border-b border-zinc-100 pb-3">
+        {([
+          { key: 'showcase' as const, label: 'All Capabilities' },
+          { key: 'setup' as const, label: 'Setup Wizard' },
+          { key: 'monitor' as const, label: 'Workflow Monitor' },
+        ]).map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setSubView(item.key)}
+            className={cn(
+              'text-sm transition-colors',
+              subView === item.key
+                ? 'text-zinc-900 font-medium'
+                : 'text-zinc-400 hover:text-zinc-600'
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <React.Suspense
+        fallback={
+          <p className="text-sm text-zinc-400 py-12">Loading...</p>
+        }
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={subView}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            {subView === 'showcase' && <AgentShowcase />}
+            {subView === 'setup' && <AgentSetupWizard />}
+            {subView === 'monitor' && <AgentWorkflowMonitor />}
+          </motion.div>
+        </AnimatePresence>
+      </React.Suspense>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Component: EnablementCenter
 // ---------------------------------------------------------------------------
 
@@ -800,6 +874,8 @@ export function EnablementCenter({
         return <AboutView />;
       case 'ai-in-action':
         return <AiInActionView />;
+      case 'ai-agents':
+        return <AiAgentsView />;
       default:
         return <LearningPathsView />;
     }
