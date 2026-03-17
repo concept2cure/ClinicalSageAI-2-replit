@@ -213,6 +213,14 @@ const StudyArchitectModuleStandalone = lazy(() =>
   }))
 );
 
+const TemplateLibraryInline = lazy(() =>
+  import('./components/templates/TemplateLibraryInline').then(m => ({ default: m.TemplateLibraryInline }))
+);
+
+const ProjectKnowledgePanel = lazy(() =>
+  import('./components/workspace/ProjectKnowledgePanel').then(m => ({ default: m.ProjectKnowledgePanel }))
+);
+
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
 const IntelligenceHub = lazy(() =>
   import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
@@ -3032,7 +3040,16 @@ export const ZenApp: React.FC = () => {
                 />
               </div>
 
-              {/* Agent Workspace panel hidden by default - accessible via Tools */}
+              {/* Project Knowledge Panel — Claude.ai-style project sidebar */}
+              {!activeToolPanel && activeProjectId && (
+                <div className="w-64 flex-shrink-0 border-l border-zinc-100 hidden xl:flex">
+                  <ErrorBoundary>
+                    <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                      <ProjectKnowledgePanel projectId={activeProjectId} />
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
+              )}
 
               {/* Tool panel */}
               {activeToolPanel && (

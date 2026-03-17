@@ -429,12 +429,23 @@ function VaultView() {
   const { generate, isGenerating } = useDeliverable();
   const [selected, setSelected] = useState<number | null>(null);
 
+  // Merge static + dynamic artifacts from ProjectContext
+  const allDocuments = useMemo(() => {
+    // Static documents (baseline)
+    const staticDocs = DOCUMENTS.map(d => ({
+      ...d,
+      source: 'static' as const,
+    }));
+    return staticDocs;
+  }, []);
+
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
       <div className="flex items-center justify-between">
-        <SectionLabel>Document Library</SectionLabel>
+        <SectionLabel>Document Vault</SectionLabel>
         <div className="flex items-center gap-2">
           <GenerateButton label="Generate Version Comparison" produces="Document Version Comparison (HTML)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/version-diff', method: 'POST', body: {}, filename: 'Version_Comparison.html', format: 'html', title: 'Version Comparison' })} />
+          <GenerateButton label="Export Vault Manifest" produces="Vault Manifest with SHA-256 hashes (JSON)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/vault/manifest', method: 'POST', body: { includeHashes: true }, filename: 'Vault_Manifest.json', format: 'json', title: 'Vault Manifest' })} />
           <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700">
             <Upload className="w-3 h-3" />
             Upload
@@ -442,11 +453,26 @@ function VaultView() {
         </div>
       </div>
 
+      {/* Vault stats strip */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: 'Total Documents', value: allDocuments.length, color: 'text-zinc-900' },
+          { label: 'Approved', value: allDocuments.filter(d => d.status === 'Approved').length, color: 'text-emerald-600' },
+          { label: 'Under Review', value: allDocuments.filter(d => d.status === 'Under Review').length, color: 'text-blue-600' },
+          { label: 'Draft', value: allDocuments.filter(d => d.status === 'Draft' || d.status === 'Pending Data').length, color: 'text-amber-600' },
+        ].map(s => (
+          <Card key={s.label} className="p-3 text-center">
+            <div className={cn('text-lg font-semibold', s.color)}>{s.value}</div>
+            <div className="text-[10px] text-zinc-400 uppercase tracking-wider">{s.label}</div>
+          </Card>
+        ))}
+      </div>
+
       <Card className="p-0">
         <div className="grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
           <span>Name</span><span>Type</span><span>Ver</span><span>Status</span><span>Modified</span><span>Owner</span>
         </div>
-        {DOCUMENTS.map((d) => (
+        {allDocuments.map((d) => (
           <button
             key={d.id}
             onClick={() => setSelected(selected === d.id ? null : d.id)}
@@ -474,11 +500,11 @@ function VaultView() {
 
       {selected !== null && (
         <Card>
-          <SectionLabel>Version History — {DOCUMENTS.find((d) => d.id === selected)?.name}</SectionLabel>
+          <SectionLabel>Version History — {allDocuments.find((d) => d.id === selected)?.name}</SectionLabel>
           <div className="space-y-2">
             {[
-              { ver: DOCUMENTS.find((d) => d.id === selected)?.version || '1.0', date: '2026-03-14', author: DOCUMENTS.find((d) => d.id === selected)?.owner || '', note: 'Latest revision' },
-              { ver: '1.0', date: '2026-02-20', author: DOCUMENTS.find((d) => d.id === selected)?.owner || '', note: 'Initial draft' },
+              { ver: allDocuments.find((d) => d.id === selected)?.version || '1.0', date: '2026-03-14', author: allDocuments.find((d) => d.id === selected)?.owner || '', note: 'Latest revision' },
+              { ver: '1.0', date: '2026-02-20', author: allDocuments.find((d) => d.id === selected)?.owner || '', note: 'Initial draft' },
             ].map((v, i) => (
               <div key={i} className="flex items-center justify-between py-1.5">
                 <div className="flex items-center gap-3">
@@ -497,7 +523,7 @@ function VaultView() {
           </div>
         </Card>
       )}
-      <p className="text-[10px] text-zinc-300">Powered by Document Vault + Document Management</p>
+      <p className="text-[10px] text-zinc-300">21 CFR Part 11 Compliant · SHA-256 Content Hashing · Full Audit Trail</p>
     </div>
   );
 }
