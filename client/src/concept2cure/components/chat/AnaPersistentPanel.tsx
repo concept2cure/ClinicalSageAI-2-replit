@@ -1,16 +1,16 @@
 /**
- * @fileoverview AnA — Bottom-docked AI chat bar
+ * @fileoverview AnA — THE single unified AI chat (Claude.ai style)
  * @module concept2cure/components/chat/AnaPersistentPanel
- * @version 3.0.0
+ * @version 4.0.0
  *
- * A persistent, context-aware AI chat bar docked at the bottom of every page.
- * Always visible. Context-aware per screen. Can expand upward to show conversation.
+ * ONE chat. ONE input. ONE conversation. Exactly like Claude.
+ * The conversation fills the available space above the input bar.
+ * Input bar is always at the bottom. Context-aware per workspace.
  *
- * Design: Claude.ai input bar at bottom, conversation expands up.
+ * This is the ONLY chat surface in the application.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import {
@@ -21,9 +21,6 @@ import {
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
-  ChevronDown,
-  ChevronUp,
-  X,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -45,6 +42,13 @@ interface AnaMessage {
   timestamp: Date;
 }
 
+interface SuggestedAction {
+  id: string;
+  label: string;
+  intent?: string;
+  description?: string;
+}
+
 interface AnaPersistentPanelProps {
   contextProfile?: {
     productType?: string;
@@ -53,6 +57,27 @@ interface AnaPersistentPanelProps {
     activeProject?: string;
     projectId?: string;
   };
+  /** Suggested actions shown as quick-start chips when conversation is empty */
+  suggestedActions?: SuggestedAction[];
+  /** Greeting text shown when no messages */
+  greeting?: string;
+  /** Initial message to auto-send on mount */
+  initialMessage?: string | null;
+  /** Callback when user triggers a suggested action */
+  onActionRun?: (entry: {
+    id: string;
+    intent: string;
+    label: string;
+    status: 'running' | 'done' | 'failed';
+    ts: number;
+  }) => void;
+  /** Navigate to a layout mode or path */
+  onNavigate?: (path: string) => void;
+  /**
+   * "full" = fills all available space, shows greeting + suggested actions (Claude.ai style)
+   * "compact" = just the input bar at bottom, conversation expands as overlay
+   */
+  mode?: 'full' | 'compact';
 }
 
 // ─── Context labels ──────────────────────────────────────────────────────────
@@ -79,33 +104,40 @@ const SCREEN_LABELS: Record<string, string> = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({ contextProfile }) => {
+const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
+  contextProfile,
+  suggestedActions,
+  greeting,
+  initialMessage,
+  onActionRun,
+  onNavigate,
+  mode = 'full',
+}) => {
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showActions, setShowActions] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const initialMessageSentRef = useRef(false);
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
 
+  const defaultGreeting = useMemo(() => {
+    if (greeting) return greeting;
+    if (contextProfile?.activeProject) {
+      return `How can I help with ${contextProfile.activeProject}?`;
+    }
+    return 'What would you like to work on?';
+  }, [greeting, contextProfile?.activeProject]);
+
   // Auto-scroll when new messages
   useEffect(() => {
-    if (isExpanded) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, isThinking, isExpanded]);
-
-  // Auto-expand when first message is sent
-  useEffect(() => {
-    if (messages.length > 0 && !isExpanded) {
-      setIsExpanded(true);
-    }
-  }, [messages.length]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isThinking]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -115,6 +147,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({ contextProfile 
       el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
     }
   }, [input]);
+
+  // Handle initial message (auto-send once)
+  useEffect(() => {
+    if (initialMessage && !initialMessageSentRef.current) {
+      initialMessageSentRef.current = true;
+      // Slight delay to let component mount
+      setTimeout(() => handleSend(initialMessage), 100);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMessage]);
 
   const handleSend = useCallback(async (messageText?: string) => {
     const text = messageText || input.trim();
@@ -129,7 +171,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({ contextProfile 
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    setIsExpanded(true);
     setIsThinking(true);
 
     try {
@@ -184,146 +225,245 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({ contextProfile 
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  return (
-    <div className="flex-shrink-0 border-t border-zinc-200 bg-white relative z-30">
-      {/* ── Expanded conversation area ── */}
-      <AnimatePresence>
-        {isExpanded && messages.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="overflow-hidden border-t border-zinc-100"
-          >
-            <div className="max-h-[40vh] overflow-y-auto zen-scroll" style={{ scrollbarWidth: 'thin' }}>
-              {/* Header with collapse + clear */}
-              <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-1.5 bg-white/95 backdrop-blur-sm border-b border-zinc-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
-                    <Sparkles className="w-3 h-3 text-white" />
+  const handleSuggestedAction = (action: SuggestedAction) => {
+    if (action.intent && onActionRun) {
+      onActionRun({
+        id: action.id,
+        intent: action.intent,
+        label: action.label,
+        status: 'running',
+        ts: Date.now(),
+      });
+    }
+    handleSend(action.label);
+  };
+
+  const hasMessages = messages.length > 0;
+  const isCompact = mode === 'compact';
+
+  // ── Compact mode: just input bar + expandable overlay ──
+  if (isCompact) {
+    return (
+      <div className="flex-shrink-0 border-t border-zinc-200 bg-white relative z-30">
+        {/* Expanded conversation overlay (slides up from bottom) */}
+        {hasMessages && (
+          <div className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-zinc-100" style={{ scrollbarWidth: 'thin' }}>
+            {messages.map(msg => {
+              const isUser = msg.role === 'user';
+              const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
+              return (
+                <div key={msg.id} className={cn('group px-4 py-3', isUser ? 'bg-zinc-50/60' : 'bg-white')}>
+                  <div className="flex gap-2.5 max-w-3xl mx-auto">
+                    <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-zinc-700 text-white' : 'bg-violet-600')}>
+                      {isUser ? <span className="text-[9px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3 h-3 text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-semibold text-zinc-800">{isUser ? 'You' : 'AnA'}</span>
+                      {isUser ? (
+                        <p className="text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
+                      ) : (
+                        <div className="prose prose-sm prose-zinc max-w-none mt-0.5 prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5 prose-strong:text-zinc-900 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                      )}
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-zinc-700">AnA</span>
-                  {contextProfile?.activeProject && (
-                    <span className="text-[10px] text-zinc-400">&middot; {contextProfile.activeProject}</span>
-                  )}
                 </div>
-                <div className="flex items-center gap-1">
-                  {messages.length > 0 && (
-                    <button
-                      onClick={() => { setMessages([]); setIsExpanded(false); }}
-                      className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
-                      title="Clear conversation"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setIsExpanded(false)}
-                    className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
-                    title="Collapse"
-                  >
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  </button>
+              );
+            })}
+            {isThinking && (
+              <div className="px-4 py-3 bg-white">
+                <div className="flex gap-2.5 max-w-3xl mx-auto">
+                  <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkles className="w-3 h-3 text-white" /></div>
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-800">AnA</span>
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
 
-              {/* Messages */}
-              {messages.map(msg => {
-                const isUser = msg.role === 'user';
-                const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
+        {/* Input bar */}
+        <div className="px-4 py-2.5 bg-white">
+          <div className="max-w-3xl mx-auto">
+            <div className={cn(
+              'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-2xl transition-colors duration-150',
+              isFocused ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm' : 'border-zinc-200 hover:border-zinc-300'
+            )}>
+              <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
+                <Sparkles className="w-4 h-4 text-violet-500" />
+                {screenLabel && <span className="text-[10px] text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>}
+              </div>
+              <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]" />
+              {hasMessages && (
+                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg transition-colors" title="New thread">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <button onClick={() => handleSend()} disabled={!input.trim() || isThinking} className={cn('flex-shrink-0 p-2 rounded-full transition-colors duration-150', input.trim() && !isThinking ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-200 text-zinc-400 cursor-not-allowed')} aria-label="Send message">
+                <ArrowUp className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-                return (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      'group px-4 py-3',
-                      isUser ? 'bg-zinc-50/60' : 'bg-white'
-                    )}
-                    onMouseEnter={() => !isUser && setShowActions(msg.id)}
-                    onMouseLeave={() => setShowActions(null)}
-                  >
-                    <div className="flex gap-2.5 max-w-3xl mx-auto">
-                      <div className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'bg-zinc-700 text-white' : 'bg-violet-600'
-                      )}>
-                        {isUser ? (
-                          <span className="text-[9px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
-                        ) : (
-                          <Sparkles className="w-3 h-3 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-semibold text-zinc-800">{isUser ? 'You' : 'AnA'}</span>
-                        {isUser ? (
-                          <p className="text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
-                        ) : (
-                          <div
-                            className="prose prose-sm prose-zinc max-w-none mt-0.5
-                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
-                              prose-strong:text-zinc-900
-                              prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
-                              prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600
-                              prose-ul:text-zinc-700 prose-ol:text-zinc-700
-                              prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-                              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                            dangerouslySetInnerHTML={{ __html: htmlContent }}
-                          />
-                        )}
-                        {!isUser && (
-                          <div className={cn(
-                            'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
-                            showActions === msg.id ? 'opacity-100' : 'opacity-0'
-                          )}>
-                            <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Copy">
-                              {copiedId === msg.id ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-                            </button>
-                            <button className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
-                            <button className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+  // ── Full mode: fills available space like Claude.ai ──
+  return (
+    <div className="flex-1 flex flex-col min-h-0 bg-white">
+      {/* ── Conversation area — fills available space ── */}
+      <div className="flex-1 overflow-y-auto zen-scroll" style={{ scrollbarWidth: 'thin' }}>
+        {!hasMessages && !isThinking ? (
+          /* ── Empty state: greeting + suggested actions ── */
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            <div className="max-w-2xl w-full text-center">
+              {/* Greeting */}
+              <div className="mb-8">
+                <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-semibold text-zinc-900">{defaultGreeting}</h2>
+                {screenLabel && (
+                  <p className="text-sm text-zinc-400 mt-1">{screenLabel}</p>
+                )}
+              </div>
 
-              {/* Thinking indicator */}
-              {isThinking && (
-                <div className="px-4 py-3 bg-white">
+              {/* Suggested actions */}
+              {suggestedActions && suggestedActions.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
+                  {suggestedActions.slice(0, 4).map(action => (
+                    <button
+                      key={action.id}
+                      onClick={() => handleSuggestedAction(action)}
+                      className="text-left px-4 py-3 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors group"
+                    >
+                      <p className="text-sm font-medium text-zinc-700 group-hover:text-zinc-900">{action.label}</p>
+                      {action.description && (
+                        <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{action.description}</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ── Messages ── */
+          <div className="pb-2">
+            {messages.map(msg => {
+              const isUser = msg.role === 'user';
+              const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
+
+              return (
+                <div
+                  key={msg.id}
+                  className={cn(
+                    'group px-4 py-3',
+                    isUser ? 'bg-zinc-50/60' : 'bg-white'
+                  )}
+                  onMouseEnter={() => !isUser && setShowActions(msg.id)}
+                  onMouseLeave={() => setShowActions(null)}
+                >
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
-                    <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Sparkles className="w-3 h-3 text-white" />
+                    <div className={cn(
+                      'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
+                      isUser ? 'bg-zinc-700 text-white' : 'bg-violet-600'
+                    )}>
+                      {isUser ? (
+                        <span className="text-[9px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
+                      ) : (
+                        <Sparkles className="w-3 h-3 text-white" />
+                      )}
                     </div>
-                    <div>
-                      <span className="text-xs font-semibold text-zinc-800">AnA</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-semibold text-zinc-800">{isUser ? 'You' : 'AnA'}</span>
+                      {isUser ? (
+                        <p className="text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
+                      ) : (
+                        <div
+                          className="prose prose-sm prose-zinc max-w-none mt-0.5
+                            prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
+                            prose-strong:text-zinc-900
+                            prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
+                            prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600
+                            prose-ul:text-zinc-700 prose-ol:text-zinc-700
+                            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                          dangerouslySetInnerHTML={{ __html: htmlContent }}
+                        />
+                      )}
+                      {!isUser && (
+                        <div className={cn(
+                          'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
+                          showActions === msg.id ? 'opacity-100' : 'opacity-0'
+                        )}>
+                          <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Copy">
+                            {copiedId === msg.id ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                          <button className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
+                          <button className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
                         </div>
-                        <span className="text-xs text-violet-600 font-medium">Thinking...</span>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </motion.div>
+              );
+            })}
+
+            {/* Thinking indicator */}
+            {isThinking && (
+              <div className="px-4 py-3 bg-white">
+                <div className="flex gap-2.5 max-w-3xl mx-auto">
+                  <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Sparkles className="w-3 h-3 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-800">AnA</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                      </div>
+                      <span className="text-xs text-violet-600 font-medium">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
         )}
-      </AnimatePresence>
+      </div>
 
       {/* ── Bottom input bar — always visible ── */}
-      <div className="px-4 py-2.5 bg-white">
+      <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-100 bg-white">
         <div className="max-w-3xl mx-auto">
+          {/* Clear conversation button */}
+          {hasMessages && (
+            <div className="flex justify-center mb-2">
+              <button
+                onClick={() => setMessages([])}
+                className="flex items-center gap-1.5 px-3 py-1 text-xs text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full transition-colors"
+              >
+                <RotateCcw className="w-3 h-3" />
+                New thread
+              </button>
+            </div>
+          )}
+
           <div className={cn(
-            'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-2xl transition-all duration-200',
+            'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-2xl transition-colors duration-150',
             isFocused
-              ? 'border-blue-300 ring-4 ring-blue-50 bg-white shadow-sm'
+              ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm'
               : 'border-zinc-200 hover:border-zinc-300'
           )}>
             {/* Context indicator */}
@@ -342,28 +482,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({ contextProfile 
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Ask AnA anything about this workspace..."
+              placeholder="Message AnA..."
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]"
             />
-
-            {/* Expand/collapse toggle */}
-            {messages.length > 0 && (
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="flex-shrink-0 p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg transition-colors"
-                title={isExpanded ? 'Collapse conversation' : 'Show conversation'}
-              >
-                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-              </button>
-            )}
 
             {/* Send */}
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isThinking}
               className={cn(
-                'flex-shrink-0 p-2 rounded-full transition-all duration-200',
+                'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
                 input.trim() && !isThinking
                   ? 'bg-zinc-900 text-white hover:bg-zinc-800'
                   : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'

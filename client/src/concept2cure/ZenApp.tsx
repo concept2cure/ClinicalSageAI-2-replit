@@ -782,7 +782,42 @@ export const ZenApp: React.FC = () => {
     [activeProjectId]
   );
 
-  // Pending draft request from IND Workspace → passed to ZenChat when switching to assistant mode
+  // Workspace suggested actions — context-aware quick-start chips for AnA
+  const workspaceSuggestedActions = useMemo(() => {
+    const base = workspaceSummary?.nextActions ?? [];
+    if (base.length > 0) return base.slice(0, 4);
+
+    const t = (activeProject?.type || 'IND').toUpperCase();
+    const starters: Record<string, Array<{ id: string; label: string; intent: string; description: string }>> = {
+      '510K': [
+        { id: 'upload-device-docs', label: 'Upload device documents', intent: 'upload-source-documents', description: 'Add device specs, test results, and labeling.' },
+        { id: 'find-predicates', label: 'Find likely predicates', intent: 'find-likely-510k-predicates', description: 'Search FDA for substantially equivalent devices.' },
+        { id: 'draft-device-desc', label: 'Draft device description', intent: 'draft-510k-device-description', description: 'Generate Section 3 device description.' },
+        { id: 'check-estar', label: 'Check eSTAR readiness', intent: 'check-estar-readiness', description: 'Review eSTAR template requirements.' },
+      ],
+      IND: [
+        { id: 'upload-source', label: 'Upload source documents', intent: 'upload-source-documents', description: 'Add CSRs, CMC data, and preclinical files.' },
+        { id: 'draft-ind-outline', label: 'Draft IND outline', intent: 'draft-ind-outline', description: 'Generate IND outline per 21 CFR 312.23.' },
+        { id: 'missing-sections', label: 'Identify missing sections', intent: 'identify-missing-ind-sections', description: 'Audit your IND for incomplete sections.' },
+        { id: 'gen-cmc-workplan', label: 'Generate CMC workplan', intent: 'generate-cmc-workplan', description: 'Build Module 3 CMC workplan and timeline.' },
+      ],
+      CER: [
+        { id: 'upload-evidence', label: 'Upload evidence & literature', intent: 'upload-source-documents', description: 'Add clinical literature and PMS data.' },
+        { id: 'build-cer-outline', label: 'Build CER outline', intent: 'build-cer-outline', description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.' },
+        { id: 'draft-benefit-risk', label: 'Draft benefit-risk section', intent: 'draft-cer-benefit-risk', description: 'Generate the benefit-risk analysis.' },
+        { id: 'review-pms-pmcf', label: 'Review PMS / PMCF gaps', intent: 'review-pms-pmcf-gaps', description: 'Identify post-market surveillance gaps.' },
+      ],
+      NDA: [
+        { id: 'upload-source', label: 'Upload source documents', intent: 'upload-source-documents', description: 'Add CSRs, CMC data, and prior filings.' },
+        { id: 'draft-nda-outline', label: 'Draft NDA outline', intent: 'draft-nda-outline', description: 'Generate NDA outline per 21 CFR 314.' },
+        { id: 'nda-missing', label: 'Identify missing sections', intent: 'identify-missing-nda-sections', description: 'Audit NDA for gaps and missing modules.' },
+        { id: 'gen-summary', label: 'Generate ISS/ISE outline', intent: 'generate-iss-ise-outline', description: 'Outline Integrated Summary of Safety/Efficacy.' },
+      ],
+    };
+    return (starters[t] ?? starters['IND']).slice(0, 4);
+  }, [activeProject?.type, workspaceSummary?.nextActions]);
+
+  // Pending draft request from IND Workspace → passed to AnA when switching to workspace mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
     code: string;
     title: string;
@@ -901,10 +936,10 @@ export const ZenApp: React.FC = () => {
   }, [layoutMode, activeProjectId, embeddedModule]);
 
   const handleNewChat = useCallback(() => {
-    // Clear active conversation/thread and enter workspace/assistant
+    // Clear active conversation/thread
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
-    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'assistant');
+    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects');
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
@@ -1428,7 +1463,7 @@ export const ZenApp: React.FC = () => {
               setActiveToolPanel('intelligence');
               break;
             case 'agents':
-              setLayoutMode('assistant');
+              setLayoutMode('regulatory-workspace');
               break;
             case 'tasks':
               setLayoutMode('timeline');
@@ -1653,7 +1688,7 @@ export const ZenApp: React.FC = () => {
                   Portfolio analytics and risk dashboards are being built. Check back soon.
                 </p>
                 <button
-                  onClick={() => setLayoutMode('assistant')}
+                  onClick={() => setLayoutMode('regulatory-workspace')}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -1723,7 +1758,7 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
               <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
-                  onClick={() => setLayoutMode('assistant')}
+                  onClick={() => setLayoutMode('regulatory-workspace')}
                   className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -1814,7 +1849,7 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="eCTD Co-Author"
                 subtitle="IND · NDA · BLA · 510(k) · CTD section-by-section drafting"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
                 <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
@@ -1878,7 +1913,7 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="CMC Platform"
                 subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
                 <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
@@ -1994,7 +2029,7 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="Document Vault"
                 subtitle="Field-ready document control · Compliance · Audit trails"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               <div className="flex-1 overflow-auto">
                 <ErrorBoundary>
@@ -2014,7 +2049,7 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="Clinical Trial Hub"
                 subtitle="Study design · Protocol optimization · CSR intelligence · Trial management"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               <div className="flex-1 overflow-auto">
                 <ErrorBoundary>
@@ -2876,175 +2911,27 @@ export const ZenApp: React.FC = () => {
                 )}
               </div>
 
-              {/* ── Workspace body: chat center + right panel ───────────── */}
+              {/* ── Workspace body: AnA chat + right panel ───────────── */}
               <div className="flex-1 flex min-h-0">
-                {/* Center: ZenChat */}
-                <div className="flex-1 flex flex-col min-h-0 min-w-0">
-                  <ZenChat
-                    projectId={activeProjectId}
-                    projectName={activeProject?.name}
-                    submissionType={activeProject?.type}
-                    threadId={activeThreadId}
-                    greeting={platformGreeting}
-                    lastWork={lastWorkSummary}
-                    nextTask={
-                      nextTask
-                        ? {
-                            taskTitle: nextTask.taskTitle,
-                            taskDescription: nextTask.taskDescription,
-                          }
-                        : null
-                    }
-                    suggestedActions={(() => {
-                      const t = (activeProject?.type || 'IND').toUpperCase();
-                      const base = workspaceSummary?.nextActions ?? [];
-                      if (base.length > 0) return base.slice(0, 4);
-
-                      // Determine project state for smart ordering
-                      const hasFiles = (workspaceKnowledge.knowledge?.documents?.length ?? 0) > 0;
-                      const hasOutputs =
-                        projectArtifacts.length > 0 ||
-                        (workspaceSummary?.recent?.artifacts?.length ?? 0) > 0;
-
-                      const starters: Record<
-                        string,
-                        Array<{ id: string; label: string; intent: string; description: string }>
-                      > = {
-                        '510K': [
-                          {
-                            id: 'upload-device-docs',
-                            label: 'Upload device documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add device specs, test results, and labeling.',
-                          },
-                          {
-                            id: 'find-predicates',
-                            label: 'Find likely predicates',
-                            intent: 'find-likely-510k-predicates',
-                            description: 'Search FDA for substantially equivalent devices.',
-                          },
-                          {
-                            id: 'draft-device-desc',
-                            label: 'Draft device description',
-                            intent: 'draft-510k-device-description',
-                            description: 'Generate Section 3 device description.',
-                          },
-                          {
-                            id: 'check-estar',
-                            label: 'Check eSTAR readiness',
-                            intent: 'check-estar-readiness',
-                            description: 'Review eSTAR template requirements.',
-                          },
-                        ],
-                        IND: [
-                          {
-                            id: 'upload-source',
-                            label: 'Upload source documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add CSRs, CMC data, and preclinical files.',
-                          },
-                          {
-                            id: 'draft-ind-outline',
-                            label: 'Draft IND outline',
-                            intent: 'draft-ind-outline',
-                            description: 'Generate IND outline per 21 CFR 312.23.',
-                          },
-                          {
-                            id: 'missing-sections',
-                            label: 'Identify missing sections',
-                            intent: 'identify-missing-ind-sections',
-                            description: 'Audit your IND for incomplete sections.',
-                          },
-                          {
-                            id: 'gen-cmc-workplan',
-                            label: 'Generate CMC workplan',
-                            intent: 'generate-cmc-workplan',
-                            description: 'Build Module 3 CMC workplan and timeline.',
-                          },
-                        ],
-                        CER: [
-                          {
-                            id: 'upload-evidence',
-                            label: 'Upload evidence & literature',
-                            intent: 'upload-source-documents',
-                            description: 'Add clinical literature and PMS data.',
-                          },
-                          {
-                            id: 'build-cer-outline',
-                            label: 'Build CER outline',
-                            intent: 'build-cer-outline',
-                            description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.',
-                          },
-                          {
-                            id: 'draft-benefit-risk',
-                            label: 'Draft benefit-risk section',
-                            intent: 'draft-cer-benefit-risk',
-                            description: 'Generate the benefit-risk analysis.',
-                          },
-                          {
-                            id: 'review-pms-pmcf',
-                            label: 'Review PMS / PMCF gaps',
-                            intent: 'review-pms-pmcf-gaps',
-                            description: 'Identify post-market surveillance gaps.',
-                          },
-                        ],
-                        NDA: [
-                          {
-                            id: 'upload-source',
-                            label: 'Upload source documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add CSRs, CMC data, and prior filings.',
-                          },
-                          {
-                            id: 'draft-nda-outline',
-                            label: 'Draft NDA outline',
-                            intent: 'draft-nda-outline',
-                            description: 'Generate NDA outline per 21 CFR 314.',
-                          },
-                          {
-                            id: 'nda-missing',
-                            label: 'Identify missing sections',
-                            intent: 'identify-missing-nda-sections',
-                            description: 'Audit NDA for gaps and missing modules.',
-                          },
-                          {
-                            id: 'gen-summary',
-                            label: 'Generate ISS/ISE outline',
-                            intent: 'generate-iss-ise-outline',
-                            description: 'Outline Integrated Summary of Safety/Efficacy.',
-                          },
-                        ],
-                      };
-
-                      const all = starters[t] ?? starters['IND'];
-                      // State-aware ordering: no files → upload first; has files no outputs → generate first
-                      if (!hasFiles) return [all[0], ...all.slice(1, 4)]; // upload first
-                      if (!hasOutputs) return [all[1], all[2], all[3], all[0]].slice(0, 3); // generate first
-                      return all.slice(1, 4); // skip upload, show generate/audit
-                    })()}
-                    onActionRun={handleActionRun}
-                    onNavigate={(path: string) => {
-                      try {
-                        const params = new URLSearchParams(
-                          new URL(path, window.location.origin).search
-                        );
-                        const p = params.get('panel') as ToolPanel | null;
-                        if (p && p in TOOL_PANELS) {
-                          setActiveToolPanel(p);
-                          return;
-                        }
-                      } catch (_) {
-                        /* fallback */
-                      }
-                      setLayoutMode('workspace');
-                    }}
-                    onNewProject={() => setNewProjectOpen(true)}
-                    onThreadChange={tid => {
-                      handleThreadChange(tid);
-                      if (pendingDraftSection) setPendingDraftSection(null);
-                    }}
-                  />
-                </div>
+                {/* Center: AnA (the ONE chat — Claude.ai style) */}
+                <AnaPersistentPanel
+                  mode="full"
+                  contextProfile={{
+                    productType: activeProject?.type,
+                    userRole: userRole,
+                    screenName: 'regulatory-workspace',
+                    activeProject: activeProject?.name,
+                    projectId: activeProjectId,
+                  }}
+                  greeting={platformGreeting || `How can I help with ${activeProject?.name || 'your project'}?`}
+                  suggestedActions={workspaceSuggestedActions}
+                  onActionRun={handleActionRun}
+                  initialMessage={
+                    pendingDraftSection
+                      ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
+                      : null
+                  }
+                />
 
                 {/* Right panel: Files / Outputs / Instructions */}
                 {workspacePanelOpen && (
@@ -3251,107 +3138,31 @@ export const ZenApp: React.FC = () => {
               </ErrorBoundary>
             </div>
           )}
+          {/* assistant/ctd mode → redirect to workspace (ONE chat via AnA) */}
           {!embeddedModule && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
-            <>
-              {/* Chat - Connected to Cortex */}
-              <div
-                className={cn(
-                  'flex-1 flex flex-col min-w-0 min-h-0',
-                  activeToolPanel && !toolPanelFullscreen && 'flex-shrink-0'
-                )}
-                style={{
-                  display: toolPanelFullscreen ? 'none' : 'flex',
-                }}
-              >
-                {/* Workspace Readiness Strip — real counts from backend */}
-                <div className="flex-shrink-0 px-4 sm:px-6 pt-2 pb-0 border-b border-zinc-100/60 bg-zinc-50/40">
-                  <WorkspaceReadinessStrip
-                    counts={workspaceSummary?.counts}
-                    isLoading={summaryLoading}
-                    orgName={workspaceSummary?.org?.name}
-                  />
-                </div>
-
-                <ZenChat
-                  projectId={activeProjectId}
-                  projectName={activeProject?.name}
-                  submissionType={activeProject?.type}
-                  threadId={activeThreadId}
-                  greeting={platformGreeting}
-                  lastWork={lastWorkSummary}
-                  nextTask={
-                    nextTask
-                      ? { taskTitle: nextTask.taskTitle, taskDescription: nextTask.taskDescription }
-                      : null
-                  }
-                  suggestedActions={workspaceSummary?.nextActions}
-                  onNavigate={(path: string) => {
-                    // If path opens a panel, do it inline
-                    try {
-                      const params = new URLSearchParams(
-                        new URL(path, window.location.origin).search
-                      );
-                      const p = params.get('panel') as ToolPanel | null;
-                      if (p && p in TOOL_PANELS) {
-                        setActiveToolPanel(p);
-                        return;
-                      }
-                    } catch (_) {
-                      /* fallback */
-                    }
-                    setLayoutMode('assistant');
-                  }}
-                  onNewProject={() => setNewProjectOpen(true)}
-                  initialMessage={
-                    pendingDraftSection
-                      ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
-                      : null
-                  }
-                  onThreadChange={tid => {
-                    handleThreadChange(tid);
-                    // Clear pending draft after it's been sent
-                    if (pendingDraftSection) setPendingDraftSection(null);
-                  }}
-                />
-              </div>
-
-              {/* Project Knowledge Panel — Claude.ai-style project sidebar */}
-              {!activeToolPanel && activeProjectId && (
-                <div className="w-64 flex-shrink-0 border-l border-zinc-100 hidden xl:flex">
-                  <ErrorBoundary>
-                    <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
-                      <ProjectKnowledgePanel projectId={activeProjectId} />
-                    </Suspense>
-                  </ErrorBoundary>
-                </div>
-              )}
-
-              {/* Tool panel */}
-              {activeToolPanel && (
-                <ToolPanelWrapper
-                  panel={activeToolPanel}
-                  onClose={() => {
-                    setActiveToolPanel(null);
-                    setToolPanelFullscreen(false);
-                  }}
-                  isFullscreen={toolPanelFullscreen}
-                  onToggleFullscreen={() => setToolPanelFullscreen(!toolPanelFullscreen)}
-                />
-              )}
-            </>
+            <RedirectToWorkspace onRedirect={() => setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects')} />
           )}
         </div>
 
-        {/* AnA — Bottom-docked AI chat bar, always visible on every page */}
-        <AnaPersistentPanel
-          contextProfile={{
-            productType: activeProject?.type,
-            userRole: userRole,
-            screenName: layoutMode,
-            activeProject: activeProject?.name,
-            projectId: activeProjectId,
-          }}
-        />
+        {/* AnA — THE single chat surface
+            workspace/regulatory-workspace: rendered inline above (mode="full")
+            module pages: shown here as compact input bar at bottom
+            projects/home: shown here as full chat (no module content above) */}
+        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && (
+          <AnaPersistentPanel
+            mode={layoutMode === 'projects' ? 'full' : 'compact'}
+            contextProfile={{
+              productType: activeProject?.type,
+              userRole: userRole,
+              screenName: layoutMode,
+              activeProject: activeProject?.name,
+              projectId: activeProjectId,
+            }}
+            greeting={platformGreeting}
+            suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
+            onActionRun={handleActionRun}
+          />
+        )}
       </div>
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
