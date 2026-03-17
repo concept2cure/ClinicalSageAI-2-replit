@@ -1,5 +1,8 @@
 import 'dotenv/config';
 
+// Initialize Sentry error monitoring early, before other imports
+import './utils/sentry';
+
 // CRITICAL: Force IPv4 first to prevent ENETUNREACH errors in environments without IPv6 support
 // This MUST be at the very top before ANY database connections are made
 import dns from 'dns';

@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,8 +28,8 @@ export class ProductionErrorBoundary extends React.Component {
     // Log error details for debugging
     console.error('Production Error Boundary caught:', error, errorInfo);
     
-    // In production, you would send this to an error tracking service
-    // Example: Sentry.captureException(error, { extra: errorInfo });
+    // Send to Sentry if initialized
+    Sentry.captureException(error, { extra: errorInfo });
     
     this.setState({
       error,
