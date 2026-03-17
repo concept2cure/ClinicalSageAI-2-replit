@@ -1347,6 +1347,16 @@ try {
   console.error('❌ Failed to mount eCTD Compile routes:', error);
 }
 
+// Mount eCTD Export routes (ICH M8 v4.0 ZIP package generation)
+try {
+  const ectdExportModule = await import('./routes/ectd-export.ts');
+  const ectdExportRoutes = ectdExportModule.default;
+  app.use('/api/ectd/export', ectdExportRoutes);
+  console.log('✅ eCTD Export routes mounted (ICH M8 v4.0 packaging)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Export routes:', error);
+}
+
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
 try {
   const indPdfModule = await import('./routes/ind-pdf.ts');
