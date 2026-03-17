@@ -16345,3 +16345,298 @@ export const methodRegulatoryOutcomes = pgTable(
 );
 
 export type MethodRegulatoryOutcome = InferSelectModel<typeof methodRegulatoryOutcomes>;
+
+// ============================================================
+// SUBMISSION TWIN — Living Submission Intelligence Layer
+// ============================================================
+
+/** Strength of evidence support for a claim */
+export const claimSupportStrengthEnum = pgEnum('claim_support_strength', [
+  'direct',
+  'indirect',
+  'weak',
+  'stale',
+  'contradictory',
+  'unsupported',
+]);
+
+/** Type of narrative drift detected */
+export const driftTypeEnum = pgEnum('drift_type', [
+  'summary_detail_mismatch',
+  'claim_escalation_without_evidence',
+  'endpoint_framing_drift',
+  'cmc_maturity_overstatement',
+  'narrative_statistical_mismatch',
+  'document_contradiction',
+  'stale_downstream_summary',
+]);
+
+/** Regulator reviewer persona for challenge simulation */
+export const reviewerLensEnum = pgEnum('reviewer_lens', [
+  'skeptical_reviewer',
+  'evidence_sufficiency_skeptic',
+  'cmc_heavy_reviewer',
+  'clinical_risk_reviewer',
+  'compliance_inspection',
+  'claims_challenger',
+  'biostatistics_skeptic',
+]);
+
+/** Severity level for twin findings */
+export const twinFindingSeverityEnum = pgEnum('twin_finding_severity', [
+  'critical',
+  'high',
+  'medium',
+  'low',
+  'informational',
+]);
+
+/** Status of a twin assessment run */
+export const twinAssessmentStatusEnum = pgEnum('twin_assessment_status', [
+  'running',
+  'completed',
+  'failed',
+  'stale',
+]);
+
+/**
+ * Submission Twin — Claims
+ * Every assertion, rationale, or summary statement in the submission.
+ */
+export const submissionTwinClaims = pgTable(
+  'submission_twin_claims',
+  {
+    id: serial('id').primaryKey(),
+    packageId: integer('package_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id),
+    artifactId: integer('artifact_id')
+      .references(() => concept2cureArtifacts.id),
+    sectionId: integer('section_id')
+      .references(() => c2cPackageSections.id),
+    claimText: text('claim_text').notNull(),
+    claimType: text('claim_type').notNull(), // 'efficacy', 'safety', 'cmc_quality', 'regulatory_precedent', 'statistical', 'labeling'
+    sectionPath: text('section_path'), // e.g. 'module2/2.5/clinical-overview'
+    sourceLocation: json('source_location'), // { page, paragraph, line }
+    confidence: real('confidence').default(0),
+    isActive: boolean('is_active').default(true).notNull(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('twin_claims_package_idx').on(table.packageId),
+    artifactIdx: index('twin_claims_artifact_idx').on(table.artifactId),
+    typeIdx: index('twin_claims_type_idx').on(table.claimType),
+    orgIdx: index('twin_claims_org_idx').on(table.organizationId),
+  })
+);
+
+export const insertSubmissionTwinClaimSchema = createInsertSchemaOmit(submissionTwinClaims, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type SubmissionTwinClaim = InferSelectModel<typeof submissionTwinClaims>;
+
+/**
+ * Submission Twin — Evidence Links
+ * Maps each claim to supporting (or contradicting) evidence.
+ */
+export const submissionTwinEvidenceLinks = pgTable(
+  'submission_twin_evidence_links',
+  {
+    id: serial('id').primaryKey(),
+    claimId: integer('claim_id')
+      .notNull()
+      .references(() => submissionTwinClaims.id),
+    evidenceArtifactId: integer('evidence_artifact_id')
+      .references(() => concept2cureArtifacts.id),
+    evidenceVaultDocId: uuid('evidence_vault_doc_id'),
+    evidenceText: text('evidence_text'),
+    supportStrength: claimSupportStrengthEnum('support_strength').notNull(),
+    relevanceScore: real('relevance_score').default(0),
+    isStatistical: boolean('is_statistical').default(false),
+    statisticalDetail: json('statistical_detail'), // { method, pValue, ci, effectSize, power }
+    staleSince: timestamp('stale_since'),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    claimIdx: index('twin_evidence_claim_idx').on(table.claimId),
+    strengthIdx: index('twin_evidence_strength_idx').on(table.supportStrength),
+    orgIdx: index('twin_evidence_org_idx').on(table.organizationId),
+  })
+);
+
+export type SubmissionTwinEvidenceLink = InferSelectModel<typeof submissionTwinEvidenceLinks>;
+
+/**
+ * Submission Twin — Drift Alerts
+ * Detected narrative inconsistencies, contradictions, or stale references.
+ */
+export const submissionTwinDriftAlerts = pgTable(
+  'submission_twin_drift_alerts',
+  {
+    id: serial('id').primaryKey(),
+    packageId: integer('package_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id),
+    driftType: driftTypeEnum('drift_type').notNull(),
+    severity: twinFindingSeverityEnum('severity').notNull(),
+    sourceArtifactId: integer('source_artifact_id')
+      .references(() => concept2cureArtifacts.id),
+    targetArtifactId: integer('target_artifact_id')
+      .references(() => concept2cureArtifacts.id),
+    description: text('description').notNull(),
+    sourceExcerpt: text('source_excerpt'),
+    targetExcerpt: text('target_excerpt'),
+    suggestedFix: text('suggested_fix'),
+    resolved: boolean('resolved').default(false).notNull(),
+    resolvedAt: timestamp('resolved_at'),
+    resolvedBy: integer('resolved_by'),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('twin_drift_package_idx').on(table.packageId),
+    typeIdx: index('twin_drift_type_idx').on(table.driftType),
+    severityIdx: index('twin_drift_severity_idx').on(table.severity),
+    resolvedIdx: index('twin_drift_resolved_idx').on(table.resolved),
+    orgIdx: index('twin_drift_org_idx').on(table.organizationId),
+  })
+);
+
+export type SubmissionTwinDriftAlert = InferSelectModel<typeof submissionTwinDriftAlerts>;
+
+/**
+ * Submission Twin — Regulator Challenge Simulations
+ * AI-generated reviewer questions, concerns, and deficiency predictions per lens.
+ */
+export const submissionTwinChallenges = pgTable(
+  'submission_twin_challenges',
+  {
+    id: serial('id').primaryKey(),
+    packageId: integer('package_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id),
+    assessmentId: integer('assessment_id')
+      .references(() => submissionTwinAssessments.id),
+    reviewerLens: reviewerLensEnum('reviewer_lens').notNull(),
+    challengeText: text('challenge_text').notNull(),
+    targetClaimId: integer('target_claim_id')
+      .references(() => submissionTwinClaims.id),
+    targetSection: text('target_section'),
+    severity: twinFindingSeverityEnum('severity').notNull(),
+    deficiencyLikelihood: real('deficiency_likelihood').default(0), // 0-1
+    suggestedResponse: text('suggested_response'),
+    suggestedArtifact: text('suggested_artifact'), // e.g. 'Reviewer Concern Brief'
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('twin_challenges_package_idx').on(table.packageId),
+    assessmentIdx: index('twin_challenges_assessment_idx').on(table.assessmentId),
+    lensIdx: index('twin_challenges_lens_idx').on(table.reviewerLens),
+    severityIdx: index('twin_challenges_severity_idx').on(table.severity),
+    orgIdx: index('twin_challenges_org_idx').on(table.organizationId),
+  })
+);
+
+export type SubmissionTwinChallenge = InferSelectModel<typeof submissionTwinChallenges>;
+
+/**
+ * Submission Twin — Change Impact Records
+ * When an artifact changes, what downstream artifacts and claims are affected.
+ */
+export const submissionTwinChangeImpacts = pgTable(
+  'submission_twin_change_impacts',
+  {
+    id: serial('id').primaryKey(),
+    packageId: integer('package_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id),
+    changedArtifactId: integer('changed_artifact_id')
+      .notNull()
+      .references(() => concept2cureArtifacts.id),
+    changeDescription: text('change_description').notNull(),
+    changeType: text('change_type').notNull(), // 'content_edit', 'status_change', 'version_bump', 'evidence_update', 'statistical_update'
+    impactedArtifactId: integer('impacted_artifact_id')
+      .references(() => concept2cureArtifacts.id),
+    impactedClaimId: integer('impacted_claim_id')
+      .references(() => submissionTwinClaims.id),
+    impactSeverity: twinFindingSeverityEnum('impact_severity').notNull(),
+    impactDescription: text('impact_description').notNull(),
+    remediation: text('remediation'),
+    resolved: boolean('resolved').default(false).notNull(),
+    resolvedAt: timestamp('resolved_at'),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('twin_impact_package_idx').on(table.packageId),
+    changedIdx: index('twin_impact_changed_idx').on(table.changedArtifactId),
+    impactedIdx: index('twin_impact_impacted_idx').on(table.impactedArtifactId),
+    resolvedIdx: index('twin_impact_resolved_idx').on(table.resolved),
+    orgIdx: index('twin_impact_org_idx').on(table.organizationId),
+  })
+);
+
+export type SubmissionTwinChangeImpact = InferSelectModel<typeof submissionTwinChangeImpacts>;
+
+/**
+ * Submission Twin — Assessments (snapshot runs)
+ * Each assessment is a point-in-time evaluation of the full submission package.
+ */
+export const submissionTwinAssessments = pgTable(
+  'submission_twin_assessments',
+  {
+    id: serial('id').primaryKey(),
+    packageId: integer('package_id')
+      .notNull()
+      .references(() => c2cSubmissionPackages.id),
+    status: twinAssessmentStatusEnum('status').notNull().default('running'),
+    readinessScore: real('readiness_score'), // 0-100
+    fragilityScore: real('fragility_score'), // 0-100 (higher = more fragile)
+    claimCount: integer('claim_count').default(0),
+    supportedClaimCount: integer('supported_claim_count').default(0),
+    unsupportedClaimCount: integer('unsupported_claim_count').default(0),
+    driftAlertCount: integer('drift_alert_count').default(0),
+    challengeCount: integer('challenge_count').default(0),
+    criticalFindingCount: integer('critical_finding_count').default(0),
+    nextBestArtifact: text('next_best_artifact'),
+    nextBestArtifactRationale: text('next_best_artifact_rationale'),
+    weakZones: json('weak_zones'), // [{ section, score, issues[] }]
+    biostatAlignment: json('biostat_alignment'), // { aligned, mismatches[], recommendations[] }
+    executiveSummary: text('executive_summary'),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    triggeredBy: integer('triggered_by'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    packageIdx: index('twin_assessment_package_idx').on(table.packageId),
+    statusIdx: index('twin_assessment_status_idx').on(table.status),
+    orgIdx: index('twin_assessment_org_idx').on(table.organizationId),
+    createdIdx: index('twin_assessment_created_idx').on(table.createdAt),
+  })
+);
+
+export const insertSubmissionTwinAssessmentSchema = createInsertSchemaOmit(submissionTwinAssessments, {
+  id: true,
+  completedAt: true,
+  createdAt: true,
+});
+export type SubmissionTwinAssessment = InferSelectModel<typeof submissionTwinAssessments>;

@@ -6255,6 +6255,17 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // SUBMISSION TWIN — Living Submission Intelligence Layer
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const submissionTwinRoutes = await import('./routes/submission-twin.ts');
+    app.use('/api/submission-twin', submissionTwinRoutes.default);
+    console.log('✅ Submission Twin routes mounted at /api/submission-twin');
+  } catch (error) {
+    console.error('❌ Failed to mount Submission Twin routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // MISSION CONTROL — Program OS (PM ecosystem)
   // ──────────────────────────────────────────────────────────────────────────
   try {
