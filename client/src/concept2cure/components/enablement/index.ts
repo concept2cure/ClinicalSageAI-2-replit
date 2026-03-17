@@ -42,9 +42,7 @@ export { default as FirstRunExperience } from './FirstRunExperience';
 export {
   AchievementProvider,
   useAchievements,
-  ConfettiEffect,
   AchievementToast,
-  MilestoneOverlay,
 } from './AchievementCelebration';
 
 // Before/After Interactive Comparison

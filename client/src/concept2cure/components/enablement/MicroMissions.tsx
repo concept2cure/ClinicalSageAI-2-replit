@@ -1,29 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Play,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  Brain,
-  Bot,
-  ChevronRight,
-  X,
-  HelpCircle,
-  Trophy,
-  Star,
-  Zap,
-  Target,
-  Search,
-  Filter,
-  RotateCcw,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface MissionStep {
   title: string;
@@ -63,21 +42,23 @@ export interface MissionBrowserProps {
   className?: string;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────────────────────
 
-const DIFFICULTY_CONFIG = {
-  'quick-win': { label: 'Quick Win', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', gradient: 'from-emerald-500 to-emerald-600' },
-  'challenge': { label: 'Challenge', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30', gradient: 'from-amber-500 to-orange-600' },
-  'deep-dive': { label: 'Deep Dive', color: 'bg-violet-500/15 text-violet-400 border-violet-500/30', gradient: 'from-violet-500 to-purple-600' },
+const DIFFICULTY_LABELS: Record<MicroMission['difficulty'], string> = {
+  'quick-win': 'Quick win',
+  'challenge': 'Challenge',
+  'deep-dive': 'Deep dive',
 };
 
-const AI_MODE_CONFIG = {
-  'dr-sage': { label: 'Dr. Sage', icon: Brain, color: 'text-blue-400' },
-  'ana': { label: 'AnA 1.0', icon: Sparkles, color: 'text-violet-400' },
-  'both': { label: 'Dr. Sage + AnA 1.0', icon: Bot, color: 'text-indigo-400' },
+const AI_MODE_LABELS: Record<MicroMission['aiMode'], string> = {
+  'dr-sage': 'Dr. Sage',
+  'ana': 'AnA 1.0',
+  'both': 'Dr. Sage + AnA 1.0',
 };
 
-// ─── Mission Data ─────────────────────────────────────────────────────────────
+const fade = { initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.15 } };
+
+// ─── Mission Data ───────────────────────────────────────────────────────────
 
 export const MICRO_MISSIONS: MicroMission[] = [
   {
@@ -219,145 +200,53 @@ export const MICRO_MISSIONS: MicroMission[] = [
   },
 ];
 
-// ─── Confetti Effect ──────────────────────────────────────────────────────────
-
-function ConfettiEffect() {
-  const particles = useMemo(() => {
-    const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#6366f1'];
-    return Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      delay: Math.random() * 0.5,
-      rotation: Math.random() * 360,
-      size: Math.random() * 6 + 4,
-    }));
-  }, []);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          initial={{ y: -20, x: `${p.x}%`, opacity: 1, rotate: 0 }}
-          animate={{ y: '120%', opacity: 0, rotate: p.rotation + 720 }}
-          transition={{ duration: 2 + Math.random(), delay: p.delay, ease: 'easeOut' }}
-          className="absolute"
-          style={{ left: `${p.x}%` }}
-        >
-          <div
-            className="rounded-sm"
-            style={{ width: p.size, height: p.size, backgroundColor: p.color }}
-          />
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-// ─── MissionCard ──────────────────────────────────────────────────────────────
+// ─── MissionCard ────────────────────────────────────────────────────────────
 
 export function MissionCard({ mission, completed, completionTime, onStart }: MissionCardProps) {
-  const diffConfig = DIFFICULTY_CONFIG[mission.difficulty];
-  const aiConfig = AI_MODE_CONFIG[mission.aiMode];
-  const AiIcon = aiConfig.icon;
+  const aiLabel = AI_MODE_LABELS[mission.aiMode];
+  const estimateLabel = `~${mission.estimatedSeconds} seconds`;
 
   return (
     <motion.div
-      whileHover={{ y: -2, scale: 1.01 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      {...fade}
+      className="bg-white rounded-lg border border-zinc-100 p-5"
     >
-      <Card className="relative overflow-hidden bg-slate-900/80 border-slate-700/50 hover:border-slate-600/80 transition-all group">
-        {/* Gradient top border */}
-        <div className={cn('absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r', diffConfig.gradient)} />
+      <h3 className="text-base font-semibold text-zinc-900">{mission.title}</h3>
+      <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{mission.description}</p>
+      <p className="text-xs text-zinc-400 mt-3">
+        {estimateLabel} &middot; {aiLabel}
+      </p>
+      <p className="text-xs text-zinc-400 mt-1">
+        {mission.skills.join(', ')}
+      </p>
 
-        <CardContent className="p-4">
-          {/* Header row */}
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-200 leading-tight pr-2">
-              {mission.title}
-            </h3>
-            {completed && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400 }}
-              >
-                <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400 flex-shrink-0" />
-              </motion.div>
-            )}
-          </div>
-
-          {/* Description */}
-          <p className="text-xs text-slate-400 leading-relaxed mb-3">{mission.description}</p>
-
-          {/* Badges row */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-3">
-            <Badge variant="outline" className={cn('text-[10px] border', diffConfig.color)}>
-              {diffConfig.label}
-            </Badge>
-            <Badge variant="outline" className="text-[10px] border-slate-600 text-slate-400">
-              <Clock className="w-2.5 h-2.5 mr-1" />
-              ~60 seconds
-            </Badge>
-            <Badge variant="outline" className={cn('text-[10px] border-slate-600', aiConfig.color)}>
-              <AiIcon className="w-2.5 h-2.5 mr-1" />
-              {aiConfig.label}
-            </Badge>
-          </div>
-
-          {/* Skills */}
-          <div className="flex flex-wrap gap-1 mb-3">
-            {mission.skills.map((skill) => (
-              <span
-                key={skill}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700/50"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-
-          {/* CTA / Completion */}
-          {completed ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-xs text-emerald-400 font-medium">Completed</span>
-              </div>
-              {completionTime !== undefined && (
-                <span className="text-[10px] text-slate-500">
-                  {completionTime}s
-                </span>
-              )}
-            </div>
-          ) : (
-            <Button
-              size="sm"
-              className="w-full h-8 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-violet-600 group-hover:border-transparent group-hover:text-white transition-all"
-              onClick={onStart}
-            >
-              <Play className="w-3 h-3 mr-1.5" />
-              Start Mission
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <div className="mt-4">
+        {completed ? (
+          <span className="text-sm text-zinc-400">
+            &#10003; Completed{completionTime !== undefined ? ` in ${completionTime}s` : ''}
+          </span>
+        ) : (
+          <button
+            onClick={onStart}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Start &rarr;
+          </button>
+        )}
+      </div>
     </motion.div>
   );
 }
 
-// ─── MissionRunner ────────────────────────────────────────────────────────────
+// ─── MissionRunner ──────────────────────────────────────────────────────────
 
 export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [showTip, setShowTip] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timer
   useEffect(() => {
     if (isComplete) return;
     timerRef.current = setInterval(() => {
@@ -379,11 +268,8 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
       setCurrentStep((prev) => prev + 1);
       setShowTip(false);
     } else {
-      // Mission complete
       if (timerRef.current) clearInterval(timerRef.current);
       setIsComplete(true);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
     }
   }, [currentStep, mission.steps.length]);
 
@@ -391,224 +277,132 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
     onComplete(elapsed);
   }, [elapsed, onComplete]);
 
-  const progress = ((currentStep + (isComplete ? 1 : 0)) / mission.steps.length) * 100;
   const step = mission.steps[currentStep];
-  const diffConfig = DIFFICULTY_CONFIG[mission.difficulty];
-  const aiConfig = AI_MODE_CONFIG[mission.aiMode];
 
   return (
-    <div className="relative">
-      {showConfetti && <ConfettiEffect />}
+    <motion.div
+      {...fade}
+      className="bg-white border border-zinc-100 rounded-lg overflow-hidden"
+    >
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-900">{mission.title}</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Step {currentStep + 1} of {mission.steps.length}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-zinc-400 font-mono">{formatTime(elapsed)}</span>
+          <button
+            onClick={onCancel}
+            className="text-xs text-zinc-400 hover:text-zinc-600"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-900 rounded-xl border border-slate-700/60 overflow-hidden"
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br', diffConfig.gradient)}>
-              <Target className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-slate-200">{mission.title}</h3>
-              <div className="flex items-center gap-2 mt-0.5">
-                <Badge variant="outline" className={cn('text-[9px] border', diffConfig.color)}>
-                  {diffConfig.label}
-                </Badge>
-                <span className="text-[10px] text-slate-500">
-                  Step {currentStep + 1} of {mission.steps.length}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700">
-              <Clock className="w-3 h-3 text-slate-400" />
-              <span className="text-xs font-mono text-slate-300">{formatTime(elapsed)}</span>
-            </div>
-            <button
-              onClick={onCancel}
-              className="text-slate-500 hover:text-slate-300 transition-colors"
+      {/* Content */}
+      <div className="p-5">
+        <AnimatePresence mode="wait">
+          {!isComplete ? (
+            <motion.div
+              key={`step-${currentStep}`}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
             >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="h-1 bg-slate-800">
-          <motion.div
-            className={cn('h-full bg-gradient-to-r', diffConfig.gradient)}
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ type: 'spring', stiffness: 200, damping: 30 }}
-          />
-        </div>
-
-        {/* Content */}
-        <div className="p-5">
-          <AnimatePresence mode="wait">
-            {!isComplete ? (
-              <motion.div
-                key={`step-${currentStep}`}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25 }}
-              >
-                {/* Step indicators */}
-                <div className="flex gap-1.5 mb-4">
-                  {mission.steps.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        'h-1.5 rounded-full flex-1 transition-colors',
-                        idx < currentStep
-                          ? 'bg-emerald-500'
-                          : idx === currentStep
-                          ? 'bg-blue-500'
-                          : 'bg-slate-800'
-                      )}
-                    />
-                  ))}
-                </div>
-
-                {/* Step content */}
-                <div className="mb-4">
-                  <h4 className="text-base font-semibold text-slate-200 mb-2">{step.title}</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">{step.instruction}</p>
-                </div>
-
-                {/* Simulated interaction area */}
-                <div className="mb-4 p-4 rounded-lg bg-slate-800/50 border border-slate-700/50 border-dashed">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                    <span className="text-xs text-slate-500">Simulated interaction area</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {Array.from({ length: 3 }, (_, i) => (
-                      <div
-                        key={i}
-                        className="h-2.5 rounded bg-slate-700/60"
-                        style={{ width: `${60 + Math.random() * 35}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Tip */}
-                <AnimatePresence>
-                  {showTip && step.tip && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mb-4 p-3 rounded-lg bg-violet-500/10 border border-violet-500/20"
-                    >
-                      <div className="flex items-start gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-violet-400 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <span className="text-[10px] text-violet-400 font-semibold uppercase tracking-wider">
-                            Dr. Sage Tip
-                          </span>
-                          <p className="text-xs text-violet-300/80 mt-0.5">{step.tip}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  {step.tip && !showTip ? (
-                    <button
-                      onClick={() => setShowTip(true)}
-                      className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-violet-400 transition-colors"
-                    >
-                      <HelpCircle className="w-3.5 h-3.5" />
-                      Need help?
-                    </button>
-                  ) : (
-                    <div />
-                  )}
-                  <Button
-                    size="sm"
-                    className="h-8 text-xs bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 border-0"
-                    onClick={handleCompleteStep}
-                  >
-                    {currentStep < mission.steps.length - 1 ? (
-                      <>
-                        Complete Step
-                        <ChevronRight className="w-3 h-3 ml-1" />
-                      </>
-                    ) : (
-                      <>
-                        Finish Mission
-                        <Trophy className="w-3 h-3 ml-1" />
-                      </>
+              {/* Step list */}
+              <div className="space-y-1 mb-5">
+                {mission.steps.map((s, idx) => (
+                  <p
+                    key={idx}
+                    className={cn(
+                      'text-sm',
+                      idx < currentStep
+                        ? 'text-zinc-300'
+                        : idx === currentStep
+                        ? 'font-medium text-zinc-900'
+                        : 'text-zinc-400'
                     )}
-                  </Button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="complete"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="text-center py-6"
+                  >
+                    {idx + 1}. {s.title}
+                  </p>
+                ))}
+              </div>
+
+              {/* Current step instruction */}
+              <p className="text-sm text-zinc-600 leading-relaxed mb-4">
+                {step.instruction}
+              </p>
+
+              {/* Tip */}
+              <AnimatePresence>
+                {showTip && step.tip && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="text-xs text-zinc-400 italic mb-4 leading-relaxed"
+                  >
+                    Tip: {step.tip}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between">
+                {step.tip && !showTip ? (
+                  <button
+                    onClick={() => setShowTip(true)}
+                    className="text-xs text-zinc-400 hover:text-zinc-600"
+                  >
+                    Need help?
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <button
+                  onClick={handleCompleteStep}
+                  className="text-sm text-zinc-900 font-medium hover:underline"
+                >
+                  {currentStep < mission.steps.length - 1
+                    ? 'Complete step \u2192'
+                    : 'Finish mission \u2192'}
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="complete"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.15 }}
+              className="text-center py-8"
+            >
+              <h3 className="text-base font-semibold text-zinc-900 mb-1">Mission complete</h3>
+              <p className="text-sm text-zinc-500 mb-6">
+                You finished {mission.title} in{' '}
+                <span className="font-mono text-zinc-700">{formatTime(elapsed)}</span>
+              </p>
+              <button
+                onClick={handleFinish}
+                className="text-sm text-blue-600 hover:underline"
               >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.2 }}
-                  className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mx-auto mb-4"
-                >
-                  <Trophy className="w-8 h-8 text-white" />
-                </motion.div>
-                <h3 className="text-lg font-bold text-slate-200 mb-1">Mission Complete!</h3>
-                <p className="text-sm text-slate-400 mb-4">
-                  You finished <span className="text-slate-200 font-medium">{mission.title}</span> in{' '}
-                  <span className="text-emerald-400 font-mono font-medium">{formatTime(elapsed)}</span>
-                </p>
-
-                {/* Skills earned */}
-                <div className="flex flex-wrap gap-1.5 justify-center mb-6">
-                  {mission.skills.map((skill) => (
-                    <motion.div
-                      key={skill}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + Math.random() * 0.3 }}
-                    >
-                      <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
-                        <Star className="w-2.5 h-2.5 mr-1" />
-                        {skill}
-                      </Badge>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <Button
-                  size="sm"
-                  className="h-9 text-xs bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 border-0"
-                  onClick={handleFinish}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                  Continue
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-    </div>
+                Continue &rarr;
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
 
-// ─── MissionBrowser ───────────────────────────────────────────────────────────
+// ─── MissionBrowser ─────────────────────────────────────────────────────────
 
 export function MissionBrowser({
   onStartMission,
@@ -628,7 +422,6 @@ export function MissionBrowser({
   }, [difficultyFilter, aiFilter]);
 
   const recommendedMissions = useMemo(() => {
-    // Role-based recommendations
     const roleMap: Record<string, string[]> = {
       'regulatory-affairs': ['first-evidence-upload', 'run-gap-analysis', 'build-submission-package'],
       'medical-writer': ['ask-ana-question', 'generate-governed-artifact', 'compare-document-versions'],
@@ -649,155 +442,113 @@ export function MissionBrowser({
   }, [filteredMissions]);
 
   const completedCount = Object.keys(completedMissions).length;
+  const hasFilters = difficultyFilter || aiFilter;
 
   const clearFilters = useCallback(() => {
     setDifficultyFilter(null);
     setAiFilter(null);
   }, []);
 
-  const hasFilters = difficultyFilter || aiFilter;
+  const FilterToggle = ({
+    label,
+    active,
+    onClick,
+  }: {
+    label: string;
+    active: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      onClick={onClick}
+      className={cn(
+        'text-xs px-2 py-1',
+        active
+          ? 'font-medium text-zinc-900'
+          : 'text-zinc-400 hover:text-zinc-600'
+      )}
+    >
+      {label}
+    </button>
+  );
+
+  const renderSection = (title: string, missions: MicroMission[]) => {
+    if (missions.length === 0) return null;
+    return (
+      <section>
+        <h3 className="text-sm font-medium text-zinc-900 mb-3">{title}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {missions.map((mission) => (
+            <MissionCard
+              key={mission.id}
+              mission={mission}
+              completed={!!completedMissions[mission.id]}
+              completionTime={completedMissions[mission.id]}
+              onStart={() => onStartMission(mission.id)}
+            />
+          ))}
+        </div>
+      </section>
+    );
+  };
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn('space-y-10', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-400" />
-            Micro-Missions
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            60-second interactive challenges to master the platform
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400">
-            {completedCount}/{MICRO_MISSIONS.length} completed
-          </Badge>
-        </div>
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-900">Micro-Missions</h2>
+        <p className="text-sm text-zinc-500 mt-1">
+          60-second interactive challenges to master the platform
+        </p>
+        <p className="text-xs text-zinc-400 mt-0.5">
+          {completedCount} of {MICRO_MISSIONS.length} completed
+        </p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Filter className="w-3.5 h-3.5 text-slate-500" />
-        {/* Difficulty filters */}
-        {(['quick-win', 'challenge', 'deep-dive'] as const).map((d) => {
-          const config = DIFFICULTY_CONFIG[d];
-          return (
-            <button
-              key={d}
-              onClick={() => setDifficultyFilter(difficultyFilter === d ? null : d)}
-              className={cn(
-                'text-[10px] px-2 py-1 rounded-full border transition-all',
-                difficultyFilter === d
-                  ? config.color
-                  : 'border-slate-700 text-slate-500 hover:text-slate-400 hover:border-slate-600'
-              )}
-            >
-              {config.label}
-            </button>
-          );
-        })}
-        <div className="w-px h-4 bg-slate-700" />
-        {/* AI mode filters */}
-        {(['dr-sage', 'ana', 'both'] as const).map((a) => {
-          const config = AI_MODE_CONFIG[a];
-          return (
-            <button
-              key={a}
-              onClick={() => setAiFilter(aiFilter === a ? null : a)}
-              className={cn(
-                'text-[10px] px-2 py-1 rounded-full border transition-all',
-                aiFilter === a
-                  ? 'border-indigo-500/40 text-indigo-400 bg-indigo-500/10'
-                  : 'border-slate-700 text-slate-500 hover:text-slate-400 hover:border-slate-600'
-              )}
-            >
-              {config.label}
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center gap-1">
+        {(['quick-win', 'challenge', 'deep-dive'] as const).map((d) => (
+          <FilterToggle
+            key={d}
+            label={DIFFICULTY_LABELS[d]}
+            active={difficultyFilter === d}
+            onClick={() => setDifficultyFilter(difficultyFilter === d ? null : d)}
+          />
+        ))}
+        <span className="text-zinc-200 mx-1">&middot;</span>
+        {(['dr-sage', 'ana', 'both'] as const).map((a) => (
+          <FilterToggle
+            key={a}
+            label={AI_MODE_LABELS[a]}
+            active={aiFilter === a}
+            onClick={() => setAiFilter(aiFilter === a ? null : a)}
+          />
+        ))}
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="text-[10px] px-2 py-1 text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1"
+            className="text-xs text-zinc-400 hover:text-zinc-600 ml-2"
           >
-            <RotateCcw className="w-2.5 h-2.5" />
             Clear
           </button>
         )}
       </div>
 
-      {/* Recommended for You */}
-      {recommendedMissions.length > 0 && !hasFilters && (
-        <section>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Star className="w-3.5 h-3.5 text-amber-400" />
-            Recommended for You
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {recommendedMissions.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                completed={!!completedMissions[mission.id]}
-                completionTime={completedMissions[mission.id]}
-                onStart={() => onStartMission(mission.id)}
-              />
-            ))}
-          </div>
-        </section>
+      {/* Sections */}
+      {!hasFilters && (
+        <>
+          {renderSection('Recommended', recommendedMissions)}
+          {renderSection('Popular', popularMissions)}
+          {renderSection('New', newMissions)}
+        </>
       )}
 
-      {/* Popular Missions */}
-      {popularMissions.length > 0 && !hasFilters && (
-        <section>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-rose-400" />
-            Popular Missions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {popularMissions.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                completed={!!completedMissions[mission.id]}
-                completionTime={completedMissions[mission.id]}
-                onStart={() => onStartMission(mission.id)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* New Missions */}
-      {newMissions.length > 0 && !hasFilters && (
-        <section>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-            New Missions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {newMissions.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                completed={!!completedMissions[mission.id]}
-                completionTime={completedMissions[mission.id]}
-                onStart={() => onStartMission(mission.id)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Filtered view (all missions) */}
+      {/* Filtered view */}
       {hasFilters && (
         <section>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          <h3 className="text-sm font-medium text-zinc-900 mb-3">
             {filteredMissions.length} mission{filteredMissions.length !== 1 ? 's' : ''} found
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {filteredMissions.map((mission) => (
               <MissionCard
                 key={mission.id}
@@ -810,11 +561,10 @@ export function MissionBrowser({
           </div>
           {filteredMissions.length === 0 && (
             <div className="text-center py-12">
-              <Search className="w-8 h-8 text-slate-700 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">No missions match your filters</p>
+              <p className="text-sm text-zinc-500">No missions match your filters</p>
               <button
                 onClick={clearFilters}
-                className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors"
+                className="text-xs text-blue-600 hover:underline mt-1"
               >
                 Clear all filters
               </button>
