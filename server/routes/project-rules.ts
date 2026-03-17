@@ -338,7 +338,7 @@ router.delete('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
 // POST /api/project-rules/:ruleId/test — Dry-run a rule
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/:ruleId/test', async (req: Request, res: Response) => {
+router.post('/:ruleId/test', asyncHandler(async (req: Request, res: Response) => {
   try {
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
@@ -377,13 +377,12 @@ router.post('/:ruleId/test', async (req: Request, res: Response) => {
       testResult: result,
     });
   } catch (error) {
-    console.error('[ProjectRules] Error testing rule:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid test data', details: error.errors });
     }
-    res.status(500).json({ error: 'Failed to test rule' });
+    throw error;
   }
-});
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/project-rules/executions — Execution log
