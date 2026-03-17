@@ -205,15 +205,15 @@ export const StepCard: React.FC<StepCardProps> = ({
 
   return (
     <div className={cn(
-      "bg-white dark:bg-gray-900 rounded-2xl border-2 shadow-sm overflow-hidden transition-all",
+      "bg-white rounded-2xl border-2 shadow-sm overflow-hidden transition-all",
       borderColor,
-      step.status === 'IN_PROGRESS' && "ring-2 ring-blue-100 dark:ring-blue-900",
+      step.status === 'IN_PROGRESS' && "ring-2 ring-blue-100",
       className
     )}>
       {/* Header */}
       <button
         type="button"
-        className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         onClick={onToggleExpand}
         aria-expanded={isExpanded}
         aria-controls={expandedId}
@@ -236,7 +236,7 @@ export const StepCard: React.FC<StepCardProps> = ({
             
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                <h3 className="font-semibold text-gray-900">
                   {step.name}
                 </h3>
                 {step.isRequired && (
@@ -245,7 +245,7 @@ export const StepCard: React.FC<StepCardProps> = ({
               </div>
 
               {step.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                   {step.description}
                 </p>
               )}
@@ -283,11 +283,11 @@ export const StepCard: React.FC<StepCardProps> = ({
       
       {/* Expanded Content */}
       {isExpanded && (
-        <div id={expandedId} className="border-t border-gray-100 dark:border-gray-800">
+        <div id={expandedId} className="border-t border-gray-100">
           {/* Preconditions */}
           {step.preconditions && step.preconditions.length > 0 && (
-            <div className="p-4 bg-gray-50 dark:bg-gray-800/50">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="p-4 bg-gray-50">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">
                 Preconditions
               </h4>
               <PreconditionBadges 
@@ -302,24 +302,24 @@ export const StepCard: React.FC<StepCardProps> = ({
             <div className="p-4 grid grid-cols-2 gap-4 text-sm">
               {step.startedAt && (
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">Started:</span>
-                  <span className="ml-2 text-gray-900 dark:text-gray-100">
+                  <span className="text-gray-500">Started:</span>
+                  <span className="ml-2 text-gray-900">
                     {new Date(step.startedAt).toLocaleString()}
                   </span>
                 </div>
               )}
               {step.completedAt && (
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">Completed:</span>
-                  <span className="ml-2 text-gray-900 dark:text-gray-100">
+                  <span className="text-gray-500">Completed:</span>
+                  <span className="ml-2 text-gray-900">
                     {new Date(step.completedAt).toLocaleString()}
                   </span>
                 </div>
               )}
               {step.actualDurationMinutes && (
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">Duration:</span>
-                  <span className="ml-2 text-gray-900 dark:text-gray-100">
+                  <span className="text-gray-500">Duration:</span>
+                  <span className="ml-2 text-gray-900">
                     {Math.round(step.actualDurationMinutes / 60)}h {step.actualDurationMinutes % 60}m
                   </span>
                 </div>
@@ -329,8 +329,8 @@ export const StepCard: React.FC<StepCardProps> = ({
           
           {/* Linked Artifacts */}
           {step.linkedArtifactIds && step.linkedArtifactIds.length > 0 && (
-            <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="p-4 border-t border-gray-100">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">
                 Linked Documents
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -351,8 +351,8 @@ export const StepCard: React.FC<StepCardProps> = ({
           
           {/* Error Message */}
           {step.lastError && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-800">
-              <div className="flex items-start gap-2 text-red-700 dark:text-red-400">
+            <div className="p-4 bg-red-50 border-t border-red-100">
+              <div className="flex items-start gap-2 text-red-700">
                 <AlertTriangle size={16} className="mt-0.5" />
                 <div>
                   <span className="font-medium">Error:</span>
@@ -364,10 +364,10 @@ export const StepCard: React.FC<StepCardProps> = ({
           
           {/* Rejection Input */}
           {showRejectInput && (
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-100">
+            <div className="p-4 bg-amber-50 border-t border-amber-100">
               <label
                 htmlFor={`reject-${step.id}`}
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Rejection Reason
               </label>
@@ -402,10 +402,10 @@ export const StepCard: React.FC<StepCardProps> = ({
           )}
           
           {/* Actions */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               onClick={onViewHistory}
-              className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
             >
               <History size={16} />
               View History

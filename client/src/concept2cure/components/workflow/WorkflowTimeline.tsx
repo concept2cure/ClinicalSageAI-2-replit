@@ -105,7 +105,7 @@ const TimelineStep: React.FC<{
       className={cn(
         "flex items-start gap-4 group text-left w-full",
         isClickable
-          ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg -mx-2 px-2 py-2 transition-colors"
+          ? "cursor-pointer hover:bg-gray-50 rounded-lg -mx-2 px-2 py-2 transition-colors"
           : "cursor-not-allowed opacity-80"
       )}
       onClick={isClickable ? onClick : undefined}
@@ -143,16 +143,16 @@ const TimelineStep: React.FC<{
         <div className="flex items-center gap-2">
           <h4 className={cn(
             "font-medium",
-            step.status === 'COMPLETED' && "text-green-700 dark:text-green-400",
-            step.status === 'IN_PROGRESS' && "text-blue-700 dark:text-blue-400",
-            step.status === 'BLOCKED' && "text-red-700 dark:text-red-400",
+            step.status === 'COMPLETED' && "text-green-700",
+            step.status === 'IN_PROGRESS' && "text-blue-700",
+            step.status === 'BLOCKED' && "text-red-700",
             step.status === 'PENDING' && "text-gray-500"
           )}>
             {step.name}
           </h4>
           
           {step.isRequired && (
-            <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
               Required
             </span>
           )}
@@ -165,7 +165,7 @@ const TimelineStep: React.FC<{
         </div>
         
         {step.description && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-500 mt-1">
             {step.description}
           </p>
         )}
@@ -222,7 +222,7 @@ const PhaseGroup: React.FC<{
       {/* Phase Header */}
       <button
         onClick={onToggle}
-        className="flex items-center gap-3 w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center gap-3 w-full p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
         aria-expanded={phase.isExpanded}
         aria-controls={`phase-${phase.id}`}
         data-testid={`button-phase-toggle-${phase.id}`}
@@ -234,7 +234,7 @@ const PhaseGroup: React.FC<{
         )}
         
         <div className="flex-1 text-left">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="font-semibold text-gray-900">
             {phase.name}
           </h3>
           <p className="text-xs text-gray-500">
@@ -244,13 +244,13 @@ const PhaseGroup: React.FC<{
         
         {/* Phase Progress */}
         <div className="flex items-center gap-2">
-          <div className="w-24 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+          <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className="h-full bg-green-500 transition-all duration-500"
               style={{ width: `${phaseProgress}%` }}
             />
           </div>
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-300 w-8">
+          <span className="text-xs font-medium text-gray-600 w-8">
             {phaseProgress}%
           </span>
         </div>
@@ -259,7 +259,7 @@ const PhaseGroup: React.FC<{
       {phase.isExpanded && (
         <div
           id={`phase-${phase.id}`}
-          className="mt-4 pl-4 border-l-2 border-gray-100 dark:border-gray-700 ml-4"
+          className="mt-4 pl-4 border-l-2 border-gray-100 ml-4"
         >
           {phase.steps.map((step, idx) => (
             <TimelineStep
@@ -341,7 +341,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
         {/* Horizontal Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-gray-700">
               Progress
             </span>
             <div className="flex items-center gap-2">
@@ -351,14 +351,14 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
               )}>
                 {assetState}
               </span>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <span className="text-sm font-medium text-gray-900">
                 {progressPercent}%
               </span>
             </div>
           </div>
-          <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-700"
+              className="h-full bg-blue-500 transition-all duration-700"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -416,9 +416,9 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   return (
     <div className={cn("w-full", className)}>
       {/* Header with Progress */}
-      <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">
             Workflow Progress
           </h2>
           <p className="text-sm text-gray-500">
@@ -434,7 +434,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
             {assetState}
           </span>
           <div
-            className="text-2xl font-bold text-gray-900 dark:text-gray-100"
+            className="text-2xl font-bold text-gray-900"
             aria-label={`Workflow progress ${progressPercent}%`}
           >
             {progressPercent}%
@@ -444,7 +444,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       
       {/* Progress Bar */}
       <div className="mb-6">
-        <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
           <div 
             className="h-full bg-gradient-to-r from-blue-500 via-blue-400 to-green-500 transition-all duration-700 ease-out"
             style={{ width: `${progressPercent}%` }}

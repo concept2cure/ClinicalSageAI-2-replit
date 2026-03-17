@@ -250,17 +250,17 @@ interface MetricCardProps {
 const COLOR_BG_100: Record<string, string> = {
   blue: 'bg-blue-100', indigo: 'bg-indigo-100', green: 'bg-green-100', purple: 'bg-purple-100',
   violet: 'bg-violet-100', amber: 'bg-amber-100', teal: 'bg-teal-100', cyan: 'bg-cyan-100',
-  rose: 'bg-rose-100', slate: 'bg-slate-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
+  rose: 'bg-rose-100', slate: 'bg-zinc-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
 };
 const COLOR_TEXT_600: Record<string, string> = {
   blue: 'text-blue-600', indigo: 'text-indigo-600', green: 'text-green-600', purple: 'text-purple-600',
   violet: 'text-violet-600', amber: 'text-amber-600', teal: 'text-teal-600', cyan: 'text-cyan-600',
-  rose: 'text-rose-600', slate: 'text-slate-600', sky: 'text-sky-600', orange: 'text-orange-600',
+  rose: 'text-rose-600', slate: 'text-zinc-600', sky: 'text-sky-600', orange: 'text-orange-600',
 };
 const COLOR_TEXT_700: Record<string, string> = {
   blue: 'text-blue-700', indigo: 'text-indigo-700', green: 'text-green-700', purple: 'text-purple-700',
   violet: 'text-violet-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
-  rose: 'text-rose-700', slate: 'text-slate-700', sky: 'text-sky-700', orange: 'text-orange-700',
+  rose: 'text-rose-700', slate: 'text-zinc-700', sky: 'text-sky-700', orange: 'text-orange-700',
 };
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {

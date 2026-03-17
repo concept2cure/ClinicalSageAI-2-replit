@@ -77,7 +77,7 @@ function JobStatusBadge({ status }: { status: string }) {
   switch (status) {
     case 'COMPLETED':
       return (
-        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+        <Badge className="bg-green-100 text-green-800">
           <CheckCircle2 className="mr-1 h-3 w-3" /> Completed
         </Badge>
       );
@@ -89,7 +89,7 @@ function JobStatusBadge({ status }: { status: string }) {
       );
     case 'RUNNING':
       return (
-        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+        <Badge className="bg-blue-100 text-blue-800">
           <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Running
         </Badge>
       );
@@ -106,13 +106,13 @@ function PackStatusBadge({ status }: { status: string }) {
   switch (status) {
     case 'SUCCEEDED':
       return (
-        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+        <Badge className="bg-green-100 text-green-800">
           <Shield className="mr-1 h-3 w-3" /> Sealed
         </Badge>
       );
     case 'BUILDING':
       return (
-        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+        <Badge className="bg-blue-100 text-blue-800">
           <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Building
         </Badge>
       );
@@ -124,7 +124,7 @@ function PackStatusBadge({ status }: { status: string }) {
       );
     case 'REVOKED':
       return (
-        <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+        <Badge className="bg-amber-100 text-amber-800">
           <AlertTriangle className="mr-1 h-3 w-3" /> Revoked
         </Badge>
       );
@@ -138,7 +138,7 @@ function WarningsBadge({ hasWarnings, count }: { hasWarnings: boolean; count: nu
   return (
     <Badge
       variant="outline"
-      className="border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400"
+      className="border-amber-300 text-amber-700"
     >
       <AlertTriangle className="mr-1 h-3 w-3" />
       {count} warning{count !== 1 ? 's' : ''}
@@ -302,7 +302,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
         jobStatus &&
         jobStatus.status !== 'COMPLETED' &&
         jobStatus.status !== 'FAILED' && (
-          <div className="border border-blue-200 dark:border-blue-800 rounded-md">
+          <div className="border border-blue-200 rounded-md">
             <div className="flex items-center gap-3 px-4 py-3">
               <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
               <div className="flex-1">
@@ -315,7 +315,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
         )}
 
       {activeJobId && jobStatus?.status === 'COMPLETED' && (
-        <div className="border border-green-200 dark:border-green-800 rounded-md">
+        <div className="border border-green-200 rounded-md">
           <div className="flex items-center gap-3 px-4 py-3">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
             <div className="flex-1">
@@ -553,7 +553,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                   />
                   {readiness.missingClaims && readiness.missingClaims.length > 0 && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      <p className="font-medium text-yellow-700 dark:text-yellow-400">
+                      <p className="font-medium text-yellow-700">
                         Missing approvals:
                       </p>
                       <ul className="list-disc list-inside">
@@ -639,8 +639,8 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
               {packDetail.hasWarnings &&
                 Array.isArray(packDetail.warnings) &&
                 packDetail.warnings.length > 0 && (
-                  <div className="rounded-md border border-amber-200 dark:border-amber-800 p-3">
-                    <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-2">
+                  <div className="rounded-md border border-amber-200 p-3">
+                    <p className="text-sm font-medium text-amber-700 mb-2">
                       <AlertTriangle className="inline h-4 w-4 mr-1" /> Quality Warnings
                     </p>
                     <ul className="space-y-1">
