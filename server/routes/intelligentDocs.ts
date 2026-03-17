@@ -19,6 +19,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -98,47 +99,42 @@ function generateLinkHash(sourceHash: string, linkedText: string, timestamp: str
  * GET /api/intelligent-docs/sources
  * List source documents with search and filtering
  */
-router.get('/sources', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { search, type, limit = '50', offset = '0' } = req.query;
+router.get('/sources', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { search, type, limit = '50', offset = '0' } = req.query;
 
-    let query = `
-      SELECT id, title, document_type, version, content_hash, excerpt,
-             external_url, external_ref, citation_count, created_at, updated_at
-      FROM intelligent_docs.source_documents
-      WHERE organization_id = $1
-    `;
-    const params: unknown[] = [req.organizationId];
-    let paramIndex = 2;
+  let query = `
+    SELECT id, title, document_type, version, content_hash, excerpt,
+           external_url, external_ref, citation_count, created_at, updated_at
+    FROM intelligent_docs.source_documents
+    WHERE organization_id = $1
+  `;
+  const params: unknown[] = [req.organizationId];
+  let paramIndex = 2;
 
-    if (search) {
-      query += ` AND search_vector @@ plainto_tsquery('english', $${paramIndex})`;
-      params.push(search);
-      paramIndex++;
-    }
-
-    if (type) {
-      query += ` AND document_type = $${paramIndex}`;
-      params.push(type);
-      paramIndex++;
-    }
-
-    query += ` ORDER BY updated_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(parseInt(limit as string, 10), parseInt(offset as string, 10));
-
-    const result = await db.execute(sql.raw(query, ...params));
-    res.json({ sources: result.rows, total: result.rowCount });
-  } catch (error) {
-    console.error('Error fetching sources:', error);
-    res.status(500).json({ error: 'Failed to fetch source documents' });
+  if (search) {
+    query += ` AND search_vector @@ plainto_tsquery('english', $${paramIndex})`;
+    params.push(search);
+    paramIndex++;
   }
-});
+
+  if (type) {
+    query += ` AND document_type = $${paramIndex}`;
+    params.push(type);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY updated_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+  params.push(parseInt(limit as string, 10), parseInt(offset as string, 10));
+
+  const result = await db.execute(sql.raw(query, ...params));
+  res.json({ sources: result.rows, total: result.rowCount });
+}));
 
 /**
  * POST /api/intelligent-docs/sources
  * Create a new source document
  */
-router.post('/sources', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/sources', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = CreateSourceDocumentSchema.parse(req.body);
     const contentHash = generateHash(data.content || data.title);
@@ -161,78 +157,72 @@ router.post('/sources', requireOrganization, async (req: AuthenticatedRequest, r
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors });
     }
-    console.error('Error creating source:', error);
-    res.status(500).json({ error: 'Failed to create source document' });
+    throw error;
   }
-});
+}));
 
 /**
  * PUT /api/intelligent-docs/sources/:id
  * Update source document (creates new version)
  */
-router.put('/sources/:id', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const data = CreateSourceDocumentSchema.partial().parse(req.body);
+router.put('/sources/:id', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const data = CreateSourceDocumentSchema.partial().parse(req.body);
 
-    // Get current version
-    const current = await db.execute(sql`
-      SELECT id, version, content_hash FROM intelligent_docs.source_documents
-      WHERE id = ${id} AND organization_id = ${req.organizationId}
-    `);
+  // Get current version
+  const current = await db.execute(sql`
+    SELECT id, version, content_hash FROM intelligent_docs.source_documents
+    WHERE id = ${id} AND organization_id = ${req.organizationId}
+  `);
 
-    if (current.rowCount === 0) {
-      return res.status(404).json({ error: 'Source document not found' });
-    }
-
-    const oldVersion = current.rows[0] as { version: string; content_hash: string };
-    const newVersion = incrementVersion(oldVersion.version);
-    const newHash = generateHash(data.content || data.title || '');
-
-    // Create new version (old remains for audit)
-    const result = await db.execute(sql`
-      INSERT INTO intelligent_docs.source_documents (
-        organization_id, title, document_type, content, excerpt,
-        content_hash, version, previous_version_id, external_url, external_ref,
-        metadata, created_by
-      )
-      SELECT
-        organization_id,
-        COALESCE(${data.title || null}, title),
-        COALESCE(${data.documentType || null}, document_type),
-        COALESCE(${data.content || null}, content),
-        COALESCE(${data.excerpt || null}, excerpt),
-        ${newHash},
-        ${newVersion},
-        ${id},
-        COALESCE(${data.externalUrl || null}, external_url),
-        COALESCE(${data.externalRef || null}, external_ref),
-        COALESCE(${JSON.stringify(data.metadata || null)}, metadata),
-        ${req.userId}
-      FROM intelligent_docs.source_documents
-      WHERE id = ${id}
-      RETURNING id, title, document_type, version, content_hash, created_at
-    `);
-
-    // Trigger change propagation if content changed
-    if (newHash !== oldVersion.content_hash) {
-      await triggerChangePropagation(
-        req.organizationId!,
-        id,
-        oldVersion.version,
-        newVersion,
-        oldVersion.content_hash,
-        newHash,
-        req.userId!
-      );
-    }
-
-    res.json({ source: result.rows[0], previousVersion: oldVersion.version });
-  } catch (error) {
-    console.error('Error updating source:', error);
-    res.status(500).json({ error: 'Failed to update source document' });
+  if (current.rowCount === 0) {
+    return res.status(404).json({ error: 'Source document not found' });
   }
-});
+
+  const oldVersion = current.rows[0] as { version: string; content_hash: string };
+  const newVersion = incrementVersion(oldVersion.version);
+  const newHash = generateHash(data.content || data.title || '');
+
+  // Create new version (old remains for audit)
+  const result = await db.execute(sql`
+    INSERT INTO intelligent_docs.source_documents (
+      organization_id, title, document_type, content, excerpt,
+      content_hash, version, previous_version_id, external_url, external_ref,
+      metadata, created_by
+    )
+    SELECT
+      organization_id,
+      COALESCE(${data.title || null}, title),
+      COALESCE(${data.documentType || null}, document_type),
+      COALESCE(${data.content || null}, content),
+      COALESCE(${data.excerpt || null}, excerpt),
+      ${newHash},
+      ${newVersion},
+      ${id},
+      COALESCE(${data.externalUrl || null}, external_url),
+      COALESCE(${data.externalRef || null}, external_ref),
+      COALESCE(${JSON.stringify(data.metadata || null)}, metadata),
+      ${req.userId}
+    FROM intelligent_docs.source_documents
+    WHERE id = ${id}
+    RETURNING id, title, document_type, version, content_hash, created_at
+  `);
+
+  // Trigger change propagation if content changed
+  if (newHash !== oldVersion.content_hash) {
+    await triggerChangePropagation(
+      req.organizationId!,
+      id,
+      oldVersion.version,
+      newVersion,
+      oldVersion.content_hash,
+      newHash,
+      req.userId!
+    );
+  }
+
+  res.json({ source: result.rows[0], previousVersion: oldVersion.version });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TRACEABILITY LINKS
@@ -242,52 +232,52 @@ router.put('/sources/:id', requireOrganization, async (req: AuthenticatedRequest
  * GET /api/intelligent-docs/links
  * List traceability links for a document
  */
-router.get('/links', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { documentId, sourceId, status } = req.query;
+router.get('/links', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { documentId, sourceId, status } = req.query;
 
-    let query = `
-      SELECT tl.*, sd.title as source_title, sd.document_type as source_type
-      FROM intelligent_docs.traceability_links tl
-      JOIN intelligent_docs.source_documents sd ON sd.id = tl.source_document_id
-      WHERE tl.organization_id = $1
-    `;
-    const params: unknown[] = [req.organizationId];
-    let paramIndex = 2;
+  let query = `
+    SELECT tl.id, tl.organization_id, tl.source_document_id, tl.source_hash, tl.source_version,
+           tl.target_document_id, tl.target_section_id, tl.target_range_from, tl.target_range_to,
+           tl.linked_text, tl.citation_type, tl.confidence, tl.link_hash,
+           tl.verification_status, tl.verified_at, tl.verified_by,
+           tl.created_by, tl.created_at,
+           sd.title as source_title, sd.document_type as source_type
+    FROM intelligent_docs.traceability_links tl
+    JOIN intelligent_docs.source_documents sd ON sd.id = tl.source_document_id
+    WHERE tl.organization_id = $1
+  `;
+  const params: unknown[] = [req.organizationId];
+  let paramIndex = 2;
 
-    if (documentId) {
-      query += ` AND tl.target_document_id = $${paramIndex}`;
-      params.push(documentId);
-      paramIndex++;
-    }
-
-    if (sourceId) {
-      query += ` AND tl.source_document_id = $${paramIndex}`;
-      params.push(sourceId);
-      paramIndex++;
-    }
-
-    if (status) {
-      query += ` AND tl.verification_status = $${paramIndex}`;
-      params.push(status);
-      paramIndex++;
-    }
-
-    query += ` ORDER BY tl.created_at DESC`;
-
-    const result = await db.execute(sql.raw(query, ...params));
-    res.json({ links: result.rows });
-  } catch (error) {
-    console.error('Error fetching links:', error);
-    res.status(500).json({ error: 'Failed to fetch traceability links' });
+  if (documentId) {
+    query += ` AND tl.target_document_id = $${paramIndex}`;
+    params.push(documentId);
+    paramIndex++;
   }
-});
+
+  if (sourceId) {
+    query += ` AND tl.source_document_id = $${paramIndex}`;
+    params.push(sourceId);
+    paramIndex++;
+  }
+
+  if (status) {
+    query += ` AND tl.verification_status = $${paramIndex}`;
+    params.push(status);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY tl.created_at DESC`;
+
+  const result = await db.execute(sql.raw(query, ...params));
+  res.json({ links: result.rows });
+}));
 
 /**
  * POST /api/intelligent-docs/links
  * Create a new traceability link
  */
-router.post('/links', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/links', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = CreateTraceabilityLinkSchema.parse(req.body);
 
@@ -332,60 +322,54 @@ router.post('/links', requireOrganization, async (req: AuthenticatedRequest, res
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors });
     }
-    console.error('Error creating link:', error);
-    res.status(500).json({ error: 'Failed to create traceability link' });
+    throw error;
   }
-});
+}));
 
 /**
  * POST /api/intelligent-docs/links/:id/verify
  * Verify a traceability link against current source
  */
-router.post('/links/:id/verify', requireOrganization, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
+router.post('/links/:id/verify', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
 
-    // Get link and current source hash
-    const result = await db.execute(sql`
-      SELECT tl.*, sd.content_hash as current_hash, sd.version as current_version
-      FROM intelligent_docs.traceability_links tl
-      JOIN intelligent_docs.source_documents sd ON sd.id = tl.source_document_id
-      WHERE tl.id = ${id} AND tl.organization_id = ${req.organizationId}
-    `);
+  // Get link and current source hash
+  const result = await db.execute(sql`
+    SELECT tl.*, sd.content_hash as current_hash, sd.version as current_version
+    FROM intelligent_docs.traceability_links tl
+    JOIN intelligent_docs.source_documents sd ON sd.id = tl.source_document_id
+    WHERE tl.id = ${id} AND tl.organization_id = ${req.organizationId}
+  `);
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Link not found' });
-    }
-
-    const link = result.rows[0] as {
-      source_hash: string;
-      current_hash: string;
-      current_version: string;
-    };
-
-    // Check if source has changed
-    const isValid = link.source_hash === link.current_hash;
-    const newStatus = isValid ? 'valid' : 'outdated';
-
-    await db.execute(sql`
-      UPDATE intelligent_docs.traceability_links
-      SET verification_status = ${newStatus},
-          verified_at = NOW(),
-          verified_by = ${req.userId}
-      WHERE id = ${id}
-    `);
-
-    res.json({
-      linkId: id,
-      status: newStatus,
-      sourceHashMatch: isValid,
-      currentVersion: link.current_version,
-    });
-  } catch (error) {
-    console.error('Error verifying link:', error);
-    res.status(500).json({ error: 'Failed to verify link' });
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: 'Link not found' });
   }
-});
+
+  const link = result.rows[0] as {
+    source_hash: string;
+    current_hash: string;
+    current_version: string;
+  };
+
+  // Check if source has changed
+  const isValid = link.source_hash === link.current_hash;
+  const newStatus = isValid ? 'valid' : 'outdated';
+
+  await db.execute(sql`
+    UPDATE intelligent_docs.traceability_links
+    SET verification_status = ${newStatus},
+        verified_at = NOW(),
+        verified_by = ${req.userId}
+    WHERE id = ${id}
+  `);
+
+  res.json({
+    linkId: id,
+    status: newStatus,
+    sourceHashMatch: isValid,
+    currentVersion: link.current_version,
+  });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHANGE PROPAGATION
@@ -441,14 +425,17 @@ router.get('/propagation-events/:id/impacted', requireOrganization, async (req: 
     const { id } = req.params;
 
     const result = await db.execute(sql`
-      SELECT * FROM intelligent_docs.impacted_sections
+      SELECT id, propagation_event_id, document_id, section_id, linked_text, link_id,
+             severity, reason, suggested_action, suggested_patch_text, patch_confidence,
+             resolution_status, resolved_at, resolved_by, resolution_note, created_at
+      FROM intelligent_docs.impacted_sections
       WHERE propagation_event_id = ${id}
-      ORDER BY 
-        CASE severity 
-          WHEN 'critical' THEN 1 
-          WHEN 'high' THEN 2 
-          WHEN 'medium' THEN 3 
-          ELSE 4 
+      ORDER BY
+        CASE severity
+          WHEN 'critical' THEN 1
+          WHEN 'high' THEN 2
+          WHEN 'medium' THEN 3
+          ELSE 4
         END
     `);
 
@@ -494,7 +481,10 @@ router.post('/compliance/calculate', requireOrganization, async (req: Authentica
 
     // Get active rules for this submission type
     const rules = await db.execute(sql`
-      SELECT * FROM intelligent_docs.compliance_rules
+      SELECT id, organization_id, rule_id, name, description, category, severity,
+             applicable_submissions, validation_config, regulatory_reference,
+             is_active, created_at, updated_at
+      FROM intelligent_docs.compliance_rules
       WHERE is_active = TRUE
         AND (organization_id IS NULL OR organization_id = ${req.organizationId})
         AND ${data.submissionType} = ANY(applicable_submissions)
@@ -551,7 +541,11 @@ router.get('/compliance/history', requireOrganization, async (req: Authenticated
     }
 
     const result = await db.execute(sql`
-      SELECT * FROM intelligent_docs.compliance_scores
+      SELECT id, organization_id, document_id, submission_type, overall_score,
+             structure_score, content_score, citations_score, format_score,
+             completeness_score, regulatory_score, data_integrity_score, signature_score,
+             passed_rules, total_rules, violations, calculated_by, calculated_at
+      FROM intelligent_docs.compliance_scores
       WHERE document_id = ${documentId as string}
         AND organization_id = ${req.organizationId}
       ORDER BY calculated_at DESC
@@ -574,7 +568,10 @@ router.get('/compliance/rules', requireOrganization, async (req: AuthenticatedRe
     const { submissionType, category } = req.query;
 
     let query = `
-      SELECT * FROM intelligent_docs.compliance_rules
+      SELECT id, organization_id, rule_id, name, description, category, severity,
+             applicable_submissions, validation_config, regulatory_reference,
+             is_active, created_at, updated_at
+      FROM intelligent_docs.compliance_rules
       WHERE is_active = TRUE
         AND (organization_id IS NULL OR organization_id = $1)
     `;

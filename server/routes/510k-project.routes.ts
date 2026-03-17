@@ -23,7 +23,7 @@ router.use(create510kDeprecationNotice('/projects'));
 router.get('/templates', async (req: Request, res: Response) => {
   try {
     const templates = await db.execute(sql`
-      SELECT * FROM fda_510k_project_templates
+      SELECT id, template_name, device_classification, required_sections, optional_sections, testing_requirements, documentation_checklist, default_settings, is_active, created_at, updated_at FROM fda_510k_project_templates
       WHERE is_active = true
       ORDER BY device_classification, template_name
     `);
@@ -239,7 +239,7 @@ router.post('/create', async (req: Request, res: Response) => {
     // 5. If template was selected, populate initial data from template
     if (templateId && templateId !== '' && !isNaN(parseInt(templateId))) {
       const templateResult = await db.execute(sql`
-        SELECT * FROM fda_510k_project_templates
+        SELECT id, template_name, required_sections, optional_sections, testing_requirements, documentation_checklist, default_settings FROM fda_510k_project_templates
         WHERE id = ${parseInt(templateId)}
       `);
 
@@ -378,13 +378,13 @@ router.get('/:projectId', async (req: Request, res: Response) => {
 
     // Get team assignments using SQL
     const teamAssignments = await db.execute(sql`
-      SELECT * FROM fda_510k_team_assignments
+      SELECT id, project_id, user_id, role, permissions, assigned_sections, created_at, updated_at FROM fda_510k_team_assignments
       WHERE project_id = ${parseInt(projectId)}
     `);
 
     // Get initial data forms using SQL
     const dataForms = await db.execute(sql`
-      SELECT * FROM fda_510k_initial_data_forms
+      SELECT id, project_id, form_type, form_data, is_complete, completed_at, created_at, updated_at FROM fda_510k_initial_data_forms
       WHERE project_id = ${parseInt(projectId)}
     `);
 

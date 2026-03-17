@@ -645,7 +645,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const templateResult = await pool.query(
-      `SELECT * FROM authoring_templates WHERE id = $1 AND tenant_id = $2`,
+      `SELECT id, template_name, template_type, category, regions, template_content, guidance_content, metadata, is_active, usage_count, created_at, updated_at, created_by, tenant_id FROM authoring_templates WHERE id = $1 AND tenant_id = $2`,
       [id, tenantId]
     );
 
@@ -654,7 +654,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
     }
 
     const guidanceResult = await pool.query(
-      `SELECT * FROM template_guidance WHERE template_id = $1 AND tenant_id = $2 ORDER BY section_code`,
+      `SELECT id, template_id, section_name, section_code, guidance_text, examples, regulatory_references, ai_prompts, compliance_checklist, created_at, updated_at, tenant_id FROM template_guidance WHERE template_id = $1 AND tenant_id = $2 ORDER BY section_code`,
       [id, tenantId]
     );
 
@@ -718,7 +718,7 @@ router.post('/templates/apply/:id', async (req: Request, res: Response) => {
 
     // Get template
     const templateResult = await pool.query(
-      `SELECT * FROM authoring_templates WHERE id = $1 AND tenant_id = $2`,
+      `SELECT id, template_name, template_type, category, regions, template_content, guidance_content, metadata, is_active, usage_count, created_at, updated_at, created_by, tenant_id FROM authoring_templates WHERE id = $1 AND tenant_id = $2`,
       [id, tenantId]
     );
 
@@ -777,15 +777,15 @@ router.get('/guidance/:sectionId', async (req: Request, res: Response) => {
 
     // Get section-specific guidance
     const guidanceResult = await pool.query(
-      `SELECT * FROM section_guidance 
-       WHERE section_id = $1 AND tenant_id = $2 
+      `SELECT id, section_id, document_type, guidance_type, content, metadata, priority, created_at, updated_at, tenant_id FROM section_guidance
+       WHERE section_id = $1 AND tenant_id = $2
        ORDER BY priority DESC, guidance_type`,
       [sectionId, tenantId]
     );
 
     // Get template guidance if section is from a template
     const templateGuidanceResult = await pool.query(
-      `SELECT tg.* FROM template_guidance tg
+      `SELECT tg.id, tg.template_id, tg.section_name, tg.section_code, tg.guidance_text, tg.examples, tg.regulatory_references, tg.ai_prompts, tg.compliance_checklist, tg.created_at, tg.updated_at, tg.tenant_id FROM template_guidance tg
        JOIN authoring_sections s ON s.code = tg.section_code
        WHERE s.id = $1 AND tg.tenant_id = $2`,
       [sectionId, tenantId]
@@ -962,8 +962,8 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const docResult = await pool.query(
-      `SELECT 
-        d.*,
+      `SELECT
+        d.id, d.title, d.module, d.product_code, d.locale, d.status, d.created_at, d.updated_at, d.created_by, d.template_id, d.submitted_at, d.current_workflow_id, d.approved_at, d.frozen_at, d.locked_at, d.locked_by, d.tenant_id, d.version,
         COUNT(DISTINCT s.id) as section_count,
         COUNT(DISTINCT c.id) as comment_count,
         COUNT(DISTINCT r.id) as revision_count
@@ -1004,8 +1004,8 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT 
-        s.*,
+      `SELECT
+        s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id,
         COUNT(DISTINCT c.id) as comment_count,
         COUNT(DISTINCT r.id) as revision_count,
         COUNT(DISTINCT ct.id) as citation_count
@@ -1085,7 +1085,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
 
     // Get current section data for revision
     const currentSection = await pool.query(
-      'SELECT * FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
       [sectionId, tenantId]
     );
 
@@ -1169,8 +1169,8 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT 
-        r.*,
+      `SELECT
+        r.id, r.section_id, r.content, r.created_by, r.created_at, r.tenant_id,
         u.name as created_by_name,
         u.email as created_by_email
        FROM doc_revisions r
@@ -1213,7 +1213,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
 
     // Get the revision
     const revResult = await pool.query(
-      'SELECT * FROM doc_revisions WHERE id = $1 AND section_id = $2 AND tenant_id = $3',
+      'SELECT id, section_id, content, created_by, created_at, tenant_id FROM doc_revisions WHERE id = $1 AND section_id = $2 AND tenant_id = $3',
       [rev_id, sectionId, tenantId]
     );
 
@@ -1420,7 +1420,7 @@ router.get('/sections/:sectionId/citations', async (req: Request, res: Response)
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT * FROM authoring_citations 
+      `SELECT id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id, payload_sha256, frozen_at FROM authoring_citations
        WHERE section_id = $1 AND tenant_id = $2
        ORDER BY created_at`,
       [sectionId, tenantId]
@@ -1451,8 +1451,8 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
     const { status, author, includeReplies = 'true' } = req.query;
 
     let query = `
-      SELECT 
-        c.*,
+      SELECT
+        c.id, c.doc_id, c.section_id, c.body, c.anchor, c.status, c.created_by, c.user_name, c.user_email, c.parent_comment_id, c.position_data, c.resolution_note, c.resolved_by, c.resolved_at, c.created_at, c.updated_at, c.tenant_id,
         COALESCE(c.user_name, c.created_by) as author_name,
         c.user_email as author_email,
         COUNT(DISTINCT r.id) as reply_count,
@@ -1494,8 +1494,8 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
       for (const comment of comments) {
         if (!comment.parent_comment_id) {
           const repliesResult = await pool.query(
-            `SELECT 
-              c.*,
+            `SELECT
+              c.id, c.doc_id, c.section_id, c.body, c.anchor, c.status, c.created_by, c.user_name, c.user_email, c.parent_comment_id, c.position_data, c.resolution_note, c.resolved_by, c.resolved_at, c.created_at, c.updated_at, c.tenant_id,
               COALESCE(c.user_name, c.created_by) as author_name,
               c.user_email as author_email
              FROM authoring_comments c
@@ -1716,7 +1716,7 @@ router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT * FROM authoring_reviews 
+      `SELECT id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, review_comments, reviewed_at, requested_at, requested_by, created_at, updated_at, tenant_id FROM authoring_reviews
        WHERE doc_id = $1 AND tenant_id = $2
        ORDER BY requested_at DESC`,
       [id, tenantId]
@@ -1855,7 +1855,7 @@ router.get('/documents/:id/comment-activity', async (req: Request, res: Response
     const limit = parseInt(req.query.limit as string) || 50;
 
     const result = await pool.query(
-      `SELECT * FROM authoring_comment_activity 
+      `SELECT id, doc_id, comment_id, activity_type, actor_id, actor_name, metadata, created_at, tenant_id FROM authoring_comment_activity
        WHERE doc_id = $1 AND tenant_id = $2
        ORDER BY created_at DESC
        LIMIT $3`,
@@ -1888,7 +1888,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
 
     // Get section details
     const sectionResult = await pool.query(
-      `SELECT s.*, d.module, d.product_code 
+      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module, d.product_code
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
@@ -2076,7 +2076,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
 
     // Get section content
     const sectionResult = await pool.query(
-      `SELECT s.*, d.module 
+      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
@@ -2226,7 +2226,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     // Get document with all sections
     const docResult = await pool.query(
-      `SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2`,
+      `SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2`,
       [docId, tenantId]
     );
 
@@ -2241,8 +2241,8 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     // Get all sections
     const sectionsResult = await pool.query(
-      `SELECT * FROM authoring_sections 
-       WHERE doc_id = $1 AND tenant_id = $2 
+      `SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections
+       WHERE doc_id = $1 AND tenant_id = $2
        ORDER BY order_index, created_at`,
       [docId, tenantId]
     );
@@ -2727,16 +2727,16 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
     
     // Get current document content
     const docResult = await pool.query(
-      'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
       [docId, tenantId]
     );
-    
+
     if (docResult.rowCount === 0) {
       return res.status(404).json({ error: 'Document not found' });
     }
-    
+
     const doc = docResult.rows[0];
-    
+
     // Check if already frozen
     if (doc.status === 'FROZEN' || doc.status === 'APPROVED') {
       return res.status(400).json({ error: 'Document is already frozen' });
@@ -2744,7 +2744,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
     
     // Get all sections
     const sectionsResult = await pool.query(
-      'SELECT * FROM authoring_sections WHERE document_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE document_id = $1 AND tenant_id = $2 ORDER BY order_index',
       [docId, tenantId]
     );
     
@@ -2900,8 +2900,8 @@ router.get('/docs/:docId/signatures', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
     
     const result = await pool.query(
-      `SELECT * FROM electronic_signatures 
-       WHERE doc_id = $1 AND tenant_id = $2 
+      `SELECT id, doc_id, signer_email, signer_name, signature_meaning, signature_intent, document_hash, pin_verified, ip_address, user_agent, signature_timestamp, tenant_id FROM electronic_signatures
+       WHERE doc_id = $1 AND tenant_id = $2
        ORDER BY signature_timestamp DESC`,
       [docId, tenantId]
     );
@@ -2923,7 +2923,7 @@ router.get('/docs/:docId/frozen', async (req: Request, res: Response) => {
     const { version } = req.query;
     const tenantId = getTenantId(req);
     
-    let query = `SELECT * FROM frozen_documents WHERE document_id = $1 AND tenant_id = $2`;
+    let query = `SELECT id, document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, frozen_at, tenant_id FROM frozen_documents WHERE document_id = $1 AND tenant_id = $2`;
     const params = [docId, tenantId];
     
     if (version) {
@@ -2982,10 +2982,10 @@ router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query(
       `
-      SELECT c.*, s.code, s.title 
+      SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code, s.title
       FROM authoring_citations c
       JOIN authoring_sections s ON s.id=c.section_id
-      WHERE s.doc_id=$1 
+      WHERE s.doc_id=$1
       ORDER BY c.created_at ASC
     `,
       [req.params.docId]
@@ -3065,7 +3065,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     const doc = (
       await pool.query(
         `
-      SELECT * FROM authoring_documents WHERE id=$1
+      SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id=$1
     `,
         [req.params.docId]
       )
@@ -3074,8 +3074,8 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     const sections = (
       await pool.query(
         `
-      SELECT * FROM authoring_sections 
-      WHERE doc_id=$1 
+      SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections
+      WHERE doc_id=$1
       ORDER BY order_index, code
     `,
         [req.params.docId]
@@ -3085,10 +3085,10 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     const cites = (
       await pool.query(
         `
-      SELECT * FROM authoring_citations 
+      SELECT id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id, payload_sha256, frozen_at FROM authoring_citations
       WHERE section_id IN (
         SELECT id FROM authoring_sections WHERE doc_id=$1
-      ) 
+      )
       ORDER BY created_at
     `,
         [req.params.docId]
@@ -3401,7 +3401,7 @@ async function logExport(
 async function listDocTokens(docId: string) {
   const result = await pool.query(
     `
-    SELECT c.*, s.id as section_id, s.section_number as section_code, s.title as section_title
+    SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.id as section_id, s.section_number as section_code, s.title as section_title
     FROM authoring_citations c
     JOIN authoring_sections s ON s.id = c.section_id
     WHERE s.document_id = $1
@@ -3926,7 +3926,7 @@ router.post('/docs/:docId/checklist/compose', async (req: Request, res: Response
 
     // If checklist exists, return it (idempotent)
     const existing = (await pool.query(`
-      SELECT * FROM doc_checklist WHERE doc_id=$1 AND section_id=$2 AND region=$3 LIMIT 1`,
+      SELECT checklist_id, doc_id, section_id, region, reviewer_email, status, created_at FROM doc_checklist WHERE doc_id=$1 AND section_id=$2 AND region=$3 LIMIT 1`,
       [docId, section_id, regionTag])).rows[0];
     let checklistId = existing?.checklist_id;
 
@@ -3938,7 +3938,7 @@ router.post('/docs/:docId/checklist/compose', async (req: Request, res: Response
       checklistId = ins.checklist_id;
 
       // Inspect section + citations to craft items
-      const cites = (await pool.query(`SELECT * FROM authoring_citations WHERE section_id=$1`, [section_id])).rows || [];
+      const cites = (await pool.query(`SELECT id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id, payload_sha256, frozen_at FROM authoring_citations WHERE section_id=$1`, [section_id])).rows || [];
       const keys = new Set(cites.map((c: any) => c.source)); // e.g., QUALITY.SPECS.DP, P8.TABLES …
 
       const items = [];
@@ -3974,12 +3974,12 @@ router.post('/docs/:docId/checklist/compose', async (req: Request, res: Response
     }
 
     const full = (await pool.query(`
-      SELECT c.*, s.code as section_code, s.title as section_title
-      FROM doc_checklist c 
+      SELECT c.checklist_id, c.doc_id, c.section_id, c.region, c.reviewer_email, c.status, c.created_at, s.code as section_code, s.title as section_title
+      FROM doc_checklist c
       LEFT JOIN authoring_sections s ON s.id = c.section_id
       WHERE c.checklist_id=$1`, [checklistId])).rows[0];
 
-    const rows = (await pool.query(`SELECT * FROM doc_checklist_items WHERE checklist_id=$1 ORDER BY created_at`, [checklistId])).rows;
+    const rows = (await pool.query(`SELECT item_id, checklist_id, item_key, text, status, comment, evidence_cite, created_at, updated_at FROM doc_checklist_items WHERE checklist_id=$1 ORDER BY created_at`, [checklistId])).rows;
     res.json({ checklist: full, items: rows });
   } catch (error) {
     console.error("POST /docs/:id/checklist/compose", error);
@@ -3994,12 +3994,12 @@ router.get('/docs/:docId/checklist', async (req: Request, res: Response) => {
     if (!section_id) return res.status(400).json({ error: "section_id required" });
     const regionTag = (region || "ICH").toString().toUpperCase();
     const head = (await pool.query(`
-      SELECT * FROM doc_checklist
+      SELECT checklist_id, doc_id, section_id, region, reviewer_email, status, created_at FROM doc_checklist
       WHERE doc_id=$1 AND section_id=$2 AND region=$3
       ORDER BY created_at DESC LIMIT 1`,
       [req.params.docId, section_id, regionTag])).rows[0];
     if (!head) return res.json({ checklist:null, items:[] });
-    const items = (await pool.query(`SELECT * FROM doc_checklist_items WHERE checklist_id=$1 ORDER BY created_at`, [head.checklist_id])).rows;
+    const items = (await pool.query(`SELECT item_id, checklist_id, item_key, text, status, comment, evidence_cite, created_at, updated_at FROM doc_checklist_items WHERE checklist_id=$1 ORDER BY created_at`, [head.checklist_id])).rows;
     res.json({ checklist: head, items });
   } catch (error) {
     console.error("GET /docs/:id/checklist", error);
@@ -4065,8 +4065,8 @@ router.post('/docs/:docId/cr', requireAny(["AUTHOR","QA","RA_CMC"]), async (req:
 router.get('/docs/:docId/cr', async (req: Request, res: Response) => {
   try {
     const rows = (await pool.query(`
-      SELECT c.*, s.code as section_code, s.title as section_title
-      FROM doc_change_requests c 
+      SELECT c.cr_id, c.doc_id, c.section_id, c.title, c.reason, c.apply_kind, c.patch_json, c.proposer_email, c.approver_email, c.status, c.resolved_at, c.created_at, s.code as section_code, s.title as section_title
+      FROM doc_change_requests c
       LEFT JOIN authoring_sections s ON s.id = c.section_id
       WHERE c.doc_id=$1
       ORDER BY c.created_at DESC`, [req.params.docId])).rows;
@@ -4113,7 +4113,7 @@ router.post('/cr/:crId/reject', requireAny(["QA","RA_CMC"]), async (req: Request
 router.post('/cr/:crId/apply', requireAny(["RA_CMC","QA"]), async (req: Request, res: Response) => {
   try {
     // fetch CR + doc status
-    const cr = (await pool.query(`SELECT * FROM doc_change_requests WHERE cr_id=$1`, [req.params.crId])).rows[0];
+    const cr = (await pool.query(`SELECT cr_id, doc_id, section_id, title, reason, apply_kind, patch_json, proposer_email, approver_email, status, resolved_at, created_at FROM doc_change_requests WHERE cr_id=$1`, [req.params.crId])).rows[0];
     if (!cr) return res.status(404).json({ error: "CR not found" });
 
     const d = (await pool.query(`
@@ -4170,7 +4170,7 @@ router.post('/docs/:docId/permissions', requireAny(["QA","RA_CMC"]), async (req:
 
 router.get('/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
-    const rows = (await pool.query(`SELECT * FROM doc_permissions WHERE doc_id=$1 ORDER BY created_at DESC`, [req.params.docId])).rows;
+    const rows = (await pool.query(`SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions WHERE doc_id=$1 ORDER BY created_at DESC`, [req.params.docId])).rows;
     res.json(rows);
   } catch (error) {
     console.error("GET /docs/:id/permissions", error);
@@ -4195,7 +4195,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     // Get document and sections
     const docResult = await pool.query(
-      'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
       [docId, tenantId]
     );
 
@@ -4204,9 +4204,9 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     }
 
     const doc = docResult.rows[0];
-    
+
     const sectionsResult = await pool.query(
-      'SELECT * FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
       [docId, tenantId]
     );
 
@@ -4307,7 +4307,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
 
     // Check document exists and is in DRAFT status
     const docResult = await pool.query(
-      'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
       [docId, tenantId]
     );
 
@@ -4383,8 +4383,8 @@ router.get('/docs/:docId/workflow', async (req: Request, res: Response) => {
     const workflowId = docResult.rows[0].current_workflow_id;
     
     const stepsResult = await pool.query(
-      `SELECT * FROM authoring_workflow_steps 
-       WHERE workflow_id = $1 AND tenant_id = $2 
+      `SELECT workflow_id, doc_id, step_no, role, approver_email, status, decision_note, decided_at, created_at, tenant_id FROM authoring_workflow_steps
+       WHERE workflow_id = $1 AND tenant_id = $2
        ORDER BY step_no`,
       [workflowId, tenantId]
     );
@@ -4491,8 +4491,8 @@ router.get('/docs/:docId/signatures', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT * FROM authoring_signatures 
-       WHERE doc_id = $1 AND tenant_id = $2 
+      `SELECT id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash, signature_digest, signed_at, tenant_id FROM authoring_signatures
+       WHERE doc_id = $1 AND tenant_id = $2
        ORDER BY signed_at DESC`,
       [docId, tenantId]
     );
@@ -4516,7 +4516,7 @@ router.post('/docs/:docId/freeze', requireAny(['QA', 'RA_CMC', 'ADMIN']), async 
 
     // Check document exists and is APPROVED
     const docResult = await pool.query(
-      'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
       [docId, tenantId]
     );
 
@@ -4569,8 +4569,8 @@ router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT * FROM authoring_audit_events 
-       WHERE doc_id = $1 AND tenant_id = $2 
+      `SELECT id, doc_id, event_type, actor, metadata, created_at, tenant_id FROM authoring_audit_events
+       WHERE doc_id = $1 AND tenant_id = $2
        ORDER BY created_at DESC
        LIMIT $3`,
       [docId, tenantId, limit]
@@ -5045,7 +5045,7 @@ router.get('/ai/suggestions/:documentId', async (req: Request, res: Response) =>
     const tenantId = getTenantId(req);
     
     const result = await pool.query(
-      `SELECT * FROM authoring_ai_suggestions 
+      `SELECT id, document_id, section_id, suggestion_type, severity, original_text, suggested_text, explanation, position_start, position_end, confidence_score, status, resolved_at, resolved_by, created_at, tenant_id FROM authoring_ai_suggestions
        WHERE document_id = $1 AND status = $2 AND tenant_id = $3
        ORDER BY severity DESC, position_start ASC`,
       [documentId, status, tenantId]
@@ -5085,7 +5085,7 @@ router.get('/ai/compliance-scores/:documentId', async (req: Request, res: Respon
     const tenantId = getTenantId(req);
     
     const result = await pool.query(
-      `SELECT * FROM authoring_compliance_scores 
+      `SELECT id, document_id, regulatory_score, technical_score, clarity_score, consistency_score, completeness_score, overall_score, ich_compliance, ctd_compliance, ind_compliance, missing_sections, analysis_timestamp, tenant_id FROM authoring_compliance_scores
        WHERE document_id = $1 AND tenant_id = $2
        ORDER BY analysis_timestamp DESC
        LIMIT 1`,

@@ -116,7 +116,7 @@ router.get('/', async (req: Request, res: Response) => {
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
     const activeOnly = req.query.activeOnly !== 'false';
 
-    let query = `SELECT * FROM project_rules WHERE organization_id = $1`;
+    let query = `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE organization_id = $1`;
     const params: any[] = [organizationId];
     let paramIndex = 2;
 
@@ -212,7 +212,7 @@ router.get('/:ruleId', async (req: Request, res: Response) => {
     const { organizationId } = tenantContext;
 
     const result = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
       [req.params.ruleId, organizationId]
     );
 
@@ -238,7 +238,7 @@ router.patch('/:ruleId', async (req: Request, res: Response) => {
 
     // Check rule exists and is not built-in
     const existing = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
       [req.params.ruleId, organizationId]
     );
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
@@ -323,7 +323,7 @@ router.delete('/:ruleId', async (req: Request, res: Response) => {
     const { organizationId } = tenantContext;
 
     const existing = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
       [req.params.ruleId, organizationId]
     );
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
@@ -364,7 +364,7 @@ router.post('/:ruleId/test', async (req: Request, res: Response) => {
 
     // Get the rule
     const ruleResult = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      `SELECT rule_id, name, conditions, actions FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
       [req.params.ruleId, organizationId]
     );
     if (ruleResult.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });

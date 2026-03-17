@@ -4,6 +4,7 @@ import express from 'express';
 import { db, pool } from '../db';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router({ mergeParams: true }); // Enable merging params from parent router (for :draftId)
 
@@ -382,80 +383,61 @@ const NonclinicalDataSchema = z.object({
  * GET /api/ind/drafts/:draftId/nonclinical
  * Retrieves the nonclinical data and associated studies for a specific draft.
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, asyncHandler(async (req, res) => {
   const { draftId } = req.params;
-  const userId = (req as any).user?.id; // Type assertion for development - in production use proper typing
+  const userId = (req as any).user?.id;
 
-  try {
-    const nonclinicalData = await dbOps.getNonclinicalData(draftId, userId);
+  const nonclinicalData = await dbOps.getNonclinicalData(draftId, userId);
 
-    if (!nonclinicalData) {
-      return res.status(404).json({
-        success: false,
-        message: 'Nonclinical data not found for this draft.',
-      });
-    }
-
-    // Format response data
-    const responseData = {
-      overallNonclinicalSummary: nonclinicalData.overallNonclinicalSummary,
-      pharmacologyStatus: nonclinicalData.pharmacologyStatus,
-      pkStatus: nonclinicalData.pkStatus,
-      toxicologyStatus: nonclinicalData.toxicologyStatus,
-      studies: nonclinicalData.studies || [],
-    };
-
-    res.status(200).json({ success: true, data: responseData });
-  } catch (error) {
-    console.error(`Error fetching Nonclinical data for draft ${draftId}:`, error);
-    res.status(500).json({
+  if (!nonclinicalData) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to retrieve Nonclinical data.',
+      message: 'Nonclinical data not found for this draft.',
     });
   }
-});
+
+  const responseData = {
+    overallNonclinicalSummary: nonclinicalData.overallNonclinicalSummary,
+    pharmacologyStatus: nonclinicalData.pharmacologyStatus,
+    pkStatus: nonclinicalData.pkStatus,
+    toxicologyStatus: nonclinicalData.toxicologyStatus,
+    studies: nonclinicalData.studies || [],
+  };
+
+  res.status(200).json({ success: true, data: responseData });
+}));
 
 /**
  * PUT /api/ind/drafts/:draftId/nonclinical
  * Creates or updates the nonclinical data and studies for a specific draft.
  */
-router.put('/', authMiddleware, async (req, res) => {
+router.put('/', authMiddleware, asyncHandler(async (req, res) => {
   const { draftId } = req.params;
-  const userId = (req as any).user?.id; // Type assertion for development
+  const userId = (req as any).user?.id;
   const dataToSave = req.body;
 
-  try {
-    // Validate input data against schema
-    const validationResult = NonclinicalDataSchema.safeParse(dataToSave);
+  const validationResult = NonclinicalDataSchema.safeParse(dataToSave);
 
-    if (!validationResult.success) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid data format',
-        errors: validationResult.error.format(),
-      });
-    }
-
-    const result = await dbOps.saveNonclinicalData(draftId, userId, validationResult.data);
-    res.status(200).json(result);
-  } catch (error) {
-    console.error(`Error saving Nonclinical data for draft ${draftId}:`, error);
-    res.status(500).json({
+  if (!validationResult.success) {
+    return res.status(400).json({
       success: false,
-      message: 'Failed to save Nonclinical data.',
+      message: 'Invalid data format',
+      errors: validationResult.error.format(),
     });
   }
-});
+
+  const result = await dbOps.saveNonclinicalData(draftId, userId, validationResult.data);
+  res.status(200).json(result);
+}));
 
 /**
  * POST /api/ind/drafts/:draftId/nonclinical/studies/:studyId/validate
  * Updates the validation status of a specific study.
  */
-router.post('/studies/:studyId/validate', authMiddleware, async (req, res) => {
+router.post('/studies/:studyId/validate', authMiddleware, asyncHandler(async (req, res) => {
   const { studyId } = req.params;
   const { validationStatus, validationIssues } = req.body;
 
-  // Validate input
   if (!validationStatus || !['pending', 'validated', 'rejected'].includes(validationStatus)) {
     return res.status(400).json({
       success: false,
@@ -463,28 +445,20 @@ router.post('/studies/:studyId/validate', authMiddleware, async (req, res) => {
     });
   }
 
-  try {
-    const result = await dbOps.validateStudy(studyId, validationStatus, validationIssues);
+  const result = await dbOps.validateStudy(studyId, validationStatus, validationIssues);
 
-    if (!result) {
-      return res.status(404).json({
-        success: false,
-        message: 'Study not found.',
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Study validation status updated successfully.',
-      data: result,
-    });
-  } catch (error) {
-    console.error(`Error validating study ${studyId}:`, error);
-    res.status(500).json({
+  if (!result) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to update study validation status.',
+      message: 'Study not found.',
     });
   }
-});
+
+  res.status(200).json({
+    success: true,
+    message: 'Study validation status updated successfully.',
+    data: result,
+  });
+}));
 
 export default router;
