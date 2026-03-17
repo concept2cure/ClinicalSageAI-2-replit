@@ -126,12 +126,42 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
 
+  // AnA personality — rotating thinking messages
+  const [thinkingMsg, setThinkingMsg] = useState('');
+  useEffect(() => {
+    if (!isThinking) return;
+    const ANA_THINKING_MESSAGES = [
+      'Reviewing your regulatory landscape...',
+      'Cross-referencing guidance documents...',
+      'Checking the latest FDA updates...',
+      'Let me dig into the CTD modules for you...',
+      'Analyzing your submission strategy...',
+      'Running compliance checks...',
+      'Connecting the regulatory dots...',
+      'Almost there — dotting the i\'s on 21 CFR Part 11...',
+      'Warming up the ELSA engines... no, not that one ❄️',
+      'Consulting my regulatory crystal ball...',
+      'Searching through 65 ICH guidelines...',
+      'Making sure everything is submission-ready...',
+      'Checking predicate devices and precedents...',
+      'Let it flow, let it flow... through the review process 🏔️',
+      'Building your regulatory snowglobe of insights...',
+    ];
+    setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
+    const interval = setInterval(() => {
+      setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isThinking]);
+
   const defaultGreeting = useMemo(() => {
     if (greeting) return greeting;
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `How can I help with ${contextProfile.activeProject}?`;
+      return `${timeGreeting}! Ready to make progress on ${contextProfile.activeProject}. What shall we tackle?`;
     }
-    return 'What would you like to work on?';
+    return `${timeGreeting}! I'm AnA, your regulatory co-pilot. What would you like to work on?`;
   }, [greeting, contextProfile?.activeProject]);
 
   // Auto-scroll when new messages
@@ -433,7 +463,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
-                      <span className="text-xs text-violet-600 font-medium">Thinking...</span>
+                      <span className="text-xs text-violet-600 font-medium">{thinkingMsg || 'Thinking...'}</span>
                     </div>
                   </div>
                 </div>

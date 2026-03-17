@@ -572,6 +572,154 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ANALYTICS DASHBOARD — Real data from project/artifact APIs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBack: () => void }) {
+  const { data: summaryRaw } = useQuery({
+    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+  });
+  const summary = (summaryRaw as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
+
+  const { data: auditRaw } = useQuery({
+    queryKey: ['/api/concept2cure/audit-logs', { limit: 30 }],
+    queryFn: () => fetch('/api/concept2cure/audit-logs?limit=30').then(r => r.json()),
+  });
+  const auditLogs = (auditRaw as any)?.data?.logs || [];
+
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter((p: any) => p.status === 'active').length;
+  const completedProjects = projects.filter((p: any) => p.status === 'completed').length;
+
+  // Derive activity by day from audit logs
+  const activityByDay = useMemo(() => {
+    const days = new Map<string, number>();
+    auditLogs.forEach((l: any) => {
+      if (l.timestamp) {
+        const day = new Date(l.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+        days.set(day, (days.get(day) || 0) + 1);
+      }
+    });
+    return Array.from(days.entries()).slice(0, 7).map(([day, count]) => ({ day, count }));
+  }, [auditLogs]);
+
+  const metrics = [
+    { label: 'Total Projects', value: totalProjects, color: 'text-zinc-900' },
+    { label: 'Active', value: activeProjects, color: 'text-blue-600' },
+    { label: 'Completed', value: completedProjects, color: 'text-emerald-600' },
+    { label: 'Total Artifacts', value: summary.total, color: 'text-zinc-900' },
+    { label: 'In Draft', value: summary.draft, color: 'text-amber-600' },
+    { label: 'In Review', value: summary.review, color: 'text-blue-600' },
+    { label: 'Approved', value: summary.approved, color: 'text-emerald-600' },
+  ];
+
+  return (
+    <div className="flex-1 overflow-y-auto p-8 bg-white">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-xl font-semibold text-zinc-900">Portfolio Analytics</h2>
+            <p className="text-sm text-zinc-500 mt-0.5">Real-time metrics from your projects and artifacts</p>
+          </div>
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          {metrics.slice(0, 4).map(m => (
+            <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
+              <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">{m.label}</p>
+              <p className={cn('text-2xl font-semibold mt-1', m.color)}>{m.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          {/* Artifact Status Breakdown */}
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">Artifact Pipeline</p>
+            {summary.total === 0 ? (
+              <p className="text-xs text-zinc-400 text-center py-6">No artifacts yet. Create projects and generate documents to see pipeline analytics.</p>
+            ) : (
+              <div className="space-y-3">
+                {[
+                  { label: 'Draft', value: summary.draft, pct: Math.round((summary.draft / Math.max(1, summary.total)) * 100), color: 'bg-amber-500' },
+                  { label: 'In Review', value: summary.review, pct: Math.round((summary.review / Math.max(1, summary.total)) * 100), color: 'bg-blue-500' },
+                  { label: 'Approved', value: summary.approved, pct: Math.round((summary.approved / Math.max(1, summary.total)) * 100), color: 'bg-emerald-500' },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-zinc-600">{item.label}</span>
+                      <span className="text-xs font-medium text-zinc-900">{item.value} ({item.pct}%)</span>
+                    </div>
+                    <div className="h-2 bg-zinc-200 rounded-full">
+                      <div className={cn('h-2 rounded-full transition-all', item.color)} style={{ width: `${item.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Activity Chart */}
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">Recent Activity</p>
+            {activityByDay.length === 0 ? (
+              <p className="text-xs text-zinc-400 text-center py-6">No recent activity recorded.</p>
+            ) : (
+              <div className="flex items-end gap-2 h-32">
+                {activityByDay.map(({ day, count }) => {
+                  const maxCount = Math.max(...activityByDay.map(d => d.count), 1);
+                  const height = Math.max(8, (count / maxCount) * 100);
+                  return (
+                    <div key={day} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] text-zinc-500">{count}</span>
+                      <div className="w-full bg-zinc-900 rounded-t" style={{ height: `${height}%` }} />
+                      <span className="text-[10px] text-zinc-400">{day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Project List */}
+        <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">Project Summary</p>
+          {projects.length === 0 ? (
+            <p className="text-xs text-zinc-400 text-center py-6">No projects yet. Create your first project to see analytics.</p>
+          ) : (
+            <div className="space-y-2">
+              {projects.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className={cn('w-2 h-2 rounded-full', p.status === 'active' ? 'bg-emerald-500' : p.status === 'completed' ? 'bg-blue-500' : 'bg-zinc-400')} />
+                    <span className="text-sm text-zinc-900">{p.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-zinc-400">{p.submissionType || 'IND'}</span>
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full', p.status === 'active' ? 'bg-emerald-50 text-emerald-700' : p.status === 'completed' ? 'bg-blue-50 text-blue-700' : 'bg-zinc-100 text-zinc-600')}>
+                      {p.status || 'draft'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ZEN APP
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1704,24 +1852,10 @@ export const ZenApp: React.FC = () => {
           )}
 
           {!embeddedModule && layoutMode === 'analytics' && (
-            <div className="flex-1 overflow-y-auto flex items-center justify-center p-8 bg-white">
-              <div className="max-w-md text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-50 flex items-center justify-center">
-                  <BarChart2 className="w-6 h-6 text-amber-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-900">Analytics</h3>
-                <p className="text-sm text-zinc-500 mt-1 mb-6">
-                  Portfolio analytics and risk dashboards are being built. Check back soon.
-                </p>
-                <button
-                  onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back to Chat
-                </button>
-              </div>
-            </div>
+            <AnalyticsDashboardInline
+              projects={projects || []}
+              onBack={() => setLayoutMode('regulatory-workspace')}
+            />
           )}
 
           {!embeddedModule && layoutMode === 'timeline' && (
@@ -1729,9 +1863,30 @@ export const ZenApp: React.FC = () => {
               <div className="max-w-3xl mx-auto">
                 <WorkflowTimeline
                   steps={timelineSteps}
-                  currentStepId="step-authoring"
-                  progressPercent={50}
-                  assetState="REVIEW"
+                  currentStepId={(() => {
+                    // Derive current step from project artifacts
+                    const arts = projectArtifacts || [];
+                    if (arts.length === 0) return 'step-upload';
+                    const hasApproved = arts.some((a: any) => a.status === 'approved' || a.status === 'locked');
+                    const hasReview = arts.some((a: any) => a.status === 'review');
+                    if (hasApproved) return 'step-export';
+                    if (hasReview) return 'step-review';
+                    return 'step-authoring';
+                  })()}
+                  progressPercent={(() => {
+                    const arts = projectArtifacts || [];
+                    if (arts.length === 0) return 10;
+                    const approved = arts.filter((a: any) => a.status === 'approved' || a.status === 'locked').length;
+                    return Math.min(95, Math.round((approved / Math.max(1, arts.length)) * 100) + 10);
+                  })()}
+                  assetState={(() => {
+                    const arts = projectArtifacts || [];
+                    const hasApproved = arts.some((a: any) => a.status === 'approved' || a.status === 'locked');
+                    const hasReview = arts.some((a: any) => a.status === 'review');
+                    if (hasApproved) return 'APPROVED';
+                    if (hasReview) return 'REVIEW';
+                    return 'DRAFT';
+                  })()}
                   workflowRunId={workflowRunId}
                   showPhases
                 />
