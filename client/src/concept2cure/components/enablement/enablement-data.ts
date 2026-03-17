@@ -696,14 +696,14 @@ export const LEARNING_MODULES: LearningModule[] = [
   },
   {
     id: 'mod-agents-foresight',
-    title: 'ForesightAI Predictive Intelligence',
+    title: 'AnA SnowGlobe Predictive Intelligence',
     description:
-      'Leverage multi-modal clinical prediction, Monte Carlo simulation, protocol analysis, and the knowledge graph for data-driven regulatory strategy.',
+      'Leverage multi-modal clinical prediction, Monte Carlo simulation, protocol analysis, and the knowledge graph for data-driven regulatory strategy via AnA SnowGlobe.',
     category: 'ai-agents',
     roles: ['strategist', 'clinical-ops', 'executive'],
-    clientTypes: ['pharma', 'biotech'],
-    workflows: ['ind', 'nda', 'pma'],
-    productAreas: ['foresight-ai'],
+    clientTypes: ['pharma', 'biotech', 'meddevice', 'cro'],
+    workflows: ['ind', 'nda', 'pma', '510k', 'cer'],
+    productAreas: ['ana-snowglobe'],
     certificationTrack: 'cert-agent-specialist',
     maturityLevel: 3,
     aiMode: 'ana',
@@ -797,7 +797,7 @@ export const CERTIFICATIONS: Certification[] = [
     id: 'cert-agent-specialist',
     title: 'AI Agent Specialist',
     description:
-      'Certifies expertise in configuring, monitoring, and optimizing the 35+ specialized AI agents across the Agent Swarm, Innovation Platform, Cognitive Ecosystem, and ForesightAI.',
+      'Certifies expertise in configuring, monitoring, and optimizing the 35+ specialized AI agents across the Agent Swarm, Innovation Platform, Cognitive Ecosystem, and AnA SnowGlobe.',
     competence: 'AI Agent Configuration, Monitoring & Optimization',
     focus: 'combined',
     requiredModuleIds: [

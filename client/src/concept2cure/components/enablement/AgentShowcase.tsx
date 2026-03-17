@@ -12,7 +12,7 @@ type SystemGroup =
   | "cognitive-ecosystem"
   | "innovation"
   | "intelligence"
-  | "foresight";
+  | "ana-snowglobe";
 
 type Category =
   | "orchestration"
@@ -540,11 +540,11 @@ const capabilities: AgentCapability[] = [
     apiEndpoint: "/api/intelligence/strategic",
     category: "prediction",
   },
-  // ForesightAI (5)
+  // AnA SnowGlobe (5)
   {
     id: "foresight-prediction",
-    name: "ForesightAI Prediction Engine",
-    system: "foresight",
+    name: "AnA SnowGlobe Prediction Engine",
+    system: "ana-snowglobe",
     description: "Multi-modal clinical outcome prediction using ensemble machine learning models.",
     whatItDoes: [
       "Predicts trial success probability by phase and indication",
@@ -560,7 +560,7 @@ const capabilities: AgentCapability[] = [
   {
     id: "monte-carlo",
     name: "Monte Carlo Simulation",
-    system: "foresight",
+    system: "ana-snowglobe",
     description: "Probabilistic timeline and risk modeling for submission planning.",
     whatItDoes: [
       "Runs 10,000+ simulations per scenario",
@@ -576,7 +576,7 @@ const capabilities: AgentCapability[] = [
   {
     id: "protocol-analyzer",
     name: "Protocol Analyzer",
-    system: "foresight",
+    system: "ana-snowglobe",
     description: "NLP-based protocol intelligence for design optimization and risk assessment.",
     whatItDoes: [
       "Parses protocol documents using specialized NLP models",
@@ -591,8 +591,8 @@ const capabilities: AgentCapability[] = [
   },
   {
     id: "foresight-kg",
-    name: "Foresight Knowledge Graph",
-    system: "foresight",
+    name: "AnA SnowGlobe Knowledge Graph",
+    system: "ana-snowglobe",
     description: "Predictive relationship mapping that identifies emerging trends and regulatory signals.",
     whatItDoes: [
       "Maps predictive relationships across clinical and regulatory data",
@@ -608,7 +608,7 @@ const capabilities: AgentCapability[] = [
   {
     id: "csr-integration",
     name: "CSR Integration",
-    system: "foresight",
+    system: "ana-snowglobe",
     description: "Clinical Study Report data integration for seamless prediction model training.",
     whatItDoes: [
       "Ingests and normalizes CSR data from multiple formats",
@@ -633,7 +633,7 @@ const systemLabels: Record<string, string> = {
   "cognitive-ecosystem": "Cognitive",
   innovation: "Innovation",
   intelligence: "Intelligence",
-  foresight: "ForesightAI",
+  "ana-snowglobe": "AnA SnowGlobe",
 };
 
 const categoryLabels: Record<string, string> = {

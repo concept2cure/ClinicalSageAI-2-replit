@@ -122,7 +122,7 @@ interface TraceabilityClaim {
 const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: 'quality', label: 'Quality Center' },
   { key: 'compliance', label: 'Compliance' },
-  { key: 'snowglobe', label: 'SnowGlobe' },
+  { key: 'snowglobe', label: 'AnA SnowGlobe' },
   { key: 'readiness', label: 'Readiness Score' },
   { key: 'evidence', label: 'Evidence Confidence' },
   { key: 'audit', label: 'Audit Trail' },
@@ -178,6 +178,41 @@ const MOCK_SIMULATIONS: SimulationEngine[] = [
   { name: 'Evidence Sufficiency', description: 'Evaluates whether evidence package meets approval threshold', riskScore: 31, findings: ['Primary endpoint met with p<0.001', 'Long-term safety data adequate (24-month)', 'Real-world evidence supplements trial data'], status: 'completed' },
   { name: 'Collaboration Fragility', description: 'Identifies team bottlenecks and knowledge concentration risks', riskScore: 48, findings: ['CMC section authored by single expert', 'Clinical pharmacology section awaiting final review', 'No backup author for nonclinical overview'], status: 'completed' },
 ];
+
+// --- AnA SnowGlobe: Predictive Intelligence (merged from ForesightAI) ------
+
+const ANA_PREDICTION = {
+  trialName: 'ONCO-HORIZON Phase 3: Anti-PD-L1 + VEGF Inhibitor in Advanced HCC',
+  successProbability: 0.68,
+  riskFactors: [
+    { factor: 'Enrollment pace below target in Asia-Pacific sites', impact: 'high' as const },
+    { factor: 'OS endpoint requires extended follow-up; interim futility risk', impact: 'high' as const },
+    { factor: 'Competitor readout expected Q4 2026 may shift standard of care', impact: 'medium' as const },
+    { factor: 'Biomarker-defined subgroup may dilute ITT effect size', impact: 'medium' as const },
+    { factor: 'Manufacturing scale-up for combination product on track', impact: 'low' as const },
+  ],
+  monteCarlo: {
+    simulations: 10000,
+    sampleSize: 480,
+    power: 0.84,
+    medianOS: '14.2 months',
+    ciLower: '12.1 months',
+    ciUpper: '16.8 months',
+    hazardRatio: 0.72,
+  },
+  endpoints: [
+    { name: 'Overall Survival (OS)', type: 'Primary', recommendation: 'Retain as co-primary' },
+    { name: 'Progression-Free Survival (PFS)', type: 'Co-primary', recommendation: 'Retain as co-primary' },
+    { name: 'Objective Response Rate (ORR)', type: 'Secondary', recommendation: 'Add as key secondary for accelerated approval path' },
+    { name: 'Duration of Response (DOR)', type: 'Secondary', recommendation: 'Include per FDA oncology guidance' },
+  ],
+  protocolFindings: [
+    'Consider adaptive enrichment design to address biomarker subgroup uncertainty',
+    'Add pre-specified interim analysis at 60% information fraction',
+    'Expand Asia-Pacific site network by 3–4 centers to mitigate enrollment risk',
+    'Align PFS assessment schedule with RECIST 1.1 every 8 weeks',
+  ],
+};
 
 const MOCK_READINESS_MODULES: ReadinessModule[] = [
   { module: 'Module 1', name: 'Administrative Information', completeness: 95, status: 'ready' },
@@ -539,23 +574,49 @@ function SnowGlobeView() {
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">SnowGlobe</h2>
+          <h2 className="text-lg font-medium text-zinc-900">AnA SnowGlobe</h2>
           <p className="text-sm text-zinc-600 mt-1">
-            Stress-test your submission. Six simulation engines model agency, reviewer, and operational risks.
+            Unified prediction engine. Stress-test submissions, forecast trial outcomes, and model regulatory risk.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <GenerateButton
             label="Generate Full Report"
-            produces="SnowGlobe Simulation Report (PDF)"
+            produces="AnA SnowGlobe Prediction Report (PDF)"
             isLoading={isGenerating}
             onClick={() => generate({
               endpoint: '/api/snowglobe/report',
               method: 'POST',
-              body: { engines: 'all' },
-              filename: 'SnowGlobe_Simulation_Report.pdf',
+              body: { engines: 'all', includePredictions: true },
+              filename: 'AnA_SnowGlobe_Report.pdf',
               format: 'pdf',
-              title: 'SnowGlobe Simulation Report',
+              title: 'AnA SnowGlobe Prediction Report',
+            })}
+          />
+          <GenerateButton
+            label="Generate SAP Draft"
+            produces="Statistical Analysis Plan (DOCX)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/sap-draft',
+              method: 'POST',
+              body: {},
+              filename: 'Statistical_Analysis_Plan.docx',
+              format: 'docx',
+              title: 'Statistical Analysis Plan',
+            })}
+          />
+          <ExportButton
+            label="Endpoint Analysis"
+            produces="Endpoint Recommendation Report (PDF)"
+            isLoading={isGenerating}
+            onClick={() => generate({
+              endpoint: '/api/concept2cure/reports/endpoint-analysis',
+              method: 'POST',
+              body: {},
+              filename: 'Endpoint_Recommendation.pdf',
+              format: 'pdf',
+              title: 'Endpoint Recommendation Report',
             })}
           />
         </div>
@@ -572,9 +633,17 @@ function SnowGlobeView() {
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Engines Run</p>
             <p className="text-2xl font-semibold text-zinc-900 mt-1">{simulations.filter((s) => s.status === 'completed').length}/{simulations.length}</p>
           </div>
+          <div>
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Trial Success</p>
+            <p className="text-2xl font-semibold text-zinc-900 mt-1">{(ANA_PREDICTION.successProbability * 100).toFixed(0)}%</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Statistical Power</p>
+            <p className="text-2xl font-semibold text-zinc-900 mt-1">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
+          </div>
         </div>
         <p className="text-xs text-zinc-400 mt-4">
-          Powered by SnowGlobe 6-engine simulation system
+          Powered by AnA SnowGlobe — 6-engine simulation + Monte Carlo + ForesightAI + Endpoint Recommender
         </p>
       </div>
 
@@ -610,6 +679,109 @@ function SnowGlobeView() {
             </button>
           </div>
         ))}
+      </div>
+
+      {/* ── Trial Prediction (merged from ForesightAI) ─────────────── */}
+      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-zinc-900">Trial Prediction</h3>
+            <p className="text-xs text-zinc-400 mt-0.5">{ANA_PREDICTION.trialName}</p>
+          </div>
+          <span className={cn(
+            'text-2xl font-semibold',
+            ANA_PREDICTION.successProbability >= 0.7 ? 'text-emerald-600' :
+            ANA_PREDICTION.successProbability >= 0.5 ? 'text-amber-500' : 'text-red-500',
+          )}>
+            {(ANA_PREDICTION.successProbability * 100).toFixed(0)}%
+          </span>
+        </div>
+
+        {/* Risk Factors */}
+        <div>
+          <p className="text-xs text-zinc-400 uppercase tracking-wide mb-2">Risk Factors</p>
+          <div className="space-y-1.5">
+            {ANA_PREDICTION.riskFactors.map((rf, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className={cn(
+                  'mt-0.5 w-1.5 h-1.5 rounded-full shrink-0',
+                  rf.impact === 'high' ? 'bg-red-400' : rf.impact === 'medium' ? 'bg-amber-400' : 'bg-zinc-300',
+                )} />
+                <span className="text-xs text-zinc-600">{rf.factor}</span>
+                <span className={cn(
+                  'text-[10px] font-medium uppercase ml-auto shrink-0',
+                  rf.impact === 'high' ? 'text-red-500' : rf.impact === 'medium' ? 'text-amber-500' : 'text-zinc-400',
+                )}>{rf.impact}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Monte Carlo Simulation ─────────────────────────────────── */}
+      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-4">
+        <h3 className="text-sm font-medium text-zinc-900">Monte Carlo Simulation</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p className="text-xs text-zinc-400">Simulations</p>
+            <p className="text-sm font-medium text-zinc-900">{ANA_PREDICTION.monteCarlo.simulations.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400">Sample Size</p>
+            <p className="text-sm font-medium text-zinc-900">N={ANA_PREDICTION.monteCarlo.sampleSize}</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400">Statistical Power</p>
+            <p className="text-sm font-medium text-zinc-900">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400">Hazard Ratio</p>
+            <p className="text-sm font-medium text-zinc-900">{ANA_PREDICTION.monteCarlo.hazardRatio}</p>
+          </div>
+        </div>
+        <div className="bg-zinc-50 rounded p-3">
+          <p className="text-xs text-zinc-400 mb-1">Median OS Estimate</p>
+          <p className="text-sm font-medium text-zinc-900">
+            {ANA_PREDICTION.monteCarlo.medianOS}{' '}
+            <span className="text-xs text-zinc-400 font-normal">
+              (95% CI: {ANA_PREDICTION.monteCarlo.ciLower} – {ANA_PREDICTION.monteCarlo.ciUpper})
+            </span>
+          </p>
+        </div>
+      </div>
+
+      {/* ── Recommended Endpoints ──────────────────────────────────── */}
+      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-3">
+        <h3 className="text-sm font-medium text-zinc-900">Recommended Endpoints</h3>
+        <div className="divide-y divide-zinc-50">
+          {ANA_PREDICTION.endpoints.map((ep, i) => (
+            <div key={i} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+              <div>
+                <p className="text-xs font-medium text-zinc-900">{ep.name}</p>
+                <p className="text-[10px] text-zinc-400">{ep.recommendation}</p>
+              </div>
+              <span className={cn(
+                'text-[10px] font-medium px-2 py-0.5 rounded-full',
+                ep.type === 'Primary' ? 'bg-blue-50 text-blue-600' :
+                ep.type === 'Co-primary' ? 'bg-indigo-50 text-indigo-600' :
+                'bg-zinc-100 text-zinc-500',
+              )}>{ep.type}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Protocol Optimization ──────────────────────────────────── */}
+      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-3">
+        <h3 className="text-sm font-medium text-zinc-900">Protocol Optimization</h3>
+        <ul className="space-y-2">
+          {ANA_PREDICTION.protocolFindings.map((finding, i) => (
+            <li key={i} className="text-xs text-zinc-600 flex items-start gap-2">
+              <span className="text-blue-500 mt-0.5 shrink-0">→</span>
+              {finding}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

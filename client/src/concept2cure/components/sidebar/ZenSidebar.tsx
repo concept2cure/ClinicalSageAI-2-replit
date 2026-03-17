@@ -4,7 +4,7 @@
  *
  * Navigation restructured around user intent:
  *   WORK     → Copilot, Author
- *   RESEARCH → Intelligence, ForesightAI (coming soon via Intelligence sub-tab)
+ *   RESEARCH → Intelligence (Alerts, Evidence, Precedents, Pathways)
  *   ASSURE   → Review & Readiness
  *   MANAGE   → Command Center, Academy
  */
@@ -377,7 +377,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<Search className="w-3.5 h-3.5" />}
               label="Intelligence"
-              subtitle="Alerts · Evidence · Precedents · ForesightAI"
+              subtitle="Alerts · Evidence · Precedents · Pathways"
               active={activeNavId === 'intelligence-hub'}
               onClick={() => onNavigate?.('intelligence-hub')}
             />

@@ -27,7 +27,6 @@ type TabKey =
   | 'evidence'
   | 'precedent'
   | 'pathway'
-  | 'foresight'
   | 'strategic';
 
 interface Tab {
@@ -44,7 +43,6 @@ const tabs: Tab[] = [
   { key: 'evidence', label: 'Evidence Hub' },
   { key: 'precedent', label: 'Precedent Finder' },
   { key: 'pathway', label: 'Pathway Advisor' },
-  { key: 'foresight', label: 'ForesightAI' },
   { key: 'strategic', label: 'Strategic View' },
 ];
 
@@ -286,41 +284,6 @@ const expeditedPrograms = [
     benefits: 'Approval based on surrogate endpoint; post-marketing confirmatory trial required',
   },
 ];
-
-// --- ForesightAI data ------------------------------------------------------
-
-const foresightPrediction = {
-  trialName: 'ONCO-HORIZON Phase 3: Anti-PD-L1 + VEGF Inhibitor in Advanced HCC',
-  successProbability: 0.68,
-  riskFactors: [
-    { factor: 'Enrollment pace below target in Asia-Pacific sites', impact: 'high' as const },
-    { factor: 'OS endpoint requires extended follow-up; interim futility risk', impact: 'high' as const },
-    { factor: 'Competitor readout expected Q4 2026 may shift standard of care', impact: 'medium' as const },
-    { factor: 'Biomarker-defined subgroup may dilute ITT effect size', impact: 'medium' as const },
-    { factor: 'Manufacturing scale-up for combination product on track', impact: 'low' as const },
-  ],
-  monteCarlo: {
-    simulations: 10000,
-    sampleSize: 480,
-    power: 0.84,
-    medianOS: '14.2 months',
-    ciLower: '12.1 months',
-    ciUpper: '16.8 months',
-    hazardRatio: 0.72,
-  },
-  endpoints: [
-    { name: 'Overall Survival (OS)', type: 'Primary', recommendation: 'Retain as co-primary' },
-    { name: 'Progression-Free Survival (PFS)', type: 'Co-primary', recommendation: 'Retain as co-primary' },
-    { name: 'Objective Response Rate (ORR)', type: 'Secondary', recommendation: 'Add as key secondary for accelerated approval path' },
-    { name: 'Duration of Response (DOR)', type: 'Secondary', recommendation: 'Include per FDA oncology guidance' },
-  ],
-  protocolFindings: [
-    'Consider adaptive enrichment design to address biomarker subgroup uncertainty',
-    'Add pre-specified interim analysis at 60% information fraction',
-    'Expand Asia-Pacific site network by 3–4 centers to mitigate enrollment risk',
-    'Align PFS assessment schedule with RECIST 1.1 every 8 weeks',
-  ],
-};
 
 // --- Strategic data --------------------------------------------------------
 
@@ -723,144 +686,6 @@ function PathwayAdvisor() {
   );
 }
 
-function ForesightAI() {
-  const pred = foresightPrediction;
-  const { generate, isGenerating } = useDeliverable();
-
-  return (
-    <motion.div {...fade} className="space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-400">
-          What will happen if...? Powered by ForesightAI Engine, Monte Carlo, Study Design Agent, and Endpoint Recommender.
-        </p>
-        <div className="flex items-center gap-2 shrink-0 ml-4">
-          <GenerateButton
-            label="Generate Feasibility Report"
-            produces="Trial Feasibility Report (PDF)"
-            isLoading={isGenerating}
-            onClick={() => generate({
-              endpoint: '/api/foresight/report',
-              method: 'POST',
-              body: {},
-              filename: 'Trial_Feasibility_Report.pdf',
-              format: 'pdf',
-              title: 'Trial Feasibility Report',
-            })}
-          />
-          <GenerateButton
-            label="Generate SAP Draft"
-            produces="Statistical Analysis Plan (DOCX)"
-            isLoading={isGenerating}
-            onClick={() => generate({
-              endpoint: '/api/concept2cure/reports/sap-draft',
-              method: 'POST',
-              body: {},
-              filename: 'Statistical_Analysis_Plan.docx',
-              format: 'docx',
-              title: 'Statistical Analysis Plan',
-            })}
-          />
-          <ExportButton
-            label="Export Endpoint Analysis"
-            produces="Endpoint Recommendation Report (PDF)"
-            isLoading={isGenerating}
-            onClick={() => generate({
-              endpoint: '/api/concept2cure/reports/endpoint-analysis',
-              method: 'POST',
-              body: {},
-              filename: 'Endpoint_Recommendation.pdf',
-              format: 'pdf',
-              title: 'Endpoint Recommendation Report',
-            })}
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-zinc-100 p-5">
-        <h3 className="text-sm font-medium text-zinc-900 mb-1">{pred.trialName}</h3>
-        <div className="flex items-center gap-6 mt-3">
-          <div>
-            <div className="text-xs text-zinc-400">Success probability</div>
-            <div className="text-2xl font-medium text-zinc-900">{(pred.successProbability * 100).toFixed(0)}%</div>
-          </div>
-          <div>
-            <div className="text-xs text-zinc-400">Hazard ratio</div>
-            <div className="text-2xl font-medium text-zinc-900">{pred.monteCarlo.hazardRatio}</div>
-          </div>
-          <div>
-            <div className="text-xs text-zinc-400">Sample size</div>
-            <div className="text-2xl font-medium text-zinc-900">{pred.monteCarlo.sampleSize}</div>
-          </div>
-          <div>
-            <div className="text-xs text-zinc-400">Power</div>
-            <div className="text-2xl font-medium text-zinc-900">{(pred.monteCarlo.power * 100).toFixed(0)}%</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg border border-zinc-100 p-5">
-          <h3 className="text-sm font-medium text-zinc-900 mb-3">Risk factors</h3>
-          <div className="space-y-2">
-            {pred.riskFactors.map((rf, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide mt-0.5 shrink-0 w-14">
-                  {rf.impact}
-                </span>
-                <p className="text-sm text-zinc-600">{rf.factor}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-zinc-100 p-5">
-          <h3 className="text-sm font-medium text-zinc-900 mb-3">Monte Carlo simulation</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-zinc-400">Simulations</span>
-              <span className="text-zinc-900 font-medium">{pred.monteCarlo.simulations.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-400">Median OS</span>
-              <span className="text-zinc-900 font-medium">{pred.monteCarlo.medianOS}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-400">95% CI</span>
-              <span className="text-zinc-900 font-medium">
-                {pred.monteCarlo.ciLower} – {pred.monteCarlo.ciUpper}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-zinc-100 p-5">
-        <h3 className="text-sm font-medium text-zinc-900 mb-3">Recommended endpoints</h3>
-        <div className="space-y-2">
-          {pred.endpoints.map((ep, i) => (
-            <div key={i} className="flex items-center gap-4 text-sm">
-              <span className="text-zinc-900 font-medium w-64 shrink-0">{ep.name}</span>
-              <span className="text-xs text-zinc-400 w-20 shrink-0">{ep.type}</span>
-              <span className="text-zinc-600">{ep.recommendation}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-zinc-100 p-5">
-        <h3 className="text-sm font-medium text-zinc-900 mb-3">Protocol optimization</h3>
-        <div className="space-y-2">
-          {pred.protocolFindings.map((f, i) => (
-            <p key={i} className="text-sm text-zinc-600">
-              {i + 1}. {f}
-            </p>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 function StrategicView() {
   const { generate, isGenerating } = useDeliverable();
 
@@ -984,8 +809,6 @@ export function IntelligenceHub({ onClose }: { onClose: () => void }) {
         return <PrecedentFinder />;
       case 'pathway':
         return <PathwayAdvisor />;
-      case 'foresight':
-        return <ForesightAI />;
       case 'strategic':
         return <StrategicView />;
       default:
