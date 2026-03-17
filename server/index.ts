@@ -1613,6 +1613,16 @@ try {
   console.error('❌ Failed to mount Version Diff routes:', error);
 }
 
+// Mount Biostatistics Platform routes (7 capabilities: continuum, optimizer, estimand, SAP, external controls, adaptive, knowledge graph)
+try {
+  const biostatModule = await import('./routes/biostatPlatform.ts');
+  const biostatRoutes = biostatModule.default;
+  app.use('/api/biostat', biostatRoutes);
+  console.log('✅ Biostatistics Platform routes mounted successfully (7 capabilities)');
+} catch (error) {
+  console.error('❌ Failed to mount Biostatistics Platform routes:', error);
+}
+
 // Mount Content Atoms API routes
 try {
   const atomsModule = await import('./routes/atoms.js');
