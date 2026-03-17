@@ -322,54 +322,25 @@ const foresightPrediction = {
 
 // --- Strategic data --------------------------------------------------------
 
-const portfolioSubmissions = [
-  {
-    id: 1,
-    name: 'CurePath-201 (NDA)',
-    indication: 'NSCLC, 2nd-line',
-    agency: 'FDA',
-    readiness: 0.87,
-    risk: 'low' as const,
-    stage: 'Pre-submission meeting scheduled',
-    targetDate: '2026-06-15',
-  },
-  {
-    id: 2,
-    name: 'ImmunoVax BLA',
-    indication: 'Melanoma adjuvant',
-    agency: 'EMA',
-    readiness: 0.72,
-    risk: 'medium' as const,
-    stage: 'Module 2 drafting',
-    targetDate: '2026-09-01',
-  },
-  {
-    id: 3,
-    name: 'CardioSafe 510(k)',
-    indication: 'Cardiac monitoring',
-    agency: 'FDA',
-    readiness: 0.94,
-    risk: 'low' as const,
-    stage: 'Final review before submission',
-    targetDate: '2026-04-10',
-  },
-  {
-    id: 4,
-    name: 'NeuroStim De Novo',
-    indication: 'Chronic pain management',
-    agency: 'FDA',
-    readiness: 0.58,
-    risk: 'high' as const,
-    stage: 'Clinical data compilation',
-    targetDate: '2026-12-01',
-  },
+const competitiveLandscape = [
+  { company: 'Astellas Pharma', area: 'Oncology', event: 'FDA Priority Review granted for ADC candidate', impact: 'high' as const, date: '2026-03-14' },
+  { company: 'Roche / Genentech', area: 'Immunology', event: 'Phase 3 topline data positive — bispecific antibody', impact: 'medium' as const, date: '2026-03-12' },
+  { company: 'Medtronic', area: 'Cardiac Devices', event: 'De Novo clearance for AI-guided monitoring', impact: 'high' as const, date: '2026-03-10' },
+  { company: 'Novartis', area: 'Neurology', event: 'EMA CHMP positive opinion — gene therapy', impact: 'medium' as const, date: '2026-03-08' },
 ];
 
-const strategicRecommendations = [
-  'Prioritize CardioSafe 510(k) — highest readiness score and nearest target date. Final QA review recommended this week.',
-  'CurePath-201 pre-submission meeting prep is on track. Ensure Module 2.5 reflects updated FDA Clinical Overview guidance issued March 15.',
-  'ImmunoVax BLA Module 2 drafting should incorporate recent EMA CMC requirement changes to avoid queries during validation.',
-  'NeuroStim De Novo requires a clinical evidence gap closure plan. Consider requesting a pre-submission meeting with FDA CDRH within 30 days.',
+const therapeuticTrends = [
+  { area: 'Oncology', approvals2025: 18, activePipeline: 342, trend: 'up' as const, insight: 'ADC and bispecific modalities dominating new filings' },
+  { area: 'Neurology', approvals2025: 7, activePipeline: 189, trend: 'up' as const, insight: 'Gene therapy filings accelerating after recent FDA guidance' },
+  { area: 'Cardiology', approvals2025: 5, activePipeline: 124, trend: 'flat' as const, insight: 'Digital health companion diagnostics gaining traction' },
+  { area: 'Rare Disease', approvals2025: 12, activePipeline: 267, trend: 'up' as const, insight: 'Orphan drug incentives driving 34% YoY pipeline growth' },
+];
+
+const strategicInsights = [
+  'FDA Priority Review rate for oncology ADCs is 67% — significantly above the 42% baseline. Consider accelerated pathway for similar modalities.',
+  'EMA centralized procedure timelines shortened by 15% in 2025 vs 2024. Factor into global filing strategy.',
+  'Three competitor De Novo clearances in cardiac AI this quarter signal receptive regulatory posture — favorable window for similar submissions.',
+  'PMDA-FDA parallel review pilot program expanding eligibility in Q2 2026. Evaluate dual-filing opportunities for pipeline candidates.',
 ];
 
 // ---------------------------------------------------------------------------
@@ -479,9 +450,8 @@ function EvidenceHub() {
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <div className="text-xs text-zinc-400 mb-0.5">Confidence</div>
-                <div className="text-sm font-medium text-zinc-900">{(item.confidence * 100).toFixed(0)}%</div>
-                <div className="text-xs text-zinc-400 mt-1">Relevance {(item.relevance * 100).toFixed(0)}%</div>
+                <div className="text-xs text-zinc-400 mb-0.5">Relevance</div>
+                <div className="text-sm font-medium text-zinc-900">{(item.relevance * 100).toFixed(0)}%</div>
               </div>
             </div>
           </div>
@@ -728,79 +698,71 @@ function ForesightAI() {
 }
 
 function StrategicView() {
-  const avgReadiness =
-    portfolioSubmissions.reduce((sum, s) => sum + s.readiness, 0) / portfolioSubmissions.length;
-  const riskCounts = {
-    low: portfolioSubmissions.filter((s) => s.risk === 'low').length,
-    medium: portfolioSubmissions.filter((s) => s.risk === 'medium').length,
-    high: portfolioSubmissions.filter((s) => s.risk === 'high').length,
-  };
-
   return (
     <motion.div {...fade} className="space-y-6">
       <p className="text-sm text-zinc-400">
-        Big picture insights. Powered by Strategic Intelligence, Clinical Intelligence, and Portfolio Analytics.
+        Market intelligence, competitive landscape, and therapeutic area trends. Powered by Strategic Intelligence and Clinical Intelligence.
       </p>
 
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-zinc-100 p-4">
-          <div className="text-xs text-zinc-400 mb-1">Active submissions</div>
-          <div className="text-2xl font-medium text-zinc-900">{portfolioSubmissions.length}</div>
-        </div>
-        <div className="bg-white rounded-lg border border-zinc-100 p-4">
-          <div className="text-xs text-zinc-400 mb-1">Avg readiness</div>
-          <div className="text-2xl font-medium text-zinc-900">{(avgReadiness * 100).toFixed(0)}%</div>
-        </div>
-        <div className="bg-white rounded-lg border border-zinc-100 p-4">
-          <div className="text-xs text-zinc-400 mb-1">Low risk</div>
-          <div className="text-2xl font-medium text-zinc-900">{riskCounts.low}</div>
-        </div>
-        <div className="bg-white rounded-lg border border-zinc-100 p-4">
-          <div className="text-xs text-zinc-400 mb-1">At risk</div>
-          <div className="text-2xl font-medium text-zinc-900">{riskCounts.medium + riskCounts.high}</div>
-        </div>
-      </div>
-
+      {/* Therapeutic Area Trends */}
       <div>
-        <h3 className="text-sm font-medium text-zinc-900 mb-3">Portfolio</h3>
-        <div className="space-y-3">
-          {portfolioSubmissions.map((s) => (
-            <div key={s.id} className="bg-white rounded-lg border border-zinc-100 p-4">
+        <h3 className="text-sm font-medium text-zinc-900 mb-3">Therapeutic Area Landscape</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {therapeuticTrends.map((area) => (
+            <div key={area.area} className="bg-white rounded-lg border border-zinc-100 p-4">
               <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h4 className="text-sm font-medium text-zinc-900">{s.name}</h4>
-                  <div className="flex items-center gap-3 text-xs text-zinc-400 mt-0.5">
-                    <span>{s.indication}</span>
-                    <span>{s.agency}</span>
-                    <span>Target: {s.targetDate}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-zinc-900">{(s.readiness * 100).toFixed(0)}%</div>
-                  <div className="text-xs text-zinc-400">readiness</div>
-                </div>
+                <h4 className="text-sm font-medium text-zinc-900">{area.area}</h4>
+                <span className={cn(
+                  'text-xs font-medium uppercase tracking-wide',
+                  area.trend === 'up' ? 'text-emerald-600' : 'text-zinc-400'
+                )}>
+                  {area.trend === 'up' ? '↑ Growing' : '→ Stable'}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-600">{s.stage}</span>
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{s.risk} risk</span>
+              <div className="flex items-center gap-6 text-xs text-zinc-400 mb-2">
+                <span>{area.approvals2025} approvals (2025)</span>
+                <span>{area.activePipeline} active trials</span>
               </div>
-              <div className="mt-2 h-1 bg-zinc-50 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-zinc-900 rounded-full"
-                  style={{ width: `${s.readiness * 100}%` }}
-                />
-              </div>
+              <p className="text-xs text-zinc-600 leading-relaxed">{area.insight}</p>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Competitive Intelligence */}
       <div>
-        <h3 className="text-sm font-medium text-zinc-900 mb-3">Strategic recommendations</h3>
+        <h3 className="text-sm font-medium text-zinc-900 mb-3">Competitive Intelligence</h3>
         <div className="space-y-3">
-          {strategicRecommendations.map((rec, i) => (
+          {competitiveLandscape.map((item, i) => (
             <div key={i} className="bg-white rounded-lg border border-zinc-100 p-4">
-              <p className="text-sm text-zinc-600 leading-relaxed">{rec}</p>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-3">
+                  <h4 className="text-sm font-medium text-zinc-900">{item.company}</h4>
+                  <span className="text-xs text-zinc-400">{item.area}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    'text-xs font-medium uppercase tracking-wide',
+                    item.impact === 'high' ? 'text-amber-600' : 'text-zinc-400'
+                  )}>
+                    {item.impact} impact
+                  </span>
+                  <span className="text-xs text-zinc-300">{item.date}</span>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-600">{item.event}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Strategic Insights */}
+      <div>
+        <h3 className="text-sm font-medium text-zinc-900 mb-3">Strategic Insights</h3>
+        <div className="space-y-3">
+          {strategicInsights.map((insight, i) => (
+            <div key={i} className="bg-white rounded-lg border border-zinc-100 p-4">
+              <p className="text-sm text-zinc-600 leading-relaxed">{insight}</p>
             </div>
           ))}
         </div>

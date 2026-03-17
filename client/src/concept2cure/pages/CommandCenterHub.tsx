@@ -673,24 +673,6 @@ function AnalyticsView() {
         </Card>
       </div>
 
-      <Card>
-        <SectionLabel>Program Readiness Breakdown</SectionLabel>
-        <div className="space-y-2">
-          {PROGRAMS.map((p) => (
-            <div key={p.id} className="flex items-center gap-4">
-              <span className="text-xs text-zinc-900 w-48 truncate font-medium">{p.name}</span>
-              <Pill text={p.type} className="bg-zinc-50 text-zinc-600 w-14 justify-center" />
-              <div className="flex-1 h-1.5 bg-zinc-100 rounded-full">
-                <div
-                  className={cn('h-1.5 rounded-full', p.readiness >= 80 ? 'bg-emerald-500' : p.readiness >= 60 ? 'bg-amber-500' : 'bg-red-500')}
-                  style={{ width: `${p.readiness}%` }}
-                />
-              </div>
-              <span className="text-xs font-medium text-zinc-900 w-10 text-right">{p.readiness}%</span>
-            </div>
-          ))}
-        </div>
-      </Card>
       <p className="text-[10px] text-zinc-300">Powered by Program Analytics + Portfolio Analytics + Reports</p>
     </div>
   );

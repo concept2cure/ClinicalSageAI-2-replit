@@ -618,17 +618,26 @@ function ReadinessScoreView() {
         </table>
       </div>
 
-      {/* Gaps */}
+      {/* Prediction Detail */}
       <div className="bg-white border border-zinc-100 rounded-lg p-5">
-        <h3 className="text-sm font-medium text-zinc-900">Identified Gaps</h3>
-        <ul className="mt-3 space-y-2">
-          {MOCK_READINESS_GAPS.map((gap, i) => (
-            <li key={i} className="text-sm text-zinc-600 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-              {gap}
-            </li>
-          ))}
-        </ul>
+        <h3 className="text-sm font-medium text-zinc-900">Filing Probability Model</h3>
+        <p className="text-xs text-zinc-400 mt-1 mb-3">
+          Predicted outcomes based on historical approval data for similar submissions.
+        </p>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-zinc-400">First-cycle approval</p>
+            <p className="text-sm font-medium text-zinc-900">68%</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400">Major amendment needed</p>
+            <p className="text-sm font-medium text-zinc-900">22%</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400">Refuse to file risk</p>
+            <p className="text-sm font-medium text-zinc-900">10%</p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -644,7 +653,7 @@ function EvidenceConfidenceView() {
       <div>
         <h2 className="text-lg font-medium text-zinc-900">Evidence Confidence</h2>
         <p className="text-sm text-zinc-600 mt-1">
-          Where is the evidence weak? Heatmap of evidence strength across submission sections.
+          Claim-to-citation coverage. Are key regulatory claims backed by sufficient, traceable evidence?
         </p>
       </div>
 
