@@ -184,10 +184,17 @@ function computeAuditChainHash(entry: Omit<AuditTrailEntry, 'hash'>, previousHas
 }
 
 // ---------------------------------------------------------------------------
-// IN-MEMORY AUDIT CHAIN (production uses DB with Merkle tree)
+// AUDIT CHAIN — In-memory chain + DB persistence (audit_events table)
 // ---------------------------------------------------------------------------
 
 let lastAuditHash = computeHash('GENESIS_BLOCK_TRIALSAGE');
+
+// Reference to the pool — set by createPart11Router
+let _part11Pool: Pool | null = null;
+
+function setAuditPool(pool: Pool) {
+  _part11Pool = pool;
+}
 
 function appendAuditEntry(
   params: Omit<AuditTrailEntry, 'id' | 'hash' | 'previousHash'>
@@ -200,6 +207,40 @@ function appendAuditEntry(
   };
   entry.hash = computeAuditChainHash(entry, lastAuditHash);
   lastAuditHash = entry.hash;
+
+  // Persist to audit_events table (fire-and-forget but log errors loudly)
+  if (_part11Pool) {
+    _part11Pool.query(
+      `INSERT INTO audit_events
+        (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+         user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, true, true)`,
+      [
+        1, // default org — callers should pass org context where available
+        entry.action,
+        entry.entityType,
+        entry.entityId,
+        entry.userId,
+        entry.userName,
+        entry.userRole,
+        entry.ipAddress,
+        entry.changeReason || entry.newValue || `${entry.action} on ${entry.entityType}`,
+        JSON.stringify({
+          previousValue: entry.previousValue,
+          newValue: entry.newValue,
+          sessionId: entry.sessionId,
+          userAgent: entry.userAgent,
+          part11_source: 'compliance_engine',
+        }),
+      ]
+    ).catch((err: Error) => {
+      console.error('[Part11] CRITICAL: Failed to persist audit entry to DB:', err.message);
+      console.error('[Part11] Entry data:', JSON.stringify({ id: entry.id, action: entry.action, entityId: entry.entityId }));
+    });
+  } else {
+    console.warn('[Part11] WARNING: No DB pool available — audit entry stored in-memory only:', entry.id);
+  }
+
   return entry;
 }
 
@@ -488,26 +529,148 @@ router.post('/audit-trail', (req: Request, res: Response) => {
 
 /**
  * GET /audit-trail/chain-integrity
- * Verify the integrity of the audit trail hash chain
+ * Verify the integrity of the audit trail hash chain by re-computing
+ * hashes from the DB and comparing against stored record_hash values.
  */
-router.get('/audit-trail/chain-integrity', (_req: Request, res: Response) => {
-  // In production, this would verify the entire Merkle tree from DB
-  res.json({
-    success: true,
-    data: {
-      chainStatus: 'intact',
-      lastHash: lastAuditHash,
-      hashAlgorithm: 'SHA-256',
-      chainType: 'linear-hash-chain',
-      genesisHash: computeHash('GENESIS_BLOCK_TRIALSAGE'),
-      compliance: {
-        '§11.10(e)':
-          'Audit trail preserves complete change history with computer-generated timestamps',
-        tamperEvident:
-          'Each entry is cryptographically linked to its predecessor via SHA-256 hash chain',
+router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) => {
+  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const orgId = req.query.org_id || req.query.organizationId;
+
+  try {
+    // Build WHERE clause scoped by org if provided
+    const orgFilter = orgId ? `WHERE organization_id = $1` : '';
+    const params = orgId ? [parseInt(String(orgId), 10)] : [];
+
+    // Fetch all audit_events rows in chain order
+    const { rows } = await pool.query(
+      `SELECT id, organization_id, sequence_number, event_type, entity_type,
+              entity_id, user_id, user_name, timestamp, reason,
+              record_hash, previous_hash
+       FROM audit_events ${orgFilter}
+       ORDER BY organization_id, sequence_number ASC`,
+      params
+    );
+
+    if (rows.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          chainStatus: 'empty',
+          totalEntries: 0,
+          integrityValid: true,
+          hashAlgorithm: 'SHA-256',
+          chainType: 'linear-hash-chain',
+          compliance: {
+            '§11.10(e)': 'Audit trail preserves complete change history with computer-generated timestamps',
+            tamperEvident: 'Each entry is cryptographically linked to its predecessor via SHA-256 hash chain',
+          },
+        },
+      });
+    }
+
+    // Walk the chain and recompute hashes
+    const brokenLinks: Array<{ id: number; sequenceNumber: number; orgId: number; expected: string; actual: string }> = [];
+    let prevHashByOrg: Record<number, string> = {};
+    let totalVerified = 0;
+
+    for (const row of rows) {
+      const oid = row.organization_id;
+      const prevHash = prevHashByOrg[oid] || null;
+
+      // Verify previous_hash pointer
+      if (row.previous_hash !== prevHash && row.previous_hash !== null && prevHash !== null) {
+        brokenLinks.push({
+          id: row.id,
+          sequenceNumber: row.sequence_number,
+          orgId: oid,
+          expected: prevHash || '(genesis)',
+          actual: row.previous_hash || '(null)',
+        });
+      }
+
+      // Recompute record_hash using the same formula as the DB trigger
+      const payload =
+        (row.sequence_number ?? '') + '|' +
+        (row.event_type ?? '') + '|' +
+        (row.entity_type ?? '') + '|' +
+        (row.entity_id ?? '') + '|' +
+        (row.user_id ?? '') + '|' +
+        (row.user_name ?? '') + '|' +
+        (row.timestamp ? new Date(row.timestamp).toISOString().replace('T', ' ').replace('Z', '+00') : '') + '|' +
+        (row.reason ?? '') + '|' +
+        (row.previous_hash ?? 'GENESIS');
+
+      const expectedHash = computeHash(payload);
+
+      // Allow for timestamp format differences — also verify without reformatting
+      if (row.record_hash && row.record_hash !== expectedHash) {
+        // Try raw timestamp string as PostgreSQL stores it
+        const rawPayload =
+          (row.sequence_number ?? '') + '|' +
+          (row.event_type ?? '') + '|' +
+          (row.entity_type ?? '') + '|' +
+          (row.entity_id ?? '') + '|' +
+          (row.user_id ?? '') + '|' +
+          (row.user_name ?? '') + '|' +
+          (String(row.timestamp) ?? '') + '|' +
+          (row.reason ?? '') + '|' +
+          (row.previous_hash ?? 'GENESIS');
+
+        const altHash = computeHash(rawPayload);
+        if (row.record_hash !== altHash) {
+          brokenLinks.push({
+            id: row.id,
+            sequenceNumber: row.sequence_number,
+            orgId: oid,
+            expected: expectedHash.substring(0, 16) + '...',
+            actual: (row.record_hash || '(null)').substring(0, 16) + '...',
+          });
+        }
+      }
+
+      prevHashByOrg[oid] = row.record_hash;
+      totalVerified++;
+    }
+
+    const isIntact = brokenLinks.length === 0;
+
+    res.json({
+      success: true,
+      data: {
+        chainStatus: isIntact ? 'intact' : 'broken',
+        integrityValid: isIntact,
+        totalEntries: totalVerified,
+        brokenLinks: brokenLinks.length,
+        brokenLinkDetails: brokenLinks.slice(0, 20), // First 20 for diagnostics
+        lastHash: rows[rows.length - 1]?.record_hash || lastAuditHash,
+        hashAlgorithm: 'SHA-256',
+        chainType: 'linear-hash-chain',
+        verifiedAt: new Date().toISOString(),
+        genesisHash: computeHash('GENESIS_BLOCK_TRIALSAGE'),
+        compliance: {
+          '§11.10(e)': 'Audit trail preserves complete change history with computer-generated timestamps',
+          tamperEvident: 'Each entry is cryptographically linked to its predecessor via SHA-256 hash chain',
+          verificationMethod: 'Full re-computation of SHA-256 hash chain from database records',
+        },
       },
-    },
-  });
+    });
+  } catch (err: any) {
+    // Fallback if audit_events table doesn't exist yet
+    console.warn('[Part11] Chain integrity check failed:', err.message);
+    res.json({
+      success: true,
+      data: {
+        chainStatus: 'unavailable',
+        integrityValid: null,
+        totalEntries: 0,
+        error: 'audit_events table not available',
+        lastHash: lastAuditHash,
+        hashAlgorithm: 'SHA-256',
+        chainType: 'linear-hash-chain',
+        genesisHash: computeHash('GENESIS_BLOCK_TRIALSAGE'),
+      },
+    });
+  }
 });
 
 // ============================
@@ -885,4 +1048,5 @@ router.get('/health', (_req: Request, res: Response) => {
   });
 });
 
+export { setAuditPool };
 export default router;

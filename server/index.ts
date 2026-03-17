@@ -2529,23 +2529,143 @@ app.get('/api/audit', async (req: Request, res: Response) => {
 
 app.get('/api/audit/export', async (req: Request, res: Response) => {
   try {
-    const { rows } = await queryAuditEvents(req.query, 10000, 0);
-    const logs = rows.map(formatAuditRow);
-    const headers = ['timestamp', 'userName', 'action', 'component', 'details', 'ipAddress'];
+    // Use signed export service for tamper-evident audit packages
+    const { generateSignedAuditExport } = await import('./services/audit/signedAuditExport.js');
+    const format = (req.query.format === 'json' ? 'json' : 'csv') as 'csv' | 'json';
+    const userId = (req as any).userId || (req as any).user?.id || 'unknown';
+    const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
-    const csvRows = logs.map((log: any) =>
-      [log.timestamp, log.userName, log.action, log.component, log.details, log.ipAddress]
-        .map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`)
-        .join(',')
-    );
+    const signedExport = await generateSignedAuditExport(pool, {
+      organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+      startDate: req.query.start_date ? String(req.query.start_date) : undefined,
+      endDate: req.query.end_date ? String(req.query.end_date) : undefined,
+      eventType: req.query.event_type ? String(req.query.event_type) : undefined,
+      userId: req.query.user_id ? parseInt(String(req.query.user_id), 10) : undefined,
+      format,
+      exportedBy: userName,
+      exportedByRole: (req as any).userRole || (req as any).user?.role || 'unknown',
+      ipAddress: req.ip || 'unknown',
+    });
 
-    const csv = [headers.join(','), ...csvRows].join('\n');
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="audit_logs.csv"');
-    return res.send(csv);
+    // Set integrity headers so the manifest travels with the download
+    res.setHeader('Content-Type', signedExport.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${signedExport.filename}"`);
+    res.setHeader('X-Audit-Export-Id', signedExport.manifest.exportId);
+    res.setHeader('X-Audit-Data-Hash', signedExport.manifest.dataHash);
+    res.setHeader('X-Audit-Signature', signedExport.signature);
+    res.setHeader('X-Audit-Chain-Status', signedExport.manifest.chainIntegrity.status);
+    res.setHeader('X-Audit-Row-Count', String(signedExport.manifest.rowCount));
+    return res.send(signedExport.data);
   } catch (error) {
     console.error('Failed to export audit logs:', error);
     return res.status(500).json({ error: 'Failed to export audit logs' });
+  }
+});
+
+/**
+ * GET /api/audit/export/signed
+ * Full signed export — returns JSON bundle with data + manifest + signature.
+ * This is the inspection-ready endpoint: an inspector can independently verify
+ * the HMAC signature and data hash to confirm nothing was tampered.
+ */
+app.get('/api/audit/export/signed', async (req: Request, res: Response) => {
+  try {
+    const { generateSignedAuditExport } = await import('./services/audit/signedAuditExport.js');
+    const format = (req.query.format === 'csv' ? 'csv' : 'json') as 'csv' | 'json';
+    const userId = (req as any).userId || (req as any).user?.id || 'unknown';
+    const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
+
+    const signedExport = await generateSignedAuditExport(pool, {
+      organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+      startDate: req.query.start_date ? String(req.query.start_date) : undefined,
+      endDate: req.query.end_date ? String(req.query.end_date) : undefined,
+      eventType: req.query.event_type ? String(req.query.event_type) : undefined,
+      userId: req.query.user_id ? parseInt(String(req.query.user_id), 10) : undefined,
+      format,
+      exportedBy: userName,
+      exportedByRole: (req as any).userRole || (req as any).user?.role || 'unknown',
+      ipAddress: req.ip || 'unknown',
+    });
+
+    res.json({
+      success: true,
+      export: {
+        data: signedExport.data,
+        manifest: signedExport.manifest,
+        signature: signedExport.signature,
+        verification: {
+          instruction: 'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the server signing key, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash.',
+          algorithm: 'HMAC-SHA256',
+          hashAlgorithm: 'SHA-256',
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Failed to generate signed audit export:', error);
+    return res.status(500).json({ error: 'Failed to generate signed audit export' });
+  }
+});
+
+/**
+ * POST /api/audit/export/verify
+ * Verify a previously exported audit package.
+ * Accepts { data, manifest, signature } and confirms integrity.
+ */
+app.post('/api/audit/export/verify', async (req: Request, res: Response) => {
+  try {
+    const { verifySignedAuditExport } = await import('./services/audit/signedAuditExport.js');
+    const { data, manifest, signature } = req.body;
+
+    if (!data || !manifest || !signature) {
+      return res.status(400).json({ error: 'data, manifest, and signature are required' });
+    }
+
+    const result = verifySignedAuditExport(data, manifest, signature);
+    res.json({
+      success: true,
+      verification: {
+        valid: result.valid,
+        errors: result.errors,
+        verifiedAt: new Date().toISOString(),
+        compliance: {
+          standard: '21 CFR Part 11 §11.10(e)',
+          description: result.valid
+            ? 'Export integrity verified — data has not been modified since generation'
+            : 'INTEGRITY FAILURE — export data or manifest has been tampered with',
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Failed to verify audit export:', error);
+    return res.status(500).json({ error: 'Failed to verify audit export' });
+  }
+});
+
+/**
+ * GET /api/audit/chain-monitor/status
+ * Returns the current status of the background chain integrity monitor.
+ */
+app.get('/api/audit/chain-monitor/status', async (_req: Request, res: Response) => {
+  try {
+    const { getChainMonitorStatus } = await import('./services/audit/chainIntegrityMonitor.js');
+    const status = getChainMonitorStatus();
+    res.json({ success: true, data: status });
+  } catch {
+    res.json({ success: true, data: { status: 'not_started' } });
+  }
+});
+
+/**
+ * POST /api/audit/chain-monitor/check
+ * Trigger an on-demand chain integrity check.
+ */
+app.post('/api/audit/chain-monitor/check', async (_req: Request, res: Response) => {
+  try {
+    const { runOnDemandCheck } = await import('./services/audit/chainIntegrityMonitor.js');
+    const status = await runOnDemandCheck();
+    res.json({ success: true, data: status });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Chain integrity check failed', details: err.message });
   }
 });
 
@@ -6039,6 +6159,8 @@ async function startServer() {
 
   try {
     const part11Routes = await import('./routes/part11-compliance.ts');
+    // Wire up DB pool so audit entries persist to audit_events table
+    if (part11Routes.setAuditPool) part11Routes.setAuditPool(pool);
     app.use('/api/part11', part11Routes.default);
     console.log('✅ 21 CFR Part 11 Compliance routes mounted at /api/part11');
   } catch (error) {
@@ -6303,6 +6425,15 @@ async function startServer() {
     }
   } else {
     console.log('⚠️ SKIP_VITE enabled - skipping Vite middleware setup');
+  }
+
+  // Start audit chain integrity monitor (background job every 5 min)
+  try {
+    const { startChainMonitor } = await import('./services/audit/chainIntegrityMonitor.js');
+    startChainMonitor(pool, 5 * 60 * 1000);
+    console.log('✅ Audit chain integrity monitor started (5-min interval)');
+  } catch (err) {
+    console.warn('⚠️ Chain integrity monitor failed to start:', err);
   }
 
   // Start the HTTP server
