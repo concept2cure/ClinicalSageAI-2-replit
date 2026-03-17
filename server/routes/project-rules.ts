@@ -107,45 +107,40 @@ const dryRunSchema = z.object({
 // GET /api/project-rules — List rules
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
 
-    const scope = req.query.scope as string | undefined;
-    const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
-    const activeOnly = req.query.activeOnly !== 'false';
+  const scope = req.query.scope as string | undefined;
+  const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
+  const activeOnly = req.query.activeOnly !== 'false';
 
-    let query = `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE organization_id = $1`;
-    const params: any[] = [organizationId];
-    let paramIndex = 2;
+  let query = `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE organization_id = $1`;
+  const params: any[] = [organizationId];
+  let paramIndex = 2;
 
-    if (activeOnly) {
-      query += ` AND is_active = true`;
-    }
-    if (scope) {
-      query += ` AND scope = $${paramIndex++}`;
-      params.push(scope);
-    }
-    if (projectId) {
-      query += ` AND (scope = 'global' OR scope_project_id = $${paramIndex++})`;
-      params.push(projectId);
-    }
-
-    query += ' ORDER BY priority DESC, name ASC';
-
-    const result = await pool.query(query, params);
-
-    res.json({
-      rules: result.rows,
-      total: result.rows.length,
-    });
-  } catch (error) {
-    console.error('[ProjectRules] Error listing rules:', error);
-    res.status(500).json({ error: 'Failed to fetch rules' });
+  if (activeOnly) {
+    query += ` AND is_active = true`;
   }
-});
+  if (scope) {
+    query += ` AND scope = $${paramIndex++}`;
+    params.push(scope);
+  }
+  if (projectId) {
+    query += ` AND (scope = 'global' OR scope_project_id = $${paramIndex++})`;
+    params.push(projectId);
+  }
+
+  query += ' ORDER BY priority DESC, name ASC';
+
+  const result = await pool.query(query, params);
+
+  res.json({
+    rules: result.rows,
+    total: result.rows.length,
+  });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/project-rules — Create rule
