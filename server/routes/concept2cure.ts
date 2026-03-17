@@ -882,22 +882,78 @@ router.get('/projects', async (req: Request, res: Response) => {
       [organizationId]
     );
 
-    const response = await Promise.all(
-      result.rows.map(async (p: any) => ({
-        id: `proj_${p.id}`,
-        name: p.name,
-        submissionType: p.metadata?.submissionType || p.type || 'IND',
-        description: p.description,
-        status: p.status || 'active',
-        sponsor: p.metadata?.sponsor,
-        product: p.metadata?.product,
-        region: p.metadata?.region,
-        organizationId,
-        conversations: await getConversationsFromDb(p.id, organizationId),
-        createdAt: p.created_at,
-        updatedAt: p.updated_at,
-      }))
-    );
+    // Batch-load all conversations for all projects (2 queries total instead of 2*N)
+    const projectIds = result.rows.map((p: any) => p.id);
+    const allConversationsByProject = new Map<number, Conversation[]>();
+
+    if (projectIds.length > 0) {
+      const allDbConvs = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            inArray(concept2cureConversations.projectId, projectIds),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .orderBy(desc(concept2cureConversations.updatedAt));
+
+      if (allDbConvs.length > 0) {
+        const convIds = allDbConvs.map(c => c.id);
+        const allDbMsgs = await db
+          .select()
+          .from(concept2cureMessages)
+          .where(inArray(concept2cureMessages.conversationId, convIds))
+          .orderBy(concept2cureMessages.createdAt);
+
+        const msgsByConv = new Map<number, Message[]>();
+        for (const m of allDbMsgs) {
+          const list = msgsByConv.get(m.conversationId) || [];
+          list.push({
+            id: m.messageId,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            timestamp: m.createdAt,
+            attachments: m.attachments as Message['attachments'],
+            artifactId: m.artifactId || undefined,
+            edited: m.edited || false,
+          });
+          msgsByConv.set(m.conversationId, list);
+        }
+
+        for (const conv of allDbConvs) {
+          const list = allConversationsByProject.get(conv.projectId) || [];
+          list.push({
+            id: conv.conversationId,
+            projectId: `proj_${conv.projectId}`,
+            title: conv.title,
+            messages: msgsByConv.get(conv.id) || [],
+            parentConversationId: conv.parentConversationId?.toString(),
+            forkMessageIndex: conv.forkMessageIndex || undefined,
+            threadId: conv.threadId || undefined,
+            createdAt: conv.createdAt,
+            updatedAt: conv.updatedAt,
+          });
+          allConversationsByProject.set(conv.projectId, list);
+        }
+      }
+    }
+
+    const response = result.rows.map((p: any) => ({
+      id: `proj_${p.id}`,
+      name: p.name,
+      submissionType: p.metadata?.submissionType || p.type || 'IND',
+      description: p.description,
+      status: p.status || 'active',
+      sponsor: p.metadata?.sponsor,
+      product: p.metadata?.product,
+      region: p.metadata?.region,
+      organizationId,
+      conversations: allConversationsByProject.get(p.id) || [],
+      createdAt: p.created_at,
+      updatedAt: p.updated_at,
+    }));
 
     return sendSuccess(res, response);
   } catch (error: any) {
@@ -1694,10 +1750,10 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
       })
       .returning();
 
-    // Insert forked messages if any
+    // Batch insert forked messages (single round-trip instead of N)
     if (messagesToCopy.length > 0) {
-      for (const msg of messagesToCopy) {
-        await db.insert(concept2cureMessages).values({
+      await db.insert(concept2cureMessages).values(
+        messagesToCopy.map(msg => ({
           organizationId,
           conversationId: newDbConversation.id,
           messageId: msg.id,
@@ -1706,8 +1762,8 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
           contentHash: calculateContentHash(msg.content),
           attachments: msg.attachments || null,
           createdById: userId,
-        });
-      }
+        }))
+      );
     }
 
     const newConversation: Conversation = {

@@ -3,6 +3,10 @@
  *
  * This service manages workflow templates, workflow instances, and approvals
  * across the unified document system.
+ *
+ * Performance optimizations:
+ * - LRU cache for workflow templates (read-heavy, rarely mutated)
+ * - Batch-loaded approvals to eliminate N+1 queries
  */
 
 import { db } from '../db';
@@ -14,9 +18,18 @@ import {
   workflowApprovals,
   workflowHistory,
 } from '../../shared/schema/unified_workflow';
+import { LRUCache } from '../middleware/enterprise-performance';
+
+// Template cache: templates change infrequently, cache for 5 minutes
+const templateCache = new LRUCache<any>({ maxSize: 200, defaultTtl: 5 * 60_000 });
 
 export class WorkflowService {
   constructor(private db: any) {}
+
+  /** Invalidate cached template after mutation */
+  private invalidateTemplateCache(templateId: number) {
+    templateCache.delete(`template:${templateId}`);
+  }
 
   /**
    * Get workflow templates for a specific module
@@ -46,6 +59,10 @@ export class WorkflowService {
    * @returns The workflow template
    */
   async getWorkflowTemplate(templateId: number) {
+    const cacheKey = `template:${templateId}`;
+    const cached = templateCache.get(cacheKey);
+    if (cached) return cached;
+
     const templates = await this.db
       .select()
       .from(workflowTemplates)
@@ -62,10 +79,9 @@ export class WorkflowService {
       .where(eq(workflowSteps.templateId, templateId))
       .orderBy(workflowSteps.order);
 
-    return {
-      ...templates[0],
-      steps,
-    };
+    const result = { ...templates[0], steps };
+    templateCache.set(cacheKey, result);
+    return result;
   }
 
   /**
@@ -212,6 +228,7 @@ export class WorkflowService {
    * @returns The updated template
    */
   async updateWorkflowTemplate(templateId: number, data: any, userId: string) {
+    this.invalidateTemplateCache(templateId);
     return this.db.transaction(async (tx: any) => {
       // Update the template
       const [template] = await tx
@@ -279,6 +296,7 @@ export class WorkflowService {
    * @returns Success status
    */
   async deactivateWorkflowTemplate(templateId: number, userId: string) {
+    this.invalidateTemplateCache(templateId);
     await this.db
       .update(workflowTemplates)
       .set({
@@ -639,7 +657,7 @@ export class WorkflowService {
    * @param organizationId The organization ID
    * @returns Array of active workflows
    */
-  async getActiveWorkflows(organizationId: string) {
+  async getActiveWorkflows(organizationId: string, page = 1, pageSize = 50) {
     const workflows = await this.db
       .select()
       .from(documentWorkflows)
@@ -648,22 +666,50 @@ export class WorkflowService {
           eq(documentWorkflows.status, 'active'),
           eq(documentWorkflows.organizationId, organizationId)
         )
-      );
+      )
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
 
-    return Promise.all(
-      workflows.map(async (workflow: any) => {
-        const approvals = await this.getWorkflowApprovals(workflow.id);
-        const pendingApproval = approvals.find((a: any) => a.status === 'pending');
-        const template = await this.getWorkflowTemplate(workflow.templateId);
+    if (!workflows.length) return [];
 
-        return {
-          ...workflow,
-          currentApproval: pendingApproval,
-          template,
-          approvals,
-        };
+    // Batch-load all approvals for these workflows in a single query
+    const workflowIds = workflows.map((w: any) => w.id);
+    const allApprovals = await this.db
+      .select()
+      .from(workflowApprovals)
+      .where(inArray(workflowApprovals.workflowId, workflowIds))
+      .orderBy(workflowApprovals.stepOrder);
+
+    // Group approvals by workflow ID
+    const approvalsByWorkflow = new Map<number, any[]>();
+    for (const approval of allApprovals) {
+      const existing = approvalsByWorkflow.get(approval.workflowId) || [];
+      existing.push(approval);
+      approvalsByWorkflow.set(approval.workflowId, existing);
+    }
+
+    // Templates are cached, so parallel fetches are fast (cache hits)
+    const uniqueTemplateIds = [...new Set(workflows.map((w: any) => w.templateId))];
+    const templateMap = new Map<number, any>();
+    await Promise.all(
+      uniqueTemplateIds.map(async (tid: number) => {
+        const template = await this.getWorkflowTemplate(tid);
+        if (template) templateMap.set(tid, template);
       })
     );
+
+    return workflows.map((workflow: any) => {
+      const approvals = approvalsByWorkflow.get(workflow.id) || [];
+      const pendingApproval = approvals.find((a: any) => a.status === 'pending');
+      const template = templateMap.get(workflow.templateId);
+
+      return {
+        ...workflow,
+        currentApproval: pendingApproval,
+        template,
+        approvals,
+      };
+    });
   }
 
   /**
@@ -672,7 +718,7 @@ export class WorkflowService {
    * @param organizationId The organization ID
    * @returns Array of completed workflows
    */
-  async getCompletedWorkflows(organizationId: string) {
+  async getCompletedWorkflows(organizationId: string, page = 1, pageSize = 50) {
     const workflows = await this.db
       .select()
       .from(documentWorkflows)
@@ -682,20 +728,42 @@ export class WorkflowService {
           eq(documentWorkflows.organizationId, organizationId)
         )
       )
-      .orderBy(desc(documentWorkflows.completedAt));
+      .orderBy(desc(documentWorkflows.completedAt))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
 
-    return Promise.all(
-      workflows.map(async (workflow: any) => {
-        const approvals = await this.getWorkflowApprovals(workflow.id);
-        const template = await this.getWorkflowTemplate(workflow.templateId);
+    if (!workflows.length) return [];
 
-        return {
-          ...workflow,
-          template,
-          approvals,
-        };
+    // Batch-load all approvals in a single query
+    const workflowIds = workflows.map((w: any) => w.id);
+    const allApprovals = await this.db
+      .select()
+      .from(workflowApprovals)
+      .where(inArray(workflowApprovals.workflowId, workflowIds))
+      .orderBy(workflowApprovals.stepOrder);
+
+    const approvalsByWorkflow = new Map<number, any[]>();
+    for (const approval of allApprovals) {
+      const existing = approvalsByWorkflow.get(approval.workflowId) || [];
+      existing.push(approval);
+      approvalsByWorkflow.set(approval.workflowId, existing);
+    }
+
+    // Templates are cached via LRU
+    const uniqueTemplateIds = [...new Set(workflows.map((w: any) => w.templateId))];
+    const templateMap = new Map<number, any>();
+    await Promise.all(
+      uniqueTemplateIds.map(async (tid: number) => {
+        const template = await this.getWorkflowTemplate(tid);
+        if (template) templateMap.set(tid, template);
       })
     );
+
+    return workflows.map((workflow: any) => ({
+      ...workflow,
+      template: templateMap.get(workflow.templateId),
+      approvals: approvalsByWorkflow.get(workflow.id) || [],
+    }));
   }
 
   /**

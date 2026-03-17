@@ -595,7 +595,12 @@ router.post('/api/licenses/validate-access', async (req, res) => {
     const { licenseId, accessToken, ipAddress } = req.body;
     
     const result = await db.query(`
-      SELECT * FROM licenses 
+      SELECT id, client_id, client_name, company_name, contact_email,
+             license_type, license_key, access_token,
+             max_users, max_submissions, max_storage_gb, max_projects,
+             features, valid_from, valid_until,
+             ip_restrictions, notes, status, created_at, updated_at
+      FROM licenses
       WHERE id = $1 AND access_token = $2 AND status = 'active'
     `, [licenseId, accessToken]);
     

@@ -110,7 +110,7 @@ router.get('/applications/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const appResult = await query(
-      `SELECT * FROM ind_applications WHERE id = $1${organizationId ? ' AND organization_id = $2' : ''}`,
+      `SELECT id, project_id, organization_id, drug_name, indication, sponsor, submission_type, status, progress_pct, created_at, updated_at FROM ind_applications WHERE id = $1${organizationId ? ' AND organization_id = $2' : ''}`,
       organizationId ? [id, organizationId] : [id]
     );
 

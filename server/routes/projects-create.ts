@@ -147,7 +147,7 @@ router.get('/workspace/projects', async (req: Request, res: Response) => {
 
   try {
     const r = await sq(
-      `SELECT * FROM (
+      `SELECT id, name, type, status, updated_at FROM (
          SELECT id::text, name, 'ind' AS type, status, updated_at FROM ind_projects WHERE organization_id = $1
          UNION ALL
          SELECT id::text, COALESCE(device_name, 'Unnamed') AS name, '510k' AS type, NULL AS status, updated_at FROM fda_510k_projects WHERE organization_id = $1

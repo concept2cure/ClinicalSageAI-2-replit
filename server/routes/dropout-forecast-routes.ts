@@ -453,7 +453,8 @@ router.get('/dropout-forecast/history/:session_id', async (req, res) => {
     }
 
     const history = await db.execute(sql`
-      SELECT * FROM analytics_forecasts
+      SELECT id, session_id, forecast_type, request_params, forecast_result, created_at
+      FROM analytics_forecasts
       WHERE session_id = ${session_id} AND forecast_type = 'dropout'
       ORDER BY created_at DESC
     `);

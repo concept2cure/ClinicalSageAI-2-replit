@@ -52,8 +52,9 @@ router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
 
     const query = {
       text: `
-        SELECT * FROM qmp_section_gating 
-        WHERE ${cerSectionsGating.organizationId} = $1 
+        SELECT id, organization_id, qmp_id, section_key, required_level, active, created_by_id, updated_by_id, created_at, updated_at
+        FROM qmp_section_gating
+        WHERE ${cerSectionsGating.organizationId} = $1
         AND ${cerSectionsGating.qmpId} = $2
         ORDER BY ${cerSectionsGating.sectionKey} ASC
       `,
@@ -89,8 +90,8 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
     // Check if the entry exists
     const checkQuery = {
       text: `
-        SELECT * FROM qmp_section_gating 
-        WHERE ${cerSectionsGating.organizationId} = $1 
+        SELECT id FROM qmp_section_gating
+        WHERE ${cerSectionsGating.organizationId} = $1
         AND ${cerSectionsGating.qmpId} = $2
         AND ${cerSectionsGating.sectionKey} = $3
       `,
@@ -172,8 +173,9 @@ router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
 
     const query = {
       text: `
-        SELECT * FROM ctq_factors 
-        WHERE ${ctqFactors.organizationId} = $1 
+        SELECT id, organization_id, name, risk_level, description, mitigation_strategy, applicable_section, category, created_at, updated_at
+        FROM ctq_factors
+        WHERE ${ctqFactors.organizationId} = $1
         AND ${ctqFactors.applicableSection} = $2
         ORDER BY ${ctqFactors.riskLevel} DESC, ${ctqFactors.name} ASC
       `,

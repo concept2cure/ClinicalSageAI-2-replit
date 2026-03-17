@@ -918,7 +918,7 @@ router.get('/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    let query = `SELECT * FROM project_notifications WHERE user_id = $1 AND organization_id = $2`;
+    let query = `SELECT id, user_id, organization_id, project_id, section_code, type, title, message, read, read_at, created_at FROM project_notifications WHERE user_id = $1 AND organization_id = $2`;
     const params: any[] = [userId, orgId];
 
     if (unreadOnly) {
