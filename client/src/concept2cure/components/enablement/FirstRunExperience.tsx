@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface FirstRunExperienceProps {
   onComplete: (selectedRole?: string) => void;
   onSkip: () => void;
+  /** Pass existing projects so onboarding adapts for returning users */
+  existingProjects?: Array<{ id: string; name: string; type?: string }>;
+  userName?: string;
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -115,12 +118,17 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
 
 // ─── Screen 0: Welcome ──────────────────────────────────────────────────────
 
-function WelcomeScreen() {
+function WelcomeScreen({ userName, projectCount }: { userName?: string; projectCount?: number }) {
+  const hasProjects = (projectCount ?? 0) > 0;
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <h1 className="text-3xl font-semibold text-zinc-900">Welcome to Concept2Cure</h1>
+      <h1 className="text-3xl font-semibold text-zinc-900">
+        {userName ? `Welcome back, ${userName}` : 'Welcome to Concept2Cure'}
+      </h1>
       <p className="text-base text-zinc-500 mt-3">
-        One platform. Two intelligent systems. Your entire regulatory workflow.
+        {hasProjects
+          ? `You have ${projectCount} active project${projectCount !== 1 ? 's' : ''}. Let's set up your AI assistants to work even smarter.`
+          : 'One platform. Two intelligent systems. Your entire regulatory workflow.'}
       </p>
     </div>
   );
@@ -131,15 +139,27 @@ function WelcomeScreen() {
 function DrSageScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
+      <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-6">
+        <span className="text-2xl">&#x1F9D1;&#x200D;&#x2695;&#xFE0F;</span>
+      </div>
       <h2 className="text-3xl font-semibold text-zinc-900">Meet Dr. Sage</h2>
       <p className="text-base text-zinc-500 max-w-md leading-relaxed mt-4">
         Your guide, trainer, and workflow operator. Dr. Sage helps you navigate the
         platform, learn best practices, and execute tasks with confidence.
       </p>
-      <div className="mt-6 max-w-md text-left space-y-2">
-        <p className="text-base text-zinc-600">Contextual help wherever you are</p>
-        <p className="text-base text-zinc-600">Guided workflows for complex tasks</p>
-        <p className="text-base text-zinc-600">Safe, auditable corrections and fixes</p>
+      <div className="mt-6 max-w-md text-left space-y-3">
+        <div className="flex items-start gap-3">
+          <span className="text-emerald-500 mt-0.5">&#x2713;</span>
+          <p className="text-sm text-zinc-600">Contextual help wherever you are — just look for the guide icon</p>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="text-emerald-500 mt-0.5">&#x2713;</span>
+          <p className="text-sm text-zinc-600">Guided walkthroughs and platform training built right in</p>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="text-emerald-500 mt-0.5">&#x2713;</span>
+          <p className="text-sm text-zinc-600">Safe, auditable corrections and compliance checks</p>
+        </div>
       </div>
     </div>
   );
@@ -150,15 +170,27 @@ function DrSageScreen() {
 function AnAScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <h2 className="text-3xl font-semibold text-zinc-900">Meet AnA 1.0</h2>
+      <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mb-6">
+        <span className="text-2xl">&#x2728;</span>
+      </div>
+      <h2 className="text-3xl font-semibold text-zinc-900">Meet AnA</h2>
       <p className="text-base text-zinc-500 max-w-md leading-relaxed mt-4">
-        Your Regulatory Intelligence Copilot. AnA analyzes evidence, reasons through
-        precedent, detects gaps in your submission, and powers the decisions that matter.
+        Your Regulatory Intelligence Copilot — always available at the bottom of every page.
+        AnA is context-aware: it knows which workspace you're in and adapts its guidance.
       </p>
-      <div className="mt-6 max-w-md text-left space-y-2">
-        <p className="text-base text-zinc-600">Evidence analysis and synthesis</p>
-        <p className="text-base text-zinc-600">Precedent intelligence across submissions</p>
-        <p className="text-base text-zinc-600">Real-time gap detection</p>
+      <div className="mt-6 max-w-md text-left space-y-3">
+        <div className="flex items-start gap-3">
+          <span className="text-violet-500 mt-0.5">&#x2713;</span>
+          <p className="text-sm text-zinc-600">Always visible at the bottom — type a question from any page</p>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="text-violet-500 mt-0.5">&#x2713;</span>
+          <p className="text-sm text-zinc-600">Context-aware: knows your project, workspace, and submission type</p>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="text-violet-500 mt-0.5">&#x2713;</span>
+          <p className="text-sm text-zinc-600">Evidence analysis, gap detection, and precedent intelligence</p>
+        </div>
       </div>
     </div>
   );
@@ -391,7 +423,7 @@ function ReadyScreen({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export default function FirstRunExperience({ onComplete, onSkip }: FirstRunExperienceProps) {
+export default function FirstRunExperience({ onComplete, onSkip, existingProjects, userName }: FirstRunExperienceProps) {
   const [screen, setScreen] = useState(0);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [submissionType, setSubmissionType] = useState<SubmissionType | null>(null);
@@ -461,7 +493,7 @@ export default function FirstRunExperience({ onComplete, onSkip }: FirstRunExper
   }, [goNext, goPrev, handleSkip]);
 
   const screens = [
-    <WelcomeScreen key="welcome" />,
+    <WelcomeScreen key="welcome" userName={userName} projectCount={existingProjects?.length} />,
     <DrSageScreen key="sage" />,
     <AnAScreen key="ana" />,
     <ChooseRoleScreen key="role" selectedRole={selectedRole} onSelect={setSelectedRole} />,

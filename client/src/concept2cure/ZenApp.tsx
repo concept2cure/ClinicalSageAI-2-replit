@@ -110,6 +110,13 @@ import {
   Users,
 } from 'lucide-react';
 
+// Minimal loading fallback — no spinner, just a white screen to avoid flash
+const ModuleLoadingFallback = () => (
+  <div className="flex-1 flex items-center justify-center bg-white">
+    <div className="w-6 h-6 rounded-full border-2 border-zinc-200 border-t-zinc-400 animate-spin" />
+  </div>
+);
+
 // Utility: instantly redirect dead layout modes to regulatory-workspace
 const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect }) => {
   React.useEffect(() => {
@@ -487,7 +494,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col h-full bg-white border-l border-zinc-200 transition-all duration-200',
+        'flex flex-col h-full bg-white border-l border-zinc-200',
         isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
       )}
     >
@@ -819,6 +826,7 @@ export const ZenApp: React.FC = () => {
   }, [threads, activeProjectId]);
 
   // Set active project when projects load (prefer summary's last-touched project)
+  // NOTE: activeProjectId intentionally excluded from deps to prevent re-trigger loops
   useEffect(() => {
     if (!activeProjectId) {
       const summaryProject = workspaceSummary?.active?.projectId;
@@ -828,7 +836,8 @@ export const ZenApp: React.FC = () => {
         setActiveProjectId(projects[0].id);
       }
     }
-  }, [projects, activeProjectId, workspaceSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects, workspaceSummary]);
 
   // Open a tool panel from the ?panel= URL query param on first load
   useEffect(() => {
@@ -900,11 +909,21 @@ export const ZenApp: React.FC = () => {
   }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // KEYBOARD SHORTCUTS
+  // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
   // ─────────────────────────────────────────────────────────────────────────────
+
+  const kbStateRef = useRef({
+    activeToolPanel, commandPaletteOpen, settingsOpen, layoutMode, activeProjectId,
+  });
+  kbStateRef.current = { activeToolPanel, commandPaletteOpen, settingsOpen, layoutMode, activeProjectId };
+
+  const handleNewChatRef = useRef(handleNewChat);
+  handleNewChatRef.current = handleNewChat;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const st = kbStateRef.current;
+
       // Command palette: ⌘K or Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
@@ -914,7 +933,7 @@ export const ZenApp: React.FC = () => {
       // New chat: ⌘N or Ctrl+N
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault();
-        handleNewChat();
+        handleNewChatRef.current();
       }
 
       // Settings: ⌘,
@@ -927,15 +946,15 @@ export const ZenApp: React.FC = () => {
       if (
         (e.metaKey || e.ctrlKey) &&
         e.key === 'e' &&
-        layoutMode === 'workspace' &&
-        activeProjectId
+        st.layoutMode === 'workspace' &&
+        st.activeProjectId
       ) {
         e.preventDefault();
         setEditProjectOpen(true);
       }
 
       // Close tool panel: Escape
-      if (e.key === 'Escape' && activeToolPanel && !commandPaletteOpen && !settingsOpen) {
+      if (e.key === 'Escape' && st.activeToolPanel && !st.commandPaletteOpen && !st.settingsOpen) {
         setActiveToolPanel(null);
         setToolPanelFullscreen(false);
       }
@@ -957,14 +976,8 @@ export const ZenApp: React.FC = () => {
       document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('mc-navigate', handleMcNavigate);
     };
-  }, [
-    activeToolPanel,
-    commandPaletteOpen,
-    settingsOpen,
-    handleNewChat,
-    layoutMode,
-    activeProjectId,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
@@ -1541,20 +1554,13 @@ export const ZenApp: React.FC = () => {
               {/* Module content area */}
               <div
                 className={cn(
-                  'flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-200',
+                  'flex-1 flex flex-col min-h-0 overflow-hidden',
                   moduleAssistantOpen && 'mr-0'
                 )}
               >
                 <ErrorBoundary>
                   <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading 510(k) Module...</p>
-                        </div>
-                      </div>
-                    }
+                    fallback={<ModuleLoadingFallback />}
                   >
                     <EmbeddedCERV2Page
                       embedded={true}
@@ -1623,14 +1629,7 @@ export const ZenApp: React.FC = () => {
             >
               <ErrorBoundary>
                 <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Sherpa System...</p>
-                      </div>
-                    </div>
-                  }
+                  fallback={<ModuleLoadingFallback />}
                 >
                   <ConvergentCanvas
                     userId={activeProjectId || 'anonymous'}
@@ -1693,14 +1692,7 @@ export const ZenApp: React.FC = () => {
             >
               <ErrorBoundary>
                 <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Mission Control...</p>
-                      </div>
-                    </div>
-                  }
+                  fallback={<ModuleLoadingFallback />}
                 >
                   <MissionControl />
                 </Suspense>
@@ -1711,7 +1703,7 @@ export const ZenApp: React.FC = () => {
           {/* Snow Globe — Prediction & Intelligence Engine */}
           {!embeddedModule && layoutMode === 'snowglobe' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+              <Suspense fallback={<ModuleLoadingFallback />}>
                 <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
               </Suspense>
             </div>
@@ -1720,7 +1712,7 @@ export const ZenApp: React.FC = () => {
           {/* Snow Globe — Chamber Detail View */}
           {!embeddedModule && layoutMode === 'snowglobe-chambers' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe-chambers">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+              <Suspense fallback={<ModuleLoadingFallback />}>
                 <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
               </Suspense>
             </div>
@@ -1772,14 +1764,7 @@ export const ZenApp: React.FC = () => {
                   <div className="flex-1 overflow-auto">
                     <ErrorBoundary>
                       <Suspense
-                        fallback={
-                          <div className="flex-1 flex items-center justify-center bg-white h-full">
-                            <div className="text-center">
-                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                              <p className="text-zinc-500">Loading IND Workspace...</p>
-                            </div>
-                          </div>
-                        }
+                        fallback={<ModuleLoadingFallback />}
                       >
                         <INDWorkspace
                           projectId={activeProjectId}
@@ -1854,14 +1839,7 @@ export const ZenApp: React.FC = () => {
                 <div className="flex-1 flex flex-col min-h-0">
                   <ErrorBoundary>
                     <Suspense
-                      fallback={
-                        <div className="flex-1 flex items-center justify-center bg-white">
-                          <div className="text-center">
-                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                            <p className="text-zinc-500">Loading eCTD Co-Author...</p>
-                          </div>
-                        </div>
-                      }
+                      fallback={<ModuleLoadingFallback />}
                     >
                       <ECTDCoAuthorStandalone
                         onOpenInEditor={section => {
@@ -1993,14 +1971,7 @@ export const ZenApp: React.FC = () => {
                   <div className="flex-1 overflow-auto">
                     <ErrorBoundary>
                       <Suspense
-                        fallback={
-                          <div className="flex-1 flex items-center justify-center bg-white h-full">
-                            <div className="text-center">
-                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                              <p className="text-zinc-500">Loading CMC Platform...</p>
-                            </div>
-                          </div>
-                        }
+                        fallback={<ModuleLoadingFallback />}
                       >
                         <CMCModuleStandalone
                           onDocumentCreated={({ artifactId }: { artifactId: string }) => {
@@ -2028,14 +1999,7 @@ export const ZenApp: React.FC = () => {
               <div className="flex-1 overflow-auto">
                 <ErrorBoundary>
                   <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading Document Vault...</p>
-                        </div>
-                      </div>
-                    }
+                    fallback={<ModuleLoadingFallback />}
                   >
                     <VaultPageStandalone />
                   </Suspense>
@@ -2055,14 +2019,7 @@ export const ZenApp: React.FC = () => {
               <div className="flex-1 overflow-auto">
                 <ErrorBoundary>
                   <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading Clinical Trial Hub...</p>
-                        </div>
-                      </div>
-                    }
+                    fallback={<ModuleLoadingFallback />}
                   >
                     <StudyArchitectModuleStandalone />
                   </Suspense>
@@ -2767,14 +2724,7 @@ export const ZenApp: React.FC = () => {
             >
               <ErrorBoundary>
                 <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Rules Engine...</p>
-                      </div>
-                    </div>
-                  }
+                  fallback={<ModuleLoadingFallback />}
                 >
                   <RulesManager onBack={() => setLayoutMode('mission-control')} />
                 </Suspense>
@@ -3306,7 +3256,7 @@ export const ZenApp: React.FC = () => {
               {/* Chat - Connected to Cortex */}
               <div
                 className={cn(
-                  'flex-1 flex flex-col min-w-0 min-h-0 transition-all duration-200',
+                  'flex-1 flex flex-col min-w-0 min-h-0',
                   activeToolPanel && !toolPanelFullscreen && 'flex-shrink-0'
                 )}
                 style={{
@@ -3477,6 +3427,8 @@ export const ZenApp: React.FC = () => {
       {showFirstRun && (
         <Suspense fallback={null}>
           <FirstRunExperience
+            userName={userName}
+            existingProjects={projects}
             onComplete={(selectedRole) => {
               setShowFirstRun(false);
               try { localStorage.setItem('concept2cure_first_run_complete', 'true'); } catch {}

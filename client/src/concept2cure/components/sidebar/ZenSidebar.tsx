@@ -382,14 +382,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </button>
         </div>
 
-        {/* New conversation */}
+        {/* New workspace thread */}
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[12px] font-medium hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
-            New conversation
+            New workspace thread
           </button>
         </div>
 
