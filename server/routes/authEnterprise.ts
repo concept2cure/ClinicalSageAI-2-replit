@@ -632,22 +632,7 @@ router.get('/session', async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
 
-  // Dev mode - always return authenticated
-  if (isDev) {
-    return res.json({
-      authenticated: true,
-      user: {
-        id: '1',
-        email: 'developer@trialsage.ai',
-        firstName: 'Dev',
-        lastName: 'User',
-        displayName: 'Dev User',
-        role: 'admin',
-        organizationId: '2',
-        organizationName: 'Concept2Cure',
-      },
-    });
-  }
+  // SECURITY FIX: Dev-mode session bypass removed. Always require valid JWT.
 
   if (!token) {
     return res.json({ authenticated: false });
