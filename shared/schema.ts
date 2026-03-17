@@ -15569,3 +15569,62 @@ export const concept2cureConversationsRelations = relations(
     artifacts: many(concept2cureArtifacts),
   })
 );
+
+// ============================================================================
+// SOURCE CITATIONS — Sentence-level source linking for regulatory traceability
+// ============================================================================
+
+export const sourceTypeEnum = pgEnum('source_type', [
+  'trial_data',
+  'literature',
+  'regulatory_guidance',
+  'internal_data',
+]);
+
+export const sourceCitations = pgTable(
+  'source_citations',
+  {
+    id: serial('id').primaryKey(),
+    documentId: integer('document_id')
+      .notNull()
+      .references(() => documents.id),
+    sectionId: integer('section_id'),
+    sentenceIndex: integer('sentence_index').notNull(),
+    sentenceText: text('sentence_text').notNull(),
+    sourceType: sourceTypeEnum('source_type').notNull(),
+    sourceId: text('source_id').notNull(),
+    sourceTitle: text('source_title').notNull(),
+    sourceUrl: text('source_url'),
+    confidence: real('confidence').notNull().default(1.0),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdBy: integer('created_by')
+      .references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    documentIdx: index('source_citations_document_idx').on(table.documentId),
+    orgIdx: index('source_citations_org_idx').on(table.organizationId),
+    sectionIdx: index('source_citations_section_idx').on(table.documentId, table.sectionId),
+  })
+);
+
+export const insertSourceCitationSchema = createInsertSchemaOmit(sourceCitations, {
+  id: true,
+  createdAt: true,
+});
+
+export type SourceCitation = InferSelectModel<typeof sourceCitations>;
+export type InsertSourceCitation = z.infer<typeof insertSourceCitationSchema>;
+
+export const sourceCitationsRelations = relations(sourceCitations, ({ one }) => ({
+  document: one(documents, {
+    fields: [sourceCitations.documentId],
+    references: [documents.id],
+  }),
+  organization: one(organizations, {
+    fields: [sourceCitations.organizationId],
+    references: [organizations.id],
+  }),
+}));

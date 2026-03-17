@@ -1603,6 +1603,16 @@ try {
   console.error('❌ Failed to mount CERV2 Versions routes:', error);
 }
 
+// Mount Version Diff routes (document version comparison engine)
+try {
+  const versionDiffModule = await import('./routes/versionDiff.ts');
+  const versionDiffRoutes = versionDiffModule.default;
+  app.use('/api/documents', versionDiffRoutes);
+  console.log('✅ Version Diff API routes mounted successfully (document version comparison)');
+} catch (error) {
+  console.error('❌ Failed to mount Version Diff routes:', error);
+}
+
 // Mount Content Atoms API routes
 try {
   const atomsModule = await import('./routes/atoms.js');
@@ -5975,6 +5985,14 @@ async function startServer() {
     console.log('✅ Documents-unified routes mounted at /api/documents');
   } catch (error) {
     console.error('Failed to mount documents-unified routes:', error);
+  }
+
+  try {
+    const sourceLinksRoutes = await import('./routes/sourceLinks.ts');
+    app.use('/api/documents', sourceLinksRoutes.default);
+    console.log('✅ Source Links routes mounted at /api/documents/:id/sources');
+  } catch (error) {
+    console.error('Failed to mount source links routes:', error);
   }
 
   try {
