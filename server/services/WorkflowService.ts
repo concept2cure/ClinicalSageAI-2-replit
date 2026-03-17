@@ -657,7 +657,7 @@ export class WorkflowService {
    * @param organizationId The organization ID
    * @returns Array of active workflows
    */
-  async getActiveWorkflows(organizationId: string) {
+  async getActiveWorkflows(organizationId: string, page = 1, pageSize = 50) {
     const workflows = await this.db
       .select()
       .from(documentWorkflows)
@@ -666,7 +666,9 @@ export class WorkflowService {
           eq(documentWorkflows.status, 'active'),
           eq(documentWorkflows.organizationId, organizationId)
         )
-      );
+      )
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
 
     if (!workflows.length) return [];
 
@@ -716,7 +718,7 @@ export class WorkflowService {
    * @param organizationId The organization ID
    * @returns Array of completed workflows
    */
-  async getCompletedWorkflows(organizationId: string) {
+  async getCompletedWorkflows(organizationId: string, page = 1, pageSize = 50) {
     const workflows = await this.db
       .select()
       .from(documentWorkflows)
@@ -726,7 +728,9 @@ export class WorkflowService {
           eq(documentWorkflows.organizationId, organizationId)
         )
       )
-      .orderBy(desc(documentWorkflows.completedAt));
+      .orderBy(desc(documentWorkflows.completedAt))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
 
     if (!workflows.length) return [];
 

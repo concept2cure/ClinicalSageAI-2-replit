@@ -250,8 +250,12 @@ router.get('/documents-in-review', async (req, res) => {
  */
 router.get('/active-workflows', async (req, res) => {
   try {
-    const { organizationId } = req.query;
-    const workflows = await workflowService.getActiveWorkflows(organizationId as string);
+    const { organizationId, page, pageSize } = req.query;
+    const workflows = await workflowService.getActiveWorkflows(
+      organizationId as string,
+      parseInt(page as string, 10) || 1,
+      Math.min(parseInt(pageSize as string, 10) || 50, 200)
+    );
     res.json(workflows);
   } catch (error) {
     console.error('Error fetching active workflows:', error);
@@ -265,8 +269,12 @@ router.get('/active-workflows', async (req, res) => {
  */
 router.get('/completed-workflows', async (req, res) => {
   try {
-    const { organizationId } = req.query;
-    const workflows = await workflowService.getCompletedWorkflows(organizationId as string);
+    const { organizationId, page, pageSize } = req.query;
+    const workflows = await workflowService.getCompletedWorkflows(
+      organizationId as string,
+      parseInt(page as string, 10) || 1,
+      Math.min(parseInt(pageSize as string, 10) || 50, 200)
+    );
     res.json(workflows);
   } catch (error) {
     console.error('Error fetching completed workflows:', error);

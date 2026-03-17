@@ -793,10 +793,16 @@ console.log('✅ /api/device-projects CRUD routes mounted');
 import templateRoutes from './api/templates/routes.ts';
 app.use('/api/templates', templateRoutes);
 
-// Import and mount AI routes
+// Import and mount AI routes — protected by circuit breaker for fault isolation
 import aiRoutes from './api/ai/routes.ts';
 import phase3Routes from './api/ai/phase3-routes.js';
-app.use('/api/ai', aiRoutes);
+import { createCircuitBreakerMiddleware } from './middleware/circuitBreaker';
+const aiCircuitBreaker = createCircuitBreakerMiddleware('ai-service', {
+  failureThreshold: 10,
+  resetTimeout: 30_000,
+  maxTimeout: 60_000, // AI calls can be slow
+});
+app.use('/api/ai', aiCircuitBreaker, aiRoutes);
 app.use('/api/test-assembly', testAssemblyRoutes(pool));
 // Mount Phase 3 AI routes
 app.use('/api', phase3Routes);
@@ -825,7 +831,7 @@ try {
 
 // Mount AI Assistance routes
 try {
-  app.use('/api/ai-assistance', aiAssistanceRoutes);
+  app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
   // Initialize the AI provider router and inject into AI assistance module
   aiProviderRouter = getAIRouter(pool);
   if (aiProviderRouter) {
