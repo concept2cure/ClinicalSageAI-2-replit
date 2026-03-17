@@ -19,7 +19,7 @@ router.get('/folders', async (req, res) => {
     const { tree, organizationId = 1 } = req.query;
     
     const result = await pool.query(
-      'SELECT * FROM document_folders WHERE organization_id = $1 ORDER BY name',
+      'SELECT id, name, parent_id, organization_id, created_at, updated_at FROM document_folders WHERE organization_id = $1 ORDER BY name',
       [organizationId]
     );
     

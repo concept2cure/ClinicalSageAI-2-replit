@@ -38,7 +38,8 @@ const dbOps = {
     try {
       // Run a raw SQL query to fetch nonclinical data
       const nonclinicalDataQuery = sql`
-        SELECT * FROM ind_nonclinical_data
+        SELECT id, draft_id, overall_nonclinical_summary, pharmacology_status, pk_status, toxicology_status, created_at, updated_at
+        FROM ind_nonclinical_data
         WHERE draft_id = ${draftId}
       `;
 
@@ -52,7 +53,10 @@ const dbOps = {
 
       // Fetch associated studies
       const studiesQuery = sql`
-        SELECT * FROM ind_nonclinical_studies
+        SELECT id, study_identifier, study_title, study_type, species, model,
+               route_of_administration, duration, main_findings, glp_compliance,
+               validation_status, validation_issues, study_location, study_director
+        FROM ind_nonclinical_studies
         WHERE nonclinical_data_id = ${nonclinicalRecord.id}
         ORDER BY study_identifier ASC
       `;

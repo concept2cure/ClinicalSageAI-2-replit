@@ -23,10 +23,13 @@ async function getSimilarCsrs(db: any, indication: string, phase: string) {
 
       // Query the actual CSR database
       const query = `
-        SELECT * FROM reports 
-        WHERE 
+        SELECT id, title, indication, phase, therapeutic_area, sponsor, year,
+               design, sample_size, duration_weeks, primary_endpoint, outcome,
+               efficacy_data, safety_data, key_findings
+        FROM reports
+        WHERE
           (
-            LOWER(therapeutic_area) LIKE $1 
+            LOWER(therapeutic_area) LIKE $1
             OR LOWER(indication) LIKE $2
           )
           AND LOWER(phase) LIKE $3

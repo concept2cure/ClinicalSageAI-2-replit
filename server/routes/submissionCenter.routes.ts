@@ -228,7 +228,8 @@ router.put('/tasks/:id', async (req: Request, res: Response) => {
 router.get('/regulatory-intelligence', async (req: Request, res: Response) => {
   try {
     const result = await query(`
-      SELECT * FROM regulatory_intelligence
+      SELECT id, title, description, category, impact_level, published_date
+      FROM regulatory_intelligence
       ORDER BY published_date DESC
       LIMIT 20
     `);
