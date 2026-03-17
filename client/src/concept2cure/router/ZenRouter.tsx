@@ -32,6 +32,11 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 
+// Lazy-load PasswordReset for the reset-password-via-email flow
+const PasswordResetPage = lazy(
+  () => import('@/portal-v2/components/auth/PasswordReset'),
+);
+
 /**
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
  */
@@ -241,6 +246,17 @@ export const ZenRouter: React.FC = () => {
 
           {/* Alias: /signup redirects to /concept2cure/signup */}
           <Route path="/signup">{() => <Redirect to="/concept2cure/signup" />}</Route>
+
+          {/* Password reset (linked from email) */}
+          <Route path="/concept2cure/password-reset">
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <PasswordResetPage />
+                </Suspense>
+              </PageTransition>
+            )}
+          </Route>
 
           {/* Onboarding - protected, for first-time users */}
           <Route path="/concept2cure/onboarding">
