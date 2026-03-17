@@ -10,11 +10,8 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { config } from '../config/environment';
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  process.env.SESSION_SECRET ||
-  'trialsage-dev-secret-key-change-in-production';
 const isDev = process.env.NODE_ENV !== 'production';
 
 // JWT token payload interface
@@ -65,8 +62,8 @@ declare global {
  * Authenticate JWT token from Authorization header
  */
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  // In dev mode, auto-authenticate with dev user
-  if (isDev && !req.headers.authorization) {
+  // In dev mode, auto-authenticate with dev user (requires explicit opt-in)
+  if (isDev && process.env.DEV_AUTO_AUTH === 'true' && !req.headers.authorization) {
     req.user = {
       id: 1,
       userId: 1,
@@ -89,7 +86,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, config.jwt.secret) as JWTPayload;
     req.user = {
       id: decoded.userId || decoded.id || decoded.sub || 0,
       userId: decoded.userId || decoded.id || decoded.sub,
@@ -236,8 +233,8 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   const token = authHeader?.replace('Bearer ', '');
 
   if (!token) {
-    // In dev mode, attach dev user anyway
-    if (isDev) {
+    // In dev mode, attach dev user anyway (requires explicit opt-in)
+    if (isDev && process.env.DEV_AUTO_AUTH === 'true') {
       req.user = {
         id: 1,
         userId: 1,
@@ -252,7 +249,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, config.jwt.secret) as JWTPayload;
     req.user = {
       id: decoded.userId || decoded.id || decoded.sub || 0,
       userId: decoded.userId || decoded.id || decoded.sub,
@@ -264,7 +261,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
     };
   } catch {
     // Token invalid but that's okay for optional auth
-    if (isDev) {
+    if (isDev && process.env.DEV_AUTO_AUTH === 'true') {
       req.user = {
         id: 1,
         userId: 1,

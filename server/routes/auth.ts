@@ -23,27 +23,13 @@ import {
   permissions,
 } from '../../shared/schema';
 
+import { config } from '../config/environment';
+
 const router = Router();
 
-// JWT Secret - in production, use environment variable
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  process.env.SESSION_SECRET ||
-  'trialsage-dev-secret-key-change-in-production';
+// JWT configuration from centralized config
 const JWT_EXPIRES_IN = '24h';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
-
-// CRIT-06 FIX: Fail-fast if no JWT secret in production
-if (
-  process.env.NODE_ENV === 'production' &&
-  !process.env.JWT_SECRET &&
-  !process.env.SESSION_SECRET
-) {
-  throw new Error(
-    'FATAL: JWT_SECRET or SESSION_SECRET must be set in production. ' +
-      'Refusing to start with a hardcoded fallback key.'
-  );
-}
 
 // Development auth bypass fully removed — all authentication is enforced.
 // To test locally, create a user via POST /api/auth/signup then login normally.
@@ -100,7 +86,7 @@ router.get('/session', async (req: Request, res: Response) => {
     }
 
     // Verify JWT token
-    const decoded = jwt.verify(token, JWT_SECRET) as {
+    const decoded = jwt.verify(token, config.jwt.secret) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -286,13 +272,13 @@ router.post('/login', async (req: Request, res: Response) => {
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
       },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
       { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
@@ -429,7 +415,7 @@ router.post('/signup', async (req: Request, res: Response) => {
         organizationUuid: result.org.uuid,
         role: 'admin',
       },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
@@ -490,7 +476,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
+    const decoded = jwt.verify(refreshToken, config.jwt.secret) as {
       userId: string;
       email: string;
       type: string;
@@ -505,13 +491,13 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
     const accessToken = jwt.sign(
       { userId: decoded.userId, email: decoded.email, organizationId: '2' },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const newRefreshToken = jwt.sign(
       { userId: decoded.userId, email: decoded.email, type: 'refresh' },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
@@ -554,7 +540,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as {
+    const decoded = jwt.verify(token, config.jwt.secret) as {
       userId: string;
       email: string;
       organizationId?: string;

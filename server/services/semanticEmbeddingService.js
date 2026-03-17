@@ -1,4 +1,4 @@
-import { db } from '../db/index.js';
+import { db } from '../db';
 import { documentVectors, components, componentVersions } from '../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import regulatoryAIPhase3 from './regulatoryAIServicePhase3.js';

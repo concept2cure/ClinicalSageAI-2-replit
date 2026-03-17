@@ -1,7 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import semanticEmbeddingService from '../services/semanticEmbeddingService.js';
-import { db } from '../db/index.js';
+import { db } from '../db';
 import { documentVectors } from '../../shared/schema.js';
 import { eq, sql } from 'drizzle-orm';
 

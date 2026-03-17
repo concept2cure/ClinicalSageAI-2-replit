@@ -7,13 +7,11 @@ const xmlbuilder2 = require('xmlbuilder2');
 const Ajv = require('ajv');
 
 // Import OpenAI
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { getIntelligencePrefix } from './lumen-context-builder.js';
 
 // Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 import { db } from '../db';
 import { fda510kSections, fda510kProjects } from '../../shared/schema';
 import { eq, asc } from 'drizzle-orm';

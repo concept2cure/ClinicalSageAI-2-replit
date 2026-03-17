@@ -30,12 +30,9 @@ import {
   verifySignatureIntegrity,
 } from '../services/auth-security-service';
 
-const router = Router();
+import { config } from '../config/environment';
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  process.env.SESSION_SECRET ||
-  'trialsage-dev-secret-key-change-in-production';
+const router = Router();
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Dev user for testing
@@ -167,7 +164,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
           organizationId: '2',
           role: 'admin',
         },
-        JWT_SECRET,
+        config.jwt.secret,
         { expiresIn: '24h' }
       );
 
@@ -251,7 +248,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
           role: 'pending_mfa', // Restricted token — only valid for MFA verification
           mfaPending: true,
         },
-        JWT_SECRET,
+        config.jwt.secret,
         { expiresIn: '5m' } // Short-lived — only valid for MFA step
       );
 
@@ -279,7 +276,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
         organizationId: (user.defaultOrganizationId || 2).toString(),
         role: 'admin',
       },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: '24h' }
     );
 
@@ -307,7 +304,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
     if (isDev) {
       const token = jwt.sign(
         { userId: '1', email: req.body.email, organizationId: '2', role: 'admin' },
-        JWT_SECRET,
+        config.jwt.secret,
         { expiresIn: '24h' }
       );
 
@@ -355,7 +352,7 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
     if (isDev) {
       const token = jwt.sign(
         { userId: '1', email, organizationId: '2', role: 'admin' },
-        JWT_SECRET,
+        config.jwt.secret,
         { expiresIn: '24h' }
       );
 
@@ -378,7 +375,7 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
     // Verify the partial token to get user identity
     let decoded: any;
     try {
-      decoded = jwt.verify(partialToken, JWT_SECRET) as any;
+      decoded = jwt.verify(partialToken, config.jwt.secret) as any;
     } catch {
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
@@ -412,7 +409,7 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
         organizationId: decoded.organizationId,
         role: 'admin',
       },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: '24h' }
     );
 
@@ -603,7 +600,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
 
   const token = jwt.sign(
     { userId: '1', email, organizationId: organizationId || '2', role: 'admin' },
-    JWT_SECRET,
+    config.jwt.secret,
     { expiresIn: '24h' }
   );
 
@@ -641,7 +638,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
     };
 
     if (oldToken) {
-      decoded = jwt.verify(oldToken, JWT_SECRET) as any;
+      decoded = jwt.verify(oldToken, config.jwt.secret) as any;
     }
 
     const newToken = jwt.sign(
@@ -651,7 +648,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
         organizationId: decoded.organizationId,
         role: decoded.role,
       },
-      JWT_SECRET,
+      config.jwt.secret,
       { expiresIn: '24h' }
     );
 
@@ -663,7 +660,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
     if (isDev) {
       const newToken = jwt.sign(
         { userId: '1', email: 'developer@trialsage.ai', organizationId: '2', role: 'admin' },
-        JWT_SECRET,
+        config.jwt.secret,
         { expiresIn: '24h' }
       );
       return res.json({ success: true, token: newToken });
@@ -706,7 +703,7 @@ router.get('/session', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, config.jwt.secret) as any;
     res.json({
       authenticated: true,
       user: {

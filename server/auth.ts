@@ -12,6 +12,7 @@ import { users } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
 import { db } from './db';
 import jwt from 'jsonwebtoken';
+import { config } from './config/environment';
 
 const logger = createScopedLogger('auth');
 
@@ -69,13 +70,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   try {
     // 1. Try JWT verification first (primary auth method)
-    const JWT_SECRET =
-      process.env.JWT_SECRET ||
-      process.env.SESSION_SECRET ||
-      'trialsage-dev-secret-key-change-in-production';
-
     try {
-      const decoded = jwt.verify(apiKey, JWT_SECRET) as {
+      const decoded = jwt.verify(apiKey, config.jwt.secret) as {
         userId?: string;
         email?: string;
         organizationId?: string;

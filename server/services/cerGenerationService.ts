@@ -13,7 +13,7 @@
  * - Multi-format export (PDF, DOCX, XML)
  */
 
-import { db } from '../db/index';
+import { db } from '../db';
 import {
   cerReports,
   cerClinicalEvidence,

@@ -9,7 +9,6 @@ import express from 'express';
 import { createServer } from 'http';
 import { Pool } from 'pg';
 import { setupVite } from './vite';
-// import rateLimit from 'express-rate-limit';
 import { httpLogger, errorHandler } from './src/mw/observability.js';
 // Database performance optimizations - optional
 import multer from 'multer';
@@ -77,11 +76,6 @@ import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance.ts';
 // Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
 
-// Import authoring routes - made optional to prevent startup crashes
-// import authoringRouter from './routes/authoring.router.js';
-
-// Import sections routes - deprecated, using predictive-sections.ts instead
-// import sectionsRouter from './routes/sections.js';
 import predictiveSectionsRoutes from './routes/predictive-sections.ts';
 
 // Import enterprise routes
@@ -299,15 +293,12 @@ pool
     console.error('❌ Database connection failed:', err.message);
   });
 
-// VaultDMSService disabled - service moved to _deprecated
-// import VaultDMSService from './services/VaultDMSService.js';
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
   upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
   download: async (path: string) => path,
   delete: async (path: string) => true,
 };
-// app.locals.vaultDmsService = new VaultDMSService(pool, storageClient);
 console.log('✅ Storage client initialized (VaultDMS deprecated)');
 
 // Health check endpoints
@@ -797,10 +788,6 @@ console.log('✅ /api/device-projects CRUD routes mounted');
 import templateRoutes from './api/templates/routes.ts';
 app.use('/api/templates', templateRoutes);
 
-// Template usage routes deprecated - consolidated into templateRoutes
-// import templatesUsageRoutes from './routes/templates-usage.js';
-// app.use('/api', templatesUsageRoutes);
-
 // Import and mount AI routes
 import aiRoutes from './api/ai/routes.ts';
 import phase3Routes from './api/ai/phase3-routes.js';
@@ -970,6 +957,7 @@ try {
 try {
   const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
   const docOrchestrationRoutes = docOrchestrationModule.default;
+  // Routes define absolute paths internally (e.g., /api/510k/:projectId/generate-documents, ...)
   app.use(docOrchestrationRoutes);
   console.log('✅ Document Orchestration API routes mounted successfully (510k auto-population)');
 } catch (error) {
