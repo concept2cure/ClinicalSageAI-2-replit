@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   BarChart3,
   GraduationCap,
+  Building2,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -396,6 +397,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── MANAGE — operations & governance ──────────────────── */}
           <WorkspaceGroup label="Manage">
+            <NavItem
+              icon={<Building2 className="w-3.5 h-3.5" />}
+              label="Client Intelligence"
+              subtitle="Persona · Memory · Documents"
+              active={activeNavId === 'client-intelligence'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('client-intelligence')}
+            />
             <NavItem
               icon={<BarChart3 className="w-3.5 h-3.5" />}
               label="Command Center"

@@ -27,6 +27,7 @@ import {
   detectActiveModule,
 } from './module-intelligence.js';
 import { assembleInstructionEnginePrompt } from './lumen-instruction-engine.js';
+import { buildClientIntelligenceContext } from './client-intelligence-memory.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -83,6 +84,7 @@ export interface LumenContext {
   userName: string | null;
   organizationName: string | null;
   userIntelligence: UserIntelligence | null;
+  clientIntelligence: string | null;
   timestamp: string;
 }
 
@@ -420,8 +422,8 @@ export async function buildLumenContext(params: {
   const { organizationId, userId } = params;
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
-  // Load all context in parallel for speed — including full user intelligence
-  const [project, documents, conversation, userInfo, orgName, userIntelligence] = await Promise.all(
+  // Load all context in parallel for speed — including full user intelligence & client intelligence
+  const [project, documents, conversation, userInfo, orgName, userIntelligence, clientIntelligence] = await Promise.all(
     [
       projectId && organizationId
         ? loadProjectContext(projectId, organizationId)
@@ -440,6 +442,10 @@ export async function buildLumenContext(params: {
             organizationId,
             activeProjectId: projectId || undefined,
           })
+        : Promise.resolve(null),
+      // Client Intelligence Memory — deep knowledge of the client organization
+      organizationId
+        ? buildClientIntelligenceContext(organizationId).catch(() => null)
         : Promise.resolve(null),
     ]
   );
@@ -463,6 +469,7 @@ export async function buildLumenContext(params: {
     userName: userInfo.name,
     organizationName: orgName,
     userIntelligence,
+    clientIntelligence,
     timestamp: new Date().toISOString(),
   };
 }
@@ -605,6 +612,12 @@ When the user asks "what should I work on?" or you're providing proactive guidan
     }
 
 Use conversation history to avoid re-asking for information the user has already provided.`);
+  }
+
+  // ── Client Intelligence Memory ─────────────────────────────────────────
+  // Deep knowledge of the client organization, learned from ingested documents
+  if (context.clientIntelligence) {
+    parts.push(context.clientIntelligence);
   }
 
   // ── Document Context ─────────────────────────────────────────────────────

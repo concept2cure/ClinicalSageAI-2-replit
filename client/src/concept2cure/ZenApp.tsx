@@ -232,6 +232,8 @@ const CommandCenterHub = lazy(() =>
   import('./pages/CommandCenterHub').then(m => ({ default: m.CommandCenterHub }))
 );
 
+const ClientIntelligencePage = lazy(() => import('./pages/ClientIntelligencePage'));
+
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   capa: CAPAManagementPanel,
@@ -307,6 +309,7 @@ type LayoutMode =
   | 'intelligence-hub'
   | 'review-readiness'
   | 'command-center'
+  | 'client-intelligence'
   | 'templates';
 
 const INDUSTRY_MODES: IndustryMode[] = [
@@ -1272,6 +1275,7 @@ export const ZenApp: React.FC = () => {
               'submission-workspace': 'command-center',
               'document-vault': 'command-center',
               'enablement-center': 'enablement-center',
+              'client-intelligence': 'client-intelligence',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1370,6 +1374,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'command-center':
               setLayoutMode('command-center');
+              break;
+            case 'client-intelligence':
+              setLayoutMode('client-intelligence');
               break;
             default:
               break;
@@ -2165,6 +2172,23 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <CommandCenterHub onClose={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Client Intelligence — company persona, document ingestion, memory ── */}
+          {!embeddedModule && layoutMode === 'client-intelligence' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-intelligence">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <ClientIntelligencePage />
                 </Suspense>
               </ErrorBoundary>
             </div>
