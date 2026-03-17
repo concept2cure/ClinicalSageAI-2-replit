@@ -39,6 +39,7 @@ import {
   FileStack,
   Scale,
   Rocket,
+  Beaker,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -486,6 +487,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'biostatistics'}
               accentColor="emerald"
               onClick={() => onNavigate?.('biostatistics')}
+            />
+            <NavItem
+              icon={<Beaker className="w-3.5 h-3.5" />}
+              label="CMC Platform"
+              subtitle="Chemistry · Manufacturing"
+              active={activeNavId === 'cmc'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('cmc')}
             />
           </WorkspaceGroup>
 

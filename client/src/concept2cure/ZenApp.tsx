@@ -1364,7 +1364,7 @@ export const ZenApp: React.FC = () => {
               'regulatory-workspace': 'ai-copilot',
               'ind-workspace': 'author',
               'ectd-coauthor': 'author',
-              cmc: 'author',
+              cmc: 'cmc',
               'clinical-trial': 'author',
               author: 'author',
               'intelligence-hub': 'intelligence-hub',
@@ -3391,6 +3391,17 @@ export const ZenApp: React.FC = () => {
             </>
           )}
         </div>
+
+        {/* AnA — Bottom-docked AI chat bar, always visible on every page */}
+        <AnaPersistentPanel
+          contextProfile={{
+            productType: activeProject?.type,
+            userRole: userRole,
+            screenName: layoutMode,
+            activeProject: activeProject?.name,
+            projectId: activeProjectId,
+          }}
+        />
       </div>
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
@@ -3404,16 +3415,7 @@ export const ZenApp: React.FC = () => {
         }}
       />
 
-      {/* AnA — Persistent AI conversation panel available on every page */}
-      <AnaPersistentPanel
-        contextProfile={{
-          productType: activeProject?.type,
-          userRole: userRole,
-          screenName: layoutMode,
-          activeProject: activeProject?.name,
-          projectId: activeProjectId,
-        }}
-      />
+      {/* AnA — moved to inline bottom bar (see below) */}
 
       {/* Command palette */}
       <ZenCommandPalette
