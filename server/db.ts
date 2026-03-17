@@ -29,12 +29,15 @@ try {
   // Check if database URL is available
   if (databaseUrl) {
     logger.info('Initializing PostgreSQL connection pool');
+    const isProduction = process.env.NODE_ENV === 'production';
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
-      max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-      connectionTimeoutMillis: 5000, // How long to wait for a connection to become available
+      max: isProduction ? 40 : 20, // Scale pool for production concurrency
+      idleTimeoutMillis: 15000, // Release idle connections faster (was 30s)
+      connectionTimeoutMillis: 5000,
+      statement_timeout: 30000, // Kill queries running longer than 30s
+      idle_in_transaction_session_timeout: 60000, // Kill idle-in-transaction after 60s
     });
 
     // Test connection with retry mechanism
