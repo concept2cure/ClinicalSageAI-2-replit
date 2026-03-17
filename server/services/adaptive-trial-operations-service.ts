@@ -643,11 +643,18 @@ export class AdaptiveTrialOperationsService {
     const zBeta = normalQuantile(targetPower);
     const varianceRatio = pooledVariance / originalVariance;
 
+    const effectSizeSq = Math.pow(effectSize, 2);
+    if (effectSizeSq === 0) {
+      throw new Error('Effect size cannot be zero for sample size re-estimation');
+    }
     let newSampleSize = Math.ceil(
-      (Math.pow(zAlpha + zBeta, 2) * 2 * pooledVariance) / Math.pow(effectSize, 2)
+      (Math.pow(zAlpha + zBeta, 2) * 2 * pooledVariance) / effectSizeSq
     );
 
     // Adjust for dropout
+    if (dropoutRate >= 1) {
+      throw new Error('Dropout rate must be less than 1');
+    }
     newSampleSize = Math.ceil(newSampleSize / (1 - dropoutRate));
 
     // Apply cap: new sample size cannot exceed a multiplier of original (regulatory constraint)
@@ -656,8 +663,9 @@ export class AdaptiveTrialOperationsService {
 
     // Recalculate power with the capped sample size
     const effectiveSampleSize = Math.floor(cappedSampleSize * (1 - dropoutRate));
-    const achievedZBeta =
-      effectSize * Math.sqrt(effectiveSampleSize / (2 * pooledVariance)) - zAlpha;
+    const achievedZBeta = pooledVariance > 0
+      ? effectSize * Math.sqrt(effectiveSampleSize / (2 * pooledVariance)) - zAlpha
+      : -zAlpha;
     const achievedPower = normalCDF(achievedZBeta);
 
     const ssrResult = {
@@ -724,12 +732,22 @@ export class AdaptiveTrialOperationsService {
       snapshotId: snapshotId ?? null,
     };
 
+    const validAdaptationTypes = [
+      'sample_size_reestimation', 'response_adaptive_randomization',
+      'dose_selection', 'arm_dropping', 'endpoint_modification',
+      'population_enrichment', 'seamless_phase',
+    ] as const;
+    type AdaptationType = typeof validAdaptationTypes[number];
+    if (!validAdaptationTypes.includes(adaptationType as AdaptationType)) {
+      throw new Error(`Invalid adaptation type: ${adaptationType}. Must be one of: ${validAdaptationTypes.join(', ')}`);
+    }
+
     const [record] = await db
       .insert(adaptationDecisions)
       .values({
         planId,
         snapshotId: snapshotId ?? null,
-        adaptationType: adaptationType as any,
+        adaptationType: adaptationType as AdaptationType,
         decision,
         rationale,
         parameters,

@@ -614,8 +614,12 @@ Respond in JSON with this exact structure:
     try {
       const filters = [like(methodRegulatoryOutcomes.indication, `%${indication}%`)];
 
+      // Always filter by organizationId for tenant isolation
       if (organizationId !== undefined) {
         filters.push(eq(methodRegulatoryOutcomes.organizationId, organizationId));
+      } else {
+        // Prevent cross-tenant leakage — return empty if no org context
+        return { indication, strategy, examples: [], summary: 'Organization context required.' };
       }
 
       // If strategy is provided, map it to likely method names to filter

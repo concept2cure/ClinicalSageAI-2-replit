@@ -36,12 +36,12 @@ const authMiddleware = authenticateToken;
  * Helper to resolve the organization ID from the authenticated request.
  */
 function resolveOrganizationId(req: Request): number {
-  return (
+  const orgId =
     (req as any).organizationId ||
     (req as any).user?.organizationId ||
-    (req as any).tenantContext?.organizationId ||
-    1
-  );
+    (req as any).tenantContext?.organizationId;
+  if (!orgId) throw new Error('Organization context required');
+  return orgId;
 }
 
 /**
@@ -195,9 +195,6 @@ router.get('/continuum/:threadId/csr-sections', authMiddleware, async (req: Requ
     const threadId = Number(req.params.threadId);
 
     const result = await statisticalContinuumService.generateCSRSections(threadId, orgId);
-    res.json({ success: true, data: result });
-    };
-
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

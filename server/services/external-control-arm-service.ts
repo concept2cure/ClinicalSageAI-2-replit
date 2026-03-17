@@ -551,7 +551,8 @@ export class ExternalControlArmService {
     const k = armsWithData.length;
     const wSum = fixedWeights.reduce((s, w) => s + w, 0);
     const w2Sum = fixedWeights.reduce((s, w) => s + w * w, 0);
-    const tau2 = Math.max(0, (Q - (k - 1)) / (wSum - w2Sum / wSum));
+    const tauDenom = wSum > 0 ? wSum - w2Sum / wSum : 0;
+    const tau2 = tauDenom > 0 ? Math.max(0, (Q - (k - 1)) / tauDenom) : 0;
 
     // Borrowing weight: inversely proportional to heterogeneity
     // weight = 1 / (1 + tau2 / median(within_var))
