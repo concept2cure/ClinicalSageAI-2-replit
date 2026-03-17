@@ -460,7 +460,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<Bot className="w-3.5 h-3.5" />}
               label="Agent Swarm"
-              subtitle="10 agents · Orchestration"
+              subtitle="AI Agent Swarm"
               active={activeNavId === 'agent-hub'}
               accentColor="violet"
               onClick={() => onNavigate?.('agent-hub')}

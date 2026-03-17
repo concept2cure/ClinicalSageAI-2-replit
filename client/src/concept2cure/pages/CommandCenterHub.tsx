@@ -61,8 +61,11 @@ const TABS: Tab[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-// MOCK DATA
+// SAMPLE DATA — Illustrative examples for demonstration purposes.
+// In production, these will be replaced by live project data.
 // ═══════════════════════════════════════════════════════════════════
+
+const IS_SAMPLE_DATA = true;
 
 const PROGRAMS = [
   { id: 1, name: 'ARX-514 (Oncology)', type: 'IND' as const, status: 'Active', readiness: 82, lastActivity: '2 hours ago' },
@@ -168,6 +171,17 @@ const COLUMNS = [
   { key: 'done', label: 'Done' },
 ] as const;
 
+function SampleDataBanner() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
+      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+      <span>
+        <span className="font-medium">Sample data</span> — These metrics are illustrative examples. Connect your projects to see live data.
+      </span>
+    </div>
+  );
+}
+
 function Pill({ text, className }: { text: string; className?: string }) {
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full', className)}>
@@ -203,6 +217,7 @@ function DashboardView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {IS_SAMPLE_DATA && <SampleDataBanner />}
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <SectionLabel>Mission Control Overview</SectionLabel>
@@ -284,6 +299,7 @@ function SubmissionsView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {IS_SAMPLE_DATA && <SampleDataBanner />}
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <SectionLabel>Submission Packages</SectionLabel>
@@ -363,6 +379,7 @@ function WorkflowsView() {
   const { generate, isGenerating } = useDeliverable();
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {IS_SAMPLE_DATA && <SampleDataBanner />}
       <div className="flex items-center justify-between">
         <SectionLabel>Task Board</SectionLabel>
         <div className="flex items-center gap-3">
@@ -441,6 +458,7 @@ function VaultView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {IS_SAMPLE_DATA && <SampleDataBanner />}
       <div className="flex items-center justify-between">
         <SectionLabel>Document Vault</SectionLabel>
         <div className="flex items-center gap-2">
@@ -535,6 +553,7 @@ function NegotiationsView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {IS_SAMPLE_DATA && <SampleDataBanner />}
       <div className="flex items-center justify-between">
         <SectionLabel>FDA Meeting Timeline</SectionLabel>
         <div className="flex items-center gap-2">
@@ -616,6 +635,7 @@ function TeamView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {IS_SAMPLE_DATA && <SampleDataBanner />}
       <div className="flex items-center justify-between">
         <SectionLabel>Team Members</SectionLabel>
         <div className="flex items-center gap-2">
@@ -691,6 +711,7 @@ function AnalyticsView() {
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      {IS_SAMPLE_DATA && <SampleDataBanner />}
       <div className="flex items-center justify-between">
         <SectionLabel>Portfolio Overview</SectionLabel>
         <div className="flex items-center gap-2">
