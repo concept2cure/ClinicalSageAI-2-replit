@@ -31,6 +31,7 @@
  */
 
 import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import Anthropic from '@anthropic-ai/sdk';
 import { Pool } from 'pg';
 import crypto from 'crypto';
@@ -279,10 +280,10 @@ export class AIProviderRouter {
    */
   private initializeProviders(): void {
     // OpenAI
-    if (process.env.OPENAI_API_KEY) {
-      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    try {
+      this.openai = getOpenAIClient();
       console.log('✅ OpenAI provider initialized');
-    } else {
+    } catch {
       console.warn('⚠️ OpenAI API key not configured');
     }
 

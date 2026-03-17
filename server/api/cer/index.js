@@ -1,15 +1,13 @@
 const express = require('express');
 const { getPool } = require('../../db/pool');
-const { OpenAI } = require('openai');
+const { getOpenAIClient } = require('../../services/openai-client');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Middleware to check for valid API key if missing
 const checkApiKey = (req, res, next) => {

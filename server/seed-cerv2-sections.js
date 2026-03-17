@@ -1,5 +1,5 @@
 // Seed CERV2 510(k) Sections - Complete FDA eSTAR Template
-import { db } from './db/index.js';
+import { db } from './db';
 import { sql } from 'drizzle-orm';
 
 const FDA_ESTAR_SECTIONS = [

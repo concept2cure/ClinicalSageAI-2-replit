@@ -13,7 +13,7 @@ import {
 import { eq, and, sql, desc, inArray, like, ilike, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import * as cheerio from 'cheerio';
@@ -21,11 +21,7 @@ import * as cheerio from 'cheerio';
 // Initialize OpenAI if API key is available
 let openai = null;
 try {
-  if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
+  openai = getOpenAIClient();
 } catch (error) {
   console.log('OpenAI initialization failed, using fallback embeddings');
 }

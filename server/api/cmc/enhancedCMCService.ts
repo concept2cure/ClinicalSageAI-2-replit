@@ -1,9 +1,7 @@
 // Enhanced CMC generation service with AI capabilities
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../../services/openai-client';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 export class EnhancedCMCService {
   static async generateEnhancedBlueprint(data: {

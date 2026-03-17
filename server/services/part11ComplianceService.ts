@@ -13,7 +13,7 @@
  * - System validation documentation
  */
 
-import { db } from '../db/index';
+import { db } from '../db';
 import { deviceAuditTrail, electronicSignatures, users, organizations } from '../../shared/schema';
 import { documentVersions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';

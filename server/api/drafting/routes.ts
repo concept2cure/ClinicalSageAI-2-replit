@@ -12,7 +12,7 @@
  */
 import { Router, Request, Response } from 'express';
 import type { Pool, PoolClient } from 'pg';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../../services/openai-client';
 import { v4 as uuidv4 } from 'uuid';
 import { getRequestDbClient } from '../../middleware/tenantContext';
 
@@ -98,9 +98,7 @@ const CONFIG = {
 type Queryable = Pool | PoolClient;
 
 // OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // GxP-Hardened System Prompt
 const SYSTEM_PROMPT = `You are a Senior Regulatory Scientist with expertise in FDA submissions, ICH guidelines, and clinical regulatory writing.

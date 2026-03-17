@@ -75,24 +75,48 @@ async function releaseDbClient(req: Request): Promise<void> {
 
 /**
  * Middleware to extract and attach tenant context to request object
+ *
+ * SECURITY: Organization ID is derived exclusively from the authenticated
+ * JWT token (req.user.organizationId), NOT from request headers.
+ * This prevents tenant impersonation attacks where a user sends a forged
+ * x-org-id / x-organization-id header to access another tenant's data.
+ *
+ * Non-sensitive supplemental context (clientWorkspaceId, module) may still
+ * come from headers as they are scoped within the tenant boundary.
  */
 export function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Extract tenant context from headers
-  const organizationId = (req.headers['x-org-id'] as string) || null;
-  const organizationUuid = (req.headers['x-org-uuid'] as string) || null;
-  const clientWorkspaceId = (req.headers['x-client-id'] as string) || null;
-  const module = (req.headers['x-module'] as string) || null;
+  // SECURITY: organizationId MUST come from verified JWT (set by auth middleware),
+  // never from user-supplied headers.
+  const jwtOrganizationId = req.user?.organizationId != null
+    ? String(req.user.organizationId)
+    : null;
 
-  // Preserve existing tenant context (e.g., set by authMiddleware from JWT)
+  // Preserve existing tenant context (e.g., set by requireTenantContext from JWT)
   const existing = req.tenantContext || ({} as any);
 
-  // Create tenant context object — header values override, but fall back to existing
+  // SECURITY: Log a warning if the client sent a header org ID that differs
+  // from the JWT org ID. This may indicate a tenant impersonation attempt.
+  const headerOrgId = (req.headers['x-org-id'] as string) || null;
+  if (headerOrgId && jwtOrganizationId && headerOrgId !== jwtOrganizationId) {
+    console.warn(
+      `[SECURITY] Tenant impersonation attempt blocked: ` +
+      `JWT orgId=${jwtOrganizationId}, header x-org-id=${headerOrgId}, ` +
+      `userId=${req.user?.id || 'unknown'}, path=${req.path}`
+    );
+  }
+
+  // Non-sensitive supplemental context may come from headers
+  const organizationUuid = (req.headers['x-org-uuid'] as string) || existing.organizationUuid || null;
+  const clientWorkspaceId = (req.headers['x-client-id'] as string) || existing.clientWorkspaceId || null;
+  const module = (req.headers['x-module'] as string) || existing.module || null;
+
+  // Create tenant context object — organizationId always from JWT
   const tenantContext: TenantContext = {
     organizationId:
-      organizationId || (existing.organizationId != null ? String(existing.organizationId) : null),
-    organizationUuid: organizationUuid || existing.organizationUuid || null,
-    clientWorkspaceId: clientWorkspaceId || existing.clientWorkspaceId || null,
-    module: module || existing.module || null,
+      jwtOrganizationId || (existing.organizationId != null ? String(existing.organizationId) : null),
+    organizationUuid,
+    clientWorkspaceId,
+    module,
   };
 
   // Attach to request

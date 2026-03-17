@@ -6,7 +6,7 @@
 import express from 'express';
 import multer from 'multer';
 import crypto from 'crypto';
-import { db } from '../db/index.js';
+import { db } from '../db';
 import { sql } from 'drizzle-orm';
 
 const router = express.Router();

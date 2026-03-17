@@ -8,7 +8,7 @@
  * @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6 GCP
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   Building,
   Building2,
@@ -257,9 +257,46 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
     }
   }, [currentStep, data]);
 
-  const handleComplete = useCallback(() => {
-    if (data.agreedToTerms && data.agreedToDataProcessing) {
-      onComplete(data);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const handleComplete = useCallback(async () => {
+    if (!data.agreedToTerms || !data.agreedToDataProcessing) return;
+
+    // First, call the parent handler to create the organization
+    onComplete(data);
+
+    // Then redirect to Stripe Checkout with Link for payment
+    if (data.subscriptionTier !== 'free') {
+      setCheckoutLoading(true);
+      setCheckoutError(null);
+      try {
+        const res = await fetch('/api/billing/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          },
+          body: JSON.stringify({
+            tier: data.subscriptionTier,
+            billingCycle: data.billingCycle,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to start checkout');
+        }
+
+        const { checkoutUrl } = await res.json();
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
+          return;
+        }
+      } catch (err) {
+        setCheckoutError(err instanceof Error ? err.message : 'Payment setup failed');
+        setCheckoutLoading(false);
+      }
     }
   }, [data, onComplete]);
 
@@ -355,14 +392,31 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
                 Back
               </button>
             )}
+            {checkoutError && (
+              <span className="text-sm text-red-600 mr-2 self-center">{checkoutError}</span>
+            )}
             {currentStep === 'review' ? (
               <button
                 onClick={handleComplete}
-                disabled={!canProceed}
+                disabled={!canProceed || checkoutLoading}
                 className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <CheckCircle className="h-5 w-5" />
-                Complete Setup
+                {checkoutLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Redirecting to Payment...
+                  </>
+                ) : data.subscriptionTier === 'free' ? (
+                  <>
+                    <CheckCircle className="h-5 w-5" />
+                    Complete Setup
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-5 w-5" />
+                    Complete Setup & Pay
+                  </>
+                )}
               </button>
             ) : (
               <button

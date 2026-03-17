@@ -7,6 +7,7 @@
  */
 
 const config = require('../config/environment').config;
+const Sentry = require('@sentry/node');
 
 // Create a simple structured logger
 const createLogger = module => {
@@ -43,9 +44,9 @@ const createLogger = module => {
       console.log(JSON.stringify(logEntry));
     }
 
-    // Here we would add integrations with external monitoring services
+    // Send errors to Sentry if configured
     if (level === 'error' && process.env.SENTRY_DSN) {
-      // Example: Sentry.captureException(new Error(message), { extra: context });
+      Sentry.captureException(new Error(message), { extra: context });
     }
   };
 
@@ -163,9 +164,9 @@ const errorTrackerMiddleware = logger => {
       organizationId: req.organizationId,
     });
 
-    // In production, we'd also send this to error monitoring service
+    // Send to Sentry error monitoring if configured
     if (process.env.SENTRY_DSN) {
-      // Example: Sentry.captureException(err);
+      Sentry.captureException(err);
     }
 
     // Don't expose error details in production

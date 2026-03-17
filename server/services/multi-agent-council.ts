@@ -43,6 +43,7 @@ import {
   getPromptInjectionProtection,
   PromptInjectionError,
 } from '../lib/prompt-injection-protection';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 import { getTamperProofAuditLog } from '../lib/tamper-proof-audit';
 import { getGracefulDegradationService } from '../lib/graceful-degradation';
 
@@ -184,8 +185,17 @@ export class MultiAgentCouncilService {
     operation: string,
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
     correlationId: string,
-    options?: { temperature?: number; maxTokens?: number; responseFormat?: 'text' | 'json' }
+    options?: { temperature?: number; maxTokens?: number; responseFormat?: 'text' | 'json'; organizationId?: number; projectId?: number | string }
   ): Promise<LLMResponse> {
+    // Inject client/project intelligence so council agents read SKILL/.MD context
+    if (options?.organizationId || options?.projectId) {
+      const intelligencePrefix = await getIntelligencePrefix(options.organizationId, options.projectId).catch(() => '');
+      if (intelligencePrefix && messages.length > 0 && messages[0].role === 'system') {
+        messages = [...messages];
+        messages[0] = { ...messages[0], content: intelligencePrefix + messages[0].content };
+      }
+    }
+
     // Check if AI features are available
     if (!this.degradation.isFeatureAvailable('COUNCIL_DRAFTING')) {
       throw new CouncilError(

@@ -5,15 +5,13 @@
  * across CER and 510(k) modules using vector search with OpenAI-powered fallbacks.
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import path from 'path';
 import fs from 'fs';
 import { pool } from '../utils/database.js';
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Setup IEEE API connection
 const IEEE_API_KEY = process.env.IEEE_API_KEY;

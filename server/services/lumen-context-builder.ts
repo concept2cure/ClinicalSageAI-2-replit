@@ -1399,3 +1399,68 @@ Reference ICH E-series guidelines for study design and reporting.`,
 
   return MODULE_GUIDES[moduleNum] || null;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTELLIGENCE PREFIX — Lightweight helper for ALL AI services
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get a compact intelligence context prefix that can be prepended to
+ * ANY agent's system prompt. This is the universal "read your SKILL.md"
+ * function — every AI invocation in the platform should call this.
+ *
+ * Returns a string containing:
+ *   - Client intelligence (company persona, pipeline, regulatory profile)
+ *   - Project intelligence (strategy, endpoints, constraints, learned insights)
+ *
+ * Lightweight: only loads intelligence context, not the full Lumen prompt.
+ * For the full experience, use buildContextAwarePrompt() instead.
+ *
+ * @param organizationId - The client's organization ID
+ * @param projectId - Optional active project ID
+ * @returns Intelligence context string to prepend to system prompt, or empty string
+ */
+export async function getIntelligencePrefix(
+  organizationId?: number,
+  projectId?: number | string
+): Promise<string> {
+  if (!organizationId) return '';
+
+  const parsedProjectId = projectId ? parseInt(String(projectId), 10) : null;
+
+  try {
+    const [clientCtx, projectCtx] = await Promise.all([
+      buildClientIntelligenceContext(organizationId).catch(() => null),
+      parsedProjectId
+        ? buildProjectIntelligenceContext(parsedProjectId).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+    const parts: string[] = [];
+
+    if (clientCtx) {
+      parts.push(`
+---
+## IMPORTANT: Client Intelligence (Read Before Responding)
+The following is learned intelligence about this client organization.
+Use it to personalize every response and recommendation.
+${clientCtx}
+---`);
+    }
+
+    if (projectCtx) {
+      parts.push(`
+---
+## IMPORTANT: Project Intelligence (Read Before Responding)
+The following is learned intelligence about the active project.
+Use it to tailor analysis, drafting, and guidance to this specific submission.
+${projectCtx}
+---`);
+    }
+
+    return parts.join('\n');
+  } catch (err) {
+    console.warn('[IntelligencePrefix] Failed to load intelligence context:', err);
+    return '';
+  }
+}

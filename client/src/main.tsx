@@ -1,3 +1,6 @@
+// Initialize Sentry error monitoring early, before other imports
+import './utils/sentry';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';

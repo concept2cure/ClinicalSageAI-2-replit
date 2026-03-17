@@ -3,15 +3,13 @@ import regulatoryIR from './regulatoryIR.js';
 import portfolio from './portfolio.js';
 import playbookRoutes from './playbookRoutes.js';
 import { pool } from '../../db.js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../../services/openai-client';
 import crypto from 'crypto';
 
 const router = Router();
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // ===== BLUEPRINT GENERATION =====
 

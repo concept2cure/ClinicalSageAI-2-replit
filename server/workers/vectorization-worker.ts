@@ -12,7 +12,7 @@
  * - Progress tracking and error logging
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 import pdfParse from 'pdf-parse';
 import { pool } from '../db';
 
@@ -44,9 +44,7 @@ const BATCH_SIZE = 5;
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 
 // OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 function requirePool() {
   if (!pool) {

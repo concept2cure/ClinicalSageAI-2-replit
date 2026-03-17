@@ -5,7 +5,7 @@
  * Provides enforcement of regulatory metadata governance through standardized terms
  */
 
-import { db } from '../db/index.js';
+import { db } from '../db.js';
 import { components } from '../../shared/schema.js';
 import { eq, and } from 'drizzle-orm';
 

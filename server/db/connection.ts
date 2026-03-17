@@ -1,42 +1,5 @@
 /**
- * Database Connection Module
- *
- * This module provides a unified database connection for the application.
- * It handles connecting to PostgreSQL using environment variables.
+ * @deprecated Import from server/db.ts directly instead.
+ * This file will be removed in a future version.
  */
-
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import dotenv from 'dotenv';
-import { getSslConfig } from './ssl';
-import { getDatabaseUrl } from './getDatabaseUrl';
-
-// Load environment variables
-dotenv.config();
-
-// Get the cleaned database URL
-const dbUrl = getDatabaseUrl();
-
-if (!dbUrl) {
-  console.error('DATABASE_URL environment variable is not set!');
-  process.exit(1);
-}
-
-// Create a Postgres client
-const client = postgres(dbUrl, {
-  max: 10, // Maximum number of connections
-  idle_timeout: 30, // Connection timeout in seconds
-  max_lifetime: 60 * 30, // Maximum connection lifetime in seconds
-  ssl: getSslConfig(dbUrl),
-});
-
-// Create a Drizzle ORM instance
-export const db = drizzle(client);
-
-// Export a function to close the database connection
-export const closeDbConnection = async () => {
-  await client.end();
-};
-
-// Export the raw Postgres client for operations not supported by Drizzle
-export const pgClient = client;
+export { db, getPool } from '../db';

@@ -23,7 +23,7 @@
  */
 
 import { pool } from '../db.js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import crypto from 'crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -190,7 +190,7 @@ function splitIntoSentences(text: string): string[] {
 // SENTENCE → SOURCE MAPPING
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 /**
  * Map sentences to their source documents using semantic similarity + keyword matching.

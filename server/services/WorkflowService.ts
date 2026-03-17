@@ -5,7 +5,7 @@
  * across the unified document system.
  */
 
-import { db } from '../db/connection';
+import { db } from '../db';
 import { and, eq, inArray, desc, isNull, ne, or, sql } from 'drizzle-orm';
 import {
   workflowTemplates,

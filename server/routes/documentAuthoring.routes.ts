@@ -37,7 +37,7 @@ import {
 import { createRateLimiter } from '../middleware/rateLimiter';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { Server as SocketIOServer } from 'socket.io';
 
 // Extend Express Request interface

@@ -4,15 +4,13 @@
  */
 
 import express from 'express';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 import { pool as dbPool } from '../utils/database.js';
 
 const router = express.Router();
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 /**
  * Enhanced vector search with regulatory metadata

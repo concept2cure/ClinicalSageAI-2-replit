@@ -1,5 +1,5 @@
 import { diffWords, diffLines, diffTrimmedLines } from 'diff';
-import { db } from '../db/index.js';
+import { db } from '../db.js';
 import { 
   components, 
   componentVersions 

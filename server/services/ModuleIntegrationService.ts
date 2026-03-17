@@ -6,7 +6,7 @@
  * managing documents across different modules.
  */
 
-import { db } from '../db/connection';
+import { db } from '../db';
 import { eq, and, inArray } from 'drizzle-orm';
 import { WorkflowService } from './WorkflowService';
 import {

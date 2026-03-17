@@ -12,7 +12,7 @@ import { requireTenantContext, tenantContextMiddleware } from './tenantContext';
 import { authMiddleware } from '../auth';
 import { createScopedLogger } from '../utils/logger';
 import { createRateLimiter } from './rateLimiter';
-import { query } from '../db/pool';
+import { query } from '../db';
 
 const logger = createScopedLogger('middleware');
 

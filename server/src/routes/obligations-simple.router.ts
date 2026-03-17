@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
   const pool = getPool();

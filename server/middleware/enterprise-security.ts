@@ -285,20 +285,26 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
     '/api/health',
     '/api/auth/login',
     '/api/auth/register',
+    '/api/auth/signup',
   ];
   if (publicPaths.some(p => req.path.startsWith(p))) {
     return next();
   }
 
-  // Get organization ID from JWT or header
+  // SECURITY: Organization ID MUST come from the verified JWT token, NOT from
+  // user-supplied headers. This prevents tenant impersonation attacks where an
+  // authenticated user sends a forged x-organization-id header to access
+  // another organization's data.
   const user = (req as any).user;
-  const headerOrgId = req.headers['x-organization-id'];
+  const headerOrgId = req.headers['x-organization-id'] as string | undefined;
 
   if (user?.organizationId) {
-    // Prevent header-based impersonation
-    if (headerOrgId && headerOrgId !== user.organizationId) {
+    // Detect and block header-based impersonation attempts
+    if (headerOrgId && String(headerOrgId) !== String(user.organizationId)) {
       console.warn(
-        `[SECURITY] Tenant impersonation attempt: JWT org=${user.organizationId}, Header org=${headerOrgId}`
+        `[SECURITY] Tenant impersonation attempt blocked: ` +
+        `JWT org=${user.organizationId}, Header org=${headerOrgId}, ` +
+        `userId=${user.id || user.userId || 'unknown'}, path=${req.path}`
       );
       return res.status(403).json({
         error: 'Organization mismatch',
@@ -306,18 +312,10 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
       });
     }
     (req as any).organizationId = user.organizationId;
-  } else if (headerOrgId && typeof headerOrgId === 'string') {
-    // Validate UUID format or numeric ID or simple alphanumeric
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const simpleRegex = /^[a-z0-9_-]{1,64}$/i;
-    if (!uuidRegex.test(headerOrgId) && !simpleRegex.test(headerOrgId)) {
-      return res.status(400).json({
-        error: 'Invalid organization ID format',
-        code: 'INVALID_ORG_ID',
-      });
-    }
-    (req as any).organizationId = headerOrgId;
   }
+  // SECURITY: If no JWT user is present, do NOT fall back to header-based org ID.
+  // Unauthenticated requests should not have tenant context set from untrusted input.
+  // The route's own auth middleware will reject unauthenticated requests as needed.
 
   next();
 }

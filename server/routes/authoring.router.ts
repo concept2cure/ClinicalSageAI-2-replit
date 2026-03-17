@@ -7,7 +7,7 @@ import { spawn } from 'child_process';
 import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
 import { PDFDocument } from 'pdf-lib';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 
 // REQUIRED JWT verification for 21 CFR Part 11 compliance
 // Authorization: Bearer <jwt> with { email, roles: [...] } claims
@@ -1907,10 +1907,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     // Try to use OpenAI service if available
     if (process.env.OPENAI_API_KEY) {
       try {
-        const { default: OpenAI } = await import('openai');
-        const openai = new OpenAI({
-          apiKey: process.env.OPENAI_API_KEY,
-        });
+        const { getOpenAIClient } = await import('../services/openai-client');
+        const openai = getOpenAIClient();
 
         const prompt = `Generate professional ${region} regulatory content for:
 Module: ${section.module}
@@ -4646,10 +4644,8 @@ let openai: any = null;
 const getOpenAI = async () => {
   if (!openai) {
     try {
-      const { OpenAI } = await import('openai');
-      openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY || '',
-      });
+      const { getOpenAIClient } = await import('../services/openai-client');
+      openai = getOpenAIClient();
     } catch (err) {
       console.error('Failed to load OpenAI:', err);
     }

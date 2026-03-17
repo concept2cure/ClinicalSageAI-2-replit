@@ -4,7 +4,7 @@
  */
 
 import { google } from 'googleapis';
-import { db } from '../db/index.js';
+import { db } from '../db.js';
 import { coauthorDocuments, integrationTokens } from '../../shared/schema.js';
 import { eq, and } from 'drizzle-orm';
 

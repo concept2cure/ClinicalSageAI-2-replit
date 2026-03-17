@@ -6,7 +6,8 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
+import type OpenAI from 'openai';
 
 // FDA Requirement definitions
 const FDA_REQUIREMENTS_MAP = {
@@ -57,10 +58,9 @@ export class EvidenceManagementService {
 
   constructor() {
     // Initialize OpenAI if API key exists
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (apiKey) {
-      this.openai = new OpenAI({ apiKey });
-    }
+    try {
+      this.openai = getOpenAIClient();
+    } catch {}
   }
 
   /**

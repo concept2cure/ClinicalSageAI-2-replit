@@ -175,10 +175,14 @@ router.get('/templates/:id', async (req, res) => {
 /**
  * GET /templates/:id/download
  * Streams the template file from storage.
+ * Query params:
+ *   ?format=pdf  — convert DOCX to PDF before download (requires LibreOffice)
+ *   ?format=docx — default, streams original DOCX
  */
 router.get('/templates/:id/download', async (req, res) => {
   try {
     const templateId = parseInt(req.params.id, 10);
+    const format = (req.query.format || 'docx').toString().toLowerCase();
 
     const result = await query('SELECT file_key, title FROM ind_templates WHERE id = $1', [
       templateId,
@@ -186,28 +190,61 @@ router.get('/templates/:id/download', async (req, res) => {
 
     const row = result.rows[0];
     if (!row?.file_key) {
-      return res.status(501).json({
-        error: 'Download functionality requires a stored template file.',
+      return res.status(404).json({
+        error: 'Template file not found.',
         message: 'This template has no associated file on record.',
       });
     }
 
+    const safeTitle = row.title.replace(/\s+/g, '_');
+
     // file_key is expected to be an absolute path or a URL to an object store
-    const { createReadStream, existsSync } = await import('fs');
-    if (existsSync(row.file_key)) {
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${row.title.replace(/\s+/g, '_')}.docx"`
-      );
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      );
-      createReadStream(row.file_key).pipe(res);
-    } else {
-      // Redirect to external/CDN URL
-      res.redirect(302, row.file_key);
+    const { createReadStream, existsSync, readFileSync } = await import('fs');
+
+    if (!existsSync(row.file_key)) {
+      // External/CDN URL — redirect (PDF conversion not supported for remote files)
+      return res.redirect(302, row.file_key);
     }
+
+    if (format === 'pdf') {
+      // Convert DOCX to PDF via LibreOffice
+      try {
+        const { convertDocxToPdf, isPdfConversionAvailable } = await import('./pdfConversionService.js');
+        const available = await isPdfConversionAvailable();
+        if (!available) {
+          return res.status(503).json({
+            error: 'PDF conversion not available.',
+            message:
+              'LibreOffice is not installed on this server. ' +
+              'Install with: apt-get install -y libreoffice-common libreoffice-writer',
+            fallback: `/api/ind/templates/${templateId}/download?format=docx`,
+          });
+        }
+
+        const docxBuffer = readFileSync(row.file_key);
+        const pdfBuffer = await convertDocxToPdf(docxBuffer);
+
+        res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Length', pdfBuffer.length);
+        return res.send(pdfBuffer);
+      } catch (conversionError) {
+        logger.error(`PDF conversion failed for template ${templateId}:`, conversionError);
+        return res.status(500).json({
+          error: 'PDF conversion failed.',
+          message: conversionError.message,
+          fallback: `/api/ind/templates/${templateId}/download?format=docx`,
+        });
+      }
+    }
+
+    // Default: stream DOCX
+    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.docx"`);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    createReadStream(row.file_key).pipe(res);
   } catch (error) {
     logger.error(`Error downloading template ${req.params.id}:`, error);
     res.status(500).json({ error: 'Failed to download template' });

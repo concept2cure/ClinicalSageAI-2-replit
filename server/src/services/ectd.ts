@@ -143,7 +143,7 @@ function generateBackboneXml(batchData: any, region: string): string {
   return doc.end({ prettyPrint: true });
 }
 
-export function validateeCTDStructure(zipData: any): { valid: boolean; errors: string[] } {
+export async function validateeCTDStructure(zipData: any): Promise<{ valid: boolean; errors: string[] }> {
   const errors: string[] = [];
 
   // Basic validation - check for required files/folders
@@ -152,8 +152,41 @@ export function validateeCTDStructure(zipData: any): { valid: boolean; errors: s
     return { valid: false, errors };
   }
 
-  // In a real implementation, you would validate the ZIP structure
-  // against ICH eCTD specifications
+  // Attempt full ICH eCTD structural validation via the export service
+  try {
+    const { validateEctdPackage } = await import('../../server/services/ectdExportService');
+    let buffer: Buffer;
+    if (Buffer.isBuffer(zipData)) {
+      buffer = zipData;
+    } else if (zipData instanceof Uint8Array) {
+      buffer = Buffer.from(zipData);
+    } else {
+      // Assume it's a JSZip instance — generate a buffer
+      buffer = await zipData.generateAsync({ type: 'nodebuffer' });
+    }
+    const result = await validateEctdPackage(buffer);
+    return { valid: result.valid, errors: [...result.errors, ...result.warnings] };
+  } catch {
+    // Fallback: lightweight validation if the export service is unavailable
+    try {
+      const loadedZip = await JSZip.loadAsync(
+        Buffer.isBuffer(zipData) ? zipData : zipData
+      );
+      const files = Object.keys(loadedZip.files);
 
-  return { valid: errors.length === 0, errors };
+      if (!files.includes('index.xml')) {
+        errors.push('Missing required index.xml backbone file');
+      }
+      const hasModuleFolders = ['m1/', 'm2/', 'm3/', 'm4/', 'm5/'].filter(
+        f => files.some(name => name.startsWith(f))
+      );
+      if (hasModuleFolders.length < 3) {
+        errors.push(`Only ${hasModuleFolders.length}/5 module folders present`);
+      }
+    } catch (parseErr: any) {
+      errors.push(`Invalid ZIP data: ${parseErr.message}`);
+    }
+
+    return { valid: errors.length === 0, errors };
+  }
 }

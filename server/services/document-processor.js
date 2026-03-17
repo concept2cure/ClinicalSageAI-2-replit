@@ -8,14 +8,12 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { db } from '../db.js';
 import { hashDocument } from './blockchain.js';
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Document types
 export const DOCUMENT_TYPES = {

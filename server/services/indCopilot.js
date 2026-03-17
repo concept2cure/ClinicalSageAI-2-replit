@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { logger } from '../utils/logger.js';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -20,9 +20,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Only init Supabase if credentials are present (not required in PostgreSQL-only deployments)
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Cache for regulatory guidelines to avoid repeated fetching
 const guidelinesCache = new Map();

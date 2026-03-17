@@ -15,7 +15,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
 import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
@@ -241,9 +241,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       }> = [];
 
       try {
-        const openaiKey = process.env.OPENAI_API_KEY;
-        if (!openaiKey) throw new Error('OPENAI_API_KEY not set');
-        const openai = new OpenAI({ apiKey: openaiKey });
+        const openai = getOpenAIClient();
         const openaiTools = toOpenAITools();
 
         // ── Phase 1: Non-streaming call with tool schemas ──────────────────
