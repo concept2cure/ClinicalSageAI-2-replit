@@ -16429,6 +16429,7 @@ export const submissionTwinClaims = pgTable(
   table => ({
     packageIdx: index('twin_claims_package_idx').on(table.packageId),
     artifactIdx: index('twin_claims_artifact_idx').on(table.artifactId),
+    sectionIdx: index('twin_claims_section_idx').on(table.sectionId),
     typeIdx: index('twin_claims_type_idx').on(table.claimType),
     orgIdx: index('twin_claims_org_idx').on(table.organizationId),
   })
@@ -16468,11 +16469,16 @@ export const submissionTwinEvidenceLinks = pgTable(
   },
   table => ({
     claimIdx: index('twin_evidence_claim_idx').on(table.claimId),
+    artifactIdx: index('twin_evidence_artifact_idx').on(table.evidenceArtifactId),
     strengthIdx: index('twin_evidence_strength_idx').on(table.supportStrength),
     orgIdx: index('twin_evidence_org_idx').on(table.organizationId),
   })
 );
 
+export const insertSubmissionTwinEvidenceLinkSchema = createInsertSchemaOmit(submissionTwinEvidenceLinks, {
+  id: true,
+  createdAt: true,
+});
 export type SubmissionTwinEvidenceLink = InferSelectModel<typeof submissionTwinEvidenceLinks>;
 
 /**
@@ -16506,6 +16512,8 @@ export const submissionTwinDriftAlerts = pgTable(
   },
   table => ({
     packageIdx: index('twin_drift_package_idx').on(table.packageId),
+    sourceArtifactIdx: index('twin_drift_source_idx').on(table.sourceArtifactId),
+    targetArtifactIdx: index('twin_drift_target_idx').on(table.targetArtifactId),
     typeIdx: index('twin_drift_type_idx').on(table.driftType),
     severityIdx: index('twin_drift_severity_idx').on(table.severity),
     resolvedIdx: index('twin_drift_resolved_idx').on(table.resolved),
@@ -16513,6 +16521,10 @@ export const submissionTwinDriftAlerts = pgTable(
   })
 );
 
+export const insertSubmissionTwinDriftAlertSchema = createInsertSchemaOmit(submissionTwinDriftAlerts, {
+  id: true,
+  createdAt: true,
+});
 export type SubmissionTwinDriftAlert = InferSelectModel<typeof submissionTwinDriftAlerts>;
 
 /**
@@ -16545,12 +16557,17 @@ export const submissionTwinChallenges = pgTable(
   table => ({
     packageIdx: index('twin_challenges_package_idx').on(table.packageId),
     assessmentIdx: index('twin_challenges_assessment_idx').on(table.assessmentId),
+    claimIdx: index('twin_challenges_claim_idx').on(table.targetClaimId),
     lensIdx: index('twin_challenges_lens_idx').on(table.reviewerLens),
     severityIdx: index('twin_challenges_severity_idx').on(table.severity),
     orgIdx: index('twin_challenges_org_idx').on(table.organizationId),
   })
 );
 
+export const insertSubmissionTwinChallengeSchema = createInsertSchemaOmit(submissionTwinChallenges, {
+  id: true,
+  createdAt: true,
+});
 export type SubmissionTwinChallenge = InferSelectModel<typeof submissionTwinChallenges>;
 
 /**
@@ -16587,11 +16604,16 @@ export const submissionTwinChangeImpacts = pgTable(
     packageIdx: index('twin_impact_package_idx').on(table.packageId),
     changedIdx: index('twin_impact_changed_idx').on(table.changedArtifactId),
     impactedIdx: index('twin_impact_impacted_idx').on(table.impactedArtifactId),
+    claimIdx: index('twin_impact_claim_idx').on(table.impactedClaimId),
     resolvedIdx: index('twin_impact_resolved_idx').on(table.resolved),
     orgIdx: index('twin_impact_org_idx').on(table.organizationId),
   })
 );
 
+export const insertSubmissionTwinChangeImpactSchema = createInsertSchemaOmit(submissionTwinChangeImpacts, {
+  id: true,
+  createdAt: true,
+});
 export type SubmissionTwinChangeImpact = InferSelectModel<typeof submissionTwinChangeImpacts>;
 
 /**

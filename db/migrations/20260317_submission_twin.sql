@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS submission_twin_claims (
 
 CREATE INDEX IF NOT EXISTS twin_claims_package_idx ON submission_twin_claims(package_id);
 CREATE INDEX IF NOT EXISTS twin_claims_artifact_idx ON submission_twin_claims(artifact_id);
+CREATE INDEX IF NOT EXISTS twin_claims_section_idx ON submission_twin_claims(section_id);
 CREATE INDEX IF NOT EXISTS twin_claims_type_idx ON submission_twin_claims(claim_type);
 CREATE INDEX IF NOT EXISTS twin_claims_org_idx ON submission_twin_claims(organization_id);
 
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS submission_twin_evidence_links (
 );
 
 CREATE INDEX IF NOT EXISTS twin_evidence_claim_idx ON submission_twin_evidence_links(claim_id);
+CREATE INDEX IF NOT EXISTS twin_evidence_artifact_idx ON submission_twin_evidence_links(evidence_artifact_id);
 CREATE INDEX IF NOT EXISTS twin_evidence_strength_idx ON submission_twin_evidence_links(support_strength);
 CREATE INDEX IF NOT EXISTS twin_evidence_org_idx ON submission_twin_evidence_links(organization_id);
 
@@ -89,6 +91,8 @@ CREATE TABLE IF NOT EXISTS submission_twin_drift_alerts (
 );
 
 CREATE INDEX IF NOT EXISTS twin_drift_package_idx ON submission_twin_drift_alerts(package_id);
+CREATE INDEX IF NOT EXISTS twin_drift_source_idx ON submission_twin_drift_alerts(source_artifact_id);
+CREATE INDEX IF NOT EXISTS twin_drift_target_idx ON submission_twin_drift_alerts(target_artifact_id);
 CREATE INDEX IF NOT EXISTS twin_drift_type_idx ON submission_twin_drift_alerts(drift_type);
 CREATE INDEX IF NOT EXISTS twin_drift_severity_idx ON submission_twin_drift_alerts(severity);
 CREATE INDEX IF NOT EXISTS twin_drift_resolved_idx ON submission_twin_drift_alerts(resolved);
@@ -142,6 +146,7 @@ CREATE TABLE IF NOT EXISTS submission_twin_challenges (
 
 CREATE INDEX IF NOT EXISTS twin_challenges_package_idx ON submission_twin_challenges(package_id);
 CREATE INDEX IF NOT EXISTS twin_challenges_assessment_idx ON submission_twin_challenges(assessment_id);
+CREATE INDEX IF NOT EXISTS twin_challenges_claim_idx ON submission_twin_challenges(target_claim_id);
 CREATE INDEX IF NOT EXISTS twin_challenges_lens_idx ON submission_twin_challenges(reviewer_lens);
 CREATE INDEX IF NOT EXISTS twin_challenges_severity_idx ON submission_twin_challenges(severity);
 CREATE INDEX IF NOT EXISTS twin_challenges_org_idx ON submission_twin_challenges(organization_id);
@@ -167,5 +172,6 @@ CREATE TABLE IF NOT EXISTS submission_twin_change_impacts (
 CREATE INDEX IF NOT EXISTS twin_impact_package_idx ON submission_twin_change_impacts(package_id);
 CREATE INDEX IF NOT EXISTS twin_impact_changed_idx ON submission_twin_change_impacts(changed_artifact_id);
 CREATE INDEX IF NOT EXISTS twin_impact_impacted_idx ON submission_twin_change_impacts(impacted_artifact_id);
+CREATE INDEX IF NOT EXISTS twin_impact_claim_idx ON submission_twin_change_impacts(impacted_claim_id);
 CREATE INDEX IF NOT EXISTS twin_impact_resolved_idx ON submission_twin_change_impacts(resolved);
 CREATE INDEX IF NOT EXISTS twin_impact_org_idx ON submission_twin_change_impacts(organization_id);

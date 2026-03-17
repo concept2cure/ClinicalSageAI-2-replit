@@ -41,6 +41,48 @@ import OpenAI from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// ── Enum validators ──
+
+const VALID_DRIFT_TYPES = new Set([
+  'summary_detail_mismatch', 'claim_escalation_without_evidence', 'endpoint_framing_drift',
+  'cmc_maturity_overstatement', 'narrative_statistical_mismatch', 'document_contradiction',
+  'stale_downstream_summary',
+]);
+
+const VALID_SEVERITIES = new Set([
+  'critical', 'high', 'medium', 'low', 'informational',
+]);
+
+const VALID_REVIEWER_LENSES = new Set([
+  'skeptical_reviewer', 'evidence_sufficiency_skeptic', 'cmc_heavy_reviewer',
+  'clinical_risk_reviewer', 'compliance_inspection', 'claims_challenger', 'biostatistics_skeptic',
+]);
+
+const VALID_SUPPORT_STRENGTHS = new Set([
+  'direct', 'indirect', 'weak', 'stale', 'contradictory', 'unsupported',
+]);
+
+function validateDriftType(val: string): string {
+  return VALID_DRIFT_TYPES.has(val) ? val : 'document_contradiction';
+}
+
+function validateSeverity(val: string): string {
+  return VALID_SEVERITIES.has(val) ? val : 'medium';
+}
+
+function validateSupportStrength(val: string): string {
+  return VALID_SUPPORT_STRENGTHS.has(val) ? val : 'unsupported';
+}
+
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 // ── Types ──
 
 interface ClaimExtractionResult {
@@ -319,7 +361,12 @@ class SubmissionTwinService {
         const evidence = await db
           .select()
           .from(submissionTwinEvidenceLinks)
-          .where(eq(submissionTwinEvidenceLinks.claimId, claim.id));
+          .where(
+            and(
+              eq(submissionTwinEvidenceLinks.claimId, claim.id),
+              eq(submissionTwinEvidenceLinks.organizationId, organizationId)
+            )
+          );
 
         const bestSupport = evidence.length > 0
           ? evidence.reduce((best, e) => (e.relevanceScore ?? 0) > (best.relevanceScore ?? 0) ? e : best)
@@ -374,8 +421,8 @@ class SubmissionTwinService {
           .insert(submissionTwinDriftAlerts)
           .values({
             packageId,
-            driftType: drift.driftType as any,
-            severity: drift.severity as any,
+            driftType: validateDriftType(drift.driftType) as any,
+            severity: validateSeverity(drift.severity) as any,
             sourceArtifactId: sourceArtifact?.artifactId ?? null,
             targetArtifactId: targetArtifact?.artifactId ?? null,
             description: drift.description,
@@ -539,11 +586,11 @@ class SubmissionTwinService {
             .values({
               packageId,
               assessmentId,
-              reviewerLens: lens as any,
+              reviewerLens: (VALID_REVIEWER_LENSES.has(lens) ? lens : 'skeptical_reviewer') as any,
               challengeText: result.challengeText,
               targetClaimId: targetClaim?.id ?? null,
               targetSection: result.targetSection ?? null,
-              severity: result.severity as any,
+              severity: validateSeverity(result.severity) as any,
               deficiencyLikelihood: result.deficiencyLikelihood,
               suggestedResponse: result.suggestedResponse ?? null,
               suggestedArtifact: result.suggestedArtifact ?? null,
@@ -650,7 +697,7 @@ class SubmissionTwinService {
             changeType,
             impactedArtifactId: impactedArtifact?.artifactId ?? null,
             impactedClaimId: impact.impactedClaimId ?? null,
-            impactSeverity: impact.severity as any,
+            impactSeverity: validateSeverity(impact.severity) as any,
             impactDescription: impact.description,
             remediation: impact.remediation ?? null,
             organizationId,
@@ -830,16 +877,30 @@ class SubmissionTwinService {
         )
       );
 
-    // Count evidence per claim
-    const evidenceCounts = await Promise.all(
-      claims.map(async c => {
-        const [result] = await db
-          .select({ cnt: count() })
-          .from(submissionTwinEvidenceLinks)
-          .where(eq(submissionTwinEvidenceLinks.claimId, c.id));
-        return { claimId: c.id, sectionId: c.sectionId, count: Number(result?.cnt ?? 0) };
-      })
-    );
+    // Count evidence per claim (single query instead of N+1)
+    const claimIds = claims.map(c => c.id);
+    let evidenceCountRows: Array<{ claimId: number; cnt: number }> = [];
+    if (claimIds.length > 0) {
+      evidenceCountRows = (await db
+        .select({
+          claimId: submissionTwinEvidenceLinks.claimId,
+          cnt: count(),
+        })
+        .from(submissionTwinEvidenceLinks)
+        .where(
+          and(
+            inArray(submissionTwinEvidenceLinks.claimId, claimIds),
+            eq(submissionTwinEvidenceLinks.organizationId, organizationId)
+          )
+        )
+        .groupBy(submissionTwinEvidenceLinks.claimId)) as Array<{ claimId: number; cnt: number }>;
+    }
+    const evidenceCountMap = new Map(evidenceCountRows.map(r => [r.claimId, Number(r.cnt)]));
+    const evidenceCounts = claims.map(c => ({
+      claimId: c.id,
+      sectionId: c.sectionId,
+      count: evidenceCountMap.get(c.id) ?? 0,
+    }));
 
     // Get drift alerts
     const driftAlerts = await this.getDriftAlerts(packageId, organizationId);
@@ -1107,15 +1168,30 @@ class SubmissionTwinService {
       })
       .from(c2cArtifactSectionMap)
       .innerJoin(c2cPackageSections, eq(c2cArtifactSectionMap.sectionDbId, c2cPackageSections.id))
-      .where(eq(c2cPackageSections.packageDbId, packageId));
+      .where(
+        and(
+          eq(c2cPackageSections.packageDbId, packageId),
+          eq(c2cPackageSections.organizationId, organizationId)
+        )
+      );
 
     const results: Array<{ artifactId: number; content: string; sectionKey?: string }> = [];
+    const MAX_ARTIFACTS = 200; // Bound memory usage
 
-    for (const mapping of mappings) {
+    for (const mapping of mappings.slice(0, MAX_ARTIFACTS)) {
       const [version] = await db
         .select({ content: concept2cureArtifactVersions.content })
         .from(concept2cureArtifactVersions)
-        .where(eq(concept2cureArtifactVersions.artifactId, mapping.artifactId))
+        .innerJoin(
+          concept2cureArtifacts,
+          eq(concept2cureArtifactVersions.artifactId, concept2cureArtifacts.id)
+        )
+        .where(
+          and(
+            eq(concept2cureArtifactVersions.artifactId, mapping.artifactId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        )
         .orderBy(desc(concept2cureArtifactVersions.version))
         .limit(1);
 
@@ -1126,7 +1202,7 @@ class SubmissionTwinService {
 
         results.push({
           artifactId: mapping.artifactId,
-          content: content.substring(0, 4000), // Limit for AI context
+          content: content.substring(0, 4000),
           sectionKey: mapping.sectionKey,
         });
       }
@@ -1149,7 +1225,7 @@ class SubmissionTwinService {
       temperature: 0.2,
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"claims":[]}');
+    const parsed = safeJsonParse(response.choices[0]?.message?.content, { claims: [] });
     return parsed as ClaimExtractionResult;
   }
 
@@ -1185,7 +1261,7 @@ class SubmissionTwinService {
       temperature: 0.2,
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"assessments":[]}');
+    const parsed = safeJsonParse(response.choices[0]?.message?.content, { assessments: [] });
     return (parsed.assessments ?? []) as EvidenceAssessment[];
   }
 
@@ -1211,7 +1287,7 @@ class SubmissionTwinService {
       temperature: 0.3,
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"drifts":[]}');
+    const parsed = safeJsonParse(response.choices[0]?.message?.content, { drifts: [] });
     return (parsed.drifts ?? []) as DriftDetection[];
   }
 
@@ -1259,7 +1335,7 @@ ${blockerSummary || 'None.'}`,
       temperature: 0.4,
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"challenges":[]}');
+    const parsed = safeJsonParse(response.choices[0]?.message?.content, { challenges: [] });
     return (parsed.challenges ?? []) as ChallengeResult[];
   }
 
@@ -1296,7 +1372,7 @@ ${blockerSummary || 'None.'}`,
       temperature: 0.3,
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"impacts":[]}');
+    const parsed = safeJsonParse(response.choices[0]?.message?.content, { impacts: [] });
     return (parsed.impacts ?? []) as Array<{
       description: string;
       severity: string;
@@ -1338,7 +1414,7 @@ ${blockerSummary || 'None.'}`,
       temperature: 0.3,
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+    const parsed = safeJsonParse(response.choices[0]?.message?.content, {} as Record<string, unknown>);
     return {
       artifactType: parsed.artifactType ?? 'Support Gap Memo',
       rationale: parsed.rationale ?? 'Based on current submission gaps.',

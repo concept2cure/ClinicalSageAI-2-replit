@@ -267,6 +267,26 @@ export function SubmissionTwinDashboard({ packageId }: Props) {
         </Button>
       </div>
 
+      {/* Loading / Error States */}
+      {assessmentsQuery.isLoading && (
+        <Card>
+          <CardContent className="py-6 text-center text-muted-foreground">
+            <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+            Loading submission twin data...
+          </CardContent>
+        </Card>
+      )}
+      {(assessmentsQuery.isError || claimsQuery.isError || driftQuery.isError) && (
+        <Card className="border-red-200 bg-red-50/50">
+          <CardContent className="py-4 flex items-center gap-2 text-red-700">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="text-sm">
+              Failed to load some data. {assessmentsQuery.error?.message || claimsQuery.error?.message || driftQuery.error?.message}
+            </span>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Score Cards */}
       {(latestAssessment || readiness) && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -721,7 +741,7 @@ export function SubmissionTwinDashboard({ packageId }: Props) {
               </div>
 
               {/* Weak Zones */}
-              {readiness.weakZones.length > 0 && (
+              {readiness.weakZones && readiness.weakZones.length > 0 && (
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -732,7 +752,7 @@ export function SubmissionTwinDashboard({ packageId }: Props) {
                   <CardContent>
                     <div className="space-y-3">
                       {readiness.weakZones.map((zone, idx) => (
-                        <div key={idx} className="border rounded-lg p-3">
+                        <div key={zone.sectionId ?? `zone-${idx}`} className="border rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
                             <span className="font-medium text-sm">{zone.section}</span>
                             <span className={`text-sm font-bold ${zone.score < 30 ? 'text-red-600' : zone.score < 60 ? 'text-orange-600' : 'text-yellow-600'}`}>
