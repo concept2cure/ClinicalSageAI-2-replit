@@ -1,3 +1,14 @@
+/**
+ * Vault Schema — Document storage, versioning, and RAG vector embeddings
+ *
+ * PARTIALLY ACTIVE:
+ * - vaultDocuments: ACTIVE (used by vault routes)
+ * - vaultDocumentChunks: INACTIVE — defined but no routes/services query this table
+ * - vaultEvidenceCitations: INACTIVE — defined but no routes/services query this table
+ *
+ * The inactive tables are intended for RAG-based document retrieval and
+ * evidence citation tracking. They have migration DDL but no active queries.
+ */
 import {
   pgSchema,
   uuid,
