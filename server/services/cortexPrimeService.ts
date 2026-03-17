@@ -15,7 +15,7 @@
  */
 
 import { Pool, PoolClient } from 'pg';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 
 // ============================================================================
 // TYPES

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import express, { Request, Response, NextFunction } from 'express';
 import { Queue } from 'bull';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import Joi from 'joi';
 import jwt from 'jsonwebtoken';
 import AWS from 'aws-sdk';

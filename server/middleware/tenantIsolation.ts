@@ -34,21 +34,53 @@ declare global {
 
 /**
  * Extract and validate tenant context from request
+ *
+ * SECURITY: Organization ID is derived exclusively from the authenticated
+ * JWT token (req.user.organizationId), NOT from user-supplied headers.
+ * This prevents tenant impersonation attacks where a user sends a forged
+ * x-organization-id header to access another organization's data.
  */
 export function tenantIsolationMiddleware(req: Request, res: Response, next: NextFunction): void {
   try {
-    // Extract organization ID from headers or session
-    const organizationId =
-      (req.headers['x-organization-id'] as string) || (req.session as any)?.organizationId;
+    // SECURITY: organizationId MUST come from the verified JWT token (set by auth
+    // middleware on req.user), never from user-supplied headers or query params.
+    const user = req.user as any;
+    const jwtOrganizationId = user?.organizationId != null
+      ? String(user.organizationId)
+      : null;
 
-    const userId = (req.headers['x-user-id'] as string) || (req.user as any)?.id || 'anonymous';
+    // Fall back to session only if no JWT org (session is server-side, not user-controlled)
+    const organizationId = jwtOrganizationId || (req.session as any)?.organizationId || null;
 
+    // SECURITY: Detect and log header-based impersonation attempts
+    const headerOrgId = req.headers['x-organization-id'] as string;
+    if (headerOrgId && jwtOrganizationId && headerOrgId !== jwtOrganizationId) {
+      const userId = user?.id || 'unknown';
+      logger.warn('Tenant impersonation attempt blocked', {
+        jwtOrgId: jwtOrganizationId,
+        headerOrgId,
+        userId,
+        path: req.path,
+      });
+      logSecurityEvent(
+        String(userId),
+        jwtOrganizationId,
+        'tenant_impersonation_attempt',
+        'critical',
+        { headerOrgId, jwtOrgId: jwtOrganizationId, path: req.path }
+      );
+      // Do NOT use the header value — continue with JWT value
+    }
+
+    const userId = user?.id || user?.userId || 'anonymous';
+
+    // workspaceId is scoped within a tenant and may come from headers
     const workspaceId = req.headers['x-workspace-id'] as string;
 
     // Validate organization ID format
     if (organizationId && !isValidOrganizationId(organizationId)) {
       logger.warn('Invalid organization ID format', { organizationId, userId });
-      logSecurityEvent(userId, organizationId || 'unknown', 'invalid_org_id', 'warning', {
+      logSecurityEvent(String(userId), organizationId || 'unknown', 'invalid_org_id', 'warning', {
         providedId: organizationId,
       });
       res.status(400).json({ error: 'Invalid organization ID format' });
@@ -59,7 +91,7 @@ export function tenantIsolationMiddleware(req: Request, res: Response, next: Nex
     req.tenant = {
       organizationId: organizationId || 'default',
       workspaceId,
-      userId,
+      userId: String(userId),
       roles: extractRoles(req),
       permissions: extractPermissions(req),
     };

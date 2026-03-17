@@ -21,7 +21,7 @@
  */
 
 import { pool } from '../db.js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import crypto from 'crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -102,7 +102,7 @@ export interface BatchVerificationResult {
 // AUTO-COMPUTED CONFIDENCE SCORES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 /**
  * Auto-compute confidence score for an evidence object.

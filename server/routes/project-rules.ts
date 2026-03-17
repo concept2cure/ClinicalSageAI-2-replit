@@ -19,7 +19,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { getRulesEngine } from '../services/rules-engine';
 import type { RuleTriggerEvent } from '../services/rules-engine/types';

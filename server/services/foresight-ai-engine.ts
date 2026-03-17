@@ -4,7 +4,7 @@
  * Production-ready service for pharmaceutical companies
  */
 
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { db } from '../db';
 import { 
   foresightPredictions, 
@@ -22,11 +22,10 @@ import {
 } from '@shared/schema';
 import { and, eq, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 import { ForesightKnowledgeGraph } from './foresight-knowledge-graph';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 
 // Initialize OpenAI with GPT-5 capabilities
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+const openai = getOpenAIClient();
 
 // Advanced model selection for different tasks
 const AI_MODELS = {
@@ -61,14 +60,19 @@ export class ForesightAIEngine {
 
     // Build comprehensive context from all data sources
     const context = await this.buildMultiModalContext(params);
-    
+
+    // Inject client/project intelligence so the engine reads SKILL/.MD context
+    const intelligencePrefix = await getIntelligencePrefix(
+      organizationId ? parseInt(String(organizationId), 10) : undefined
+    ).catch(() => '');
+
     // Use GPT-5 for advanced prediction
     const predictionResponse = await openai.chat.completions.create({
       model: AI_MODELS.PREDICTION,
       messages: [
         {
           role: 'system',
-          content: `You are an advanced clinical trial prediction system with expertise in translational medicine.
+          content: `${intelligencePrefix}You are an advanced clinical trial prediction system with expertise in translational medicine.
                    Analyze multi-modal data including biomarkers, clinical outcomes, imaging, and genomics to predict:
                    1. Success probability with confidence intervals
                    2. Critical risk factors and mitigation strategies

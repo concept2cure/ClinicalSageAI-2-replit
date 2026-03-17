@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { aiProposeControls, aiDraftP34 } from '../services/ai/strategy.js';

@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { db } from '../db/connection';
+import { db } from '../db';
 import {
   ModuleIntegrationService,
   DocumentNotFoundException,

@@ -19,11 +19,24 @@ const setTenantContext = async (req, res, next) => {
   }
 
   try {
-    // Get organization ID from authenticated request
-    const organizationId =
-      req.headers['x-organization-id'] ||
-      req.query.organizationId ||
-      (req.user && req.user.organizationId);
+    // SECURITY: Organization ID must come from the verified JWT token (req.user),
+    // NOT from user-supplied headers. This prevents tenant impersonation attacks
+    // where a user sends a forged x-organization-id header.
+    const jwtOrganizationId = req.user && req.user.organizationId
+      ? String(req.user.organizationId)
+      : null;
+
+    // Log impersonation attempts (header org differs from JWT org)
+    const headerOrgId = req.headers['x-organization-id'];
+    if (headerOrgId && jwtOrganizationId && String(headerOrgId) !== jwtOrganizationId) {
+      console.warn(
+        `[SECURITY] Tenant impersonation attempt blocked: ` +
+        `JWT orgId=${jwtOrganizationId}, header=${headerOrgId}, ` +
+        `userId=${req.user?.id || 'unknown'}, path=${req.path}`
+      );
+    }
+
+    const organizationId = jwtOrganizationId;
 
     if (!organizationId) {
       // If no organization context, proceed without setting tenant context

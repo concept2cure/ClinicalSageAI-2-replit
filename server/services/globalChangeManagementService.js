@@ -5,7 +5,7 @@
  * text transformation across the entire regulatory dossier
  */
 
-import { db } from '../db/index.js';
+import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import OpenAI from 'openai';
 import ectdAuditService from './ectdAuditService.js';

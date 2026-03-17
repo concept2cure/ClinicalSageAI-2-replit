@@ -6,6 +6,8 @@
  * user feedback for API and service operations.
  */
 
+import * as Sentry from '@sentry/react';
+
 /**
  * Default friendly messages for common error types
  */
@@ -226,9 +228,9 @@ export const captureError = (error, context = {}, sendToMonitoring = true) => {
     timestamp: new Date().toISOString(),
   });
 
-  // In a production app, would send to monitoring service
-  if (sendToMonitoring && window.errorMonitoring) {
-    window.errorMonitoring.captureException(error, { context });
+  // Send to Sentry if monitoring is enabled
+  if (sendToMonitoring) {
+    Sentry.captureException(error, { extra: context });
   }
 };
 

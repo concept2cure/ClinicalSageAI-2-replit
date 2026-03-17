@@ -1496,8 +1496,8 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       return sendError(res, 503, 'AI service not configured');
     }
 
-    const { default: OpenAI } = await import('openai');
-    const openai = new OpenAI({ apiKey });
+    const { getOpenAIClient } = await import('../services/openai-client');
+    const openai = getOpenAIClient();
 
     const actionPrompts: Record<string, string> = {
       rewrite:

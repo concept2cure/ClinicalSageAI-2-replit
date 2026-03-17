@@ -14,11 +14,9 @@ const auditService = {
   },
 };
 
-// Stub RBAC service (real service deprecated)
-const rbacService = {
-  checkPermission: async () => true,
-  requirePermission: (resource, action) => (req, res, next) => next(),
-};
+// Use the real RBAC service — deny-by-default (FDA 21 CFR Part 11 §11.10(d))
+import rbacServiceImport from '../../services/roleBasedAccess.js';
+const rbacService = rbacServiceImport;
 
 const router = express.Router();
 

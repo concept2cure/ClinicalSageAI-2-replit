@@ -14,7 +14,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../../services/openai-client';
 
 // Rate limiter for document generation (more permissive)
 const docGenerationLimiter = rateLimit({
@@ -38,7 +38,7 @@ const imageGenerationLimiter = rateLimit({
 const router = express.Router();
 
 // Get OpenAI client
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

@@ -5,6 +5,7 @@ import { insertDocumentSchema, insertDocumentFolderSchema } from '@shared/schema
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import documentPreviewRouter from './documentPreview';
 // Generate UUID manually instead of using a package
 const uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -337,5 +338,8 @@ function generateHtmlFromDocument(document: any): string {
     </html>
   `;
 }
+
+// Mount document preview sub-router
+router.use('/', documentPreviewRouter);
 
 export default router;

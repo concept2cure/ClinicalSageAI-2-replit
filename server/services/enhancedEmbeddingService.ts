@@ -21,7 +21,8 @@
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import OpenAI from 'openai';
+import type OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import pg from 'pg';
 import crypto from 'crypto';
 
@@ -114,10 +115,7 @@ export class EnhancedEmbeddingService {
   private isProcessing = false;
 
   constructor(pool: pg.Pool) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is required for embedding service');
-    }
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    this.openai = getOpenAIClient();
     this.pool = pool;
     console.log('✅ Enhanced Embedding Service initialized');
   }

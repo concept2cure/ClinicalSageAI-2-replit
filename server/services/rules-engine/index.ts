@@ -12,7 +12,7 @@
  * @module server/services/rules-engine/index.ts
  */
 
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 import { ProjectRulesEngine } from './engine';
 import { registerAllHandlers } from './actions';
 

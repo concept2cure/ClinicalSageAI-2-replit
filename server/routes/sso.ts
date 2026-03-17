@@ -1,11 +1,9 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
+import { config } from '../config/environment';
+
 const router = Router();
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  process.env.SESSION_SECRET ||
-  'trialsage-dev-secret-key-change-in-production';
 const isDev = process.env.NODE_ENV !== 'production';
 
 // GET /api/auth/sso/:provider/initiate
@@ -30,10 +28,13 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
 
   // For dev mode, accept the mock code and return a token + user info
   if (isDev) {
-    // Create a simple JWT token
-    const token = jwt.sign({ userId: '1', email: 'sso-user@example.com', provider }, JWT_SECRET, {
-      expiresIn: '24h',
-    });
+    // SECURITY: JWT must include organizationId so downstream tenant middleware
+    // derives the org context from the token, not from user-supplied headers.
+    const token = jwt.sign(
+      { userId: '1', email: 'sso-user@example.com', organizationId: '2', role: 'client_user', provider },
+      config.jwt.secret,
+      { expiresIn: '24h' }
+    );
 
     return res.json({
       success: true,

@@ -14,14 +14,14 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { authMiddleware } from '../auth';
 import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
+import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import ragService from '../services/biotechRagService.js';
 
 // Initialize OpenAI for real AI generation
 let openai: OpenAI | null = null;
 try {
-  if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
+  openai = getOpenAIClient();
 } catch {
   console.log('[CERV2 AI] OpenAI not available, using template fallback');
 }
@@ -197,8 +197,12 @@ const sectionTemplates: Record<string, Record<string, string>> = {
 async function generateWithRAG(
   prompt: string,
   ragQuery: string,
-  systemPrompt: string
+  systemPrompt: string,
+  organizationId?: number
 ): Promise<{ text: string; source: string; ragSources: any[] }> {
+  // Inject client/project intelligence so CERV2 reads SKILL/.MD context
+  const intelligencePrefix = await getIntelligencePrefix(organizationId).catch(() => '');
+  systemPrompt = intelligencePrefix + systemPrompt;
   // Step 1: Retrieve relevant context from RAG
   let ragContext = '';
   let ragSources: any[] = [];
@@ -284,7 +288,8 @@ router.post(
       const { text: aiText, source, ragSources } = await generateWithRAG(
         userPrompt,
         ragQuery,
-        systemPrompt
+        systemPrompt,
+        (req as any).resolvedOrganizationId
       );
 
       // If AI generated content, use it; otherwise fall back to template
@@ -659,7 +664,8 @@ router.post(
       const { text: aiText, source, ragSources } = await generateWithRAG(
         userPrompt,
         ragQuery,
-        systemPrompt
+        systemPrompt,
+        (req as any).resolvedOrganizationId
       );
 
       if (aiText) {

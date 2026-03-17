@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { getPool } from '../db/pool.js';
+import { getPool } from '../db.js';
 
 const router = express.Router();
 

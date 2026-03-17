@@ -28,6 +28,7 @@ import {
 } from '../../shared/schema.js';
 import { eq, and, or, inArray, like, sql, desc, asc, isNull } from 'drizzle-orm';
 import part11ComplianceService from './part11ComplianceService.js';
+import { getOpenAIClient } from './openai-client';
 import OpenAI from 'openai';
 import multer from 'multer';
 import path from 'path';
@@ -38,12 +39,10 @@ import mammoth from 'mammoth';
 
 // Initialize OpenAI for intelligent tagging (if available)
 let openai: OpenAI | null = null;
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+try {
+  openai = getOpenAIClient();
   console.log('✅ OpenAI configured for intelligent tagging');
-} else {
+} catch {
   console.log('⚠️ OpenAI API key not found - using fallback keyword-based tagging');
 }
 

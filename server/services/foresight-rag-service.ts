@@ -1,4 +1,4 @@
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import { getRAGPipeline } from './advancedRAGPipeline.js';
 
 export interface RAGQuery {

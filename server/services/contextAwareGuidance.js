@@ -3,12 +3,10 @@
  * Provides intelligent, proactive assistance based on current eCTD module/section
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { logger } from '../utils/logger.js';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // eCTD Module Context Definitions
 const ECTD_MODULE_CONTEXTS = {

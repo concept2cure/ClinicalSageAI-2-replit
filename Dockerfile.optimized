@@ -24,6 +24,14 @@ FROM node:20-slim AS production
 
 WORKDIR /app
 
+# Install LibreOffice headless for DOCX-to-PDF conversion
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      libreoffice-common \
+      libreoffice-writer \
+      fonts-liberation \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install production dependencies only
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force

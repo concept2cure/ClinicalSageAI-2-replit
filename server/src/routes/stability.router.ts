@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import PDFDocument from 'pdfkit';

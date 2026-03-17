@@ -12,7 +12,7 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { db } from '../../db/connection';
+import { db } from '../../db';
 import { pmSettings, auditLogs, organizations } from '../../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 

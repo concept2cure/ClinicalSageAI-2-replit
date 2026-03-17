@@ -14,7 +14,7 @@
  * - FDA credential and certificate management
  */
 
-import { db } from '../db/index.js';
+import { db } from '../db';
 import {
   fdaIntegrationLogs,
   medicalDevices,

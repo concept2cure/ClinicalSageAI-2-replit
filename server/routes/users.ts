@@ -12,12 +12,9 @@ import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users, organizations } from '../../shared/schema';
 
-const router = Router();
+import { config } from '../config/environment';
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  process.env.SESSION_SECRET ||
-  'trialsage-dev-secret-key-change-in-production';
+const router = Router();
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -62,7 +59,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string; email: string };
     const user = await db
       .select()
       .from(users)
@@ -112,7 +109,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as {
+    const decoded = jwt.verify(token, config.jwt.secret) as {
       userId: string;
       email: string;
       organizationId: string;

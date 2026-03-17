@@ -1,7 +1,7 @@
 // import archiver from "archiver";
 import fs from 'fs';
 import path from 'path';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
   const pool = getPool();

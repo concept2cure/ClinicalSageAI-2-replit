@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 // Run compliance checks on uploaded documents
 export async function runComplianceChecks(submissionId: string) {
