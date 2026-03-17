@@ -125,6 +125,9 @@ const EnablementCenter = lazy(() =>
 // Dr. Sage Global Layer — persistent help/guide/copilot presence
 import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
+// AnA Persistent Panel — always-available AI conversation on every page
+import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
+
 // First-run onboarding experience
 const FirstRunExperience = lazy(() =>
   import('./components/enablement/FirstRunExperience')
@@ -234,6 +237,21 @@ const CommandCenterHub = lazy(() =>
 
 const ClientIntelligencePage = lazy(() => import('./pages/ClientIntelligencePage'));
 
+// Collaboration Hub — threaded collaboration workspace
+const CollaborationHubPage = lazy(() =>
+  import('./pages/MissionControl/CollaborationHub').then(m => ({ default: m.default }))
+);
+
+// Biostatistics Platform — statistical analysis, power calculations, endpoints
+const BiostatPlatformDashboard = lazy(() =>
+  import('@/components/biostat/BiostatPlatformDashboard')
+);
+
+// Training Center — client onboarding, courses, certifications
+const TrainingManagementPage = lazy(() =>
+  import('@/portal-v2/components/admin/TrainingManagement')
+);
+
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   capa: CAPAManagementPanel,
@@ -310,7 +328,9 @@ type LayoutMode =
   | 'review-readiness'
   | 'command-center'
   | 'client-intelligence'
-  | 'templates';
+  | 'templates'
+  | 'biostatistics'
+  | 'training-center';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1276,6 +1296,9 @@ export const ZenApp: React.FC = () => {
               'document-vault': 'command-center',
               'enablement-center': 'enablement-center',
               'client-intelligence': 'client-intelligence',
+              'collaboration-hub': 'collaboration-hub',
+              'biostatistics': 'biostatistics',
+              'training-center': 'training-center',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1377,6 +1400,15 @@ export const ZenApp: React.FC = () => {
               break;
             case 'client-intelligence':
               setLayoutMode('client-intelligence');
+              break;
+            case 'collaboration-hub':
+              setLayoutMode('collaboration-hub');
+              break;
+            case 'biostatistics':
+              setLayoutMode('biostatistics');
+              break;
+            case 'training-center':
+              setLayoutMode('training-center');
               break;
             default:
               break;
@@ -2189,6 +2221,57 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <ClientIntelligencePage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Collaboration Hub — threaded collaboration, reviews, team ── */}
+          {!embeddedModule && layoutMode === 'collaboration-hub' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-collaboration-hub">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <CollaborationHubPage programId={activeProjectId ? Number(activeProjectId) : null} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Biostatistics Platform — analysis, power, endpoints, design ── */}
+          {!embeddedModule && layoutMode === 'biostatistics' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biostatistics">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <BiostatPlatformDashboard />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Training Center — onboarding, courses, certifications ── */}
+          {!embeddedModule && layoutMode === 'training-center' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-training-center">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <TrainingManagementPage />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -3100,6 +3183,17 @@ export const ZenApp: React.FC = () => {
           userRole: userRole,
           screenName: layoutMode,
           activeProject: activeProject?.name,
+        }}
+      />
+
+      {/* AnA — Persistent AI conversation panel available on every page */}
+      <AnaPersistentPanel
+        contextProfile={{
+          productType: activeProject?.type,
+          userRole: userRole,
+          screenName: layoutMode,
+          activeProject: activeProject?.name,
+          projectId: activeProjectId,
         }}
       />
 

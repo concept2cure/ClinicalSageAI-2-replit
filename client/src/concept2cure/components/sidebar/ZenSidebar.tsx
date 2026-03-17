@@ -28,6 +28,9 @@ import {
   BarChart3,
   GraduationCap,
   Building2,
+  Users,
+  FlaskConical,
+  BookOpen,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -371,6 +374,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'author'}
               onClick={() => onNavigate?.('author')}
             />
+            <NavItem
+              icon={<Users className="w-3.5 h-3.5" />}
+              label="Collaboration Hub"
+              subtitle="Threads · Reviews · Team"
+              active={activeNavId === 'collaboration-hub'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('collaboration-hub')}
+            />
           </WorkspaceGroup>
 
           {/* ── RESEARCH — what I need to know ───────────────────── */}
@@ -381,6 +392,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Alerts · Evidence · Precedents · Pathways"
               active={activeNavId === 'intelligence-hub'}
               onClick={() => onNavigate?.('intelligence-hub')}
+            />
+            <NavItem
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="Biostatistics"
+              subtitle="Analysis · Power · Endpoints · Design"
+              active={activeNavId === 'biostatistics'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('biostatistics')}
             />
           </WorkspaceGroup>
 
@@ -417,6 +436,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="Academy"
               active={activeNavId === 'enablement-center'}
               onClick={() => onNavigate?.('enablement-center')}
+            />
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="Training Center"
+              subtitle="Onboarding · Courses · Certifications"
+              active={activeNavId === 'training-center'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('training-center')}
             />
           </WorkspaceGroup>
 
