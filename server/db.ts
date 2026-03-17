@@ -285,8 +285,10 @@ export async function query(text: string, params: any[] = []): Promise<any> {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
 
-    // Log slow queries (>100ms)
-    if (duration > 100) {
+    // Log slow queries (configurable, default 250ms prod / 100ms dev)
+    const slowThreshold = parseInt(process.env.SLOW_QUERY_THRESHOLD_MS || '', 10)
+      || (process.env.NODE_ENV === 'production' ? 250 : 100);
+    if (duration > slowThreshold) {
       logger.warn('Slow query detected', {
         duration,
         query: text,

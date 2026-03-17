@@ -12,6 +12,7 @@ import {
   DocumentNotFoundException,
 } from '../services/ModuleIntegrationService';
 import { WorkflowService } from '../services/WorkflowService';
+import { cacheResponse } from '../middleware/enterprise-performance';
 
 const router = Router();
 const moduleIntegrationService = new ModuleIntegrationService(db);
@@ -129,7 +130,7 @@ router.patch('/documents/:id', async (req, res) => {
  * Get workflow templates for a module
  * GET /api/module-integration/templates/:moduleType
  */
-router.get('/templates/:moduleType', async (req, res) => {
+router.get('/templates/:moduleType', cacheResponse({ ttl: 60_000 }), async (req, res) => {
   try {
     const { moduleType } = req.params;
     const { organizationId } = req.query;
