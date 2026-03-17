@@ -102,6 +102,12 @@ import {
   Download,
   Brain,
   Snowflake,
+  Bot,
+  Compass,
+  Activity,
+  Rocket,
+  FileStack,
+  Users,
 } from 'lucide-react';
 
 // Utility: instantly redirect dead layout modes to regulatory-workspace
@@ -252,6 +258,35 @@ const TrainingManagementPage = lazy(() =>
   import('@/portal-v2/components/admin/TrainingManagement')
 );
 
+// Agent Hub — Agent Swarm showcase, setup wizard, monitoring
+const AgentShowcasePage = lazy(() =>
+  import('./components/enablement/AgentShowcase').then(m => ({ default: m.AgentShowcase }))
+);
+
+// Document Sherpa — proactive AI-guided document authoring
+const DocumentSherpaPage = lazy(() =>
+  import('./components/intelligentDocs/DocumentSherpa').then(m => ({ default: m.DocumentSherpa }))
+);
+
+// Review Pulse — PM orchestration, signals, readiness tracking
+const ReviewPulseDashboardPage = lazy(() =>
+  import('./components/workspace/ReviewPulseDashboard').then(m => ({ default: m.ReviewPulseDashboard }))
+);
+
+// Client Onboarding — setup wizard, configuration
+const OnboardingWizardPage = lazy(() =>
+  import('@/portal-v2/components/onboarding/OnboardingWizard')
+);
+
+// Knowledge Base — account-level skills, .MD upload, materials ingestion
+// Already imported: CustomInstructions from './components/knowledge/CustomInstructions'
+
+// Project Knowledge — project-level context, uploads, sources
+// Already lazy-loaded: ProjectKnowledgePanel
+
+// Legal Center — IP, contracts, regulatory law (to be built)
+// Placeholder rendering until component is created
+
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   capa: CAPAManagementPanel,
@@ -330,7 +365,14 @@ type LayoutMode =
   | 'client-intelligence'
   | 'templates'
   | 'biostatistics'
-  | 'training-center';
+  | 'training-center'
+  | 'agent-hub'
+  | 'document-sherpa'
+  | 'review-pulse'
+  | 'client-onboarding'
+  | 'knowledge-base'
+  | 'project-knowledge'
+  | 'legal-center';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -627,6 +669,9 @@ export const ZenApp: React.FC = () => {
 
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
+
+  // Account-level custom instructions for Knowledge Base
+  const [customInstructions, setCustomInstructions] = useState('');
 
   // Right panel tab in workspace mode
   const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs' | 'instructions'>(
@@ -1299,6 +1344,14 @@ export const ZenApp: React.FC = () => {
               'collaboration-hub': 'collaboration-hub',
               'biostatistics': 'biostatistics',
               'training-center': 'training-center',
+              'agent-hub': 'agent-hub',
+              'document-sherpa': 'document-sherpa',
+              'review-pulse': 'review-pulse',
+              'client-onboarding': 'client-onboarding',
+              'knowledge-base': 'knowledge-base',
+              'project-knowledge': 'project-knowledge',
+              'legal-center': 'legal-center',
+              'snowglobe': 'snowglobe',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1409,6 +1462,30 @@ export const ZenApp: React.FC = () => {
               break;
             case 'training-center':
               setLayoutMode('training-center');
+              break;
+            case 'agent-hub':
+              setLayoutMode('agent-hub');
+              break;
+            case 'document-sherpa':
+              setLayoutMode('document-sherpa');
+              break;
+            case 'snowglobe':
+              setLayoutMode('snowglobe');
+              break;
+            case 'review-pulse':
+              setLayoutMode('review-pulse');
+              break;
+            case 'client-onboarding':
+              setLayoutMode('client-onboarding');
+              break;
+            case 'knowledge-base':
+              setLayoutMode('knowledge-base');
+              break;
+            case 'project-knowledge':
+              setLayoutMode('project-knowledge');
+              break;
+            case 'legal-center':
+              setLayoutMode('legal-center');
               break;
             default:
               break;
@@ -2321,6 +2398,243 @@ export const ZenApp: React.FC = () => {
                   <TrainingManagementPage />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
+          {!embeddedModule && layoutMode === 'agent-hub' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Bot className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-800">AI Agents</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <AgentShowcasePage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Document Sherpa — AI-guided authoring ── */}
+          {!embeddedModule && layoutMode === 'document-sherpa' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-sherpa">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Compass className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Document Sherpa</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <DocumentSherpaPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Review Pulse — PM signals, readiness, risk ── */}
+          {!embeddedModule && layoutMode === 'review-pulse' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-pulse">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Activity className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Review Pulse</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <ReviewPulseDashboardPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Client Onboarding — setup wizard, configuration ── */}
+          {!embeddedModule && layoutMode === 'client-onboarding' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-onboarding">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Rocket className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Client Onboarding</span>
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <OnboardingWizardPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Knowledge Base — account-level skills, .MD upload, materials ── */}
+          {!embeddedModule && layoutMode === 'knowledge-base' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-knowledge-base">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Upload className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-xs font-medium text-zinc-800">Knowledge Base</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-3xl mx-auto">
+                  <div className="mb-6">
+                    <h2 className="text-lg font-semibold text-zinc-900 mb-1">Account Knowledge Base</h2>
+                    <p className="text-sm text-zinc-500 leading-relaxed">
+                      Upload materials, skills files, and .MD documents for AnA to learn from. This knowledge applies across all projects in your organization.
+                    </p>
+                  </div>
+                  <CustomInstructions
+                    value={customInstructions}
+                    onChange={async (val) => {
+                      setCustomInstructions(val);
+                      try {
+                        await fetch('/api/project-knowledge/instructions', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ instructions: val }),
+                        });
+                      } catch { /* silently fail */ }
+                    }}
+                    projectType={activeProject?.type}
+                    defaultOpen
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Project Knowledge — project-level context, uploads, sources ── */}
+          {!embeddedModule && layoutMode === 'project-knowledge' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-project-knowledge">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <FileStack className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Project Knowledge</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <ProjectKnowledgePanel projectId={activeProjectId || null} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Legal Center — IP, contracts, regulatory law ── */}
+          {!embeddedModule && layoutMode === 'legal-center' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Scale className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Legal Center</span>
+              </div>
+              <div className="flex-1 flex items-center justify-center bg-white">
+                <div className="text-center px-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
+                    <Scale className="w-8 h-8 text-zinc-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-900 mb-2">Legal Center</h3>
+                  <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">
+                    IP management, contract review, and regulatory law resources. This module is being configured for your organization.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
