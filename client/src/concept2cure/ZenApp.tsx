@@ -284,8 +284,15 @@ const OnboardingWizardPage = lazy(() =>
 // Project Knowledge — project-level context, uploads, sources
 // Already lazy-loaded: ProjectKnowledgePanel
 
-// Legal Center — IP, contracts, regulatory law (to be built)
-// Placeholder rendering until component is created
+// Legal Center — IP, contracts, regulatory law
+const LegalCenterPage = lazy(() =>
+  import('./pages/LegalCenter').then(m => ({ default: m.default }))
+);
+
+// Platform Home — Claude.ai-style landing dashboard
+const PlatformHome = lazy(() =>
+  import('./components/home/PlatformHome')
+);
 
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
@@ -998,6 +1005,35 @@ export const ZenApp: React.FC = () => {
         const panel = actionId.replace('tool-', '') as ToolPanel;
         setActiveToolPanel(panel);
         setLayoutMode(panel === 'ectd' ? 'ctd' : 'editor');
+        setCommandPaletteOpen(false);
+        return;
+      }
+
+      // Handle module navigation — every module accessible via command palette
+      const MODULE_ROUTES: Record<string, LayoutMode> = {
+        'go-copilot': 'regulatory-workspace',
+        'go-author': 'author',
+        'go-document-sherpa': 'document-sherpa',
+        'go-collaboration': 'collaboration-hub',
+        'go-agents': 'agent-hub',
+        'go-snowglobe': 'snowglobe',
+        'go-review-pulse': 'review-pulse',
+        'go-intelligence': 'intelligence-hub',
+        'go-biostatistics': 'biostatistics',
+        'go-review-readiness': 'review-readiness',
+        'go-legal': 'legal-center',
+        'go-client-intelligence': 'client-intelligence',
+        'go-command-center': 'command-center',
+        'go-knowledge-base': 'knowledge-base',
+        'go-project-knowledge': 'project-knowledge',
+        'go-academy': 'enablement-center',
+        'go-training': 'training-center',
+        'go-onboarding': 'client-onboarding',
+        'go-home': 'projects',
+      };
+
+      if (MODULE_ROUTES[actionId]) {
+        setLayoutMode(MODULE_ROUTES[actionId]);
         setCommandPaletteOpen(false);
         return;
       }
@@ -2167,7 +2203,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <div className="w-px h-4 bg-zinc-200" />
                 <PenLine className="w-4 h-4 text-zinc-500" />
@@ -2313,7 +2349,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
@@ -2347,7 +2383,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
@@ -2381,7 +2417,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <BookOpen className="w-3.5 h-3.5 text-violet-500" />
@@ -2410,7 +2446,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Bot className="w-3.5 h-3.5 text-violet-500" />
@@ -2444,7 +2480,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Compass className="w-3.5 h-3.5 text-blue-500" />
@@ -2478,7 +2514,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Activity className="w-3.5 h-3.5 text-blue-500" />
@@ -2512,7 +2548,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Rocket className="w-3.5 h-3.5 text-blue-500" />
@@ -2541,7 +2577,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Upload className="w-3.5 h-3.5 text-emerald-500" />
@@ -2584,7 +2620,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <FileStack className="w-3.5 h-3.5 text-blue-500" />
@@ -2618,23 +2654,15 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Scale className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Legal Center</span>
               </div>
-              <div className="flex-1 flex items-center justify-center bg-white">
-                <div className="text-center px-8">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
-                    <Scale className="w-8 h-8 text-zinc-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-zinc-900 mb-2">Legal Center</h3>
-                  <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">
-                    IP management, contract review, and regulatory law resources. This module is being configured for your organization.
-                  </p>
-                </div>
-              </div>
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <LegalCenterPage onClose={() => setLayoutMode('projects')} />
+              </Suspense>
             </div>
           )}
 
@@ -2657,7 +2685,7 @@ export const ZenApp: React.FC = () => {
                     className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Projects</span>
+                    <span>Home</span>
                   </button>
                   <span className="text-zinc-200">·</span>
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
@@ -2756,193 +2784,22 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Projects Index ─────────────────────────────────────────────── */}
           {!embeddedModule && layoutMode === 'projects' && (
-            <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
-              <div className="max-w-4xl mx-auto px-6 py-10">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h1 className="text-2xl font-semibold text-zinc-900">
-                      {workspaceSummary?.org?.name || 'Projects'}
-                    </h1>
-                    <p className="text-sm text-zinc-500 mt-1">
-                      {projects.filter(p => !p.archived).length} active project
-                      {projects.filter(p => !p.archived).length !== 1 ? 's' : ''}
-                      {workspaceSummary?.counts?.documents
-                        ? ` · ${workspaceSummary.counts.documents} documents`
-                        : ''}
-                      {workspaceSummary?.counts?.threads
-                        ? ` · ${workspaceSummary.counts.threads} conversations`
-                        : ''}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setNewProjectOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Project
-                  </button>
-                </div>
-
-                {/* Project list */}
-                {projects.filter(p => !p.archived).length > 0 ? (
-                  <div className="border border-zinc-200 rounded-lg overflow-hidden mb-10 bg-white">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-zinc-100 bg-zinc-50/60">
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
-                            Type
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
-                            Project
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">
-                            Chats
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">
-                            Updated
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100">
-                        {projects
-                          .filter(p => !p.archived)
-                          .map(project => {
-                            const dotColor: Record<string, string> = {
-                              '510K': 'bg-blue-500',
-                              IND: 'bg-violet-500',
-                              NDA: 'bg-emerald-500',
-                              BLA: 'bg-teal-500',
-                              PMA: 'bg-orange-500',
-                              CER: 'bg-pink-500',
-                              MAA: 'bg-indigo-500',
-                            };
-                            return (
-                              <tr
-                                key={project.id}
-                                data-testid={`project-row-${project.id}`}
-                                onClick={() => {
-                                  navInProgressRef.current = true;
-                                  setActiveProjectId(project.id);
-                                  setRiViewMode('editor');
-                                  setLayoutMode('regulatory-workspace');
-                                  navigate(`/concept2cure/project/${project.id}`);
-                                }}
-                                className="cursor-pointer hover:bg-zinc-50 transition-colors"
-                              >
-                                <td className="px-4 py-2.5 whitespace-nowrap">
-                                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600">
-                                    <span
-                                      className={cn(
-                                        'w-1.5 h-1.5 rounded-full',
-                                        dotColor[project.type] ?? 'bg-zinc-400'
-                                      )}
-                                    />
-                                    {project.type}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-2.5">
-                                  <span className="font-medium text-zinc-900">{project.name}</span>
-                                  {project.starred && (
-                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
-                                  )}
-                                  {project.description && (
-                                    <span className="block text-xs text-zinc-400 truncate max-w-md">
-                                      {project.description}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-2.5 text-zinc-400 hidden sm:table-cell">
-                                  {project.conversationCount}
-                                </td>
-                                <td className="px-4 py-2.5 text-zinc-400 text-right hidden sm:table-cell">
-                                  {project.lastUpdated
-                                    ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric',
-                                      })
-                                    : '—'}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  /* Empty state */
-                  <div className="border border-dashed border-zinc-300 bg-white px-6 py-8 text-center mb-10 rounded-lg">
-                    <FolderOpen className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
-                    <p className="text-sm text-zinc-600 mb-3">No projects yet</p>
-                    <button
-                      onClick={() => setNewProjectOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Create first project
-                    </button>
-                  </div>
-                )}
-
-                {/* Recent activity row */}
-                {(workspaceSummary?.recent?.artifacts?.length ?? 0) > 0 && (
-                  <div>
-                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                      Recent Artifacts
-                    </h2>
-                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
-                      {workspaceSummary!.recent.artifacts!.slice(0, 4).map((a: any) => (
-                        <div
-                          key={a.id}
-                          className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 transition-colors"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-                          <span className="text-sm font-medium text-zinc-900 truncate flex-1">
-                            {a.title || a.type}
-                          </span>
-                          <span className="text-xs text-zinc-400 flex-shrink-0">
-                            {a.type} · {a.status} ·{' '}
-                            {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recent threads */}
-                {(workspaceSummary?.recent?.threads?.length ?? 0) > 0 && (
-                  <div className="mt-8">
-                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                      Recent Conversations
-                    </h2>
-                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
-                      {workspaceSummary!.recent.threads!.slice(0, 5).map((t: any) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setActiveThreadId(t.id);
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-zinc-50 transition-colors"
-                        >
-                          <MessageSquare className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                          <span className="text-sm text-zinc-700 truncate">{t.title}</span>
-                          <span className="ml-auto text-xs text-zinc-400 flex-shrink-0">
-                            {t.updatedAt
-                              ? new Date(t.updatedAt).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
-                              : ''}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+              <PlatformHome
+                userName={userName}
+                projects={projects}
+                onProjectClick={(projectId) => {
+                  navInProgressRef.current = true;
+                  setActiveProjectId(projectId);
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
+                  navigate(`/concept2cure/project/${projectId}`);
+                }}
+                onNewProject={() => setNewProjectOpen(true)}
+                onNavigate={(mode) => setLayoutMode(mode as LayoutMode)}
+                workspaceSummary={workspaceSummary}
+              />
+            </Suspense>
           )}
 
           {/* ── Project Workspace — entered by clicking a project card ──────── */}
