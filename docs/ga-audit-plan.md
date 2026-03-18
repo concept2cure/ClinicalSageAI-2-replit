@@ -120,6 +120,11 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 - `account_template_registry` — scoped document templates
 - `account_projection` — materialized state view
 - `account_events` — append-only event ledger
+- `projects` — 4-level self-referential hierarchy (Program→Project→Study→Sub-project) with `parentProjectId`, `depth`, `path` (materialized)
+- `client_workspaces` — sub-tenant scoping under organization with `(organizationId, slug)` unique constraint
+- `conversations` — AI conversations scoped to project with fork support (`parentConversationId`, `forkMessageIndex`)
+- `c2c_package_sections` — workstream sections with `sectionKey`, `parentSectionId`, and `sortOrder`
+- `c2c_artifact_section_map` — maps artifacts to sections with `documentFamily`, `ownerFunction`, `ownershipType`
 
 #### B. Failure Modes
 
@@ -129,6 +134,9 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 4. **Irrelevant account context injected**: When `submissionType`, `moduleType`, `workType`, `regulatoryRegion` are all undefined in the `ResolutionContext`, ALL scope filters are skipped (`scopeClause` returns empty string), injecting every active/locked canon item up to `maxItems=30`
 5. **Project truth silently overwritten**: `buildProjectIntelligenceContext()` and `resolveAccountContext()` can produce conflicting instructions — no deduplication or conflict detection exists
 6. **Token budget overflow**: `tokensEstimate` is computed (char_count / 4) but never enforced against a limit — could produce prompts exceeding model context window
+7. **Project hierarchy context leakage**: Projects use a 4-level hierarchy (Program→Project→Study→Sub-project) with materialized `path` — if context resolution walks the ancestry chain, a sub-project at depth 3 could inherit canon from a sibling program that shares the same organization but different `clientWorkspaceId`
+8. **Forked conversation context divergence**: Conversations support forking via `parentConversationId` — after fork, the child conversation may resolve different canon items (due to time passing or new canon assertions) than the parent, creating inconsistent regulatory guidance within the same project
+9. **Section ownership mismatch**: `c2c_artifact_section_map` assigns `ownerFunction` (cmc/clinical/regulatory) per artifact-section mapping — if canon resolution doesn't filter by owner function, a CMC-scoped artifact could receive clinical-scoped canon items
 
 #### C. Audit Method
 
@@ -179,9 +187,13 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 | JWT authentication | `server/middleware/auth.ts` | Global middleware on all `/api/*` except allowlist |
 | Tenant isolation | `server/middleware/tenantIsolation.ts` | JWT-derived org ID, impersonation detection |
 | DB-level RLS | `server/db/tenantRls.ts` | PostgreSQL RLS policies on org_id |
+| RBAC middleware | `server/src/mw/rbac.ts` | `requireRole()` — 6 roles: Viewer, Analyst, ProcessEng, QA, RegCMC, Admin |
 | AI gateway policy | `server/services/ai-gateway/policy.ts` | `GatewayPolicyEngine.evaluate()` — token budget, rate limit, blocked patterns |
 | Submission policy | `server/src/services/policy.ts` | `resolvePolicy()` — review due hours, required approvals, block-on-critical |
 | Submission ops policy | `server/submission-ops/policy-engine.ts` | Submission lifecycle policies |
+| Gatekeeper service | `server/src/services/gatekeeper.ts` | `buildGateContext()` → `evalPolicy()` → `aiReleaseDecision()` — multi-step gate with XAI audit trail |
+| Section quality gates | `server/routes/section-quality-gates.ts` | Section readiness validation before publishing |
+| Blocker tracking | `c2c_blockers` table | Policy violation records with `breachedPolicyId`, `severity`, `escalationStatus` |
 | Audit immutability | `db/migrations/054_gcc_part11_audit.sql` | Trigger blocks UPDATE/DELETE on `audit.event_log` |
 | Part 11 route protection | `server/index.ts` | Blocks DELETE/PUT on `/api/audit/*` |
 | Canon lock | `account-canon.ts:248-269` | `lockCanonFact()` — sets status='locked' |
@@ -206,6 +218,9 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 6. **Artifact lock bypass**: Locking is column-based (`locked_at`, `locked_by_id`) — no DB trigger enforces immutability on locked artifacts
 7. **Policy resolution fallback**: `resolvePolicy()` returns `DEFAULT_POLICY` when no policies match — this default may be too permissive (`blockOnOpenCritical: true` is safe, but `requiredReviewerClasses: []` means no reviewers required)
 8. **Permission self-escalation**: `PUT /api/concept2cure/user/permissions` — needs verification that users cannot elevate their own roles
+9. **Gatekeeper AI release bypass**: `gatekeeper.ts` uses `aiReleaseDecision()` — if the AI recommends release but blockers exist, does the gate enforce the blockers or defer to AI? The XAI trail logs the decision but enforcement may be advisory-only
+10. **RBAC role resolution fallback**: `rbac.ts` `resolveRole()` falls back to `Viewer` if no role is found — but the fallback path should be audited to ensure it doesn't grant access to routes that should require explicit role assignment
+11. **Section quality gate bypass via direct artifact update**: If `PUT /api/concept2cure/projects/:id/artifacts/:id` doesn't invoke section quality gates, artifacts could be modified without readiness validation
 
 #### C. Audit Method
 
