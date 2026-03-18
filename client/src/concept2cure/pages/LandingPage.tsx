@@ -50,9 +50,9 @@ function Section({ children, className = '', id }: { children: React.ReactNode; 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const HERO_STATS = [
-  { value: '4', label: 'Global Agencies', sub: 'FDA · EMA · PMDA · NMPA' },
-  { value: '12+', label: 'AI Agents', sub: 'Working in parallel' },
-  { value: '75%', label: 'Faster Submissions', sub: 'vs. manual workflows' },
+  { value: '6', label: 'Global Agencies', sub: 'FDA · EMA · PMDA · NMPA · MHRA · TGA' },
+  { value: '86+', label: 'Integrated Modules', sub: 'One connected platform' },
+  { value: '68%', label: 'Faster Filing', sub: 'vs. manual workflows' },
   { value: '21 CFR', label: 'Part 11 Compliant', sub: 'Enterprise-grade' },
 ];
 
@@ -161,60 +161,66 @@ const FEATURES = [
   },
 ];
 
-// Extended module showcase — the complete platform
+// Extended module showcase — the complete platform (86+ modules, organized by strategic group)
 const PLATFORM_MODULES = [
   {
     category: 'Research & Intelligence',
     modules: [
-      { name: 'Deep Research Engine', desc: 'AI-powered literature search across PubMed, ClinicalTrials.gov, and regulatory databases. Auto-extract endpoints, populations, and safety data.' },
-      { name: 'Predicate Intelligence', desc: '510(k) predicate device analysis with automated substantial equivalence mapping, FDA MAUDE adverse event mining, and recall tracking.' },
-      { name: 'CSR Intelligence', desc: 'Search, compare, and analyze Clinical Study Reports. AI extracts key findings, endpoints, and statistical results across thousands of studies.' },
-      { name: 'Regulatory Intelligence Hub', desc: 'Real-time monitoring of FDA guidances, EMA opinions, PMDA reviews, advisory committee meetings, CRLs, and warning letters.' },
+      { name: 'Deep Research Engine', desc: 'AI-powered search across PubMed, ClinicalTrials.gov, FDA, EMA, PMDA databases. Auto-extract endpoints, populations, safety signals, and evidence.' },
+      { name: 'Predicate Intelligence', desc: '510(k) predicate device analysis with substantial equivalence mapping, MAUDE adverse event mining, recall tracking, and competitive landscape.' },
+      { name: 'CSR Intelligence', desc: 'Search, compare, and cluster Clinical Study Reports. AI extracts findings, endpoints, and statistical results across thousands of studies.' },
+      { name: 'Regulatory Intelligence Hub', desc: 'Real-time monitoring of guidances, approvals, CRLs, advisory committees, enforcement actions, and warning letters across all agencies.' },
+      { name: 'Biostatistics Engine', desc: 'Study design validation, power calculations, endpoint analysis, and statistical methodology support aligned with ICH E9/E10 guidelines.' },
     ],
   },
   {
-    category: 'Document Authoring',
+    category: 'Document Authoring & Collaboration',
     modules: [
-      { name: 'eCTD Co-Author', desc: 'AI-assisted authoring for all CTD modules (1-5). SmartTags, version control, tracked changes, and real-time collaboration with regulatory-aware AI suggestions.' },
-      { name: 'CSR Builder', desc: 'Full ICH E3-compliant Clinical Study Report generation. AI drafts sections from study data, auto-generates tables/figures, and validates cross-references.' },
-      { name: 'Document Vault', desc: 'GxP-compliant document management with version control, approval workflows, hash-chain verification, and full audit trail for inspection readiness.' },
-      { name: 'DOCX Factory', desc: 'One-click export of regulatory documents to Word format with agency-specific formatting, headers, TOC, and appendix generation.' },
+      { name: 'eCTD Co-Author', desc: 'AI-assisted authoring for CTD Modules 1-5 with SmartTags, claim verification, AI-generated citations, tracked changes, and redline alerts.' },
+      { name: 'CSR Builder', desc: 'Full ICH E3-compliant Clinical Study Report generation. AI drafts sections, auto-generates tables/figures, and validates cross-references.' },
+      { name: 'Document Sherpa', desc: 'AI guide that anticipates needs during authoring — proactive warnings about gaps, blocker detection, and journey progress tracking.' },
+      { name: 'Collaboration Hub', desc: 'Real-time co-editing with team presence, @mentions, task assignments, review workflows, and timezone-aware global coordination.' },
+      { name: 'DOCX Factory', desc: 'One-click export to Word with agency-specific formatting, headers, TOC, appendices, and regulatory-compliant templates.' },
     ],
   },
   {
-    category: 'Submission & Compliance',
+    category: 'Submission & Regulatory Pathways',
     modules: [
-      { name: 'eCTD Submission Builder', desc: 'Assemble, validate, and export eCTD v4 packages for FDA, EMA, PMDA, and NMPA. Automated gateway validation with zero-rejection guarantee.' },
-      { name: '510(k) Automation', desc: 'End-to-end 510(k) workflow: predicate search, substantial equivalence analysis, comparison tables, decision trees, and pre-submission package assembly.' },
-      { name: 'IND/NDA Wizard', desc: 'Guided IND and NDA assembly with module-by-module checklists, cross-reference validation, and automated completeness checks.' },
-      { name: 'IVDR Compliance', desc: 'EU IVDR 2017/746 compliance management for in-vitro diagnostics: classification, GSPR mapping, technical documentation, and notified body readiness.' },
+      { name: 'eCTD Submission Builder', desc: 'Assemble, validate, and export eCTD v4 packages for all agencies. Automated gateway validation and zero-rejection guarantee.' },
+      { name: '510(k) Automation', desc: 'End-to-end 510(k): predicate search, substantial equivalence analysis, comparison tables, decision trees, eSTAR tracking, and pre-sub assembly.' },
+      { name: 'IND/NDA/BLA Wizard', desc: 'Guided assembly for INDs, NDAs, and BLAs with module checklists, cross-reference validation, and automated completeness checks.' },
+      { name: 'IVDR / EU MDR', desc: 'EU IVDR 2017/746 compliance: Annex VIII classification, GSPR mapping, clinical evidence compilation, and notified body readiness.' },
+      { name: 'FDA Meeting Prep', desc: 'Pre-IND, EOP2, Pre-NDA meeting request drafting, briefing document generation, Type A/B/C management, and action item tracking.' },
     ],
   },
   {
-    category: 'Quality & Manufacturing',
+    category: 'Quality, CMC & Manufacturing',
     modules: [
-      { name: 'CMC Platform', desc: 'Comprehensive Chemistry, Manufacturing, and Controls management. Drug substance/product specs, analytical methods, stability data, and batch records.' },
-      { name: 'Stability Tracking', desc: 'ICH Q1A-compliant stability study management with automated trending, out-of-spec alerts, shelf-life predictions, and graphical reporting.' },
-      { name: 'Analytical Methods', desc: 'Method validation, transfer tracking, and analytical procedure lifecycle management per ICH Q2/Q14 guidelines.' },
-      { name: 'Blueprint Generator', desc: 'AI-generated CMC blueprints from product specifications. Auto-drafts Module 3 sections including manufacturing process descriptions and control strategies.' },
+      { name: 'CMC Platform', desc: 'Full Module 3 management: drug substance/product specs, analytical methods, stability data, batch records, and impurity profiles per ICH Q1-Q14.' },
+      { name: 'Stability Tracking', desc: 'ICH Q1A-compliant studies with automated trending, OOS alerts, shelf-life predictions, graphical reporting, and comparability studies.' },
+      { name: 'Analytical Validation', desc: 'Method validation and transfer tracking per ICH Q2/Q14 with acceptance criteria management and documentation generation.' },
+      { name: 'CAPA Management', desc: 'Corrective and Preventive Action tracking with root cause analysis, effectiveness checks, and regulatory reporting workflows.' },
+      { name: 'Post-Market Surveillance', desc: 'PSUR/PBRER generation, signal management, MedWatch/MDR reporting, PMCF planning, and vigilance tracking.' },
     ],
   },
   {
-    category: 'Project & Portfolio',
+    category: 'AI Agents & Automation',
     modules: [
-      { name: 'Mission Control', desc: 'Real-time portfolio dashboard showing submission readiness scores, PDUFA dates, active agents, milestone tracking, and risk heatmaps across all programs.' },
-      { name: 'Regulatory Risk Dashboard', desc: 'AI-powered risk scoring across your portfolio. Identifies gaps, flags approaching deadlines, and recommends prioritization strategies.' },
-      { name: 'Timeline & Canvas', desc: 'Visual regulatory timeline planning with dependency mapping, critical path analysis, and interactive canvas for submission strategy visualization.' },
-      { name: 'Convergent Canvas', desc: 'Multi-agent workspace where AI research, drafting, and review agents converge. Morning briefings, council threads, and industry-specific workspaces.' },
+      { name: 'Agent Swarm', desc: 'Orchestrated multi-agent system: Coordinator, Drafter, Researcher, Statistician, QC Agent, and Compliance Agent working in parallel on submissions.' },
+      { name: 'AnA SnowGlobe', desc: 'Prediction engine for regulatory outcomes — submission success modeling, pathway simulations, what-if analysis, and knowledge graphs.' },
+      { name: 'Convergent Canvas', desc: 'Adaptive command center with Morning Briefings, Council Threads (multi-agent advisory), and industry-specific workspaces for every role.' },
+      { name: 'Review Pulse', desc: 'Real-time review orchestration: activity tracking, blocker identification, artifact readiness, and workload distribution across teams.' },
+      { name: 'Compliance Guardian', desc: 'Real-time regulatory compliance monitoring within documents — checks guideline adherence as you write and flags non-compliant language.' },
     ],
   },
   {
-    category: 'Security & Audit',
+    category: 'Governance, Security & Audit',
     modules: [
-      { name: '21 CFR Part 11', desc: 'Complete electronic records compliance: immutable audit trails, digital e-signatures, access controls, session management, and password policies per NIST 800-63B.' },
-      { name: 'Proof Certificates', desc: 'Blockchain-anchored proof certificates for every document version. Cryptographic hash chains provide tamper-evident verification for regulatory inspections.' },
-      { name: 'RBAC & SSO', desc: 'Enterprise role-based access control with Microsoft and Google SSO. Granular permissions per project, module, and document with full activity logging.' },
-      { name: 'Audit Trail Dashboard', desc: 'Inspection-ready audit trail with advanced filtering, export to PDF/CSV, user activity analytics, and compliance verification reports.' },
+      { name: '21 CFR Part 11 Suite', desc: 'Complete electronic records compliance: immutable audit trails, e-signatures, session management, and password policies per NIST 800-63B.' },
+      { name: 'Proof Certificates', desc: 'Cryptographic hash-chain verification for every document version. Tamper-evident proof certificates for regulatory inspections.' },
+      { name: 'Document Vault', desc: 'GxP-compliant repository with version control, approval workflows, RBAC, SSO (Microsoft/Google), and full provenance tracking.' },
+      { name: 'Inspection Readiness', desc: 'FDA Form 483 preparation, documentation review, gap closure tracking, and inspection-ready audit trail dashboards with PDF/CSV export.' },
+      { name: 'Auto-Traceability', desc: 'Automatic cross-reference linking, source-to-claim connections, forward/backward references, and dependency tracking across all documents.' },
     ],
   },
 ];
@@ -1011,7 +1017,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeUp} className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-zinc-100 border border-zinc-200">
-              <span className="text-sm font-medium text-zinc-700">24+ integrated modules</span>
+              <span className="text-sm font-medium text-zinc-700">86+ integrated modules across 6 strategic groups</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
               The complete regulatory platform
@@ -1071,33 +1077,33 @@ export const LandingPage: React.FC = () => {
               <span className="text-sm font-medium text-violet-700">Powered by AI</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
-              12 AI agents working in parallel
+              An AI agent swarm that never sleeps
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
-              AnA 1.0, your regulatory intelligence co-pilot, orchestrates a swarm of
-              specialized agents that handle research, drafting, QC, and compliance simultaneously.
+              AnA 1.0 orchestrates a swarm of specialized agents — Coordinator, Drafter, Researcher,
+              Statistician, QC, and Compliance — all working in parallel while your team focuses on strategy.
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 items-start">
             {/* Agent Grid */}
-            <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3">
+            <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {AI_CAPABILITIES.map((agent) => (
                 <motion.div
                   key={agent.name}
                   variants={fadeUp}
-                  className="p-4 rounded-xl bg-white border border-zinc-100 hover:border-violet-200 transition-all"
+                  className="p-3.5 rounded-xl bg-white border border-zinc-100 hover:border-violet-200 transition-all"
                 >
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                     <span className="text-xs font-semibold text-zinc-900">{agent.name}</span>
                   </div>
-                  <p className="text-xs text-zinc-500 leading-relaxed">{agent.desc}</p>
+                  <p className="text-[11px] text-zinc-500 leading-relaxed">{agent.desc}</p>
                 </motion.div>
               ))}
             </motion.div>
 
-            {/* AnA + Dr. Sage */}
+            {/* AnA + SnowGlobe + Dr. Sage */}
             <motion.div variants={fadeUp} className="space-y-4">
               <div className="p-6 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white">
                 <div className="flex items-center gap-3 mb-4">
@@ -1110,28 +1116,45 @@ export const LandingPage: React.FC = () => {
                   </div>
                 </div>
                 <p className="text-sm text-white/90 leading-relaxed">
-                  Your always-on regulatory strategist. AnA understands FDA, EMA, PMDA, and NMPA
-                  requirements, drafts submission documents, and orchestrates the entire agent swarm
-                  to accelerate your regulatory timeline.
+                  Your always-on regulatory strategist. AnA orchestrates the entire agent swarm,
+                  drafts submission documents, synthesizes evidence, and provides multi-agency
+                  regulatory guidance across FDA, EMA, PMDA, NMPA, MHRA, and TGA.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-white border border-zinc-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-900 to-violet-900 text-white border border-indigo-700/50">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">AnA SnowGlobe</div>
+                    <div className="text-[11px] text-indigo-300">Predictive Intelligence Engine</div>
+                  </div>
+                </div>
+                <p className="text-xs text-indigo-200 leading-relaxed">
+                  Submission success prediction, pathway simulations, what-if analysis, and regulatory
+                  outcome modeling. See the future of your filing before you file.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white border border-zinc-100">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
                     </svg>
                   </div>
                   <div>
-                    <div className="font-semibold text-zinc-900">Dr. Sage</div>
-                    <div className="text-xs text-zinc-500">Contextual Training & Guidance</div>
+                    <div className="font-semibold text-sm text-zinc-900">Dr. Sage</div>
+                    <div className="text-[11px] text-zinc-500">Academy &amp; Contextual Guidance</div>
                   </div>
                 </div>
-                <p className="text-sm text-zinc-600 leading-relaxed">
-                  Just-in-time regulatory training and contextual help. Dr. Sage guides your team
-                  through complex regulations, reduces onboarding from months to weeks, and ensures
-                  everyone stays current on evolving requirements.
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Just-in-time regulatory training with learning paths, certifications, and micro-missions.
+                  Reduces onboarding from months to weeks and keeps teams current on evolving requirements.
                 </p>
               </div>
             </motion.div>
