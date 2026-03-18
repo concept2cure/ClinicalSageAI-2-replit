@@ -3127,6 +3127,11 @@ import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);
 console.log('✅ Client Intelligence Memory API routes mounted successfully');
 
+// Mount Account Intelligence routes (canon, event ledger, skill bundles, terms, templates)
+import accountIntelligenceRoutes from './routes/account-intelligence';
+app.use('/api/account-intelligence', accountIntelligenceRoutes);
+console.log('✅ Account Intelligence API routes mounted successfully');
+
 // Mount Universal Packager routes
 import universalPackagerRoutes from './routes/universal-packager';
 app.use('/api/packager', universalPackagerRoutes);

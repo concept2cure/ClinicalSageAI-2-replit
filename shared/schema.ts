@@ -15632,6 +15632,497 @@ export const projectIngestedDocuments = pgTable(
 export type ProjectIngestedDocument = InferSelectModel<typeof projectIngestedDocuments>;
 
 // ============================================================
+// ACCOUNT CANON + EVENT LEDGER
+// ============================================================
+
+/**
+ * Account Canon Items — Governed, versioned account-level truths.
+ *
+ * Each canon item is a durable piece of account knowledge that has been
+ * asserted and optionally validated. Canon items are immutable once locked;
+ * updates create new versions via the event ledger.
+ *
+ * Categories map to life sciences customer operating memory:
+ * - regulatory_region: authority preferences, market strategies
+ * - terminology: approved terms, naming conventions, locked language
+ * - submission_pattern: standard structures, filing approaches, eCTD conventions
+ * - evidence_preference: evidence types, citation style, data requirements
+ * - authority_position: prior agency feedback, deficiency patterns, response style
+ * - template_preference: SOP/template defaults, output structure preferences
+ * - compliance_constraint: customer-specific constraints, gating rules
+ * - reviewer_chain: approver/reviewer workflows, sign-off requirements
+ * - risk_pattern: recurring risks, deficiencies, remediation approaches
+ * - product_portfolio: device families, programs, molecules, pipeline map
+ */
+export const accountCanonItems = pgTable(
+  'account_canon_items',
+  {
+    id: serial('id').primaryKey(),
+    canonId: text('canon_id').notNull().unique(), // External ID (canon_xxx)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    profileId: integer('profile_id')
+      .references(() => clientIntelligenceProfiles.id), // Link to intelligence profile
+
+    // ── Canon Identity ──────────────────────────────────────────
+    category: text('category').notNull(), // regulatory_region, terminology, submission_pattern, evidence_preference, authority_position, template_preference, compliance_constraint, reviewer_chain, risk_pattern, product_portfolio
+    subcategory: text('subcategory'), // e.g. 'fda_510k', 'ema_cer', 'naming_convention'
+    key: text('key').notNull(), // Lookup key within category: 'preferred_predicate_strategy', 'cer_evidence_structure'
+    title: text('title').notNull(), // Human-readable label
+    content: text('content').notNull(), // Full canon content (markdown)
+
+    // ── Scope & Resolution ────────────────────────────────────────
+    submissionTypes: json('submission_types').$type<string[]>(), // ['510k', 'PMA'] — null = all
+    moduleTypes: json('module_types').$type<string[]>(), // ['cer', 'clinical', 'cmc'] — null = all
+    workTypes: json('work_types').$type<string[]>(), // ['drafting', 'review', 'analysis'] — null = all
+    regulatoryRegions: json('regulatory_regions').$type<string[]>(), // ['US-FDA', 'EU-EMA'] — null = all
+
+    // ── Governance ────────────────────────────────────────────────
+    version: integer('version').default(1).notNull(),
+    status: text('status').default('active').notNull(), // draft, active, locked, superseded, archived
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+    supersededById: integer('superseded_by_id'), // Points to newer version's ID
+
+    // ── Provenance ────────────────────────────────────────────────
+    sourceType: text('source_type'), // manual, ai_extracted, document_import, event_derived
+    sourceDocumentId: text('source_document_id'), // Reference to originating document
+    sourceDescription: text('source_description'),
+    confidenceScore: real('confidence_score').default(0.9),
+
+    // ── Vector Embedding (for semantic resolution) ────────────────
+    embedding: vector('embedding', { dimensions: 1536 }),
+
+    // ── Metadata ──────────────────────────────────────────────────
+    metadata: json('metadata').$type<Record<string, unknown>>(),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_canon_org_idx').on(table.organizationId),
+    categoryIdx: index('acct_canon_category_idx').on(table.category),
+    keyIdx: index('acct_canon_key_idx').on(table.key),
+    statusIdx: index('acct_canon_status_idx').on(table.status),
+    canonIdIdx: index('acct_canon_id_idx').on(table.canonId),
+    profileIdx: index('acct_canon_profile_idx').on(table.profileId),
+  })
+);
+
+export type AccountCanonItem = InferSelectModel<typeof accountCanonItems>;
+export const insertAccountCanonItemSchema = createInsertSchemaOmit(accountCanonItems, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Event Ledger — Append-only event log for account-level changes.
+ *
+ * Every mutation to account canon, preferences, templates, or terminology
+ * is recorded as an immutable event. The current state (projection) is
+ * derived from replaying these events.
+ *
+ * This follows the same provenance pattern as concept2cureProvenanceEvents
+ * but scoped to the account intelligence layer.
+ */
+export const accountEvents = pgTable(
+  'account_events',
+  {
+    id: serial('id').primaryKey(),
+    eventId: text('event_id').notNull().unique(), // External ID (aevt_xxx)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── Event Classification ─────────────────────────────────────
+    eventType: text('event_type').notNull(),
+    // account_fact_asserted — new fact added to canon
+    // account_fact_validated — fact verified by human
+    // account_fact_superseded — fact replaced by newer version
+    // account_template_approved — template preference confirmed
+    // account_term_locked — terminology locked (no further changes)
+    // account_preference_changed — evidence/citation/output preference updated
+    // account_submission_pattern_recorded — submission structure/approach captured
+    // account_authority_position_recorded — agency feedback/position logged
+    // account_skill_bundle_created — new execution bundle created
+    // account_skill_bundle_updated — bundle contents changed
+    // account_canon_resolved — canon items used in an AI run (audit trail)
+
+    // ── Target Reference ──────────────────────────────────────────
+    canonItemId: integer('canon_item_id')
+      .references(() => accountCanonItems.id),
+    skillBundleId: integer('skill_bundle_id'), // FK added after skillBundles table defined
+    targetType: text('target_type'), // canon_item, skill_bundle, term_entry, template_entry
+    targetId: text('target_id'), // External ID of the affected entity
+
+    // ── Event Payload ─────────────────────────────────────────────
+    previousValue: json('previous_value').$type<Record<string, unknown>>(),
+    newValue: json('new_value').$type<Record<string, unknown>>(),
+    description: text('description'), // Human-readable event description
+    details: json('details').$type<Record<string, unknown>>().default({}),
+
+    // ── Actor ─────────────────────────────────────────────────────
+    actorId: integer('actor_id').references(() => users.id),
+    actorName: text('actor_name'),
+    actorEmail: text('actor_email'),
+    actorType: text('actor_type').default('user'), // user, system, ai
+
+    // ── Correlation ───────────────────────────────────────────────
+    correlationId: text('correlation_id'), // Links related events (e.g., bulk import)
+    projectId: integer('project_id').references(() => projects.id), // If triggered from project context
+    conversationId: integer('conversation_id'), // If triggered from conversation
+
+    // ── Immutable ─────────────────────────────────────────────────
+    ipAddress: varchar('ip_address', { length: 45 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_evt_org_idx').on(table.organizationId),
+    eventTypeIdx: index('acct_evt_type_idx').on(table.eventType),
+    canonItemIdx: index('acct_evt_canon_idx').on(table.canonItemId),
+    targetIdx: index('acct_evt_target_idx').on(table.targetType, table.targetId),
+    createdAtIdx: index('acct_evt_created_at_idx').on(table.createdAt),
+    correlationIdx: index('acct_evt_correlation_idx').on(table.correlationId),
+  })
+);
+
+export type AccountEvent = InferSelectModel<typeof accountEvents>;
+
+/**
+ * Account Projection — Materialized state view computed from events.
+ *
+ * Stores the latest computed state for fast reads. Rebuilt from the
+ * event ledger on demand or after significant changes.
+ */
+export const accountProjection = pgTable(
+  'account_projection',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id)
+      .unique(), // One projection per org
+
+    // ── Computed State ────────────────────────────────────────────
+    activeCanonCount: integer('active_canon_count').default(0),
+    lockedCanonCount: integer('locked_canon_count').default(0),
+    activeSkillBundleCount: integer('active_skill_bundle_count').default(0),
+    termDictionarySize: integer('term_dictionary_size').default(0),
+    templateRegistrySize: integer('template_registry_size').default(0),
+
+    // ── Category Summaries ───────────────────────────────────────
+    canonByCategory: json('canon_by_category').$type<Record<string, number>>().default({}),
+    recentEvents: json('recent_events').$type<Array<{
+      eventId: string;
+      eventType: string;
+      description: string;
+      createdAt: string;
+    }>>().default([]),
+
+    // ── Health Metrics ────────────────────────────────────────────
+    lastEventAt: timestamp('last_event_at'),
+    lastProjectionAt: timestamp('last_projection_at'),
+    eventCountSinceProjection: integer('event_count_since_projection').default(0),
+    projectionVersion: integer('projection_version').default(1),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_proj_org_idx').on(table.organizationId),
+  })
+);
+
+export type AccountProjection = InferSelectModel<typeof accountProjection>;
+
+// ============================================================
+// ACCOUNT SKILL BUNDLES
+// ============================================================
+
+/**
+ * Account Skill Bundles — Reusable account-level execution bundles.
+ *
+ * Each bundle codifies "how this account does X" — e.g., how they write
+ * CER evidence summaries, their IND module drafting defaults, their
+ * FDA response letter style.
+ *
+ * Bundles are resolved by submission type + module + work type and
+ * injected into AI prompts as execution instructions.
+ */
+export const accountSkillBundles = pgTable(
+  'account_skill_bundles',
+  {
+    id: serial('id').primaryKey(),
+    bundleId: text('bundle_id').notNull().unique(), // External ID (bundle_xxx)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    profileId: integer('profile_id')
+      .references(() => clientIntelligenceProfiles.id),
+
+    // ── Bundle Identity ─────────────────────────────────────────
+    name: text('name').notNull(), // "FDA 510(k) Drafting Bundle"
+    description: text('description'), // What this bundle is for
+    bundleType: text('bundle_type').notNull(), // drafting, review, analysis, response, export, workflow
+
+    // ── Scope & Resolution ──────────────────────────────────────
+    submissionTypes: json('submission_types').$type<string[]>(), // ['510k', 'PMA'] — null = all
+    moduleTypes: json('module_types').$type<string[]>(), // ['cer', 'clinical', 'cmc'] — null = all
+    workTypes: json('work_types').$type<string[]>(), // ['drafting', 'review'] — null = all
+    regulatoryRegions: json('regulatory_regions').$type<string[]>(), // ['US-FDA'] — null = all
+
+    // ── Bundle Contents ─────────────────────────────────────────
+    promptFragments: json('prompt_fragments').$type<Array<{
+      role: string; // system_addon, instruction, constraint, style_guide
+      content: string;
+      priority: number; // 1-10, higher = more important
+    }>>().default([]),
+
+    outputStructure: json('output_structure').$type<{
+      format?: string; // markdown, docx, pdf
+      sections?: string[];
+      templateId?: string;
+      defaultHeadings?: string[];
+    }>(),
+
+    evidencePreferences: json('evidence_preferences').$type<{
+      preferredTypes?: string[]; // clinical_trial, literature, real_world, bench_testing
+      citationStyle?: string; // apa, vancouver, numbered, regulatory
+      minimumEvidenceLevel?: string;
+      requiredSources?: string[];
+    }>(),
+
+    authorityResponseStyle: json('authority_response_style').$type<{
+      tone?: string; // formal, collaborative, concise
+      structure?: string[];
+      requiredElements?: string[];
+      avoidPatterns?: string[];
+    }>(),
+
+    policyBindings: json('policy_bindings').$type<Array<{
+      policyType: string; // quality_gate, review_requirement, compliance_check
+      description: string;
+      enforcement: string; // mandatory, recommended, optional
+    }>>().default([]),
+
+    artifactDefaults: json('artifact_defaults').$type<{
+      defaultStatus?: string;
+      defaultCategory?: string;
+      requiredMetadata?: string[];
+      templateId?: string;
+    }>(),
+
+    reviewerRequirements: json('reviewer_requirements').$type<{
+      requiredReviewers?: number;
+      reviewerRoles?: string[];
+      approvalChain?: string[];
+      signatureRequired?: boolean;
+    }>(),
+
+    // ── Governance ──────────────────────────────────────────────
+    version: integer('version').default(1).notNull(),
+    status: text('status').default('active').notNull(), // draft, active, locked, archived
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+
+    // ── Metadata ────────────────────────────────────────────────
+    metadata: json('metadata').$type<Record<string, unknown>>(),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_bundle_org_idx').on(table.organizationId),
+    bundleIdIdx: index('acct_bundle_id_idx').on(table.bundleId),
+    typeIdx: index('acct_bundle_type_idx').on(table.bundleType),
+    statusIdx: index('acct_bundle_status_idx').on(table.status),
+    profileIdx: index('acct_bundle_profile_idx').on(table.profileId),
+  })
+);
+
+export type AccountSkillBundle = InferSelectModel<typeof accountSkillBundles>;
+export const insertAccountSkillBundleSchema = createInsertSchemaOmit(accountSkillBundles, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Term Dictionary — Locked terminology for an account.
+ *
+ * Terms that must be used consistently across all documents and
+ * AI outputs for this account. Enforced during drafting and review.
+ */
+export const accountTermDictionary = pgTable(
+  'account_term_dictionary',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    bundleId: integer('bundle_id')
+      .references(() => accountSkillBundles.id), // Optional link to a skill bundle
+
+    // ── Term Definition ─────────────────────────────────────────
+    term: text('term').notNull(), // The approved term
+    definition: text('definition'), // What it means
+    context: text('context'), // When to use it
+    alternatives: json('alternatives').$type<string[]>(), // Synonyms/variants to map FROM
+    doNotUse: json('do_not_use').$type<string[]>(), // Terms explicitly prohibited
+
+    // ── Scope ───────────────────────────────────────────────────
+    category: text('category'), // device_name, indication, mechanism, regulatory, general
+    submissionTypes: json('submission_types').$type<string[]>(), // Scoped to specific submission types
+    regulatoryRegions: json('regulatory_regions').$type<string[]>(),
+
+    // ── Governance ──────────────────────────────────────────────
+    status: text('status').default('active').notNull(), // active, locked, deprecated
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_term_org_idx').on(table.organizationId),
+    termIdx: index('acct_term_term_idx').on(table.term),
+    categoryIdx: index('acct_term_category_idx').on(table.category),
+    bundleIdx: index('acct_term_bundle_idx').on(table.bundleId),
+    statusIdx: index('acct_term_status_idx').on(table.status),
+  })
+);
+
+export type AccountTermEntry = InferSelectModel<typeof accountTermDictionary>;
+export const insertAccountTermEntrySchema = createInsertSchemaOmit(accountTermDictionary, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Template Registry — Account-specific template overrides.
+ *
+ * Extends the platform template registry with account-specific customizations:
+ * section ordering, default content, required sections, naming conventions.
+ */
+export const accountTemplateRegistry = pgTable(
+  'account_template_registry',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    bundleId: integer('bundle_id')
+      .references(() => accountSkillBundles.id),
+
+    // ── Template Identity ───────────────────────────────────────
+    templateKey: text('template_key').notNull(), // Maps to platform template ID or custom key
+    name: text('name').notNull(),
+    description: text('description'),
+    submissionType: text('submission_type'), // '510k', 'IND', 'CER', etc.
+    regulatoryRegion: text('regulatory_region'), // 'US-FDA', 'EU-EMA', etc.
+
+    // ── Template Customizations ──────────────────────────────────
+    sectionOverrides: json('section_overrides').$type<Array<{
+      sectionCode: string;
+      title?: string; // Override section title
+      instruction?: string; // Override drafting instruction
+      required?: boolean;
+      defaultContent?: string;
+      order?: number;
+    }>>(),
+
+    defaultMetadata: json('default_metadata').$type<Record<string, unknown>>(),
+    headerFooter: json('header_footer').$type<{
+      headerText?: string;
+      footerText?: string;
+      logoUrl?: string;
+      confidentialityNotice?: string;
+    }>(),
+
+    namingConvention: text('naming_convention'), // Pattern for document naming: "{product}-{type}-{version}-{date}"
+
+    // ── Governance ──────────────────────────────────────────────
+    version: integer('version').default(1).notNull(),
+    status: text('status').default('active').notNull(), // active, locked, archived
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_tmpl_org_idx').on(table.organizationId),
+    templateKeyIdx: index('acct_tmpl_key_idx').on(table.templateKey),
+    submissionTypeIdx: index('acct_tmpl_sub_type_idx').on(table.submissionType),
+    bundleIdx: index('acct_tmpl_bundle_idx').on(table.bundleId),
+    statusIdx: index('acct_tmpl_status_idx').on(table.status),
+  })
+);
+
+export type AccountTemplateEntry = InferSelectModel<typeof accountTemplateRegistry>;
+export const insertAccountTemplateEntrySchema = createInsertSchemaOmit(accountTemplateRegistry, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Canon Resolution Log — Audit trail of which canon items
+ * and skill bundles were resolved into each AI run.
+ *
+ * Required for regulatory traceability: proves which account intelligence
+ * influenced each generated artifact.
+ */
+export const accountCanonResolutionLog = pgTable(
+  'account_canon_resolution_log',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── Run Context ─────────────────────────────────────────────
+    requestId: text('request_id').notNull(), // AI gateway request ID for correlation
+    projectId: integer('project_id').references(() => projects.id),
+    conversationId: integer('conversation_id'),
+    threadId: text('thread_id'),
+
+    // ── What Was Resolved ────────────────────────────────────────
+    resolvedCanonIds: json('resolved_canon_ids').$type<number[]>().default([]),
+    resolvedBundleIds: json('resolved_bundle_ids').$type<number[]>().default([]),
+    resolvedTermIds: json('resolved_term_ids').$type<number[]>().default([]),
+    resolvedTemplateIds: json('resolved_template_ids').$type<number[]>().default([]),
+
+    // ── Resolution Context ──────────────────────────────────────
+    submissionType: text('submission_type'),
+    moduleType: text('module_type'),
+    workType: text('work_type'),
+    regulatoryRegion: text('regulatory_region'),
+    totalTokensInjected: integer('total_tokens_injected'),
+
+    // ── Immutable ───────────────────────────────────────────────
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_reslog_org_idx').on(table.organizationId),
+    requestIdx: index('acct_reslog_request_idx').on(table.requestId),
+    projectIdx: index('acct_reslog_project_idx').on(table.projectId),
+    createdAtIdx: index('acct_reslog_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type AccountCanonResolutionLogEntry = InferSelectModel<typeof accountCanonResolutionLog>;
+
+// ============================================================
+// END ACCOUNT CANON + SKILL BUNDLES
+// ============================================================
+
+// ============================================================
 // END CLIENT & PROJECT INTELLIGENCE MEMORY SYSTEM
 // ============================================================
 
