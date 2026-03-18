@@ -21,10 +21,19 @@ import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
 
+// Helper to read organization ID from header or query param
+function getOrgId(req: express.Request): number {
+  return parseInt(
+    (req.headers['x-organization-id'] as string) ||
+    (req.query.organizationId as string) ||
+    '1'
+  );
+}
+
 // Analytical Methods Routes
 router.get('/analytical-methods', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const methods = await db
       .select({
         id: analyticalMethods.id,
@@ -77,7 +86,7 @@ router.put('/analytical-methods/:id', async (req, res) => {
 // Process Validation Routes
 router.get('/process-validation', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const validation = await db
       .select()
       .from(processValidation)
@@ -103,7 +112,7 @@ router.post('/process-validation', async (req, res) => {
 // Stability Studies Routes
 router.get('/stability-studies', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const studies = await db
       .select({
         id: stabilityStudies.id,
@@ -140,7 +149,7 @@ router.post('/stability-studies', async (req, res) => {
 // QC Testing Routes
 router.get('/qc-testing', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const testing = await db.select().from(qcTesting).where(eq(qcTesting.organizationId, orgId));
     res.json({ success: true, data: testing });
   } catch (error) {
@@ -163,7 +172,7 @@ router.post('/qc-testing', async (req, res) => {
 // Change Control Routes
 router.get('/change-control', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const changes = await db
       .select()
       .from(cmcChangeControl)
@@ -189,7 +198,7 @@ router.post('/change-control', async (req, res) => {
 // Drug Substances Routes
 router.get('/drug-substances', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const substances = await db
       .select({
         id: drugSubstances.id,
@@ -226,7 +235,7 @@ router.post('/drug-substances', async (req, res) => {
 // Drug Products Routes
 router.get('/drug-products', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const products = await db
       .select({
         id: drugProducts.id,
