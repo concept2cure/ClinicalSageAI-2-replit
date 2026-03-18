@@ -188,6 +188,65 @@ export const stripeEvents = pgTable('stripe_events', {
 
 export type StripeEvent = InferSelectModel<typeof stripeEvents>;
 
+// ============================================================
+// DEEP RESEARCH JOBS (premium research orchestration)
+// ============================================================
+
+export const deepResearchJobs = pgTable('deep_research_jobs', {
+  id: serial('id').primaryKey(),
+  uuid: uuid('uuid').default(sql`gen_random_uuid()`),
+  organizationId: integer('organization_id').references(() => organizations.id),
+  projectId: integer('project_id'),
+  userId: integer('user_id'),
+  status: text('status').default('queued').notNull(), // queued, running, synthesizing, complete, failed
+  query: json('query'),
+  progress: integer('progress').default(0),
+  results: json('results'),
+  synthesis: text('synthesis'),
+  creditsUsed: integer('credits_used').default(0),
+  connectorLogs: json('connector_logs'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+});
+
+export type DeepResearchJob = InferSelectModel<typeof deepResearchJobs>;
+
+// ============================================================
+// CONNECTOR CREDENTIALS (encrypted per-org, for Veeva/Medidata)
+// ============================================================
+
+export const connectorCredentials = pgTable('connector_credentials', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  connectorId: text('connector_id').notNull(), // veeva_vault, medidata_rave, etc.
+  credentials: text('credentials').notNull(), // AES-256-GCM encrypted JSON
+  isValid: boolean('is_valid').default(true),
+  lastValidatedAt: timestamp('last_validated_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqOrgConnector: unique().on(table.organizationId, table.connectorId),
+}));
+
+export type ConnectorCredential = InferSelectModel<typeof connectorCredentials>;
+
+// ============================================================
+// USAGE RECORDS (credit-based metering for deep research, builders)
+// ============================================================
+
+export const usageRecords = pgTable('usage_records', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  userId: integer('user_id'),
+  featureId: text('feature_id').notNull(), // deep_research, csr_builder, ctd_builder
+  creditsUsed: integer('credits_used').default(1),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  idxUsageOrg: index('idx_usage_org_feature').on(table.organizationId, table.featureId, table.createdAt),
+}));
+
+export type UsageRecord = InferSelectModel<typeof usageRecords>;
+
 /**
  * Audit Logs
  * GxP-compliant immutable audit trail of CRUD activity.

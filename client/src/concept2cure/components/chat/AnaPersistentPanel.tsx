@@ -21,6 +21,9 @@ import {
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
+  ChevronDown,
+  Zap,
+  MessageSquare,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -78,6 +81,8 @@ interface AnaPersistentPanelProps {
    * "compact" = just the input bar at bottom, conversation expands as overlay
    */
   mode?: 'full' | 'compact';
+  /** Pre-select the chat mode (standard or deep-research) */
+  defaultChatMode?: 'standard' | 'deep-research';
 }
 
 // ─── Context labels ──────────────────────────────────────────────────────────
@@ -99,6 +104,8 @@ const SCREEN_LABELS: Record<string, string> = {
   'training-center': 'Training Center',
   'knowledge-base': 'Knowledge Base',
   cmc: 'CMC Platform',
+  'deep-research': 'Deep Research',
+  'document-builder': 'Document Builder',
   projects: 'Home',
 };
 
@@ -112,12 +119,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onActionRun,
   onNavigate,
   mode = 'full',
+  defaultChatMode = 'standard',
 }) => {
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [chatMode, setChatMode] = useState<'standard' | 'deep-research'>(defaultChatMode);
+  const [showModeDropdown, setShowModeDropdown] = useState(false);
+  const modeDropdownRef = useRef<HTMLDivElement>(null);
   const [showActions, setShowActions] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -125,6 +136,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+
+  // Close mode dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
+        setShowModeDropdown(false);
+      }
+    };
+    if (showModeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showModeDropdown]);
 
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
@@ -209,6 +233,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
+          chatMode,
           context: {
             screen: contextProfile?.screenName,
             project: contextProfile?.activeProject,
@@ -496,11 +521,62 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm'
               : 'border-zinc-200 hover:border-zinc-300'
           )}>
-            {/* Context indicator */}
-            <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
-              <Sparkles className="w-4 h-4 text-violet-500" />
-              {screenLabel && (
-                <span className="text-[10px] text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>
+            {/* Mode selector — Claude.ai model-picker style */}
+            <div className="relative flex-shrink-0 self-center" ref={modeDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowModeDropdown(prev => !prev)}
+                className={cn(
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  chatMode === 'deep-research'
+                    ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                )}
+              >
+                {chatMode === 'deep-research' ? (
+                  <Zap className="w-3.5 h-3.5" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">
+                  {chatMode === 'deep-research' ? 'Deep Research' : 'AnA'}
+                </span>
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </button>
+
+              {showModeDropdown && (
+                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-zinc-200 shadow-lg py-1 z-50">
+                  <button
+                    type="button"
+                    onClick={() => { setChatMode('standard'); setShowModeDropdown(false); }}
+                    className={cn(
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      chatMode === 'standard' && 'bg-zinc-50'
+                    )}
+                  >
+                    <MessageSquare className="w-4 h-4 mt-0.5 text-zinc-500 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900">AnA</div>
+                      <div className="text-[11px] text-zinc-400 leading-tight">Fast regulatory co-pilot for everyday questions</div>
+                    </div>
+                    {chatMode === 'standard' && <Check className="w-4 h-4 text-blue-600 ml-auto mt-0.5 flex-shrink-0" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setChatMode('deep-research'); setShowModeDropdown(false); }}
+                    className={cn(
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      chatMode === 'deep-research' && 'bg-violet-50'
+                    )}
+                  >
+                    <Zap className="w-4 h-4 mt-0.5 text-violet-600 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900">Deep Research</div>
+                      <div className="text-[11px] text-zinc-400 leading-tight">Multi-source search across ClinicalTrials.gov, PubMed, FDA &amp; more</div>
+                    </div>
+                    {chatMode === 'deep-research' && <Check className="w-4 h-4 text-violet-600 ml-auto mt-0.5 flex-shrink-0" />}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -512,7 +588,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Message AnA..."
+              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : 'Message AnA...'}
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]"
             />

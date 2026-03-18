@@ -56,6 +56,10 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // Lazy-load CERV2Page for embedded module rendering inside the shell
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+// DTC Landing Page (public, no auth)
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+// Full Document Builder wizard (CSR + CTD across global agencies)
+const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
 import {
   X,
   ChevronLeft,
@@ -395,7 +399,9 @@ type LayoutMode =
   | 'knowledge-base'
   | 'project-knowledge'
   | 'legal-center'
-  | 'artifacts';
+  | 'artifacts'
+  | 'document-builder'
+  | 'deep-research';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1745,6 +1751,12 @@ export const ZenApp: React.FC = () => {
             case 'artifacts':
               setLayoutMode('artifacts');
               break;
+            case 'deep-research':
+              setLayoutMode('deep-research');
+              break;
+            case 'document-builder':
+              setLayoutMode('document-builder');
+              break;
             default:
               break;
           }
@@ -2848,6 +2860,27 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* ── Document Builder — CSR + CTD wizard across global agencies ── */}
+          {!embeddedModule && layoutMode === 'document-builder' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-builder">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <BookOpen className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-800">Document Builder</span>
+              </div>
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <FullDocumentBuilder />
+              </Suspense>
+            </div>
+          )}
+
           {/* Precedent Intelligence — disabled (consolidated into Intelligence Hub) */}
 
           {/* Redirect deprecated routes to unified workspace */}
@@ -3113,7 +3146,8 @@ export const ZenApp: React.FC = () => {
             projects/home: shown here as full chat (no module content above) */}
         {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && (
           <AnaPersistentPanel
-            mode={layoutMode === 'projects' ? 'full' : 'compact'}
+            mode={layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'}
+            defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
             contextProfile={{
               productType: activeProject?.type,
               userRole: userRole,
@@ -3121,7 +3155,9 @@ export const ZenApp: React.FC = () => {
               activeProject: activeProject?.name,
               projectId: activeProjectId,
             }}
-            greeting={platformGreeting}
+            greeting={layoutMode === 'deep-research'
+              ? 'What would you like to research? I\'ll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more.'
+              : platformGreeting}
             suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
             onActionRun={handleActionRun}
           />

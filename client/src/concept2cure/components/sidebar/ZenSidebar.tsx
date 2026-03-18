@@ -446,6 +446,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onClick={() => onNavigate?.('document-sherpa')}
             />
             <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Document Builder"
+              subtitle="CSR · CTD · Multi-agency"
+              active={activeNavId === 'document-builder'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('document-builder')}
+            />
+            <NavItem
               icon={<Users className="w-3.5 h-3.5" />}
               label="Collaboration"
               subtitle="Threads · Reviews · Decisions"
@@ -484,6 +492,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── RESEARCH — what I need to know ───────────────────── */}
           <WorkspaceGroup label="Research">
+            <NavItem
+              icon={<Search className="w-3.5 h-3.5" />}
+              label="Deep Research"
+              subtitle="Multi-source · Connectors · AI"
+              active={activeNavId === 'deep-research'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('deep-research')}
+            />
             <NavItem
               icon={<Search className="w-3.5 h-3.5" />}
               label="Intelligence"

@@ -1273,6 +1273,16 @@ try {
   console.error('❌ Failed to mount Billing routes:', error);
 }
 
+// Mount Deep Research routes (connectors, orchestrator, usage metering)
+try {
+  const deepResearchModule = await import('./routes/deep-research.js');
+  const deepResearchRouter = deepResearchModule.default;
+  app.use('/api/deep-research', deepResearchRouter);
+  console.log('✅ Deep Research API routes mounted (connectors, jobs, usage)');
+} catch (error) {
+  console.error('❌ Failed to mount Deep Research routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');
