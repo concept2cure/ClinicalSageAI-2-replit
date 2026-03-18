@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import {
   Users,
@@ -280,16 +281,7 @@ const MOCK_ACTIVITY: ActivityEntry[] = [
   { id: 10, userId: 3, userName: 'Carol Nguyen', action: 'posted a comment on', target: 'Module 2.4 Nonclinical Overview', timestamp: '8 hrs ago' },
 ];
 
-const MOCK_WORKLOAD: WorkloadEntry[] = [
-  { memberId: 1, memberName: 'Alice Chen', assigned: 14, inReview: 3, overdue: 2 },
-  { memberId: 2, memberName: 'Bob Martinez', assigned: 8, inReview: 0, overdue: 0 },
-  { memberId: 3, memberName: 'Carol Nguyen', assigned: 5, inReview: 7, overdue: 1 },
-  { memberId: 4, memberName: 'David Park', assigned: 3, inReview: 5, overdue: 0 },
-  { memberId: 5, memberName: 'Eva Rossi', assigned: 11, inReview: 1, overdue: 3 },
-  { memberId: 6, memberName: 'Frank Dubois', assigned: 6, inReview: 0, overdue: 0 },
-  { memberId: 7, memberName: 'Grace Kim', assigned: 4, inReview: 9, overdue: 1 },
-  { memberId: 8, memberName: 'Henry Okafor', assigned: 2, inReview: 4, overdue: 0 },
-];
+// Workload data fetched via useQuery in the component
 
 const WORKLOAD_RECOMMENDATIONS = [
   { from: 'Alice Chen', to: 'Bob Martinez', count: 3, reason: 'Alice has 2 overdue tasks and 14 assigned; Bob has capacity with only 8 assigned and 0 overdue.' },

@@ -1117,15 +1117,33 @@ export const LegalCenter: React.FC<{ onClose?: () => void }> = ({ onClose }) => 
   const [search, setSearch] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
 
+  const { data: patents = [] } = useQuery<Patent[]>({
+    queryKey: ['concept2cure', 'patents'],
+    queryFn: async () => {
+      const res = await fetch('/api/concept2cure/patents');
+      if (!res.ok) throw new Error('Failed to fetch patents');
+      return res.json();
+    },
+  });
+
+  const { data: complianceItems = [] } = useQuery<ComplianceItem[]>({
+    queryKey: ['concept2cure', 'compliance'],
+    queryFn: async () => {
+      const res = await fetch('/api/concept2cure/compliance');
+      if (!res.ok) throw new Error('Failed to fetch compliance data');
+      return res.json();
+    },
+  });
+
   const tabs: TabDef[] = useMemo(
     () => [
-      { id: 'ip-portfolio', label: 'IP Portfolio', icon: <Fingerprint className="h-4 w-4" />, count: MOCK_PATENTS.length },
+      { id: 'ip-portfolio', label: 'IP Portfolio', icon: <Fingerprint className="h-4 w-4" />, count: patents.length },
       { id: 'contracts', label: 'Contracts', icon: <Briefcase className="h-4 w-4" />, count: MOCK_CONTRACTS.length },
       { id: 'regulatory-law', label: 'Regulatory Law', icon: <Scale className="h-4 w-4" />, count: MOCK_REGULATORY_LAW.length },
-      { id: 'compliance', label: 'Compliance', icon: <Shield className="h-4 w-4" />, count: MOCK_COMPLIANCE.length },
+      { id: 'compliance', label: 'Compliance', icon: <Shield className="h-4 w-4" />, count: complianceItems.length },
       { id: 'risk-register', label: 'Risk Register', icon: <AlertTriangle className="h-4 w-4" />, count: MOCK_RISKS.length },
     ],
-    [],
+    [patents, complianceItems],
   );
 
   const tabMeta: Record<TabId, { title: string; subtitle: string }> = {
