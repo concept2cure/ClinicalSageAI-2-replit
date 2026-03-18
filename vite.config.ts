@@ -2,12 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import themePlugin from '@replit/vite-plugin-shadcn-theme-json';
 import path from 'path';
-import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
-
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
     themePlugin(),
     // Cartographer plugin for dev environment mapping (optional)
     ...(process.env.NODE_ENV !== 'production' && process.env.REPL_ID !== undefined
@@ -22,6 +19,26 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, 'client'),
+  server: {
+    hmr: {
+      overlay: false,
+    },
+    watch: {
+      // Ignore non-client files so server-side / DB edits don't trigger reloads
+      ignored: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/scripts/**',
+        '**/server/**',
+        '**/shared/**',
+        '**/migrations/**',
+        '**/backend/**',
+        '**/*.md',
+        '**/*.sh',
+        '**/*.sql',
+      ],
+    },
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,

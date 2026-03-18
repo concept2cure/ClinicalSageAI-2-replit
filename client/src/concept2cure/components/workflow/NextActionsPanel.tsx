@@ -57,7 +57,7 @@ const priorityConfig = {
   CRITICAL: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300', label: '🔴 Critical' },
   HIGH: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-300', label: '🟠 High' },
   MEDIUM: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', label: '🟡 Medium' },
-  LOW: { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-300', label: '⚪ Low' },
+  LOW: { bg: 'bg-zinc-100', text: 'text-zinc-600', border: 'border-zinc-300', label: '⚪ Low' },
 };
 
 // Calculate priority from SLA
@@ -156,7 +156,7 @@ const ActionItem: React.FC<{
   return (
     <div
       className={cn(
-        "group relative p-4 rounded-2xl border bg-white dark:bg-gray-900 transition-all hover:shadow-md cursor-pointer",
+        "group relative p-4 rounded-2xl border bg-white transition-all hover:shadow-md cursor-pointer",
         config.border,
         priority === 'CRITICAL' && "animate-pulse-subtle"
       )}
@@ -184,10 +184,10 @@ const ActionItem: React.FC<{
         </div>
         
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+          <h4 className="font-medium text-zinc-900 truncate">
             {action.name}
           </h4>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
             <span className="truncate">{action.workflowName}</span>
             <span className={cn(
               "px-2 py-0.5 rounded-full font-medium",
@@ -204,7 +204,7 @@ const ActionItem: React.FC<{
               priority === 'CRITICAL' && "text-red-600",
               priority === 'HIGH' && "text-amber-600",
               priority === 'MEDIUM' && "text-blue-600",
-              priority === 'LOW' && "text-gray-500"
+              priority === 'LOW' && "text-zinc-500"
             )}>
               {priority === 'CRITICAL' ? (
                 <AlertTriangle size={12} />
@@ -247,7 +247,7 @@ const ActionItem: React.FC<{
         
         <ChevronRight 
           size={16} 
-          className="text-gray-300 group-hover:text-gray-500 transition-colors" 
+          className="text-zinc-300 group-hover:text-zinc-500 transition-colors" 
         />
       </div>
     </div>
@@ -260,10 +260,10 @@ const EmptyState: React.FC = () => (
     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
       <Sparkles size={32} className="text-green-500" />
     </div>
-    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">
+    <h3 className="text-lg font-medium text-zinc-900 mb-1">
       All caught up!
     </h3>
-    <p className="text-sm text-gray-500 dark:text-gray-400">
+    <p className="text-sm text-zinc-500">
       No pending actions at the moment. Great job staying on top of your workflows.
     </p>
   </div>
@@ -301,7 +301,7 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
   if (sortedActions.length === 0 && showEmpty) {
     return (
       <div className={cn(
-        "bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800",
+        "bg-white rounded-2xl border border-zinc-200",
         className
       )}>
         <EmptyState />
@@ -315,21 +315,21 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
   
   return (
     <div className={cn(
-      "bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden",
+      "bg-white rounded-2xl border border-zinc-200 overflow-hidden",
       className
     )}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="px-6 py-4 border-b border-zinc-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
               <Zap size={20} className="text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <h2 className="text-lg font-semibold text-zinc-900">
                 Your Next Actions
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-zinc-500">
                 {totalCount} pending {totalCount === 1 ? 'action' : 'actions'}
               </p>
             </div>
@@ -359,7 +359,7 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
       
       {/* Footer - View All */}
       {totalCount > maxItems && (
-        <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800">
+        <div className="px-6 py-3 bg-zinc-50 border-t border-zinc-100">
           <button className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
             <Target size={16} />
             View all {totalCount} actions
@@ -396,7 +396,7 @@ export const ActionStatsBar: React.FC<{
   
   return (
     <div className={cn("flex items-center gap-3 text-sm", className)}>
-      <span className="text-gray-500">Actions:</span>
+      <span className="text-zinc-500">Actions:</span>
       {stats.critical > 0 && (
         <span className="flex items-center gap-1 text-red-600 font-medium">
           🔴 {stats.critical}
@@ -413,7 +413,7 @@ export const ActionStatsBar: React.FC<{
         </span>
       )}
       {stats.low > 0 && (
-        <span className="flex items-center gap-1 text-gray-500">
+        <span className="flex items-center gap-1 text-zinc-500">
           ⚪ {stats.low}
         </span>
       )}

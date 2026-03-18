@@ -388,24 +388,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [activeArtifact?.content, activeArtifact?.title, onContentChange]);
 
-  // ── Global keyboard shortcuts ───────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      // Ctrl/Cmd+S — save
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        if (activeArtifact) handleSave(activeArtifact.content, {});
-      }
-      // Escape — close menus
-      if (e.key === 'Escape') {
-        setOverflowOpen(false);
-        setAiMenuOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [activeArtifact, handleSave]);
-
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
@@ -455,6 +437,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     },
     [projectId, activeArtifact, loadArtifacts]
   );
+
+  // ── Global keyboard shortcuts ───────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+S — save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (activeArtifact) handleSave(activeArtifact.content, {});
+      }
+      // Escape — close menus
+      if (e.key === 'Escape') {
+        setOverflowOpen(false);
+        setAiMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeArtifact, handleSave]);
 
   // ── Create new document ──────────────────────────────────────────────────
   const handleCreateNew = useCallback(async () => {
@@ -575,6 +575,46 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       setDocxExporting(false);
     }
   }, [activeArtifact, submissionType, generateDocxMutation, pushToast]);
+
+  // ── PDF Export ─────────────────────────────────────────────────────────
+  const handleExportPdf = useCallback(async () => {
+    if (!activeArtifact) return;
+    pushToast('Exporting PDF…', 'info');
+    try {
+      const res = await fetch('/api/concept2cure/artifacts/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ title: activeArtifact.title, content: activeArtifact.content }),
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+      downloadBlob(blob, filename);
+      pushToast(`Downloaded ${filename}`, 'success');
+    } catch {
+      pushToast('PDF export failed', 'error');
+    }
+  }, [activeArtifact, pushToast]);
+
+  // ── PPTX Export ────────────────────────────────────────────────────────
+  const handleExportPptx = useCallback(async () => {
+    if (!activeArtifact) return;
+    pushToast('Exporting PowerPoint…', 'info');
+    try {
+      const res = await fetch('/api/concept2cure/artifacts/export-pptx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ title: activeArtifact.title, content: activeArtifact.content }),
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pptx`;
+      downloadBlob(blob, filename);
+      pushToast(`Downloaded ${filename}`, 'success');
+    } catch {
+      pushToast('PowerPoint export failed', 'error');
+    }
+  }, [activeArtifact, pushToast]);
 
   // ── Sign & Approve ───────────────────────────────────────────────────
   const handleSignApprove = useCallback(async () => {
@@ -1162,18 +1202,32 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <Check className="w-3 h-3 text-zinc-400" />
                   Save
                 </button>
-                {/* DOCX Export */}
+                {/* Export submenu */}
+                <div className="px-3 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Export</div>
                 <button
                   role="menuitem"
-                  onClick={() => {
-                    handleExportDocx();
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() => { handleExportDocx(); setOverflowOpen(false); }}
                   disabled={docxExporting}
                   className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <Download className="w-3 h-3 text-zinc-400" />
-                  Export DOCX
+                  Word (.docx)
+                </button>
+                <button
+                  role="menuitem"
+                  onClick={() => { handleExportPdf(); setOverflowOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                >
+                  <Download className="w-3 h-3 text-zinc-400" />
+                  PDF (.pdf)
+                </button>
+                <button
+                  role="menuitem"
+                  onClick={() => { handleExportPptx(); setOverflowOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                >
+                  <Download className="w-3 h-3 text-zinc-400" />
+                  PowerPoint (.pptx)
                 </button>
                 <div className="border-t border-zinc-100 my-1" />
                 {/* Sign */}

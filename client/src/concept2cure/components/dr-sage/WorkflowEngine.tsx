@@ -83,29 +83,29 @@ const STATUS_CONFIG = {
     label: 'Pending',
   },
   running: {
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    border: 'border-blue-400 dark:border-blue-500',
+    bg: 'bg-blue-50',
+    border: 'border-blue-400',
     icon: Loader2,
     iconColor: 'text-blue-500',
     label: 'Running',
   },
   complete: {
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-    border: 'border-emerald-400 dark:border-emerald-500',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-400',
     icon: CheckCircle2,
     iconColor: 'text-emerald-500',
     label: 'Complete',
   },
   blocked: {
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    border: 'border-red-400 dark:border-red-500',
+    bg: 'bg-red-50',
+    border: 'border-red-400',
     icon: AlertCircle,
     iconColor: 'text-red-500',
     label: 'Blocked',
   },
   'action-needed': {
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    border: 'border-amber-400 dark:border-amber-500',
+    bg: 'bg-amber-50',
+    border: 'border-amber-400',
     icon: AlertTriangle,
     iconColor: 'text-amber-500',
     label: 'Action Needed',
@@ -115,17 +115,17 @@ const STATUS_CONFIG = {
 const ACTOR_CONFIG = {
   'dr-sage': {
     label: 'Dr. Sage',
-    bg: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+    bg: 'bg-blue-100 text-blue-700',
     icons: [Bot],
   },
   ana: {
     label: 'AnA 1.0',
-    bg: 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300',
+    bg: 'bg-violet-100 text-violet-700',
     icons: [Brain],
   },
   both: {
     label: 'Dr. Sage + AnA 1.0',
-    bg: 'bg-gradient-to-r from-blue-100 to-violet-100 dark:from-blue-900/40 dark:to-violet-900/40 text-indigo-700 dark:text-indigo-300',
+    bg: 'bg-gradient-to-r from-blue-100 to-violet-100 text-indigo-700',
     icons: [Bot, Brain],
   },
 } as const;
@@ -204,7 +204,7 @@ function StepCard({
             className={cn(
               'w-0.5 flex-1 min-h-[24px]',
               step.status === 'complete'
-                ? 'bg-emerald-300 dark:bg-emerald-700'
+                ? 'bg-emerald-300'
                 : 'bg-border',
             )}
           />
@@ -252,7 +252,7 @@ function StepCard({
               transition={{ duration: 0.3 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-100/60 dark:bg-emerald-900/30 p-2.5 text-xs text-emerald-700 dark:text-emerald-300">
+              <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-100/60 p-2.5 text-xs text-emerald-700">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
                 <span>{step.result}</span>
               </div>
@@ -271,7 +271,7 @@ function StepCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-500 dark:text-amber-300 dark:hover:bg-amber-900/30"
+                  className="border-amber-400 text-amber-700 hover:bg-amber-100"
                   onClick={() => onAction(step.id)}
                 >
                   <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
@@ -323,8 +323,8 @@ export function WorkflowEngine({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/40">
-              <Zap className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100">
+              <Zap className="h-4 w-4 text-indigo-600" />
             </div>
             <div>
               <CardTitle className="text-base">{title}</CardTitle>
@@ -395,7 +395,7 @@ export function WorkflowEngine({
               exit={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="mt-2 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 p-4">
+              <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-50 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -409,7 +409,7 @@ export function WorkflowEngine({
                   >
                     <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   </motion.div>
-                  <span className="font-semibold text-sm text-emerald-700 dark:text-emerald-300">
+                  <span className="font-semibold text-sm text-emerald-700">
                     Workflow Complete
                   </span>
                 </div>

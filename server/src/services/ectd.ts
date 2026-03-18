@@ -154,7 +154,7 @@ export async function validateeCTDStructure(zipData: any): Promise<{ valid: bool
 
   // Attempt full ICH eCTD structural validation via the export service
   try {
-    const { validateEctdPackage } = await import('../../server/services/ectdExportService');
+    const { validateEctdPackage } = await import('../../services/ectdExportService');
     let buffer: Buffer;
     if (Buffer.isBuffer(zipData)) {
       buffer = zipData;

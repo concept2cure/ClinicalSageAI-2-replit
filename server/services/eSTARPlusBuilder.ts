@@ -842,15 +842,11 @@ export class eSTARPlusBuilder {
         submissionDate: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Error fetching project metadata:', error);
-      
-      // Return mock data if not found (for development)
-      return {
-        manufacturer: 'Example Medical Devices, Inc.',
-        deviceName: 'ExampleMed Device',
-        sequence: '001',
-        submissionDate: new Date().toISOString()
-      };
+      console.error(`Error fetching project metadata for ${projectId}:`, error);
+      throw new Error(
+        `Unable to retrieve project metadata for project ${projectId}. ` +
+        'Ensure the project exists and the database connection is available.'
+      );
     }
   }
   

@@ -437,6 +437,63 @@ function NewSimulationDialog({
   );
 }
 
+// Section Viewer Component
+function SectionViewer({ documentId }: { documentId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['spl-sections', documentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/gcc/labeling/documents/${documentId}/sections`);
+      if (!response.ok) throw new Error('Failed to fetch sections');
+      return response.json();
+    },
+    enabled: !!documentId,
+  });
+
+  const sections: SPLSection[] = data?.sections || [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (sections.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
+        <p>No sections found for this document.</p>
+        <p className="text-sm mt-1">Sections will appear here once the document is populated.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ScrollArea className="h-[400px]">
+      <div className="space-y-3">
+        {sections
+          .sort((a, b) => a.display_order - b.display_order)
+          .map((section) => (
+            <div key={section.id} className="border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="text-xs font-mono">
+                  {section.section_number}
+                </Badge>
+                <span className="font-medium text-sm">{section.section_name}</span>
+              </div>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
+                {section.section_text || 'No content'}
+              </p>
+            </div>
+          ))}
+      </div>
+    </ScrollArea>
+  );
+}
+
 // Main Dashboard Component
 export default function LabelImpactSimulator({ programId }: { programId?: string }) {
   const { toast } = useToast();
@@ -794,9 +851,7 @@ export default function LabelImpactSimulator({ programId }: { programId?: string
                   </TabsContent>
                   
                   <TabsContent value="sections" className="mt-4">
-                    <div className="text-center py-8 text-muted-foreground">
-                      Section viewer coming soon
-                    </div>
+                    <SectionViewer documentId={selectedDocument.id} />
                   </TabsContent>
                 </Tabs>
               </CardContent>

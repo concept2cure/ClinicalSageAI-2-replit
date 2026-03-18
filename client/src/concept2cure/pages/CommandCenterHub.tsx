@@ -9,6 +9,9 @@
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
+import { useProjects } from '@/concept2cure/hooks/useProjects';
+import { useProjectTasks } from '@/concept2cure/hooks/useProjectTasks';
+import { useQuery } from '@tanstack/react-query';
 import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 import {
   Activity,
@@ -61,79 +64,6 @@ const TABS: Tab[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-// MOCK DATA
-// ═══════════════════════════════════════════════════════════════════
-
-const PROGRAMS = [
-  { id: 1, name: 'ARX-514 (Oncology)', type: 'IND' as const, status: 'Active', readiness: 82, lastActivity: '2 hours ago' },
-  { id: 2, name: 'NVD-201 (Cardiology)', type: 'NDA' as const, status: 'Under Review', readiness: 94, lastActivity: '1 day ago' },
-  { id: 3, name: 'CLR-330 (Diagnostics)', type: '510(k)' as const, status: 'Drafting', readiness: 56, lastActivity: '3 hours ago' },
-  { id: 4, name: 'BTX-710 (Neurology)', type: 'IND' as const, status: 'Pre-Submission', readiness: 71, lastActivity: '5 hours ago' },
-];
-
-const RISK_SIGNALS = [
-  { id: 1, severity: 'critical' as const, message: 'CMC Section 3.2.S missing stability data — ARX-514', program: 'ARX-514' },
-  { id: 2, severity: 'high' as const, message: 'FDA Type B meeting response overdue by 4 days — NVD-201', program: 'NVD-201' },
-  { id: 3, severity: 'high' as const, message: 'Predicate device comparison incomplete — CLR-330', program: 'CLR-330' },
-];
-
-const SUBMISSIONS = [
-  { id: 1, name: 'ARX-514 IND Original', type: 'IND', agency: 'FDA', status: 'In Progress', readiness: 82, due: '2026-04-15', sections: 12, completed: 9, missing: ['3.2.S.7 Stability', '2.4 Nonclinical Overview', '1.3.1 Cover Letter'], blockers: ['Stability data pending from CRO'] },
-  { id: 2, name: 'NVD-201 NDA Module 3', type: 'NDA', agency: 'FDA', status: 'Review', readiness: 94, due: '2026-05-01', sections: 8, completed: 8, missing: [], blockers: ['QA sign-off pending'] },
-  { id: 3, name: 'CLR-330 510(k) Substantial Equivalence', type: '510(k)', agency: 'FDA', status: 'Drafting', readiness: 56, due: '2026-06-30', sections: 10, completed: 5, missing: ['Performance Testing', 'Biocompatibility Report', 'Software Documentation', 'Labeling', 'Sterilization Validation'], blockers: ['Predicate comparison not finalized', 'Bench testing in progress'] },
-];
-
-const TASKS = [
-  { id: 1, title: 'Draft CMC stability protocol', assignee: 'Dr. Patel', column: 'todo' as const, priority: 'high' as const },
-  { id: 2, title: 'Update predicate comparison table', assignee: 'M. Chen', column: 'todo' as const, priority: 'critical' as const },
-  { id: 3, title: 'Review Module 2.5 summary', assignee: 'S. Williams', column: 'in_progress' as const, priority: 'high' as const },
-  { id: 4, title: 'Compile nonclinical references', assignee: 'Dr. Patel', column: 'in_progress' as const, priority: 'medium' as const },
-  { id: 5, title: 'Format eCTD Module 1 cover letter', assignee: 'J. Rivera', column: 'review' as const, priority: 'medium' as const },
-  { id: 6, title: 'Validate bioanalytical methods section', assignee: 'A. Kumar', column: 'review' as const, priority: 'high' as const },
-  { id: 7, title: 'Publish Module 3.2.P Drug Product', assignee: 'S. Williams', column: 'done' as const, priority: 'medium' as const },
-  { id: 8, title: 'Finalize QOS for NVD-201', assignee: 'Dr. Patel', column: 'done' as const, priority: 'high' as const },
-];
-
-const DOCUMENTS = [
-  { id: 1, name: 'ARX-514 Investigators Brochure', type: 'IB', version: '3.1', status: 'Approved', modified: '2026-03-14', owner: 'Dr. Patel' },
-  { id: 2, name: 'NVD-201 Clinical Study Report', type: 'CSR', version: '2.0', status: 'Under Review', modified: '2026-03-16', owner: 'S. Williams' },
-  { id: 3, name: 'CLR-330 510(k) Summary', type: '510(k)', version: '1.2', status: 'Draft', modified: '2026-03-15', owner: 'M. Chen' },
-  { id: 4, name: 'BTX-710 Nonclinical Overview', type: 'Module 2.4', version: '1.0', status: 'Draft', modified: '2026-03-12', owner: 'A. Kumar' },
-  { id: 5, name: 'ARX-514 CMC Stability Report', type: 'Module 3.2.S', version: '1.1', status: 'Pending Data', modified: '2026-03-10', owner: 'J. Rivera' },
-  { id: 6, name: 'NVD-201 Risk-Benefit Analysis', type: 'Module 2.5', version: '4.0', status: 'Approved', modified: '2026-03-13', owner: 'Dr. Patel' },
-];
-
-const MEETINGS = [
-  { id: 1, date: '2026-02-10', agency: 'FDA', type: 'Pre-IND', status: 'Completed', program: 'ARX-514', agenda: ['Proposed clinical trial design', 'CMC development plan', 'Nonclinical package sufficiency'], commitments: [{ text: 'Submit revised protocol synopsis', due: '2026-03-15', done: true }, { text: 'Provide additional tox study rationale', due: '2026-04-01', done: false }], actionItems: 3, completedActions: 2 },
-  { id: 2, date: '2026-03-05', agency: 'FDA', type: 'Type B', status: 'Completed', program: 'NVD-201', agenda: ['Bioequivalence study design', 'Labeling considerations', 'REMS discussion'], commitments: [{ text: 'Provide updated dissolution data', due: '2026-03-20', done: false }, { text: 'Submit revised labeling draft', due: '2026-04-10', done: false }], actionItems: 4, completedActions: 1 },
-  { id: 3, date: '2026-04-20', agency: 'FDA', type: 'Type C', status: 'Scheduled', program: 'CLR-330', agenda: ['Predicate device selection rationale', 'Performance testing approach', 'Clinical data requirements'], commitments: [], actionItems: 0, completedActions: 0 },
-];
-
-const TEAM_MEMBERS = [
-  { id: 1, name: 'Dr. Anita Patel', role: 'Regulatory Lead', tasks: 6, availability: 'Available', active: true },
-  { id: 2, name: 'Sophia Williams', role: 'Clinical Writer', tasks: 4, availability: 'Busy', active: true },
-  { id: 3, name: 'Michael Chen', role: 'Quality Specialist', tasks: 3, availability: 'Available', active: true },
-  { id: 4, name: 'Juan Rivera', role: 'CMC Specialist', tasks: 5, availability: 'In Meeting', active: false },
-  { id: 5, name: 'Arjun Kumar', role: 'Nonclinical Reviewer', tasks: 2, availability: 'Available', active: true },
-];
-
-const ANALYTICS_DATA = {
-  cycleTime: [
-    { phase: 'Drafting', avg: 14 },
-    { phase: 'Internal Review', avg: 7 },
-    { phase: 'QA Review', avg: 5 },
-    { phase: 'Finalization', avg: 3 },
-    { phase: 'eCTD Publishing', avg: 2 },
-  ],
-  quality: [
-    { period: 'Q3 2025', deficiencyRate: 12 },
-    { period: 'Q4 2025', deficiencyRate: 8 },
-    { period: 'Q1 2026', deficiencyRate: 5 },
-  ],
-  portfolio: { totalPrograms: 4, onTrack: 2, atRisk: 1, delayed: 1, avgReadiness: 76 },
-};
-
-// ═══════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════
 
@@ -168,6 +98,19 @@ const COLUMNS = [
   { key: 'done', label: 'Done' },
 ] as const;
 
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+}
+
 function Pill({ text, className }: { text: string; className?: string }) {
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full', className)}>
@@ -189,16 +132,99 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// DATA HOOK — Fetches real data from APIs
+// ═══════════════════════════════════════════════════════════════════
+
+function useCommandCenterData() {
+  const { projects, isLoading: isLoadingProjects } = useProjects();
+
+  // Fetch artifact summary
+  const { data: artifactSummary } = useQuery({
+    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+  });
+
+  // Fetch all artifacts across projects
+  const { data: artifactsData } = useQuery({
+    queryKey: ['/api/concept2cure/artifacts'],
+  });
+
+  // Fetch audit logs for activity feed
+  const { data: auditData } = useQuery({
+    queryKey: ['/api/concept2cure/audit-logs', { limit: 20 }],
+    queryFn: () => fetch('/api/concept2cure/audit-logs?limit=20').then(r => r.json()),
+  });
+
+  // Fetch pending reviews
+  const { data: reviewsData } = useQuery({
+    queryKey: ['/api/concept2cure/reviews/pending'],
+  });
+
+  // Transform projects into programs format
+  const programs = (projects || []).map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    type: p.submissionType || 'IND',
+    status: p.status === 'active' ? 'Active' : p.status === 'completed' ? 'Completed' : 'Drafting',
+    readiness: p.completionPercentage || 0,
+    lastActivity: p.updatedAt ? formatTimeAgo(p.updatedAt) : 'No activity',
+  }));
+
+  // Transform artifacts into documents format
+  const documents = ((artifactsData as any)?.data || []).slice(0, 10).map((a: any) => ({
+    id: a.artifactId || a.id,
+    name: a.title,
+    type: a.type || 'Document',
+    version: String(a.version || '1.0'),
+    status: a.status === 'approved' ? 'Approved' : a.status === 'review' ? 'Under Review' : a.status === 'locked' ? 'Approved' : 'Draft',
+    modified: a.updatedAt ? new Date(a.updatedAt).toLocaleDateString() : '',
+    owner: a.createdByName || 'System',
+  }));
+
+  // Derive risk signals from pending reviews
+  const riskSignals = ((reviewsData as any)?.data?.assignments || []).slice(0, 5).map((r: any, i: number) => ({
+    id: i + 1,
+    severity: r.status === 'pending' ? 'high' as const : 'medium' as const,
+    message: `Review pending: ${r.artifactTitle || 'Untitled'} (v${r.artifactVersion || 1})`,
+    program: '',
+  }));
+
+  // Get summary metrics
+  const summary = (artifactSummary as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
+
+  // Activity feed from audit logs
+  const activities = ((auditData as any)?.data?.logs || []).slice(0, 6).map((l: any) => ({
+    time: l.timestamp ? formatTimeAgo(l.timestamp) : '',
+    user: l.userName || 'System',
+    action: `${l.action || 'updated'} ${l.entityType || 'item'}`,
+  }));
+
+  const isLoading = isLoadingProjects;
+
+  return { programs, documents, riskSignals, summary, activities, isLoading };
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // SUB-VIEWS
 // ═══════════════════════════════════════════════════════════════════
 
-function DashboardView() {
+function DashboardView({ programs, riskSignals, summary, isLoading }: {
+  programs: any[];
+  riskSignals: any[];
+  summary: { total: number; draft: number; review: number; approved: number };
+  isLoading: boolean;
+}) {
   const { generate, isGenerating } = useDeliverable();
+
+  const totalPrograms = programs.length;
+  const avgReadiness = totalPrograms > 0
+    ? Math.round(programs.reduce((s, p) => s + (p.readiness || 0), 0) / totalPrograms)
+    : 0;
+
   const metrics = [
-    { label: 'Active Submissions', value: '4', icon: Package },
-    { label: 'Overall Readiness', value: '76%', icon: Target },
-    { label: 'Open Blockers', value: '5', icon: AlertTriangle },
-    { label: 'Days to Next Milestone', value: '29', icon: Calendar },
+    { label: 'Active Submissions', value: String(totalPrograms), icon: Package },
+    { label: 'Overall Readiness', value: totalPrograms > 0 ? `${avgReadiness}%` : '—', icon: Target },
+    { label: 'Open Reviews', value: String(riskSignals.length), icon: AlertTriangle },
+    { label: 'Documents', value: String(summary.total), icon: FileText },
   ];
 
   return (
@@ -219,7 +245,7 @@ function DashboardView() {
               <m.icon className="w-4 h-4 text-zinc-400" />
               <span className="text-xs text-zinc-400">{m.label}</span>
             </div>
-            <p className="text-2xl font-semibold text-zinc-900">{m.value}</p>
+            <p className="text-2xl font-semibold text-zinc-900">{isLoading ? '...' : m.value}</p>
           </Card>
         ))}
       </div>
@@ -227,49 +253,65 @@ function DashboardView() {
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2">
           <SectionLabel>Active Programs</SectionLabel>
-          <Card className="p-0 divide-y divide-zinc-50">
-            {PROGRAMS.map((p) => (
-              <div key={p.id} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className={cn('w-2 h-2 rounded-full', STATUS_DOT[p.status])} />
-                  <div>
-                    <p className="text-sm font-medium text-zinc-900">{p.name}</p>
-                    <p className="text-xs text-zinc-400">{p.lastActivity}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Pill text={p.type} className="bg-zinc-50 text-zinc-600" />
-                  <div className="w-24">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-zinc-400">Readiness</span>
-                      <span className="text-xs font-medium text-zinc-900">{p.readiness}%</span>
-                    </div>
-                    <div className="h-1 bg-zinc-100 rounded-full">
-                      <div className="h-1 bg-zinc-900 rounded-full" style={{ width: `${p.readiness}%` }} />
+          {programs.length === 0 ? (
+            <Card className="py-12 text-center">
+              <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <p className="text-sm text-zinc-500">No programs yet</p>
+              <p className="text-xs text-zinc-400 mt-1">Create projects to see your active regulatory programs here.</p>
+            </Card>
+          ) : (
+            <Card className="p-0 divide-y divide-zinc-50">
+              {programs.map((p) => (
+                <div key={p.id} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className={cn('w-2 h-2 rounded-full', STATUS_DOT[p.status] || 'bg-zinc-400')} />
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">{p.name}</p>
+                      <p className="text-xs text-zinc-400">{p.lastActivity}</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-zinc-300" />
+                  <div className="flex items-center gap-4">
+                    <Pill text={p.type} className="bg-zinc-50 text-zinc-600" />
+                    <div className="w-24">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-zinc-400">Readiness</span>
+                        <span className="text-xs font-medium text-zinc-900">{p.readiness}%</span>
+                      </div>
+                      <div className="h-1 bg-zinc-100 rounded-full">
+                        <div className="h-1 bg-zinc-900 rounded-full" style={{ width: `${p.readiness}%` }} />
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-zinc-300" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </Card>
+              ))}
+            </Card>
+          )}
         </div>
 
         <div>
           <SectionLabel>Risk Signals</SectionLabel>
-          <div className="space-y-2">
-            {RISK_SIGNALS.map((r) => (
-              <Card key={r.id} className="p-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className={cn('w-4 h-4 mt-0.5 shrink-0', r.severity === 'critical' ? 'text-red-500' : 'text-orange-500')} />
-                  <div>
-                    <p className="text-xs font-medium text-zinc-900 leading-snug">{r.message}</p>
-                    <Pill text={r.severity} className={cn('mt-1', SEVERITY_STYLES[r.severity])} />
+          {riskSignals.length === 0 ? (
+            <Card className="py-12 text-center">
+              <CheckCircle2 className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <p className="text-sm text-zinc-500">No risk signals</p>
+              <p className="text-xs text-zinc-400 mt-1">Pending reviews and risks will appear here.</p>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {riskSignals.map((r) => (
+                <Card key={r.id} className="p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className={cn('w-4 h-4 mt-0.5 shrink-0', r.severity === 'critical' ? 'text-red-500' : 'text-orange-500')} />
+                    <div>
+                      <p className="text-xs font-medium text-zinc-900 leading-snug">{r.message}</p>
+                      <Pill text={r.severity} className={cn('mt-1', SEVERITY_STYLES[r.severity])} />
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
           <p className="text-[10px] text-zinc-300 mt-3">Powered by Mission Control + Submission Readiness Twin</p>
         </div>
       </div>
@@ -277,10 +319,26 @@ function DashboardView() {
   );
 }
 
-function SubmissionsView() {
+function SubmissionsView({ programs }: { programs: any[] }) {
   const { generate, isGenerating } = useDeliverable();
   const [selected, setSelected] = useState(0);
-  const sub = SUBMISSIONS[selected];
+
+  // Map programs into a submissions-like shape
+  const submissions = programs.map((p) => ({
+    id: p.id,
+    name: p.name,
+    type: p.type,
+    agency: 'FDA',
+    status: p.status,
+    readiness: p.readiness,
+    due: '',
+    sections: 0,
+    completed: 0,
+    missing: [] as string[],
+    blockers: [] as string[],
+  }));
+
+  const sub = submissions[selected] || null;
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
@@ -293,83 +351,118 @@ function SubmissionsView() {
           <RunButton label="Compile eCTD Package" produces="eCTD Submission Package (ZIP)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/ectd/compile', method: 'POST', body: {}, filename: 'eCTD_Package.zip', format: 'zip', title: 'eCTD Package' })} />
         </div>
       </div>
-      <Card className="p-0 divide-y divide-zinc-50">
-        {SUBMISSIONS.map((s, i) => (
-          <button
-            key={s.id}
-            onClick={() => setSelected(i)}
-            className={cn('w-full flex items-center justify-between px-4 py-3 text-left transition-colors', selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
-          >
-            <div className="flex items-center gap-3">
-              <div className={cn('w-2 h-2 rounded-full', STATUS_DOT[s.status])} />
-              <div>
-                <p className="text-sm font-medium text-zinc-900">{s.name}</p>
-                <p className="text-xs text-zinc-400">{s.agency} · Due {s.due}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Pill text={s.type} className="bg-zinc-50 text-zinc-600" />
-              <Pill text={s.status} className={cn(STATUS_DOT[s.status] === 'bg-emerald-500' ? 'bg-emerald-50 text-emerald-700' : STATUS_DOT[s.status] === 'bg-blue-500' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700')} />
-              <span className="text-sm font-medium text-zinc-900 w-10 text-right">{s.readiness}%</span>
-            </div>
-          </button>
-        ))}
-      </Card>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <SectionLabel>Section Completion</SectionLabel>
-          <p className="text-2xl font-semibold text-zinc-900">{sub.completed} / {sub.sections}</p>
-          <div className="h-1.5 bg-zinc-100 rounded-full mt-2">
-            <div className="h-1.5 bg-zinc-900 rounded-full" style={{ width: `${(sub.completed / sub.sections) * 100}%` }} />
-          </div>
+      {submissions.length === 0 ? (
+        <Card className="py-12 text-center">
+          <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <p className="text-sm text-zinc-500">No submissions yet</p>
+          <p className="text-xs text-zinc-400 mt-1">Create projects to track your regulatory submissions here.</p>
         </Card>
+      ) : (
+        <>
+          <Card className="p-0 divide-y divide-zinc-50">
+            {submissions.map((s, i) => (
+              <button
+                key={s.id}
+                onClick={() => setSelected(i)}
+                className={cn('w-full flex items-center justify-between px-4 py-3 text-left transition-colors', selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn('w-2 h-2 rounded-full', STATUS_DOT[s.status] || 'bg-zinc-400')} />
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900">{s.name}</p>
+                    <p className="text-xs text-zinc-400">{s.agency}{s.due ? ` · Due ${s.due}` : ''}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Pill text={s.type} className="bg-zinc-50 text-zinc-600" />
+                  <Pill text={s.status} className={cn(STATUS_DOT[s.status] === 'bg-emerald-500' ? 'bg-emerald-50 text-emerald-700' : STATUS_DOT[s.status] === 'bg-blue-500' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700')} />
+                  <span className="text-sm font-medium text-zinc-900 w-10 text-right">{s.readiness}%</span>
+                </div>
+              </button>
+            ))}
+          </Card>
 
-        <Card>
-          <SectionLabel>Missing Documents</SectionLabel>
-          {sub.missing.length === 0 ? (
-            <div className="flex items-center gap-2 text-emerald-600">
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-sm">All complete</span>
+          {sub && (
+            <div className="grid grid-cols-3 gap-4">
+              <Card>
+                <SectionLabel>Section Completion</SectionLabel>
+                {sub.sections > 0 ? (
+                  <>
+                    <p className="text-2xl font-semibold text-zinc-900">{sub.completed} / {sub.sections}</p>
+                    <div className="h-1.5 bg-zinc-100 rounded-full mt-2">
+                      <div className="h-1.5 bg-zinc-900 rounded-full" style={{ width: `${(sub.completed / sub.sections) * 100}%` }} />
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-zinc-400">No sections defined yet</p>
+                )}
+              </Card>
+
+              <Card>
+                <SectionLabel>Missing Documents</SectionLabel>
+                {sub.missing.length === 0 ? (
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="text-sm">All complete</span>
+                  </div>
+                ) : (
+                  <ul className="space-y-1">
+                    {sub.missing.map((m, i) => (
+                      <li key={i} className="text-xs text-zinc-600 flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
+                        {m}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+
+              <Card>
+                <SectionLabel>Blockers</SectionLabel>
+                {sub.blockers.length === 0 ? (
+                  <p className="text-xs text-zinc-400">No blockers identified</p>
+                ) : (
+                  sub.blockers.map((b, i) => (
+                    <div key={i} className="flex items-start gap-2 mb-2 last:mb-0">
+                      <AlertTriangle className="w-3 h-3 text-orange-500 mt-0.5 shrink-0" />
+                      <span className="text-xs text-zinc-600">{b}</span>
+                    </div>
+                  ))
+                )}
+              </Card>
             </div>
-          ) : (
-            <ul className="space-y-1">
-              {sub.missing.map((m, i) => (
-                <li key={i} className="text-xs text-zinc-600 flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
-                  {m}
-                </li>
-              ))}
-            </ul>
           )}
-        </Card>
-
-        <Card>
-          <SectionLabel>Blockers</SectionLabel>
-          {sub.blockers.map((b, i) => (
-            <div key={i} className="flex items-start gap-2 mb-2 last:mb-0">
-              <AlertTriangle className="w-3 h-3 text-orange-500 mt-0.5 shrink-0" />
-              <span className="text-xs text-zinc-600">{b}</span>
-            </div>
-          ))}
-        </Card>
-      </div>
+        </>
+      )}
       <p className="text-[10px] text-zinc-300">Powered by Submission Ops Command Center</p>
     </div>
   );
 }
 
-function WorkflowsView() {
+function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
   const { generate, isGenerating } = useDeliverable();
+  const { tasks: rawTasks, isLoadingTasks } = useProjectTasks(firstProjectId);
+
+  // Map task statuses to column keys
+  const tasks = (rawTasks || []).map((t: any) => ({
+    id: t.id,
+    title: t.name || t.title,
+    assignee: t.assigneeName || '',
+    column: t.status === 'todo' ? 'todo' as const
+      : t.status === 'in-progress' ? 'in_progress' as const
+      : t.status === 'review' ? 'review' as const
+      : t.status === 'done' ? 'done' as const
+      : t.status === 'blocked' ? 'todo' as const
+      : 'todo' as const,
+    priority: (t.priority === 'urgent' ? 'critical' : t.priority || 'medium') as 'critical' | 'high' | 'medium' | 'low',
+  }));
+
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
       <div className="flex items-center justify-between">
         <SectionLabel>Task Board</SectionLabel>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <Zap className="w-3 h-3" />
-            <span>Last automation sweep: 12 min ago · 3 actions taken</span>
-          </div>
           <div className="flex items-center gap-2">
             <ExportButton label="Export Status Report" produces="Workflow Status Report (PDF)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/workflow-status', method: 'POST', body: {}, filename: 'Workflow_Status_Report.pdf', format: 'pdf', title: 'Workflow Status Report' })} />
             <RunButton label="Run Automation Sweep" produces="Automated task execution" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/automation/sweep', method: 'POST', body: {}, filename: 'sweep.json', format: 'json', title: 'Automation Sweep', saveOnly: true })} />
@@ -377,67 +470,47 @@ function WorkflowsView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        {COLUMNS.map((col) => {
-          const tasks = TASKS.filter((t) => t.column === col.key);
-          return (
-            <div key={col.key}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-zinc-600">{col.label}</span>
-                <span className="text-[10px] text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded">{tasks.length}</span>
+      {tasks.length === 0 && !isLoadingTasks ? (
+        <Card className="py-12 text-center">
+          <ListChecks className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <p className="text-sm text-zinc-500">No tasks yet</p>
+          <p className="text-xs text-zinc-400 mt-1">Create projects and add tasks to see your workflow board here.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-4 gap-4">
+          {COLUMNS.map((col) => {
+            const colTasks = tasks.filter((t) => t.column === col.key);
+            return (
+              <div key={col.key}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-600">{col.label}</span>
+                  <span className="text-[10px] text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded">{colTasks.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {colTasks.map((t) => (
+                    <Card key={t.id} className="p-3">
+                      <p className="text-xs font-medium text-zinc-900 mb-2 leading-snug">{t.title}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-zinc-400">{t.assignee}</span>
+                        <Pill text={t.priority} className={SEVERITY_STYLES[t.priority]} />
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2">
-                {tasks.map((t) => (
-                  <Card key={t.id} className="p-3">
-                    <p className="text-xs font-medium text-zinc-900 mb-2 leading-snug">{t.title}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-zinc-400">{t.assignee}</span>
-                      <Pill text={t.priority} className={SEVERITY_STYLES[t.priority]} />
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <Card>
-        <SectionLabel>Active Workflows</SectionLabel>
-        <div className="space-y-3">
-          {[
-            { name: 'ARX-514 IND Assembly', progress: 68, tasks: '9/13' },
-            { name: 'NVD-201 NDA Module 3 Review', progress: 88, tasks: '7/8' },
-            { name: 'CLR-330 510(k) Compilation', progress: 42, tasks: '5/12' },
-          ].map((wf) => (
-            <div key={wf.name} className="flex items-center gap-4">
-              <span className="text-xs text-zinc-900 w-56 truncate">{wf.name}</span>
-              <div className="flex-1 h-1.5 bg-zinc-100 rounded-full">
-                <div className="h-1.5 bg-zinc-900 rounded-full" style={{ width: `${wf.progress}%` }} />
-              </div>
-              <span className="text-xs text-zinc-400 w-12 text-right">{wf.tasks}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </Card>
+      )}
+
       <p className="text-[10px] text-zinc-300">Powered by Workflow Engine + Task Management + Automation</p>
     </div>
   );
 }
 
-function VaultView() {
+function VaultView({ documents }: { documents: any[] }) {
   const { generate, isGenerating } = useDeliverable();
-  const [selected, setSelected] = useState<number | null>(null);
-
-  // Merge static + dynamic artifacts from ProjectContext
-  const allDocuments = useMemo(() => {
-    // Static documents (baseline)
-    const staticDocs = DOCUMENTS.map(d => ({
-      ...d,
-      source: 'static' as const,
-    }));
-    return staticDocs;
-  }, []);
+  const [selected, setSelected] = useState<number | string | null>(null);
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
@@ -456,10 +529,10 @@ function VaultView() {
       {/* Vault stats strip */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Total Documents', value: allDocuments.length, color: 'text-zinc-900' },
-          { label: 'Approved', value: allDocuments.filter(d => d.status === 'Approved').length, color: 'text-emerald-600' },
-          { label: 'Under Review', value: allDocuments.filter(d => d.status === 'Under Review').length, color: 'text-blue-600' },
-          { label: 'Draft', value: allDocuments.filter(d => d.status === 'Draft' || d.status === 'Pending Data').length, color: 'text-amber-600' },
+          { label: 'Total Documents', value: documents.length, color: 'text-zinc-900' },
+          { label: 'Approved', value: documents.filter(d => d.status === 'Approved').length, color: 'text-emerald-600' },
+          { label: 'Under Review', value: documents.filter(d => d.status === 'Under Review').length, color: 'text-blue-600' },
+          { label: 'Draft', value: documents.filter(d => d.status === 'Draft' || d.status === 'Pending Data').length, color: 'text-amber-600' },
         ].map(s => (
           <Card key={s.label} className="p-3 text-center">
             <div className={cn('text-lg font-semibold', s.color)}>{s.value}</div>
@@ -468,43 +541,51 @@ function VaultView() {
         ))}
       </div>
 
-      <Card className="p-0">
-        <div className="grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
-          <span>Name</span><span>Type</span><span>Ver</span><span>Status</span><span>Modified</span><span>Owner</span>
-        </div>
-        {allDocuments.map((d) => (
-          <button
-            key={d.id}
-            onClick={() => setSelected(selected === d.id ? null : d.id)}
-            className={cn('w-full grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2.5 text-left border-b border-zinc-50 last:border-0 transition-colors', selected === d.id ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
-          >
-            <span className="text-xs font-medium text-zinc-900 flex items-center gap-2">
-              <FileText className="w-3 h-3 text-zinc-400" />
-              {d.name}
-            </span>
-            <span className="text-xs text-zinc-600">{d.type}</span>
-            <span className="text-xs text-zinc-600">v{d.version}</span>
-            <span className="text-xs">
-              <Pill text={d.status} className={cn(
-                d.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' :
-                d.status === 'Under Review' ? 'bg-blue-50 text-blue-700' :
-                d.status === 'Pending Data' ? 'bg-orange-50 text-orange-700' :
-                'bg-zinc-50 text-zinc-600'
-              )} />
-            </span>
-            <span className="text-xs text-zinc-400">{d.modified}</span>
-            <span className="text-xs text-zinc-600">{d.owner}</span>
-          </button>
-        ))}
-      </Card>
+      {documents.length === 0 ? (
+        <Card className="py-12 text-center">
+          <FolderOpen className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <p className="text-sm text-zinc-500">No documents yet</p>
+          <p className="text-xs text-zinc-400 mt-1">Create projects and generate artifacts to populate the document vault.</p>
+        </Card>
+      ) : (
+        <Card className="p-0">
+          <div className="grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
+            <span>Name</span><span>Type</span><span>Ver</span><span>Status</span><span>Modified</span><span>Owner</span>
+          </div>
+          {documents.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => setSelected(selected === d.id ? null : d.id)}
+              className={cn('w-full grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2.5 text-left border-b border-zinc-50 last:border-0 transition-colors', selected === d.id ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
+            >
+              <span className="text-xs font-medium text-zinc-900 flex items-center gap-2">
+                <FileText className="w-3 h-3 text-zinc-400" />
+                {d.name}
+              </span>
+              <span className="text-xs text-zinc-600">{d.type}</span>
+              <span className="text-xs text-zinc-600">v{d.version}</span>
+              <span className="text-xs">
+                <Pill text={d.status} className={cn(
+                  d.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' :
+                  d.status === 'Under Review' ? 'bg-blue-50 text-blue-700' :
+                  d.status === 'Pending Data' ? 'bg-orange-50 text-orange-700' :
+                  'bg-zinc-50 text-zinc-600'
+                )} />
+              </span>
+              <span className="text-xs text-zinc-400">{d.modified}</span>
+              <span className="text-xs text-zinc-600">{d.owner}</span>
+            </button>
+          ))}
+        </Card>
+      )}
 
-      {selected !== null && (
+      {selected !== null && documents.length > 0 && (
         <Card>
-          <SectionLabel>Version History — {allDocuments.find((d) => d.id === selected)?.name}</SectionLabel>
+          <SectionLabel>Version History — {documents.find((d) => d.id === selected)?.name}</SectionLabel>
           <div className="space-y-2">
             {[
-              { ver: allDocuments.find((d) => d.id === selected)?.version || '1.0', date: '2026-03-14', author: allDocuments.find((d) => d.id === selected)?.owner || '', note: 'Latest revision' },
-              { ver: '1.0', date: '2026-02-20', author: allDocuments.find((d) => d.id === selected)?.owner || '', note: 'Initial draft' },
+              { ver: documents.find((d) => d.id === selected)?.version || '1.0', date: documents.find((d) => d.id === selected)?.modified || '', author: documents.find((d) => d.id === selected)?.owner || '', note: 'Latest revision' },
+              { ver: '1.0', date: '', author: documents.find((d) => d.id === selected)?.owner || '', note: 'Initial draft' },
             ].map((v, i) => (
               <div key={i} className="flex items-center justify-between py-1.5">
                 <div className="flex items-center gap-3">
@@ -530,8 +611,6 @@ function VaultView() {
 
 function NegotiationsView() {
   const { generate, isGenerating } = useDeliverable();
-  const [selected, setSelected] = useState(0);
-  const meeting = MEETINGS[selected];
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
@@ -542,77 +621,20 @@ function NegotiationsView() {
           <ExportButton label="Export Commitments" produces="Commitment Tracker (XLSX)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/commitments-export', method: 'POST', body: {}, filename: 'FDA_Commitments_Tracker.xlsx', format: 'xlsx', title: 'FDA Commitments Tracker' })} />
         </div>
       </div>
-      <Card className="p-0 divide-y divide-zinc-50">
-        {MEETINGS.map((m, i) => (
-          <button
-            key={m.id}
-            onClick={() => setSelected(i)}
-            className={cn('w-full flex items-center justify-between px-4 py-3 text-left transition-colors', selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
-          >
-            <div className="flex items-center gap-3">
-              <div className={cn('w-2 h-2 rounded-full', STATUS_DOT[m.status])} />
-              <div>
-                <p className="text-sm font-medium text-zinc-900">{m.type} Meeting — {m.program}</p>
-                <p className="text-xs text-zinc-400">{m.agency} · {m.date}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Pill text={m.status} className={m.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} />
-              <span className="text-xs text-zinc-400">{m.completedActions}/{m.actionItems} actions</span>
-            </div>
-          </button>
-        ))}
+
+      <Card className="py-12 text-center">
+        <Handshake className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+        <p className="text-sm text-zinc-500">No FDA meetings recorded yet</p>
+        <p className="text-xs text-zinc-400 mt-1">Use AnA to schedule and track agency interactions.</p>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <SectionLabel>Agenda</SectionLabel>
-          <ul className="space-y-1.5">
-            {meeting.agenda.map((a, i) => (
-              <li key={i} className="text-xs text-zinc-600 flex items-start gap-2">
-                <span className="text-zinc-300 mt-0.5">—</span>
-                {a}
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card>
-          <SectionLabel>Commitments to FDA</SectionLabel>
-          {meeting.commitments.length === 0 ? (
-            <p className="text-xs text-zinc-400">No commitments yet — meeting is scheduled</p>
-          ) : (
-            <div className="space-y-2">
-              {meeting.commitments.map((c, i) => (
-                <div key={i} className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2">
-                    {c.done ? (
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
-                    ) : (
-                      <Clock className="w-3 h-3 text-orange-500 mt-0.5 shrink-0" />
-                    )}
-                    <span className={cn('text-xs', c.done ? 'text-zinc-400 line-through' : 'text-zinc-900')}>{c.text}</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-400 shrink-0">Due {c.due}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
       <p className="text-[10px] text-zinc-300">Powered by Regulatory Negotiation Logbook</p>
     </div>
   );
 }
 
-function TeamView() {
+function TeamView({ activities }: { activities: { time: string; user: string; action: string }[] }) {
   const { generate, isGenerating } = useDeliverable();
-  const activities = [
-    { time: '10 min ago', user: 'Dr. Patel', action: 'approved Module 2.5 Risk-Benefit Analysis' },
-    { time: '25 min ago', user: 'S. Williams', action: 'uploaded revised Clinical Study Report v2.0' },
-    { time: '1 hour ago', user: 'M. Chen', action: 'commented on predicate comparison table' },
-    { time: '2 hours ago', user: 'A. Kumar', action: 'started review of nonclinical overview' },
-  ];
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
@@ -623,61 +645,37 @@ function TeamView() {
           <ExportButton label="Export Activity Log" produces="Activity Log (CSV)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/activity-log', method: 'POST', body: {}, filename: 'Activity_Log.csv', format: 'csv', title: 'Activity Log' })} />
         </div>
       </div>
-      <Card className="p-0">
-        <div className="grid grid-cols-[1fr_140px_80px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
-          <span>Name</span><span>Role</span><span>Tasks</span><span>Availability</span>
-        </div>
-        {TEAM_MEMBERS.map((m) => (
-          <div key={m.id} className="grid grid-cols-[1fr_140px_80px_100px] gap-2 px-4 py-2.5 border-b border-zinc-50 last:border-0">
-            <div className="flex items-center gap-2">
-              <div className={cn('w-2 h-2 rounded-full', m.active ? 'bg-emerald-500' : 'bg-zinc-300')} />
-              <span className="text-xs font-medium text-zinc-900">{m.name}</span>
-            </div>
-            <span className="text-xs text-zinc-600">{m.role}</span>
-            <span className="text-xs text-zinc-900">{m.tasks} assigned</span>
-            <Pill text={m.availability} className={cn(
-              m.availability === 'Available' ? 'bg-emerald-50 text-emerald-700' :
-              m.availability === 'Busy' ? 'bg-amber-50 text-amber-700' :
-              'bg-orange-50 text-orange-700'
-            )} />
-          </div>
-        ))}
+
+      <Card className="py-12 text-center">
+        <Users className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+        <p className="text-sm text-zinc-500">Team members will appear here when collaboration features are configured</p>
+        <p className="text-xs text-zinc-400 mt-1">Invite team members and assign roles to see capacity and availability.</p>
       </Card>
 
       <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <SectionLabel>Reviewer Capacity</SectionLabel>
-          <div className="space-y-2">
-            {TEAM_MEMBERS.map((m) => (
-              <div key={m.id} className="flex items-center gap-3">
-                <span className="text-xs text-zinc-600 w-28 truncate">{m.name.split(' ').slice(-1)[0]}</span>
-                <div className="flex-1 h-1.5 bg-zinc-100 rounded-full">
-                  <div
-                    className={cn('h-1.5 rounded-full', m.tasks > 5 ? 'bg-red-400' : m.tasks > 3 ? 'bg-amber-400' : 'bg-emerald-400')}
-                    style={{ width: `${Math.min(100, (m.tasks / 8) * 100)}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-zinc-400 w-8">{m.tasks}/8</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
+        <div />
         <Card>
           <SectionLabel>Activity Feed</SectionLabel>
-          <div className="space-y-3">
-            {activities.map((a, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <Activity className="w-3 h-3 text-zinc-300 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-xs text-zinc-600">
-                    <span className="font-medium text-zinc-900">{a.user}</span> {a.action}
-                  </p>
-                  <p className="text-[10px] text-zinc-400">{a.time}</p>
+          {activities.length === 0 ? (
+            <div className="text-center py-4">
+              <Activity className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <p className="text-xs text-zinc-400">No recent activity</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activities.map((a, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <Activity className="w-3 h-3 text-zinc-300 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs text-zinc-600">
+                      <span className="font-medium text-zinc-900">{a.user}</span> {a.action}
+                    </p>
+                    <p className="text-[10px] text-zinc-400">{a.time}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
       <p className="text-[10px] text-zinc-300">Powered by Collaboration Hub + Team Workspace</p>
@@ -685,9 +683,36 @@ function TeamView() {
   );
 }
 
-function AnalyticsView() {
+function AnalyticsView({ programs, summary }: {
+  programs: any[];
+  summary: { total: number; draft: number; review: number; approved: number };
+}) {
   const { generate, isGenerating } = useDeliverable();
-  const { cycleTime, quality, portfolio } = ANALYTICS_DATA;
+
+  const totalPrograms = programs.length;
+  const avgReadiness = totalPrograms > 0
+    ? Math.round(programs.reduce((s, p) => s + (p.readiness || 0), 0) / totalPrograms)
+    : 0;
+
+  // Derive on-track / at-risk from readiness
+  const onTrack = programs.filter(p => p.readiness >= 70).length;
+  const atRisk = programs.filter(p => p.readiness >= 40 && p.readiness < 70).length;
+  const delayed = programs.filter(p => p.readiness < 40).length;
+
+  const portfolio = [
+    { label: 'Total Programs', value: totalPrograms },
+    { label: 'On Track', value: onTrack },
+    { label: 'At Risk', value: atRisk },
+    { label: 'Delayed', value: delayed },
+    { label: 'Avg Readiness', value: totalPrograms > 0 ? `${avgReadiness}%` : '—' },
+  ];
+
+  const artifactBreakdown = [
+    { label: 'Total Artifacts', value: summary.total },
+    { label: 'Draft', value: summary.draft },
+    { label: 'In Review', value: summary.review },
+    { label: 'Approved', value: summary.approved },
+  ];
 
   return (
     <div className="space-y-6" style={{ animation: 'fadeIn 0.15s ease-out' }}>
@@ -697,14 +722,9 @@ function AnalyticsView() {
           <ExportButton label="Export Analytics Report" produces="Program Analytics Report (PDF)" isLoading={isGenerating} onClick={() => generate({ endpoint: '/api/concept2cure/reports/program-analytics', method: 'POST', body: {}, filename: 'Program_Analytics.pdf', format: 'pdf', title: 'Program Analytics' })} />
         </div>
       </div>
+
       <div className="grid grid-cols-5 gap-4">
-        {[
-          { label: 'Total Programs', value: portfolio.totalPrograms },
-          { label: 'On Track', value: portfolio.onTrack },
-          { label: 'At Risk', value: portfolio.atRisk },
-          { label: 'Delayed', value: portfolio.delayed },
-          { label: 'Avg Readiness', value: `${portfolio.avgReadiness}%` },
-        ].map((m) => (
+        {portfolio.map((m) => (
           <Card key={m.label}>
             <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-1">{m.label}</p>
             <p className="text-xl font-semibold text-zinc-900">{m.value}</p>
@@ -714,40 +734,47 @@ function AnalyticsView() {
 
       <div className="grid grid-cols-2 gap-4">
         <Card>
-          <SectionLabel>Cycle Time — Average Days per Phase</SectionLabel>
-          <div className="space-y-2.5">
-            {cycleTime.map((c) => (
-              <div key={c.phase} className="flex items-center gap-3">
-                <span className="text-xs text-zinc-600 w-32">{c.phase}</span>
-                <div className="flex-1 h-2 bg-zinc-100 rounded-full">
-                  <div className="h-2 bg-zinc-900 rounded-full" style={{ width: `${(c.avg / 14) * 100}%` }} />
+          <SectionLabel>Artifact Breakdown</SectionLabel>
+          {summary.total === 0 ? (
+            <div className="text-center py-6">
+              <BarChart3 className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <p className="text-xs text-zinc-400">No artifacts yet. Create projects and artifacts to see analytics.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {artifactBreakdown.map((item) => (
+                <div key={item.label} className="flex items-center gap-3">
+                  <span className="text-xs text-zinc-600 w-32">{item.label}</span>
+                  <div className="flex-1 h-2 bg-zinc-100 rounded-full">
+                    <div className="h-2 bg-zinc-900 rounded-full" style={{ width: summary.total > 0 ? `${(item.value / summary.total) * 100}%` : '0%' }} />
+                  </div>
+                  <span className="text-xs font-medium text-zinc-900 w-10 text-right">{item.value}</span>
                 </div>
-                <span className="text-xs font-medium text-zinc-900 w-10 text-right">{c.avg}d</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-[10px] text-zinc-400 mt-3">Total avg cycle: {cycleTime.reduce((s, c) => s + c.avg, 0)} days</p>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card>
-          <SectionLabel>Quality Trend — Deficiency Rate (%)</SectionLabel>
-          <div className="space-y-3">
-            {quality.map((q) => (
-              <div key={q.period} className="flex items-center justify-between">
-                <span className="text-xs text-zinc-600">{q.period}</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-40 h-2 bg-zinc-100 rounded-full">
-                    <div className="h-2 bg-zinc-900 rounded-full" style={{ width: `${(q.deficiencyRate / 15) * 100}%` }} />
+          <SectionLabel>Program Readiness Distribution</SectionLabel>
+          {programs.length === 0 ? (
+            <div className="text-center py-6">
+              <Target className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <p className="text-xs text-zinc-400">Create projects to see readiness metrics here.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {programs.map((p) => (
+                <div key={p.id} className="flex items-center gap-3">
+                  <span className="text-xs text-zinc-600 w-32 truncate">{p.name}</span>
+                  <div className="flex-1 h-2 bg-zinc-100 rounded-full">
+                    <div className="h-2 bg-zinc-900 rounded-full" style={{ width: `${p.readiness}%` }} />
                   </div>
-                  <span className="text-xs font-medium text-zinc-900 w-8 text-right">{q.deficiencyRate}%</span>
+                  <span className="text-xs font-medium text-zinc-900 w-10 text-right">{p.readiness}%</span>
                 </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-1.5 mt-3">
-            <TrendingUp className="w-3 h-3 text-emerald-500" />
-            <span className="text-[10px] text-emerald-600">58% improvement in deficiency rate over 3 quarters</span>
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 
@@ -762,18 +789,22 @@ function AnalyticsView() {
 
 export function CommandCenterHub({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
+  const { programs, documents, riskSignals, summary, activities, isLoading } = useCommandCenterData();
+
+  // Get the first project ID for workflows tab
+  const firstProjectId = programs.length > 0 ? String(programs[0].id) : null;
 
   const content = useMemo(() => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardView />;
-      case 'submissions': return <SubmissionsView />;
-      case 'workflows': return <WorkflowsView />;
-      case 'vault': return <VaultView />;
+      case 'dashboard': return <DashboardView programs={programs} riskSignals={riskSignals} summary={summary} isLoading={isLoading} />;
+      case 'submissions': return <SubmissionsView programs={programs} />;
+      case 'workflows': return <WorkflowsView firstProjectId={firstProjectId} />;
+      case 'vault': return <VaultView documents={documents} />;
       case 'negotiations': return <NegotiationsView />;
-      case 'team': return <TeamView />;
-      case 'analytics': return <AnalyticsView />;
+      case 'team': return <TeamView activities={activities} />;
+      case 'analytics': return <AnalyticsView programs={programs} summary={summary} />;
     }
-  }, [activeTab]);
+  }, [activeTab, programs, documents, riskSignals, summary, activities, isLoading, firstProjectId]);
 
   return (
     <div className="fixed inset-0 z-50 bg-[#FAFAF9] flex flex-col">

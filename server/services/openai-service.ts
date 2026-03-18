@@ -4,14 +4,11 @@ import type { Message as ThreadMessage } from 'openai/resources/beta/threads/mes
 import type { Run } from 'openai/resources/beta/threads/runs/runs';
 import type { Thread } from 'openai/resources/beta/threads/threads';
 
-// Initialize OpenAI client
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is not defined in the environment variables');
-}
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI client (optional — Claude is the primary AI provider)
+// OpenAI is still needed for Assistants API features which don't have a Claude equivalent
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 /**
  * Create a new OpenAI Assistant

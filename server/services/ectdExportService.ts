@@ -264,6 +264,62 @@ ${granuleElements}
 }
 
 // ---------------------------------------------------------------------------
+// Structured Document Generation (replaces generic placeholders)
+// ---------------------------------------------------------------------------
+
+function generateStructuredDocument(opts: {
+  sectionCode: string;
+  title: string;
+  status: string;
+  version: string;
+  moduleName: string;
+  wordCount: number | null;
+  generatedAt: string;
+}): string {
+  const moduleNum = opts.sectionCode.split('.')[0];
+  const moduleDef = MODULE_DEFS[moduleNum];
+  const moduleLabel = moduleDef ? `Module ${moduleNum}: ${moduleDef.name}` : `Module ${moduleNum}`;
+
+  return [
+    `${'='.repeat(72)}`,
+    `  ${opts.title}`,
+    `${'='.repeat(72)}`,
+    ``,
+    `  Document Metadata`,
+    `  ${'─'.repeat(40)}`,
+    `  Section Code:    ${opts.sectionCode}`,
+    `  Module:          ${moduleLabel}`,
+    `  Version:         ${opts.version}`,
+    `  Status:          ${opts.status}`,
+    `  Generated:       ${opts.generatedAt}`,
+    opts.wordCount ? `  Word Count:      ${opts.wordCount.toLocaleString()}` : null,
+    ``,
+    `  ${'─'.repeat(40)}`,
+    `  Content Status: PENDING`,
+    ``,
+    `  This document is part of the eCTD submission package for`,
+    `  ${moduleLabel}.`,
+    ``,
+    `  The document content has not yet been finalized in the document`,
+    `  management system. When the authoring workflow for this section`,
+    `  is complete, the content will be automatically included in`,
+    `  subsequent export builds.`,
+    ``,
+    `  Section: ${opts.sectionCode} — ${opts.title}`,
+    ``,
+    `  Required Actions:`,
+    `    1. Complete document authoring for section ${opts.sectionCode}`,
+    `    2. Submit document through the review/approval workflow`,
+    `    3. Re-export the eCTD package to include final content`,
+    ``,
+    `${'='.repeat(72)}`,
+    `  ClinicalSageAI eCTD Export Service — ICH M8 v4.0`,
+    `${'='.repeat(72)}`,
+    ``,
+  ].filter(line => line !== null).join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // Core Export Logic
 // ---------------------------------------------------------------------------
 
@@ -392,17 +448,50 @@ export async function generateEctdPackage(
     const fileName = granule.fileName || `${granule.granuleName.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`;
     const filePath = `${granuleToPath(granule.granuleId, entry.moduleName)}/${fileName}`;
 
-    // Generate a placeholder document for granules that have content
-    const placeholderContent = `[eCTD Document Placeholder]\n\nSection: ${granule.granuleId}\nTitle: ${granule.granuleName}\nStatus: ${granule.status}\nVersion: ${granule.version}\n\nThis file is a placeholder. In production, the actual document content\nwould be retrieved from the document management system.\n`;
+    // Attempt to retrieve actual document content from the database
+    let documentContent: string | null = null;
+    if (granule.documentPath) {
+      try {
+        const docResult = await pool.query(
+          `SELECT dv.content, dv.file_content, d.title, d.description
+           FROM document_versions dv
+           JOIN documents d ON d.id = dv.document_id
+           WHERE d.id = $1 OR dv.id = $1
+           ORDER BY dv.created_at DESC
+           LIMIT 1`,
+          [granule.id]
+        );
+        if (docResult.rows.length > 0 && (docResult.rows[0].content || docResult.rows[0].file_content)) {
+          documentContent = docResult.rows[0].content || docResult.rows[0].file_content;
+        }
+      } catch {
+        // Document retrieval failed — will generate structured placeholder
+      }
+    }
 
-    zip.file(filePath, placeholderContent);
+    // If no content from vault, check metadata for any stored content
+    if (!documentContent && granule.metadata?.content) {
+      documentContent = granule.metadata.content;
+    }
+
+    const fileContent = documentContent || generateStructuredDocument({
+      sectionCode: granule.granuleId,
+      title: granule.granuleName,
+      status: granule.status,
+      version: granule.version,
+      moduleName: entry.moduleName,
+      wordCount: granule.wordCount,
+      generatedAt,
+    });
+
+    zip.file(filePath, fileContent);
     totalFiles++;
 
     entry.granules.push({
       granuleId: granule.granuleId,
       granuleName: granule.granuleName,
       filePath,
-      checksum: md5(placeholderContent),
+      checksum: md5(fileContent),
       operation: 'new',
     });
   }

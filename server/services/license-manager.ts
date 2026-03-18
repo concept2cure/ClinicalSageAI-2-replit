@@ -214,6 +214,93 @@ export async function canAccessModule(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// FEATURE-LEVEL TIER GATING (DTC model)
+// Maps individual features to minimum required tier.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const FEATURE_TIER_MAP: Record<string, string> = {
+  // Free tier features
+  chat: 'free',
+  csr_search: 'free',
+  basic_intelligence: 'free',
+  project_management: 'free',
+
+  // Standard tier (Startup Biotech $499/mo)
+  deep_research: 'standard',
+  csr_builder: 'standard',
+  ectd_authoring: 'standard',
+  fda_connector: 'standard',
+  ema_connector: 'standard',
+  pubmed_connector: 'free',
+  clinical_trials_gov: 'free',
+
+  // Professional tier (Growth $1,499/mo)
+  ctd_builder: 'professional',
+  multi_agency_export: 'professional',
+  veeva_connector: 'professional',
+  medidata_connector: 'professional',
+  pmda_connector: 'professional',
+  nmpa_connector: 'professional',
+  document_builder: 'professional',
+  biostatistics: 'professional',
+
+  // Enterprise tier
+  unlimited_research: 'enterprise',
+  api_access: 'enterprise',
+  sso: 'enterprise',
+  custom_integrations: 'enterprise',
+};
+
+/**
+ * Check if a feature is available for a given tier.
+ */
+export function isFeatureAvailable(feature: string, orgTier: string): boolean {
+  const requiredTier = FEATURE_TIER_MAP[feature];
+  if (!requiredTier) return true; // Unknown features default to available
+  const requiredLevel = TIER_LEVELS[requiredTier] ?? 99;
+  const currentLevel = TIER_LEVELS[orgTier] ?? 0;
+  return currentLevel >= requiredLevel;
+}
+
+/**
+ * Get all features available for a tier.
+ */
+export function getAvailableFeatures(orgTier: string): string[] {
+  return Object.entries(FEATURE_TIER_MAP)
+    .filter(([, requiredTier]) => {
+      const requiredLevel = TIER_LEVELS[requiredTier] ?? 99;
+      const currentLevel = TIER_LEVELS[orgTier] ?? 0;
+      return currentLevel >= requiredLevel;
+    })
+    .map(([feature]) => feature);
+}
+
+/**
+ * Middleware that gates a route behind a specific feature.
+ * Usage: router.get('/deep-research', requireFeature('deep_research'), handler)
+ */
+export function requireFeature(feature: string) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const license = (req as any).licenseInfo as LicenseInfo | undefined;
+    const tier = license?.tier || 'free';
+
+    if (!isFeatureAvailable(feature, tier)) {
+      const requiredTier = FEATURE_TIER_MAP[feature] || 'professional';
+      return res.status(403).json({
+        error: 'Feature not available on your current plan',
+        code: 'FEATURE_TIER_REQUIRED',
+        feature,
+        requiredTier,
+        currentTier: tier,
+        upgradeUrl: '/settings/subscription',
+      });
+    }
+
+    next();
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EXPRESS MIDDLEWARE
 // ═══════════════════════════════════════════════════════════════════════════════
 

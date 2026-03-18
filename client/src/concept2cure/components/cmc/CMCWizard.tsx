@@ -201,8 +201,8 @@ const STATUS_CONFIG: Record<
   },
   pending: {
     label: 'Pending',
-    color: 'text-slate-500',
-    bgColor: 'bg-slate-100',
+    color: 'text-zinc-500',
+    bgColor: 'bg-zinc-100',
     icon: <Clock className="w-4 h-4" />,
   },
 };
@@ -241,7 +241,7 @@ const GuardrailCard: React.FC<{
           <span className={cn('text-xs font-bold', guidelineConfig.color)}>
             ICH {guidelineConfig.name}
           </span>
-          <h4 className="font-medium text-slate-800">{guardrail.parameter}</h4>
+          <h4 className="font-medium text-zinc-800">{guardrail.parameter}</h4>
         </div>
         <span
           className={cn(
@@ -258,12 +258,12 @@ const GuardrailCard: React.FC<{
       {/* Value Bar */}
       <div className="mb-3">
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-slate-500">Current Value</span>
+          <span className="text-zinc-500">Current Value</span>
           <span className={cn('font-mono font-bold', statusConfig.color)}>
             {guardrail.currentValue} {guardrail.unit}
           </span>
         </div>
-        <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+        <div className="relative h-3 bg-zinc-100 rounded-full overflow-hidden">
           <div
             className={cn(
               'absolute h-full rounded-full transition-all',
@@ -275,24 +275,24 @@ const GuardrailCard: React.FC<{
           />
           {/* Threshold Line */}
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-slate-800"
+            className="absolute top-0 bottom-0 w-0.5 bg-zinc-800"
             style={{ left: '100%', transform: 'translateX(-2px)' }}
           />
         </div>
         <div className="flex justify-between text-[10px] mt-1">
-          <span className="text-slate-400">0</span>
-          <span className="text-slate-600 font-medium">
+          <span className="text-zinc-400">0</span>
+          <span className="text-zinc-600 font-medium">
             Threshold: {guardrail.thresholdValue} {guardrail.unit}
           </span>
         </div>
       </div>
 
       {/* Message */}
-      <p className="text-xs text-slate-600 mb-3">{guardrail.message}</p>
+      <p className="text-xs text-zinc-600 mb-3">{guardrail.message}</p>
 
       {/* Actions */}
       {guardrail.requiresJustification && (
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
           <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" />
             Justification Required
@@ -305,7 +305,7 @@ const GuardrailCard: React.FC<{
           ) : (
             <button
               onClick={onGenerateJustification}
-              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 flex items-center gap-1"
+              className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 flex items-center gap-1"
             >
               <Sparkles className="w-3 h-3" />
               Generate Justification
@@ -315,7 +315,7 @@ const GuardrailCard: React.FC<{
       )}
 
       {/* ICH Reference */}
-      <div className="text-[10px] text-slate-400 mt-2">Ref: {guardrail.ichReference}</div>
+      <div className="text-[10px] text-zinc-400 mt-2">Ref: {guardrail.ichReference}</div>
     </div>
   );
 };
@@ -324,9 +324,9 @@ const ImpurityTable: React.FC<{
   impurities: Impurity[];
   onReview?: (impurity: Impurity) => void;
 }> = ({ impurities, onReview }) => (
-  <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-    <div className="p-3 bg-slate-50 border-b border-slate-200">
-      <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+  <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+    <div className="p-3 bg-zinc-50 border-b border-zinc-200">
+      <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
         <Beaker className="w-4 h-4 text-orange-600" />
         Impurity Profile (ICH Q3A/Q3B)
       </h3>
@@ -334,29 +334,29 @@ const ImpurityTable: React.FC<{
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-3 py-2 text-left font-medium text-slate-600">Impurity</th>
-            <th className="px-3 py-2 text-right font-medium text-slate-600">Level</th>
-            <th className="px-3 py-2 text-right font-medium text-slate-600">Report</th>
-            <th className="px-3 py-2 text-right font-medium text-slate-600">ID</th>
-            <th className="px-3 py-2 text-right font-medium text-slate-600">Qualify</th>
-            <th className="px-3 py-2 text-center font-medium text-slate-600">Status</th>
-            <th className="px-3 py-2 text-center font-medium text-slate-600">Actions</th>
+          <tr className="bg-zinc-50 border-b border-zinc-200">
+            <th className="px-3 py-2 text-left font-medium text-zinc-600">Impurity</th>
+            <th className="px-3 py-2 text-right font-medium text-zinc-600">Level</th>
+            <th className="px-3 py-2 text-right font-medium text-zinc-600">Report</th>
+            <th className="px-3 py-2 text-right font-medium text-zinc-600">ID</th>
+            <th className="px-3 py-2 text-right font-medium text-zinc-600">Qualify</th>
+            <th className="px-3 py-2 text-center font-medium text-zinc-600">Status</th>
+            <th className="px-3 py-2 text-center font-medium text-zinc-600">Actions</th>
           </tr>
         </thead>
         <tbody>
           {impurities.map(imp => {
             const statusConfig = STATUS_CONFIG[imp.status];
             return (
-              <tr key={imp.id} className="border-b border-slate-100 hover:bg-slate-50">
+              <tr key={imp.id} className="border-b border-zinc-100 hover:bg-zinc-50">
                 <td className="px-3 py-2">
                   <div>
-                    <span className="font-medium text-slate-800">{imp.name}</span>
+                    <span className="font-medium text-zinc-800">{imp.name}</span>
                     <span
                       className={cn(
                         'ml-2 px-1.5 py-0.5 text-[10px] rounded',
                         imp.type === 'specified' && 'bg-blue-100 text-blue-700',
-                        imp.type === 'unspecified' && 'bg-slate-100 text-slate-600',
+                        imp.type === 'unspecified' && 'bg-zinc-100 text-zinc-600',
                         imp.type === 'total' && 'bg-purple-100 text-purple-700'
                       )}
                     >
@@ -364,16 +364,16 @@ const ImpurityTable: React.FC<{
                     </span>
                   </div>
                 </td>
-                <td className="px-3 py-2 text-right font-mono font-medium text-slate-800">
+                <td className="px-3 py-2 text-right font-mono font-medium text-zinc-800">
                   {imp.currentLevel}%
                 </td>
-                <td className="px-3 py-2 text-right font-mono text-slate-500">
+                <td className="px-3 py-2 text-right font-mono text-zinc-500">
                   {imp.reportingThreshold}%
                 </td>
-                <td className="px-3 py-2 text-right font-mono text-slate-500">
+                <td className="px-3 py-2 text-right font-mono text-zinc-500">
                   {imp.identificationThreshold}%
                 </td>
-                <td className="px-3 py-2 text-right font-mono text-slate-500">
+                <td className="px-3 py-2 text-right font-mono text-zinc-500">
                   {imp.qualificationThreshold}%
                 </td>
                 <td className="px-3 py-2">
@@ -425,19 +425,19 @@ const ImpurityTable: React.FC<{
 const StabilityChart: React.FC<{
   conditions: StabilityCondition[];
 }> = ({ conditions }) => (
-  <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-    <div className="p-3 bg-slate-50 border-b border-slate-200">
-      <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+  <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+    <div className="p-3 bg-zinc-50 border-b border-zinc-200">
+      <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
         <ThermometerSun className="w-4 h-4 text-blue-600" />
         Stability Summary (ICH Q1A)
       </h3>
     </div>
     <div className="p-4 space-y-4">
       {conditions.map(cond => (
-        <div key={cond.id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+        <div key={cond.id} className="border-b border-zinc-100 pb-4 last:border-0 last:pb-0">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-medium text-slate-700">{cond.condition}</span>
-            <span className="text-xs text-slate-500">
+            <span className="font-medium text-zinc-700">{cond.condition}</span>
+            <span className="text-xs text-zinc-500">
               {cond.timePoint} / {cond.duration}
             </span>
           </div>
@@ -447,10 +447,10 @@ const StabilityChart: React.FC<{
               return (
                 <div
                   key={param.id}
-                  className="flex items-center justify-between p-2 bg-slate-50 rounded"
+                  className="flex items-center justify-between p-2 bg-zinc-50 rounded"
                 >
                   <div>
-                    <span className="text-xs text-slate-600">{param.name}</span>
+                    <span className="text-xs text-zinc-600">{param.name}</span>
                     {param.trend && (
                       <span className="ml-1">
                         {param.trend === 'stable' && (
@@ -516,7 +516,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
   ];
 
   return (
-    <div className={cn('flex flex-col h-full bg-slate-50', className)}>
+    <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
       {/* Header */}
       <div className="flex-shrink-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6">
         <div className="flex items-center justify-between mb-4">
@@ -604,7 +604,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex-shrink-0 bg-white border-b border-slate-200">
+      <div className="flex-shrink-0 bg-white border-b border-zinc-200">
         <div className="flex gap-1 p-2">
           {tabs.map(tab => (
             <button
@@ -614,7 +614,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
                 'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2',
                 activeTab === tab.id
                   ? 'bg-green-100 text-green-700'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-zinc-600 hover:bg-zinc-100'
               )}
             >
               {tab.label}
@@ -649,29 +649,29 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
         {activeTab === 'stability' && <StabilityChart conditions={substance.stability} />}
 
         {activeTab === 'specs' && (
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-            <div className="p-3 bg-slate-50 border-b border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-800">Specifications (ICH Q6A/Q6B)</h3>
+          <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+            <div className="p-3 bg-zinc-50 border-b border-zinc-200">
+              <h3 className="text-sm font-semibold text-zinc-800">Specifications (ICH Q6A/Q6B)</h3>
             </div>
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Parameter</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Method</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Acceptance</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Result</th>
-                  <th className="px-3 py-2 text-center font-medium text-slate-600">Status</th>
+                <tr className="bg-zinc-50 border-b border-zinc-200">
+                  <th className="px-3 py-2 text-left font-medium text-zinc-600">Parameter</th>
+                  <th className="px-3 py-2 text-left font-medium text-zinc-600">Method</th>
+                  <th className="px-3 py-2 text-left font-medium text-zinc-600">Acceptance</th>
+                  <th className="px-3 py-2 text-left font-medium text-zinc-600">Result</th>
+                  <th className="px-3 py-2 text-center font-medium text-zinc-600">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {substance.specifications.map(spec => {
                   const statusConfig = STATUS_CONFIG[spec.status];
                   return (
-                    <tr key={spec.id} className="border-b border-slate-100">
-                      <td className="px-3 py-2 font-medium text-slate-800">{spec.parameter}</td>
-                      <td className="px-3 py-2 text-slate-600">{spec.method}</td>
-                      <td className="px-3 py-2 font-mono text-slate-600">{spec.acceptance}</td>
-                      <td className="px-3 py-2 font-mono font-medium text-slate-800">
+                    <tr key={spec.id} className="border-b border-zinc-100">
+                      <td className="px-3 py-2 font-medium text-zinc-800">{spec.parameter}</td>
+                      <td className="px-3 py-2 text-zinc-600">{spec.method}</td>
+                      <td className="px-3 py-2 font-mono text-zinc-600">{spec.acceptance}</td>
+                      <td className="px-3 py-2 font-mono font-medium text-zinc-800">
                         {spec.result}
                       </td>
                       <td className="px-3 py-2">
