@@ -73,35 +73,12 @@ ${protocol}`;
     try {
       content = await analyzeText(prompt, systemPrompt);
     } catch (aiError: any) {
-      // Fallback demo content when OpenAI is unavailable
-      console.warn(
-        '[Planner] OpenAI unavailable, returning demo IND summary:',
-        aiError?.message?.substring(0, 100)
-      );
-      content = `## IND Application Summary — Demo Mode
-
-**Note:** This is a demo-generated summary. Connect a valid OpenAI API key for AI-powered generation.
-
-### 1. Introduction and Objectives
-This Investigational New Drug (IND) application covers the clinical investigation of ${molecule} for its intended therapeutic indication.
-
-### 2. Investigational Product Overview
-- **Product:** ${molecule}
-- **Mechanism:** ${moa}
-- **Development Stage:** Phase I/II
-
-### 3. Clinical Trial Design
-- **Primary Endpoint:** ${primaryEndpoint}
-- **Design Rationale:** ${designRationale}
-- **Statistical Model:** ${statisticalModel}
-
-### 4. Safety Monitoring
-A Data Safety Monitoring Board (DSMB) will oversee the trial with predefined stopping rules per ICH E6 guidelines.
-
-### 5. Risk-Benefit Assessment
-The clinical benefit is anticipated to outweigh the risks based on preclinical data and the unmet medical need in the target population.
-
-*This document was generated in demo mode. Please configure a valid OpenAI API key for full AI-powered regulatory document generation.*`;
+      console.error('[Planner] OpenAI unavailable for IND generation:', aiError?.message?.substring(0, 200));
+      return res.status(503).json({
+        success: false,
+        error: 'AI service is currently unavailable. Please ensure a valid OpenAI API key is configured and try again.',
+        code: 'AI_SERVICE_UNAVAILABLE',
+      });
     }
 
     return res.json({
