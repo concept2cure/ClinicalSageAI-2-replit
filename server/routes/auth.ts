@@ -12,6 +12,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
 import {
@@ -21,6 +22,13 @@ import {
 } from '../../shared/schema';
 import { sendPasswordResetEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
+import {
+  validatePasswordPolicy,
+  isAccountLocked,
+  recordFailedLogin,
+  resetFailedLogins,
+  isPasswordExpired,
+} from '../services/auth-security-service';
 
 import { config } from '../config/environment';
 
@@ -30,12 +38,55 @@ const router = Router();
 const JWT_EXPIRES_IN = '24h';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
+// ─── Rate Limiters ──────────────────────────────────────────────────────────
+// Separate limiters for different risk levels.
+
+/** Login: 10 attempts per 15 minutes per IP */
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' } },
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+});
+
+/** Signup: 5 per hour per IP */
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many signup attempts. Please try again later.' } },
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+});
+
+/** Password reset: 5 per hour per IP */
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many password reset requests. Please try again later.' } },
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+});
+
+/** MFA verify: 10 per 15 minutes per IP */
+const mfaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' } },
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+});
+
 // Development auth bypass fully removed — all authentication is enforced.
 // To test locally, create a user via POST /api/auth/signup then login normally.
 
 const signupSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(12, 'Password must be at least 12 characters'),
   companyName: z.string().min(2),
   industryMode: z.enum([
     'biotech',
@@ -186,7 +237,7 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
 
@@ -197,10 +248,7 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // CRIT-02d FIX: Removed dev-mode any-credentials login bypass
-    // All login attempts now validated against database with bcrypt
-
-    // Validate credentials against database
+    // All login attempts validated against database with bcrypt
     if (!requireDb(res)) return;
     const user = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
 
@@ -211,8 +259,20 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // CRIT-01b FIX: Password verification with bcrypt
     const userData = user[0];
+
+    // ── Account Lockout Check ─────────────────────────────────────────────
+    const lockStatus = await isAccountLocked(userData.id);
+    if (lockStatus.locked) {
+      return res.status(423).json({
+        success: false,
+        error: {
+          code: 'AUTH_002',
+          message: 'Account temporarily locked due to too many failed attempts. Try again later.',
+        },
+        lockedUntil: lockStatus.lockedUntil?.toISOString(),
+      });
+    }
 
     if (!userData.passwordHash) {
       console.error('[auth] User has no password hash:', userData.email);
@@ -224,11 +284,18 @@ router.post('/login', async (req: Request, res: Response) => {
 
     const isPasswordValid = await bcrypt.compare(password, userData.passwordHash);
     if (!isPasswordValid) {
+      // Record failed attempt and potentially lock
+      const failResult = await recordFailedLogin(userData.id);
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
+        remainingAttempts: failResult.remainingAttempts,
+        accountLocked: failResult.locked,
       });
     }
+
+    // Successful password check — reset lockout counter
+    await resetFailedLogins(userData.id);
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
     let organizationId = defaultOrganizationId;
@@ -352,7 +419,7 @@ router.post('/login', async (req: Request, res: Response) => {
  * POST /api/auth/signup
  * Create organization + admin user
  */
-router.post('/signup', async (req: Request, res: Response) => {
+router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
   try {
     const parsed = signupSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -363,6 +430,15 @@ router.post('/signup', async (req: Request, res: Response) => {
     }
 
     const { email, password, companyName, industryMode, firstName, lastName } = parsed.data;
+
+    // Enforce enterprise password policy (NIST 800-63B)
+    const policyResult = validatePasswordPolicy(password);
+    if (!policyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: policyResult.errors[0], details: { errors: policyResult.errors } },
+      });
+    }
 
     if (!requireDb(res)) return;
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -680,7 +756,7 @@ router.get('/me', async (req: Request, res: Response) => {
  * Accepts the challenge token (from login response) + TOTP code,
  * and returns the real JWT access/refresh tokens.
  */
-router.post('/mfa/verify', async (req: Request, res: Response) => {
+router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
   try {
     const { challengeId, code, method } = req.body;
 
@@ -1053,10 +1129,12 @@ async function handleResetPassword(req: Request, res: Response) {
       });
     }
 
-    if (newPassword.length < 8) {
+    // Enforce enterprise password policy (NIST 800-63B)
+    const resetPolicyResult = validatePasswordPolicy(newPassword);
+    if (!resetPolicyResult.valid) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: 'Password must be at least 8 characters' },
+        error: { code: 'AUTH_001', message: resetPolicyResult.errors[0], details: { errors: resetPolicyResult.errors } },
       });
     }
 
@@ -1127,11 +1205,134 @@ async function handleResetPassword(req: Request, res: Response) {
   }
 }
 
-// Register both legacy and v2 paths
-router.post('/forgot-password', handleForgotPassword);
-router.post('/password/reset-request', handleForgotPassword);
+// Register both legacy and v2 paths (rate-limited)
+router.post('/forgot-password', passwordResetLimiter, handleForgotPassword);
+router.post('/password/reset-request', passwordResetLimiter, handleForgotPassword);
 
-router.post('/reset-password', handleResetPassword);
-router.post('/password/reset-confirm', handleResetPassword);
+router.post('/reset-password', passwordResetLimiter, handleResetPassword);
+router.post('/password/reset-confirm', passwordResetLimiter, handleResetPassword);
+
+// ---------------------------------------------------------------------------
+// Password Change (Authenticated)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/auth/password/change
+ * Change password for the currently authenticated user.
+ * Requires current password + new password (enforced by policy).
+ */
+router.post('/password/change', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Authentication required' },
+      });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as {
+      userId: string;
+      email: string;
+    };
+
+    const { currentPassword, newPassword, terminateOtherSessions } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Current password and new password are required' },
+      });
+    }
+
+    // Enforce enterprise password policy
+    const changePolicyResult = validatePasswordPolicy(newPassword);
+    if (!changePolicyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: changePolicyResult.errors[0], details: { errors: changePolicyResult.errors } },
+      });
+    }
+
+    if (!requireDb(res)) return;
+
+    const [userData] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, parseInt(decoded.userId)))
+      .limit(1);
+
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'User not found' },
+      });
+    }
+
+    // Verify current password
+    if (!userData.passwordHash) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Current password is incorrect' },
+      });
+    }
+
+    const currentValid = await bcrypt.compare(currentPassword, userData.passwordHash);
+    if (!currentValid) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Current password is incorrect' },
+      });
+    }
+
+    // Prevent reusing the same password
+    const sameAsOld = await bcrypt.compare(newPassword, userData.passwordHash);
+    if (sameAsOld) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'New password must be different from current password' },
+      });
+    }
+
+    // Hash and store new password
+    const newHash = await bcrypt.hash(newPassword, 12);
+
+    // Maintain password history (last 5)
+    const history = (userData.passwordHistory as string[] || []).slice(0, 4);
+    history.unshift(userData.passwordHash);
+
+    await db
+      .update(users)
+      .set({
+        passwordHash: newHash,
+        passwordChangedAt: new Date(),
+        passwordHistory: history,
+        mustChangePassword: false,
+      })
+      .where(eq(users.id, userData.id));
+
+    console.log(`[auth] Password changed for user ${userData.id}`);
+
+    return res.json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_005', message: 'Session expired' },
+      });
+    }
+
+    console.error('[auth] Password change error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Password change failed' },
+    });
+  }
+});
 
 export default router;
