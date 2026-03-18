@@ -271,4 +271,165 @@ router.get('/:reportId/verify', async (req: Request, res: Response) => {
   }
 });
 
+// ── Supersede & Revoke ──────────────────────────────────────
+
+/**
+ * POST /api/intelligent-reports/:reportId/supersede
+ * Create a new version of a sealed report, marking the original as superseded
+ */
+router.post('/:reportId/supersede', async (req: Request, res: Response) => {
+  try {
+    const originalReportId = parseInt(req.params.reportId);
+    const {
+      organizationId, clientWorkspaceId, projectId,
+      domain, subtype, title, targetRegulatory,
+      complianceFrameworks, parameters, persona,
+    } = req.body;
+
+    if (!organizationId || !domain || !title) {
+      return res.status(400).json({
+        success: false,
+        error: 'Required fields: organizationId, domain, title',
+      });
+    }
+
+    const userId = (req as any).user?.id || req.body.userId || 1;
+    const userName = (req as any).user?.name || req.body.userName || 'System';
+
+    const result = await intelligentReportEngine.supersedeReport(originalReportId, {
+      organizationId,
+      clientWorkspaceId,
+      projectId,
+      domain,
+      subtype,
+      title,
+      targetRegulatory,
+      complianceFrameworks,
+      parameters,
+      persona,
+      userId,
+      userName,
+      ipAddress: req.ip || req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        originalReportId,
+        newReportId: result.record.id,
+        newReportCode: result.record.reportCode,
+        newVersion: result.record.version,
+        verificationCode: result.verificationCode,
+        contentHash: result.record.contentHash,
+      },
+    });
+  } catch (error: any) {
+    console.error('Supersede error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/intelligent-reports/:reportId/revoke
+ * Revoke a report with justification (irrecoverable — recorded in seal chain)
+ */
+router.post('/:reportId/revoke', async (req: Request, res: Response) => {
+  try {
+    const reportId = parseInt(req.params.reportId);
+    const { justification } = req.body;
+
+    if (!justification) {
+      return res.status(400).json({ success: false, error: 'Justification required for revocation' });
+    }
+
+    const userId = (req as any).user?.id || req.body.userId || 1;
+    const userName = (req as any).user?.name || req.body.userName || 'System';
+
+    await intelligentReportEngine.revokeReport(
+      reportId,
+      userId,
+      userName,
+      justification,
+      req.ip || req.socket.remoteAddress,
+    );
+
+    res.json({ success: true, data: { reportId, status: 'revoked', justification } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ── Export ───────────────────────────────────────────────────
+
+/**
+ * GET /api/intelligent-reports/:reportId/export/:format
+ * Export report with integrity manifest (json | csv | manifest)
+ */
+router.get('/:reportId/export/:format', async (req: Request, res: Response) => {
+  try {
+    const reportId = parseInt(req.params.reportId);
+    const format = req.params.format as 'json' | 'csv' | 'manifest';
+
+    if (!['json', 'csv', 'manifest'].includes(format)) {
+      return res.status(400).json({ success: false, error: 'Format must be json, csv, or manifest' });
+    }
+
+    const result = await intelligentReportEngine.exportReport(reportId, format);
+
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.setHeader('Content-Type', result.contentType);
+    res.setHeader('X-Integrity-Hash', result.integrityManifest.exportHash);
+    res.setHeader('X-Verification-Code', result.integrityManifest.verificationCode);
+
+    if (format === 'csv') {
+      res.send(result.data);
+    } else {
+      res.json(result.data);
+    }
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ── Drift Detection & Compliance Validation ─────────────────
+
+/**
+ * GET /api/intelligent-reports/:reportId/drift-check
+ * Detect provenance drift — checks if source data changed since report generation
+ */
+router.get('/:reportId/drift-check', async (req: Request, res: Response) => {
+  try {
+    const reportId = parseInt(req.params.reportId);
+    const result = await intelligentReportEngine.detectProvenanceDrift(reportId);
+    res.json({
+      success: true,
+      data: result,
+      driftDetected: result.drifted > 0,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/intelligent-reports/:reportId/compliance-validation
+ * Run full compliance validation against target regulatory body
+ */
+router.get('/:reportId/compliance-validation', async (req: Request, res: Response) => {
+  try {
+    const reportId = parseInt(req.params.reportId);
+    const { body } = req.query;
+
+    const result = await intelligentReportEngine.runComplianceValidation(
+      reportId,
+      body as any,
+    );
+
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
