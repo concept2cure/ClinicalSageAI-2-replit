@@ -216,9 +216,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Icon className={cn('h-5 w-5', option.color)} />
-                    <span className="font-semibold text-gray-900">{option.name}</span>
+                    <span className="font-semibold text-zinc-900">{option.name}</span>
                   </div>
-                  <span className="text-xs text-gray-600 line-clamp-2">{option.description}</span>
+                  <span className="text-xs text-zinc-600 line-clamp-2">{option.description}</span>
                 </button>
               );
             })}
@@ -234,14 +234,14 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
             >
               <selectedTypeOption.icon className={cn('h-5 w-5', selectedTypeOption.color)} />
               <div>
-                <div className="font-medium text-gray-900">{selectedTypeOption.name}</div>
-                <div className="text-xs text-gray-600">{selectedTypeOption.fullName}</div>
+                <div className="font-medium text-zinc-900">{selectedTypeOption.name}</div>
+                <div className="text-xs text-zinc-600">{selectedTypeOption.fullName}</div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleBack}
-                className="ml-auto text-gray-500 hover:text-gray-700"
+                className="ml-auto text-zinc-500 hover:text-zinc-700"
               >
                 Change
               </Button>
@@ -272,12 +272,12 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
             </div>
 
             {/* What happens next */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-              <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+            <div className="bg-zinc-50 rounded-lg p-4 space-y-2">
+              <h4 className="text-sm font-medium text-zinc-900 flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                 What happens next
               </h4>
-              <ul className="text-xs text-gray-600 space-y-1 ml-6">
+              <ul className="text-xs text-zinc-600 space-y-1 ml-6">
                 <li>• Your project workspace will be created</li>
                 <li>• You can start chatting immediately</li>
                 <li>• Upload documents to build project knowledge</li>

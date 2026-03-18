@@ -31,6 +31,20 @@ import {
   Users,
   FlaskConical,
   BookOpen,
+  Snowflake,
+  Bot,
+  Compass,
+  Activity,
+  Upload,
+  FileStack,
+  Scale,
+  Rocket,
+  Beaker,
+  Layers,
+  FileText,
+  ClipboardList,
+  Shield,
+  Globe,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -288,8 +302,28 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Core module icons */}
         <div className="w-8 border-t border-zinc-200 my-1" />
         <button
+          onClick={() => onNavigate?.('agent-hub')}
+          aria-label="AI Agents"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'agent-hub' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Bot className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('snowglobe')}
+          aria-label="SnowGlobe"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'snowglobe' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Snowflake className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => onNavigate?.('collaboration-hub')}
-          aria-label="Collaboration Hub"
+          aria-label="Collaboration"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
             activeNavId === 'collaboration-hub' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
@@ -298,24 +332,24 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <Users className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('biostatistics')}
-          aria-label="Biostatistics"
+          onClick={() => onNavigate?.('artifacts')}
+          aria-label="Artifacts"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'biostatistics' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'artifacts' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <FlaskConical className="w-4 h-4" />
+          <Layers className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('training-center')}
-          aria-label="Training Center"
+          onClick={() => onNavigate?.('knowledge-base')}
+          aria-label="Knowledge Base"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'training-center' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'knowledge-base' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <BookOpen className="w-4 h-4" />
+          <Upload className="w-4 h-4" />
         </button>
 
         <button
@@ -363,14 +397,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </button>
         </div>
 
-        {/* New conversation */}
+        {/* New workspace thread */}
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[12px] font-medium hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
-            New conversation
+            New workspace thread
           </button>
         </div>
 
@@ -396,7 +430,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <WorkspaceGroup label="Work">
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
-              label="Copilot"
+              label="AnA RI Copilot"
               active={activeNavId === 'ai-copilot'}
               accentColor="blue"
               onClick={() => onNavigate?.('ai-copilot')}
@@ -409,6 +443,21 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onClick={() => onNavigate?.('author')}
             />
             <NavItem
+              icon={<Compass className="w-3.5 h-3.5" />}
+              label="Document Sherpa"
+              subtitle="Guided authoring · AI assist"
+              active={activeNavId === 'document-sherpa'}
+              onClick={() => onNavigate?.('document-sherpa')}
+            />
+            <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Document Builder"
+              subtitle="CSR · CTD · Multi-agency"
+              active={activeNavId === 'document-builder'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('document-builder')}
+            />
+            <NavItem
               icon={<Users className="w-3.5 h-3.5" />}
               label="Collaboration"
               subtitle="Threads · Reviews · Decisions"
@@ -418,8 +467,43 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             />
           </WorkspaceGroup>
 
+          {/* ── AI — agents & intelligence ──────────────────────── */}
+          <WorkspaceGroup label="AI Agents">
+            <NavItem
+              icon={<Bot className="w-3.5 h-3.5" />}
+              label="Agent Swarm"
+              subtitle="AI Agent Swarm"
+              active={activeNavId === 'agent-hub'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('agent-hub')}
+            />
+            <NavItem
+              icon={<Snowflake className="w-3.5 h-3.5" />}
+              label="SnowGlobe"
+              subtitle="Predictions · Simulations"
+              active={activeNavId === 'snowglobe'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('snowglobe')}
+            />
+            <NavItem
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="Review Pulse"
+              subtitle="Signals · Readiness · Risk"
+              active={activeNavId === 'review-pulse'}
+              onClick={() => onNavigate?.('review-pulse')}
+            />
+          </WorkspaceGroup>
+
           {/* ── RESEARCH — what I need to know ───────────────────── */}
           <WorkspaceGroup label="Research">
+            <NavItem
+              icon={<Search className="w-3.5 h-3.5" />}
+              label="Deep Research"
+              subtitle="Multi-source · Connectors · AI"
+              active={activeNavId === 'deep-research'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('deep-research')}
+            />
             <NavItem
               icon={<Search className="w-3.5 h-3.5" />}
               label="Intelligence"
@@ -435,6 +519,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               accentColor="emerald"
               onClick={() => onNavigate?.('biostatistics')}
             />
+            <NavItem
+              icon={<Beaker className="w-3.5 h-3.5" />}
+              label="CMC Platform"
+              subtitle="Chemistry · Manufacturing"
+              active={activeNavId === 'cmc'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('cmc')}
+            />
           </WorkspaceGroup>
 
           {/* ── ASSURE — quality & compliance ─────────────────────── */}
@@ -445,6 +537,21 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Quality · Compliance · Audit"
               active={activeNavId === 'review-readiness'}
               onClick={() => onNavigate?.('review-readiness')}
+            />
+            <NavItem
+              icon={<Scale className="w-3.5 h-3.5" />}
+              label="Legal Center"
+              subtitle="IP · Contracts · Regulatory law"
+              active={activeNavId === 'legal-center'}
+              onClick={() => onNavigate?.('legal-center')}
+            />
+            <NavItem
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="Report Engine"
+              subtitle="Immutable · Provenance · Indemnify"
+              active={activeNavId === 'report-engine'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('report-engine')}
             />
           </WorkspaceGroup>
 
@@ -466,18 +573,63 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onClick={() => onNavigate?.('command-center')}
             />
             <NavItem
+              icon={<Layers className="w-3.5 h-3.5" />}
+              label="Artifacts"
+              subtitle="Outputs · Documents · Templates"
+              active={activeNavId === 'artifacts'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('artifacts')}
+            />
+            <NavItem
+              icon={<Upload className="w-3.5 h-3.5" />}
+              label="Knowledge Base"
+              subtitle="Skills · .MD · Materials"
+              active={activeNavId === 'knowledge-base'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('knowledge-base')}
+            />
+            <NavItem
+              icon={<FileStack className="w-3.5 h-3.5" />}
+              label="Project Knowledge"
+              subtitle="Context · Uploads · Sources"
+              active={activeNavId === 'project-knowledge'}
+              onClick={() => onNavigate?.('project-knowledge')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── LEARN — enablement & onboarding ────────────────────── */}
+          <WorkspaceGroup label="Learn">
+            <NavItem
               icon={<GraduationCap className="w-3.5 h-3.5" />}
               label="Academy"
+              subtitle="Dr. Sage · AnA guides"
               active={activeNavId === 'enablement-center'}
               onClick={() => onNavigate?.('enablement-center')}
             />
             <NavItem
               icon={<BookOpen className="w-3.5 h-3.5" />}
               label="Training Center"
-              subtitle="Onboarding · Courses · Guides"
+              subtitle="Courses · Certifications"
               active={activeNavId === 'training-center'}
               accentColor="violet"
               onClick={() => onNavigate?.('training-center')}
+            />
+            <NavItem
+              icon={<Rocket className="w-3.5 h-3.5" />}
+              label="Client Onboarding"
+              subtitle="Setup · Configuration"
+              active={activeNavId === 'client-onboarding'}
+              onClick={() => onNavigate?.('client-onboarding')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── About & Training ─────────────────────────────── */}
+          <WorkspaceGroup label="Learn" defaultOpen={false}>
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="About & Training"
+              active={activeNavId === 'about-training'}
+              onClick={() => onNavigate?.('about-training')}
             />
           </WorkspaceGroup>
 

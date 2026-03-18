@@ -120,16 +120,40 @@ interface ZenChatProps {
 // THINKING INDICATOR - Claude-style pulsing "Thinking..." state
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ThinkingIndicator: React.FC = () => (
-  <div className="flex items-center gap-2 py-1">
-    <div className="relative flex items-center gap-1">
-      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
-      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+const ANA_THINKING_PHRASES = [
+  'Reviewing your regulatory landscape...',
+  'Cross-referencing guidance documents...',
+  'Checking the latest FDA updates...',
+  'Let me dig into the CTD modules...',
+  'Analyzing your submission strategy...',
+  'Running compliance checks...',
+  'Almost there — dotting the i\'s on Part 11...',
+  'Warming up the ELSA engines... no, not that one ❄️',
+  'Consulting my regulatory crystal ball...',
+  'Let it flow through the review process 🏔️',
+  'Building your regulatory snowglobe...',
+  'Searching through 65 ICH guidelines...',
+];
+
+const ThinkingIndicator: React.FC = () => {
+  const [msg, setMsg] = React.useState(() => ANA_THINKING_PHRASES[Math.floor(Math.random() * ANA_THINKING_PHRASES.length)]);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setMsg(ANA_THINKING_PHRASES[Math.floor(Math.random() * ANA_THINKING_PHRASES.length)]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <div className="relative flex items-center gap-1">
+        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+      </div>
+      <span className="text-sm text-violet-600 font-medium animate-pulse">{msg}</span>
     </div>
-    <span className="text-sm text-violet-600 font-medium animate-pulse">Thinking...</span>
-  </div>
-);
+  );
+};
 
 const TypingIndicator: React.FC = () => (
   <div className="flex items-center gap-1.5 py-1">
@@ -674,7 +698,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {greeting?.text || 'Good morning — ready to work?'}
           </h1>
           <p className="text-sm text-zinc-500 max-w-lg mx-auto leading-relaxed">
-            Concept2Cure is your RI co-author for FDA regulatory submissions, clinical trial design,
+            AnA is your AI-powered regulatory intelligence co-author for FDA submissions, clinical trial design,
             and compliance strategy. Tell me what you're working on and I'll generate documents,
             identify gaps, and guide every step.
           </p>

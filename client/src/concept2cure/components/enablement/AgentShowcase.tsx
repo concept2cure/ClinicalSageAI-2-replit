@@ -789,15 +789,17 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
 export function AgentShowcase() {
   const [systemFilter, setSystemFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>("active");
 
   const filtered = useMemo(() => {
     return capabilities.filter((cap) => {
+      if (statusFilter !== "all" && cap.status !== statusFilter) return false;
       if (systemFilter !== "all" && cap.system !== systemFilter) return false;
       if (categoryFilter !== "all" && cap.category !== categoryFilter)
         return false;
       return true;
     });
-  }, [systemFilter, categoryFilter]);
+  }, [systemFilter, categoryFilter, statusFilter]);
 
   const counts = useMemo(() => {
     const active = capabilities.filter((c) => c.status === "active").length;
@@ -826,6 +828,11 @@ export function AgentShowcase() {
 
         {/* Filters */}
         <div className="space-y-3 mb-8">
+          <FilterBar
+            options={{ all: "All", active: "Active", beta: "Beta", "coming-soon": "Coming Soon" }}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
           <FilterBar
             options={systemLabels}
             value={systemFilter}

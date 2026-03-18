@@ -260,7 +260,7 @@ function MainApp() {
   // Removed stability measures to show authentic TrialSage content
 
   // Check if we're on the landing page, regulatory hub, coauthor pages, or dashboard (which have their own navigation)
-  const isLandingPage = location === '/' || location === '/client-portal';
+  const isLandingPage = location === '/client-portal';
   const isRegulatoryHub =
     location === '/regulatory-intelligence-hub' || location === '/client-portal/regulatory-intel';
   const isCoAuthorPage =
@@ -269,8 +269,8 @@ function MainApp() {
   // Ensure CERV2 pages are NOT excluded from the navigation
   const isCERV2Page = location === '/cerv2' || location.startsWith('/cerv2/');
 
-  // Concept2Cure pages have their own layout, no top nav needed
-  const isConcept2CurePage = location === '/concept2cure' || location.startsWith('/concept2cure/');
+  // Concept2Cure pages (and root landing) have their own layout, no top nav needed
+  const isConcept2CurePage = location === '/' || location === '/concept2cure' || location.startsWith('/concept2cure/');
 
   // Always show navigation for CERV2 pages
   const shouldShowNav =
@@ -402,8 +402,14 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Root and legacy portal routes → redirect to Concept2Cure home */}
-            <Route path="/">{() => <Redirect to="/concept2cure" />}</Route>
+            {/* Root → Marketing Landing Page via ZenRouter (shows LandingPage for unauth, redirects to /concept2cure for auth) */}
+            <Route path="/">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
             {/* Lumen Cortex AI Assistant - Full Page */}
             <Route path="/lumen-cortex">

@@ -13,10 +13,21 @@ import {
   TrendingUp,
   Globe,
   Shield,
+  Inbox,
+  FileText,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { ActionButton, GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
+import {
+  useRealTimeAlerts,
+  useRecalls,
+  useGuidances,
+  useCompetitorIntelligence,
+  usePDUFADates,
+} from '@/concept2cure/hooks/useRegulatoryIntelligence';
+import { useQuery } from '@tanstack/react-query';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,173 +59,11 @@ const tabs: Tab[] = [
 
 const fade = { initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: 4 }, transition: { duration: 0.15 } };
 
-// --- Alerts data -----------------------------------------------------------
-
-const alerts = [
-  {
-    id: 1,
-    date: '2026-03-15',
-    severity: 'critical' as const,
-    title: 'FDA updates Module 2.5 Clinical Overview guidance',
-    description:
-      'The FDA Center for Drug Evaluation and Research issued revised guidance for the Clinical Overview section of the Common Technical Document. Key changes include new expectations for benefit-risk integration and requirements for subgroup analyses in the narrative summary.',
-    agencies: ['FDA'],
-  },
-  {
-    id: 2,
-    date: '2026-03-12',
-    severity: 'high' as const,
-    title: 'EMA revises CTD Module 3 CMC requirements',
-    description:
-      'The European Medicines Agency published updated requirements for Module 3 Chemistry, Manufacturing, and Controls. Changes affect drug substance characterization expectations and stability data formatting for centralized procedure applications.',
-    agencies: ['EMA'],
-  },
-  {
-    id: 3,
-    date: '2026-03-10',
-    severity: 'high' as const,
-    title: 'Health Canada announces new pediatric data submission requirements',
-    description:
-      'Effective June 2026, Health Canada will require prospective pediatric study plans for all new drug submissions in oncology and rare diseases. Sponsors must submit Pediatric Investigation Plans concurrent with the initial NDS filing.',
-    agencies: ['Health Canada'],
-  },
-  {
-    id: 4,
-    date: '2026-03-08',
-    severity: 'medium' as const,
-    title: 'PMDA issues revised bioequivalence study design guidance',
-    description:
-      'Japan\'s PMDA released updated guidance on bioequivalence study design for generic drug applications. The revision introduces acceptance of adaptive crossover designs and modifies dissolution testing specifications for BCS Class II compounds.',
-    agencies: ['PMDA'],
-  },
-  {
-    id: 5,
-    date: '2026-03-05',
-    severity: 'medium' as const,
-    title: 'ICH E6(R3) implementation timeline finalized',
-    description:
-      'The International Council for Harmonisation confirmed the implementation timeline for ICH E6(R3) Good Clinical Practice. Regional adoption deadlines have been set, with FDA and EMA requiring compliance by Q1 2027.',
-    agencies: ['FDA', 'EMA', 'PMDA'],
-  },
-  {
-    id: 6,
-    date: '2026-03-02',
-    severity: 'low' as const,
-    title: 'FDA Class II recall: Software update for cardiac monitoring devices',
-    description:
-      'FDA issued a Class II recall notice for select cardiac monitoring devices due to a firmware issue affecting data transmission reliability. Affected manufacturers must submit corrective action plans within 30 days.',
-    agencies: ['FDA'],
-  },
-];
-
-// --- Evidence data ---------------------------------------------------------
-
-const evidenceItems = [
-  {
-    id: 1,
-    title: 'Efficacy of PD-1 inhibitors in microsatellite-instable colorectal cancer: a systematic review',
-    source: 'PubMed',
-    date: '2026-02-18',
-    confidence: 0.94,
-    relevance: 0.91,
-    citations: 187,
-  },
-  {
-    id: 2,
-    title: 'FDA Statistical Review: Pembrolizumab for first-line treatment of NSCLC',
-    source: 'FDA',
-    date: '2025-11-22',
-    confidence: 0.97,
-    relevance: 0.88,
-    citations: 0,
-  },
-  {
-    id: 3,
-    title: 'Comparative effectiveness of checkpoint inhibitors across solid tumors: network meta-analysis',
-    source: 'PubMed',
-    date: '2026-01-09',
-    confidence: 0.89,
-    relevance: 0.85,
-    citations: 64,
-  },
-  {
-    id: 4,
-    title: 'Internal Phase 2 data: ORR and DOR in refractory CRC cohort (Study C2C-301)',
-    source: 'Internal',
-    date: '2026-03-01',
-    confidence: 0.82,
-    relevance: 0.96,
-    citations: 0,
-  },
-  {
-    id: 5,
-    title: 'Real-world evidence on immune-related adverse events: post-marketing surveillance dataset',
-    source: 'FDA',
-    date: '2025-09-14',
-    confidence: 0.91,
-    relevance: 0.79,
-    citations: 42,
-  },
-];
-
-// --- Precedent data --------------------------------------------------------
-
-const precedents = [
-  {
-    id: 1,
-    name: 'CardioSense Pro Cardiac Monitor',
-    pathway: '510(k)',
-    decisionDate: '2025-08-14',
-    outcome: 'approved' as const,
-    similarity: 0.92,
-    predicateDevice: 'K203415',
-    keyQuestions: [
-      'Substantial equivalence to predicate in signal processing algorithm',
-      'Biocompatibility testing for prolonged skin contact',
-    ],
-  },
-  {
-    id: 2,
-    name: 'NeuroPulse Stimulation System',
-    pathway: 'De Novo',
-    decisionDate: '2025-05-22',
-    outcome: 'approved' as const,
-    similarity: 0.84,
-    predicateDevice: 'DEN210038',
-    keyQuestions: [
-      'Novel classification for neurostimulation with AI-guided dosing',
-      'Clinical evidence requirements for safety in outpatient setting',
-    ],
-  },
-  {
-    id: 3,
-    name: 'GlucoTrack Continuous Monitor v2',
-    pathway: '510(k)',
-    decisionDate: '2025-02-11',
-    outcome: 'rejected' as const,
-    similarity: 0.78,
-    predicateDevice: 'K194822',
-    keyQuestions: [
-      'Insufficient analytical performance data for hypoglycemic range',
-      'Missing comparative study against predicate device',
-    ],
-  },
-  {
-    id: 4,
-    name: 'VascuPath Imaging Catheter',
-    pathway: 'PMA',
-    decisionDate: '2024-11-30',
-    outcome: 'crl' as const,
-    similarity: 0.71,
-    predicateDevice: 'P200045',
-    keyQuestions: [
-      'Additional clinical data requested for tortuous vessel anatomy',
-      'Post-market surveillance plan deemed insufficient',
-    ],
-  },
-];
-
-// --- Pathway data ----------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Reference Data — Regulatory pathways and programs
+// These are legitimate static reference data maintained from official FDA,
+// EMA, and ICH guidance. FDA pathways and expedited programs rarely change.
+// ---------------------------------------------------------------------------
 
 const agencies = [
   { id: 'fda', name: 'FDA', region: 'United States' },
@@ -234,31 +83,31 @@ const fdaPathways = [
     name: 'NDA (New Drug Application)',
     description:
       'Standard approval pathway for new molecular entities. Requires complete clinical, nonclinical, and CMC data demonstrating safety and efficacy.',
-    timeline: '10–12 months (standard), 6–8 months (priority)',
+    timeline: '10\u201312 months (standard), 6\u20138 months (priority)',
   },
   {
     name: 'BLA (Biologics License Application)',
     description:
       'Approval pathway for biological products including vaccines, blood products, and therapeutic proteins. Includes facility inspection requirements.',
-    timeline: '10–12 months (standard), 6–8 months (priority)',
+    timeline: '10\u201312 months (standard), 6\u20138 months (priority)',
   },
   {
     name: '510(k) Premarket Notification',
     description:
       'Clearance pathway for medical devices that are substantially equivalent to a legally marketed predicate device. No clinical data required if equivalence is demonstrated.',
-    timeline: '3–6 months',
+    timeline: '3\u20136 months',
   },
   {
     name: 'PMA (Premarket Approval)',
     description:
       'Most stringent device approval pathway for Class III devices. Requires clinical evidence of safety and effectiveness.',
-    timeline: '6–12 months',
+    timeline: '6\u201312 months',
   },
   {
     name: 'De Novo Classification',
     description:
       'Alternative pathway for novel, low-to-moderate risk devices without a predicate. Creates a new regulatory classification upon authorization.',
-    timeline: '6–12 months',
+    timeline: '6\u201312 months',
   },
 ];
 
@@ -285,28 +134,19 @@ const expeditedPrograms = [
   },
 ];
 
-// --- Strategic data --------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Empty state component
+// ---------------------------------------------------------------------------
 
-const competitiveLandscape = [
-  { company: 'Astellas Pharma', area: 'Oncology', event: 'FDA Priority Review granted for ADC candidate', impact: 'high' as const, date: '2026-03-14' },
-  { company: 'Roche / Genentech', area: 'Immunology', event: 'Phase 3 topline data positive — bispecific antibody', impact: 'medium' as const, date: '2026-03-12' },
-  { company: 'Medtronic', area: 'Cardiac Devices', event: 'De Novo clearance for AI-guided monitoring', impact: 'high' as const, date: '2026-03-10' },
-  { company: 'Novartis', area: 'Neurology', event: 'EMA CHMP positive opinion — gene therapy', impact: 'medium' as const, date: '2026-03-08' },
-];
-
-const therapeuticTrends = [
-  { area: 'Oncology', approvals2025: 18, activePipeline: 342, trend: 'up' as const, insight: 'ADC and bispecific modalities dominating new filings' },
-  { area: 'Neurology', approvals2025: 7, activePipeline: 189, trend: 'up' as const, insight: 'Gene therapy filings accelerating after recent FDA guidance' },
-  { area: 'Cardiology', approvals2025: 5, activePipeline: 124, trend: 'flat' as const, insight: 'Digital health companion diagnostics gaining traction' },
-  { area: 'Rare Disease', approvals2025: 12, activePipeline: 267, trend: 'up' as const, insight: 'Orphan drug incentives driving 34% YoY pipeline growth' },
-];
-
-const strategicInsights = [
-  'FDA Priority Review rate for oncology ADCs is 67% — significantly above the 42% baseline. Consider accelerated pathway for similar modalities.',
-  'EMA centralized procedure timelines shortened by 15% in 2025 vs 2024. Factor into global filing strategy.',
-  'Three competitor De Novo clearances in cardiac AI this quarter signal receptive regulatory posture — favorable window for similar submissions.',
-  'PMDA-FDA parallel review pilot program expanding eligibility in Q2 2026. Evaluate dual-filing opportunities for pipeline candidates.',
-];
+function EmptyState({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
+  return (
+    <div className="bg-white rounded-lg border border-zinc-100 py-12 text-center">
+      <Icon className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+      <p className="text-sm text-zinc-500">{title}</p>
+      <p className="text-xs text-zinc-400 mt-1">{description}</p>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Sub-view components
@@ -322,12 +162,99 @@ function SeverityLabel({ severity }: { severity: string }) {
 
 function RegulatoryAlerts() {
   const { generate, isGenerating } = useDeliverable();
+  const { alerts: liveAlerts, connectionStatus } = useRealTimeAlerts('current-user');
+  const { data: recallsData } = useRecalls();
+  const { data: guidancesData } = useGuidances();
+
+  // Transform real data into unified alert format
+  const alerts = React.useMemo(() => {
+    const items: Array<{
+      id: string;
+      date: string;
+      severity: 'critical' | 'high' | 'medium' | 'low';
+      title: string;
+      description: string;
+      agencies: string[];
+    }> = [];
+
+    // Map live alerts from real-time subscription
+    if (liveAlerts && liveAlerts.length > 0) {
+      liveAlerts.forEach((alert) => {
+        const severityMap: Record<string, 'critical' | 'high' | 'medium' | 'low'> = {
+          CRITICAL: 'critical',
+          HIGH: 'high',
+          MEDIUM: 'medium',
+          LOW: 'low',
+          INFO: 'low',
+        };
+        items.push({
+          id: alert.id,
+          date: alert.timestamp ? new Date(alert.timestamp).toISOString().split('T')[0] : '',
+          severity: severityMap[alert.priority] || 'medium',
+          title: alert.title,
+          description: alert.message,
+          agencies: alert.source === 'FDA_ENFORCEMENT' || alert.source === 'FDA_GUIDANCE' || alert.source === 'RECALLS'
+            ? ['FDA']
+            : alert.source === 'MAUDE' ? ['FDA']
+            : alert.source === 'PDUFA' ? ['FDA']
+            : [],
+        });
+      });
+    }
+
+    // Map FDA guidances into alert items
+    if (guidancesData && guidancesData.length > 0) {
+      guidancesData.forEach((g) => {
+        items.push({
+          id: `guidance-${g.id}`,
+          date: g.issueDate,
+          severity: g.guidanceType === 'final' ? 'high' : 'medium',
+          title: g.title,
+          description: g.summary || `${g.guidanceType === 'final' ? 'Final' : 'Draft'} guidance issued by ${g.centerCode}.`,
+          agencies: ['FDA'],
+        });
+      });
+    }
+
+    // Map FDA recalls into alert items
+    if (recallsData && recallsData.length > 0) {
+      recallsData.forEach((r) => {
+        const severityMap: Record<string, 'critical' | 'high' | 'medium'> = {
+          I: 'critical',
+          II: 'high',
+          III: 'medium',
+        };
+        items.push({
+          id: `recall-${r.id}`,
+          date: r.centerClassificationDate,
+          severity: severityMap[r.recallClass] || 'medium',
+          title: `FDA Class ${r.recallClass} Recall: ${r.recallingFirm}`,
+          description: `${r.reasonForRecall} — Product: ${r.productDescription}`,
+          agencies: ['FDA'],
+        });
+      });
+    }
+
+    // Sort by date descending
+    items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    return items;
+  }, [liveAlerts, guidancesData, recallsData]);
+
   return (
     <motion.div {...fade} className="space-y-1">
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-zinc-400">
-          What changed that affects your submission? Powered by Regulatory Delta Radar and Regulatory Intelligence Service.
-        </p>
+        <div>
+          <p className="text-sm text-zinc-400">
+            What changed that affects your submission? Powered by Regulatory Delta Radar and Regulatory Intelligence Service.
+          </p>
+          {connectionStatus === 'connected' && (
+            <p className="text-xs text-emerald-500 mt-1">Live monitoring active</p>
+          )}
+          {connectionStatus === 'connecting' && (
+            <p className="text-xs text-amber-500 mt-1">Connecting to alert feed...</p>
+          )}
+        </div>
         <ExportButton
           label="Export Watch Report"
           produces="Regulatory Watch Report (PDF)"
@@ -343,40 +270,48 @@ function RegulatoryAlerts() {
         />
       </div>
       <div className="space-y-4">
-        {alerts.map((alert) => (
-          <div key={alert.id} className="bg-white rounded-lg border border-zinc-100 p-5">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <Clock className="w-4 h-4 text-zinc-400" />
-                <span className="text-xs text-zinc-400">{alert.date}</span>
-                <SeverityLabel severity={alert.severity} />
+        {alerts.length === 0 ? (
+          <EmptyState
+            icon={AlertTriangle}
+            title="No regulatory alerts"
+            description="The system monitors FDA, EMA, PMDA, and Health Canada feeds. Alerts will appear here when regulatory changes are detected."
+          />
+        ) : (
+          alerts.map((alert) => (
+            <div key={alert.id} className="bg-white rounded-lg border border-zinc-100 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-zinc-400" />
+                  <span className="text-xs text-zinc-400">{alert.date}</span>
+                  <SeverityLabel severity={alert.severity} />
+                </div>
+                <div className="flex items-center gap-2">
+                  {alert.agencies.map((a) => (
+                    <span key={a} className="text-xs text-zinc-500 border border-zinc-100 rounded px-2 py-0.5">
+                      {a}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {alert.agencies.map((a) => (
-                  <span key={a} className="text-xs text-zinc-500 border border-zinc-100 rounded px-2 py-0.5">
-                    {a}
-                  </span>
-                ))}
-              </div>
+              <h3 className="text-sm font-medium text-zinc-900 mb-1">{alert.title}</h3>
+              <p className="text-sm text-zinc-600 leading-relaxed mb-3">{alert.description}</p>
+              <GenerateButton
+                label="Impact Assessment"
+                produces="Regulatory Impact Assessment (PDF)"
+                size="sm"
+                isLoading={isGenerating}
+                onClick={() => generate({
+                  endpoint: '/api/concept2cure/reports/alert-impact',
+                  method: 'POST',
+                  body: { alertId: alert.id },
+                  filename: `Impact_Assessment_Alert_${alert.id}.pdf`,
+                  format: 'pdf',
+                  title: 'Impact Assessment',
+                })}
+              />
             </div>
-            <h3 className="text-sm font-medium text-zinc-900 mb-1">{alert.title}</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed mb-3">{alert.description}</p>
-            <GenerateButton
-              label="Impact Assessment"
-              produces="Regulatory Impact Assessment (PDF)"
-              size="sm"
-              isLoading={isGenerating}
-              onClick={() => generate({
-                endpoint: '/api/concept2cure/reports/alert-impact',
-                method: 'POST',
-                body: { alertId: alert.id },
-                filename: `Impact_Assessment_Alert_${alert.id}.pdf`,
-                format: 'pdf',
-                title: 'Impact Assessment',
-              })}
-            />
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </motion.div>
   );
@@ -387,9 +322,40 @@ function EvidenceHub() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const { generate, isGenerating } = useDeliverable();
 
-  const sources = ['all', 'PubMed', 'FDA', 'Internal'];
+  // Fetch artifacts from API for evidence hub
+  const { data: artifactsResponse } = useQuery({
+    queryKey: ['/api/concept2cure/artifacts'],
+  });
+
+  // Fetch audit logs for additional evidence/activity context
+  const { data: auditResponse } = useQuery({
+    queryKey: ['/api/concept2cure/audit-logs', { limit: 30 }],
+    queryFn: () => fetch('/api/concept2cure/audit-logs?limit=30').then(r => r.json()),
+  });
+
+  // Transform artifacts into evidence items
+  const evidenceItems = React.useMemo(() => {
+    const rawArtifacts = (artifactsResponse as any)?.data || (artifactsResponse as any) || [];
+    if (!Array.isArray(rawArtifacts)) return [];
+
+    return rawArtifacts.map((artifact: any, idx: number) => ({
+      id: artifact.id || idx,
+      title: artifact.title || artifact.name || 'Untitled artifact',
+      source: artifact.source || artifact.type || 'Internal',
+      date: artifact.createdAt ? new Date(artifact.createdAt).toISOString().split('T')[0] : '',
+      confidence: artifact.confidence ?? artifact.qualityScore ?? 0.8,
+      relevance: artifact.relevance ?? (artifact.status === 'approved' ? 0.95 : artifact.status === 'reviewed' ? 0.85 : 0.7),
+      citations: artifact.citations ?? 0,
+    }));
+  }, [artifactsResponse]);
+
+  const sources = React.useMemo(() => {
+    const uniqueSources = new Set(evidenceItems.map((e: any) => e.source));
+    return ['all', ...Array.from(uniqueSources)];
+  }, [evidenceItems]);
+
   const filtered = evidenceItems.filter(
-    (e) =>
+    (e: any) =>
       (sourceFilter === 'all' || e.source === sourceFilter) &&
       (query === '' || e.title.toLowerCase().includes(query.toLowerCase()))
   );
@@ -459,26 +425,33 @@ function EvidenceHub() {
       </div>
 
       <div className="space-y-3">
-        {filtered.map((item) => (
-          <div key={item.id} className="bg-white rounded-lg border border-zinc-100 p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-zinc-900 mb-1">{item.title}</h3>
-                <div className="flex items-center gap-4 text-xs text-zinc-400">
-                  <span>{item.source}</span>
-                  <span>{item.date}</span>
-                  {item.citations > 0 && <span>{item.citations} citations</span>}
+        {evidenceItems.length === 0 ? (
+          <EmptyState
+            icon={FileSearch}
+            title="No evidence items yet"
+            description="Upload documents and create projects to build your evidence library. Artifacts from your work will appear here."
+          />
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-zinc-400 py-8 text-center">No evidence items match your search.</p>
+        ) : (
+          filtered.map((item: any) => (
+            <div key={item.id} className="bg-white rounded-lg border border-zinc-100 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-zinc-900 mb-1">{item.title}</h3>
+                  <div className="flex items-center gap-4 text-xs text-zinc-400">
+                    <span>{item.source}</span>
+                    <span>{item.date}</span>
+                    {item.citations > 0 && <span>{item.citations} citations</span>}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-zinc-400 mb-0.5">Relevance</div>
+                  <div className="text-sm font-medium text-zinc-900">{(item.relevance * 100).toFixed(0)}%</div>
                 </div>
               </div>
-              <div className="text-right shrink-0">
-                <div className="text-xs text-zinc-400 mb-0.5">Relevance</div>
-                <div className="text-sm font-medium text-zinc-900">{(item.relevance * 100).toFixed(0)}%</div>
-              </div>
             </div>
-          </div>
-        ))}
-        {filtered.length === 0 && (
-          <p className="text-sm text-zinc-400 py-8 text-center">No evidence items match your search.</p>
+          ))
         )}
       </div>
     </motion.div>
@@ -489,11 +462,30 @@ function PrecedentFinder() {
   const [searchQuery, setSearchQuery] = useState('');
   const { generate, isGenerating } = useDeliverable();
 
+  // Fetch precedent/predicate data from API
+  const { data: precedentsResponse } = useQuery({
+    queryKey: ['/api/concept2cure/precedents'],
+    queryFn: () => fetch('/api/concept2cure/precedents').then(r => r.json()),
+  });
+
+  const precedents = React.useMemo(() => {
+    const raw = (precedentsResponse as any)?.data || (precedentsResponse as any) || [];
+    if (!Array.isArray(raw)) return [];
+    return raw;
+  }, [precedentsResponse]);
+
   const outcomeLabel = (o: string) => {
     if (o === 'approved') return 'Approved';
     if (o === 'rejected') return 'Not Substantially Equivalent';
     return 'Complete Response Letter';
   };
+
+  const filteredPrecedents = precedents.filter(
+    (p: any) =>
+      searchQuery === '' ||
+      (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.pathway || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <motion.div {...fade} className="space-y-6">
@@ -543,37 +535,53 @@ function PrecedentFinder() {
       </div>
 
       <div className="space-y-4">
-        {precedents.map((p) => (
-          <div key={p.id} className="bg-white rounded-lg border border-zinc-100 p-5">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-sm font-medium text-zinc-900">{p.name}</h3>
-                <div className="flex items-center gap-3 mt-1 text-xs text-zinc-400">
-                  <span>{p.pathway}</span>
-                  <span>{p.decisionDate}</span>
-                  <span>{p.predicateDevice}</span>
+        {precedents.length === 0 ? (
+          <EmptyState
+            icon={FileSearch}
+            title="No precedent data yet"
+            description="Create a project and define your product profile to find regulatory precedents and predicate devices."
+          />
+        ) : filteredPrecedents.length === 0 ? (
+          <p className="text-sm text-zinc-400 py-8 text-center">No precedents match your search.</p>
+        ) : (
+          filteredPrecedents.map((p: any) => (
+            <div key={p.id} className="bg-white rounded-lg border border-zinc-100 p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-medium text-zinc-900">{p.name}</h3>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-zinc-400">
+                    <span>{p.pathway}</span>
+                    <span>{p.decisionDate}</span>
+                    {p.predicateDevice && <span>{p.predicateDevice}</span>}
+                  </div>
                 </div>
+                {p.similarity != null && (
+                  <div className="text-right shrink-0">
+                    <div className="text-xs text-zinc-400 mb-0.5">Similarity</div>
+                    <div className="text-sm font-medium text-zinc-900">{(p.similarity * 100).toFixed(0)}%</div>
+                  </div>
+                )}
               </div>
-              <div className="text-right shrink-0">
-                <div className="text-xs text-zinc-400 mb-0.5">Similarity</div>
-                <div className="text-sm font-medium text-zinc-900">{(p.similarity * 100).toFixed(0)}%</div>
-              </div>
+              {p.outcome && (
+                <div className="mb-3">
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                    {outcomeLabel(p.outcome)}
+                  </span>
+                </div>
+              )}
+              {p.keyQuestions && p.keyQuestions.length > 0 && (
+                <div className="space-y-1">
+                  <div className="text-xs text-zinc-400 mb-1">Key FDA questions</div>
+                  {p.keyQuestions.map((q: string, i: number) => (
+                    <p key={i} className="text-sm text-zinc-600 leading-relaxed">
+                      {i + 1}. {q}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="mb-3">
-              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
-                {outcomeLabel(p.outcome)}
-              </span>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-zinc-400 mb-1">Key FDA questions</div>
-              {p.keyQuestions.map((q, i) => (
-                <p key={i} className="text-sm text-zinc-600 leading-relaxed">
-                  {i + 1}. {q}
-                </p>
-              ))}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </motion.div>
   );
@@ -619,6 +627,7 @@ function PathwayAdvisor() {
         </div>
       </div>
 
+      {/* Reference Data — Agency selector */}
       <div className="flex items-center gap-2">
         {agencies.map((a) => (
           <button
@@ -639,8 +648,12 @@ function PathwayAdvisor() {
 
       {selectedAgency === 'fda' && (
         <div className="space-y-6">
+          {/* Reference Data — Regulatory pathways from official FDA guidance */}
           <div>
-            <h3 className="text-sm font-medium text-zinc-900 mb-3">Regulatory Pathways</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-medium text-zinc-900">Regulatory Pathways</h3>
+              <span className="text-[10px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
+            </div>
             <div className="space-y-3">
               {fdaPathways.map((p) => (
                 <div key={p.name} className="bg-white rounded-lg border border-zinc-100 p-4">
@@ -656,8 +669,12 @@ function PathwayAdvisor() {
             </div>
           </div>
 
+          {/* Reference Data — Expedited programs from official FDA guidance */}
           <div>
-            <h3 className="text-sm font-medium text-zinc-900 mb-3">Expedited Programs</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-medium text-zinc-900">Expedited Programs</h3>
+              <span className="text-[10px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               {expeditedPrograms.map((ep) => (
                 <div key={ep.name} className="bg-white rounded-lg border border-zinc-100 p-4">
@@ -688,6 +705,37 @@ function PathwayAdvisor() {
 
 function StrategicView() {
   const { generate, isGenerating } = useDeliverable();
+
+  // Real data from hooks
+  const { data: competitorData } = useCompetitorIntelligence();
+  const { data: pdufaData } = usePDUFADates();
+
+  // Transform competitor intelligence into display format
+  const competitiveLandscape = React.useMemo(() => {
+    if (!competitorData || competitorData.length === 0) return [];
+    return competitorData.map((item) => ({
+      company: item.companyName,
+      area: item.productName || item.eventType,
+      event: item.summary,
+      impact: item.impact === 'positive' ? 'high' as const
+        : item.impact === 'negative' ? 'high' as const
+        : 'medium' as const,
+      date: item.date,
+    }));
+  }, [competitorData]);
+
+  // Transform PDUFA dates into display format
+  const upcomingDates = React.useMemo(() => {
+    if (!pdufaData || pdufaData.length === 0) return [];
+    return pdufaData.filter((d) => d.status === 'pending').map((d) => ({
+      id: d.id,
+      product: d.productName,
+      sponsor: d.sponsor,
+      targetDate: d.targetDate,
+      dateType: d.dateType,
+      indication: d.indication || '',
+    }));
+  }, [pdufaData]);
 
   return (
     <motion.div {...fade} className="space-y-6">
@@ -725,68 +773,69 @@ function StrategicView() {
         </div>
       </div>
 
-      {/* Therapeutic Area Trends */}
+      {/* Upcoming PDUFA Dates */}
       <div>
-        <h3 className="text-sm font-medium text-zinc-900 mb-3">Therapeutic Area Landscape</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {therapeuticTrends.map((area) => (
-            <div key={area.area} className="bg-white rounded-lg border border-zinc-100 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-zinc-900">{area.area}</h4>
-                <span className={cn(
-                  'text-xs font-medium uppercase tracking-wide',
-                  area.trend === 'up' ? 'text-emerald-600' : 'text-zinc-400'
-                )}>
-                  {area.trend === 'up' ? '↑ Growing' : '→ Stable'}
-                </span>
+        <h3 className="text-sm font-medium text-zinc-900 mb-3">Upcoming PDUFA Dates</h3>
+        {upcomingDates.length === 0 ? (
+          <EmptyState
+            icon={Clock}
+            title="No upcoming PDUFA dates"
+            description="PDUFA target action dates will appear here when available from FDA feeds."
+          />
+        ) : (
+          <div className="space-y-3">
+            {upcomingDates.map((d) => (
+              <div key={d.id} className="bg-white rounded-lg border border-zinc-100 p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-3">
+                    <h4 className="text-sm font-medium text-zinc-900">{d.product}</h4>
+                    <span className="text-xs text-zinc-400">{d.sponsor}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{d.dateType}</span>
+                    <span className="text-xs text-zinc-400">{d.targetDate}</span>
+                  </div>
+                </div>
+                {d.indication && <p className="text-sm text-zinc-600">{d.indication}</p>}
               </div>
-              <div className="flex items-center gap-6 text-xs text-zinc-400 mb-2">
-                <span>{area.approvals2025} approvals (2025)</span>
-                <span>{area.activePipeline} active trials</span>
-              </div>
-              <p className="text-xs text-zinc-600 leading-relaxed">{area.insight}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Competitive Intelligence */}
       <div>
         <h3 className="text-sm font-medium text-zinc-900 mb-3">Competitive Intelligence</h3>
-        <div className="space-y-3">
-          {competitiveLandscape.map((item, i) => (
-            <div key={i} className="bg-white rounded-lg border border-zinc-100 p-4">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-3">
-                  <h4 className="text-sm font-medium text-zinc-900">{item.company}</h4>
-                  <span className="text-xs text-zinc-400">{item.area}</span>
+        {competitiveLandscape.length === 0 ? (
+          <EmptyState
+            icon={BarChart3}
+            title="No competitive intelligence data yet"
+            description="Configure competitor tracking in your project settings to monitor market activity and regulatory events."
+          />
+        ) : (
+          <div className="space-y-3">
+            {competitiveLandscape.map((item, i) => (
+              <div key={i} className="bg-white rounded-lg border border-zinc-100 p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-3">
+                    <h4 className="text-sm font-medium text-zinc-900">{item.company}</h4>
+                    <span className="text-xs text-zinc-400">{item.area}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      'text-xs font-medium uppercase tracking-wide',
+                      item.impact === 'high' ? 'text-amber-600' : 'text-zinc-400'
+                    )}>
+                      {item.impact} impact
+                    </span>
+                    <span className="text-xs text-zinc-300">{item.date}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    'text-xs font-medium uppercase tracking-wide',
-                    item.impact === 'high' ? 'text-amber-600' : 'text-zinc-400'
-                  )}>
-                    {item.impact} impact
-                  </span>
-                  <span className="text-xs text-zinc-300">{item.date}</span>
-                </div>
+                <p className="text-sm text-zinc-600">{item.event}</p>
               </div>
-              <p className="text-sm text-zinc-600">{item.event}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Strategic Insights */}
-      <div>
-        <h3 className="text-sm font-medium text-zinc-900 mb-3">Strategic Insights</h3>
-        <div className="space-y-3">
-          {strategicInsights.map((insight, i) => (
-            <div key={i} className="bg-white rounded-lg border border-zinc-100 p-4">
-              <p className="text-sm text-zinc-600 leading-relaxed">{insight}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );

@@ -97,8 +97,8 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
     <div className={cn('rounded-2xl border bg-white p-6 shadow-sm', className)}>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Proof Certificate</h2>
-          <p className="text-sm text-gray-500">Run {proof.workflowRunId}</p>
+          <h2 className="text-lg font-semibold text-zinc-900">Proof Certificate</h2>
+          <p className="text-sm text-zinc-500">Run {proof.workflowRunId}</p>
         </div>
         {verification ? (
           <span
@@ -116,7 +116,7 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
           </span>
         ) : (
           <span
-            className="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600"
+            className="flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-600"
             role="status"
             aria-live="polite"
           >
@@ -127,17 +127,17 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
       </header>
 
       <section className="mt-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-          <p className="text-xs uppercase tracking-wide text-gray-400">Execution Proof</p>
-          <p className="mt-1 text-sm font-medium text-gray-800">{proof.proof.pathProof?.proofId}</p>
+        <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-400">Execution Proof</p>
+          <p className="mt-1 text-sm font-medium text-zinc-800">{proof.proof.pathProof?.proofId}</p>
         </div>
-        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-          <p className="text-xs uppercase tracking-wide text-gray-400">Integrity Root</p>
-          <p className="mt-1 text-sm font-medium text-gray-800">{proof.proof.documentIntegrityProof.merkleRoot}</p>
+        <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-400">Integrity Root</p>
+          <p className="mt-1 text-sm font-medium text-zinc-800">{proof.proof.documentIntegrityProof.merkleRoot}</p>
         </div>
-        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-          <p className="text-xs uppercase tracking-wide text-gray-400">Authorizations</p>
-          <p className="mt-1 text-sm font-medium text-gray-800">
+        <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-400">Authorizations</p>
+          <p className="mt-1 text-sm font-medium text-zinc-800">
             {proof.proof.authorizationProofs.length} proofs
           </p>
         </div>

@@ -1904,12 +1904,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
 
     const section = sectionResult.rows[0];
 
-    // Try to use OpenAI service if available
-    if (process.env.OPENAI_API_KEY) {
-      try {
-        const { getOpenAIClient } = await import('../services/openai-client');
-        const openai = getOpenAIClient();
-
+    // Generate with AI Gateway (Claude primary)
+    try {
+      const { getGateway } = await import('../services/ai-gateway/gateway.js');
+      const gw = getGateway();
+      if (gw.getEnabledProviders().length > 0) {
         const prompt = `Generate professional ${region} regulatory content for:
 Module: ${section.module}
 Section: ${section.code} - ${section.title}
@@ -1920,32 +1919,35 @@ ${requirements ? `Requirements: ${requirements}` : ''}
 
 Provide detailed, compliance-ready content following ${region} guidelines.`;
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',
+        const gwResponse = await gw.route({
+          taskType: 'document_drafting',
           messages: [{ role: 'user', content: prompt }],
-          max_tokens: 2000,
+          maxTokens: 2000,
           temperature: 0.3,
+          callerModule: 'authoring-router/generate-draft',
         });
 
-        const generatedContent = completion.choices[0].message?.content?.trim() || '';
-
-        res.json({
-          success: true,
-          draft: {
-            content: generatedContent,
-            metadata: {
-              tone,
-              region,
-              generated_at: new Date().toISOString(),
-              model: 'openai-davinci',
+        const generatedContent = gwResponse.content?.trim() || '';
+        if (generatedContent) {
+          return res.json({
+            success: true,
+            draft: {
+              content: generatedContent,
+              metadata: {
+                tone,
+                region,
+                generated_at: new Date().toISOString(),
+                model: gwResponse.model,
+                provider: gwResponse.provider,
+              },
             },
-          },
-          message: 'AI draft generated successfully',
-        });
-      } catch (aiError) {
-        console.error('OpenAI service error:', aiError);
-        // Fall back to template-based generation
+            message: 'AI draft generated successfully',
+          });
+        }
       }
+    } catch (aiError) {
+      console.error('AI Gateway error:', aiError);
+      // Fall back to template-based generation
     }
 
     // Fallback: Template-based content generation
@@ -4639,18 +4641,10 @@ router.post('/users/pin', async (req: Request, res: Response) => {
 
 // ============= AI ANALYSIS & SUGGESTIONS =============
 
-// Initialize OpenAI client (lazy load)
-let openai: any = null;
-const getOpenAI = async () => {
-  if (!openai) {
-    try {
-      const { getOpenAIClient } = await import('../services/openai-client');
-      openai = getOpenAIClient();
-    } catch (err) {
-      console.error('Failed to load OpenAI:', err);
-    }
-  }
-  return openai;
+// AI Gateway client (routes through Claude by default)
+const getAI = async () => {
+  const { getGateway } = await import('../services/ai-gateway/gateway.js');
+  return getGateway();
 };
 
 // Regulatory validation rules
@@ -4681,10 +4675,10 @@ router.post('/ai/analyze', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Content is required for analysis' });
     }
 
-    const ai = await getOpenAI();
+    const aiGateway = await getAI();
     const suggestions: any[] = [];
     const complianceIssues: any[] = [];
-    
+
     // 1. Grammar and clarity check
     if (analysis_type === 'full' || analysis_type === 'grammar') {
       const grammarPrompt = `Analyze the following regulatory document text for grammar, clarity, and professional writing issues.
@@ -4706,14 +4700,16 @@ Provide output as JSON with this structure:
 }`;
 
       try {
-        const completion = await ai.chat.completions.create({
-          model: 'gpt-4-turbo-preview',
+        const gwResponse = await aiGateway.route({
+          taskType: 'document_analysis',
           messages: [{ role: 'user', content: grammarPrompt }],
-          response_format: { type: 'json_object' },
+          jsonMode: true,
           temperature: 0.3,
+          maxTokens: 2000,
+          callerModule: 'authoring-router/ai-analyze/grammar',
         });
-        
-        const result = JSON.parse(completion.choices[0].message.content || '{}');
+
+        const result = JSON.parse(gwResponse.content || '{}');
         suggestions.push(...(result.suggestions || []));
       } catch (aiError) {
         console.error('AI grammar check failed:', aiError);

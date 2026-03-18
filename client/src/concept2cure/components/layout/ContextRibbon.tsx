@@ -192,14 +192,14 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
   return (
     <div
       className={cn(
-        'h-12 bg-white border-b border-slate-200 flex items-center justify-between px-6 text-xs shadow-sm z-30 select-none',
+        'h-12 bg-white border-b border-zinc-200 flex items-center justify-between px-6 text-xs shadow-sm z-30 select-none',
         className
       )}
     >
       {/* ═══════ LEFT: ACTIVE CONTEXT ═══════ */}
       <div className="flex items-center gap-4">
         {/* Context Indicator */}
-        <div className="flex items-center gap-2 text-slate-500 font-bold tracking-widest">
+        <div className="flex items-center gap-2 text-zinc-500 font-bold tracking-widest">
           <Activity className="w-3.5 h-3.5 text-blue-600" />
           <span className="text-[10px]">ACTIVE CONTEXT</span>
         </div>
@@ -207,12 +207,12 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         {/* Project / Status */}
         <button
           onClick={onProjectClick}
-          className="flex items-center gap-2 hover:bg-slate-50 rounded-lg px-2 py-1 -ml-2 transition-colors"
+          className="flex items-center gap-2 hover:bg-zinc-50 rounded-lg px-2 py-1 -ml-2 transition-colors"
         >
-          <span className="font-bold text-slate-800 bg-slate-100 px-3 py-1 rounded border border-slate-200 shadow-sm">
+          <span className="font-bold text-zinc-800 bg-zinc-100 px-3 py-1 rounded border border-zinc-200 shadow-sm">
             {project}
           </span>
-          <span className="text-slate-300">/</span>
+          <span className="text-zinc-300">/</span>
           <span className={cn('font-medium uppercase flex items-center gap-1', modeConfig.color)}>
             {modeConfig.icon}
             {status || modeConfig.label}
@@ -230,7 +230,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
               days <= 7 && 'bg-red-50 border-red-200',
               days > 7 && days <= 14 && 'bg-amber-50 border-amber-200',
               days > 14 && days <= 30 && 'bg-blue-50 border-blue-200',
-              days > 30 && 'bg-slate-50 border-slate-200'
+              days > 30 && 'bg-zinc-50 border-zinc-200'
             )}
           >
             <Clock
@@ -239,17 +239,17 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
                 days <= 7 && 'text-red-500',
                 days > 7 && days <= 14 && 'text-amber-500',
                 days > 14 && days <= 30 && 'text-blue-500',
-                days > 30 && 'text-slate-500'
+                days > 30 && 'text-zinc-500'
               )}
             />
-            <span className="text-slate-600">DUE:</span>
+            <span className="text-zinc-600">DUE:</span>
             <span
               className={cn(
                 'font-mono font-bold',
                 days <= 7 && 'text-red-600',
                 days > 7 && days <= 14 && 'text-amber-600',
                 days > 14 && days <= 30 && 'text-blue-600',
-                days > 30 && 'text-slate-600'
+                days > 30 && 'text-zinc-600'
               )}
             >
               {days}d
@@ -258,7 +258,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         )}
 
         {/* Divider */}
-        <div className="h-6 w-px bg-slate-200" />
+        <div className="h-6 w-px bg-zinc-200" />
 
         {/* Risk Level */}
         <button
@@ -269,7 +269,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
             riskConfig.borderColor
           )}
         >
-          <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+          <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">
             RISK:
           </span>
           <div className={cn(riskConfig.color, riskConfig.pulse && 'animate-pulse')}>
@@ -282,7 +282,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
                 'px-1.5 py-0.5 text-[10px] font-bold rounded-full',
                 riskLevel === 'CRITICAL' || riskLevel === 'HIGH'
                   ? 'bg-red-600 text-white'
-                  : 'bg-slate-200 text-slate-600'
+                  : 'bg-zinc-200 text-zinc-600'
               )}
             >
               {riskItems}
@@ -291,33 +291,33 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         </button>
 
         {/* Divider */}
-        <div className="h-6 w-px bg-slate-200" />
+        <div className="h-6 w-px bg-zinc-200" />
 
         {/* Active Users */}
         {activeUsers > 0 && (
           <>
-            <div className="flex items-center gap-1.5 text-slate-500">
+            <div className="flex items-center gap-1.5 text-zinc-500">
               <Users className="w-3.5 h-3.5 text-blue-500" />
               <span className="font-medium">{activeUsers}</span>
-              <span className="text-slate-400">online</span>
+              <span className="text-zinc-400">online</span>
             </div>
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-zinc-200" />
           </>
         )}
 
         {/* RI Connection */}
         <button
           onClick={onConnectionClick}
-          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-zinc-50 transition-colors"
           title={`AnA Cortex: ${connConfig.label}${lastSyncTime ? ` • Last sync: ${lastSyncTime}` : ''}`}
         >
           <Zap className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-[10px] font-bold text-slate-500 tracking-wider">CORTEX</span>
+          <span className="text-[10px] font-bold text-zinc-500 tracking-wider">CORTEX</span>
           <div className={connConfig.color}>{connConfig.icon}</div>
           <span
             className={cn(
               'font-mono text-[10px]',
-              connection === 'LIVE' ? 'text-blue-600' : 'text-slate-400'
+              connection === 'LIVE' ? 'text-blue-600' : 'text-zinc-400'
             )}
           >
             {connection}

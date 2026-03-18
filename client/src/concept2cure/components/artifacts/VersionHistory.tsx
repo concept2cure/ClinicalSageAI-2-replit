@@ -141,7 +141,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
   return (
     <div className={cn('relative pl-6', !isFirst && 'pt-4')}>
       {/* Timeline connector */}
-      {!isFirst && <div className="absolute left-[11px] top-0 h-4 w-0.5 bg-gray-200" />}
+      {!isFirst && <div className="absolute left-[11px] top-0 h-4 w-0.5 bg-zinc-200" />}
 
       {/* Timeline dot */}
       <div
@@ -149,7 +149,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
           'absolute left-0 w-6 h-6 rounded-full flex items-center justify-center',
           isCurrent
             ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2'
-            : 'bg-gray-100 text-gray-500',
+            : 'bg-zinc-100 text-zinc-500',
           isSelected && 'ring-2 ring-amber-400 ring-offset-1'
         )}
       >
@@ -160,7 +160,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
       <div
         className={cn(
           'group ml-4 p-3 rounded-lg transition-colors cursor-pointer',
-          isSelected ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-gray-50'
+          isSelected ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-zinc-50'
         )}
         onClick={onSelect}
       >
@@ -168,7 +168,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span
-                className={cn('text-sm font-medium', isCurrent ? 'text-blue-700' : 'text-gray-900')}
+                className={cn('text-sm font-medium', isCurrent ? 'text-blue-700' : 'text-zinc-900')}
               >
                 Version {version.versionNumber}
               </span>
@@ -189,10 +189,10 @@ const VersionItem: React.FC<VersionItemProps> = ({
             </div>
 
             {version.changeSummary && (
-              <p className="text-xs text-gray-600 mt-1">{version.changeSummary}</p>
+              <p className="text-xs text-zinc-600 mt-1">{version.changeSummary}</p>
             )}
 
-            <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+            <div className="flex items-center gap-2 mt-2 text-xs text-zinc-400">
               <span>{getChangeLabel(version.changeType)}</span>
               <span>·</span>
               <span>{formatRelativeTime(version.createdAt)}</span>
@@ -214,7 +214,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
                         e.stopPropagation();
                         onRestore();
                       }}
-                      className="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                      className="p-1.5 rounded-md text-zinc-400 hover:text-blue-600 hover:bg-blue-50"
                     >
                       <RotateCcw className="h-4 w-4" />
                     </button>
@@ -232,7 +232,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
                         e.stopPropagation();
                         onCompare();
                       }}
-                      className="p-1.5 rounded-md text-gray-400 hover:text-purple-600 hover:bg-purple-50"
+                      className="p-1.5 rounded-md text-zinc-400 hover:text-purple-600 hover:bg-purple-50"
                     >
                       <GitCompare className="h-4 w-4" />
                     </button>
@@ -268,11 +268,11 @@ const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
       <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-red-100 border border-red-300" />
-          <span className="text-gray-600">Version {versionA.versionNumber} (older)</span>
+          <span className="text-zinc-600">Version {versionA.versionNumber} (older)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-green-100 border border-green-300" />
-          <span className="text-gray-600">Version {versionB.versionNumber} (newer)</span>
+          <span className="text-zinc-600">Version {versionB.versionNumber} (newer)</span>
         </div>
       </div>
 
@@ -294,7 +294,7 @@ const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
                   isRemoved && 'bg-red-50 text-red-800 line-through'
                 )}
               >
-                <span className="inline-block w-8 text-gray-400 select-none">{idx + 1}</span>
+                <span className="inline-block w-8 text-zinc-400 select-none">{idx + 1}</span>
                 {line || ' '}
               </div>
             );
@@ -352,7 +352,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
           <button
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
-              'text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+              'text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900',
               className
             )}
           >
@@ -366,7 +366,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <History className="h-5 w-5 text-gray-600" />
+              <History className="h-5 w-5 text-zinc-600" />
               Version History
             </DialogTitle>
             <DialogDescription>
@@ -465,7 +465,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                 <Download className="h-4 w-4 mr-2" />
                 Export All Versions
               </Button>
-              <span className="text-xs text-gray-400">{versionCount} total versions</span>
+              <span className="text-xs text-zinc-400">{versionCount} total versions</span>
             </div>
           </div>
         </DialogContent>

@@ -245,15 +245,17 @@ class RedactionService {
           inspectorUserAgent
         );
 
-        // In a real implementation, we would return a new PDF buffer
-        // For now, we'll just return a text file with the redacted content
+        // PDF text content is extracted and redacted, but the output is
+        // returned as plain text rather than a re-rendered PDF.  A future
+        // iteration should use a PDF-manipulation library (e.g., pdf-lib or
+        // HummusJS) to redact in-place and return a valid PDF buffer.
         return {
           buffer: Buffer.from(redactedText, 'utf8'),
           matchesFound,
           patternsApplied,
           executionTime: Date.now() - startTime,
-          contentType: 'text/plain', // Change content type since we're returning text
-          message: 'PDF redaction is returning plain text for demo purposes',
+          contentType: 'text/plain',
+          message: 'PDF text was extracted and redacted. Output is plain text because in-place PDF redaction is not yet implemented.',
         };
       }
 

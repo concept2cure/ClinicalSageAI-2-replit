@@ -80,7 +80,7 @@ const JourneyProgress: React.FC<{
   completionPercent: number;
 }> = ({ currentStep, totalSteps, submissionType, completionPercent }) => {
   return (
-    <div className="relative p-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl text-white shadow-md">
+    <div className="relative p-4 bg-zinc-900 rounded-2xl text-white shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Mountain className="w-5 h-5" />
@@ -134,23 +134,23 @@ const HazardAlert: React.FC<{
   const majorBlockers = blockers.filter(b => b.severity === 'major');
   
   return (
-    <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border-2 border-red-200 dark:border-red-800">
+    <div className="p-4 bg-red-50/60 rounded-xl border border-red-200">
       <div className="flex items-center gap-2 mb-3">
         <AlertOctagon className="w-5 h-5 text-red-500" />
-        <span className="font-semibold text-red-700 dark:text-red-400">
+        <span className="font-semibold text-red-700">
           Hazard Ahead: {blockers.length} Blocker{blockers.length > 1 ? 's' : ''}
         </span>
       </div>
       
       {criticalBlockers.length > 0 && (
         <div className="mb-3">
-          <span className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">
+          <span className="text-xs font-medium text-red-600 uppercase tracking-wider">
             Critical - Must Fix Now
           </span>
           {criticalBlockers.map(blocker => (
-            <div key={blocker.id} className="mt-2 p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-              <p className="font-medium text-red-800 dark:text-red-300">{blocker.title}</p>
-              <p className="text-sm text-red-600 dark:text-red-400 mt-1">{blocker.description}</p>
+            <div key={blocker.id} className="mt-2 p-3 bg-red-100 rounded-lg">
+              <p className="font-medium text-red-800">{blocker.title}</p>
+              <p className="text-sm text-red-600 mt-1">{blocker.description}</p>
               <button
                 onClick={() => onAction(blocker)}
                 data-testid={`button-blocker-action-${blocker.id}`}
@@ -165,16 +165,16 @@ const HazardAlert: React.FC<{
       
       {majorBlockers.length > 0 && (
         <div>
-          <span className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+          <span className="text-xs font-medium text-amber-600 uppercase tracking-wider">
             Major - Address Soon
           </span>
           {majorBlockers.map(blocker => (
-            <div key={blocker.id} className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-              <p className="font-medium text-amber-800 dark:text-amber-300">{blocker.title}</p>
-              <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">{blocker.description}</p>
+            <div key={blocker.id} className="mt-2 p-3 bg-amber-50 rounded-lg">
+              <p className="font-medium text-amber-800">{blocker.title}</p>
+              <p className="text-sm text-amber-600 mt-1">{blocker.description}</p>
               <button
                 onClick={() => onAction(blocker)}
-                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200"
+                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800"
                 data-testid={`button-blocker-action-${blocker.id}`}
               >
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -197,31 +197,31 @@ const NextBestActionCard: React.FC<{
   onAction: () => void;
 }> = ({ guidance, onAction }) => {
   return (
-    <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-700">
+    <div className="p-4 bg-blue-50/60 rounded-xl border border-blue-200">
       <div className="flex items-center gap-2 mb-3">
         <div className="p-2 bg-blue-500 rounded-lg">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
-          <span className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+          <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">
             Your Sherpa Recommends
           </span>
-          <h3 className="font-semibold text-slate-800 dark:text-slate-200">
+          <h3 className="font-semibold text-zinc-800">
             {guidance.title}
           </h3>
         </div>
       </div>
       
-      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+      <p className="text-sm text-zinc-600 mb-3">
         {guidance.description}
       </p>
       
       <div className="flex items-center gap-4 mb-4 text-xs">
-        <span className="flex items-center gap-1 text-slate-500">
+        <span className="flex items-center gap-1 text-zinc-500">
           <Clock className="w-3.5 h-3.5" />
           {guidance.estimatedTime}
         </span>
-        <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+        <span className="flex items-center gap-1 text-green-600">
           <CheckCircle className="w-3.5 h-3.5" />
           {guidance.expectedOutcome}
         </span>
@@ -236,7 +236,7 @@ const NextBestActionCard: React.FC<{
         Do This Now
       </button>
       
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center italic">
+      <p className="text-xs text-zinc-500 mt-2 text-center italic">
         "{guidance.rationale}"
       </p>
     </div>
@@ -262,21 +262,21 @@ const StatusDashboard: React.FC<{
       {/* Compliance Score */}
       <div className={`p-3 rounded-xl border shadow-sm ${
         complianceScore >= 90 
-          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+          ? 'bg-green-50 border-green-200' 
           : complianceScore >= 70
-          ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-          : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+          ? 'bg-amber-50 border-amber-200'
+          : 'bg-red-50 border-red-200'
       }`}>
         <div className="flex items-center gap-2 mb-1">
           <Shield className={`w-4 h-4 ${
             complianceScore >= 90 ? 'text-green-500' : complianceScore >= 70 ? 'text-amber-500' : 'text-red-500'
           }`} />
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Compliance</span>
+          <span className="text-xs font-medium text-zinc-600">Compliance</span>
         </div>
         <p className={`text-2xl font-bold ${
-          complianceScore >= 90 ? 'text-green-600 dark:text-green-400' 
-          : complianceScore >= 70 ? 'text-amber-600 dark:text-amber-400' 
-          : 'text-red-600 dark:text-red-400'
+          complianceScore >= 90 ? 'text-green-600' 
+          : complianceScore >= 70 ? 'text-amber-600' 
+          : 'text-red-600'
         }`}>
           {complianceScore}%
         </p>
@@ -285,27 +285,27 @@ const StatusDashboard: React.FC<{
       {/* Claims Status */}
       <div className={`p-3 rounded-xl border shadow-sm ${
         claimPercent >= 90 
-          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-          : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+          ? 'bg-green-50 border-green-200' 
+          : 'bg-amber-50 border-amber-200'
       }`}>
         <div className="flex items-center gap-2 mb-1">
           <Link2 className={`w-4 h-4 ${claimPercent >= 90 ? 'text-green-500' : 'text-amber-500'}`} />
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Claims Sourced</span>
+          <span className="text-xs font-medium text-zinc-600">Claims Sourced</span>
         </div>
         <p className={`text-2xl font-bold ${
-          claimPercent >= 90 ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+          claimPercent >= 90 ? 'text-green-600' : 'text-amber-600'
         }`}>
           {supportedClaims}/{totalClaims}
         </p>
       </div>
       
       {/* Data Connections */}
-      <div className="p-3 rounded-xl border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm">
+      <div className="p-3 rounded-xl border bg-blue-50 border-blue-200 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
           <Compass className="w-4 h-4 text-blue-500" />
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Data Sources</span>
+          <span className="text-xs font-medium text-zinc-600">Data Sources</span>
         </div>
-        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+        <p className="text-2xl font-bold text-blue-600">
           {connectedModules}
         </p>
       </div>
@@ -314,15 +314,15 @@ const StatusDashboard: React.FC<{
       {pendingReviews !== undefined && (
         <div className={`p-3 rounded-xl border shadow-sm ${
           pendingReviews === 0 
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-            : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+            ? 'bg-green-50 border-green-200'
+            : 'bg-amber-50 border-amber-200'
         }`}>
           <div className="flex items-center gap-2 mb-1">
             <Users className={`w-4 h-4 ${pendingReviews === 0 ? 'text-green-500' : 'text-amber-500'}`} />
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Reviews</span>
+            <span className="text-xs font-medium text-zinc-600">Reviews</span>
           </div>
           <p className={`text-2xl font-bold ${
-            pendingReviews === 0 ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+            pendingReviews === 0 ? 'text-green-600' : 'text-amber-600'
           }`}>
             {pendingReviews}
           </p>
@@ -346,33 +346,33 @@ const UpcomingActionsList: React.FC<{
   
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+      <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
         Coming Up Next
       </h4>
       {upcomingActions.map((g, i) => (
         <button
           key={g.id}
           onClick={() => onAction(g)}
-          className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors text-left"
+          className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors text-left"
           data-testid={`button-upcoming-action-${g.id}`}
         >
           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
             ${g.priority === 'high' 
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+              ? 'bg-blue-100 text-blue-600' 
+              : 'bg-zinc-100 text-zinc-600'
             }`}
           >
             {i + 2}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+            <p className="text-sm font-medium text-zinc-700 truncate">
               {g.title}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-zinc-500">
               {g.estimatedTime}
             </p>
           </div>
-          <ArrowRight className="w-4 h-4 text-slate-400" />
+          <ArrowRight className="w-4 h-4 text-zinc-400" />
         </button>
       ))}
     </div>
@@ -522,7 +522,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       )}
       
       {/* Status Dashboard */}
-      <div className="rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white dark:bg-slate-800 shadow-sm p-4">
+      <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-4">
         <StatusDashboard
           complianceScore={complianceScore}
           totalClaims={totalClaims}
@@ -534,7 +534,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       
       {/* Next Best Action */}
       {nextBestAction && (
-        <div className="rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white dark:bg-slate-800 shadow-sm p-4">
+        <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-4">
           <NextBestActionCard
             guidance={nextBestAction}
             onAction={() => onGuidanceAction(nextBestAction)}
@@ -543,7 +543,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       )}
       
       {/* Upcoming Actions */}
-      <div className="rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white dark:bg-slate-800 shadow-sm p-4">
+      <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-4">
         <UpcomingActionsList
           guidance={guidance}
           onAction={onGuidanceAction}
@@ -554,8 +554,8 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       {blockers.length === 0 && guidance.length === 0 && (
         <div className="text-center py-8">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-          <h3 className="font-semibold text-slate-800 dark:text-slate-200">All Clear!</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <h3 className="font-semibold text-zinc-800">All Clear!</h3>
+          <p className="text-sm text-zinc-600 mt-1">
             Your document is on track. Keep up the great work!
           </p>
         </div>

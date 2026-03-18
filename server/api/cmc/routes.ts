@@ -21,10 +21,19 @@ import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
 
+// Helper to read organization ID from header or query param
+function getOrgId(req: express.Request): number {
+  return parseInt(
+    (req.headers['x-organization-id'] as string) ||
+    (req.query.organizationId as string) ||
+    '1'
+  );
+}
+
 // Analytical Methods Routes
 router.get('/analytical-methods', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const methods = await db
       .select({
         id: analyticalMethods.id,
@@ -77,7 +86,7 @@ router.put('/analytical-methods/:id', async (req, res) => {
 // Process Validation Routes
 router.get('/process-validation', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const validation = await db
       .select()
       .from(processValidation)
@@ -103,7 +112,7 @@ router.post('/process-validation', async (req, res) => {
 // Stability Studies Routes
 router.get('/stability-studies', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const studies = await db
       .select({
         id: stabilityStudies.id,
@@ -140,7 +149,7 @@ router.post('/stability-studies', async (req, res) => {
 // QC Testing Routes
 router.get('/qc-testing', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const testing = await db.select().from(qcTesting).where(eq(qcTesting.organizationId, orgId));
     res.json({ success: true, data: testing });
   } catch (error) {
@@ -163,7 +172,7 @@ router.post('/qc-testing', async (req, res) => {
 // Change Control Routes
 router.get('/change-control', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const changes = await db
       .select()
       .from(cmcChangeControl)
@@ -189,7 +198,7 @@ router.post('/change-control', async (req, res) => {
 // Drug Substances Routes
 router.get('/drug-substances', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const substances = await db
       .select({
         id: drugSubstances.id,
@@ -226,7 +235,7 @@ router.post('/drug-substances', async (req, res) => {
 // Drug Products Routes
 router.get('/drug-products', async (req, res) => {
   try {
-    const orgId = parseInt(req.query.organizationId as string);
+    const orgId = getOrgId(req);
     const products = await db
       .select({
         id: drugProducts.id,
@@ -378,6 +387,85 @@ router.post('/compliance/check-rules', async (req, res) => {
       error: 'Internal server error',
       message: 'Failed to check compliance rules',
     });
+  }
+});
+
+// =====================================================
+// Comparability Studies Routes (in-memory until DB table is created)
+// =====================================================
+interface ComparabilityStudy {
+  id: string;
+  title: string;
+  product: string;
+  type: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  methods: string[];
+  outcome: string | null;
+  owner: string;
+  organizationId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const comparabilityStudiesStore: ComparabilityStudy[] = [];
+let csNextId = 1;
+
+router.get('/comparability-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const studies = comparabilityStudiesStore.filter(s => s.organizationId === orgId);
+    res.json({ success: true, data: studies });
+  } catch (error) {
+    console.error('Error fetching comparability studies:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch comparability studies' });
+  }
+});
+
+router.post('/comparability-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const now = new Date().toISOString();
+    const study: ComparabilityStudy = {
+      id: `CS-${String(csNextId++).padStart(3, '0')}`,
+      title: req.body.title || '',
+      product: req.body.product || '',
+      type: req.body.type || '',
+      status: req.body.status || 'planned',
+      startDate: req.body.startDate || null,
+      endDate: req.body.endDate || null,
+      methods: req.body.methods || [],
+      outcome: req.body.outcome || null,
+      owner: req.body.owner || '',
+      organizationId: orgId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    comparabilityStudiesStore.push(study);
+    res.json({ success: true, data: study });
+  } catch (error) {
+    console.error('Error creating comparability study:', error);
+    res.status(500).json({ success: false, error: 'Failed to create comparability study' });
+  }
+});
+
+router.put('/comparability-studies/:id', async (req, res) => {
+  try {
+    const idx = comparabilityStudiesStore.findIndex(s => s.id === req.params.id);
+    if (idx === -1) {
+      return res.status(404).json({ success: false, error: 'Study not found' });
+    }
+    const updated = {
+      ...comparabilityStudiesStore[idx],
+      ...req.body,
+      updatedAt: new Date().toISOString(),
+    };
+    comparabilityStudiesStore[idx] = updated;
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Error updating comparability study:', error);
+    res.status(500).json({ success: false, error: 'Failed to update comparability study' });
   }
 });
 
