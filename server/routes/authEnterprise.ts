@@ -44,7 +44,7 @@ const enterpriseAuthLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'RATE_LIMIT', message: 'Too many authentication attempts. Please try again later.' },
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many authentication attempts. Please try again later.' } },
   keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
 });
 
@@ -225,12 +225,19 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     const mfaRequired = user.mfaEnabled === true;
 
     if (mfaRequired) {
+      if (!user.defaultOrganizationId) {
+        return res.status(403).json({
+          error: 'NO_ORGANIZATION',
+          message: 'No organization assigned to this account',
+        });
+      }
+
       // Don't issue full token yet — require MFA step
       const partialToken = jwt.sign(
         {
           userId: user.id.toString(),
           email: user.email,
-          organizationId: (user.defaultOrganizationId || 2).toString(),
+          organizationId: user.defaultOrganizationId.toString(),
           role: 'pending_mfa', // Restricted token — only valid for MFA verification
           mfaPending: true,
         },
@@ -256,24 +263,29 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
 
     // No MFA required — issue full token with actual role
     const orgId = user.defaultOrganizationId || null;
-    const actualRole = orgId ? await lookupOrgRole(user.id, orgId) : 'user';
 
-    // Look up org name
-    let verifyOrgName = 'Organization';
-    if (orgId) {
-      const [orgRow] = await db
-        .select({ name: organizations.name })
+    if (!orgId) {
+      return res.status(403).json({
+        error: 'NO_ORGANIZATION',
+        message: 'No organization assigned to this account',
+      });
+    }
+
+    // Parallel: fetch role + org name concurrently
+    const [actualRole, [orgRow]] = await Promise.all([
+      lookupOrgRole(user.id, orgId),
+      db.select({ name: organizations.name })
         .from(organizations)
         .where(eq(organizations.id, orgId))
-        .limit(1);
-      verifyOrgName = orgRow?.name || 'Organization';
-    }
+        .limit(1),
+    ]);
+    const verifyOrgName = orgRow?.name || 'Organization';
 
     const token = jwt.sign(
       {
         userId: user.id.toString(),
         email: user.email,
-        organizationId: (orgId || 1).toString(),
+        organizationId: orgId.toString(),
         role: actualRole,
       },
       config.jwt.secret,
@@ -293,7 +305,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
         role: actualRole,
-        organizationId: (orgId || 1).toString(),
+        organizationId: orgId.toString(),
         organizationName: verifyOrgName,
       },
     });
@@ -355,7 +367,17 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
 
     // MFA verified — issue full token with actual role
     const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
-    const mfaActualRole = mfaOrgId ? await lookupOrgRole(userId, mfaOrgId) : 'user';
+
+    // Parallel: fetch role, user details, and org name concurrently
+    const [mfaActualRole, [mfaUserData], mfaOrgResult] = await Promise.all([
+      mfaOrgId ? lookupOrgRole(userId, mfaOrgId) : Promise.resolve('user'),
+      db.select().from(users).where(eq(users.id, userId)).limit(1),
+      mfaOrgId
+        ? db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, mfaOrgId)).limit(1)
+        : Promise.resolve([]),
+    ]);
+    const user = mfaUserData;
+    const mfaVerifyOrgName = mfaOrgResult[0]?.name || 'Organization';
 
     const token = jwt.sign(
       {
@@ -367,26 +389,6 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       config.jwt.secret,
       { expiresIn: '24h' }
     );
-
-    // Look up user details
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    const user = userResult[0];
-
-    // Look up org name
-    let mfaVerifyOrgName = 'Organization';
-    if (mfaOrgId) {
-      const [orgRow] = await db
-        .select({ name: organizations.name })
-        .from(organizations)
-        .where(eq(organizations.id, mfaOrgId))
-        .limit(1);
-      mfaVerifyOrgName = orgRow?.name || 'Organization';
-    }
 
     res.json({
       success: true,
@@ -689,12 +691,18 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   try {
     const decoded = jwt.verify(oldToken, config.jwt.secret) as any;
 
+    // Re-query actual role from DB instead of trusting stale JWT claim
+    const refreshOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
+    const refreshRole = refreshOrgId
+      ? await lookupOrgRole(parseInt(decoded.userId), refreshOrgId)
+      : 'user';
+
     const newToken = jwt.sign(
       {
         userId: decoded.userId,
         email: decoded.email,
         organizationId: decoded.organizationId,
-        role: decoded.role,
+        role: refreshRole,
       },
       config.jwt.secret,
       { expiresIn: '24h' }

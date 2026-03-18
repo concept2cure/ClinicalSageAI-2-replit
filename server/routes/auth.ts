@@ -299,15 +299,22 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
     let organizationId = defaultOrganizationId;
+    let jwtRole = 'user';
+
+    // Single query for org membership + role (avoids duplicate organizationUsers queries)
+    const [membership] = await db
+      .select({
+        organizationId: organizationUsers.organizationId,
+        role: organizationUsers.role,
+      })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, userData.id))
+      .limit(1);
 
     if (!organizationId) {
-      const [membership] = await db
-        .select({ organizationId: organizationUsers.organizationId })
-        .from(organizationUsers)
-        .where(eq(organizationUsers.userId, userData.id))
-        .limit(1);
       organizationId = membership?.organizationId || null;
     }
+    jwtRole = membership?.role || 'user';
 
     if (!organizationId) {
       return res.status(403).json({
@@ -321,14 +328,6 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
-
-    // Get the actual role from organization_users (needed for JWT)
-    const [membershipRoleForJwt] = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(1);
-    const jwtRole = membershipRoleForJwt?.role || 'user';
 
     // Extract firstName/lastName from the name field (users table has name, not firstName/lastName)
     const nameParts = (userData.name || '').trim().split(/\s+/);
@@ -1287,9 +1286,8 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    // Prevent reusing the same password
-    const sameAsOld = await bcrypt.compare(newPassword, userData.passwordHash);
-    if (sameAsOld) {
+    // Prevent reusing the same password (string compare avoids redundant bcrypt call)
+    if (currentPassword === newPassword) {
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_001', message: 'New password must be different from current password' },
