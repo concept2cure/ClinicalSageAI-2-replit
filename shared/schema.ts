@@ -5398,6 +5398,13 @@ export const conversationWorkingMemory = pgTable(
   })
 );
 
+export type ConversationWorkingMemory = InferSelectModel<typeof conversationWorkingMemory>;
+
+export const insertConversationWorkingMemorySchema = createInsertSchemaOmit(conversationWorkingMemory, {
+  id: true,
+  generatedAt: true,
+});
+
 // Insert Schemas
 export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
   concept2cureConversations,
@@ -15683,7 +15690,8 @@ export const accountCanonItems = pgTable(
     status: text('status').default('active').notNull(), // draft, active, locked, superseded, archived
     lockedAt: timestamp('locked_at'),
     lockedById: integer('locked_by_id').references(() => users.id),
-    supersededById: integer('superseded_by_id'), // Points to newer version's ID
+    supersededById: integer('superseded_by_id')
+      .references((): any => accountCanonItems.id), // Points to newer version's ID
 
     // ── Provenance ────────────────────────────────────────────────
     sourceType: text('source_type'), // manual, ai_extracted, document_import, event_derived
@@ -15753,7 +15761,8 @@ export const accountEvents = pgTable(
     // ── Target Reference ──────────────────────────────────────────
     canonItemId: integer('canon_item_id')
       .references(() => accountCanonItems.id),
-    skillBundleId: integer('skill_bundle_id'), // FK added after skillBundles table defined
+    skillBundleId: integer('skill_bundle_id')
+      .references(() => accountSkillBundles.id), // FK to skill bundles
     targetType: text('target_type'), // canon_item, skill_bundle, term_entry, template_entry
     targetId: text('target_id'), // External ID of the affected entity
 
@@ -15789,6 +15798,11 @@ export const accountEvents = pgTable(
 );
 
 export type AccountEvent = InferSelectModel<typeof accountEvents>;
+
+export const insertAccountEventSchema = createInsertSchemaOmit(accountEvents, {
+  id: true,
+  createdAt: true,
+});
 
 /**
  * Account Projection — Materialized state view computed from events.
@@ -15836,6 +15850,12 @@ export const accountProjection = pgTable(
 );
 
 export type AccountProjection = InferSelectModel<typeof accountProjection>;
+
+export const insertAccountProjectionSchema = createInsertSchemaOmit(accountProjection, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 // ============================================================
 // ACCOUNT SKILL BUNDLES
@@ -16117,6 +16137,11 @@ export const accountCanonResolutionLog = pgTable(
 );
 
 export type AccountCanonResolutionLogEntry = InferSelectModel<typeof accountCanonResolutionLog>;
+
+export const insertAccountCanonResolutionLogSchema = createInsertSchemaOmit(accountCanonResolutionLog, {
+  id: true,
+  createdAt: true,
+});
 
 // ============================================================
 // END ACCOUNT CANON + SKILL BUNDLES
