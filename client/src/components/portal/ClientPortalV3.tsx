@@ -10,12 +10,50 @@
 
 import React, { useState, useCallback, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { AppShellV3 } from '../layout/AppShellV3';
 import { DashboardV3 } from '../dashboard/DashboardV3';
 import { ProgramWorkbenchV3 } from '../program/ProgramWorkbenchV3';
 import { EvidenceLibraryV3 } from '../library/EvidenceLibraryV3';
 import { AIAssistantV3 } from '../ai/AIAssistantV3';
 import { cn } from '@/lib/utils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  BarChart3,
+  CalendarDays,
+  Users,
+  Settings,
+  HelpCircle,
+  FileText,
+  ShieldCheck,
+  TrendingUp,
+  UserPlus,
+  Mail,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  ChevronRight,
+  Send,
+  BookOpen,
+  MessageSquare,
+  Building2,
+  Bell,
+  Palette,
+  Save,
+} from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
