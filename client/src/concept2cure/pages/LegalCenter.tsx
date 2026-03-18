@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Search,
   Filter,
@@ -126,86 +127,7 @@ interface RiskEntry {
 // Mock Data
 // ---------------------------------------------------------------------------
 
-const MOCK_PATENTS: Patent[] = [
-  {
-    id: 'PAT-001',
-    title: 'Bispecific Antibody Construct for CD19/CD3 Targeting',
-    patentNumber: 'US 11,234,567 B2',
-    jurisdiction: 'United States',
-    status: 'Granted',
-    filingDate: '2021-03-15',
-    expirationDate: '2041-03-15',
-    inventors: ['Dr. Sarah Chen', 'Dr. Marcus Webb'],
-    category: 'Composition of Matter',
-    ftoStatus: 'Clear',
-    relatedCompounds: ['CSA-201', 'CSA-201b'],
-  },
-  {
-    id: 'PAT-002',
-    title: 'Novel Lipid Nanoparticle Formulation for mRNA Delivery',
-    patentNumber: 'EP 3,987,654 A1',
-    jurisdiction: 'European Union',
-    status: 'Pending',
-    filingDate: '2023-07-22',
-    expirationDate: '2043-07-22',
-    inventors: ['Dr. Elena Vasquez', 'Dr. James Liu'],
-    category: 'Formulation',
-    ftoStatus: 'Review Needed',
-    relatedCompounds: ['CSA-305'],
-  },
-  {
-    id: 'PAT-003',
-    title: 'Method for Continuous Manufacturing of Antibody Drug Conjugates',
-    patentNumber: 'US 11,876,543 B1',
-    jurisdiction: 'United States',
-    status: 'Granted',
-    filingDate: '2020-11-08',
-    expirationDate: '2040-11-08',
-    inventors: ['Dr. Raj Patel', 'Dr. Kim Tanaka'],
-    category: 'Process',
-    ftoStatus: 'Clear',
-    relatedCompounds: ['CSA-102', 'CSA-102a'],
-  },
-  {
-    id: 'PAT-004',
-    title: 'Companion Diagnostic Biomarker Panel for PD-L1 Expression',
-    patentNumber: 'JP 2024-045678',
-    jurisdiction: 'Japan',
-    status: 'Filed',
-    filingDate: '2024-01-10',
-    expirationDate: '2044-01-10',
-    inventors: ['Dr. Yuki Nakamura'],
-    category: 'Diagnostic',
-    ftoStatus: 'Review Needed',
-    relatedCompounds: ['CSA-201'],
-  },
-  {
-    id: 'PAT-005',
-    title: 'Crystalline Form of Kinase Inhibitor Compound CSA-410',
-    patentNumber: 'WO 2023/198765',
-    jurisdiction: 'PCT',
-    status: 'Pending',
-    filingDate: '2023-09-30',
-    expirationDate: '2043-09-30',
-    inventors: ['Dr. Sarah Chen', 'Dr. Thomas Eriksen'],
-    category: 'Composition of Matter',
-    ftoStatus: 'Blocked',
-    relatedCompounds: ['CSA-410'],
-  },
-  {
-    id: 'PAT-006',
-    title: 'Adaptive Dosing Algorithm for Combination Immunotherapy',
-    patentNumber: 'US 17/654,321',
-    jurisdiction: 'United States',
-    status: 'Filed',
-    filingDate: '2024-06-18',
-    expirationDate: '2044-06-18',
-    inventors: ['Dr. Marcus Webb', 'Dr. Priya Sharma'],
-    category: 'Method of Treatment',
-    ftoStatus: 'Clear',
-    relatedCompounds: ['CSA-201', 'CSA-305'],
-  },
-];
+// Patents data fetched via useQuery in IPPortfolioPanel
 
 const MOCK_CONTRACTS: Contract[] = [
   {

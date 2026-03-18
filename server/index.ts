@@ -1808,49 +1808,67 @@ app.get('/api/csr-intelligence', (req: Request, res: Response) => {
   res.json({ message: 'CSR Intelligence API available', timestamp: new Date() });
 });
 
-// CSR Intelligence analytics endpoint
+// CSR Intelligence analytics endpoint - real database queries
 app.get('/api/csr-intelligence/analytics', async (req: Request, res: Response) => {
   try {
     const { type = 'dashboard' } = req.query;
     debugLog('CSR intelligence analytics endpoint called', { type });
 
+    // Query real counts from csr_reports table
+    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const totalCSRs = totalResult.rows[0]?.total ?? 0;
+
+    const todayResult = await pool.query(
+      "SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND upload_date >= CURRENT_DATE"
+    );
+    const processedToday = todayResult.rows[0]?.cnt ?? 0;
+
+    // Therapeutic area breakdown from real data
+    const taResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 10`
+    );
+    const therapeuticAreas: Record<string, { count: number }> = {};
+    for (const row of taResult.rows) {
+      therapeuticAreas[row.area] = { count: row.count };
+    }
+
+    // Phase breakdown
+    const phaseResult = await pool.query(
+      `SELECT COALESCE(phase, 'Unknown') AS phase, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY count DESC`
+    );
+    const phaseBreakdown = phaseResult.rows.map((r: any) => ({
+      phase: r.phase,
+      count: r.count,
+      percentage: totalCSRs > 0 ? Math.round((r.count / totalCSRs) * 1000) / 10 : 0,
+    }));
+
     const analyticsData = {
       success: true,
       data: {
         dashboard: {
-          totalCSRs: 3021,
-          processedToday: 47,
-          avgProcessingTime: 4.2,
-          successRate: 94.7,
-          criticalInsights: 23,
-          activeAnalyses: 156,
+          totalCSRs,
+          processedToday,
+          avgProcessingTime: 0,
+          successRate: 0,
+          criticalInsights: 0,
+          activeAnalyses: 0,
         },
-        temporalTrends: {
-          '2023': { count: 892, successRate: 91.2 },
-          '2024': { count: 1456, successRate: 93.8 },
-          '2025': { count: 673, successRate: 96.1 },
-        },
-        therapeuticAreas: {
-          oncology: { count: 678, avgSuccessRate: 89.4, avgDuration: 24.3 },
-          neurology: { count: 542, avgSuccessRate: 92.1, avgDuration: 21.7 },
-          cardiology: { count: 445, avgSuccessRate: 88.7, avgDuration: 19.2 },
-          immunology: { count: 398, avgSuccessRate: 90.9, avgDuration: 22.8 },
-          endocrinology: { count: 356, avgSuccessRate: 94.2, avgDuration: 18.5 },
-        },
-        biomarkerAnalysis: {
-          'PD-L1': { studies: 145, successRate: 92.4 },
-          TMB: { studies: 98, successRate: 89.8 },
-          MSI: { studies: 76, successRate: 94.1 },
-          KRAS: { studies: 112, successRate: 87.5 },
-          EGFR: { studies: 134, successRate: 91.8 },
-        },
+        temporalTrends: {},
+        therapeuticAreas,
+        biomarkerAnalysis: {},
         qualityMetrics: {
-          dataCompleteness: 94.2,
-          dataConsistency: 89.7,
-          dataAccuracy: 92.1,
-          processingEfficiency: 91.5,
+          dataCompleteness: 0,
+          dataConsistency: 0,
+          dataAccuracy: 0,
+          processingEfficiency: 0,
         },
+        phaseBreakdown,
       },
+      source: 'database',
       timestamp: new Date().toISOString(),
     };
 
@@ -1865,58 +1883,91 @@ app.get('/api/csr-intelligence/analytics', async (req: Request, res: Response) =
   }
 });
 
-// CSR Intelligence stats endpoint
+// CSR Intelligence stats endpoint - real database queries
 app.get('/api/csr-intelligence/stats', async (req: Request, res: Response) => {
   try {
     debugLog('CSR intelligence stats endpoint called');
+
+    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const csrCount = totalResult.rows[0]?.total ?? 0;
+
+    const taCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT indication)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL'
+    );
+    const therapeuticAreaCount = taCountResult.rows[0]?.cnt ?? 0;
+
+    const sponsorCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT sponsor)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND sponsor IS NOT NULL'
+    );
+    const uniqueSponsors = sponsorCountResult.rows[0]?.cnt ?? 0;
+
+    // Phase breakdown from real data
+    const phaseResult = await pool.query(
+      `SELECT COALESCE(phase, 'Unknown') AS phase, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY count DESC`
+    );
+    const phaseBreakdown = phaseResult.rows.map((r: any) => ({
+      phase: r.phase,
+      count: r.count,
+      percentage: csrCount > 0 ? Math.round((r.count / csrCount) * 1000) / 10 : 0,
+    }));
+
+    // Therapeutic area breakdown from real data
+    const taResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 10`
+    );
+    const therapeuticAreas = taResult.rows.map((r: any) => ({
+      area: r.area,
+      count: r.count,
+      percentage: csrCount > 0 ? Math.round((r.count / csrCount) * 1000) / 10 : 0,
+    }));
+
+    const completedResult = await pool.query(
+      "SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND status = 'approved'"
+    );
+    const completedReviews = completedResult.rows[0]?.cnt ?? 0;
 
     const statsData = {
       success: true,
       data: {
         overview: {
-          csrCount: 3021,
-          therapeuticAreas: 34,
-          protocolsOptimized: 427,
-          benchmarks: 892,
-          aiModels: 14,
-          totalStudies: 3021,
-          activeAnalyses: 156,
-          completedReviews: 2865,
+          csrCount,
+          therapeuticAreas: therapeuticAreaCount,
+          protocolsOptimized: 0,
+          benchmarks: 0,
+          aiModels: 0,
+          totalStudies: csrCount,
+          activeAnalyses: 0,
+          completedReviews,
+          uniqueSponsors,
         },
         analytics: {
-          successRate: 85.2,
-          avgProcessingTime: 12.4,
-          dataQuality: 94.7,
-          automationLevel: 78.3,
+          successRate: 0,
+          avgProcessingTime: 0,
+          dataQuality: 0,
+          automationLevel: 0,
         },
         distribution: {
-          phaseBreakdown: [
-            { phase: 'Phase I', count: 412, percentage: 13.6 },
-            { phase: 'Phase II', count: 985, percentage: 32.6 },
-            { phase: 'Phase III', count: 1124, percentage: 37.2 },
-            { phase: 'Phase IV', count: 500, percentage: 16.6 },
-          ],
-          therapeuticAreas: [
-            { area: 'Oncology', count: 678, percentage: 22.4 },
-            { area: 'Neurology', count: 542, percentage: 17.9 },
-            { area: 'Cardiology', count: 445, percentage: 14.7 },
-            { area: 'Immunology', count: 398, percentage: 13.2 },
-            { area: 'Endocrinology', count: 356, percentage: 11.8 },
-          ],
+          phaseBreakdown,
+          therapeuticAreas,
         },
         quality: {
-          completeness: 94.2,
-          consistency: 89.7,
-          accuracy: 92.1,
-          timeliness: 96.3,
+          completeness: 0,
+          consistency: 0,
+          accuracy: 0,
+          timeliness: 0,
         },
         performance: {
-          avgAnalysisTime: '4.2 minutes',
-          processingEfficiency: 91.5,
-          errorRate: 0.08,
-          uptime: 99.7,
+          avgAnalysisTime: '0 minutes',
+          processingEfficiency: 0,
+          errorRate: 0,
+          uptime: 0,
         },
       },
+      source: 'database',
       timestamp: new Date().toISOString(),
     };
 
@@ -1931,40 +1982,54 @@ app.get('/api/csr-intelligence/stats', async (req: Request, res: Response) => {
   }
 });
 
-// CSR Intelligence factual insights endpoint
+// CSR Intelligence factual insights endpoint - real database queries
 app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Response) => {
   try {
     debugLog('Factual insights endpoint called');
 
-    // For now, return a structured response until we can import the service
+    // Aggregate real insights from csr_reports
+    const avgSampleResult = await pool.query(
+      'SELECT AVG(sample_size)::int AS avg_sample, AVG(duration_weeks)::int AS avg_duration FROM csr_reports WHERE deleted_at IS NULL AND sample_size IS NOT NULL'
+    );
+    const avgSample = avgSampleResult.rows[0]?.avg_sample ?? 0;
+    const avgDurationWeeks = avgSampleResult.rows[0]?.avg_duration ?? 0;
+
+    // Top indications by count
+    const topIndicationsResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS studies, AVG(sample_size)::int AS avg_sample
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY studies DESC LIMIT 5`
+    );
+    const indicationInsights: Record<string, { studies: number; avgSampleSize: number }> = {};
+    for (const row of topIndicationsResult.rows) {
+      indicationInsights[row.area] = { studies: row.studies, avgSampleSize: row.avg_sample ?? 0 };
+    }
+
+    // Most common phase
+    const topPhaseResult = await pool.query(
+      `SELECT phase, COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY cnt DESC LIMIT 1`
+    );
+    const mostCommonPhase = topPhaseResult.rows[0]?.phase ?? 'N/A';
+
     const factualInsights = {
       studyDesignPatterns: {
-        mostSuccessfulPhase: 'Phase 2',
-        optimalSampleSizeRange: '100-300 patients',
-        effectiveBiomarkers: ['PD-L1', 'TMB', 'MSI'],
-        averageStudyDuration: '18 months',
-        enrollmentRateOptimal: '85%',
+        mostCommonPhase,
+        averageSampleSize: avgSample,
+        averageStudyDurationWeeks: avgDurationWeeks,
       },
-      therapeuticAreaInsights: {
-        highestSuccessRate: { area: 'Endocrinology', rate: '84%' },
-        largestDataSet: { area: 'Oncology', studies: 13 },
-        avgSampleSizes: {
-          oncology: 245,
-          neurology: 189,
-          cardiology: 312,
-        },
-      },
+      therapeuticAreaInsights: indicationInsights,
       riskFactors: {
-        lowSuccessRateIndicators: ['Enrollment delays', 'Regulatory feedback loops'],
-        commonAEPatterns: ['Fatigue', 'Nausea', 'Headache'],
-        enrollmentChallenges: ['Site activation delays', 'Protocol complexity'],
-        regulatoryRisks: ['Incomplete safety data', 'Unclear efficacy endpoints'],
+        lowSuccessRateIndicators: [],
+        commonAEPatterns: [],
+        enrollmentChallenges: [],
+        regulatoryRisks: [],
       },
       dataQualityAssessment: {
-        completenessScore: 94,
-        consistencyScore: 89,
-        accuracyScore: 92,
-        dataSource: 'verified_csr_repository',
+        completenessScore: 0,
+        consistencyScore: 0,
+        accuracyScore: 0,
+        dataSource: 'csr_reports_table',
         lastVerified: new Date().toISOString(),
       },
     };
@@ -1973,6 +2038,7 @@ app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Resp
     res.json({
       success: true,
       data: factualInsights,
+      source: 'database',
     });
   } catch (error) {
     console.error('Error getting factual insights:', error);
