@@ -45,6 +45,76 @@ export interface PricingTier {
   maxStorageGB: number;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DTC (Direct-to-Consumer) PRICING — Self-service tiers like Claude.ai
+// No enterprise sales cycles. Sign up, pay, use.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface DTCPricingTier extends PricingTier {
+  deepResearchCredits: number;  // per month (-1 = unlimited)
+  builderCredits: number;       // per month (-1 = unlimited)
+  trialDays: number;
+}
+
+export const DTC_PRICING: DTCPricingTier[] = [
+  {
+    name: 'Researcher',
+    tier: 'free',
+    baseMonthly: 0,
+    perSeatMonthly: 0,
+    annualDiscountPct: 0,
+    maxUsers: 1,
+    maxProjects: 2,
+    maxStorageGB: 1,
+    deepResearchCredits: 5,
+    builderCredits: 0,
+    trialDays: 0,
+  },
+  {
+    name: 'Startup Biotech',
+    tier: 'standard',
+    baseMonthly: 49900,       // $499/mo
+    perSeatMonthly: 0,
+    annualDiscountPct: 15,
+    maxUsers: 5,
+    maxProjects: 10,
+    maxStorageGB: 25,
+    deepResearchCredits: 50,
+    builderCredits: 10,
+    trialDays: 14,
+  },
+  {
+    name: 'Growth',
+    tier: 'professional',
+    baseMonthly: 149900,      // $1,499/mo
+    perSeatMonthly: 0,
+    annualDiscountPct: 15,
+    maxUsers: 25,
+    maxProjects: 50,
+    maxStorageGB: 100,
+    deepResearchCredits: 200,
+    builderCredits: 50,
+    trialDays: 14,
+  },
+  {
+    name: 'Enterprise',
+    tier: 'enterprise',
+    baseMonthly: 0,           // Custom pricing
+    perSeatMonthly: 0,
+    annualDiscountPct: 0,
+    maxUsers: -1,
+    maxProjects: -1,
+    maxStorageGB: -1,
+    deepResearchCredits: -1,
+    builderCredits: -1,
+    trialDays: 30,
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INDUSTRY-BASED PRICING (legacy/enterprise sales)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export const PRICING: Record<string, PricingTier[]> = {
   big_pharma: [
     { name: 'Starter', tier: 'standard', baseMonthly: 500000, perSeatMonthly: 7500, annualDiscountPct: 15, maxUsers: 25, maxProjects: 50, maxStorageGB: 100 },
@@ -192,6 +262,106 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
     url: session.url!,
     sessionId: session.id,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DTC CHECKOUT — Self-service signup with optional free trial
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface DTCCheckoutParams {
+  organizationId: number;
+  tier: string;
+  billingCycle: 'monthly' | 'annual';
+  successUrl: string;
+  cancelUrl: string;
+  currency?: string; // usd, eur, jpy, cny
+}
+
+/**
+ * Creates a Stripe Checkout Session for DTC self-service plans.
+ * Includes trial period for paid tiers. No per-seat pricing.
+ */
+export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promise<{ url: string; sessionId: string }> {
+  const stripe = getStripe();
+  const { organizationId, tier, billingCycle, successUrl, cancelUrl, currency } = params;
+
+  const dtcTier = DTC_PRICING.find(p => p.tier === tier);
+  if (!dtcTier) throw new Error(`Invalid DTC tier: ${tier}`);
+  if (dtcTier.baseMonthly === 0 && tier !== 'free') throw new Error('Enterprise tier requires custom pricing');
+
+  // Free tier — no checkout needed
+  if (tier === 'free') {
+    await pool.query(
+      `UPDATE organizations SET tier = 'free', payment_status = 'active', updated_at = NOW() WHERE id = $1`,
+      [organizationId]
+    );
+    await provisionModulesForTier(organizationId, 'free');
+    return { url: successUrl, sessionId: 'free' };
+  }
+
+  // Look up org
+  const orgResult = await pool.query(
+    `SELECT id, name, stripe_customer_id FROM organizations WHERE id = $1`,
+    [organizationId]
+  );
+  if (orgResult.rows.length === 0) throw new Error(`Organization ${organizationId} not found`);
+  const org = orgResult.rows[0];
+
+  // Ensure Stripe customer
+  let customerId = org.stripe_customer_id;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      metadata: { organizationId: String(organizationId), pricingModel: 'dtc' },
+    });
+    customerId = customer.id;
+    await pool.query(`UPDATE organizations SET stripe_customer_id = $1 WHERE id = $2`, [customerId, organizationId]);
+  }
+
+  // Calculate price
+  let unitAmount = dtcTier.baseMonthly;
+  if (billingCycle === 'annual') {
+    unitAmount = Math.round(unitAmount * (1 - dtcTier.annualDiscountPct / 100));
+  }
+
+  const productId = await getOrCreateProduct(stripe, tier, 'dtc');
+  const price = await stripe.prices.create({
+    product: productId,
+    unit_amount: unitAmount,
+    currency: currency || 'usd',
+    recurring: { interval: billingCycle === 'annual' ? 'year' : 'month' },
+    metadata: { tier, pricingModel: 'dtc', billingCycle },
+  });
+
+  const sessionConfig: any = {
+    customer: customerId,
+    mode: 'subscription',
+    payment_method_types: ['card', 'link'],
+    line_items: [{ price: price.id, quantity: 1 }],
+    subscription_data: {
+      metadata: {
+        organizationId: String(organizationId),
+        tier,
+        pricingModel: 'dtc',
+        billingCycle,
+        maxProjects: String(dtcTier.maxProjects),
+        maxStorageGB: String(dtcTier.maxStorageGB),
+      },
+    },
+    metadata: { organizationId: String(organizationId), tier },
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    allow_promotion_codes: true,
+    billing_address_collection: 'required',
+    tax_id_collection: { enabled: true },
+  };
+
+  // Add trial period for paid tiers
+  if (dtcTier.trialDays > 0) {
+    sessionConfig.subscription_data.trial_period_days = dtcTier.trialDays;
+  }
+
+  const session = await stripe.checkout.sessions.create(sessionConfig);
+  return { url: session.url!, sessionId: session.id };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

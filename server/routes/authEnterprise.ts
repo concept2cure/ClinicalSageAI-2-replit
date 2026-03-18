@@ -12,6 +12,7 @@
 
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { users, organizations, organizationUsers } from '../../shared/schema';
@@ -34,6 +35,50 @@ import { config } from '../config/environment';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
+
+// ─── Rate Limiters ──────────────────────────────────────────────────────────
+
+/** Enterprise login steps: 10 per 15 min per IP */
+const enterpriseAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many authentication attempts. Please try again later.' } },
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+});
+
+/** Helper: extract and verify JWT from Authorization header */
+function extractJwtUser(req: Request): { userId: string; email: string; organizationId?: string } | null {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.replace('Bearer ', '');
+  if (!token) return null;
+  try {
+    return jwt.verify(token, config.jwt.secret) as { userId: string; email: string; organizationId?: string };
+  } catch {
+    return null;
+  }
+}
+
+/** Helper: look up user's actual role in an organization */
+async function lookupOrgRole(userId: number, organizationId?: number): Promise<string> {
+  if (!organizationId) return 'user';
+  try {
+    const [membership] = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.userId, userId),
+          eq(organizationUsers.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    return membership?.role || 'user';
+  } catch {
+    return 'user';
+  }
+}
 
 /**
  * GET /check-sso-domain
@@ -111,7 +156,7 @@ router.post('/check-email', async (req: Request, res: Response) => {
  * POST /verify-password
  * Step 2: Verify user's password
  */
-router.post('/verify-password', async (req: Request, res: Response) => {
+router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceFingerprint } = req.body;
 
@@ -180,12 +225,19 @@ router.post('/verify-password', async (req: Request, res: Response) => {
     const mfaRequired = user.mfaEnabled === true;
 
     if (mfaRequired) {
+      if (!user.defaultOrganizationId) {
+        return res.status(403).json({
+          error: 'NO_ORGANIZATION',
+          message: 'No organization assigned to this account',
+        });
+      }
+
       // Don't issue full token yet — require MFA step
       const partialToken = jwt.sign(
         {
           userId: user.id.toString(),
           email: user.email,
-          organizationId: (user.defaultOrganizationId || 2).toString(),
+          organizationId: user.defaultOrganizationId.toString(),
           role: 'pending_mfa', // Restricted token — only valid for MFA verification
           mfaPending: true,
         },
@@ -209,13 +261,32 @@ router.post('/verify-password', async (req: Request, res: Response) => {
       });
     }
 
-    // No MFA required — issue full token
+    // No MFA required — issue full token with actual role
+    const orgId = user.defaultOrganizationId || null;
+
+    if (!orgId) {
+      return res.status(403).json({
+        error: 'NO_ORGANIZATION',
+        message: 'No organization assigned to this account',
+      });
+    }
+
+    // Parallel: fetch role + org name concurrently
+    const [actualRole, [orgRow]] = await Promise.all([
+      lookupOrgRole(user.id, orgId),
+      db.select({ name: organizations.name })
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1),
+    ]);
+    const verifyOrgName = orgRow?.name || 'Organization';
+
     const token = jwt.sign(
       {
         userId: user.id.toString(),
         email: user.email,
-        organizationId: (user.defaultOrganizationId || 2).toString(),
-        role: 'admin',
+        organizationId: orgId.toString(),
+        role: actualRole,
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -233,9 +304,9 @@ router.post('/verify-password', async (req: Request, res: Response) => {
         firstName: user.name?.split(' ')[0] || 'User',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
-        role: 'admin',
-        organizationId: (user.defaultOrganizationId || 2).toString(),
-        organizationName: 'Concept2Cure',
+        role: actualRole,
+        organizationId: orgId.toString(),
+        organizationName: verifyOrgName,
       },
     });
   } catch (error: any) {
@@ -252,7 +323,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
  * POST /verify-mfa
  * Step 3: Verify MFA code (TOTP or backup code)
  */
-router.post('/verify-mfa', async (req: Request, res: Response) => {
+router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Response) => {
   try {
     const { email, code, partialToken } = req.body;
 
@@ -294,26 +365,30 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
       });
     }
 
-    // MFA verified — issue full token
+    // MFA verified — issue full token with actual role
+    const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
+
+    // Parallel: fetch role, user details, and org name concurrently
+    const [mfaActualRole, [mfaUserData], mfaOrgResult] = await Promise.all([
+      mfaOrgId ? lookupOrgRole(userId, mfaOrgId) : Promise.resolve('user'),
+      db.select().from(users).where(eq(users.id, userId)).limit(1),
+      mfaOrgId
+        ? db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, mfaOrgId)).limit(1)
+        : Promise.resolve([]),
+    ]);
+    const user = mfaUserData;
+    const mfaVerifyOrgName = mfaOrgResult[0]?.name || 'Organization';
+
     const token = jwt.sign(
       {
         userId: decoded.userId,
         email: decoded.email,
         organizationId: decoded.organizationId,
-        role: 'admin',
+        role: mfaActualRole,
       },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
-
-    // Look up user details
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    const user = userResult[0];
 
     res.json({
       success: true,
@@ -325,9 +400,9 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
         firstName: user?.name?.split(' ')[0] || 'User',
         lastName: user?.name?.split(' ').slice(1).join(' ') || '',
         displayName: user?.name || decoded.email,
-        role: 'admin',
+        role: mfaActualRole,
         organizationId: decoded.organizationId,
-        organizationName: 'Concept2Cure',
+        organizationName: mfaVerifyOrgName,
       },
     });
   } catch (error: any) {
@@ -341,23 +416,23 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
 
 /**
  * POST /mfa/setup
- * Generate MFA secret and QR code for initial setup
+ * Generate MFA secret and QR code for initial setup.
+ * SECURITY: Requires valid JWT — userId derived from token, not request body.
  */
 router.post('/mfa/setup', async (req: Request, res: Response) => {
   try {
-    const { userId, email } = req.body;
-
-    if (!userId || !email) {
-      return res.status(400).json({ error: 'userId and email are required' });
+    const decoded = extractJwtUser(req);
+    if (!decoded) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const result = await generateMFASecret(parseInt(userId), email);
+    const result = await generateMFASecret(parseInt(decoded.userId), decoded.email);
 
     res.json({
       success: true,
       qrCodeDataUrl: result.qrCodeDataUrl,
-      secret: result.secret, // For manual entry
-      backupCodes: result.backupCodes, // Show ONCE
+      secret: result.secret,
+      backupCodes: result.backupCodes,
     });
   } catch (error) {
     console.error('[Enterprise Auth] mfa/setup error:', error);
@@ -367,17 +442,22 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
 
 /**
  * POST /mfa/enable
- * Enable MFA after user verifies their first TOTP code
+ * Enable MFA after user verifies their first TOTP code.
+ * SECURITY: Requires valid JWT — userId derived from token.
  */
 router.post('/mfa/enable', async (req: Request, res: Response) => {
   try {
-    const { userId, code } = req.body;
-
-    if (!userId || !code) {
-      return res.status(400).json({ error: 'userId and code are required' });
+    const decoded = extractJwtUser(req);
+    if (!decoded) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const success = await enableMFA(parseInt(userId), code);
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ error: 'Verification code is required' });
+    }
+
+    const success = await enableMFA(parseInt(decoded.userId), code);
 
     if (!success) {
       return res.status(400).json({
@@ -395,21 +475,26 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
 
 /**
  * POST /mfa/disable
- * Disable MFA (requires password re-authentication)
+ * Disable MFA (requires JWT + password re-authentication).
+ * SECURITY: Requires valid JWT — userId derived from token.
  */
 router.post('/mfa/disable', async (req: Request, res: Response) => {
   try {
-    const { userId, password } = req.body;
+    const decoded = extractJwtUser(req);
+    if (!decoded) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
-    if (!userId || !password) {
-      return res.status(400).json({ error: 'userId and password are required' });
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required to disable MFA' });
     }
 
     // Re-authenticate before disabling MFA
     const userResult = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(userId)))
+      .where(eq(users.id, parseInt(decoded.userId)))
       .limit(1);
 
     if (!userResult.length) {
@@ -422,7 +507,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
-    await disableMFA(parseInt(userId));
+    await disableMFA(parseInt(decoded.userId));
     res.json({ success: true, message: 'MFA disabled' });
   } catch (error) {
     console.error('[Enterprise Auth] mfa/disable error:', error);
@@ -521,7 +606,10 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // SECURITY: Validate that the user actually belongs to the requested organization.
     // Without this check, any authenticated user could switch to any org.
     const membership = await db
-      .select({ organizationId: organizationUsers.organizationId })
+      .select({
+        organizationId: organizationUsers.organizationId,
+        role: organizationUsers.role,
+      })
       .from(organizationUsers)
       .where(
         and(
@@ -542,6 +630,8 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       });
     }
 
+    const selectOrgRole = membership[0].role || 'user';
+
     // Look up org details
     const [org] = await db
       .select({ id: organizations.id, name: organizations.name })
@@ -551,9 +641,9 @@ router.post('/select-organization', async (req: Request, res: Response) => {
 
     const orgName = org?.name || 'Organization';
 
-    // Issue new JWT scoped to the selected organization
+    // Issue new JWT scoped to the selected organization with actual role
     const token = jwt.sign(
-      { userId, email, organizationId: String(organizationId), role: 'admin' },
+      { userId, email, organizationId: String(organizationId), role: selectOrgRole },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
@@ -601,12 +691,18 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   try {
     const decoded = jwt.verify(oldToken, config.jwt.secret) as any;
 
+    // Re-query actual role from DB instead of trusting stale JWT claim
+    const refreshOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
+    const refreshRole = refreshOrgId
+      ? await lookupOrgRole(parseInt(decoded.userId), refreshOrgId)
+      : 'user';
+
     const newToken = jwt.sign(
       {
         userId: decoded.userId,
         email: decoded.email,
         organizationId: decoded.organizationId,
-        role: decoded.role,
+        role: refreshRole,
       },
       config.jwt.secret,
       { expiresIn: '24h' }

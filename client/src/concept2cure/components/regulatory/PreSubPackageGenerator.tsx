@@ -139,7 +139,7 @@ const QUESTION_CATEGORIES = [
   { value: 'labeling', label: 'Labeling', color: 'bg-purple-100 text-purple-700' },
   { value: 'manufacturing', label: 'Manufacturing', color: 'bg-orange-100 text-orange-700' },
   { value: 'testing', label: 'Testing', color: 'bg-cyan-100 text-cyan-700' },
-  { value: 'other', label: 'Other', color: 'bg-gray-100 text-gray-700' },
+  { value: 'other', label: 'Other', color: 'bg-zinc-100 text-zinc-700' },
 ];
 
 const DEFAULT_SECTIONS: PackageSection[] = [
@@ -234,7 +234,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+      <div className="p-4 bg-zinc-50 rounded-lg border border-dashed border-zinc-300">
         <Label className="text-sm font-medium">Add New Question</Label>
         <div className="mt-2 flex gap-2">
           <Textarea
@@ -270,16 +270,16 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           return (
             <div
               key={q.id}
-              className="p-3 bg-white rounded-lg border border-gray-200 group"
+              className="p-3 bg-white rounded-lg border border-zinc-200 group"
             >
               <div className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-medium flex items-center justify-center">
                   {idx + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900">{q.question}</p>
+                  <p className="text-sm text-zinc-900">{q.question}</p>
                   {q.context && (
-                    <p className="text-xs text-gray-500 mt-1">{q.context}</p>
+                    <p className="text-xs text-zinc-500 mt-1">{q.context}</p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="outline" className={cn('text-[10px]', categoryInfo?.color)}>
@@ -291,7 +291,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                         'text-[10px]',
                         q.priority === 'high' && 'bg-red-50 text-red-700',
                         q.priority === 'medium' && 'bg-amber-50 text-amber-700',
-                        q.priority === 'low' && 'bg-gray-50 text-gray-700'
+                        q.priority === 'low' && 'bg-zinc-50 text-zinc-700'
                       )}
                     >
                       {q.priority} priority
@@ -300,7 +300,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 </div>
                 <button
                   onClick={() => onRemove(q.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-400 hover:text-red-600 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-600 transition-all"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -310,8 +310,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         })}
 
         {questions.length === 0 && (
-          <div className="text-center py-6 text-sm text-gray-500">
-            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+          <div className="text-center py-6 text-sm text-zinc-500">
+            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
             <p>No questions added yet.</p>
             <p className="text-xs mt-1">Add specific questions you want FDA feedback on.</p>
           </div>
@@ -342,10 +342,10 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-zinc-900">
             Package Sections
           </span>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-zinc-500">
             {completedCount}/{sections.length} sections complete
           </p>
         </div>
@@ -370,8 +370,8 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
               'p-3 rounded-lg border transition-colors',
               section.status === 'complete' && 'bg-green-50 border-green-200',
               section.status === 'in-progress' && 'bg-blue-50 border-blue-200',
-              section.status === 'not-started' && 'bg-white border-gray-200',
-              section.status === 'not-applicable' && 'bg-gray-50 border-gray-200 opacity-60'
+              section.status === 'not-started' && 'bg-white border-zinc-200',
+              section.status === 'not-applicable' && 'bg-zinc-50 border-zinc-200 opacity-60'
             )}
           >
             <div className="flex items-start gap-3">
@@ -391,8 +391,8 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
                     'text-sm font-medium',
                     section.status === 'complete' && 'text-green-800',
                     section.status === 'in-progress' && 'text-blue-800',
-                    section.status === 'not-started' && 'text-gray-900',
-                    section.status === 'not-applicable' && 'text-gray-500 line-through'
+                    section.status === 'not-started' && 'text-zinc-900',
+                    section.status === 'not-applicable' && 'text-zinc-500 line-through'
                   )}>
                     {section.title}
                   </span>
@@ -402,7 +402,7 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-zinc-500 mt-0.5">
                   {section.description}
                 </p>
               </div>
@@ -574,7 +574,7 @@ export const PreSubPackageGenerator: React.FC<PreSubPackageGeneratorProps> = ({
                         <SelectItem key={type.value} value={type.value}>
                           <div>
                             <div className="font-medium">{type.label}</div>
-                            <div className="text-xs text-gray-500">{type.description}</div>
+                            <div className="text-xs text-zinc-500">{type.description}</div>
                           </div>
                         </SelectItem>
                       ))}
@@ -591,7 +591,7 @@ export const PreSubPackageGenerator: React.FC<PreSubPackageGeneratorProps> = ({
                 </div>
               </div>
 
-              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+              <div className="p-4 bg-zinc-50 rounded-lg space-y-3">
                 <Label className="font-medium">Primary Contact</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <Input
@@ -674,24 +674,24 @@ export const PreSubPackageGenerator: React.FC<PreSubPackageGeneratorProps> = ({
                 </div>
                 <div className="px-4 py-3 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm font-medium text-gray-700">Meeting Type</div>
-                      <div className="text-lg font-semibold text-gray-900">
+                    <div className="p-3 bg-zinc-50 rounded-lg">
+                      <div className="text-sm font-medium text-zinc-700">Meeting Type</div>
+                      <div className="text-lg font-semibold text-zinc-900">
                         {MEETING_TYPES.find(t => t.value === packageData.meetingInfo.meetingType)?.label}
                       </div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm font-medium text-gray-700">Questions</div>
-                      <div className="text-lg font-semibold text-gray-900">
+                    <div className="p-3 bg-zinc-50 rounded-lg">
+                      <div className="text-sm font-medium text-zinc-700">Questions</div>
+                      <div className="text-lg font-semibold text-zinc-900">
                         {packageData.questions.length} questions
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="p-3 bg-zinc-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Sections Status</span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm font-medium text-zinc-700">Sections Status</span>
+                      <span className="text-sm text-zinc-500">
                         {requiredComplete}/{requiredTotal} required complete
                       </span>
                     </div>

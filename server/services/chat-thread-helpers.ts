@@ -36,6 +36,14 @@ export async function getOrCreateThread(
 }
 
 /**
+ * Estimate token count from text (≈4 chars per token for English).
+ * Uses the stored tokens_used column when available, falls back to heuristic.
+ */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+/**
  * Retrieve all messages in a thread, ordered chronologically.
  */
 export async function getThreadMessages(
@@ -46,6 +54,63 @@ export async function getThreadMessages(
     [threadId]
   );
   return result.rows;
+}
+
+/**
+ * Retrieve messages within a token budget, keeping the most recent messages.
+ * Loads newest-first and accumulates until the budget is exhausted.
+ *
+ * @param threadId - The thread to load from
+ * @param tokenBudget - Maximum tokens to allocate for history messages
+ * @param workingMemorySummary - Optional summary to prepend (from working memory service)
+ * @returns Messages in chronological order (oldest first), fitting within budget
+ */
+export async function getWindowedMessages(
+  threadId: string,
+  tokenBudget: number,
+  workingMemorySummary?: string | null
+): Promise<{
+  messages: Array<{ role: string; content: string }>;
+  totalMessages: number;
+  includedMessages: number;
+  tokensUsed: number;
+  wasTruncated: boolean;
+}> {
+  // Load all messages newest-first so we can pick the most recent ones
+  const result = await pool.query(
+    'SELECT role, content, tokens_used FROM chat_messages WHERE thread_id = $1 ORDER BY created_at DESC',
+    [threadId]
+  );
+  const allMessages = result.rows;
+  const totalMessages = allMessages.length;
+
+  // Reserve tokens for working memory summary if provided
+  let remaining = tokenBudget;
+  if (workingMemorySummary) {
+    remaining -= estimateTokens(workingMemorySummary);
+  }
+
+  // Greedily include messages from newest to oldest
+  const selected: Array<{ role: string; content: string }> = [];
+  let tokensUsed = 0;
+  for (const msg of allMessages) {
+    const msgTokens = msg.tokens_used > 0 ? msg.tokens_used : estimateTokens(msg.content);
+    if (tokensUsed + msgTokens > remaining && selected.length > 0) break;
+    // Always include at least the most recent message
+    selected.push({ role: msg.role, content: msg.content });
+    tokensUsed += msgTokens;
+  }
+
+  // Reverse to chronological order
+  selected.reverse();
+
+  return {
+    messages: selected,
+    totalMessages,
+    includedMessages: selected.length,
+    tokensUsed,
+    wasTruncated: selected.length < totalMessages,
+  };
 }
 
 /**

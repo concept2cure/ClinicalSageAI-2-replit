@@ -115,7 +115,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
 
   return (
     <>
-      <div className="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="group flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 transition-colors">
         {/* Icon */}
         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
           <FileIcon className="h-4 w-4 text-blue-600" />
@@ -124,12 +124,12 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 truncate">{document.name}</span>
+            <span className="text-sm font-medium text-zinc-900 truncate">{document.name}</span>
             {document.status === 'processing' && (
               <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
             <span>{formatFileSize(document.size)}</span>
             {document.pageCount && (
               <>
@@ -213,7 +213,7 @@ const ContextMeter: React.FC<ContextMeterProps> = ({ used, max }) => {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-500 flex items-center gap-1">
+        <span className="text-zinc-500 flex items-center gap-1">
           <Database className="h-3 w-3" />
           Context Window
         </span>
@@ -222,7 +222,7 @@ const ContextMeter: React.FC<ContextMeterProps> = ({ used, max }) => {
             'font-medium',
             isAtLimit && 'text-red-600',
             isNearLimit && !isAtLimit && 'text-amber-600',
-            !isNearLimit && 'text-gray-700'
+            !isNearLimit && 'text-zinc-700'
           )}
         >
           {formatTokenCount(used)} / {formatTokenCount(max)}
@@ -284,7 +284,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
           <button
             className={cn(
               'w-full flex items-center justify-between p-3 rounded-lg transition-colors',
-              'hover:bg-gray-50 text-left border border-gray-200'
+              'hover:bg-zinc-50 text-left border border-zinc-200'
             )}
           >
             <div className="flex items-center gap-3">
@@ -292,8 +292,8 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
                 <FolderOpen className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-900">Project Knowledge</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-sm font-medium text-zinc-900">Project Knowledge</div>
+                <div className="text-xs text-zinc-500">
                   {isLoading
                     ? 'Loading...'
                     : documentCount === 0
@@ -302,7 +302,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
                 </div>
               </div>
             </div>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-zinc-400" />
           </button>
         </SheetTrigger>
 
@@ -324,7 +324,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
 
             {/* Document Uploader */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">Documents</h3>
+              <h3 className="text-sm font-medium text-zinc-900">Documents</h3>
               <DocumentUploader
                 onUpload={uploadDocument}
                 isUploading={isUploading}
@@ -337,7 +337,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
             {knowledge && knowledge.documents.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-zinc-500">
                     {knowledge.documents.length} document
                     {knowledge.documents.length !== 1 ? 's' : ''} uploaded
                   </span>
@@ -358,8 +358,8 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
 
             {/* Empty State */}
             {knowledge && knowledge.documents.length === 0 && !isUploading && (
-              <div className="text-center py-6 text-sm text-gray-500">
-                <FileText className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-6 text-sm text-zinc-500">
+                <FileText className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
                 <p>No documents uploaded yet.</p>
                 <p className="text-xs mt-1">
                   Upload device specs, predicate summaries, test data, etc.
@@ -368,7 +368,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
             )}
 
             {/* Divider */}
-            <div className="border-t border-gray-200" />
+            <div className="border-t border-zinc-200" />
 
             {/* Custom Instructions */}
             <CustomInstructions

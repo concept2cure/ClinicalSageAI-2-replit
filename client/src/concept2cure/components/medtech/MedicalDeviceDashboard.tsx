@@ -886,7 +886,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
   return (
     <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
       {/* Header - THE SHERPA BANNER */}
-      <div className="flex-shrink-0 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white p-6">
+      <div className="flex-shrink-0 bg-gradient-to-r from-zinc-900 via-blue-900 to-indigo-900 text-white p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/10 rounded-xl backdrop-blur">

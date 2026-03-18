@@ -583,8 +583,8 @@ export const ZenLogin: React.FC = () => {
           w-full py-3.5 px-4
           flex items-center justify-center gap-2
           text-base font-semibold text-white
-          bg-gradient-to-r from-blue-600 to-indigo-600
-          hover:from-blue-700 hover:to-indigo-700
+          bg-zinc-900
+          hover:bg-zinc-800
           shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
           rounded-xl
           transition-all duration-200
@@ -837,8 +837,8 @@ export const ZenLogin: React.FC = () => {
           w-full py-3.5 px-4
           flex items-center justify-center gap-2
           text-base font-semibold text-white
-          bg-gradient-to-r from-blue-600 to-indigo-600
-          hover:from-blue-700 hover:to-indigo-700
+          bg-zinc-900
+          hover:bg-zinc-800
           shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
           rounded-xl
           transition-all duration-200
@@ -1055,7 +1055,7 @@ export const ZenLogin: React.FC = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left panel — branding / hero */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-zinc-900 via-blue-950 to-indigo-950">
         {/* Decorative grid */}
         <div
           className="absolute inset-0 opacity-[0.04]"

@@ -170,7 +170,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
       {/* Connector line */}
       {depth > 0 && (
         <div
-          className="absolute left-3 -top-2 h-4 w-px bg-gray-200"
+          className="absolute left-3 -top-2 h-4 w-px bg-zinc-200"
           style={{ marginLeft: `${(depth - 1) * 16}px` }}
         />
       )}
@@ -181,7 +181,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
           'group relative flex items-start gap-2 p-2 rounded-lg transition-colors cursor-pointer',
           isActive
             ? 'bg-blue-50 ring-1 ring-blue-200'
-            : 'hover:bg-gray-50'
+            : 'hover:bg-zinc-50'
         )}
         style={{ marginLeft: `${depth * 16}px` }}
         onClick={onSelect}
@@ -189,7 +189,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
         {/* Branch icon */}
         <div className={cn(
           'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-          isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+          isActive ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500'
         )}>
           {depth === 0 ? (
             <GitCommit className="h-3.5 w-3.5" />
@@ -203,7 +203,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
           <div className="flex items-center gap-2">
             <span className={cn(
               'text-sm font-medium truncate',
-              isActive ? 'text-blue-900' : 'text-gray-900'
+              isActive ? 'text-blue-900' : 'text-zinc-900'
             )}>
               {branch.title}
             </span>
@@ -214,11 +214,11 @@ const BranchNode: React.FC<BranchNodeProps> = ({
             )}
           </div>
           {branch.summary && (
-            <p className="text-xs text-gray-500 truncate mt-0.5">
+            <p className="text-xs text-zinc-500 truncate mt-0.5">
               {truncateText(branch.summary, 60)}
             </p>
           )}
-          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+          <div className="flex items-center gap-2 mt-1 text-xs text-zinc-400">
             <span className="flex items-center gap-0.5">
               <MessageSquare className="h-3 w-3" />
               {branch.messageCount}
@@ -238,7 +238,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
               <button
                 className={cn(
                   'opacity-0 group-hover:opacity-100 p-1 rounded transition-all',
-                  'hover:bg-gray-200 text-gray-400 hover:text-gray-600'
+                  'hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600'
                 )}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -272,11 +272,11 @@ const BranchNode: React.FC<BranchNodeProps> = ({
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-zinc-100 rounded"
           >
             <ChevronRight
               className={cn(
-                'h-4 w-4 text-gray-400 transition-transform',
+                'h-4 w-4 text-zinc-400 transition-transform',
                 isExpanded && 'rotate-90'
               )}
             />
@@ -347,7 +347,7 @@ export const ConversationBranches: React.FC<ConversationBranchesProps> = ({
         <button
           className={cn(
             'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
-            'text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+            'text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900',
             totalBranches > 1 && 'text-amber-700 bg-amber-50 hover:bg-amber-100',
             className
           )}
@@ -409,8 +409,8 @@ export const ConversationBranches: React.FC<ConversationBranchesProps> = ({
           </ScrollArea>
 
           {/* Help text */}
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
-            <p className="font-medium text-gray-700 mb-1">💡 Pro tip</p>
+          <div className="mt-4 p-3 bg-zinc-50 rounded-lg text-xs text-zinc-500">
+            <p className="font-medium text-zinc-700 mb-1">💡 Pro tip</p>
             <p>
               To create a fork, hover over any message and click the branch icon.
               This lets you explore "what if" scenarios without losing your original path.
@@ -443,7 +443,7 @@ export const ForkActionButton: React.FC<ForkActionButtonProps> = ({
             onClick={() => onFork(messageId)}
             className={cn(
               'p-1.5 rounded-md transition-colors',
-              'text-gray-400 hover:text-amber-600 hover:bg-amber-50'
+              'text-zinc-400 hover:text-amber-600 hover:bg-amber-50'
             )}
           >
             <GitBranch className="h-4 w-4" />
