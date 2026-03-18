@@ -551,12 +551,51 @@ router.post('/cer/generate-full', async (req, res) => {
   }
 });
 
-router.get('/cer/jobs/:id/status', (req, res) => {
-  res.json({
-    job_id: req.params.id,
-    progress: 100,
-    status: 'completed',
-  });
+router.get('/cer/jobs/:id/status', async (req, res) => {
+  try {
+    const { pool } = require('./db');
+    const { id } = req.params;
+    if (!pool) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const isNumeric = /^\d+$/.test(id);
+    const query = isNumeric
+      ? 'SELECT report_id, status, cer_status, updated_at FROM cer_reports WHERE id = $1'
+      : 'SELECT report_id, status, cer_status, updated_at FROM cer_reports WHERE report_id = $1';
+
+    const result = await pool.query(query, [isNumeric ? parseInt(id, 10) : id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'CER job not found' });
+    }
+
+    const row = result.rows[0];
+    // Derive progress percentage from status
+    const progressMap: Record<string, number> = {
+      pending: 0,
+      draft: 10,
+      'in-progress': 50,
+      review: 80,
+      approved: 100,
+      completed: 100,
+      published: 100,
+      rejected: 0,
+    };
+
+    res.json({
+      job_id: row.report_id,
+      status: row.status,
+      progress_status: row.cer_status,
+      progress: progressMap[row.status] ?? 0,
+      updated_at: row.updated_at,
+    });
+  } catch (error: any) {
+    if (error.code === '42P01') {
+      return res.status(404).json({ error: 'CER job not found' });
+    }
+    console.error('Error fetching CER job status:', error);
+    res.status(500).json({ error: 'Failed to fetch CER job status' });
+  }
 });
 
 export default function registerRoutes(app: Express): void {

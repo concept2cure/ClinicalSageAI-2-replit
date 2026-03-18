@@ -2049,72 +2049,34 @@ app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Resp
   }
 });
 
-// CSR real data ALL endpoint - fallback when file-based route not available
+// CSR real data ALL endpoint - real database query
 app.get('/api/csr-real-data/all', async (req: Request, res: Response) => {
   try {
     const { limit = 10 } = req.query;
     debugLog('CSR real data all endpoint called', { limit });
 
-    // Mock CSR data fallback when files not available
-    const mockCSRData = [
-      {
-        id: 'CSR001',
-        title: 'Phase II Study of Pembrolizumab in Advanced Non-Small Cell Lung Cancer',
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase II',
-        sponsor: 'Merck & Co',
-        therapeutic_area: 'Oncology',
-        sample_size: 105,
-        duration: '24 months',
-        status: 'Completed',
-        drugName: 'Pembrolizumab',
-        nctrialId: 'NCT02220894',
-        study_phase: 'Phase II',
-        csr_id: 'CSR001',
-      },
-      {
-        id: 'CSR002',
-        title: 'Phase III Study of Nivolumab plus Ipilimumab in Melanoma',
-        indication: 'Melanoma',
-        phase: 'Phase III',
-        sponsor: 'Bristol Myers Squibb',
-        therapeutic_area: 'Oncology',
-        sample_size: 299,
-        duration: '36 months',
-        status: 'Completed',
-        drugName: 'Nivolumab + Ipilimumab',
-        nctrialId: 'NCT01844505',
-        study_phase: 'Phase III',
-        csr_id: 'CSR002',
-      },
-      {
-        id: 'CSR003',
-        title: 'Phase I/II Study of Osimertinib in EGFR-Mutated NSCLC',
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase I/II',
-        sponsor: 'AstraZeneca',
-        therapeutic_area: 'Oncology',
-        sample_size: 253,
-        duration: '30 months',
-        status: 'Completed',
-        drugName: 'Osimertinib',
-        nctrialId: 'NCT01802632',
-        study_phase: 'Phase I/II',
-        csr_id: 'CSR003',
-      },
-    ];
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 10, 1), 100);
 
-    // Apply limit
-    const limitNum = parseInt(limit as string, 10);
-    const limitedData = mockCSRData.slice(0, limitNum);
+    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const total = countResult.rows[0]?.total ?? 0;
 
-    debugLog('CSR real data all response', { count: limitedData.length, limit });
+    const dataResult = await pool.query(
+      `SELECT id, report_id AS "reportId", report_title AS title, indication, phase,
+              sponsor, sample_size, duration_weeks, status, study_id AS "studyId",
+              upload_date AS "uploadDate"
+       FROM csr_reports WHERE deleted_at IS NULL
+       ORDER BY upload_date DESC NULLS LAST
+       LIMIT $1`,
+      [limitNum]
+    );
+
+    debugLog('CSR real data all response', { count: dataResult.rows.length, total });
     res.json({
       success: true,
-      data: limitedData,
-      count: limitedData.length,
-      total: mockCSRData.length,
-      source: 'fallback_data',
+      data: dataResult.rows,
+      count: dataResult.rows.length,
+      total,
+      source: 'database',
     });
   } catch (error) {
     console.error('Error in CSR real data all:', error);
@@ -2125,43 +2087,81 @@ app.get('/api/csr-real-data/all', async (req: Request, res: Response) => {
   }
 });
 
-// CSR real data stats endpoint for dashboard metrics
+// CSR real data stats endpoint for dashboard metrics - real database queries
 app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
   try {
     debugLog('CSR real data stats endpoint called');
+
+    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const totalReports = totalResult.rows[0]?.total ?? 0;
+
+    const processedResult = await pool.query(
+      "SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND status IN ('approved', 'submitted')"
+    );
+    const processedReports = processedResult.rows[0]?.cnt ?? 0;
+
+    const indicationCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT indication)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL'
+    );
+    const uniqueIndications = indicationCountResult.rows[0]?.cnt ?? 0;
+
+    const sponsorCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT sponsor)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND sponsor IS NOT NULL'
+    );
+    const uniqueSponsors = sponsorCountResult.rows[0]?.cnt ?? 0;
+
+    const phasesResult = await pool.query(
+      'SELECT DISTINCT phase FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL ORDER BY phase'
+    );
+    const phases = phasesResult.rows.map((r: any) => r.phase);
+
+    // Top indications
+    const topIndicationsResult = await pool.query(
+      `SELECT indication AS name, COUNT(*)::int AS count,
+              (SELECT phase FROM csr_reports cr2 WHERE cr2.indication = cr.indication AND cr2.deleted_at IS NULL AND cr2.phase IS NOT NULL GROUP BY phase ORDER BY COUNT(*) DESC LIMIT 1) AS phase
+       FROM csr_reports cr WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 5`
+    );
+
+    // Phase distribution
+    const phaseDistResult = await pool.query(
+      `SELECT COALESCE(phase, 'Unknown') AS phase, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY count DESC`
+    );
+    const phaseDistribution = phaseDistResult.rows.map((r: any) => ({
+      phase: r.phase,
+      count: r.count,
+      percentage: totalReports > 0 ? Math.round((r.count / totalReports) * 100) : 0,
+    }));
+
+    // Therapeutic areas (by indication)
+    const taResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 10`
+    );
+    const therapeuticAreas = taResult.rows.map((r: any) => ({
+      area: r.area,
+      count: r.count,
+      percentage: totalReports > 0 ? Math.round((r.count / totalReports) * 100) : 0,
+    }));
 
     const statsData = {
       success: true,
       data: {
         overview: {
-          total_reports: 3021,
-          processed_reports: 2854,
-          unique_indications: 136,
-          unique_sponsors: 140,
-          phases: ['Phase I', 'Phase II', 'Phase III', 'Phase IV'],
+          total_reports: totalReports,
+          processed_reports: processedReports,
+          unique_indications: uniqueIndications,
+          unique_sponsors: uniqueSponsors,
+          phases,
         },
-        topIndications: [
-          { name: 'Alzheimer Disease', count: 45, phase: 'Phase III' },
-          { name: 'Non-Small Cell Lung Cancer', count: 38, phase: 'Phase II' },
-          { name: 'Type 2 Diabetes', count: 32, phase: 'Phase III' },
-          { name: 'Rheumatoid Arthritis', count: 28, phase: 'Phase II' },
-          { name: 'Multiple Sclerosis', count: 24, phase: 'Phase III' },
-        ],
-        phaseDistribution: [
-          { phase: 'Phase I', count: 412, percentage: 14 },
-          { phase: 'Phase II', count: 985, percentage: 33 },
-          { phase: 'Phase III', count: 1124, percentage: 37 },
-          { phase: 'Phase IV', count: 500, percentage: 16 },
-        ],
-        therapeuticAreas: [
-          { area: 'Oncology', count: 678, percentage: 22 },
-          { area: 'Neurology', count: 542, percentage: 18 },
-          { area: 'Cardiology', count: 445, percentage: 15 },
-          { area: 'Immunology', count: 398, percentage: 13 },
-          { area: 'Endocrinology', count: 356, percentage: 12 },
-        ],
+        topIndications: topIndicationsResult.rows,
+        phaseDistribution,
+        therapeuticAreas,
       },
-      source: 'verified_csr_repository',
+      source: 'database',
       lastUpdated: new Date().toISOString(),
     };
 

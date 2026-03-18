@@ -317,92 +317,7 @@ const MOCK_REGULATORY_LAW: RegulatoryLawRef[] = [
   },
 ];
 
-const MOCK_COMPLIANCE: ComplianceItem[] = [
-  {
-    id: 'CMP-001',
-    framework: '21 CFR Part 11',
-    requirement: 'Electronic Records & Signatures — EDMS Validation',
-    status: 'Active',
-    lastAuditDate: '2025-09-15',
-    nextAuditDate: '2026-09-15',
-    findings: 2,
-    capaCount: 1,
-    owner: 'David Park, IT Quality',
-    riskLevel: 'Medium',
-  },
-  {
-    id: 'CMP-002',
-    framework: 'GDPR',
-    requirement: 'Patient Data Processing — EU Clinical Sites',
-    status: 'Active',
-    lastAuditDate: '2025-06-01',
-    nextAuditDate: '2026-06-01',
-    findings: 0,
-    capaCount: 0,
-    owner: 'Maria Santos, DPO',
-    riskLevel: 'Low',
-  },
-  {
-    id: 'CMP-003',
-    framework: 'HIPAA',
-    requirement: 'Protected Health Information — US Clinical Data',
-    status: 'Active',
-    lastAuditDate: '2025-11-20',
-    nextAuditDate: '2026-05-20',
-    findings: 1,
-    capaCount: 1,
-    owner: 'David Park, IT Quality',
-    riskLevel: 'Medium',
-  },
-  {
-    id: 'CMP-004',
-    framework: 'ICH E6(R2) GCP',
-    requirement: 'Investigator Site Monitoring SOPs',
-    status: 'At Risk',
-    lastAuditDate: '2025-03-10',
-    nextAuditDate: '2026-03-10',
-    findings: 4,
-    capaCount: 3,
-    owner: 'Angela Foster, QA Director',
-    riskLevel: 'High',
-  },
-  {
-    id: 'CMP-005',
-    framework: 'EU MDR 2017/745',
-    requirement: 'Companion Diagnostic Device Classification',
-    status: 'Pending',
-    lastAuditDate: '—',
-    nextAuditDate: '2026-08-01',
-    findings: 0,
-    capaCount: 0,
-    owner: 'Thomas Eriksen, Regulatory',
-    riskLevel: 'Medium',
-  },
-  {
-    id: 'CMP-006',
-    framework: 'SOX / Internal Controls',
-    requirement: 'Financial Reporting Controls for R&D Expenditures',
-    status: 'Active',
-    lastAuditDate: '2025-12-31',
-    nextAuditDate: '2026-06-30',
-    findings: 0,
-    capaCount: 0,
-    owner: 'CFO Office',
-    riskLevel: 'Low',
-  },
-  {
-    id: 'CMP-007',
-    framework: 'Anti-Bribery / FCPA',
-    requirement: 'HCP Interaction Transparency — Global Sites',
-    status: 'In Review',
-    lastAuditDate: '2025-10-15',
-    nextAuditDate: '2026-04-15',
-    findings: 3,
-    capaCount: 2,
-    owner: 'Robert Kim, General Counsel',
-    riskLevel: 'High',
-  },
-];
+// Compliance data fetched via useQuery in CompliancePanel
 
 const MOCK_RISKS: RiskEntry[] = [
   {
@@ -675,23 +590,40 @@ const SectionHeader: React.FC<{
 // ---------------------------------------------------------------------------
 
 const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
+  const { data: patents = [], isLoading: patentsLoading } = useQuery<Patent[]>({
+    queryKey: ['concept2cure', 'patents'],
+    queryFn: async () => {
+      const res = await fetch('/api/concept2cure/patents');
+      if (!res.ok) throw new Error('Failed to fetch patents');
+      return res.json();
+    },
+  });
+
   const filtered = useMemo(
     () =>
-      MOCK_PATENTS.filter(
+      patents.filter(
         (p) =>
           p.title.toLowerCase().includes(search.toLowerCase()) ||
           p.patentNumber.toLowerCase().includes(search.toLowerCase()) ||
           p.category.toLowerCase().includes(search.toLowerCase()),
       ),
-    [search],
+    [search, patents],
   );
 
   const stats = useMemo(() => {
-    const granted = MOCK_PATENTS.filter((p) => p.status === 'Granted').length;
-    const pending = MOCK_PATENTS.filter((p) => p.status === 'Pending' || p.status === 'Filed').length;
-    const blocked = MOCK_PATENTS.filter((p) => p.ftoStatus === 'Blocked').length;
-    return { granted, pending, blocked, total: MOCK_PATENTS.length };
-  }, []);
+    const granted = patents.filter((p) => p.status === 'Granted').length;
+    const pending = patents.filter((p) => p.status === 'Pending' || p.status === 'Filed').length;
+    const blocked = patents.filter((p) => p.ftoStatus === 'Blocked').length;
+    return { granted, pending, blocked, total: patents.length };
+  }, [patents]);
+
+  if (patentsLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-sm text-zinc-400">Loading patent portfolio...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
