@@ -12,11 +12,15 @@ This document defines eight specialized code-level audits required before GA for
 
 The platform's architecture combines:
 - **Multi-layer context inheritance**: platform → account canon → client/track → project → workstream → thread
-- **AI gateway with multi-provider routing**: OpenAI, Anthropic, Moonshot with task-based routing and automatic fallback
+- **Dual AI routing layer**: AI Gateway (`server/services/ai-gateway/gateway.ts`) + AIProviderRouter (`server/services/aiProviderRouter.ts`, 742 lines) with task-based routing across OpenAI, Anthropic, Moonshot/Kimi and automatic failover
+- **Multi-agent council**: 4-stage sequential agent workflow (`server/services/multi-agent-council.ts`, 1,213 lines) — Drafter → Statistician → Critic → Synthesizer with live data binding and verification
+- **Circuit breaker resilience**: `server/lib/circuit-breaker.ts` (CLOSED/OPEN/HALF_OPEN states), `server/lib/multi-provider-llm.ts` (unified failover interface), Redis-based rate limiting with in-memory fallback
 - **Policy engines**: AI gateway policy (`server/services/ai-gateway/policy.ts`), submission policy resolution (`server/src/services/policy.ts`), and account-level canon governance (`server/services/account-canon.ts`)
+- **Tool registry and execution**: `server/services/toolRegistry.ts` — registered tools with `chain` support for sequential execution, OpenAI function-calling conversion, audit logging to `chat_tool_runs` table
 - **Immutable audit infrastructure**: 21 CFR Part 11 event_log, signature_log, smart_fragment_versions, artifact_versions, submission_snapshots — all with mutation-prevention triggers
 - **Provenance chain**: source_documents → traceability_links → change_propagation_events → impacted_sections
 - **Prompt injection protection**: `server/lib/prompt-injection-protection.ts` with detection patterns, sanitization, and output validation
+- **Structured output enforcement**: `server/services/ai/openai-orchestrator.ts` — strict JSON schema validation for facts, CMC specs, safety updates, and eCTD structure
 
 The audits below are ordered by regulatory blast radius. Each is grounded in actual code paths, schemas, and services discovered in the codebase.
 
@@ -70,8 +74,12 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 │                                                                     │
 │  [7] MODEL ROUTING & FALLBACK                                       │
 │   ├─ ai-gateway/gateway.ts → selectModel(), getFallbackModels()    │
-│   ├─ ai-gateway/types.ts → ProviderHealth, RoutingStrategy         │
-│   └─ TASK_PROVIDER_PREFERENCES routing table                       │
+│   ├─ aiProviderRouter.ts → executeLLMWithFailover(), selectModel() │
+│   ├─ multi-provider-llm.ts → auto-failover (Kimi → OpenAI)        │
+│   ├─ multi-agent-council.ts → 4-stage agent pipeline               │
+│   ├─ circuit-breaker.ts → CLOSED/OPEN/HALF_OPEN state machine     │
+│   ├─ ai/openai-orchestrator.ts → strict JSON schema enforcement    │
+│   └─ TASK_PROVIDER_PREFERENCES + task_based routing tables         │
 │                                                                     │
 │  [8] CLINICAL/REGULATORY BOUNDARIES                                 │
 │   ├─ BASE_SYSTEM_PROMPT in lumen-context-builder.ts                │
@@ -324,6 +332,9 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 | Canon injection | `account-canon.ts:146-217` | `assertCanonFact()` — user-supplied content becomes system prompt material |
 | Blocked patterns | `ai-gateway/policy.ts:104-133` | Regex-based content filtering |
 | AI section editing | `POST /api/concept2cure/ai/edit-section` | User-directed AI content generation |
+| Tool registry | `server/services/toolRegistry.ts` | Registered tools with `chain` support — tool-to-tool execution |
+| Multi-agent council | `server/services/multi-agent-council.ts` | 4-stage agent pipeline with data bindings (SQL queries, API calls) |
+| OpenAI orchestrator | `server/services/ai/openai-orchestrator.ts` | Structured output with data binding — `extractFactsFromEvidence()` |
 
 #### B. Failure Modes
 
@@ -333,8 +344,9 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 4. **Delimiter escape in user content**: `encapsulateUserContent()` uses `═` repeat(50) as delimiter — adversary includes this exact string in their input to escape the boundary
 5. **Regex bypasses**: Detection patterns use `\s+` (requiring whitespace) — adversary uses zero-width spaces, Unicode homoglyphs, or base64 encoding to evade detection
 6. **Output validation gaps**: `validateOutput()` only checks 3 patterns — sophisticated prompt injection could produce harmful output that passes all 3 checks
-7. **Unsafe tool chaining**: If agent flows allow tool-to-tool calls, a compromised tool output could inject instructions into the next tool's input
-8. **Account-level canon injection via API**: `POST /api/concept2cure/projects/:projectId/knowledge` updates project knowledge that feeds into context — no injection scanning on this path
+7. **Unsafe tool chaining**: Tool registry supports `chain: string[]` in `ToolResult` — a compromised tool output could inject instructions into the next chained tool's input. The multi-agent council's Drafter → Statistician → Critic → Synthesizer pipeline passes output from one agent as input to the next — a poisoned Drafter output could manipulate subsequent agents
+8. **Data binding injection in multi-agent council**: `multi-agent-council.ts` supports `dataBindings` with SQL queries and API calls — if binding templates use unsanitized user input, SQL injection is possible
+9. **Account-level canon injection via API**: `POST /api/concept2cure/projects/:projectId/knowledge` updates project knowledge that feeds into context — no injection scanning on this path
 
 #### C. Audit Method
 
@@ -525,27 +537,40 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 
 #### A. What to Inspect
 
+**CRITICAL: The platform has TWO independent model routing layers that must both be audited:**
+
 | Component | File | Key Logic |
 |-----------|------|-----------|
-| Model registry | `ai-gateway/gateway.ts:36-118` | `DEFAULT_MODELS[]` — 5 models across 3 providers |
-| Task routing | `ai-gateway/gateway.ts:121-130` | `TASK_PROVIDER_PREFERENCES` — per-task provider order |
-| Model selection | `ai-gateway/gateway.ts` | `selectModel()` method |
-| Fallback chain | `ai-gateway/gateway.ts:235-251` | `getFallbackModels()` → tries remaining providers |
-| Provider health | `ai-gateway/gateway.ts` | `ProviderHealth` tracking, `recordSuccess()`, `recordFailure()` |
+| **AI Gateway** (Layer 1) | `server/services/ai-gateway/gateway.ts` | `AIGateway.route()` — policy check → model selection → fallback chain |
+| Gateway model registry | `ai-gateway/gateway.ts:36-118` | `DEFAULT_MODELS[]` — 5 models (GPT-4o, GPT-4o-mini, Claude 3.5 Sonnet, Claude 3 Haiku, Moonshot) |
+| Gateway task routing | `ai-gateway/gateway.ts:121-130` | `TASK_PROVIDER_PREFERENCES` — per-task provider order |
+| **AI Provider Router** (Layer 2) | `server/services/aiProviderRouter.ts` (742 lines) | `selectModel()`, `executeLLMWithFailover()`, `route()` |
+| Router strategies | `aiProviderRouter.ts` | 5 strategies: `task_based`, `cost_optimized`, `latency_optimized`, `quality_optimized`, `round_robin` |
+| Router health tracking | `aiProviderRouter.ts` | `providerHealth: Map<AIProvider, ProviderHealth>` — 3 failures → unhealthy, 60s recovery |
+| Router audit | `aiProviderRouter.ts` | Persists to `ai_provider_audit_log` table with request hash dedup |
+| **Multi-Provider LLM** | `server/lib/multi-provider-llm.ts` (461 lines) | Unified interface, auto-failover (Kimi → OpenAI), prompt injection scanning |
+| **Circuit breaker** | `server/lib/circuit-breaker.ts` (405 lines) | CLOSED/OPEN/HALF_OPEN states, configurable thresholds (5 failures → open, 30s reset, 2 successes → close) |
+| **Multi-agent council** | `server/services/multi-agent-council.ts` (1,213 lines) | 4-stage pipeline (Drafter → Statistician → Critic → Synthesizer), 3 retries with exponential backoff |
+| **OpenAI orchestrator** | `server/services/ai/openai-orchestrator.ts` (487 lines) | Strict JSON schema validation, structured outputs |
 | Policy enforcement | `ai-gateway/policy.ts` | `GatewayPolicyEngine.evaluate()` |
 | Audit logging | `ai-gateway/audit.ts` | `GatewayAuditLogger` — logs every request/response |
 | Deterministic mode | `ai-gateway/gateway.ts:136-150` | `DETERMINISTIC_RESPONSES` — testing mode |
+| Redis rate limiting | `server/middleware/redisRateLimiter.ts` | Distributed rate limits with in-memory fallback |
+| Graceful degradation | `server/lib/graceful-degradation.ts` | Feature availability flags |
 
 #### B. Failure Modes
 
 1. **Silent model downgrade**: When primary model (e.g., `gpt-4o`, quality=95) fails and fallback uses `gpt-4o-mini` (quality=82) or `claude-3-haiku` (quality=80), the response is returned without any quality-downgrade indicator — downstream consumers don't know the output came from a weaker model
-2. **Missing fallback logging**: The fallback path logs a `console.warn` (line 238-249) but the audit log entry uses the FINAL successful model — there's no record of which models were tried and failed
-3. **Stale provider health**: `ProviderHealth` tracking is in-memory — server restart resets all health data, potentially routing back to a failing provider
-4. **Schema validation gap on fallback**: If the primary model returns structured JSON and the fallback model returns unstructured text (or malformed JSON), calling code may crash or produce corrupted artifacts
-5. **Deterministic mode leak to production**: `DETERMINISTIC_MODE` environment variable controls whether real AI is used — if accidentally set in production, all AI responses are canned strings
-6. **Cost tracking in-memory only**: `dailyCost` map in `GatewayPolicyEngine` is lost on restart — no persistent budget enforcement
-7. **Rate limit reset on restart**: Rate limit buckets are in-memory maps — restart resets all limits
-8. **Timeout handling**: No visible request timeout in `route()` — a slow provider could block indefinitely
+2. **Dual routing layer inconsistency**: `AIGateway` and `AIProviderRouter` are both active, with different model registries, different health tracking, and different fallback logic — it's unclear which routes through which, and whether policy enforcement applies consistently across both
+3. **Missing fallback logging**: The fallback path logs a `console.warn` (line 238-249) but the audit log entry uses the FINAL successful model — there's no record of which models were tried and failed
+4. **Stale provider health**: Both `AIGateway.providerHealth` and `AIProviderRouter.providerHealth` are in-memory maps — server restart resets all health data, potentially routing back to a failing provider. Circuit breaker state (`circuit-breaker.ts`) is also in-memory
+5. **Schema validation gap on fallback**: If the primary model returns structured JSON and the fallback model returns unstructured text (or malformed JSON), calling code may crash or produce corrupted artifacts. The `openai-orchestrator.ts` uses strict JSON schema but fallback providers may not support `response_format: { type: 'json_schema', strict: true }`
+6. **Multi-agent council cascade failure**: If one agent in the 4-stage pipeline (Drafter → Statistician → Critic → Synthesizer) fails after 3 retries, the entire council session fails — but partial agent outputs may have been persisted to `lumen.agent_executions` without rollback
+7. **Deterministic mode leak to production**: `DETERMINISTIC_MODE` environment variable controls whether real AI is used — if accidentally set in production, all AI responses are canned strings
+8. **Cost tracking in-memory only**: `dailyCost` map in `GatewayPolicyEngine` is lost on restart — no persistent budget enforcement
+9. **Rate limit reset on restart**: Gateway rate limit buckets are in-memory maps — restart resets all limits. Redis rate limiter (`redisRateLimiter.ts`) persists across restarts but falls back to in-memory when Redis unavailable
+10. **Timeout handling**: No visible per-request timeout in `AIGateway.route()` — a slow provider could block indefinitely. Circuit breaker has a 120s request timeout but it's not clear all paths use it
+11. **Cache bypass in production**: `server/src/cache.ts` has caching explicitly bypassed (`return await fetcher()`) — documented as troubleshooting for "Process tab loading" but may cause excessive API calls and cost
 
 #### C. Audit Method
 
@@ -580,11 +605,15 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 
 #### E. Remediation Targets
 
+- **Consolidate dual routing**: Determine whether `AIGateway` or `AIProviderRouter` is the canonical routing layer — deprecate the other or merge them with a single model registry and health tracking system
 - `ai-gateway/gateway.ts:193-270` — Add `triedProviders: ProviderName[]` and `qualityTier: 'primary' | 'fallback'` to `GatewayResponse`
 - `ai-gateway/gateway.ts:235-251` — Log each failed provider attempt to audit (not just console.warn)
-- `ai-gateway/gateway.ts` — Add configurable per-request timeout (e.g., 60s default, 120s for document_analysis)
+- `ai-gateway/gateway.ts` — Add configurable per-request timeout (e.g., 60s default, 120s for document_analysis); ensure all paths use circuit breaker's 120s timeout
 - `ai-gateway/policy.ts` — Migrate rate limit and cost tracking to Redis or DB
 - `ai-gateway/gateway.ts` — Add response schema validation before returning (at minimum: non-empty content, valid JSON when structured_output task type)
+- `multi-agent-council.ts` — Add transaction-like rollback: if any agent stage fails after retries, clean up partial `lumen.agent_executions` records or mark session as `failed_partial`
+- `server/src/cache.ts` — Re-enable caching or remove the bypass with proper fix; document the decision
+- `circuit-breaker.ts` — Persist circuit breaker state to Redis so it survives restarts
 - Production config — Add startup check: log.error and refuse to start if `DETERMINISTIC_MODE=true` in production
 
 ---
@@ -678,13 +707,13 @@ The audits below are ordered by regulatory blast radius. Each is grounded in act
 | 1 | `concept2cure_artifact_versions` — no immutability trigger | `db/migrations/20260311_concept2cure_artifacts.sql` | Artifact version tampering |
 | 2 | `concept2cure_submission_snapshots` — no immutability trigger | `db/migrations/20260313_concept2cure_submission_snapshots.sql` | Snapshot tampering |
 | 3 | Export routes accept raw content without artifact verification | `server/routes/export_routes.ts` (all POST endpoints) | Unverified regulated export |
-| 4 | `resolveAccountContext()` silent resolution log failure | `server/services/account-canon.ts:621-648` | Missing audit trail |
-| 5 | `supersedeCanonFact()` without transaction boundary | `server/services/account-canon.ts:275-322` | Inconsistent canon state |
-| 6 | Background workers without tenant RLS context | `server/workers/entity-extraction-worker.ts`, `vectorization-worker.ts` | Cross-tenant data access |
-| 7 | `BASE_SYSTEM_PROMPT` overstated authority claims | `server/services/lumen-context-builder.ts:98-101` | Regulatory boundary violation |
-| 8 | `formatResolvedContextForPrompt()` no conflict resolution for same-key canon | `server/services/account-canon.ts:657-733` | Contradictory instructions to LLM |
-| 9 | `assertCanonFact()` no injection scanning on content | `server/services/account-canon.ts:146-217` | Canon poisoning → prompt injection |
-| 10 | AI fallback without quality-tier indicator | `server/services/ai-gateway/gateway.ts:235-270` | Silent output quality degradation |
+| 4 | Dual routing layer with unsynchronized model registries | `ai-gateway/gateway.ts` + `aiProviderRouter.ts` | Inconsistent model selection, policy bypass |
+| 5 | `resolveAccountContext()` silent resolution log failure | `server/services/account-canon.ts:621-648` | Missing audit trail |
+| 6 | `supersedeCanonFact()` without transaction boundary | `server/services/account-canon.ts:275-322` | Inconsistent canon state |
+| 7 | Multi-agent council partial failure without rollback | `server/services/multi-agent-council.ts` | Orphaned agent executions, corrupted artifacts |
+| 8 | Background workers without tenant RLS context | `server/workers/entity-extraction-worker.ts`, `vectorization-worker.ts` | Cross-tenant data access |
+| 9 | `BASE_SYSTEM_PROMPT` overstated authority claims | `server/services/lumen-context-builder.ts:98-101` | Regulatory boundary violation |
+| 10 | `assertCanonFact()` no injection scanning on content | `server/services/account-canon.ts:146-217` | Canon poisoning → prompt injection via multi-agent pipeline |
 
 ---
 
