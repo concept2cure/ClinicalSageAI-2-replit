@@ -237,12 +237,18 @@ export const LandingPage: React.FC = () => {
             AI-powered deep research, CSR generation, and CTD building for every global market.
             Self-service. No sales calls. Start in minutes.
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
             <button
               onClick={() => setLocation('/signup')}
               className="px-8 py-3.5 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40"
             >
               Start Free
+            </button>
+            <button
+              onClick={() => setLocation('/concept2cure/demo')}
+              className="px-8 py-3.5 text-base font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-all shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40"
+            >
+              Watch Interactive Demo
             </button>
             <button
               onClick={() => {

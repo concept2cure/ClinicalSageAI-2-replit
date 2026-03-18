@@ -35,6 +35,9 @@ const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // DTC Landing Page — public, renders at / for unauthenticated users
 const LandingPage = lazy(() => import('../pages/LandingPage'));
 
+// Interactive Demo — public, AnA-narrated platform walkthrough
+const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
+
 // Lazy-load PasswordReset for the reset-password-via-email flow
 const PasswordResetPage = lazy(
   () => import('@/portal-v2/components/auth/PasswordReset'),
@@ -251,6 +254,17 @@ export const ZenRouter: React.FC = () => {
     <PortalAuthProvider>
       <AnimatePresence mode="wait">
         <Switch location={location} key={location}>
+          {/* Interactive Demo — public, no auth required */}
+          <Route path="/concept2cure/demo">
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading demo..." />}>
+                  <InteractiveDemoPage />
+                </Suspense>
+              </PageTransition>
+            )}
+          </Route>
+
           {/* Login page */}
           <Route path="/concept2cure/login">
             {() => (
