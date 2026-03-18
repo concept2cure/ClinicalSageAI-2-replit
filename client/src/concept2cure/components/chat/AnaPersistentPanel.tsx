@@ -24,6 +24,8 @@ import {
   ChevronDown,
   Zap,
   MessageSquare,
+  Image as ImageIcon,
+  Download,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -43,6 +45,10 @@ interface AnaMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  /** Base64 images from Nano Banana */
+  images?: Array<{ base64: string; mimeType: string }>;
+  /** Downloadable PPTX from Nano Banana */
+  pptx?: { base64: string; filename: string; mimeType: string };
 }
 
 interface SuggestedAction {
@@ -81,8 +87,8 @@ interface AnaPersistentPanelProps {
    * "compact" = just the input bar at bottom, conversation expands as overlay
    */
   mode?: 'full' | 'compact';
-  /** Pre-select the chat mode (standard or deep-research) */
-  defaultChatMode?: 'standard' | 'deep-research';
+  /** Pre-select the chat mode (standard, deep-research, or nano-banana) */
+  defaultChatMode?: 'standard' | 'deep-research' | 'nano-banana';
 }
 
 // ─── Context labels ──────────────────────────────────────────────────────────
@@ -126,7 +132,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [isThinking, setIsThinking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const [chatMode, setChatMode] = useState<'standard' | 'deep-research'>(defaultChatMode);
+  const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'nano-banana'>(defaultChatMode);
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
   const [showActions, setShowActions] = useState<string | null>(null);
@@ -228,33 +234,75 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     setIsThinking(true);
 
     try {
-      const response = await fetch('/api/lumen-cortex/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          chatMode,
-          context: {
-            screen: contextProfile?.screenName,
-            project: contextProfile?.activeProject,
-            projectId: contextProfile?.projectId,
-            productType: contextProfile?.productType,
-            userRole: contextProfile?.userRole,
-          },
-          conversationHistory: messages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
-      });
+      let data: any;
 
-      const data = await response.json();
-      setMessages(prev => [...prev, {
-        id: `a-${Date.now()}`,
-        role: 'assistant',
-        content: data.response || data.message || 'I can help with that. Could you share more details?',
-        timestamp: new Date(),
-      }]);
+      if (chatMode === 'nano-banana') {
+        // Route to Nano Banana (Gemini image gen) endpoint
+        const response = await fetch('/api/nano-banana/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            conversationHistory: messages.slice(-10).map(m => ({
+              role: m.role,
+              content: m.content,
+            })),
+          }),
+        });
+        data = await response.json();
+
+        // Handle PPTX auto-download
+        if (data.pptx) {
+          const blob = new Blob(
+            [Uint8Array.from(atob(data.pptx.base64), c => c.charCodeAt(0))],
+            { type: data.pptx.mimeType }
+          );
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = data.pptx.filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        setMessages(prev => [...prev, {
+          id: `a-${Date.now()}`,
+          role: 'assistant',
+          content: data.response || 'Here are your results.',
+          timestamp: new Date(),
+          images: data.images,
+          pptx: data.pptx,
+        }]);
+      } else {
+        // Standard / Deep Research → Lumen Cortex
+        const response = await fetch('/api/lumen-cortex/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            chatMode,
+            context: {
+              screen: contextProfile?.screenName,
+              project: contextProfile?.activeProject,
+              projectId: contextProfile?.projectId,
+              productType: contextProfile?.productType,
+              userRole: contextProfile?.userRole,
+            },
+            conversationHistory: messages.slice(-10).map(m => ({
+              role: m.role,
+              content: m.content,
+            })),
+          }),
+        });
+        data = await response.json();
+
+        setMessages(prev => [...prev, {
+          id: `a-${Date.now()}`,
+          role: 'assistant',
+          content: data.response || data.message || 'I can help with that. Could you share more details?',
+          timestamp: new Date(),
+        }]);
+      }
     } catch {
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`,
@@ -442,18 +490,54 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       {isUser ? (
                         <p className="text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                       ) : (
-                        <div
-                          className="prose prose-sm prose-zinc max-w-none mt-0.5
-                            prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
-                            prose-strong:text-zinc-900
-                            prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                            prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
-                            prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600
-                            prose-ul:text-zinc-700 prose-ol:text-zinc-700
-                            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                          dangerouslySetInnerHTML={{ __html: htmlContent }}
-                        />
+                        <>
+                          <div
+                            className="prose prose-sm prose-zinc max-w-none mt-0.5
+                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
+                              prose-strong:text-zinc-900
+                              prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
+                              prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600
+                              prose-ul:text-zinc-700 prose-ol:text-zinc-700
+                              prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                            dangerouslySetInnerHTML={{ __html: htmlContent }}
+                          />
+                          {/* Nano Banana generated images */}
+                          {msg.images && msg.images.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {msg.images.map((img, idx) => (
+                                <img
+                                  key={idx}
+                                  src={`data:${img.mimeType};base64,${img.base64}`}
+                                  alt={`Generated image ${idx + 1}`}
+                                  className="rounded-lg border border-zinc-200 max-w-sm shadow-sm"
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {/* Nano Banana PPTX download button */}
+                          {msg.pptx && (
+                            <button
+                              onClick={() => {
+                                const blob = new Blob(
+                                  [Uint8Array.from(atob(msg.pptx!.base64), c => c.charCodeAt(0))],
+                                  { type: msg.pptx!.mimeType }
+                                );
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = msg.pptx!.filename;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                              }}
+                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              {msg.pptx.filename}
+                            </button>
+                          )}
+                        </>
                       )}
                       {!isUser && (
                         <div className={cn(
@@ -530,16 +614,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
                     ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                    : chatMode === 'nano-banana'
+                      ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
                 )}
               >
                 {chatMode === 'deep-research' ? (
                   <Zap className="w-3.5 h-3.5" />
+                ) : chatMode === 'nano-banana' ? (
+                  <ImageIcon className="w-3.5 h-3.5" />
                 ) : (
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
                 <span className="hidden sm:inline">
-                  {chatMode === 'deep-research' ? 'Deep Research' : 'AnA'}
+                  {chatMode === 'deep-research' ? 'Deep Research' : chatMode === 'nano-banana' ? 'Nano Banana' : 'AnA'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
               </button>
@@ -576,6 +664,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     </div>
                     {chatMode === 'deep-research' && <Check className="w-4 h-4 text-violet-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
+                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <button
+                    type="button"
+                    onClick={() => { setChatMode('nano-banana'); setShowModeDropdown(false); }}
+                    className={cn(
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      chatMode === 'nano-banana' && 'bg-amber-50'
+                    )}
+                  >
+                    <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900">Nano Banana</div>
+                      <div className="text-[11px] text-zinc-400 leading-tight">AI image generation, presentations &amp; visual design via Gemini</div>
+                    </div>
+                    {chatMode === 'nano-banana' && <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />}
+                  </button>
                 </div>
               )}
             </div>
@@ -588,7 +692,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : 'Message AnA...'}
+              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : 'Message AnA...'}
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]"
             />

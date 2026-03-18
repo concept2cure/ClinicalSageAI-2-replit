@@ -850,6 +850,15 @@ try {
   console.error('❌ Failed to mount Lumen Cortex routes:', error);
 }
 
+// Mount Nano Banana (Gemini image generation) routes
+try {
+  const nanoBananaRoutes = await import('./routes/nanoBanana');
+  app.use('/api/nano-banana', nanoBananaRoutes.default);
+  console.log('✅ Nano Banana (Gemini image gen) routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Nano Banana routes:', error);
+}
+
 // Mount Phase 5: Intelligent Document System routes
 try {
   app.use('/api/intelligent-docs', intelligentDocsRoutes);
