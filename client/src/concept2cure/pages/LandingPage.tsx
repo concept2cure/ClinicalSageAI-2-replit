@@ -211,6 +211,7 @@ const PLATFORM_MODULES = [
       { name: 'Convergent Canvas', desc: 'Adaptive command center with Morning Briefings, Council Threads (multi-agent advisory), and industry-specific workspaces for every role.' },
       { name: 'Review Pulse', desc: 'Real-time review orchestration: activity tracking, blocker identification, artifact readiness, and workload distribution across teams.' },
       { name: 'Compliance Guardian', desc: 'Real-time regulatory compliance monitoring within documents — checks guideline adherence as you write and flags non-compliant language.' },
+      { name: 'Nano Banana Visual AI', desc: 'Google Gemini-powered 4K image generation for regulatory infographics, study diagrams, slide decks, and publication-ready figures. Text-accurate rendering for medical/scientific content.' },
     ],
   },
   {
@@ -238,6 +239,7 @@ const AI_CAPABILITIES = [
   { name: 'Risk Scorer', desc: 'Real-time regulatory risk scoring across your portfolio' },
   { name: 'Morning Briefing', desc: 'Daily intelligence digest of regulatory changes affecting your programs' },
   { name: 'Audit Sentinel', desc: 'Continuous monitoring of 21 CFR Part 11 compliance across all activities' },
+  { name: 'Nano Banana Visual AI', desc: 'Generate 4K infographics, regulatory diagrams, slide decks, and publication-ready figures on demand via Google Gemini' },
 ];
 
 const SOLUTIONS_BY_PERSONA = [
@@ -594,6 +596,7 @@ export const LandingPage: React.FC = () => {
           <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-600">
             <a href="#platform" className="hover:text-zinc-900 transition-colors">Platform</a>
             <a href="#features" className="hover:text-zinc-900 transition-colors">Solutions</a>
+            <a href="#nano-banana" className="hover:text-zinc-900 transition-colors">Visual AI</a>
             <a href="#security" className="hover:text-zinc-900 transition-colors">Security</a>
             <a href="#pricing" className="hover:text-zinc-900 transition-colors">Pricing</a>
           </nav>
@@ -1159,6 +1162,64 @@ export const LandingPage: React.FC = () => {
               </div>
             </motion.div>
           </div>
+        </div>
+      </Section>
+
+      {/* ─── NANO BANANA VISUAL AI SHOWCASE ─── */}
+      <Section id="nano-banana" className="py-24 px-6 bg-gradient-to-b from-amber-50/40 to-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div variants={fadeUp} className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-amber-50 border border-amber-200">
+              <span className="text-sm font-medium text-amber-700">Powered by Google Gemini</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+              Nano Banana Visual AI
+            </h2>
+            <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+              Generate publication-ready infographics, regulatory diagrams, and slide decks
+              in seconds — directly inside your workflow.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                title: 'Regulatory Infographics',
+                desc: 'Generate 4K compliance visuals, safety profiles, and submission status dashboards with accurate text rendering.',
+                icon: '📊',
+              },
+              {
+                title: 'Slide Decks on Demand',
+                desc: 'Create board presentations, advisory committee briefings, and investor decks — auto-generated PPTX with AI cover images.',
+                icon: '📑',
+              },
+              {
+                title: 'Scientific Figures',
+                desc: 'Study design diagrams, patient flow charts, CONSORT diagrams, and pharmacokinetic curves — all AI-generated from your data.',
+                icon: '🧬',
+              },
+            ].map(card => (
+              <motion.div
+                key={card.title}
+                variants={fadeUp}
+                className="group p-8 rounded-2xl border-2 border-amber-100 hover:border-amber-300 bg-white hover:shadow-xl hover:shadow-amber-600/10 transition-all duration-300"
+              >
+                <div className="text-4xl mb-4">{card.icon}</div>
+                <h3 className="text-lg font-semibold text-zinc-900 mb-2">{card.title}</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">{card.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div variants={fadeUp} className="mt-12 text-center">
+            <div className="inline-flex flex-wrap gap-3 justify-center">
+              {['4K Resolution', 'Text-Accurate', 'Multi-Image Composition', 'PPTX Export', 'Conversational Editing'].map(tag => (
+                <span key={tag} className="px-3 py-1.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </Section>
 

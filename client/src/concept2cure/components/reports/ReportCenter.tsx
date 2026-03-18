@@ -17,8 +17,11 @@ import {
   Users,
   ClipboardCheck,
   FileOutput,
+  Image as ImageIcon,
+  Presentation,
 } from 'lucide-react';
 import { useReports } from '../../hooks/useReports';
+import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 
 const REPORT_TYPES = [
   {
@@ -129,6 +132,20 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
             );
           })}
         </div>
+      </div>
+
+      {/* Nano Banana — AI Visual & Presentation Generator */}
+      <div className="mb-8">
+        <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wider mb-4">
+          AI Visuals & Presentations
+        </h2>
+        <p className="text-xs text-zinc-500 mb-3">
+          Generate infographics, regulatory diagrams, or full slide decks from any report context using Nano Banana (Gemini).
+        </p>
+        <NanoBananaImageGenerator
+          context={projectId ? `Regulatory submission status for project ${projectId}` : 'Regulatory readiness overview'}
+          mode="infographic"
+        />
       </div>
 
       {/* Recent Reports */}

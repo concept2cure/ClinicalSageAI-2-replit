@@ -5824,8 +5824,32 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),
+      nanoBanana: z.boolean().optional(), // opt-in to Nano Banana cover image
     });
-    const { title, content } = schema.parse(req.body);
+    const { title, content, nanoBanana } = schema.parse(req.body);
+
+    // If Nano Banana is enabled and configured, generate the full presentation with cover
+    if (nanoBanana) {
+      try {
+        const { isConfigured, generatePresentation } = await import('../services/nanoBananaService');
+        if (isConfigured()) {
+          const result = await generatePresentation({
+            topic: title,
+            slideCount: Math.min(content.split(/\n---\n/).length || 6, 12),
+            audience: 'scientific',
+            generateImages: true,
+          });
+          const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
+          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
+          res.setHeader('Content-Length', result.pptxBuffer.length);
+          return res.send(result.pptxBuffer);
+        }
+      } catch (nbErr: any) {
+        // Fall through to standard PPTX generation
+        console.warn('[pptx-export] Nano Banana enhancement failed, falling back:', nbErr.message);
+      }
+    }
 
     const { generatePptxBuffer } = await import('../services/pptxGenerator');
     const buffer = await generatePptxBuffer(title, content);
