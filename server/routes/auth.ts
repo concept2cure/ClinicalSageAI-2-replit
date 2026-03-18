@@ -197,12 +197,12 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // CRIT-02d FIX: Removed dev-mode any-credentials login bypass
-    // All login attempts now validated against database with bcrypt
+    // All login attempts validated against database with bcrypt
 
     // Validate credentials against database
     if (!requireDb(res)) return;
-    const user = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 
     if (!user.length) {
       return res.status(401).json({
@@ -211,8 +211,19 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // CRIT-01b FIX: Password verification with bcrypt
     const userData = user[0];
+
+    // ── Account lockout check ────────────────────────────────────────
+    if (userData.lockedUntil && new Date() < userData.lockedUntil) {
+      const minutesLeft = Math.ceil((userData.lockedUntil.getTime() - Date.now()) / 60000);
+      return res.status(423).json({
+        success: false,
+        error: {
+          code: 'AUTH_012',
+          message: `Account temporarily locked. Try again in ${minutesLeft} minute(s).`,
+        },
+      });
+    }
 
     if (!userData.passwordHash) {
       console.error('[auth] User has no password hash:', userData.email);
@@ -224,10 +235,32 @@ router.post('/login', async (req: Request, res: Response) => {
 
     const isPasswordValid = await bcrypt.compare(password, userData.passwordHash);
     if (!isPasswordValid) {
+      // Increment failed login attempts
+      const attempts = (userData.failedLoginAttempts || 0) + 1;
+      const MAX_FAILED_ATTEMPTS = 5;
+      const lockoutUpdate: Record<string, any> = {
+        failedLoginAttempts: attempts,
+        lastFailedLogin: new Date(),
+      };
+      if (attempts >= MAX_FAILED_ATTEMPTS) {
+        // Lock for 15 minutes
+        lockoutUpdate.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+        console.warn(`[auth] Account locked after ${attempts} failed attempts: ${normalizedEmail}`);
+      }
+      await db.update(users).set(lockoutUpdate).where(eq(users.id, userData.id));
+
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
       });
+    }
+
+    // ── Successful password check — reset lockout counters ───────────
+    if (userData.failedLoginAttempts && userData.failedLoginAttempts > 0) {
+      await db
+        .update(users)
+        .set({ failedLoginAttempts: 0, lockedUntil: null, lastFailedLogin: null })
+        .where(eq(users.id, userData.id));
     }
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
@@ -297,6 +330,9 @@ router.post('/login', async (req: Request, res: Response) => {
         mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
       });
     }
+
+    // ── Update last login timestamp ──────────────────────────────────
+    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userData.id));
 
     // ── No MFA — issue full tokens ─────────────────────────────────────
     const accessToken = jwt.sign(
@@ -646,6 +682,18 @@ router.get('/me', async (req: Request, res: Response) => {
       meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
     const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString() || '1';
 
+    // Look up the actual organization name
+    let meOrgName = 'Organization';
+    const meOrgIdNum = parseInt(meOrgId);
+    if (meOrgIdNum) {
+      const [meOrg] = await db
+        .select({ name: organizations.name })
+        .from(organizations)
+        .where(eq(organizations.id, meOrgIdNum))
+        .limit(1);
+      meOrgName = meOrg?.name || 'Organization';
+    }
+
     res.json({
       id: userData.id.toString(),
       email: userData.email,
@@ -655,7 +703,7 @@ router.get('/me', async (req: Request, res: Response) => {
       roles: meRoles,
       permissions: [],
       organizationId: meOrgId,
-      organizationName: 'Concept2Cure Inc.',
+      organizationName: meOrgName,
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
