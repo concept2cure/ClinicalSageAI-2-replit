@@ -716,13 +716,54 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>Calendar integration coming soon</p>
-                <p className="text-sm">
-                  View deadlines, schedule meetings, and track compliance events
-                </p>
-              </div>
+              {obligations.filter(o => o.dueDate).length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>No obligations with deadlines found.</p>
+                  <p className="text-sm">Add due dates to obligations to see them here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {obligations
+                    .filter(o => o.dueDate)
+                    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+                    .map(obligation => {
+                      const dueDate = new Date(obligation.dueDate!);
+                      const isOverdue = dueDate < new Date() && obligation.status !== 'completed';
+                      const isThisWeek = dueDate <= new Date(Date.now() + 7 * 86400000) && dueDate >= new Date();
+                      return (
+                        <div
+                          key={obligation.id}
+                          className={`flex items-center justify-between p-3 rounded-lg border ${
+                            isOverdue ? 'border-red-200 bg-red-50' :
+                            isThisWeek ? 'border-yellow-200 bg-yellow-50' :
+                            'border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${
+                              obligation.status === 'completed' ? 'bg-green-500' :
+                              isOverdue ? 'bg-red-500' :
+                              isThisWeek ? 'bg-yellow-500' : 'bg-blue-500'
+                            }`} />
+                            <div>
+                              <p className="font-medium text-sm">{obligation.title}</p>
+                              <p className="text-xs text-gray-500">{obligation.agency}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge className={getStatusColor(obligation.status)}>
+                              {obligation.status.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            <span className={`text-sm font-medium ${isOverdue ? 'text-red-600' : 'text-gray-600'}`}>
+                              {dueDate.toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -730,20 +771,53 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
         <TabsContent value="communications" className="mt-6">
           <Card data-testid="communications-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Agency Communications Log
-              </CardTitle>
-              <CardDescription>Track all communications with regulatory agencies</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Agency Communications Log
+                  </CardTitle>
+                  <CardDescription>Track all communications with regulatory agencies</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>Communications tracking coming soon</p>
-                <p className="text-sm">
-                  Log emails, meetings, phone calls, and official correspondence
-                </p>
-              </div>
+              {obligations.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>No obligations to track communications for.</p>
+                  <p className="text-sm">Create obligations first to log related correspondence.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-sm text-gray-600 mb-4">
+                    Showing communication history linked to active obligations.
+                  </div>
+                  {obligations
+                    .filter(o => o.status !== 'cancelled')
+                    .slice(0, 10)
+                    .map(obligation => (
+                      <div key={obligation.id} className="flex items-start gap-4 p-3 border rounded-lg">
+                        <div className="flex-shrink-0 mt-1">
+                          <span className="text-lg">{getAgencyLogo(obligation.agency)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{obligation.title}</span>
+                            <Badge className={getStatusColor(obligation.status)} >
+                              {obligation.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-500 truncate">{obligation.description}</p>
+                          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                            <span>{obligation.agency}</span>
+                            <span>Updated {new Date(obligation.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
