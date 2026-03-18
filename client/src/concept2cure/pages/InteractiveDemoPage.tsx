@@ -143,7 +143,7 @@ const InteractiveDemoPage: React.FC = () => {
         className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/60 bg-white/80 backdrop-blur-sm z-10"
       >
         <button
-          onClick={() => navigate('/concept2cure')}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

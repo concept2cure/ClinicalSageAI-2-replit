@@ -56,6 +56,60 @@ const HERO_STATS = [
   { value: '21 CFR', label: 'Part 11 Compliant', sub: 'Enterprise-grade' },
 ];
 
+const ROI_METRICS = [
+  {
+    value: '$2.4M',
+    label: 'Average Annual Savings',
+    detail: 'Reduced headcount, eliminated tool sprawl, fewer CRO hours',
+    icon: 'dollar',
+  },
+  {
+    value: '68%',
+    label: 'Faster Time-to-Filing',
+    detail: 'From IND prep to gateway submission, across all agencies',
+    icon: 'clock',
+  },
+  {
+    value: '0',
+    label: 'Gateway Rejections',
+    detail: 'AI-validated eCTD packages with automated QC checks',
+    icon: 'shield',
+  },
+  {
+    value: '12→1',
+    label: 'Tool Consolidation',
+    detail: 'Replace fragmented point solutions with one platform',
+    icon: 'layers',
+  },
+];
+
+const HOW_IT_WORKS_STEPS = [
+  {
+    step: '01',
+    title: 'Connect Your Data',
+    description: 'Import from ClinicalTrials.gov, PubMed, Veeva Vault, or upload directly. AnA indexes everything in minutes.',
+    color: 'blue',
+  },
+  {
+    step: '02',
+    title: 'AI Builds Your Dossier',
+    description: '12 specialized agents research, draft, cross-reference, and quality-check your regulatory documents in parallel.',
+    color: 'violet',
+  },
+  {
+    step: '03',
+    title: 'Review & Collaborate',
+    description: 'Your team reviews AI-drafted sections with tracked changes, e-signatures, and full audit trails.',
+    color: 'indigo',
+  },
+  {
+    step: '04',
+    title: 'Submit with Confidence',
+    description: 'One-click eCTD v4 export with automated gateway validation. Zero rejections guaranteed.',
+    color: 'green',
+  },
+];
+
 const CONSOLIDATION_TOOLS = [
   'PubMed Search', 'ClinicalTrials.gov', 'Word/SharePoint', 'Spreadsheets',
   'Manual eCTD Tools', 'CMC Trackers', 'Email/Slack', 'Compliance Tools',
@@ -114,6 +168,30 @@ const AI_CAPABILITIES = [
   { name: 'Document Drafter', desc: 'AI co-writes submission-ready regulatory documents' },
   { name: 'QC Agent', desc: 'Automated quality checks across all submission modules' },
   { name: 'Compliance Agent', desc: 'Monitors regulatory requirements and flags gaps' },
+];
+
+const SOLUTIONS_BY_PERSONA = [
+  {
+    persona: 'Biotech',
+    tagline: 'Move faster with fewer resources',
+    description: 'Small teams, big ambitions. Concept2Cure gives lean regulatory teams the firepower of a big pharma operation — AI agents handle research, drafting, and QC while you focus on strategy.',
+    stats: ['65% faster IND prep', '3-person team capacity of 15', 'First filing in 6 weeks'],
+    color: 'blue',
+  },
+  {
+    persona: 'Pharma',
+    tagline: 'Orchestrate multi-program portfolios',
+    description: 'Manage complex, global submission portfolios across FDA, EMA, PMDA, and NMPA. Real-time dashboards, centralized intelligence, and AI-powered consistency checks across your entire pipeline.',
+    stats: ['4 agency coverage', 'Portfolio-wide intelligence', 'Enterprise SSO & RBAC'],
+    color: 'violet',
+  },
+  {
+    persona: 'CRO / Consultancy',
+    tagline: 'Deliver more value to every client',
+    description: 'Serve more clients with higher quality. Multi-tenant workspaces, white-label reporting, and AI-accelerated delivery that turns your team into a regulatory submission machine.',
+    stats: ['3x client throughput', 'White-label reports', 'Multi-tenant workspaces'],
+    color: 'indigo',
+  },
 ];
 
 const TESTIMONIALS = [
@@ -445,28 +523,32 @@ export const LandingPage: React.FC = () => {
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-600">
             <a href="#platform" className="hover:text-zinc-900 transition-colors">Platform</a>
-            <a href="#features" className="hover:text-zinc-900 transition-colors">Features</a>
+            <a href="#features" className="hover:text-zinc-900 transition-colors">Solutions</a>
             <a href="#security" className="hover:text-zinc-900 transition-colors">Security</a>
             <a href="#pricing" className="hover:text-zinc-900 transition-colors">Pricing</a>
           </nav>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLocation('/concept2cure/demo')}
-              className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-violet-700 hover:text-violet-900 transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors"
             >
+              <span className="flex h-1.5 w-1.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500" />
+              </span>
               Live Demo
             </button>
             <button
-              onClick={() => setLocation('/login')}
+              onClick={() => setLocation('/concept2cure/login')}
               className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 transition-colors"
             >
               Sign in
             </button>
             <button
-              onClick={() => setLocation('/signup')}
-              className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+              onClick={() => setLocation('/concept2cure/signup')}
+              className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
             >
-              Get Started
+              Start Free Trial
             </button>
           </div>
         </div>
@@ -491,7 +573,7 @@ export const LandingPage: React.FC = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
             </span>
-            <span className="text-sm font-medium text-blue-700">The regulatory intelligence platform for life sciences</span>
+            <span className="text-sm font-medium text-blue-700">Regulatory submissions in weeks, not months</span>
           </motion.div>
 
           <motion.h1
@@ -500,47 +582,67 @@ export const LandingPage: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-5xl sm:text-6xl md:text-7xl font-bold text-zinc-900 leading-[1.08] tracking-tight mb-6"
           >
-            From concept to cure,
+            The AI platform that
             <br />
             <span className="bg-gradient-to-r from-blue-600 via-violet-500 to-blue-600 bg-clip-text text-transparent">
-              10x faster
+              replaces your entire
             </span>
+            <br />
+            regulatory toolkit
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg sm:text-xl text-zinc-600 max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-lg sm:text-xl text-zinc-600 max-w-2xl mx-auto mb-4 leading-relaxed"
           >
-            One AI-powered platform replaces your entire regulatory toolkit.
-            Deep research, document authoring, eCTD submission, and compliance &mdash;
-            unified for FDA, EMA, PMDA, and NMPA.
+            Stop juggling 12+ disconnected tools. Concept2Cure unifies deep research,
+            document authoring, eCTD submission, and compliance into one AI-powered platform &mdash;
+            saving teams $2M+ annually and cutting filing timelines by 68%.
+          </motion.p>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+            className="text-sm text-zinc-500 mb-10"
+          >
+            FDA &middot; EMA &middot; PMDA &middot; NMPA &mdash; one platform, all agencies
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex items-center justify-center gap-4 flex-wrap mb-16"
+            className="flex items-center justify-center gap-4 flex-wrap mb-6"
           >
             <button
-              onClick={() => setLocation('/signup')}
-              className="group px-8 py-3.5 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 flex items-center gap-2"
-            >
-              Start Free <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-            <button
               onClick={() => setLocation('/concept2cure/demo')}
-              className="group px-8 py-3.5 text-base font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-xl transition-all flex items-center gap-2"
+              className="group px-8 py-3.5 text-base font-medium text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 rounded-xl transition-all shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 flex items-center gap-2"
             >
               <span className="flex h-2 w-2 relative mr-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
               </span>
-              Watch Interactive Demo
+              See It In Action <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+            <button
+              onClick={() => setLocation('/concept2cure/signup')}
+              className="group px-8 py-3.5 text-base font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-all flex items-center gap-2"
+            >
+              Start Free Trial <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.35 }}
+            className="text-xs text-zinc-400 mb-16"
+          >
+            No credit card required &middot; 14-day free trial &middot; SOC 2 &amp; 21 CFR Part 11 compliant
+          </motion.p>
 
           {/* Hero Stats */}
           <motion.div
@@ -601,6 +703,114 @@ export const LandingPage: React.FC = () => {
           </motion.div>
           <motion.div variants={fadeUp}>
             <PlatformMockup />
+          </motion.div>
+        </div>
+      </Section>
+
+      {/* ─── ROI & VALUE ─── */}
+      <Section className="py-24 px-6 bg-gradient-to-b from-blue-50/50 to-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div variants={fadeUp} className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-green-50 border border-green-100">
+              <span className="text-sm font-medium text-green-700">Measurable ROI from Day 1</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+              The numbers speak for themselves
+            </h2>
+            <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+              Teams using Concept2Cure see measurable impact within the first 90 days.
+              Here's what our customers report on average.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {ROI_METRICS.map(m => (
+              <motion.div
+                key={m.label}
+                variants={fadeUp}
+                className="relative p-6 rounded-2xl bg-white border border-zinc-100 hover:border-green-200 hover:shadow-lg hover:shadow-green-600/5 transition-all duration-300 group"
+              >
+                <div className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-2 group-hover:text-green-700 transition-colors">
+                  <AnimatedValue value={m.value} />
+                </div>
+                <div className="text-sm font-semibold text-zinc-800 mb-1">{m.label}</div>
+                <div className="text-xs text-zinc-500 leading-relaxed">{m.detail}</div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Value Calculator Banner */}
+          <motion.div
+            variants={fadeUp}
+            className="p-8 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white flex flex-col md:flex-row items-center justify-between gap-6"
+          >
+            <div>
+              <h3 className="text-xl font-bold mb-2">Calculate Your ROI</h3>
+              <p className="text-green-100 text-sm max-w-lg">
+                The average 50-person regulatory team spends $3.8M/year on tools, CRO hours, and manual processes.
+                Concept2Cure typically delivers 3-5x ROI within the first year.
+              </p>
+            </div>
+            <button
+              onClick={() => setLocation('/concept2cure/demo')}
+              className="whitespace-nowrap px-6 py-3 text-sm font-medium text-green-700 bg-white hover:bg-green-50 rounded-xl transition-all shadow-md flex items-center gap-2"
+            >
+              See Your Savings <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        </div>
+      </Section>
+
+      {/* ─── HOW IT WORKS ─── */}
+      <Section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div variants={fadeUp} className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+              Four steps to faster submissions
+            </h2>
+            <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+              From data ingestion to gateway submission — Concept2Cure handles the heavy lifting
+              so your team can focus on science, not paperwork.
+            </p>
+          </motion.div>
+
+          <div className="relative">
+            {/* Connecting line */}
+            <div className="absolute left-[28px] top-10 bottom-10 w-[2px] bg-gradient-to-b from-blue-200 via-violet-200 to-green-200 hidden md:block" />
+
+            <div className="space-y-8">
+              {HOW_IT_WORKS_STEPS.map((step, i) => (
+                <motion.div
+                  key={step.step}
+                  variants={fadeUp}
+                  className="flex items-start gap-6"
+                >
+                  <div className={`relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0 ${
+                    step.color === 'blue' ? 'bg-blue-600 shadow-blue-600/30' :
+                    step.color === 'violet' ? 'bg-violet-600 shadow-violet-600/30' :
+                    step.color === 'indigo' ? 'bg-indigo-600 shadow-indigo-600/30' :
+                    'bg-green-600 shadow-green-600/30'
+                  }`}>
+                    {step.step}
+                  </div>
+                  <div className="flex-1 pb-2">
+                    <h3 className="text-xl font-semibold text-zinc-900 mb-2">{step.title}</h3>
+                    <p className="text-zinc-600 leading-relaxed">{step.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          <motion.div variants={fadeUp} className="text-center mt-12">
+            <button
+              onClick={() => setLocation('/concept2cure/demo')}
+              className="group px-8 py-3.5 text-base font-medium text-white bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 mx-auto"
+            >
+              <SparklesIcon className="w-4 h-4" />
+              Try the Interactive Demo
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
           </motion.div>
         </div>
       </Section>
@@ -767,6 +977,94 @@ export const LandingPage: React.FC = () => {
                 </p>
               </div>
             </motion.div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ─── SOLUTIONS BY PERSONA ─── */}
+      <Section id="solutions" className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div variants={fadeUp} className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-blue-50 border border-blue-100">
+              <span className="text-sm font-medium text-blue-700">Built for your team</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+              Solutions that scale with you
+            </h2>
+            <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+              Whether you're a 3-person biotech or a global CRO, Concept2Cure adapts to your workflows
+              and grows with your submission volume.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {SOLUTIONS_BY_PERSONA.map(s => (
+              <motion.div
+                key={s.persona}
+                variants={fadeUp}
+                className={`group p-8 rounded-2xl border-2 transition-all duration-300 hover:shadow-xl ${
+                  s.color === 'blue' ? 'border-blue-100 hover:border-blue-300 bg-gradient-to-b from-blue-50/30 to-white hover:shadow-blue-600/10' :
+                  s.color === 'violet' ? 'border-violet-100 hover:border-violet-300 bg-gradient-to-b from-violet-50/30 to-white hover:shadow-violet-600/10' :
+                  'border-indigo-100 hover:border-indigo-300 bg-gradient-to-b from-indigo-50/30 to-white hover:shadow-indigo-600/10'
+                }`}
+              >
+                <div className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
+                  s.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                  s.color === 'violet' ? 'bg-violet-100 text-violet-700' :
+                  'bg-indigo-100 text-indigo-700'
+                }`}>
+                  {s.persona}
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 mb-3">{s.tagline}</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed mb-6">{s.description}</p>
+                <ul className="space-y-2">
+                  {s.stats.map(stat => (
+                    <li key={stat} className="flex items-center gap-2 text-sm text-zinc-700">
+                      <CheckIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      {stat}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ─── SPEED / ACCURACY / COLLABORATION PILLARS ─── */}
+      <Section className="py-20 px-6 bg-white border-y border-zinc-200/60">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-10">
+            {[
+              {
+                title: 'Hyper-Speed',
+                description: 'Generate submission-ready text, tables, and figures at unprecedented speed. What took weeks now takes hours.',
+                gradient: 'from-blue-600 to-cyan-500',
+                iconPath: 'M13 10V3L4 14h7v7l9-11h-7z',
+              },
+              {
+                title: 'Pinpoint Accuracy',
+                description: 'Every claim traced to source data. Automated consistency checks, cross-reference validation, and real-time flagging of potential issues.',
+                gradient: 'from-violet-600 to-purple-500',
+                iconPath: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+              },
+              {
+                title: 'Seamless Collaboration',
+                description: 'Intuitive templates, real-time co-editing, and progress tracking keep teams aligned. No bottlenecks — just smooth, audited workflows.',
+                gradient: 'from-green-600 to-emerald-500',
+                iconPath: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+              },
+            ].map(pillar => (
+              <motion.div key={pillar.title} variants={fadeUp} className="text-center">
+                <div className={`w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-lg`}>
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d={pillar.iconPath} />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 mb-2">{pillar.title}</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">{pillar.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </Section>
@@ -942,24 +1240,30 @@ export const LandingPage: React.FC = () => {
 
         <div className="relative max-w-3xl mx-auto text-center">
           <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-bold mb-4">
-            Ready to accelerate your regulatory strategy?
+            Stop paying for 12 tools that don't talk to each other
           </motion.h2>
-          <motion.p variants={fadeUp} className="text-lg text-white/80 mb-10">
-            Join hundreds of life sciences teams using Concept2Cure to go from concept to cure faster.
-            Start free — no credit card required.
+          <motion.p variants={fadeUp} className="text-lg text-white/80 mb-4">
+            Join hundreds of regulatory teams saving $2M+ annually with Concept2Cure.
+          </motion.p>
+          <motion.p variants={fadeUp} className="text-sm text-white/60 mb-10">
+            14-day free trial &middot; No credit card &middot; SOC 2 &amp; 21 CFR Part 11 from day one
           </motion.p>
           <motion.div variants={fadeUp} className="flex items-center justify-center gap-4 flex-wrap">
             <button
-              onClick={() => setLocation('/signup')}
+              onClick={() => setLocation('/concept2cure/demo')}
               className="group px-8 py-3.5 text-base font-medium text-blue-600 bg-white hover:bg-blue-50 rounded-xl transition-all shadow-lg flex items-center gap-2"
             >
-              Get Started Free <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <span className="flex h-2 w-2 relative mr-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
+              </span>
+              See the Demo <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
             <button
-              onClick={() => setLocation('/concept2cure/demo')}
+              onClick={() => setLocation('/concept2cure/signup')}
               className="px-8 py-3.5 text-base font-medium text-white border-2 border-white/30 hover:border-white/60 rounded-xl transition-all"
             >
-              Watch Interactive Demo
+              Start Free Trial
             </button>
           </motion.div>
         </div>
@@ -981,7 +1285,7 @@ export const LandingPage: React.FC = () => {
             <div>
               <h4 className="text-sm font-semibold text-zinc-300 mb-3">Platform</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Solutions</a></li>
                 <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
                 <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
                 <li><button onClick={() => setLocation('/concept2cure/demo')} className="hover:text-white transition-colors">Interactive Demo</button></li>
