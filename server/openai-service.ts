@@ -10,11 +10,11 @@ const client = new OpenAI({
 });
 
 /**
- * Check if the OpenAI API key is available
- * @returns boolean indicating if the API key is configured
+ * Check if an AI API key is available (Anthropic preferred, OpenAI fallback)
+ * @returns boolean indicating if an API key is configured
  */
 export function isApiKeyAvailable(): boolean {
-  return !!process.env.OPENAI_API_KEY;
+  return !!process.env.ANTHROPIC_API_KEY || !!process.env.OPENAI_API_KEY;
 }
 
 /**
@@ -147,17 +147,19 @@ export async function generateSearchContextSummary(
     const systemPrompt =
       'You are a clinical research expert. Provide extremely concise, focused summaries that highlight the most relevant aspects of clinical studies based on search queries.';
 
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+    const gw = getGateway();
+    const aiResponse = await gw.route({
+      taskType: 'summarization',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.3, // Lower temperature for more focused responses
-      max_tokens: 100, // Ensure we get a very concise response
+      temperature: 0.3,
+      maxTokens: 100,
+      callerModule: 'openai-service/generateSearchContextSummary',
     });
 
-    const summary = response.choices[0].message.content || '';
+    const summary = aiResponse.content || '';
 
     // Truncate if needed and add ellipsis
     if (summary.length > maxLength) {

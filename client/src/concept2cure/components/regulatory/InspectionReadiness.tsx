@@ -567,7 +567,7 @@ function InspectionList({
                   <div
                     className={`p-2 rounded-lg ${
                       inspection.status === 'completed' || inspection.status === 'follow_up'
-                        ? 'bg-gray-100'
+                        ? 'bg-zinc-100'
                         : 'bg-blue-100'
                     }`}
                   >
@@ -941,6 +941,11 @@ export function InspectionReadiness() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Early Access Banner */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
+        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[10px] uppercase tracking-wider">Early Access</span>
+        <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

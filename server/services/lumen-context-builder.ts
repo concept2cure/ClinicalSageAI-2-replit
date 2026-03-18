@@ -28,6 +28,7 @@ import {
 } from './module-intelligence.js';
 import { assembleInstructionEnginePrompt } from './lumen-instruction-engine.js';
 import { buildClientIntelligenceContext, buildProjectIntelligenceContext } from './client-intelligence-memory.js';
+import { resolveAccountContext, formatResolvedContextForPrompt } from './account-canon.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -84,6 +85,7 @@ export interface LumenContext {
   userName: string | null;
   organizationName: string | null;
   userIntelligence: UserIntelligence | null;
+  accountCanon: string | null; // Selectively resolved account-level governed memory
   clientIntelligence: string | null;
   projectIntelligence: string | null;
   timestamp: string;
@@ -423,8 +425,8 @@ export async function buildLumenContext(params: {
   const { organizationId, userId } = params;
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
-  // Load all context in parallel for speed — including full user intelligence & client intelligence
-  const [project, documents, conversation, userInfo, orgName, userIntelligence, clientIntelligence, projectIntelligence] = await Promise.all(
+  // Load all context in parallel for speed — including full user intelligence, client intelligence, & account canon
+  const [project, documents, conversation, userInfo, orgName, userIntelligence, clientIntelligence, projectIntelligence, accountCanonResolved] = await Promise.all(
     [
       projectId && organizationId
         ? loadProjectContext(projectId, organizationId)
@@ -452,6 +454,18 @@ export async function buildLumenContext(params: {
       projectId
         ? buildProjectIntelligenceContext(projectId).catch(() => null)
         : Promise.resolve(null),
+      // Account Canon — selectively resolved governed memory (canon items, terms, bundles)
+      organizationId
+        ? resolveAccountContext({
+            organizationId,
+            submissionType: params.submissionType || undefined,
+            projectId: projectId || undefined,
+          }).then(resolved =>
+            resolved.canonItems.length > 0 || resolved.terms.length > 0 || resolved.bundles.length > 0
+              ? formatResolvedContextForPrompt(resolved)
+              : null
+          ).catch(() => null)
+        : Promise.resolve(null),
     ]
   );
 
@@ -474,6 +488,7 @@ export async function buildLumenContext(params: {
     userName: userInfo.name,
     organizationName: orgName,
     userIntelligence,
+    accountCanon: accountCanonResolved,
     clientIntelligence,
     projectIntelligence,
     timestamp: new Date().toISOString(),
@@ -618,6 +633,14 @@ When the user asks "what should I work on?" or you're providing proactive guidan
     }
 
 Use conversation history to avoid re-asking for information the user has already provided.`);
+  }
+
+  // ── Account Canon (Governed Memory) ──────────────────────────────────────
+  // Selectively resolved account-level truths: canon items, locked terminology,
+  // skill bundle instructions, evidence preferences. Takes precedence over
+  // learned intelligence below.
+  if (context.accountCanon) {
+    parts.push(context.accountCanon);
   }
 
   // ── Client Intelligence Memory ─────────────────────────────────────────

@@ -561,7 +561,7 @@ export const ProjectsSidebar: React.FC = () => {
 
                 {/* Expanded conversations list */}
                 {activeProject?.id === project.id && expandedProjectId === project.id && (
-                  <div className="mt-1 ml-2 pl-3 border-l-2 border-gray-100 space-y-0.5">
+                  <div className="mt-1 ml-2 pl-3 border-l-2 border-zinc-100 space-y-0.5">
                     {/* Project Knowledge Panel - Claude.ai parity */}
                     <div className="py-2">
                       <ProjectKnowledge project={activeProject} />

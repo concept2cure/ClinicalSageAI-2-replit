@@ -603,16 +603,96 @@ const ControlStrategyStep = ({ controlStrategy, setControlStrategy, units }) => 
 };
 
 const DesignSpaceStep = ({ designSpace, setDesignSpace }) => {
+  const addFactor = () => {
+    const factors = designSpace.factors || [];
+    setDesignSpace({
+      ...designSpace,
+      factors: [...factors, { name: '', low: '', high: '', unit: '' }],
+    });
+  };
+
+  const updateFactor = (index, field, value) => {
+    const factors = [...(designSpace.factors || [])];
+    factors[index] = { ...factors[index], [field]: value };
+    setDesignSpace({ ...designSpace, factors });
+  };
+
+  const removeFactor = (index) => {
+    const factors = (designSpace.factors || []).filter((_, i) => i !== index);
+    setDesignSpace({ ...designSpace, factors });
+  };
+
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Design Space</h3>
-      <p className="text-gray-600">Define the design space for process parameters.</p>
-
-      <div className="text-center py-8 text-gray-500">
-        <Globe className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-        <p>Design space definition coming soon.</p>
-        <p className="text-sm">This will be populated based on your process parameters.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Design Space</h3>
+          <p className="text-gray-600">Define the acceptable ranges for critical process parameters.</p>
+        </div>
+        <Button onClick={addFactor} variant="outline">
+          + Add Factor
+        </Button>
       </div>
+
+      <div className="space-y-4">
+        {(designSpace.factors || []).map((factor, index) => (
+          <Card key={index} className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium">Factor {index + 1}</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeFactor(index)}
+                className="text-red-600"
+              >
+                Remove
+              </Button>
+            </div>
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Parameter Name</label>
+                <Input
+                  value={factor.name || ''}
+                  onChange={e => updateFactor(index, 'name', e.target.value)}
+                  placeholder="e.g., Blend Speed"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Low Limit</label>
+                <Input
+                  value={factor.low || ''}
+                  onChange={e => updateFactor(index, 'low', e.target.value)}
+                  placeholder="e.g., 10"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">High Limit</label>
+                <Input
+                  value={factor.high || ''}
+                  onChange={e => updateFactor(index, 'high', e.target.value)}
+                  placeholder="e.g., 30"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Unit</label>
+                <Input
+                  value={factor.unit || ''}
+                  onChange={e => updateFactor(index, 'unit', e.target.value)}
+                  placeholder="e.g., RPM"
+                />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {(designSpace.factors || []).length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <Globe className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <p>No design space factors defined yet.</p>
+          <p className="text-sm">Add factors to define acceptable parameter ranges for your process.</p>
+        </div>
+      )}
     </div>
   );
 };
@@ -646,18 +726,96 @@ const ValidationStep = ({ validation, setValidation }) => {
 };
 
 const TeamStep = ({ team, setTeam }) => {
+  const roles = [
+    'Process Owner',
+    'Quality Lead',
+    'Manufacturing Lead',
+    'Analytical Lead',
+    'Regulatory Lead',
+    'Project Manager',
+  ];
+
+  const addMember = () => {
+    setTeam([...team, { name: '', role: roles[0], email: '' }]);
+  };
+
+  const updateMember = (index, field, value) => {
+    const updated = [...team];
+    updated[index] = { ...updated[index], [field]: value };
+    setTeam(updated);
+  };
+
+  const removeMember = (index) => {
+    setTeam(team.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Team & Assignments</h3>
-      <p className="text-gray-600">Assign team members to work on this process.</p>
-
-      <div className="text-center py-8 text-gray-500">
-        <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-        <p>Team assignment functionality coming soon.</p>
-        <p className="text-sm">
-          You'll be able to assign roles and responsibilities to team members.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Team & Assignments</h3>
+          <p className="text-gray-600">Assign team members and roles for this process.</p>
+        </div>
+        <Button onClick={addMember} variant="outline">
+          + Add Member
+        </Button>
       </div>
+
+      <div className="space-y-4">
+        {team.map((member, index) => (
+          <Card key={index} className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium">Member {index + 1}</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeMember(index)}
+                className="text-red-600"
+              >
+                Remove
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Name</label>
+                <Input
+                  value={member.name || ''}
+                  onChange={e => updateMember(index, 'name', e.target.value)}
+                  placeholder="Full name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Role</label>
+                <select
+                  value={member.role || roles[0]}
+                  onChange={e => updateMember(index, 'role', e.target.value)}
+                  className="w-full p-2 border rounded"
+                >
+                  {roles.map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <Input
+                  value={member.email || ''}
+                  onChange={e => updateMember(index, 'email', e.target.value)}
+                  placeholder="email@example.com"
+                />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {team.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <p>No team members assigned yet.</p>
+          <p className="text-sm">Add members to assign roles and responsibilities.</p>
+        </div>
+      )}
     </div>
   );
 };

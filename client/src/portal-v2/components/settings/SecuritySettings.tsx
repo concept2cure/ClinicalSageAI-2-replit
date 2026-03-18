@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { securityLogger } from '../../utils/logger';
 import {
   Shield,
@@ -49,44 +50,7 @@ import type {
 } from '../../core/regulatoryCompliance';
 import { COMPLIANCE_CATEGORY_CONFIG, getComplianceCategory } from '../../core/regulatoryCompliance';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MOCK_COMPLIANCE_HEALTH: ComplianceHealth = {
-  overallScore: 87,
-  category: 'good',
-  metrics: {
-    signatureIntegrity: 100,
-    auditCompleteness: 95,
-    trainingCurrency: 72,
-    passwordCompliance: 85,
-    sodCompliance: 100,
-    dataIntegrity: 92,
-  },
-  findings: [
-    {
-      id: 'finding_001',
-      severity: 'major',
-      category: 'Training',
-      description: '3 users have expired training certifications',
-      remediation: 'Assign required training courses to affected users',
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    },
-    {
-      id: 'finding_002',
-      severity: 'minor',
-      category: 'Password',
-      description: '2 users approaching password expiration',
-      remediation: 'Notify users to update passwords before expiration',
-    },
-  ],
-  recommendations: [
-    'Enable hardware key MFA for all administrator accounts',
-    'Consider reducing session timeout for higher security',
-    'Schedule periodic access review for external partners',
-  ],
-};
+// Compliance health data fetched via useQuery in SecuritySettings
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
@@ -108,7 +72,36 @@ export function SecuritySettings() {
   const [showSignature, setShowSignature] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<Partial<ComplianceConfig> | null>(null);
 
-  const health = MOCK_COMPLIANCE_HEALTH;
+  const defaultHealth: ComplianceHealth = {
+    overallScore: 0,
+    category: 'critical' as ComplianceHealthCategory,
+    metrics: {
+      signatureIntegrity: 0,
+      auditCompleteness: 0,
+      trainingCurrency: 0,
+      passwordCompliance: 0,
+      sodCompliance: 0,
+      dataIntegrity: 0,
+    },
+    findings: [],
+    recommendations: [],
+  };
+
+  const { data: health = defaultHealth, isLoading: healthLoading } = useQuery<ComplianceHealth>({
+    queryKey: ['security', 'compliance-health'],
+    queryFn: async () => {
+      const res = await fetch('/api/security/compliance-health');
+      if (!res.ok) throw new Error('Failed to fetch compliance health');
+      const data = await res.json();
+      return {
+        ...data,
+        findings: (data.findings || []).map((f: any) => ({
+          ...f,
+          dueDate: f.dueDate ? new Date(f.dueDate) : undefined,
+        })),
+      };
+    },
+  });
 
   const sections: { id: SettingsSection; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Compliance Overview', icon: <Shield className="h-5 w-5" /> },
@@ -125,6 +118,14 @@ export function SecuritySettings() {
       setShowSignature(true);
     }
   };
+
+  if (healthLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-sm text-gray-400">Loading compliance health data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full">

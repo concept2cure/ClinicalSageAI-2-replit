@@ -21,10 +21,12 @@ import type { Request, Response } from 'express';
 import Stripe from 'stripe';
 import {
   createCheckoutSession,
+  createDTCCheckoutSession,
   createPortalSession,
   getSubscriptionStatus,
   processWebhookEvent,
   PRICING,
+  DTC_PRICING,
 } from '../services/billing.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -150,6 +152,58 @@ router.get('/pricing', async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch pricing' });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /dtc-checkout — DTC self-service checkout (like Claude.ai)
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = req.body.organizationId
+      || (req as any).tenantContext?.organizationId
+      || (req as any).user?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
+    const { tier, billingCycle, currency } = req.body;
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const result = await createDTCCheckoutSession({
+      organizationId: Number(orgId),
+      tier: tier || 'standard',
+      billingCycle: billingCycle || 'monthly',
+      successUrl: req.body.successUrl || `${baseUrl}/ai?welcome=true`,
+      cancelUrl: req.body.cancelUrl || `${baseUrl}/signup`,
+      currency,
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('[Billing] DTC checkout error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create DTC checkout';
+    res.status(500).json({ error: message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /dtc-pricing — Get DTC pricing tiers (public, no auth)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/dtc-pricing', async (_req: Request, res: Response) => {
+  const tiers = DTC_PRICING.map(p => ({
+    name: p.name,
+    tier: p.tier,
+    priceMonthly: p.baseMonthly / 100,
+    annualDiscountPct: p.annualDiscountPct,
+    maxUsers: p.maxUsers === -1 ? 'Unlimited' : p.maxUsers,
+    maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,
+    maxStorageGB: p.maxStorageGB === -1 ? 'Unlimited' : p.maxStorageGB,
+    deepResearchCredits: p.deepResearchCredits === -1 ? 'Unlimited' : p.deepResearchCredits,
+    builderCredits: p.builderCredits === -1 ? 'Unlimited' : p.builderCredits,
+    trialDays: p.trialDays,
+  }));
+  res.json({ tiers });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

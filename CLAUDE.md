@@ -1,29 +1,55 @@
 # CLAUDE.md — Claude Code Instructions for ClinicalSageAI
 
+> This file is automatically read by Claude Code at the start of every session.
+> These rules are NON-NEGOTIABLE and must be followed in every session.
+
 ## Branch Rules (NON-NEGOTIABLE)
 
-**All work happens on `concept2cure-v2`. No exceptions.**
+Claude Code MUST NOT create its own `claude/*` branches. All work goes through the established pipeline.
+
+### Correct Pipeline
+
+```
+concept2cure-v2  →  (PR)  →  main
+```
+
+- **`main`** = live production app. NEVER commit directly.
+- **`concept2cure-v2`** = the single development branch. ALL work happens here.
+- **`claude/*` branches** = FORBIDDEN. Do not create them. Ever.
+
+### Mandatory Steps at the Start of EVERY Session
 
 ```bash
-# First thing every session:
 git checkout concept2cure-v2
 git pull origin concept2cure-v2
 ```
 
-- **DO NOT** create `claude/*` branches
-- **DO NOT** open PRs from `claude/*` branches to `main`
-- **DO NOT** push to `main` directly
-- Commit and push only to `concept2cure-v2`
-- PRs go from `concept2cure-v2` → `main`
+If `git checkout concept2cure-v2` fails, stop and tell the user — do NOT create a new branch.
 
-If Claude Code's session automation creates a `claude/*` branch, switch back immediately:
+### Forbidden Actions
+
+| Action | Why |
+|--------|-----|
+| `git checkout -b claude/*` | Creates orphaned branches that bypass the product pipeline |
+| `git checkout -b feature/*` | Same problem — any new branch is forbidden |
+| Committing directly to `main` | Bypasses the development pipeline |
+| Opening a PR to `main` from anything other than `concept2cure-v2` | Breaks the merge flow |
+
+### Allowed Git Operations
+
 ```bash
 git checkout concept2cure-v2
+git pull origin concept2cure-v2
+git add <files>
+git commit -m "feat: description"    # conventional commits
+git push origin concept2cure-v2
 ```
 
 ### Why This Exists
 Claude Code previously created 5+ orphaned `claude/*` branches, causing work to go missing
 and bypassing the `concept2cure-v2` → `main` pipeline. This rule prevents that.
+
+---
 
 ## Project Overview
 
@@ -50,7 +76,7 @@ scripts/                     # Dev/deploy/seed scripts
 
 - **Runtime**: Node.js >= 20, ESM modules (`"type": "module"`)
 - **Frontend**: React 18, TanStack Query, Tailwind CSS, Radix UI
-- **Backend**: Express, Drizzle ORM, PostgreSQL (Neon)
+- **Backend**: Express, Drizzle ORM, PostgreSQL (Neon/pgvector)
 - **Auth**: JWT + bcrypt + MFA (TOTP), session validation
 - **AI**: Anthropic Claude (primary), OpenAI (fallback), AI gateway routing
 - **Build**: Vite (client), tsx (server dev), esbuild (server prod)
@@ -61,6 +87,8 @@ scripts/                     # Dev/deploy/seed scripts
 npm run dev              # Start dev server (client + server)
 npm run db:push          # Push schema changes to database
 npm run db:ensure        # Ensure core tables exist
+npm run test             # Run vitest suite
+npm run typecheck        # TypeScript type checking
 ```
 
 ## Do NOT Rebuild These (They Already Exist)
@@ -90,13 +118,6 @@ If you think something needs rebuilding, **ask the user first**.
 3. Export new tables from `shared/schema/index.ts`
 4. Run `npm run db:push` to apply
 
-## Testing
-
-```bash
-npm run test             # Run vitest suite
-npm run typecheck        # TypeScript type checking
-```
-
 ## Security Rules
 
 - Never commit `.env` files or API keys
@@ -104,3 +125,20 @@ npm run typecheck        # TypeScript type checking
 - Account lockout after 5 failed login attempts (15-min lock)
 - JWT tokens expire in 24h, refresh tokens in 7d
 - MFA (TOTP) is supported and should not be removed
+
+## File Operation Rules
+
+### NEVER ask for confirmation before:
+- Modifying, deleting, moving, or renaming existing files
+- All git operations (add, commit, push, pull)
+
+### ALWAYS ask for confirmation before:
+- Creating a file that has never existed before in the repository
+
+## Pull Request Rules
+
+When the user asks you to open a PR:
+- **From**: `concept2cure-v2`
+- **To**: `main`
+- **Title**: conventional commit style, e.g. `feat: add CSR knowledge database schema`
+- **Never** open a PR from a `claude/*` branch

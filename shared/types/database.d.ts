@@ -476,6 +476,358 @@ export interface QueryResult<T> {
 export type DrizzleEntity<T> = T & EntityWithTimestamps;
 
 // ============================================================================
+// CSR Knowledge Database Types (Layer 1: CSR Data Harvest)
+// ============================================================================
+
+export interface CsrStudy {
+  id: number;
+  organizationId: number;
+  clientWorkspaceId?: number;
+  csrId: string;
+  nctId?: string;
+  eudractNumber?: string;
+  protocolNumber?: string;
+  studyTitle: string;
+  studyAcronym?: string;
+  sponsor?: string;
+  molecule?: string;
+  moleculeType?: string;
+  brandName?: string;
+  inn?: string;
+  mechanismOfAction?: string;
+  therapeuticArea?: string;
+  indication?: string;
+  indicationMedDRA?: string;
+  phase?: string;
+  studyDesign?: string;
+  blinding?: string;
+  randomization?: string;
+  controlType?: string;
+  numberOfArms?: number;
+  adaptiveDesignDetails?: string;
+  studyStartDate?: string;
+  studyEndDate?: string;
+  primaryCompletionDate?: string;
+  durationWeeks?: number;
+  reportDate?: string;
+  regulatoryAgency?: string;
+  submissionType?: string;
+  applicationNumber?: string;
+  designRationale?: string;
+  regulatoryClassification?: string;
+  studyTypeDescription?: string;
+  sourceDocumentId?: number;
+  sourceReportId?: number;
+  extractionVersion?: string;
+  extractionConfidence?: number;
+  extractedAt?: Date;
+  verifiedBy?: number;
+  verifiedAt?: Date;
+  embedding?: number[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrTreatmentArm {
+  id: number;
+  studyId: number;
+  armName: string;
+  armType: string;
+  armDescription?: string;
+  drugName?: string;
+  dose?: string;
+  doseUnit?: string;
+  frequency?: string;
+  routeOfAdministration?: string;
+  durationWeeks?: number;
+  dosingSchedule?: string;
+  formulation?: string;
+  plannedSubjects?: number;
+  enrolledSubjects?: number;
+  completedSubjects?: number;
+  discontinuedSubjects?: number;
+  sortOrder?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrPopulation {
+  id: number;
+  studyId: number;
+  populationName: string;
+  populationDescription?: string;
+  totalScreened?: number;
+  screenFailures?: number;
+  totalRandomized?: number;
+  totalEnrolled?: number;
+  totalCompleted?: number;
+  totalDiscontinued?: number;
+  discontinuationReasons?: Record<string, any>;
+  meanAge?: number;
+  medianAge?: number;
+  ageRange?: string;
+  percentFemale?: number;
+  percentMale?: number;
+  raceDistribution?: Record<string, any>;
+  ethnicityDistribution?: Record<string, any>;
+  regionDistribution?: Record<string, any>;
+  baselineCharacteristics?: Record<string, any>;
+  medicalHistory?: Record<string, any>;
+  priorTherapies?: Record<string, any>;
+  concomitantMedications?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrEndpoint {
+  id: number;
+  studyId: number;
+  endpointCategory: string;
+  endpointName: string;
+  endpointDescription?: string;
+  measurementMethod?: string;
+  assessmentTimepoint?: string;
+  assessmentTool?: string;
+  statisticalMethod?: string;
+  statisticalModel?: string;
+  primaryAnalysisPopulation?: string;
+  multiplicityAdjustment?: string;
+  missingDataMethod?: string;
+  sensitivityAnalyses?: Record<string, any>;
+  prespecifiedSubgroups?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrEndpointResult {
+  id: number;
+  endpointId: number;
+  armId?: number;
+  nSubjects?: number;
+  resultValue?: number;
+  resultUnit?: string;
+  standardDeviation?: number;
+  standardError?: number;
+  medianValue?: number;
+  ciLower?: number;
+  ciUpper?: number;
+  ciLevel?: number;
+  comparisonArmId?: number;
+  treatmentDifference?: number;
+  pValue?: number;
+  pValueAdjusted?: number;
+  oddsRatio?: number;
+  hazardRatio?: number;
+  relativeRisk?: number;
+  nnt?: number;
+  responseRate?: number;
+  responderDefinition?: string;
+  isStatisticallySignificant?: boolean;
+  isClinicallyMeaningful?: boolean;
+  clinicalMeaningfulThreshold?: number;
+  subgroupName?: string;
+  isSubgroupAnalysis?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrAdverseEvent {
+  id: number;
+  studyId: number;
+  armId?: number;
+  preferredTerm: string;
+  systemOrganClass?: string;
+  meddraCode?: string;
+  highLevelGroupTerm?: string;
+  seriousness: string;
+  severityGrade?: number;
+  severityScale?: string;
+  causality?: string;
+  outcome?: string;
+  subjectsAffected?: number;
+  subjectsAtRisk?: number;
+  incidenceRate?: number;
+  eventsTotal?: number;
+  medianOnsetDays?: number;
+  medianDurationDays?: number;
+  doseModification?: boolean;
+  drugDiscontinued?: boolean;
+  treatmentRequired?: boolean;
+  hospitalizationRequired?: boolean;
+  isAESI?: boolean;
+  isDoseRelated?: boolean;
+  isExpected?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrSafetySummary {
+  id: number;
+  studyId: number;
+  armId?: number;
+  anyTEAE?: number;
+  anyTreatmentRelatedTEAE?: number;
+  anySeriousAE?: number;
+  anyTreatmentRelatedSAE?: number;
+  deathsDuringStudy?: number;
+  treatmentRelatedDeaths?: number;
+  discontinuationDueToAE?: number;
+  doseReductionDueToAE?: number;
+  doseInterruptionDueToAE?: number;
+  safetyPopulationN?: number;
+  labAbnormalities?: Record<string, any>;
+  vitalSignAbnormalities?: Record<string, any>;
+  ecgFindings?: Record<string, any>;
+  teaeSummaryText?: string;
+  saeSummaryText?: string;
+  deathNarratives?: string;
+  safetyConclusion?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrPharmacokinetic {
+  id: number;
+  studyId: number;
+  armId?: number;
+  parameterName: string;
+  parameterUnit?: string;
+  analyteOrMatrix?: string;
+  meanValue?: number;
+  geometricMean?: number;
+  medianValue?: number;
+  cvPercent?: number;
+  ciLower?: number;
+  ciUpper?: number;
+  nSubjects?: number;
+  dosingCondition?: string;
+  samplingTimepoint?: string;
+  isSteadyState?: boolean;
+  foodEffect?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrSafetySignal {
+  id: number;
+  organizationId: number;
+  signalName: string;
+  signalDescription?: string;
+  status: string;
+  preferredTerm?: string;
+  systemOrganClass?: string;
+  meddraCode?: string;
+  molecule?: string;
+  moleculeClass?: string;
+  sourceStudyIds?: number[];
+  evidenceStrength?: string;
+  disproportionalityScore?: number;
+  reportingOddsRatio?: number;
+  informationComponent?: number;
+  backgroundIncidence?: number;
+  comparatorIncidence?: number;
+  isClassEffect?: boolean;
+  isDoseDependent?: boolean;
+  actionTaken?: string;
+  riskMitigation?: string;
+  regulatoryNotification?: boolean;
+  detectedAt?: Date;
+  evaluatedAt?: Date;
+  closedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrRegulatoryIntelligenceRecord {
+  id: number;
+  organizationId: number;
+  agency: string;
+  therapeuticArea?: string;
+  indication?: string;
+  moleculeType?: string;
+  phase?: string;
+  intelligenceType: string;
+  title: string;
+  description?: string;
+  sourceStudyId?: number;
+  deficiencyCategory?: string;
+  agencyQuestion?: string;
+  sponsorResponse?: string;
+  resolution?: string;
+  impactOnTimeline?: string;
+  isPrecedentSetting?: boolean;
+  precedentSummary?: string;
+  applicableGuidances?: Record<string, any>;
+  tags?: Record<string, any>;
+  confidence?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CtdProgram {
+  id: number;
+  organizationId: number;
+  clientWorkspaceId?: number;
+  programName: string;
+  programCode?: string;
+  molecule?: string;
+  moleculeType?: string;
+  therapeuticArea?: string;
+  indication?: string;
+  targetAgency?: string;
+  status?: string;
+  leadProjectManager?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CtdSubmission {
+  id: number;
+  programId: number;
+  submissionTitle: string;
+  submissionType: string;
+  sequenceNumber?: number;
+  applicationNumber?: string;
+  targetAgency: string;
+  submissionDate?: string;
+  targetDate?: string;
+  acceptanceDate?: string;
+  approvalDate?: string;
+  status?: string;
+  ectdVersion?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrKnowledgeNode {
+  id: number;
+  organizationId: number;
+  nodeType: string;
+  nodeName: string;
+  normalizedName?: string;
+  description?: string;
+  externalId?: string;
+  ontologySource?: string;
+  properties?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CsrKnowledgeEdge {
+  id: number;
+  sourceNodeId: number;
+  targetNodeId: number;
+  relationshipType: string;
+  weight?: number;
+  confidence?: number;
+  sourceStudyId?: number;
+  evidenceText?: string;
+  evidenceSectionId?: number;
+  properties?: Record<string, any>;
+  createdAt: Date;
+}
+
+// ============================================================================
 // Global exports
 // ============================================================================
 

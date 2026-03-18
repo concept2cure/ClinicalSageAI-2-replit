@@ -73,35 +73,12 @@ ${protocol}`;
     try {
       content = await analyzeText(prompt, systemPrompt);
     } catch (aiError: any) {
-      // Fallback demo content when OpenAI is unavailable
-      console.warn(
-        '[Planner] OpenAI unavailable, returning demo IND summary:',
-        aiError?.message?.substring(0, 100)
-      );
-      content = `## IND Application Summary — Demo Mode
-
-**Note:** This is a demo-generated summary. Connect a valid OpenAI API key for AI-powered generation.
-
-### 1. Introduction and Objectives
-This Investigational New Drug (IND) application covers the clinical investigation of ${molecule} for its intended therapeutic indication.
-
-### 2. Investigational Product Overview
-- **Product:** ${molecule}
-- **Mechanism:** ${moa}
-- **Development Stage:** Phase I/II
-
-### 3. Clinical Trial Design
-- **Primary Endpoint:** ${primaryEndpoint}
-- **Design Rationale:** ${designRationale}
-- **Statistical Model:** ${statisticalModel}
-
-### 4. Safety Monitoring
-A Data Safety Monitoring Board (DSMB) will oversee the trial with predefined stopping rules per ICH E6 guidelines.
-
-### 5. Risk-Benefit Assessment
-The clinical benefit is anticipated to outweigh the risks based on preclinical data and the unmet medical need in the target population.
-
-*This document was generated in demo mode. Please configure a valid OpenAI API key for full AI-powered regulatory document generation.*`;
+      console.error('[Planner] OpenAI unavailable for IND generation:', aiError?.message?.substring(0, 200));
+      return res.status(503).json({
+        success: false,
+        error: 'AI service is currently unavailable. Please ensure a valid OpenAI API key is configured and try again.',
+        code: 'AI_SERVICE_UNAVAILABLE',
+      });
     }
 
     return res.json({
@@ -169,8 +146,12 @@ ${protocol}`;
     try {
       content = await analyzeText(prompt, systemPrompt);
     } catch (aiError: any) {
-      console.warn('[Planner] OpenAI unavailable for SAP, returning demo content');
-      content = `## Statistical Analysis Plan (SAP) — Demo Mode\n\n**Note:** This is a demo-generated SAP. Connect a valid OpenAI API key for AI-powered generation.\n\n### 1. Study Design\nA randomized, double-blind, placebo-controlled trial with 1:1 allocation ratio.\n\n### 2. Primary Endpoint Analysis\n- **Primary Endpoint:** As specified in the protocol\n- **Analysis Method:** Mixed-effects model for repeated measures (MMRM)\n- **Significance Level:** α = 0.05 (two-sided)\n\n### 3. Sample Size\nPower: 90%, assuming a clinically meaningful treatment difference.\n\n### 4. Missing Data\nMultiple imputation per ICH E9(R1) guidance.\n\n*Demo mode — configure OpenAI API key for full AI generation.*`;
+      console.error('[Planner] OpenAI unavailable for SAP generation:', aiError?.message?.substring(0, 200));
+      return res.status(503).json({
+        success: false,
+        error: 'AI service is currently unavailable. Please ensure a valid OpenAI API key is configured and try again.',
+        code: 'AI_SERVICE_UNAVAILABLE',
+      });
     }
     return res.json({
       success: true,
@@ -228,8 +209,12 @@ ${protocol}`;
     try {
       content = await analyzeText(prompt, systemPrompt);
     } catch (aiError: any) {
-      console.warn('[Planner] OpenAI unavailable for summary, returning demo content');
-      content = `## Protocol Summary — Demo Mode\n\n**Note:** This is a demo-generated summary. Connect a valid OpenAI API key for AI-powered generation.\n\n### Study Overview\nThis study investigates a therapeutic intervention in a defined patient population.\n\n### Design\nRandomized, double-blind, placebo-controlled, parallel-group study.\n\n### Key Endpoints\n- **Primary:** Efficacy measure at predefined timepoint\n- **Secondary:** Safety, tolerability, and exploratory biomarkers\n\n*Demo mode — configure OpenAI API key for full AI generation.*`;
+      console.error('[Planner] OpenAI unavailable for summary generation:', aiError?.message?.substring(0, 200));
+      return res.status(503).json({
+        success: false,
+        error: 'AI service is currently unavailable. Please ensure a valid OpenAI API key is configured and try again.',
+        code: 'AI_SERVICE_UNAVAILABLE',
+      });
     }
     return res.json({
       success: true,

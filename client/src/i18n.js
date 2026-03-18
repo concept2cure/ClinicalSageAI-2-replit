@@ -1,26 +1,60 @@
-// Stub version of i18n.js while we fix the dependency issues
-// We'll replace this with the actual implementation once the packages are installed
+/**
+ * Lightweight i18n implementation (pass-through for English).
+ *
+ * Provides a minimal API compatible with react-i18next so the rest of the
+ * codebase can import { useTranslation } or the default i18n object without
+ * pulling in a heavy dependency. The `t` function simply returns the key,
+ * which works perfectly for an English-only app. When full i18n is needed,
+ * swap this file for a real i18next setup.
+ */
+
+const noop = () => {};
+
+/**
+ * Translate a key. In pass-through mode this returns the key itself,
+ * with basic interpolation support for {{variable}} patterns.
+ */
+const t = (key, options = {}) => {
+  if (!key) return '';
+  // Support defaultValue
+  const base = options.defaultValue || key;
+  // Support simple {{variable}} interpolation
+  if (options && typeof base === 'string') {
+    return base.replace(/\{\{(\w+)\}\}/g, (_, varName) =>
+      options[varName] !== undefined ? String(options[varName]) : `{{${varName}}}`
+    );
+  }
+  return base;
+};
 
 const i18n = {
-  // Basic stub functions
-  t: (key, options = {}) => {
-    console.warn('[stub] i18n.t() called – replace when i18next is properly installed');
-    return key;
+  t,
+  language: 'en',
+  languages: ['en'],
+  changeLanguage: (lng) => {
+    i18n.language = lng || 'en';
+    return Promise.resolve(lng);
   },
-  changeLanguage: lng => {
-    console.warn(
-      '[stub] i18n.changeLanguage() called – replace when i18next is properly installed'
-    );
-  },
-  // Add other methods as needed
+  use: () => i18n,
+  init: () => Promise.resolve(i18n),
+  on: noop,
+  off: noop,
+  exists: () => true,
+  getFixedT: (_lng, ns) => t,
+  isInitialized: true,
 };
 
 export default i18n;
 
-// Export necessary hooks and functions for compatibility
-export const useTranslation = () => {
+/**
+ * Hook compatible with react-i18next's useTranslation.
+ * @param {string} [ns] - Optional namespace (ignored in pass-through mode).
+ * @returns {{ t: Function, i18n: object, ready: boolean }}
+ */
+export const useTranslation = (ns) => {
   return {
-    t: i18n.t,
+    t,
     i18n,
+    ready: true,
   };
 };
