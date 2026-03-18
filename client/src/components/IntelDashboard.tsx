@@ -249,7 +249,10 @@ export default function IntelDashboard() {
       if (!res.ok) throw new Error("Failed to process follow-up question");
       
       const data = await res.json();
-      setFollowUpResponse(data.answer || `This is a sample response to your question: "${followUpQuestion}"\n\nThe actual implementation would use OpenAI to provide a detailed answer based on the protocol context and the conversation history maintained in the thread (thread_id: ${threadId}).`);
+      if (!data.answer) {
+        throw new Error("The server returned an empty response. Please try again.");
+      }
+      setFollowUpResponse(data.answer);
       setFollowUpQuestion('');
       
       toast({
@@ -505,6 +508,14 @@ export default function IntelDashboard() {
               <p className="whitespace-pre-wrap text-sm leading-relaxed">{brief}</p>
             </CardContent>
           </Card>
+        )}
+
+        {protocolError && !protocol && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Protocol Generation Failed</AlertTitle>
+            <AlertDescription>{protocolError}</AlertDescription>
+          </Alert>
         )}
 
         {protocol && (

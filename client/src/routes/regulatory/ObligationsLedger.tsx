@@ -830,16 +830,68 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                 Compliance Analytics & Reporting
               </CardTitle>
               <CardDescription>
-                Advanced analytics for compliance performance and risk assessment
+                Analytics for compliance performance and risk assessment
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>Advanced analytics dashboard coming soon</p>
-                <p className="text-sm">
-                  Performance metrics, trend analysis, and predictive insights
-                </p>
+              <div className="space-y-6">
+                {/* Status Breakdown */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Status Breakdown</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {['open', 'in_progress', 'completed', 'overdue', 'cancelled'].map(status => {
+                      const count = obligations.filter(o => o.status === status).length;
+                      const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
+                      return (
+                        <div key={status} className="p-3 rounded-lg border">
+                          <p className="text-xs text-gray-500 capitalize">{status.replace('_', ' ')}</p>
+                          <p className="text-xl font-bold">{count}</p>
+                          <Progress value={pct} className="h-1 mt-1" />
+                          <p className="text-xs text-gray-400 mt-1">{pct}%</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Priority Distribution */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Priority Distribution</h4>
+                  <div className="grid grid-cols-4 gap-3">
+                    {(['critical', 'high', 'medium', 'low'] as const).map(priority => {
+                      const count = obligations.filter(o => o.priority === priority).length;
+                      const colorMap: Record<string, string> = {
+                        critical: 'text-red-600 bg-red-50',
+                        high: 'text-orange-600 bg-orange-50',
+                        medium: 'text-yellow-600 bg-yellow-50',
+                        low: 'text-green-600 bg-green-50',
+                      };
+                      return (
+                        <div key={priority} className={`p-3 rounded-lg ${colorMap[priority]}`}>
+                          <p className="text-xs capitalize font-medium">{priority}</p>
+                          <p className="text-2xl font-bold">{count}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Completion Rate */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Completion Rate</h4>
+                  <div className="flex items-center gap-4">
+                    <Progress
+                      value={stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}
+                      className="flex-1 h-3"
+                    />
+                    <span className="text-lg font-bold">
+                      {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {stats.completed} of {stats.total} obligations completed
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
