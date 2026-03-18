@@ -250,7 +250,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // All login attempts validated against database with bcrypt
     if (!requireDb(res)) return;
-    const user = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 
     if (!user.length) {
       return res.status(401).json({
@@ -363,6 +364,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
       });
     }
+
+    // ── Update last login timestamp ──────────────────────────────────
+    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userData.id));
 
     // ── No MFA — issue full tokens ─────────────────────────────────────
     const accessToken = jwt.sign(
@@ -721,6 +725,18 @@ router.get('/me', async (req: Request, res: Response) => {
       meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
     const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString() || '1';
 
+    // Look up the actual organization name
+    let meOrgName = 'Organization';
+    const meOrgIdNum = parseInt(meOrgId);
+    if (meOrgIdNum) {
+      const [meOrg] = await db
+        .select({ name: organizations.name })
+        .from(organizations)
+        .where(eq(organizations.id, meOrgIdNum))
+        .limit(1);
+      meOrgName = meOrg?.name || 'Organization';
+    }
+
     res.json({
       id: userData.id.toString(),
       email: userData.email,
@@ -730,7 +746,7 @@ router.get('/me', async (req: Request, res: Response) => {
       roles: meRoles,
       permissions: [],
       organizationId: meOrgId,
-      organizationName: 'Concept2Cure Inc.',
+      organizationName: meOrgName,
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {

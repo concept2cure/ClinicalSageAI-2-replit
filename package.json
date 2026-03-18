@@ -38,6 +38,8 @@
     "test": "jest --config scripts/jest.config.js && vitest run --config vitest.config.ts",
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "db:push": "drizzle-kit push",
+    "db:seed": "node scripts/seed-ga-demo.mjs",
+    "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:check": "node scripts/db_check.js",
     "db:status": "node scripts/db_status.js",
     "smoke:cerv2-workbench": "node scripts/smoke_cerv2_workbench.js",

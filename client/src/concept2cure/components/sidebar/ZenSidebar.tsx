@@ -42,6 +42,9 @@ import {
   Beaker,
   Layers,
   FileText,
+  ClipboardList,
+  Shield,
+  Globe,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -427,7 +430,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <WorkspaceGroup label="Work">
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
-              label="Copilot"
+              label="AnA RI Copilot"
               active={activeNavId === 'ai-copilot'}
               accentColor="blue"
               onClick={() => onNavigate?.('ai-copilot')}
@@ -617,6 +620,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Setup · Configuration"
               active={activeNavId === 'client-onboarding'}
               onClick={() => onNavigate?.('client-onboarding')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── About & Training ─────────────────────────────── */}
+          <WorkspaceGroup label="Learn" defaultOpen={false}>
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="About & Training"
+              active={activeNavId === 'about-training'}
+              onClick={() => onNavigate?.('about-training')}
             />
           </WorkspaceGroup>
 

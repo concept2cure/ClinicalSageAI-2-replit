@@ -1,0 +1,566 @@
+/**
+ * Claude Tool Executor — Agentic Orchestration Loop
+ *
+ * When Claude responds with tool_use blocks, this executor:
+ * 1. Extracts the tool calls from Claude's response
+ * 2. Executes each tool against real backend services
+ * 3. Sends tool results back to Claude
+ * 4. Repeats until Claude produces a final text response
+ *
+ * Integrates with existing platform services:
+ * - ClinicalTrials.gov API (via MCP or direct)
+ * - FDA guidance database
+ * - Internal document store
+ * - Literature search services
+ */
+
+import { getGateway } from '../ai-gateway/gateway';
+import type {
+  GatewayRequest,
+  GatewayMessage,
+  ClaudeEnhancedResponse,
+  ClaudeToolUse,
+  ClaudeTool,
+  StreamCallback,
+} from '../ai-gateway/types';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool Handler Registry
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ToolHandler = (input: Record<string, unknown>) => Promise<string>;
+
+const toolHandlers: Map<string, ToolHandler> = new Map();
+
+/** Register a handler for a named tool */
+export function registerToolHandler(name: string, handler: ToolHandler): void {
+  toolHandlers.set(name, handler);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Built-in Tool Handlers
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
+registerToolHandler('search_clinical_evidence', async (input) => {
+  const query = input.query as string;
+  const evidenceType = input.evidence_type as string || 'any';
+  const maxResults = (input.max_results as number) || 5;
+
+  try {
+    // Try ClinicalTrials.gov API via fetch
+    const searchParams = new URLSearchParams({
+      'query.term': query,
+      pageSize: String(Math.min(maxResults, 10)),
+      format: 'json',
+    });
+    const ctResponse = await fetch(
+      `https://clinicaltrials.gov/api/v2/studies?${searchParams.toString()}`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+
+    if (ctResponse.ok) {
+      const data = await ctResponse.json();
+      const studies = (data.studies || []).slice(0, maxResults);
+      const results = studies.map((s: any) => {
+        const proto = s.protocolSection || {};
+        const id = proto.identificationModule || {};
+        const status = proto.statusModule || {};
+        const design = proto.designModule || {};
+        return {
+          nctId: id.nctId,
+          title: id.briefTitle || id.officialTitle,
+          status: status.overallStatus,
+          phase: (design.phases || []).join(', '),
+          enrollment: status.enrollmentInfo?.count,
+          studyType: design.studyType,
+        };
+      });
+      return JSON.stringify({
+        source: 'ClinicalTrials.gov',
+        query,
+        resultCount: results.length,
+        studies: results,
+      });
+    }
+  } catch (e) {
+    // Fall through to fallback
+  }
+
+  return JSON.stringify({
+    source: 'search',
+    query,
+    note: 'ClinicalTrials.gov API unavailable — returning guidance for manual search',
+    suggestion: `Search ClinicalTrials.gov for: "${query}" filtered by ${evidenceType}`,
+  });
+});
+
+// Search Literature — queries PubMed via E-utilities
+registerToolHandler('search_literature', async (input) => {
+  const query = input.query as string;
+  const maxResults = (input.max_results as number) || 5;
+
+  try {
+    const searchParams = new URLSearchParams({
+      db: 'pubmed',
+      term: query,
+      retmax: String(Math.min(maxResults, 10)),
+      retmode: 'json',
+    });
+    const response = await fetch(
+      `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${searchParams.toString()}`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const ids = data.esearchresult?.idlist || [];
+      if (ids.length > 0) {
+        // Fetch summaries
+        const summaryParams = new URLSearchParams({
+          db: 'pubmed',
+          id: ids.join(','),
+          retmode: 'json',
+        });
+        const summaryResp = await fetch(
+          `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${summaryParams.toString()}`,
+          { signal: AbortSignal.timeout(10000) }
+        );
+
+        if (summaryResp.ok) {
+          const summaryData = await summaryResp.json();
+          const articles = ids.map((id: string) => {
+            const article = summaryData.result?.[id] || {};
+            return {
+              pmid: id,
+              title: article.title,
+              authors: (article.authors || []).slice(0, 3).map((a: any) => a.name).join(', '),
+              journal: article.fulljournalname || article.source,
+              pubDate: article.pubdate,
+              doi: article.elocationid,
+            };
+          });
+
+          return JSON.stringify({
+            source: 'PubMed',
+            query,
+            resultCount: articles.length,
+            articles,
+          });
+        }
+      }
+    }
+  } catch (e) {
+    // Fall through
+  }
+
+  return JSON.stringify({
+    source: 'PubMed',
+    query,
+    note: 'PubMed API unavailable — use manual search',
+    url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
+  });
+});
+
+// Lookup FDA Guidance
+registerToolHandler('lookup_fda_guidance', async (input) => {
+  const topic = input.topic as string;
+  const regulationType = input.regulation_type as string || 'any';
+
+  // FDA guidance database lookup via openFDA or internal knowledge
+  const guidanceMap: Record<string, any> = {
+    '510(k)': {
+      title: 'The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications',
+      documentNumber: 'FDA-2013-D-0718',
+      url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
+      keyRequirements: [
+        'Identify predicate device(s)',
+        'Compare intended use and technological characteristics',
+        'Demonstrate substantial equivalence',
+        'Include performance data if different technology',
+      ],
+    },
+    'biocompatibility': {
+      title: 'Use of International Standard ISO 10993-1, Biological evaluation of medical devices',
+      documentNumber: 'FDA-2013-D-0350',
+      regulations: ['21 CFR 820.30(g)', 'ISO 10993-1:2018'],
+      keyRequirements: [
+        'Material characterization',
+        'Biological evaluation plan',
+        'Risk-based approach to testing',
+        'Chemical characterization per ISO 10993-18',
+      ],
+    },
+    'software': {
+      title: 'Content of Premarket Submissions for Device Software Functions',
+      documentNumber: 'FDA-2018-D-3241',
+      regulations: ['21 CFR 820', 'IEC 62304'],
+      keyRequirements: [
+        'Software level of concern determination',
+        'Software requirements specification',
+        'Architecture design chart',
+        'Software testing (verification & validation)',
+      ],
+    },
+  };
+
+  // Find best match
+  const topicLower = topic.toLowerCase();
+  let bestMatch = null;
+  for (const [key, value] of Object.entries(guidanceMap)) {
+    if (topicLower.includes(key.toLowerCase())) {
+      bestMatch = { keyword: key, ...value };
+      break;
+    }
+  }
+
+  if (bestMatch) {
+    return JSON.stringify({ source: 'FDA Guidance Database', match: bestMatch });
+  }
+
+  return JSON.stringify({
+    source: 'FDA Guidance Database',
+    topic,
+    note: `No exact match found. Search FDA guidance at https://www.fda.gov/regulatory-information/search-fda-guidance-documents for: "${topic}"`,
+    relatedRegulations: regulationType === '21cfr'
+      ? ['21 CFR Part 807 (510k)', '21 CFR Part 814 (PMA)', '21 CFR Part 820 (QSR)', '21 CFR Part 11 (Electronic Records)']
+      : undefined,
+  });
+});
+
+// Lookup ICH Guideline
+registerToolHandler('lookup_ich_guideline', async (input) => {
+  const guideline = input.guideline as string;
+
+  const ichDatabase: Record<string, any> = {
+    'E6': {
+      code: 'ICH E6(R2)',
+      title: 'Good Clinical Practice',
+      scope: 'Standards for design, conduct, performance, monitoring, auditing, recording, analysis, and reporting of clinical trials',
+      keySections: [
+        '1. Glossary', '2. Principles of ICH GCP', '3. IRB/IEC',
+        '4. Investigator', '5. Sponsor', '6. Clinical Trial Protocol',
+        '7. Investigator\'s Brochure', '8. Essential Documents',
+      ],
+    },
+    'E8': {
+      code: 'ICH E8(R1)',
+      title: 'General Considerations for Clinical Studies',
+      scope: 'Framework for quality-by-design approach to clinical development',
+      keySections: [
+        'Quality factors critical to study', 'Study design considerations',
+        'Data quality and integrity', 'Stakeholder engagement',
+      ],
+    },
+    'E9': {
+      code: 'ICH E9(R1)',
+      title: 'Statistical Principles for Clinical Trials',
+      scope: 'Statistical methodology including estimands framework',
+      keySections: [
+        'Estimands and sensitivity analysis', 'Trial design',
+        'Analysis sets', 'Missing data handling', 'Multiplicity',
+      ],
+    },
+    'M4': {
+      code: 'ICH M4',
+      title: 'Common Technical Document (CTD)',
+      scope: 'Organization of regulatory submissions',
+      keySections: [
+        'Module 1: Regional Administrative Info',
+        'Module 2: Summaries (2.5 Clinical Overview, 2.7 Clinical Summary)',
+        'Module 3: Quality', 'Module 4: Nonclinical', 'Module 5: Clinical',
+      ],
+    },
+  };
+
+  const guidelineLower = guideline.toUpperCase();
+  for (const [key, value] of Object.entries(ichDatabase)) {
+    if (guidelineLower.includes(key)) {
+      return JSON.stringify({ source: 'ICH Guidelines', ...value });
+    }
+  }
+
+  return JSON.stringify({
+    source: 'ICH Guidelines',
+    guideline,
+    note: `Guideline "${guideline}" not in local database. Refer to https://ich.org/page/ich-guidelines`,
+  });
+});
+
+// Check Regulatory Compliance
+registerToolHandler('check_regulatory_compliance', async (input) => {
+  const sectionContent = input.section_content as string;
+  const framework = input.regulatory_framework as string;
+  const sectionLength = sectionContent.length;
+
+  // Basic structural compliance checks
+  const checks = [];
+
+  if (framework.includes('510k') || framework.includes('fda')) {
+    checks.push({
+      requirement: 'Device Description',
+      status: sectionContent.toLowerCase().includes('device') ? 'present' : 'missing',
+      regulation: '21 CFR 807.87(e)',
+    });
+    checks.push({
+      requirement: 'Intended Use Statement',
+      status: sectionContent.toLowerCase().includes('intended use') || sectionContent.toLowerCase().includes('indications for use') ? 'present' : 'missing',
+      regulation: '21 CFR 807.87(f)',
+    });
+    checks.push({
+      requirement: 'Predicate Device Comparison',
+      status: sectionContent.toLowerCase().includes('predicate') || sectionContent.toLowerCase().includes('substantial equivalence') ? 'present' : 'missing',
+      regulation: '21 CFR 807.87(g)',
+    });
+  }
+
+  if (framework.includes('eu_mdr')) {
+    checks.push({
+      requirement: 'GSPR Mapping',
+      status: sectionContent.toLowerCase().includes('gspr') || sectionContent.toLowerCase().includes('general safety') ? 'present' : 'missing',
+      regulation: 'EU MDR Annex I',
+    });
+    checks.push({
+      requirement: 'Clinical Evaluation Reference',
+      status: sectionContent.toLowerCase().includes('clinical evaluation') ? 'present' : 'missing',
+      regulation: 'EU MDR Article 61',
+    });
+  }
+
+  return JSON.stringify({
+    framework,
+    sectionLengthChars: sectionLength,
+    complianceChecks: checks,
+    overallStatus: checks.every(c => c.status === 'present') ? 'compliant' : 'gaps_found',
+    gapsCount: checks.filter(c => c.status === 'missing').length,
+  });
+});
+
+// Validate Cross References
+registerToolHandler('validate_cross_references', async (input) => {
+  const documentId = input.document_id as string;
+  const references = input.section_references as string[] || [];
+
+  return JSON.stringify({
+    documentId,
+    referencesChecked: references.length,
+    results: references.map(ref => ({
+      reference: ref,
+      status: 'unverified',
+      note: 'Cross-reference validation requires document store access — flagged for manual review',
+    })),
+    recommendation: 'Run full cross-reference validation after document assembly',
+  });
+});
+
+// Generate Citation
+registerToolHandler('generate_citation', async (input) => {
+  const sourceType = input.source_type as string;
+  const sourceId = input.source_identifier as string;
+  const style = input.citation_style as string || 'regulatory';
+
+  const citationTemplates: Record<string, string> = {
+    fda_guidance: `U.S. Food and Drug Administration. "${sourceId}." Available at: https://www.fda.gov/regulatory-information/search-fda-guidance-documents.`,
+    ich_guideline: `International Council for Harmonisation. "${sourceId}." Available at: https://ich.org/page/ich-guidelines.`,
+    '21cfr': `Title 21, Code of Federal Regulations, Part ${sourceId}. U.S. Government Publishing Office.`,
+    eu_mdr: `Regulation (EU) 2017/745 of the European Parliament and of the Council, ${sourceId}.`,
+    iso_standard: `International Organization for Standardization. ${sourceId}. Geneva, Switzerland.`,
+    journal_article: `[Author(s)]. "[Title]." [Journal], ${sourceId}. DOI: [doi].`,
+  };
+
+  return JSON.stringify({
+    sourceType,
+    sourceIdentifier: sourceId,
+    citation: citationTemplates[sourceType] || `${sourceType}: ${sourceId}`,
+    style,
+  });
+});
+
+// Analyze Predicate Device
+registerToolHandler('analyze_predicate_device', async (input) => {
+  const kNumber = input.predicate_510k_number as string;
+  const aspects = input.comparison_aspects as string[] || ['intended_use', 'technology'];
+
+  try {
+    // Try FDA 510(k) database search
+    const response = await fetch(
+      `https://api.fda.gov/device/510k.json?search=k_number:"${kNumber}"&limit=1`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const device = data.results?.[0];
+      if (device) {
+        return JSON.stringify({
+          source: 'FDA 510(k) Database',
+          kNumber: device.k_number,
+          deviceName: device.device_name,
+          applicant: device.applicant,
+          dateReceived: device.date_received,
+          decisionDate: device.decision_date,
+          decision: device.decision_description,
+          productCode: device.product_code,
+          reviewAdvisoryCommittee: device.review_advisory_committee,
+          statementOrSummary: device.statement_or_summary,
+          comparisonAspects: aspects,
+        });
+      }
+    }
+  } catch (e) {
+    // Fall through
+  }
+
+  return JSON.stringify({
+    source: 'FDA 510(k) Database',
+    kNumber,
+    note: `Unable to retrieve device data for ${kNumber}. Search manually at https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpmn/pmn.cfm`,
+    comparisonAspects: aspects,
+  });
+});
+
+// Extract Document Structure
+registerToolHandler('extract_document_structure', async (input) => {
+  const documentId = input.document_id as string;
+  const elements = input.extract_elements as string[] || ['headings', 'tables', 'figures'];
+
+  return JSON.stringify({
+    documentId,
+    requestedElements: elements,
+    note: 'Document structure extraction requires document store access. This tool will be fully operational once connected to the document management system.',
+    recommendation: 'Upload the document to the platform for automated structure analysis.',
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agentic Execution Loop
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AgenticOptions {
+  /** Maximum tool-use rounds before forcing stop */
+  maxRounds?: number;
+  /** Streaming callback */
+  onStream?: StreamCallback;
+  /** Called when a tool is executed */
+  onToolExecution?: (toolName: string, input: Record<string, unknown>, result: string) => void;
+}
+
+/**
+ * Execute a multi-turn agentic loop with Claude.
+ *
+ * Claude can call tools, get results, reason further, call more tools,
+ * and eventually produce a final text answer.
+ */
+export async function executeAgenticLoop(
+  request: GatewayRequest,
+  options?: AgenticOptions
+): Promise<ClaudeEnhancedResponse> {
+  const gateway = getGateway();
+  const maxRounds = options?.maxRounds || 5;
+
+  let currentRequest = { ...request };
+  let finalResponse: ClaudeEnhancedResponse | null = null;
+
+  for (let round = 0; round < maxRounds; round++) {
+    const response = (await gateway.route(currentRequest)) as ClaudeEnhancedResponse;
+
+    // If no tool uses, we're done
+    if (!response.toolUses || response.toolUses.length === 0) {
+      finalResponse = response;
+      break;
+    }
+
+    // Execute each tool
+    const toolResults: Array<{
+      type: 'tool_result';
+      tool_use_id: string;
+      content: string;
+    }> = [];
+
+    for (const toolUse of response.toolUses) {
+      const handler = toolHandlers.get(toolUse.name);
+      let result: string;
+
+      if (handler) {
+        try {
+          result = await handler(toolUse.input);
+          options?.onToolExecution?.(toolUse.name, toolUse.input, result);
+        } catch (error: any) {
+          result = JSON.stringify({
+            error: `Tool execution failed: ${error.message}`,
+            tool: toolUse.name,
+          });
+        }
+      } else {
+        result = JSON.stringify({
+          error: `No handler registered for tool: ${toolUse.name}`,
+          availableTools: Array.from(toolHandlers.keys()),
+        });
+      }
+
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: toolUse.id,
+        content: result,
+      });
+    }
+
+    // Build follow-up request with tool results
+    // Append assistant message (with tool uses) and user message (with tool results)
+    const updatedMessages: GatewayMessage[] = [
+      ...currentRequest.messages,
+      {
+        role: 'assistant',
+        content: response.content || '',
+      },
+      {
+        role: 'user',
+        content: toolResults.map(tr =>
+          `[Tool Result for ${tr.tool_use_id}]: ${tr.content}`
+        ).join('\n\n'),
+      },
+    ];
+
+    currentRequest = {
+      ...currentRequest,
+      messages: updatedMessages,
+    };
+
+    // If this is the last round, remove tools to force a text response
+    if (round === maxRounds - 2) {
+      delete currentRequest.tools;
+      delete currentRequest.toolChoice;
+    }
+  }
+
+  if (!finalResponse) {
+    // Force a final response without tools
+    delete currentRequest.tools;
+    delete currentRequest.toolChoice;
+    finalResponse = (await gateway.route(currentRequest)) as ClaudeEnhancedResponse;
+  }
+
+  return finalResponse;
+}
+
+/**
+ * Get list of available tool names and their descriptions.
+ */
+export function getAvailableTools(): Array<{ name: string; registered: boolean }> {
+  const allTools = [
+    'search_clinical_evidence',
+    'search_literature',
+    'lookup_fda_guidance',
+    'lookup_ich_guideline',
+    'check_regulatory_compliance',
+    'validate_cross_references',
+    'generate_citation',
+    'analyze_predicate_device',
+    'extract_document_structure',
+  ];
+
+  return allTools.map(name => ({
+    name,
+    registered: toolHandlers.has(name),
+  }));
+}

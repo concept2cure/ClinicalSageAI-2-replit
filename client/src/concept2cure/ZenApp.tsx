@@ -42,6 +42,7 @@ import { WorkflowTimeline } from './components/workflow';
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
 import { CustomInstructions } from './components/knowledge/CustomInstructions';
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
+import { useProjectTasks } from './hooks/useProjectTasks';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
@@ -151,11 +152,12 @@ const FirstRunExperience = lazy(() =>
 );
 
 // Snow Globe — Cross-platform prediction & intelligence
-const SnowGlobeHome = lazy(() =>
-  import('./pages/SnowGlobe/SnowGlobeHome')
-);
-const SnowGlobeChambers = lazy(() =>
-  import('./pages/SnowGlobe/SnowGlobeChambers')
+const SnowGlobeHome = lazy(() => import('./pages/SnowGlobe/SnowGlobeHome'));
+const SnowGlobeChambers = lazy(() => import('./pages/SnowGlobe/SnowGlobeChambers'));
+
+// About & Training Center (with Dr. Sage FDA Reviewer AI)
+const AboutTrainingCenter = lazy(() =>
+  import('./pages/AboutTrainingCenter').then(m => ({ default: m.AboutTrainingCenter }))
 );
 
 // Lazy load Phase 7 Mission Control components
@@ -406,7 +408,8 @@ type LayoutMode =
   | 'artifacts'
   | 'document-builder'
   | 'deep-research'
-  | 'report-engine';
+  | 'report-engine'
+  | 'about-training';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1389,6 +1392,29 @@ export const ZenApp: React.FC = () => {
 
   const activeProject = projects.find(p => p.id === activeProjectId);
 
+  const contextMetrics = useMemo(() => {
+    if (!activeProject || !taskSummary) {
+      return {
+        deadlineDays: '—',
+        complianceScore: 0,
+        riskCount: 0,
+        lastActivity: 'No project selected',
+        auditStatus: 'Audit trail active',
+      };
+    }
+    const targetDateStr = activeProject.metadata?.targetSubmissionDate || (activeProject as any).targetEndDate;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
+    const deadlineDays = targetDate
+      ? Math.max(0, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : '—';
+    const complianceScore = taskSummary.healthScore / 100;
+    const riskCount = taskSummary.overdue + (taskSummary.byStatus?.blocked || 0);
+    const lastActivity = taskSummary.total > 0
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
+    return { deadlineDays, complianceScore, riskCount, lastActivity, auditStatus: 'Audit trail active' };
+  }, [activeProject, taskSummary]);
+
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
     const subType = activeProject?.type?.toUpperCase();
@@ -1619,6 +1645,7 @@ export const ZenApp: React.FC = () => {
               timeline: 'command-center',
               analytics: 'command-center',
               artifacts: 'artifacts',
+              'about-training': 'about-training',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1698,6 +1725,12 @@ export const ZenApp: React.FC = () => {
               break;
             case 'mission-control':
               setLayoutMode('mission-control');
+              break;
+            case 'snowglobe':
+              setLayoutMode('snowglobe');
+              break;
+            case 'about-training':
+              setLayoutMode('about-training');
               break;
             case 'submission-workspace':
               setLayoutMode('submission-workspace');
@@ -1951,6 +1984,15 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe-chambers">
               <Suspense fallback={<ModuleLoadingFallback />}>
                 <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* About & Training Center (Dr. Sage FDA Reviewer AI) */}
+          {!embeddedModule && layoutMode === 'about-training' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-about-training">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+                <AboutTrainingCenter />
               </Suspense>
             </div>
           )}

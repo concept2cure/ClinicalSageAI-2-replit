@@ -274,9 +274,28 @@ CREATE TABLE IF NOT EXISTS users (
   last_login TIMESTAMP,
   default_organization_id INTEGER REFERENCES organizations(id),
   preferences JSONB,
+  mfa_enabled BOOLEAN DEFAULT false,
+  mfa_secret TEXT, mfa_backup_codes JSONB,
+  mfa_method TEXT DEFAULT 'totp', mfa_verified_at TIMESTAMP,
+  failed_login_attempts INTEGER DEFAULT 0,
+  locked_until TIMESTAMP, last_failed_login TIMESTAMP,
+  password_changed_at TIMESTAMP, password_history JSONB,
+  must_change_password BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
+-- Ensure columns exist for existing tables (idempotent migrations)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_backup_codes JSONB;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_method TEXT DEFAULT 'totp';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_verified_at TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_failed_login TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_history JSONB;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT false;
 CREATE TABLE IF NOT EXISTS organization_users (
   id SERIAL PRIMARY KEY,
   organization_id INTEGER NOT NULL REFERENCES organizations(id),
@@ -301,6 +320,46 @@ INSERT INTO organization_users (organization_id, user_id, role)
     (SELECT id FROM organizations WHERE slug = 'concept2cure'),
     (SELECT id FROM users WHERE email = 'jm.smith@concept2cure.pro'),
     'admin')
+  ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
+
+-- Demo Personas (password: demo123 for all)
+INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id)
+  VALUES ('sarah.chen@concept2cure.pro', 'Sarah Chen',
+    '$2b$10$trZaDVYb2r3RQClw8LoI1u/PY/Bawe1mvOXJsv2fcy/1DXyRW0zgq',
+    'Regulatory Affairs Director', 'Regulatory', 'active',
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'))
+  ON CONFLICT (email) DO NOTHING;
+INSERT INTO organization_users (organization_id, user_id, role)
+  VALUES (
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'),
+    (SELECT id FROM users WHERE email = 'sarah.chen@concept2cure.pro'),
+    'editor')
+  ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
+
+INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id)
+  VALUES ('mike.torres@concept2cure.pro', 'Mike Torres',
+    '$2b$10$trZaDVYb2r3RQClw8LoI1u/PY/Bawe1mvOXJsv2fcy/1DXyRW0zgq',
+    'Clinical Data Analyst', 'Clinical Operations', 'active',
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'))
+  ON CONFLICT (email) DO NOTHING;
+INSERT INTO organization_users (organization_id, user_id, role)
+  VALUES (
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'),
+    (SELECT id FROM users WHERE email = 'mike.torres@concept2cure.pro'),
+    'member')
+  ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
+
+INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id)
+  VALUES ('demo@concept2cure.pro', 'Demo User',
+    '$2b$10$trZaDVYb2r3RQClw8LoI1u/PY/Bawe1mvOXJsv2fcy/1DXyRW0zgq',
+    'Demo Account', 'General', 'active',
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'))
+  ON CONFLICT (email) DO NOTHING;
+INSERT INTO organization_users (organization_id, user_id, role)
+  VALUES (
+    (SELECT id FROM organizations WHERE slug = 'concept2cure'),
+    (SELECT id FROM users WHERE email = 'demo@concept2cure.pro'),
+    'member')
   ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
 SEED_SQL
     log_success "Auth tables and demo user seeded"

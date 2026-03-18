@@ -34,6 +34,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
+export * from './schema/csr-knowledge-db';
 
 // ============================================================
 // SHARED ENUMS
