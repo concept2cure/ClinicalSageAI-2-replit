@@ -435,7 +435,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
               <p className="text-sm text-muted-foreground">Avg Days Open</p>
               <p className="text-2xl font-bold">{metrics.avgDaysOpen}</p>
             </div>
-            <Calendar className="w-8 h-8 text-gray-500" />
+            <Calendar className="w-8 h-8 text-zinc-500" />
           </div>
         </div>
       </div>
@@ -1088,9 +1088,17 @@ export function CAPAManagement() {
     });
   }, [capas, filterStatus, filterPriority, searchTerm]);
 
+  const earlyAccessBanner = (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs mb-4">
+      <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[10px] uppercase tracking-wider">Early Access</span>
+      <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
+    </div>
+  );
+
   if (selectedCAPA) {
     return (
       <div className="p-6">
+        {earlyAccessBanner}
         <Button variant="outline" onClick={() => setSelectedCAPA(null)} className="mb-4">
           ← Back to CAPA List
         </Button>
@@ -1101,6 +1109,7 @@ export function CAPAManagement() {
 
   return (
     <div className="p-6 space-y-6">
+      {earlyAccessBanner}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

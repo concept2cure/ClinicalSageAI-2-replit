@@ -185,7 +185,7 @@ const MiniTimeline: React.FC<{
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-500"
+          className="h-full bg-blue-500 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -309,7 +309,7 @@ const FullTimeline: React.FC<{
         </div>
         <div className="h-3 bg-zinc-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-500 rounded-full"
+            className="h-full bg-blue-500 transition-all duration-500 rounded-full"
             style={{ width: `${overallProgress}%` }}
           />
         </div>

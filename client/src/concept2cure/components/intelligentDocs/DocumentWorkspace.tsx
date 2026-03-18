@@ -95,17 +95,17 @@ const ComplianceStatusBadge: React.FC<{
     ready: { 
       icon: CheckCircle, 
       label: 'Ready', 
-      color: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+      color: 'bg-green-100 text-green-700 border-green-200'
     },
     'needs-attention': { 
       icon: AlertTriangle, 
       label: 'Needs Attention', 
-      color: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
+      color: 'bg-amber-100 text-amber-700 border-amber-200'
     },
     blocked: { 
       icon: XCircle, 
       label: 'Blocked', 
-      color: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'
+      color: 'bg-red-100 text-red-700 border-red-200'
     },
   };
   
@@ -136,7 +136,7 @@ const SourceSuggestionCard: React.FC<{
       case 'literature': return <BookOpen className="w-4 h-4 text-green-500" />;
       case 'test_report': return <FileText className="w-4 h-4 text-orange-500" />;
       case 'regulatory_document': return <Shield className="w-4 h-4 text-indigo-500" />;
-      default: return <Database className="w-4 h-4 text-slate-500" />;
+      default: return <Database className="w-4 h-4 text-zinc-500" />;
     }
   };
   
@@ -155,30 +155,30 @@ const SourceSuggestionCard: React.FC<{
   };
   
   return (
-    <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+    <div className="p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors">
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+        <div className="p-2 bg-zinc-100 rounded-lg">
           {getSourceIcon(source.sourceType)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium text-slate-800 dark:text-slate-200 truncate">
+            <h4 className="font-medium text-zinc-800 truncate">
               {source.title}
             </h4>
-            <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs">
+            <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
               {source.relevanceScore}% match
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+          <p className="text-xs text-zinc-500 mb-2">
             {getModuleLabel(source.dataModule)}
           </p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 italic">
+          <p className="text-sm text-zinc-600 line-clamp-2 italic">
             "{source.keyExcerpt}"
           </p>
         </div>
       </div>
       
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-100">
         <button
           onClick={onLink}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
@@ -189,7 +189,7 @@ const SourceSuggestionCard: React.FC<{
         </button>
         <button
           onClick={onPreview}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-sm transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 hover:bg-zinc-100 rounded-md text-sm transition-colors"
           data-testid={`button-preview-source-${source.id}`}
         >
           <ExternalLink className="w-3.5 h-3.5" />
@@ -240,20 +240,20 @@ const CommandCenterPanel: React.FC<{
   const statusMap = {
     ready: {
       label: 'Submission Ready',
-      color: 'text-green-600 dark:text-green-400',
-      bg: 'bg-green-50 dark:bg-green-900/20',
+      color: 'text-green-600',
+      bg: 'bg-green-50',
       icon: CheckCircle,
     },
     'needs-attention': {
       label: 'Needs Attention',
-      color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
       icon: AlertTriangle,
     },
     blocked: {
       label: 'Blocked',
-      color: 'text-red-600 dark:text-red-400',
-      bg: 'bg-red-50 dark:bg-red-900/20',
+      color: 'text-red-600',
+      bg: 'bg-red-50',
       icon: XCircle,
     },
   } as const;
@@ -283,11 +283,11 @@ const CommandCenterPanel: React.FC<{
 
   return (
     <div className="space-y-4">
-      <div className={`rounded-2xl border border-slate-200/70 dark:border-slate-700/70 p-4 shadow-sm ${statusMap[complianceStatus].bg}`}>
+      <div className={`rounded-2xl border border-zinc-200/70 p-4 shadow-sm ${statusMap[complianceStatus].bg}`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Command Center</p>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 line-clamp-1">
+            <p className="text-xs uppercase tracking-wide text-zinc-500">Command Center</p>
+            <h3 className="text-lg font-semibold text-zinc-900 line-clamp-1">
               {documentTitle}
             </h3>
           </div>
@@ -297,11 +297,11 @@ const CommandCenterPanel: React.FC<{
           </div>
         </div>
         <div className="mt-3">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-xs text-zinc-500">
             <span>Compliance Score</span>
             <span>{complianceScore}%</span>
           </div>
-          <div className="mt-1 h-2 rounded-full bg-white/70 dark:bg-slate-700/70">
+          <div className="mt-1 h-2 rounded-full bg-white/70">
             <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${complianceScore}%` }} />
           </div>
         </div>
@@ -310,69 +310,69 @@ const CommandCenterPanel: React.FC<{
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onOpenSources}
-          className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-600 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-zinc-200 bg-white hover:border-blue-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-link-sources"
         >
           <div className="flex items-center gap-2">
             <Link2 className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Link Sources</span>
+            <span className="text-sm font-medium text-zinc-800">Link Sources</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-zinc-500 mt-1">
             {unsupportedClaims} claims need evidence
           </p>
         </button>
         <button
           onClick={onOpenCompliance}
-          className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-amber-300 dark:hover:border-amber-600 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-zinc-200 bg-white hover:border-amber-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-resolve-issues"
         >
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Resolve Issues</span>
+            <span className="text-sm font-medium text-zinc-800">Resolve Issues</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-zinc-500 mt-1">
             {availableSources > 0 ? 'Auto-fix ready' : 'Manual review'}
           </p>
         </button>
         <button
           onClick={onOpenBridges}
-          className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-zinc-200 bg-white hover:border-indigo-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-sync-data"
         >
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Sync Data</span>
+            <span className="text-sm font-medium text-zinc-800">Sync Data</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-zinc-500 mt-1">
             {connectedModules} modules connected
           </p>
         </button>
-        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+        <div className="p-3 rounded-xl border border-zinc-200 bg-white shadow-sm">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Claims</span>
+            <span className="text-sm font-medium text-zinc-800">Claims</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-zinc-500 mt-1">
             {totalClaims} detected in document
           </p>
         </div>
       </div>
 
       {(blockers.length > 0 || guidance.length > 0) && (
-        <div className="rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white dark:bg-slate-800 p-4 space-y-3 shadow-sm">
+        <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 space-y-3 shadow-sm">
           {blockers.length > 0 && (
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Blockers</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Blockers</p>
               <div className="mt-2 space-y-2">
                 {blockers.slice(0, 2).map(blocker => (
                   <div key={blocker.id} className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{blocker.title}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{blocker.resolution}</p>
+                      <p className="text-sm font-medium text-zinc-800">{blocker.title}</p>
+                      <p className="text-xs text-zinc-500">{blocker.resolution}</p>
                     </div>
                     <button
                       onClick={onOpenCompliance}
-                      className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+                      className="text-xs font-medium text-red-600 hover:underline"
                       data-testid={`button-resolve-blocker-${blocker.id}`}
                     >
                       Resolve
@@ -385,17 +385,17 @@ const CommandCenterPanel: React.FC<{
 
           {guidance.length > 0 && (
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Next Best Actions</p>
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Next Best Actions</p>
               <div className="mt-2 space-y-2">
                 {guidance.slice(0, 3).map(item => (
                   <div key={item.id} className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.estimatedTime}</p>
+                      <p className="text-sm font-medium text-zinc-800">{item.title}</p>
+                      <p className="text-xs text-zinc-500">{item.estimatedTime}</p>
                     </div>
                     <button
                       onClick={() => handleGuidanceAction(item)}
-                      className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-xs font-medium text-blue-600 hover:underline"
                       data-testid={`button-guidance-action-${item.id}`}
                     >
                       Do
@@ -423,14 +423,14 @@ const CommandCenterPanel: React.FC<{
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => onExport('word')}
-              className="px-3 py-2 text-sm font-medium border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+              className="px-3 py-2 text-sm font-medium border border-zinc-200 rounded-lg hover:bg-zinc-50"
               data-testid="button-export-word"
             >
               Export Word
             </button>
             <button
               onClick={() => onExport('pdf')}
-              className="px-3 py-2 text-sm font-medium border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+              className="px-3 py-2 text-sm font-medium border border-zinc-200 rounded-lg hover:bg-zinc-50"
               data-testid="button-export-pdf"
             >
               Export PDF
@@ -454,17 +454,17 @@ const ComplianceGuardCard: React.FC<{
   const severityConfig = {
     error: { 
       icon: XCircle, 
-      color: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20',
+      color: 'border-red-200 bg-red-50',
       iconColor: 'text-red-500'
     },
     warning: { 
       icon: AlertTriangle, 
-      color: 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20',
+      color: 'border-amber-200 bg-amber-50',
       iconColor: 'text-amber-500'
     },
     suggestion: { 
       icon: Lightbulb, 
-      color: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20',
+      color: 'border-blue-200 bg-blue-50',
       iconColor: 'text-blue-500'
     },
   };
@@ -476,14 +476,14 @@ const ComplianceGuardCard: React.FC<{
       <div className="flex items-start gap-3">
         <Icon className={`w-5 h-5 ${iconColor} flex-shrink-0 mt-0.5`} />
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-slate-800 dark:text-slate-200">
+          <h4 className="font-medium text-zinc-800">
             {guard.title}
           </h4>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-sm text-zinc-600 mt-1">
             {guard.description}
           </p>
           {guard.affectedText && (
-            <p className="text-xs text-slate-500 mt-2 p-2 bg-white/50 dark:bg-slate-800/50 rounded italic">
+            <p className="text-xs text-zinc-500 mt-2 p-2 bg-white/50 rounded italic">
               "{guard.affectedText}"
             </p>
           )}
@@ -491,7 +491,7 @@ const ComplianceGuardCard: React.FC<{
         {onDismiss && guard.severity === 'suggestion' && (
           <button
             onClick={onDismiss}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="p-1 text-zinc-400 hover:text-zinc-600"
             data-testid={`button-dismiss-guard-${guard.id}`}
             aria-label="Dismiss suggestion"
           >
@@ -525,7 +525,7 @@ const ComplianceGuardCard: React.FC<{
           )}
         </button>
         {guard.regulatoryRef && (
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-zinc-500">
             Ref: {guard.regulatoryRef}
           </span>
         )}
@@ -545,18 +545,18 @@ const SherpaGuidanceCard: React.FC<{
 }> = ({ guidance, isNextBest, onAction }) => {
   const priorityConfig = {
     high: { color: 'border-blue-500', badge: 'bg-blue-500 text-white' },
-    medium: { color: 'border-slate-300 dark:border-slate-600', badge: 'bg-slate-500 text-white' },
-    low: { color: 'border-slate-200 dark:border-slate-700', badge: 'bg-slate-400 text-white' },
+    medium: { color: 'border-zinc-300', badge: 'bg-zinc-500 text-white' },
+    low: { color: 'border-zinc-200', badge: 'bg-zinc-400 text-white' },
   };
   
   const { color, badge } = priorityConfig[guidance.priority];
   
   return (
-    <div className={`p-4 rounded-lg border-2 ${color} ${isNextBest ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-white dark:bg-slate-800'}`}>
+    <div className={`p-4 rounded-lg border-2 ${color} ${isNextBest ? 'bg-blue-50' : 'bg-white'}`}>
       {isNextBest && (
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-blue-500" />
-          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+          <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
             Recommended Next Step
           </span>
         </div>
@@ -567,13 +567,13 @@ const SherpaGuidanceCard: React.FC<{
           <Target className="w-4 h-4" />
         </div>
         <div className="flex-1">
-          <h4 className="font-semibold text-slate-800 dark:text-slate-200">
+          <h4 className="font-semibold text-zinc-800">
             {guidance.title}
           </h4>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-sm text-zinc-600 mt-1">
             {guidance.description}
           </p>
-          <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+          <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {guidance.estimatedTime}
@@ -611,7 +611,7 @@ const DataBridgeCard: React.FC<{
     connected: { icon: CheckCircle, color: 'text-green-500', label: 'Connected' },
     available: { icon: Database, color: 'text-blue-500', label: 'Available' },
     'needs-update': { icon: RefreshCw, color: 'text-amber-500', label: 'Needs Update' },
-    missing: { icon: XCircle, color: 'text-slate-400', label: 'No Data' },
+    missing: { icon: XCircle, color: 'text-zinc-400', label: 'No Data' },
   };
   
   const { icon: Icon, color, label } = statusConfig[bridge.status];
@@ -628,11 +628,11 @@ const DataBridgeCard: React.FC<{
   };
   
   return (
-    <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="p-3 bg-white rounded-lg border border-zinc-200">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Database className="w-4 h-4 text-slate-400" />
-          <span className="font-medium text-slate-700 dark:text-slate-300">
+          <Database className="w-4 h-4 text-zinc-400" />
+          <span className="font-medium text-zinc-700">
             {moduleLabels[bridge.sourceModule]}
           </span>
         </div>
@@ -642,11 +642,11 @@ const DataBridgeCard: React.FC<{
         </div>
       </div>
       
-      <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+      <p className="text-sm text-zinc-600 mb-2">
         {bridge.preview}
       </p>
       
-      <div className="flex items-center justify-between text-xs text-slate-500">
+      <div className="flex items-center justify-between text-xs text-zinc-500">
         <span>{bridge.itemCount} items available</span>
         <div className="flex items-center gap-2">
           {bridge.status === 'needs-update' && (
@@ -1142,22 +1142,22 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
   const complianceStatus = state.document?.complianceStatus || 'needs-attention';
 
   return (
-    <div className={`flex h-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 ${className}`}>
+    <div className={`flex h-full bg-gradient-to-b from-zinc-50 to-zinc-100 ${className}`}>
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* Main Editor Area */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur border-b border-zinc-200">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
-              <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+              <h1 className="text-lg font-semibold text-zinc-800">
                 {state.document?.title || 'New Document'}
               </h1>
             </div>
             {submissionType && (
-              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-medium rounded">
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
                 {submissionType}
               </span>
             )}
@@ -1198,19 +1198,19 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
         
         {/* Editor */}
         <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 min-h-[640px]">
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-zinc-200/80 min-h-[640px]">
             <EditorContent 
               editor={editor} 
-              className="prose prose-slate dark:prose-invert max-w-none p-8 focus:outline-none"
+              className="prose prose-slate max-w-none p-8 focus:outline-none"
             />
           </div>
         </div>
         
         {/* Claims Summary Bar */}
         {state.detectedClaims.length > 0 && (
-          <div className="px-6 py-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-t border-slate-200 dark:border-slate-700">
+          <div className="px-6 py-3 bg-white/90 backdrop-blur border-t border-zinc-200">
             <div className="flex items-center gap-6 text-sm">
-              <span className="text-slate-600 dark:text-slate-400">
+              <span className="text-zinc-600">
                 <Sparkles className="w-4 h-4 inline mr-1.5 text-blue-500" />
                 {state.detectedClaims.length} claims detected
               </span>
@@ -1224,7 +1224,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               </span>
               <button
                 onClick={() => setState(prev => ({ ...prev, activePanel: 'sources' }))}
-                className="ml-auto text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                className="ml-auto text-xs font-medium text-blue-600 hover:underline"
                 data-testid="button-review-sources"
               >
                 Review sources →
@@ -1238,17 +1238,17 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
       {/* Right Panel - Intelligence Sidebar */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {state.isPanelOpen && (
-        <div className="w-[26rem] flex flex-col bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
+        <div className="w-[26rem] flex flex-col bg-white border-l border-zinc-200">
           {/* Panel Header */}
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+          <div className="px-4 py-3 border-b border-zinc-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Intelligence Panel</p>
-                <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Step 5 Command + Evidence</h2>
+                <p className="text-xs uppercase tracking-wide text-zinc-500">Intelligence Panel</p>
+                <h2 className="text-sm font-semibold text-zinc-800">Step 5 Command + Evidence</h2>
               </div>
               <button
                 onClick={() => setState(prev => ({ ...prev, isPanelOpen: false }))}
-                className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                className="text-xs text-zinc-500 hover:text-zinc-700"
                 data-testid="button-hide-panel"
               >
                 Hide
@@ -1256,7 +1256,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             </div>
           </div>
           {/* Panel Tabs */}
-          <div className="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40">
+          <div className="flex border-b border-zinc-200 bg-zinc-50/70">
             {[
               { id: 'command', icon: Command, label: 'Command', count: 0 },
               { id: 'sherpa', icon: Sparkles, label: 'Guide', count: state.sherpaGuidance.length },
@@ -1269,8 +1269,8 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 onClick={() => setState(prev => ({ ...prev, activePanel: tab.id as any }))}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors relative
                   ${state.activePanel === tab.id
-                    ? 'text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800'
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    ? 'text-blue-700 bg-white'
+                    : 'text-zinc-500 hover:text-zinc-700'
                   }`}
                 data-testid={`button-panel-tab-${tab.id}`}
                 aria-current={state.activePanel === tab.id ? 'page' : undefined}
@@ -1280,8 +1280,8 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 {tab.count > 0 && (
                   <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs
                     ${state.activePanel === tab.id
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      ? 'bg-blue-100 text-blue-600'
+                      : 'bg-zinc-100 text-zinc-600'
                     }`}
                   >
                     {tab.count}
@@ -1321,7 +1321,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             {state.activePanel === 'sherpa' && (
               <div className="space-y-4">
                 {state.sherpaGuidance.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-zinc-500">
                     <Sparkles className="w-8 h-8 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">You're on track! No immediate actions needed.</p>
                   </div>
@@ -1349,16 +1349,16 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             {state.activePanel === 'sources' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <h3 className="text-sm font-medium text-zinc-700">
                     Available Sources
                   </h3>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-zinc-500">
                     From {state.dataBridges.filter(b => b.status === 'connected').length} modules
                   </span>
                 </div>
                 
                 {state.availableSources.filter(s => !s.isLinked).length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-zinc-500">
                     <Link2 className="w-8 h-8 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">All sources have been linked!</p>
                   </div>
@@ -1392,13 +1392,13 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             {state.activePanel === 'compliance' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <h3 className="text-sm font-medium text-zinc-700">
                     Compliance Issues
                   </h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full
                     ${state.complianceGuards.length === 0
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                      : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-amber-100 text-amber-600'
                     }`}
                   >
                     {state.complianceGuards.length === 0 ? 'All Clear' : `${state.complianceGuards.length} issues`}
@@ -1406,7 +1406,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 </div>
                 
                 {state.complianceGuards.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-zinc-500">
                     <ShieldCheck className="w-8 h-8 mx-auto mb-3 text-green-500" />
                     <p className="text-sm">No compliance issues found!</p>
                     <p className="text-xs mt-1 text-green-600">Document is ready for review</p>
@@ -1431,13 +1431,13 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             {state.activePanel === 'bridges' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <h3 className="text-sm font-medium text-zinc-700">
                     Connected Data Sources
                   </h3>
                 </div>
                 
                 {state.dataBridges.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-zinc-500">
                     <Database className="w-8 h-8 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">No data connections yet</p>
                     <p className="text-xs mt-1">Complete other workflow steps to unlock data</p>

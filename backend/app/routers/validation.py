@@ -84,7 +84,9 @@ async def validate_file(
     tenant_dir = os.path.join(settings.UPLOAD_DIR, current_user.tenant_id)
     os.makedirs(tenant_dir, exist_ok=True)
     
-    file_path = os.path.join(tenant_dir, f"{validation_id}_{file.filename}")
+    # SECURITY: Strip path components to prevent directory traversal
+    safe_filename = os.path.basename(file.filename or "upload")
+    file_path = os.path.join(tenant_dir, f"{validation_id}_{safe_filename}")
     
     try:
         with open(file_path, "wb") as f:

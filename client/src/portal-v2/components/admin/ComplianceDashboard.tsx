@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Shield,
   ShieldCheck,
@@ -168,162 +169,7 @@ const FINDING_STATUS_CONFIG: Record<
 // MOCK DATA
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MOCK_COMPLIANCE_AREAS: ComplianceArea[] = [
-  {
-    id: 'area_001',
-    name: 'Electronic Records',
-    regulation: 'FDA 21 CFR Part 11',
-    description: 'Controls for electronic records to ensure authenticity, integrity, and confidentiality',
-    status: 'compliant',
-    score: 95,
-    lastAssessed: new Date('2025-01-15'),
-    nextAssessment: new Date('2025-04-15'),
-    requirements: [
-      {
-        id: 'req_001',
-        reference: '11.10(a)',
-        title: 'Validation',
-        description: 'Systems must be validated to ensure accuracy, reliability, consistent intended performance',
-        status: 'compliant',
-        evidence: ['VAL-001', 'VAL-002'],
-      },
-      {
-        id: 'req_002',
-        reference: '11.10(b)',
-        title: 'Legible Records',
-        description: 'Ability to generate accurate and complete copies of records',
-        status: 'compliant',
-        evidence: ['SOP-EXP-001'],
-      },
-      {
-        id: 'req_003',
-        reference: '11.10(c)',
-        title: 'Record Protection',
-        description: 'Protection of records throughout retention period',
-        status: 'compliant',
-        evidence: ['SOP-BAK-001', 'POL-RET-001'],
-      },
-      {
-        id: 'req_004',
-        reference: '11.10(d)',
-        title: 'System Access',
-        description: 'Limiting system access to authorized individuals',
-        status: 'compliant',
-        evidence: ['SOP-ACC-001', 'ACL-MATRIX'],
-      },
-      {
-        id: 'req_005',
-        reference: '11.10(e)',
-        title: 'Audit Trail',
-        description: 'Secure computer-generated time-stamped audit trails',
-        status: 'compliant',
-        evidence: ['FUNC-AUDIT-001'],
-      },
-    ],
-  },
-  {
-    id: 'area_002',
-    name: 'Electronic Signatures',
-    regulation: 'FDA 21 CFR Part 11',
-    description: 'Requirements for electronic signatures to be equivalent to handwritten signatures',
-    status: 'compliant',
-    score: 98,
-    lastAssessed: new Date('2025-01-15'),
-    nextAssessment: new Date('2025-04-15'),
-    requirements: [
-      {
-        id: 'req_006',
-        reference: '11.50',
-        title: 'Signature Manifestations',
-        description: 'Electronic signatures must include printed name, date/time, and meaning',
-        status: 'compliant',
-        evidence: ['FUNC-ESIG-001'],
-      },
-      {
-        id: 'req_007',
-        reference: '11.70',
-        title: 'Signature Linking',
-        description: 'Electronic signatures must be linked to their respective records',
-        status: 'compliant',
-        evidence: ['FUNC-ESIG-002'],
-      },
-      {
-        id: 'req_008',
-        reference: '11.100',
-        title: 'General Requirements',
-        description: 'Signatures must be unique and not reused by anyone else',
-        status: 'compliant',
-        evidence: ['SOP-ESIG-001'],
-      },
-    ],
-  },
-  {
-    id: 'area_003',
-    name: 'Access Controls',
-    regulation: 'FDA 21 CFR Part 11',
-    description: 'Controls ensuring only authorized personnel can access, modify, or sign records',
-    status: 'partial',
-    score: 82,
-    lastAssessed: new Date('2025-01-15'),
-    nextAssessment: new Date('2025-04-15'),
-    requirements: [
-      {
-        id: 'req_009',
-        reference: '11.10(d)',
-        title: 'Access Limitation',
-        description: 'Limiting system access to authorized individuals',
-        status: 'compliant',
-        evidence: ['SOP-ACC-001'],
-      },
-      {
-        id: 'req_010',
-        reference: '11.10(g)',
-        title: 'Authority Checks',
-        description: 'Use of authority checks to ensure authorized actions',
-        status: 'partial',
-        evidence: [],
-        notes: 'Role matrix needs update for new features',
-      },
-      {
-        id: 'req_011',
-        reference: '11.10(i)',
-        title: 'Training',
-        description: 'Persons who develop, maintain, or use systems must have appropriate training',
-        status: 'partial',
-        evidence: ['TRN-MAT-001'],
-        notes: 'Some users have overdue training',
-      },
-    ],
-  },
-  {
-    id: 'area_004',
-    name: 'Data Integrity',
-    regulation: 'EU GMP Annex 11',
-    description: 'Ensuring data remains complete, consistent, and accurate throughout its lifecycle',
-    status: 'compliant',
-    score: 91,
-    lastAssessed: new Date('2025-01-10'),
-    nextAssessment: new Date('2025-04-10'),
-    requirements: [
-      {
-        id: 'req_012',
-        reference: 'Annex 11.4',
-        title: 'Validation',
-        description: 'Validation documentation and reports covering relevant steps',
-        status: 'compliant',
-        evidence: ['VAL-001'],
-      },
-      {
-        id: 'req_013',
-        reference: 'Annex 11.7',
-        title: 'Data Storage',
-        description: 'Regular backups of all relevant data',
-        status: 'compliant',
-        evidence: ['SOP-BAK-001'],
-      },
-    ],
-  },
-];
+// Compliance areas data fetched via useQuery in ComplianceDashboard
 
 const MOCK_FINDINGS: ComplianceFinding[] = [
   {
@@ -650,10 +496,22 @@ const FindingCard: React.FC<{
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ComplianceDashboard: React.FC = () => {
-  const [areas] = useState<ComplianceArea[]>(MOCK_COMPLIANCE_AREAS);
+  const { data: areas = [], isLoading: areasLoading } = useQuery<ComplianceArea[]>({
+    queryKey: ['compliance', 'areas'],
+    queryFn: async () => {
+      const res = await fetch('/api/compliance/areas');
+      if (!res.ok) throw new Error('Failed to fetch compliance areas');
+      const data = await res.json();
+      return data.map((area: any) => ({
+        ...area,
+        lastAssessed: new Date(area.lastAssessed),
+        nextAssessment: new Date(area.nextAssessment),
+      }));
+    },
+  });
   const [findings] = useState<ComplianceFinding[]>(MOCK_FINDINGS);
   const [metrics] = useState<ComplianceMetric[]>(MOCK_METRICS);
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = areasLoading;
   const [activeTab, setActiveTab] = useState('overview');
 
   // Calculate stats

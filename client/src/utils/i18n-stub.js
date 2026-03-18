@@ -1,25 +1,11 @@
 /**
- * Simple i18n stub to replace react-i18next dependency
- * This provides a minimal implementation that won't break our application
+ * Lightweight i18n pass-through (re-exports from the main i18n module).
+ *
+ * This file exists so that existing imports from '../utils/i18n-stub.js'
+ * continue to work. All logic lives in src/i18n.js.
  */
 
-// Simple translation function that returns the key
-export const t = key => {
-  return key;
-};
+export { useTranslation, default } from '../i18n';
 
-// Stub for useTranslation hook
-export const useTranslation = () => {
-  return {
-    t,
-    i18n: {
-      changeLanguage: lang => Promise.resolve(lang),
-      language: 'en',
-    },
-  };
-};
-
-export default {
-  t,
-  useTranslation,
-};
+// Also export t directly for convenience
+export { default as i18n } from '../i18n';

@@ -915,13 +915,57 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(authService.getUser());
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check initial auth state
-    setUser(authService.getUser());
-    setIsLoading(false);
+    // Validate stored auth against server before trusting it
+    const validateSession = async () => {
+      const storedUser = authService.getUser();
+      if (!storedUser || !authService.isAuthenticated()) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const token =
+          sessionStorage.getItem('trialsage_access_token') ||
+          localStorage.getItem('trialsage_access_token');
+        if (!token) {
+          authService.logout();
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        const res = await fetch('/api/v1/auth/session', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            setUser(data.user as AuthUser);
+          } else {
+            authService.logout();
+            setUser(null);
+          }
+        } else {
+          // Token invalid/expired server-side — clear stale auth
+          authService.logout();
+          setUser(null);
+        }
+      } catch {
+        // Network error — clear auth to be safe
+        authService.logout();
+        setUser(null);
+      }
+
+      setIsLoading(false);
+    };
+
+    validateSession();
 
     // Subscribe to auth events
     const unsubLogin = authService.on('login', event => {

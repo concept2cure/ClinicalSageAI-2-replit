@@ -48,10 +48,10 @@ const getSourceIcon = (type: string): string => {
 };
 
 const getConfidenceColor = (confidence: number): string => {
-  if (confidence >= 90) return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
-  if (confidence >= 70) return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30';
-  if (confidence >= 50) return 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30';
-  return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800';
+  if (confidence >= 90) return 'text-green-600 bg-green-100';
+  if (confidence >= 70) return 'text-blue-600 bg-blue-100';
+  if (confidence >= 50) return 'text-amber-600 bg-amber-100';
+  return 'text-zinc-600 bg-zinc-100';
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,12 +62,12 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+    <div className="border border-zinc-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors">
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <span className="text-lg">{getSourceIcon(suggestion.sourceType)}</span>
-            <span className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
+            <span className="text-sm font-medium text-zinc-900 line-clamp-1">
               {suggestion.sourceTitle}
             </span>
           </div>
@@ -76,14 +76,14 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
           </span>
         </div>
         
-        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
+        <p className="text-sm text-zinc-600 line-clamp-2 mb-2">
           {suggestion.relevantExcerpt}
         </p>
         
         <div className="flex items-center justify-between">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-xs text-blue-600 hover:underline"
             data-testid={`button-toggle-source-${suggestion.sourceId}`}
           >
             {isExpanded ? 'Show less' : 'Show more'}
@@ -100,23 +100,23 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
         </div>
         
         {isExpanded && (
-          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-            <div className="space-y-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-3 pt-3 border-t border-zinc-200">
+            <div className="space-y-2 text-xs text-zinc-500">
               <div className="flex items-center justify-between">
                 <span>Source Type:</span>
-                <span className="font-medium text-slate-700 dark:text-slate-300 capitalize">
+                <span className="font-medium text-zinc-700 capitalize">
                   {suggestion.sourceType.replace(/_/g, ' ')}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Match Reason:</span>
-                <span className="font-medium text-slate-700 dark:text-slate-300">
+                <span className="font-medium text-zinc-700">
                   {suggestion.matchReason}
                 </span>
               </div>
             </div>
             
-            <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded text-xs text-slate-600 dark:text-slate-400">
+            <div className="mt-2 p-2 bg-zinc-50 rounded text-xs text-zinc-600">
               <p className="font-medium mb-1">Full Excerpt:</p>
               <p>{suggestion.relevantExcerpt}</p>
             </div>
@@ -138,12 +138,12 @@ const EmptyState: React.FC<{
   actionLabel?: string;
 }> = ({ message, suggestion, onAction, actionLabel }) => (
   <div className="text-center py-8">
-    <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+    <div className="w-12 h-12 mx-auto mb-4 bg-zinc-100 rounded-full flex items-center justify-center">
       <span className="text-2xl">🔎</span>
     </div>
-    <p className="text-slate-600 dark:text-slate-400 mb-2">{message}</p>
+    <p className="text-zinc-600 mb-2">{message}</p>
     {suggestion && (
-      <p className="text-sm text-slate-500 dark:text-slate-500 mb-4">{suggestion}</p>
+      <p className="text-sm text-zinc-500 mb-4">{suggestion}</p>
     )}
     {onAction && actionLabel && (
       <button
@@ -164,14 +164,14 @@ const EmptyState: React.FC<{
 const LoadingState: React.FC = () => (
   <div className="space-y-3 animate-pulse">
     {[1, 2, 3].map((i) => (
-      <div key={i} className="border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+      <div key={i} className="border border-zinc-200 rounded-lg p-3">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-slate-200 dark:bg-slate-700 rounded" />
-          <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
-          <div className="ml-auto h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded-full" />
+          <div className="w-6 h-6 bg-zinc-200 rounded" />
+          <div className="h-4 w-32 bg-zinc-200 rounded" />
+          <div className="ml-auto h-4 w-12 bg-zinc-200 rounded-full" />
         </div>
-        <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded mb-1" />
-        <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+        <div className="h-3 w-full bg-zinc-200 rounded mb-1" />
+        <div className="h-3 w-3/4 bg-zinc-200 rounded" />
       </div>
     ))}
   </div>
@@ -220,9 +220,9 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
   
   if (!claim) {
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-slate-900">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+      <div className="h-full flex flex-col bg-white">
+        <div className="p-4 border-b border-zinc-200">
+          <h3 className="font-semibold text-zinc-900">
             Source Suggestions
           </h3>
         </div>
@@ -237,16 +237,16 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
   }
   
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-900">
+    <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60">
+      <div className="p-4 border-b border-zinc-200 bg-zinc-50/60">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+          <h3 className="font-semibold text-zinc-900">
             Source Suggestions
           </h3>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="p-1 text-zinc-400 hover:text-zinc-600"
             data-testid="button-close-source-panel"
             aria-label="Close source suggestions"
           >
@@ -255,11 +255,11 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
         </div>
         
         {/* Selected claim */}
-        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
-          <p className="text-sm text-amber-800 dark:text-amber-200 line-clamp-2">
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+          <p className="text-sm text-amber-800 line-clamp-2">
             "{claim.text}"
           </p>
-          <span className="text-xs text-amber-600 dark:text-amber-400 capitalize">
+          <span className="text-xs text-amber-600 capitalize">
             {claim.claimType} claim
           </span>
         </div>
@@ -275,7 +275,7 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
               className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
                 filterType === type
                   ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
               }`}
               data-testid={`button-source-filter-${type}`}
               aria-current={filterType === type ? 'page' : undefined}
@@ -316,8 +316,8 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
       </div>
       
       {/* Footer - Data bridge status */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+      <div className="p-4 border-t border-zinc-200 bg-zinc-50">
+        <div className="flex items-center justify-between text-xs text-zinc-500">
           <span>
             Searching {connectedBridges.length} connected source{connectedBridges.length !== 1 ? 's' : ''}
           </span>
@@ -350,7 +350,7 @@ export const InlineSuggestionTooltip: React.FC<{
   onDismiss: () => void;
 }> = ({ suggestion, position, onLink, onDismiss }) => (
   <div
-    className="fixed z-50 w-64 p-3 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700"
+    className="fixed z-50 w-64 p-3 bg-white rounded-lg shadow-xl border border-zinc-200"
     style={{
       left: position.x,
       top: position.y,
@@ -366,7 +366,7 @@ export const InlineSuggestionTooltip: React.FC<{
       </div>
       <button
         onClick={onDismiss}
-        className="p-1 text-slate-400 hover:text-slate-600"
+        className="p-1 text-zinc-400 hover:text-zinc-600"
         data-testid={`button-dismiss-inline-suggestion-${suggestion.sourceId}`}
         aria-label="Dismiss suggestion"
       >
@@ -374,11 +374,11 @@ export const InlineSuggestionTooltip: React.FC<{
       </button>
     </div>
     
-    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-1 line-clamp-1">
+    <p className="text-sm font-medium text-zinc-900 mb-1 line-clamp-1">
       {suggestion.sourceTitle}
     </p>
     
-    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
+    <p className="text-xs text-zinc-600 mb-3 line-clamp-2">
       {suggestion.relevantExcerpt}
     </p>
     

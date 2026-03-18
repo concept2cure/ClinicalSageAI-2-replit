@@ -155,10 +155,10 @@ export const SplitScreenLayout: React.FC = () => {
         {artifactPanelVisible && (
           <div className="fixed inset-0 z-30 flex flex-col bg-white animate-in slide-in-from-right duration-200">
             {/* Mobile artifact header */}
-            <div className="flex h-12 items-center justify-between border-b border-gray-200 px-4">
+            <div className="flex h-12 items-center justify-between border-b border-zinc-200 px-4">
               <button
                 onClick={() => setArtifactPanelWidth(0)} // This will hide the panel
-                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Back to chat
@@ -191,19 +191,19 @@ export const SplitScreenLayout: React.FC = () => {
           onMouseDown={handleMouseDown}
           className={cn(
             'relative flex w-1 cursor-col-resize items-center justify-center',
-            'bg-gray-200 hover:bg-blue-400 transition-colors',
+            'bg-zinc-200 hover:bg-blue-400 transition-colors',
             isDragging && 'bg-blue-500'
           )}
         >
           <div
             className={cn(
               'absolute z-10 flex h-12 w-5 items-center justify-center rounded',
-              'bg-gray-100 border border-gray-300 shadow-sm',
-              'hover:bg-gray-200 transition-colors',
+              'bg-zinc-100 border border-zinc-300 shadow-sm',
+              'hover:bg-zinc-200 transition-colors',
               isDragging && 'bg-blue-100 border-blue-400'
             )}
           >
-            <GripVertical className="h-4 w-4 text-gray-400" />
+            <GripVertical className="h-4 w-4 text-zinc-400" />
           </div>
         </div>
       )}
@@ -211,7 +211,7 @@ export const SplitScreenLayout: React.FC = () => {
       {/* Artifact Panel (Right) */}
       {artifactPanelVisible && (
         <div
-          className="flex flex-col h-full overflow-hidden border-l border-gray-200 bg-gray-50 transition-all duration-200"
+          className="flex flex-col h-full overflow-hidden border-l border-zinc-200 bg-zinc-50 transition-all duration-200"
           style={{ width: `${artifactWidth}%` }}
         >
           <ArtifactPanel artifact={activeArtifact} />

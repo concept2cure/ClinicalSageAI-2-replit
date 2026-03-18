@@ -14,6 +14,7 @@ export type ProviderName = 'openai' | 'anthropic' | 'moonshot';
 export type TaskType =
   | 'chat'
   | 'document_analysis'
+  | 'document_drafting'
   | 'structured_output'
   | 'regulatory_review'
   | 'code_generation'
@@ -33,9 +34,98 @@ export type RoutingStrategy =
 // Request & Response Types
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Claude-Specific Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Image content block for Claude vision */
+export interface ImageBlock {
+  type: 'image';
+  source: {
+    type: 'base64' | 'url';
+    media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+    data: string; // base64 data or URL
+  };
+}
+
+/** Text content block */
+export interface TextBlock {
+  type: 'text';
+  text: string;
+}
+
+/** Multi-modal content (text + images) */
+export type ContentBlock = TextBlock | ImageBlock;
+
+/** Claude tool definition for agentic workflows */
+export interface ClaudeTool {
+  name: string;
+  description: string;
+  input_schema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
+/** Tool use result from Claude */
+export interface ClaudeToolUse {
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+/** Tool result to send back to Claude */
+export interface ClaudeToolResult {
+  type: 'tool_result';
+  tool_use_id: string;
+  content: string;
+}
+
+/** Extended thinking configuration */
+export interface ExtendedThinkingConfig {
+  enabled: boolean;
+  budgetTokens: number; // 1024 to 128000
+}
+
+/** Prompt caching configuration for Claude */
+export interface PromptCacheConfig {
+  /** Mark system prompt blocks with cache_control for reuse */
+  enabled: boolean;
+  /** Cache type — currently only 'ephemeral' supported */
+  type: 'ephemeral';
+}
+
+/** Streaming callback for real-time token delivery */
+export type StreamCallback = (chunk: string, metadata?: {
+  type: 'text' | 'thinking' | 'tool_use';
+  thinkingContent?: string;
+}) => void;
+
+/** Claude-enhanced gateway response with thinking and tool use */
+export interface ClaudeEnhancedResponse extends GatewayResponse {
+  /** Extended thinking output (if enabled) */
+  thinking?: string;
+  /** Tool use requests from Claude */
+  toolUses?: ClaudeToolUse[];
+  /** Whether prompt cache was hit */
+  cacheHit?: boolean;
+  /** Cache creation/read token counts */
+  cacheStats?: {
+    cacheCreationInputTokens: number;
+    cacheReadInputTokens: number;
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Request & Response Types
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface GatewayMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
+  /** Multi-modal content blocks (images + text) — Claude only */
+  contentBlocks?: ContentBlock[];
 }
 
 export interface GatewayRequest {
@@ -85,6 +175,26 @@ export interface GatewayRequest {
 
   /** Arbitrary metadata for audit log */
   metadata?: Record<string, unknown>;
+
+  // ── Claude-Specific Options ──────────────────────────────────────────────
+
+  /** Enable extended thinking (Claude only) */
+  thinking?: ExtendedThinkingConfig;
+
+  /** Tools for agentic workflows (Claude only) */
+  tools?: ClaudeTool[];
+
+  /** Tool choice behavior */
+  toolChoice?: 'auto' | 'any' | { type: 'tool'; name: string };
+
+  /** Prompt caching config (Claude only) */
+  promptCache?: PromptCacheConfig;
+
+  /** Streaming callback for real-time delivery */
+  onStream?: StreamCallback;
+
+  /** Multi-modal content blocks (images) — used instead of messages for vision */
+  imageContent?: ImageBlock[];
 }
 
 export interface GatewayUsage {

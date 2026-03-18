@@ -8,6 +8,7 @@
 
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users, organizations } from '../../shared/schema';
@@ -289,22 +290,95 @@ router.post('/logout', (req: Request, res: Response) => {
 
 /**
  * POST /api/register
- * Legacy register endpoint
+ * User registration endpoint
  */
 router.post('/register', async (req: Request, res: Response) => {
-  const { username, password, email } = req.body;
+  const { username, password, email, firstName, lastName } = req.body;
+  const registrationEmail = email || (username ? `${username}@trialsage.ai` : null);
 
-  // In dev mode, just return success
-  if (isDev) {
-    return res.json({
-      id: 1,
-      username: username || email?.split('@')[0] || 'newuser',
-      email: email || `${username}@trialsage.ai`,
-      role: 'user',
+  if (!registrationEmail || !password) {
+    return res.status(400).json({
+      error: { code: 'VALIDATION_ERROR', message: 'Email and password are required' },
     });
   }
 
-  res.status(501).json({ message: 'Registration not implemented' });
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(registrationEmail)) {
+    return res.status(400).json({
+      error: { code: 'VALIDATION_ERROR', message: 'Invalid email format' },
+    });
+  }
+
+  // Validate password strength
+  if (password.length < 8) {
+    return res.status(400).json({
+      error: { code: 'VALIDATION_ERROR', message: 'Password must be at least 8 characters' },
+    });
+  }
+
+  try {
+    // Check for existing user with this email
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, registrationEmail.toLowerCase()))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return res.status(409).json({
+        error: { code: 'EMAIL_EXISTS', message: 'An account with this email already exists' },
+      });
+    }
+
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    // Build display name
+    const displayName = [firstName, lastName].filter(Boolean).join(' ')
+      || username
+      || registrationEmail.split('@')[0];
+
+    // Insert new user
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email: registrationEmail.toLowerCase(),
+        name: displayName,
+        passwordHash,
+        status: 'active',
+        passwordChangedAt: new Date(),
+      })
+      .returning();
+
+    // Generate JWT for immediate login
+    const token = jwt.sign(
+      { userId: String(newUser.id), email: newUser.email },
+      config.jwt.secret,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      id: newUser.id,
+      username: newUser.email.split('@')[0],
+      email: newUser.email,
+      displayName: newUser.name,
+      role: 'user',
+      token,
+    });
+  } catch (error: any) {
+    // Handle unique constraint violation at DB level (race condition)
+    if (error.code === '23505' && error.constraint?.includes('email')) {
+      return res.status(409).json({
+        error: { code: 'EMAIL_EXISTS', message: 'An account with this email already exists' },
+      });
+    }
+
+    console.error('[users] Registration error:', error);
+    res.status(500).json({
+      error: { code: 'INTERNAL_ERROR', message: 'Registration failed' },
+    });
+  }
 });
 
 export default router;

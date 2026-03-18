@@ -6,9 +6,9 @@
 
 import { getOpenAIClient } from './openai-client';
 import { db } from '../db';
-import { 
-  foresightPredictions, 
-  biomarkerEndpoints, 
+import {
+  foresightPredictions,
+  biomarkerEndpoints,
   clinicalOutcomes,
   translationalPatterns,
   clinicalFeedback,
@@ -23,9 +23,51 @@ import {
 import { and, eq, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 import { ForesightKnowledgeGraph } from './foresight-knowledge-graph';
 import { getIntelligencePrefix } from './lumen-context-builder.js';
+import { getGateway } from './ai-gateway/gateway';
 
-// Initialize OpenAI with GPT-5 capabilities
-const openai = getOpenAIClient();
+// AI Gateway wrapper — routes through Claude by default, falls back to OpenAI
+// This replaces direct OpenAI calls for all foresight AI operations
+const openai = {
+  chat: {
+    completions: {
+      create: async (params: any) => {
+        try {
+          const gw = getGateway();
+          if (gw.getEnabledProviders().length > 0) {
+            const response = await gw.route({
+              taskType: 'document_analysis',
+              messages: (params.messages || []).map((m: any) => ({
+                role: m.role,
+                content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+              })),
+              maxTokens: params.max_tokens || 4096,
+              temperature: params.temperature ?? 0.7,
+              jsonMode: params.response_format?.type === 'json_object',
+              callerModule: 'foresight-ai-engine',
+            });
+            // Return OpenAI-compatible shape
+            return {
+              choices: [{
+                message: { content: response.content, role: 'assistant' },
+                finish_reason: response.finishReason || 'stop',
+              }],
+              usage: {
+                prompt_tokens: response.usage.inputTokens,
+                completion_tokens: response.usage.outputTokens,
+                total_tokens: response.usage.totalTokens,
+              },
+            };
+          }
+        } catch (e) {
+          console.warn('[Foresight AI] Gateway call failed, trying direct OpenAI:', e);
+        }
+        // Fallback to direct OpenAI if gateway fails
+        const directClient = new (require('openai').default)({ apiKey: process.env.OPENAI_API_KEY || '' });
+        return directClient.chat.completions.create(params);
+      },
+    },
+  },
+};
 
 // Advanced model selection for different tasks
 const AI_MODELS = {

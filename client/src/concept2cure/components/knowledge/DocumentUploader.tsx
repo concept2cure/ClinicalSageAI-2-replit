@@ -173,7 +173,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
           error && 'border-red-300 bg-red-50',
           disabled && 'opacity-50 cursor-not-allowed',
           !isDragging && !isUploading && !uploadSuccess && !error && 
-            'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
         )}
       >
         {/* Hidden File Input */}
@@ -194,7 +194,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
             isUploading && 'bg-blue-100 text-blue-600',
             uploadSuccess && 'bg-green-100 text-green-600',
             error && 'bg-red-100 text-red-600',
-            !isDragging && !isUploading && !uploadSuccess && !error && 'bg-gray-100 text-gray-500'
+            !isDragging && !isUploading && !uploadSuccess && !error && 'bg-zinc-100 text-zinc-500'
           )}
         >
           {isUploading ? (
@@ -212,22 +212,22 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         {selectedFile ? (
           <div className="flex items-center gap-2 text-sm">
             <span className="font-medium truncate max-w-[200px]">{selectedFile.name}</span>
-            <span className="text-gray-500">({formatFileSize(selectedFile.size)})</span>
+            <span className="text-zinc-500">({formatFileSize(selectedFile.size)})</span>
             {!isUploading && !uploadSuccess && (
               <button
                 onClick={handleClearFile}
-                className="p-1 hover:bg-gray-200 rounded"
+                className="p-1 hover:bg-zinc-200 rounded"
               >
-                <X className="h-4 w-4 text-gray-500" />
+                <X className="h-4 w-4 text-zinc-500" />
               </button>
             )}
           </div>
         ) : (
           <div className="text-center">
-            <p className="text-sm font-medium text-gray-700">
+            <p className="text-sm font-medium text-zinc-700">
               {isDragging ? 'Drop file here' : 'Drag & drop or click to upload'}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               PDF, DOCX, TXT, MD, XLSX, CSV (max 50MB)
             </p>
           </div>
@@ -237,7 +237,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         {isUploading && (
           <div className="w-full max-w-xs">
             <Progress value={uploadProgress} className="h-2" />
-            <p className="text-xs text-center text-gray-500 mt-1">
+            <p className="text-xs text-center text-zinc-500 mt-1">
               Uploading... {uploadProgress}%
             </p>
           </div>

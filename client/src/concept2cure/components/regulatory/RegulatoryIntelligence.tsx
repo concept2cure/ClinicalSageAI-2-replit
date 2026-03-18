@@ -584,7 +584,7 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
  */
 function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[] }) {
   const approvalTypeConfig: Record<string, { label: string; color: string }> = {
-    standard: { label: 'Standard', color: 'bg-gray-100 text-gray-800' },
+    standard: { label: 'Standard', color: 'bg-zinc-100 text-zinc-800' },
     priority: { label: 'Priority Review', color: 'bg-blue-100 text-blue-800' },
     accelerated: { label: 'Accelerated', color: 'bg-green-100 text-green-800' },
     breakthrough: { label: 'Breakthrough', color: 'bg-purple-100 text-purple-800' },

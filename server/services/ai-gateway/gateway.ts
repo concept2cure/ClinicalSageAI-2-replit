@@ -25,6 +25,10 @@ import type {
   ModelConfig,
   ProviderHealth,
   GatewayUsage,
+  ClaudeEnhancedResponse,
+  ClaudeToolUse,
+  StreamCallback,
+  ContentBlock,
 } from './types';
 import { GatewayAuditLogger } from './audit';
 import { GatewayPolicyEngine } from './policy';
@@ -65,16 +69,18 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    id: 'claude-3-5-sonnet',
+    id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-opus-4-20250514',
     contextWindow: 200000,
-    qualityScore: 97,
-    costPer1kInput: 0.003,
-    costPer1kOutput: 0.015,
+    qualityScore: 99,
+    costPer1kInput: 0.015,
+    costPer1kOutput: 0.075,
     capabilities: [
       'chat',
       'document_analysis',
+      'document_drafting',
+      'structured_output',
       'regulatory_review',
       'code_generation',
       'summarization',
@@ -83,14 +89,34 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    id: 'claude-3-haiku',
+    id: 'claude-sonnet-4',
     provider: 'anthropic',
-    model: 'claude-3-haiku-20240307',
+    model: 'claude-sonnet-4-20250514',
     contextWindow: 200000,
-    qualityScore: 80,
-    costPer1kInput: 0.00025,
-    costPer1kOutput: 0.00125,
-    capabilities: ['chat', 'general', 'summarization'],
+    qualityScore: 97,
+    costPer1kInput: 0.003,
+    costPer1kOutput: 0.015,
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'document_drafting',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
+    enabled: true,
+  },
+  {
+    id: 'claude-haiku-4',
+    provider: 'anthropic',
+    model: 'claude-haiku-4-5-20251001',
+    contextWindow: 200000,
+    qualityScore: 85,
+    costPer1kInput: 0.0008,
+    costPer1kOutput: 0.004,
+    capabilities: ['chat', 'general', 'summarization', 'structured_output'],
     enabled: true,
   },
   {
@@ -118,15 +144,17 @@ const DEFAULT_MODELS: ModelConfig[] = [
 ];
 
 // Task → preferred provider order
+// Claude is primary for regulatory, document drafting, analysis, and code generation
 const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
-  chat: ['openai', 'anthropic', 'moonshot'],
+  chat: ['anthropic', 'openai', 'moonshot'],
   document_analysis: ['anthropic', 'openai', 'moonshot'],
-  structured_output: ['openai', 'anthropic'],
+  document_drafting: ['anthropic', 'openai'],
+  structured_output: ['anthropic', 'openai'],
   regulatory_review: ['anthropic', 'openai'],
   code_generation: ['anthropic', 'openai'],
-  summarization: ['openai', 'anthropic', 'moonshot'],
+  summarization: ['anthropic', 'openai', 'moonshot'],
   embedding: ['openai'],
-  general: ['openai', 'anthropic', 'moonshot'],
+  general: ['anthropic', 'openai', 'moonshot'],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,6 +165,8 @@ const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
   chat: 'This is a deterministic response for testing. The AI Gateway is operating in deterministic mode.',
   document_analysis:
     '## Document Analysis (Deterministic Mode)\n\nThe document has been analyzed. Key findings:\n- Section 1: Compliant\n- Section 2: Requires review\n- Section 3: Compliant\n\nOverall risk: Low.',
+  document_drafting:
+    '## Document Draft (Deterministic Mode)\n\nThis is a placeholder document draft generated in deterministic mode. Enable live AI to generate real regulatory documents.',
   structured_output: '{"result": "deterministic", "status": "success", "data": {}}',
   regulatory_review:
     '## Regulatory Review (Deterministic Mode)\n\n**Compliance Status**: Passed\n\n- 21 CFR Part 11: Compliant\n- ICH E6(R2): Compliant\n- FDA 510(k) Requirements: Met\n\nNo critical findings identified.',
@@ -438,51 +468,272 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<GatewayResponse> {
+  ): Promise<ClaudeEnhancedResponse> {
     if (!this.anthropicClient) {
       throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
+    }
+
+    // If streaming requested, delegate to streaming method
+    if (request.stream && request.onStream) {
+      return this.executeAnthropicStream(modelConfig, request, requestId, startTime);
     }
 
     // Convert messages — Anthropic needs system separate
     const systemMessages = request.messages.filter(m => m.role === 'system');
     const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
 
+    // Build messages with multi-modal support (vision)
+    const messages = nonSystemMessages.map(m => {
+      // If message has contentBlocks (images + text), use structured content
+      if (m.contentBlocks && m.contentBlocks.length > 0) {
+        return {
+          role: m.role,
+          content: m.contentBlocks.map(block => {
+            if (block.type === 'image') {
+              return {
+                type: 'image' as const,
+                source: block.source,
+              };
+            }
+            return { type: 'text' as const, text: block.text };
+          }),
+        };
+      }
+      // Also handle request-level imageContent (convenience API)
+      if (m.role === 'user' && request.imageContent && request.imageContent.length > 0) {
+        const content: any[] = request.imageContent.map(img => ({
+          type: 'image' as const,
+          source: img.source,
+        }));
+        content.push({ type: 'text' as const, text: m.content });
+        return { role: m.role, content };
+      }
+      return { role: m.role, content: m.content };
+    });
+
     const params: any = {
       model: modelConfig.model,
-      max_tokens: request.maxTokens || 2000,
-      temperature: request.temperature ?? 0.7,
-      messages: nonSystemMessages.map(m => ({ role: m.role, content: m.content })),
+      max_tokens: request.maxTokens || 4096,
+      messages,
     };
 
+    // System prompt with optional prompt caching
     if (systemMessages.length > 0) {
-      params.system = systemMessages.map(m => m.content).join('\n\n');
+      if (request.promptCache?.enabled) {
+        // Use structured system blocks with cache_control
+        params.system = systemMessages.map((m, i) => ({
+          type: 'text',
+          text: m.content,
+          ...(i === systemMessages.length - 1
+            ? { cache_control: { type: request.promptCache!.type } }
+            : {}),
+        }));
+      } else {
+        params.system = systemMessages.map(m => m.content).join('\n\n');
+      }
+    }
+
+    // Extended thinking — requires temperature unset or 1
+    if (request.thinking?.enabled) {
+      params.thinking = {
+        type: 'enabled',
+        budget_tokens: request.thinking.budgetTokens || 10000,
+      };
+      // Extended thinking requires temperature=1 and no top_p/top_k
+      params.temperature = 1;
+    } else {
+      params.temperature = request.temperature ?? 0.7;
+    }
+
+    // Tool use
+    if (request.tools && request.tools.length > 0) {
+      params.tools = request.tools;
+      if (request.toolChoice) {
+        params.tool_choice = typeof request.toolChoice === 'string'
+          ? { type: request.toolChoice }
+          : request.toolChoice;
+      }
     }
 
     const response = await this.anthropicClient.messages.create(params);
 
-    const content =
-      response.content?.map((block: any) => (block.type === 'text' ? block.text : '')).join('') ||
-      '';
+    // Extract text, thinking, and tool use blocks
+    let content = '';
+    let thinking = '';
+    const toolUses: ClaudeToolUse[] = [];
+
+    for (const block of response.content || []) {
+      if (block.type === 'text') {
+        content += block.text;
+      } else if (block.type === 'thinking') {
+        thinking += (block as any).thinking || '';
+      } else if (block.type === 'tool_use') {
+        toolUses.push({
+          id: (block as any).id,
+          name: (block as any).name,
+          input: (block as any).input,
+        });
+      }
+    }
+
+    // Calculate cache stats if prompt caching was used
+    const cacheStats = response.usage?.cache_creation_input_tokens !== undefined
+      ? {
+          cacheCreationInputTokens: response.usage.cache_creation_input_tokens || 0,
+          cacheReadInputTokens: response.usage.cache_read_input_tokens || 0,
+        }
+      : undefined;
+
+    const inputTokens = response.usage?.input_tokens || 0;
+    const outputTokens = response.usage?.output_tokens || 0;
 
     return {
       content,
+      thinking: thinking || undefined,
+      toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider: 'anthropic',
       model: modelConfig.model,
       usage: {
-        inputTokens: response.usage?.input_tokens || 0,
-        outputTokens: response.usage?.output_tokens || 0,
-        totalTokens: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0),
-        estimatedCostUsd: this.estimateCost(
-          modelConfig,
-          response.usage?.input_tokens || 0,
-          response.usage?.output_tokens || 0
-        ),
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+        estimatedCostUsd: this.estimateCost(modelConfig, inputTokens, outputTokens),
+      },
+      latencyMs: Date.now() - startTime,
+      requestId,
+      cached: false,
+      cacheHit: cacheStats ? cacheStats.cacheReadInputTokens > 0 : undefined,
+      cacheStats,
+      deterministic: false,
+      finishReason: response.stop_reason || 'unknown',
+    };
+  }
+
+  /**
+   * Streaming execution for Anthropic/Claude — delivers tokens in real-time via callback.
+   */
+  private async executeAnthropicStream(
+    modelConfig: ModelConfig,
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number
+  ): Promise<ClaudeEnhancedResponse> {
+    if (!this.anthropicClient) {
+      throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
+    }
+
+    const onStream = request.onStream!;
+    const systemMessages = request.messages.filter(m => m.role === 'system');
+    const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
+
+    const messages = nonSystemMessages.map(m => {
+      if (m.contentBlocks && m.contentBlocks.length > 0) {
+        return {
+          role: m.role,
+          content: m.contentBlocks.map(block =>
+            block.type === 'image'
+              ? { type: 'image' as const, source: block.source }
+              : { type: 'text' as const, text: block.text }
+          ),
+        };
+      }
+      return { role: m.role, content: m.content };
+    });
+
+    const params: any = {
+      model: modelConfig.model,
+      max_tokens: request.maxTokens || 4096,
+      messages,
+      stream: true,
+    };
+
+    if (systemMessages.length > 0) {
+      if (request.promptCache?.enabled) {
+        params.system = systemMessages.map((m, i) => ({
+          type: 'text',
+          text: m.content,
+          ...(i === systemMessages.length - 1
+            ? { cache_control: { type: request.promptCache!.type } }
+            : {}),
+        }));
+      } else {
+        params.system = systemMessages.map(m => m.content).join('\n\n');
+      }
+    }
+
+    if (request.thinking?.enabled) {
+      params.thinking = {
+        type: 'enabled',
+        budget_tokens: request.thinking.budgetTokens || 10000,
+      };
+      params.temperature = 1;
+    } else {
+      params.temperature = request.temperature ?? 0.7;
+    }
+
+    if (request.tools && request.tools.length > 0) {
+      params.tools = request.tools;
+      if (request.toolChoice) {
+        params.tool_choice = typeof request.toolChoice === 'string'
+          ? { type: request.toolChoice }
+          : request.toolChoice;
+      }
+    }
+
+    // Use the Anthropic SDK streaming API
+    const stream = await this.anthropicClient.messages.create(params);
+
+    let content = '';
+    let thinking = '';
+    const toolUses: ClaudeToolUse[] = [];
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let stopReason = 'unknown';
+
+    for await (const event of stream as AsyncIterable<any>) {
+      if (event.type === 'content_block_delta') {
+        if (event.delta?.type === 'text_delta') {
+          content += event.delta.text;
+          onStream(event.delta.text, { type: 'text' });
+        } else if (event.delta?.type === 'thinking_delta') {
+          thinking += event.delta.thinking;
+          onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
+        } else if (event.delta?.type === 'input_json_delta') {
+          // Tool input streaming — accumulate
+        }
+      } else if (event.type === 'content_block_start') {
+        if (event.content_block?.type === 'tool_use') {
+          toolUses.push({
+            id: event.content_block.id,
+            name: event.content_block.name,
+            input: {},
+          });
+        }
+      } else if (event.type === 'message_delta') {
+        stopReason = event.delta?.stop_reason || stopReason;
+        outputTokens = event.usage?.output_tokens || outputTokens;
+      } else if (event.type === 'message_start') {
+        inputTokens = event.message?.usage?.input_tokens || 0;
+      }
+    }
+
+    return {
+      content,
+      thinking: thinking || undefined,
+      toolUses: toolUses.length > 0 ? toolUses : undefined,
+      provider: 'anthropic',
+      model: modelConfig.model,
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+        estimatedCostUsd: this.estimateCost(modelConfig, inputTokens, outputTokens),
       },
       latencyMs: Date.now() - startTime,
       requestId,
       cached: false,
       deterministic: false,
-      finishReason: response.stop_reason || 'unknown',
+      finishReason: stopReason,
     };
   }
 
@@ -783,7 +1034,7 @@ export class AIGateway {
           name: 'anthropic',
           enabled: !!anthropicKey,
           apiKey: anthropicKey,
-          defaultModel: 'claude-3-5-sonnet-20241022',
+          defaultModel: 'claude-sonnet-4-20250514',
           models: [],
         },
         {
