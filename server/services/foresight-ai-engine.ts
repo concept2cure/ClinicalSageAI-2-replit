@@ -4,7 +4,7 @@
  * Production-ready service for pharmaceutical companies
  */
 
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { db } from '../db';
 import {
   foresightPredictions,
@@ -22,6 +22,7 @@ import {
 } from '@shared/schema';
 import { and, eq, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 import { ForesightKnowledgeGraph } from './foresight-knowledge-graph';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 import { getGateway } from './ai-gateway/gateway';
 
 // AI Gateway wrapper — routes through Claude by default, falls back to OpenAI
@@ -61,7 +62,7 @@ const openai = {
           console.warn('[Foresight AI] Gateway call failed, trying direct OpenAI:', e);
         }
         // Fallback to direct OpenAI if gateway fails
-        const directClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
+        const directClient = new (require('openai').default)({ apiKey: process.env.OPENAI_API_KEY || '' });
         return directClient.chat.completions.create(params);
       },
     },
@@ -101,14 +102,19 @@ export class ForesightAIEngine {
 
     // Build comprehensive context from all data sources
     const context = await this.buildMultiModalContext(params);
-    
+
+    // Inject client/project intelligence so the engine reads SKILL/.MD context
+    const intelligencePrefix = await getIntelligencePrefix(
+      organizationId ? parseInt(String(organizationId), 10) : undefined
+    ).catch(() => '');
+
     // Use GPT-5 for advanced prediction
     const predictionResponse = await openai.chat.completions.create({
       model: AI_MODELS.PREDICTION,
       messages: [
         {
           role: 'system',
-          content: `You are an advanced clinical trial prediction system with expertise in translational medicine.
+          content: `${intelligencePrefix}You are an advanced clinical trial prediction system with expertise in translational medicine.
                    Analyze multi-modal data including biomarkers, clinical outcomes, imaging, and genomics to predict:
                    1. Success probability with confidence intervals
                    2. Critical risk factors and mitigation strategies

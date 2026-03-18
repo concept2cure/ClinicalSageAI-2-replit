@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 import { aiChangeClassify, aiNextActions } from '../services/ai/regulatory';
 
 // Helper function for database queries

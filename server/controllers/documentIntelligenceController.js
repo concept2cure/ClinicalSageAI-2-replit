@@ -256,14 +256,15 @@ async function extractDocxContent(filePath) {
  */
 async function extractStructuredData(content, documentType) {
   try {
-    // Check for OpenAI integration - if not available, return mock data
+    // Check for OpenAI integration
     if (!process.env.OPENAI_API_KEY) {
-      logger.warn('OpenAI API key not configured, using mock extraction data');
-      return mockExtractedData(documentType);
+      const err = new Error('AI_SERVICE_UNAVAILABLE: OpenAI API key is not configured. Document intelligence extraction requires a valid OPENAI_API_KEY.');
+      err.code = 'AI_SERVICE_UNAVAILABLE';
+      throw err;
     }
 
-    const { OpenAI } = require('openai');
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const { getOpenAIClient } = require('../services/openai-client');
+    const openai = getOpenAIClient();
 
     // If content is very large, truncate it (OpenAI has token limits)
     let processedContent = content;
@@ -307,143 +308,11 @@ async function extractStructuredData(content, documentType) {
     return parsedData;
   } catch (error) {
     logger.error('Error in data extraction', { error: error.message, stack: error.stack });
-    return mockExtractedData(documentType);
+    throw error;
   }
 }
 
-/**
- * Mock data for when OpenAI is not available or fails
- */
-function mockExtractedData(documentType) {
-  // Base fields common to all document types
-  const baseResults = [
-    {
-      name: 'deviceName',
-      value: 'AccuScan MRI Contrast System',
-      confidence: 0.96,
-      source: 'document.pdf (p.1)',
-    },
-    {
-      name: 'manufacturer',
-      value: 'MediTech Imaging, Inc.',
-      confidence: 0.95,
-      source: 'document.pdf (p.1)',
-    },
-    {
-      name: 'manufacturerAddress',
-      value: '123 Innovation Dr, Burlington, MA 01803',
-      confidence: 0.9,
-      source: 'document.pdf (p.1)',
-    },
-    {
-      name: 'contactPerson',
-      value: 'Dr. Sarah Johnson',
-      confidence: 0.92,
-      source: 'document.pdf (p.2)',
-    },
-    {
-      name: 'contactEmail',
-      value: 'sjohnson@meditechimaging.com',
-      confidence: 0.89,
-      source: 'document.pdf (p.2)',
-    },
-    {
-      name: 'contactPhone',
-      value: '(555) 123-4567',
-      confidence: 0.94,
-      source: 'document.pdf (p.2)',
-    },
-    { name: 'deviceClass', value: 'II', confidence: 0.97, source: 'document.pdf (p.3)' },
-    { name: 'productCode', value: 'LNH', confidence: 0.85, source: 'document.pdf (p.3)' },
-    { name: 'regulationNumber', value: '892.1610', confidence: 0.88, source: 'document.pdf (p.3)' },
-    { name: 'panel', value: 'RA', confidence: 0.91, source: 'document.pdf (p.3)' },
-  ];
-
-  // Add more fields based on document type
-  let additionalFields = [];
-
-  if (documentType === 'technical') {
-    additionalFields = [
-      {
-        name: 'deviceDescription',
-        value: 'Automated contrast delivery system with digital control interface',
-        confidence: 0.91,
-        source: 'document.pdf (p.5)',
-      },
-      {
-        name: 'principlesOfOperation',
-        value: 'Microprocessor-controlled pump system with safety pressure monitoring',
-        confidence: 0.89,
-        source: 'document.pdf (p.6)',
-      },
-      {
-        name: 'keyFeatures',
-        value: 'Dual-syringe capability, flow rate 0.1-10ml/sec, pressure limit sensing',
-        confidence: 0.87,
-        source: 'document.pdf (p.6)',
-      },
-    ];
-  } else if (documentType === '510k') {
-    additionalFields = [
-      {
-        name: 'intendedUse',
-        value: 'For diagnostic imaging enhancement during MRI procedures',
-        confidence: 0.93,
-        source: 'document.pdf (p.4)',
-      },
-      {
-        name: 'indications',
-        value:
-          'Indicated for patients requiring enhanced MRI visualization of central nervous system and abdominal regions',
-        confidence: 0.87,
-        source: 'document.pdf (p.4)',
-      },
-      {
-        name: 'predicateDeviceName',
-        value: 'MagVision Contrast Delivery',
-        confidence: 0.78,
-        source: 'document.pdf (p.8)',
-      },
-      {
-        name: 'predicateManufacturer',
-        value: 'ImagingSolutions Medical',
-        confidence: 0.75,
-        source: 'document.pdf (p.8)',
-      },
-      {
-        name: 'predicateK510Number',
-        value: 'K123456',
-        confidence: 0.82,
-        source: 'document.pdf (p.8)',
-      },
-    ];
-  } else if (documentType === 'clinical') {
-    additionalFields = [
-      {
-        name: 'clinicalStudyType',
-        value: 'Prospective, multi-center trial',
-        confidence: 0.88,
-        source: 'document.pdf (p.10)',
-      },
-      {
-        name: 'patientPopulation',
-        value: 'Adult patients aged 18-75 requiring contrast-enhanced MRI',
-        confidence: 0.85,
-        source: 'document.pdf (p.11)',
-      },
-      {
-        name: 'safetyOutcomes',
-        value: 'No serious device-related adverse events reported',
-        confidence: 0.82,
-        source: 'document.pdf (p.15)',
-      },
-    ];
-  }
-
-  return {
-    extractedFields: [...baseResults, ...additionalFields],
-  };
-}
+// mockExtractedData removed — extraction now requires a working AI service.
 
 /**
  * Clean up temporary files after processing
@@ -527,9 +396,11 @@ const processDocuments = async (req, res) => {
   } catch (error) {
     logger.error('Document processing error', { error: error.message, stack: error.stack });
 
-    return res.status(500).json({
-      error: 'Error processing documents',
+    const statusCode = error.code === 'AI_SERVICE_UNAVAILABLE' ? 503 : 500;
+    return res.status(statusCode).json({
+      error: statusCode === 503 ? 'AI service unavailable' : 'Error processing documents',
       message: error.message,
+      code: error.code || 'PROCESSING_ERROR',
     });
   }
 };

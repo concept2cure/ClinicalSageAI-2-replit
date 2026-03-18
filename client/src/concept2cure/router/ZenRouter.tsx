@@ -32,6 +32,17 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 
+// DTC Landing Page — public, renders at / for unauthenticated users
+const LandingPage = lazy(() => import('../pages/LandingPage'));
+
+// Interactive Demo — public, AnA-narrated platform walkthrough
+const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
+
+// Lazy-load PasswordReset for the reset-password-via-email flow
+const PasswordResetPage = lazy(
+  () => import('@/portal-v2/components/auth/PasswordReset'),
+);
+
 /**
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
  */
@@ -204,6 +215,35 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// LANDING PAGE ROUTE (public → landing, authenticated → redirect to app)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LandingPageRoute: React.FC = () => {
+  const { isAuthenticated, isLoading } = usePortalAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      setLocation('/concept2cure');
+    }
+  }, [isAuthenticated, isLoading, setLocation]);
+
+  if (isLoading) {
+    return <ZenLoadingScreen message="Loading..." />;
+  }
+
+  if (isAuthenticated) {
+    return null; // Will redirect
+  }
+
+  return (
+    <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+      <LandingPage />
+    </Suspense>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ROUTER
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -214,6 +254,17 @@ export const ZenRouter: React.FC = () => {
     <PortalAuthProvider>
       <AnimatePresence mode="wait">
         <Switch location={location} key={location}>
+          {/* Interactive Demo — public, no auth required */}
+          <Route path="/concept2cure/demo">
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading demo..." />}>
+                  <InteractiveDemoPage />
+                </Suspense>
+              </PageTransition>
+            )}
+          </Route>
+
           {/* Login page */}
           <Route path="/concept2cure/login">
             {() => (
@@ -241,6 +292,26 @@ export const ZenRouter: React.FC = () => {
 
           {/* Alias: /signup redirects to /concept2cure/signup */}
           <Route path="/signup">{() => <Redirect to="/concept2cure/signup" />}</Route>
+
+          {/* DTC Landing Page — public, shows for unauthenticated visitors */}
+          <Route path="/">
+            {() => (
+              <PageTransition>
+                <LandingPageRoute />
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Password reset (linked from email) */}
+          <Route path="/concept2cure/password-reset">
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <PasswordResetPage />
+                </Suspense>
+              </PageTransition>
+            )}
+          </Route>
 
           {/* Onboarding - protected, for first-time users */}
           <Route path="/concept2cure/onboarding">

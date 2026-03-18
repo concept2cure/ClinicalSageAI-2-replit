@@ -19,10 +19,11 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { getRulesEngine } from '../services/rules-engine';
 import type { RuleTriggerEvent } from '../services/rules-engine/types';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 const pool = getPool();
@@ -106,51 +107,46 @@ const dryRunSchema = z.object({
 // GET /api/project-rules — List rules
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
 
-    const scope = req.query.scope as string | undefined;
-    const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
-    const activeOnly = req.query.activeOnly !== 'false';
+  const scope = req.query.scope as string | undefined;
+  const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
+  const activeOnly = req.query.activeOnly !== 'false';
 
-    let query = `SELECT * FROM project_rules WHERE organization_id = $1`;
-    const params: any[] = [organizationId];
-    let paramIndex = 2;
+  let query = `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE organization_id = $1`;
+  const params: any[] = [organizationId];
+  let paramIndex = 2;
 
-    if (activeOnly) {
-      query += ` AND is_active = true`;
-    }
-    if (scope) {
-      query += ` AND scope = $${paramIndex++}`;
-      params.push(scope);
-    }
-    if (projectId) {
-      query += ` AND (scope = 'global' OR scope_project_id = $${paramIndex++})`;
-      params.push(projectId);
-    }
-
-    query += ' ORDER BY priority DESC, name ASC';
-
-    const result = await pool.query(query, params);
-
-    res.json({
-      rules: result.rows,
-      total: result.rows.length,
-    });
-  } catch (error) {
-    console.error('[ProjectRules] Error listing rules:', error);
-    res.status(500).json({ error: 'Failed to fetch rules' });
+  if (activeOnly) {
+    query += ` AND is_active = true`;
   }
-});
+  if (scope) {
+    query += ` AND scope = $${paramIndex++}`;
+    params.push(scope);
+  }
+  if (projectId) {
+    query += ` AND (scope = 'global' OR scope_project_id = $${paramIndex++})`;
+    params.push(projectId);
+  }
+
+  query += ' ORDER BY priority DESC, name ASC';
+
+  const result = await pool.query(query, params);
+
+  res.json({
+    rules: result.rows,
+    total: result.rows.length,
+  });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/project-rules — Create rule
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
   try {
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
@@ -193,42 +189,36 @@ router.post('/', async (req: Request, res: Response) => {
     console.log(`[ProjectRules] Created rule "${data.name}" (${ruleId}) for org ${organizationId}`);
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('[ProjectRules] Error creating rule:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid rule data', details: error.errors });
     }
-    res.status(500).json({ error: 'Failed to create rule' });
+    throw error;
   }
-});
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/project-rules/:ruleId — Get single rule
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:ruleId', async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
+router.get('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
 
-    const result = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
-      [req.params.ruleId, organizationId]
-    );
+  const result = await pool.query(
+    `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+    [req.params.ruleId, organizationId]
+  );
 
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('[ProjectRules] Error fetching rule:', error);
-    res.status(500).json({ error: 'Failed to fetch rule' });
-  }
-});
+  if (result.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+  res.json(result.rows[0]);
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/project-rules/:ruleId — Update rule
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.patch('/:ruleId', async (req: Request, res: Response) => {
+router.patch('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
   try {
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
@@ -238,7 +228,7 @@ router.patch('/:ruleId', async (req: Request, res: Response) => {
 
     // Check rule exists and is not built-in
     const existing = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
       [req.params.ruleId, organizationId]
     );
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
@@ -304,57 +294,51 @@ router.patch('/:ruleId', async (req: Request, res: Response) => {
     console.log(`[ProjectRules] Updated rule ${req.params.ruleId}`);
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('[ProjectRules] Error updating rule:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid rule data', details: error.errors });
     }
-    res.status(500).json({ error: 'Failed to update rule' });
+    throw error;
   }
-});
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DELETE /api/project-rules/:ruleId — Delete (or soft-deactivate built-in)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.delete('/:ruleId', async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
+router.delete('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
 
-    const existing = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
-      [req.params.ruleId, organizationId]
+  const existing = await pool.query(
+    `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+    [req.params.ruleId, organizationId]
+  );
+  if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+
+  if (existing.rows[0].is_built_in) {
+    // Soft deactivate built-in rules
+    await pool.query(
+      `UPDATE project_rules SET is_active = false, updated_at = NOW() WHERE rule_id = $1`,
+      [req.params.ruleId]
     );
-    if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
-
-    if (existing.rows[0].is_built_in) {
-      // Soft deactivate built-in rules
-      await pool.query(
-        `UPDATE project_rules SET is_active = false, updated_at = NOW() WHERE rule_id = $1`,
-        [req.params.ruleId]
-      );
-      return res.json({ message: 'Built-in rule deactivated', ruleId: req.params.ruleId });
-    }
-
-    await pool.query(`DELETE FROM project_rules WHERE rule_id = $1 AND organization_id = $2`, [
-      req.params.ruleId,
-      organizationId,
-    ]);
-
-    console.log(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
-    res.json({ message: 'Rule deleted', ruleId: req.params.ruleId });
-  } catch (error) {
-    console.error('[ProjectRules] Error deleting rule:', error);
-    res.status(500).json({ error: 'Failed to delete rule' });
+    return res.json({ message: 'Built-in rule deactivated', ruleId: req.params.ruleId });
   }
-});
+
+  await pool.query(`DELETE FROM project_rules WHERE rule_id = $1 AND organization_id = $2`, [
+    req.params.ruleId,
+    organizationId,
+  ]);
+
+  console.log(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
+  res.json({ message: 'Rule deleted', ruleId: req.params.ruleId });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/project-rules/:ruleId/test — Dry-run a rule
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/:ruleId/test', async (req: Request, res: Response) => {
+router.post('/:ruleId/test', asyncHandler(async (req: Request, res: Response) => {
   try {
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
@@ -364,7 +348,7 @@ router.post('/:ruleId/test', async (req: Request, res: Response) => {
 
     // Get the rule
     const ruleResult = await pool.query(
-      `SELECT * FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      `SELECT rule_id, name, conditions, actions FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
       [req.params.ruleId, organizationId]
     );
     if (ruleResult.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
@@ -393,13 +377,12 @@ router.post('/:ruleId/test', async (req: Request, res: Response) => {
       testResult: result,
     });
   } catch (error) {
-    console.error('[ProjectRules] Error testing rule:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid test data', details: error.errors });
     }
-    res.status(500).json({ error: 'Failed to test rule' });
+    throw error;
   }
-});
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/project-rules/executions — Execution log
@@ -412,64 +395,59 @@ router.get('/logs', (req: Request, res: Response, next: Function) => {
   router.handle(req, res, next);
 });
 
-router.get('/executions/log', async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
+router.get('/executions/log', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
 
-    const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 500);
-    const offset = parseInt(req.query.offset as string, 10) || 0;
-    const ruleId = req.query.ruleId as string | undefined;
-    const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
+  const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 500);
+  const offset = parseInt(req.query.offset as string, 10) || 0;
+  const ruleId = req.query.ruleId as string | undefined;
+  const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
 
-    let query = `SELECT rel.*, pr.name as rule_name
-                 FROM rule_execution_log rel
-                 LEFT JOIN project_rules pr ON rel.rule_id = pr.rule_id
-                 WHERE rel.organization_id = $1`;
-    const params: any[] = [organizationId];
-    let paramIndex = 2;
+  let query = `SELECT rel.*, pr.name as rule_name
+               FROM rule_execution_log rel
+               LEFT JOIN project_rules pr ON rel.rule_id = pr.rule_id
+               WHERE rel.organization_id = $1`;
+  const params: any[] = [organizationId];
+  let paramIndex = 2;
 
-    if (ruleId) {
-      query += ` AND rel.rule_id = $${paramIndex++}`;
-      params.push(ruleId);
-    }
-    if (projectId) {
-      query += ` AND rel.project_id = $${paramIndex++}`;
-      params.push(projectId);
-    }
-
-    query += ` ORDER BY rel.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
-    params.push(limit, offset);
-
-    const result = await pool.query(query, params);
-
-    // Total count for pagination (parameterized to prevent SQL injection)
-    let countQuery = `SELECT COUNT(*)::int as total FROM rule_execution_log WHERE organization_id = $1`;
-    const countParams: any[] = [organizationId];
-    let countIdx = 2;
-    if (ruleId) {
-      countQuery += ` AND rule_id = $${countIdx++}`;
-      countParams.push(ruleId);
-    }
-    if (projectId) {
-      countQuery += ` AND project_id = $${countIdx++}`;
-      countParams.push(projectId);
-    }
-
-    const countResult = await pool.query(countQuery, countParams);
-
-    res.json({
-      executions: result.rows,
-      total: countResult.rows[0]?.total || 0,
-      limit,
-      offset,
-    });
-  } catch (error) {
-    console.error('[ProjectRules] Error fetching execution log:', error);
-    res.status(500).json({ error: 'Failed to fetch execution log' });
+  if (ruleId) {
+    query += ` AND rel.rule_id = $${paramIndex++}`;
+    params.push(ruleId);
   }
-});
+  if (projectId) {
+    query += ` AND rel.project_id = $${paramIndex++}`;
+    params.push(projectId);
+  }
+
+  query += ` ORDER BY rel.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
+  params.push(limit, offset);
+
+  const result = await pool.query(query, params);
+
+  // Total count for pagination (parameterized to prevent SQL injection)
+  let countQuery = `SELECT COUNT(*)::int as total FROM rule_execution_log WHERE organization_id = $1`;
+  const countParams: any[] = [organizationId];
+  let countIdx = 2;
+  if (ruleId) {
+    countQuery += ` AND rule_id = $${countIdx++}`;
+    countParams.push(ruleId);
+  }
+  if (projectId) {
+    countQuery += ` AND project_id = $${countIdx++}`;
+    countParams.push(projectId);
+  }
+
+  const countResult = await pool.query(countQuery, countParams);
+
+  res.json({
+    executions: result.rows,
+    total: countResult.rows[0]?.total || 0,
+    limit,
+    offset,
+  });
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/project-rules/templates — Built-in rule templates

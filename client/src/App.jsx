@@ -19,35 +19,49 @@ memoryOptimizer.startPeriodicCleanup();
 import { packageMonitor } from './services/packageMonitorService.js';
 import { dependencyLoader, preloadCriticalComponents } from './utils/dependencyLoader.js';
 
+const isDev = import.meta.env.DEV;
+
 // Preload critical components for document editor
 const initializeDependencyHardening = async () => {
   try {
-    console.log('🔧 Initializing dependency hardening system...');
+    if (isDev) console.log('Initializing dependency hardening system...');
 
-    // Verify package status
     const packageStatus = await packageMonitor.verifyAllPackages();
-    console.log('📦 Package verification complete:', packageStatus);
+    if (isDev) console.log('Package verification complete:', packageStatus);
 
-    // Preload critical components
     const preloadResults = await preloadCriticalComponents();
-    console.log('⚡ Component preloading complete:', preloadResults);
+    if (isDev) console.log('Component preloading complete:', preloadResults);
 
-    // Check if emergency fallback is needed
     if (preloadResults.failed > 0) {
-      console.warn('⚠️ Some components failed to load, fallback mode activated');
-    } else {
-      console.log('✅ All critical components loaded successfully');
+      console.warn('Some components failed to load, fallback mode activated');
     }
 
     return true;
   } catch (error) {
-    console.error('❌ Dependency hardening initialization failed:', error);
+    console.error('Dependency hardening initialization failed:', error);
     return false;
   }
 };
 
 // Initialize on app start
 initializeDependencyHardening();
+
+// Prefetch high-traffic route chunks after initial render (1.5s delay)
+const prefetchRoutes = () => {
+  const routes = [
+    () => import('./concept2cure/router/ZenRouter'),
+    () => import('./pages/csr/CERV2Page'),
+    () => import('./pages/cmc/CMCPage'),
+    () => import('./pages/ind/UnifiedECTD'),
+    () => import('./pages/vault/VaultBrowser'),
+  ];
+  routes.forEach(load => {
+    load().catch(() => {}); // Silently prefetch, ignore errors
+  });
+};
+if (typeof window !== 'undefined') {
+  setTimeout(prefetchRoutes, 1500);
+}
 
 // Stability utilities removed to show authentic TrialSage content
 
@@ -246,7 +260,7 @@ function MainApp() {
   // Removed stability measures to show authentic TrialSage content
 
   // Check if we're on the landing page, regulatory hub, coauthor pages, or dashboard (which have their own navigation)
-  const isLandingPage = location === '/' || location === '/client-portal';
+  const isLandingPage = location === '/client-portal';
   const isRegulatoryHub =
     location === '/regulatory-intelligence-hub' || location === '/client-portal/regulatory-intel';
   const isCoAuthorPage =
@@ -255,8 +269,8 @@ function MainApp() {
   // Ensure CERV2 pages are NOT excluded from the navigation
   const isCERV2Page = location === '/cerv2' || location.startsWith('/cerv2/');
 
-  // Concept2Cure pages have their own layout, no top nav needed
-  const isConcept2CurePage = location === '/concept2cure' || location.startsWith('/concept2cure/');
+  // Concept2Cure pages (and root landing) have their own layout, no top nav needed
+  const isConcept2CurePage = location === '/' || location === '/concept2cure' || location.startsWith('/concept2cure/');
 
   // Always show navigation for CERV2 pages
   const shouldShowNav =
@@ -388,8 +402,14 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Root and legacy portal routes → redirect to Concept2Cure home */}
-            <Route path="/">{() => <Redirect to="/concept2cure" />}</Route>
+            {/* Root → Marketing Landing Page via ZenRouter (shows LandingPage for unauth, redirects to /concept2cure for auth) */}
+            <Route path="/">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <ZenRouter />
+                </Suspense>
+              )}
+            </Route>
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
             {/* Lumen Cortex AI Assistant - Full Page */}
             <Route path="/lumen-cortex">

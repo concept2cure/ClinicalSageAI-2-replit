@@ -120,16 +120,40 @@ interface ZenChatProps {
 // THINKING INDICATOR - Claude-style pulsing "Thinking..." state
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ThinkingIndicator: React.FC = () => (
-  <div className="flex items-center gap-2 py-1">
-    <div className="relative flex items-center gap-1">
-      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
-      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-      <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+const ANA_THINKING_PHRASES = [
+  'Reviewing your regulatory landscape...',
+  'Cross-referencing guidance documents...',
+  'Checking the latest FDA updates...',
+  'Let me dig into the CTD modules...',
+  'Analyzing your submission strategy...',
+  'Running compliance checks...',
+  'Almost there — dotting the i\'s on Part 11...',
+  'Warming up the ELSA engines... no, not that one ❄️',
+  'Consulting my regulatory crystal ball...',
+  'Let it flow through the review process 🏔️',
+  'Building your regulatory snowglobe...',
+  'Searching through 65 ICH guidelines...',
+];
+
+const ThinkingIndicator: React.FC = () => {
+  const [msg, setMsg] = React.useState(() => ANA_THINKING_PHRASES[Math.floor(Math.random() * ANA_THINKING_PHRASES.length)]);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setMsg(ANA_THINKING_PHRASES[Math.floor(Math.random() * ANA_THINKING_PHRASES.length)]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <div className="relative flex items-center gap-1">
+        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+      </div>
+      <span className="text-sm text-violet-600 font-medium animate-pulse">{msg}</span>
     </div>
-    <span className="text-sm text-violet-600 font-medium animate-pulse">Thinking...</span>
-  </div>
-);
+  );
+};
 
 const TypingIndicator: React.FC = () => (
   <div className="flex items-center gap-1.5 py-1">
@@ -509,6 +533,7 @@ interface WelcomeScreenProps {
   lastWork?: { contextTitle: string; contextType: string } | null;
   nextTask?: { taskTitle: string; taskDescription?: string } | null;
   suggestedActions?: ActionCardDef[];
+  submissionType?: string;
 }
 
 const DEVICE_PROMPTS = [
@@ -565,6 +590,62 @@ const BIOTECH_PROMPTS = [
   },
 ];
 
+/**
+ * Segment-aware smart suggestions based on submission type.
+ * Every suggestion leads to a tangible document or artifact.
+ */
+function getSmartSuggestions(submissionType?: string): Array<{ title: string; description: string; highlight: boolean }> {
+  const st = (submissionType || '').toUpperCase();
+
+  // IND suggestions (Pharma / Biotech)
+  if (st === 'IND') return [
+    { title: 'Draft IND Cover Letter with Form 1571 references', description: 'Generate formal FDA IND cover letter with complete cross-references — creates a governed document in the vault', highlight: false },
+    { title: "Write the Investigator's Brochure (IB)", description: 'Draft ICH E6(R2) compliant IB compiling nonclinical pharmacology, toxicology, and clinical data', highlight: false },
+    { title: 'Create Clinical Protocol for Phase I study', description: 'Draft ICH E6(R2) GCP-compliant protocol with objectives, design, endpoints, and statistical plan', highlight: false },
+    { title: 'Generate Quality Overall Summary (M2.3)', description: 'Draft ICH M4Q-compliant QOS covering drug substance and drug product CMC sections', highlight: false },
+  ];
+
+  // NDA / BLA suggestions
+  if (st === 'NDA' || st === 'BLA') return [
+    { title: 'Draft Clinical Overview (Module 2.5)', description: 'Generate ICH M4E integrated clinical assessment with benefit-risk analysis for NDA/BLA', highlight: false },
+    { title: 'Generate Integrated Summary of Safety (ISS)', description: 'Create pooled safety analysis across studies with exposure, AEs, SAEs, and special populations', highlight: false },
+    { title: 'Write Prescribing Information / Label', description: 'Draft FDA-compliant PI with Highlights, Full Prescribing Information, and Medication Guide', highlight: false },
+    { title: 'Create Clinical Study Report (ICH E3)', description: 'Draft full ICH E3 CSR with synopsis, methods, efficacy, safety, and discussion sections', highlight: false },
+  ];
+
+  // 510(k) suggestions (MedTech)
+  if (st === '510K') return [
+    { title: 'Draft 510(k) Cover Letter', description: 'Generate FDA 510(k) premarket notification cover letter with classification and predicate references', highlight: false },
+    { title: 'Generate Substantial Equivalence comparison', description: 'Build detailed predicate comparison: intended use, technology, and performance data', highlight: false },
+    { title: 'Create Device Description document', description: 'Draft comprehensive device description with materials, principles of operation, and specifications', highlight: false },
+    { title: 'Build eSTAR submission package', description: 'Structure electronic 510(k) submission per FDA eSTAR format with all required sections', highlight: false },
+  ];
+
+  // PMA suggestions
+  if (st === 'PMA') return [
+    { title: 'Draft PMA Summary of Safety & Effectiveness', description: 'Generate SSED for Class III PMA with pivotal clinical study results and risk-benefit analysis', highlight: false },
+    { title: 'Create Biocompatibility Assessment (ISO 10993)', description: 'Draft biological evaluation plan and results summary per ISO 10993-1:2018', highlight: false },
+    { title: 'Write Clinical Study Protocol for pivotal trial', description: 'Draft IDE clinical study protocol with primary endpoints and statistical design', highlight: false },
+    { title: 'Generate Risk Management File (ISO 14971)', description: 'Create comprehensive risk analysis with hazard identification, estimation, and mitigation', highlight: false },
+  ];
+
+  // MAA suggestions (EU/EMA)
+  if (st === 'MAA') return [
+    { title: 'Draft MAA Cover Letter for EMA', description: 'Generate EMA Marketing Authorization Application cover letter with regulatory pathway references', highlight: false },
+    { title: 'Create IMPD (Investigational Medicinal Product Dossier)', description: 'Draft quality, nonclinical, and clinical sections for EU clinical trial authorization', highlight: false },
+    { title: 'Write Clinical Evaluation Report (EU MDR)', description: 'Generate CER per MEDDEV 2.7/1 Rev 4 with literature appraisal and equivalence analysis', highlight: false },
+    { title: 'Generate PSUR/PBRER', description: 'Draft ICH E2C(R2) periodic benefit-risk evaluation report for post-authorization safety', highlight: false },
+  ];
+
+  // Default — cover all types
+  return [
+    { title: 'Draft a complete IND Cover Letter', description: 'Generate a formal FDA cover letter with all required elements — creates a governed document you can edit and export', highlight: false },
+    { title: 'Write a Clinical Study Protocol', description: 'Draft ICH E6(R2) compliant protocol with study design, endpoints, and statistical methods', highlight: false },
+    { title: 'Create a Clinical Study Report (ICH E3)', description: 'Generate full CSR with synopsis, methods, efficacy results, safety evaluation, and conclusions', highlight: false },
+    { title: 'Plan my submission timeline and tasks', description: 'Generate a milestone-based project plan with tasks, dependencies, and critical path', highlight: false },
+  ];
+}
+
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onSuggestionClick,
   onNavigate,
@@ -574,6 +655,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   lastWork,
   nextTask,
   suggestedActions,
+  submissionType,
 }) => {
   const [activeTab, setActiveTab] = useState<'device' | 'biotech'>('device');
 
@@ -600,36 +682,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           },
         ]
       : []),
-    {
-      title: 'Draft a complete IND Cover Letter',
-      description: 'Generate a formal FDA cover letter with all required elements — I\'ll create a governed document you can edit inline and export',
-      highlight: false,
-    },
-    {
-      title: 'Generate a 510(k) Substantial Equivalence comparison',
-      description: 'Build a detailed predicate comparison table with device description, indications, and technological characteristics',
-      highlight: false,
-    },
-    {
-      title: 'Write a Clinical Overview (Module 2.5)',
-      description: 'Draft a comprehensive CTD clinical overview with benefit-risk assessment — save to vault when ready',
-      highlight: false,
-    },
-    {
-      title: 'Create a Clinical Evaluation Report (EU MDR)',
-      description: 'Generate a CER with clinical data appraisal, literature review, and equivalence analysis per MEDDEV 2.7/1',
-      highlight: false,
-    },
-    {
-      title: 'Draft a Regulatory Briefing Document',
-      description: 'Prepare a pre-meeting briefing package for FDA Type B meeting with questions and supporting data summary',
-      highlight: false,
-    },
-    {
-      title: 'Plan my submission timeline and tasks',
-      description: 'Generate a milestone-based project plan with tasks, dependencies, and critical path for my submission type',
-      highlight: false,
-    },
+    // Segment-aware suggestions based on submission type
+    ...getSmartSuggestions(submissionType),
   ].slice(0, 6); // Show max 6 suggestions
 
   return (
@@ -1232,6 +1286,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
             lastWork={lastWork}
             nextTask={nextTask}
             suggestedActions={suggestedActions}
+            submissionType={submissionType}
           />
         ) : (
           <div className="py-4">

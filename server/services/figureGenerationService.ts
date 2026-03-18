@@ -13,7 +13,7 @@
  * @compliance FDA 21 CFR Part 11 — all figure generation is audited
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { pool } from '../db.js';
 import crypto from 'crypto';
 
@@ -276,7 +276,7 @@ export async function generateFigure(
       return buildPlaceholderFigure(request, figureId, figureNumber, format);
     }
 
-    const openai = new OpenAI({ apiKey });
+    const openai = getOpenAIClient();
     const model = process.env.OPENAI_MODEL || 'gpt-4o';
     const completion = await openai.chat.completions.create({
       model,
@@ -370,7 +370,7 @@ export async function autoInsertFigures(params: {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return results;
 
-    const openai = new OpenAI({ apiKey });
+    const openai = getOpenAIClient();
     const model = process.env.OPENAI_MODEL || 'gpt-4o';
 
     const analysis = await openai.chat.completions.create({

@@ -1,9 +1,18 @@
 /**
  * Quality Control Database Schemas
- * 
- * Comprehensive QC management system for pharmaceutical operations
+ *
+ * STATUS: INACTIVE — These 6 tables are fully defined with insert schemas
+ * but have NO routes, services, or queries referencing them anywhere in the codebase.
+ * Migrations exist but no data flows through these tables.
+ *
+ * Tables: qcSpecifications, qcOosInvestigations, qcBatchReleases,
+ *         qcDeviations, qcMicrobiologicalTests, qcReferenceStandards
+ *
+ * Comprehensive QC management system for pharmaceutical operations.
  * Includes specifications, OOS investigations, batch releases, deviations,
- * microbiological testing, and reference standards management
+ * microbiological testing, and reference standards management.
+ *
+ * TODO: Either build QC routes/services or remove these tables to reduce schema bloat.
  */
 import { relations, InferSelectModel } from 'drizzle-orm';
 import {

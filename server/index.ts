@@ -1,5 +1,8 @@
 import 'dotenv/config';
 
+// Initialize Sentry error monitoring early, before other imports
+import './utils/sentry';
+
 // CRITICAL: Force IPv4 first to prevent ENETUNREACH errors in environments without IPv6 support
 // This MUST be at the very top before ANY database connections are made
 import dns from 'dns';
@@ -9,7 +12,6 @@ import express from 'express';
 import { createServer } from 'http';
 import { Pool } from 'pg';
 import { setupVite } from './vite';
-// import rateLimit from 'express-rate-limit';
 import { httpLogger, errorHandler } from './src/mw/observability.js';
 // Database performance optimizations - optional
 import multer from 'multer';
@@ -25,14 +27,10 @@ import { initializeProofDatabasePersistence } from '../services/proof/database-s
 // Enterprise Security & Performance Middleware
 import {
   applySecurityMiddleware,
-  securityHeaders,
-  corsMiddleware,
   auditLog,
 } from './middleware/enterprise-security.js';
 import {
   applyPerformanceMiddleware,
-  compressionMiddleware,
-  monitorPerformance,
   cleanup as cleanupPerformance,
 } from './middleware/enterprise-performance.js';
 import {
@@ -47,10 +45,9 @@ import {
 import { AIProviderRouter, getAIRouter } from './services/aiProviderRouter.js';
 // aiProviderRouter will be initialized after database connection
 let aiProviderRouter: AIProviderRouter | null = null;
-// Backward compatibility alias for existing code
-const openaiService = { getRouter: () => aiProviderRouter };
-import auditService from './services/auditService.js';
-import rbacService from './services/roleBasedAccess.js';
+// Side-effect imports: constructor initializes audit tables and RBAC cache
+import './services/auditService.js';
+import './services/roleBasedAccess.js';
 import { authMiddleware } from './auth.js';
 
 // Import database and schema for workflow persistence
@@ -67,39 +64,35 @@ const debugLog = (message: string, data?: any) => {
 };
 
 // Import CMC route handlers
-import cmcProjectRoutes from './api/cmc/projectRoutes.ts';
-import cmcBlueprintRoutes from './api/cmc/blueprintRoutes.ts';
-import cmcDashboardRoutes from './routes/cmc-dashboard.ts';
+import cmcProjectRoutes from './api/cmc/projectRoutes';
+import cmcBlueprintRoutes from './api/cmc/blueprintRoutes';
+import cmcDashboardRoutes from './routes/cmc-dashboard';
 import cmcAggregatorRoutes from './api/cmc/index.js';
-import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
+import cmcDashboardPrisma from './routes/cmc-dashboard-prisma';
+import cmcCoreRoutes from './api/cmc/routes';
 
 // Import AI assistance routes
-import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance.ts';
+import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
 // Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
 
-// Import authoring routes - made optional to prevent startup crashes
-// import authoringRouter from './routes/authoring.router.js';
-
-// Import sections routes - deprecated, using predictive-sections.ts instead
-// import sectionsRouter from './routes/sections.js';
-import predictiveSectionsRoutes from './routes/predictive-sections.ts';
+import predictiveSectionsRoutes from './routes/predictive-sections';
 
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
 
 // Import ForesightAI routes
-import foresightApiRoutes from './routes/foresight-api.ts';
-import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.ts';
-import foresightFeedbackRoutes from './routes/foresight-feedback.ts';
+import foresightApiRoutes from './routes/foresight-api';
+import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
+import foresightFeedbackRoutes from './routes/foresight-feedback';
 
 // Import Phase 5: Intelligent Document System routes
-import intelligentDocsRoutes from './routes/intelligentDocs.ts';
+import intelligentDocsRoutes from './routes/intelligentDocs';
 import { testAssemblyRoutes } from './routes/test-assembly';
 
 // Import Phase 5: PM Settings & Configuration routes
 import pmSettingsRouter from './src/routes/pm-settings.router';
-import reportsManifestRoutes from './routes/reports/manifest-routes.ts';
-import reportsGenerationRoutes from './routes/reports/generate-report.ts';
+import reportsManifestRoutes from './routes/reports/manifest-routes';
+import reportsGenerationRoutes from './routes/reports/generate-report';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -134,7 +127,7 @@ process.on('SIGTERM', async () => {
   cleanupPerformance();
   // Graceful DB shutdown
   try {
-    await pool.end();
+    if (pool) await pool.end();
     console.log('✅ Database connections closed');
   } catch (error: any) {
     console.error('❌ Error closing database:', error.message);
@@ -158,7 +151,7 @@ process.on('SIGINT', async () => {
   cleanupPerformance();
   // Graceful DB shutdown
   try {
-    await pool.end();
+    if (pool) await pool.end();
     console.log('✅ Database connections closed');
   } catch (error: any) {
     console.error('❌ Error closing database:', error.message);
@@ -172,13 +165,9 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit - log and continue for client stability
 });
 
-process.on('uncaughtException', error => {
-  console.error('🚨 Uncaught Exception:', error);
-  // For uncaught exceptions, we should exit gracefully after logging
-  setTimeout(() => {
-    console.error('🔄 Graceful restart due to uncaught exception...');
-    process.exit(1);
-  }, 1000);
+process.on('uncaughtException', (error) => {
+  console.error('UNCAUGHT EXCEPTION:', error);
+  process.exit(1);
 });
 // --- End Python FastAPI Backend Logic ---
 
@@ -263,7 +252,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Use centralized database pool
-import { getPool } from './db/pool';
+import { getPool } from './db';
 const pool = getPool();
 
 // Import enterprise table enforcement
@@ -299,15 +288,12 @@ pool
     console.error('❌ Database connection failed:', err.message);
   });
 
-// VaultDMSService disabled - service moved to _deprecated
-// import VaultDMSService from './services/VaultDMSService.js';
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
   upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
   download: async (path: string) => path,
   delete: async (path: string) => true,
 };
-// app.locals.vaultDmsService = new VaultDMSService(pool, storageClient);
 console.log('✅ Storage client initialized (VaultDMS deprecated)');
 
 // Health check endpoints
@@ -363,10 +349,10 @@ app.get('/api/diag', (_req: Request, res: Response) => {
 
 // Mount authentication routes (SECURE)
 try {
-  const authModule = await import('./routes/auth.ts');
+  const authModule = await import('./routes/auth');
   const authRouter = authModule.default;
   // Express Router is an object with handle method, not strictly a function
-  if (authRouter && (typeof authRouter === 'function' || authRouter.handle)) {
+  if (authRouter && (typeof authRouter === 'function' || (authRouter as any).handle)) {
     app.use('/api/auth', authRouter);
     // Also mount on /api/v1/auth for client compatibility
     app.use('/api/v1/auth', authRouter);
@@ -382,9 +368,9 @@ try {
 
 // Mount Users routes
 try {
-  const usersModule = await import('./routes/users.ts');
+  const usersModule = await import('./routes/users');
   const usersRouter = usersModule.default;
-  if (usersRouter && (typeof usersRouter === 'function' || usersRouter.handle)) {
+  if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
     app.use('/api/users', usersRouter);
     app.use('/api/user', usersRouter); // Alias for /api/users/me
     // DO NOT mount at /api - it breaks /api/tenants and other routes
@@ -411,11 +397,11 @@ app.post('/api/register', (req, res) => {
 
 // Mount Enterprise Authentication routes (21 CFR Part 11 Compliant)
 try {
-  const authEnterpriseModule = await import('./routes/authEnterprise.ts');
+  const authEnterpriseModule = await import('./routes/authEnterprise');
   const authEnterpriseRouter = authEnterpriseModule.default;
   if (
     authEnterpriseRouter &&
-    (typeof authEnterpriseRouter === 'function' || authEnterpriseRouter.handle)
+    (typeof authEnterpriseRouter === 'function' || (authEnterpriseRouter as any).handle)
   ) {
     app.use('/api/auth/enterprise', authEnterpriseRouter);
     console.log('✅ Enterprise Authentication routes mounted at /api/auth/enterprise');
@@ -432,9 +418,9 @@ try {
 
 // Mount SSO helper routes (/api/auth/sso) for developer/testing
 try {
-  const ssoModule = await import('./routes/sso.ts');
+  const ssoModule = await import('./routes/sso');
   const ssoRouter = ssoModule.default;
-  if (ssoRouter && (typeof ssoRouter === 'function' || ssoRouter.handle)) {
+  if (ssoRouter && (typeof ssoRouter === 'function' || (ssoRouter as any).handle)) {
     app.use('/api/auth/sso', ssoRouter);
     console.log('✅ SSO helper routes mounted at /api/auth/sso');
   }
@@ -443,7 +429,8 @@ try {
 }
 
 // ── Global Auth Middleware ──────────────────────────────────────────────
-// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects)
+// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects).
+// Uses segment-boundary matching to prevent bypass via crafted paths like /api/auth-evil.
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
   const openPrefixes = [
     '/api/auth',
@@ -456,7 +443,12 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     '/api/claude/models',
   ];
   const fullPath = req.baseUrl + req.path;
-  if (openPrefixes.some(p => fullPath.startsWith(p))) return next();
+  const isOpen = openPrefixes.some(p => {
+    if (fullPath === p) return true;
+    // Only match if prefix is followed by '/' or query string boundary
+    return fullPath.startsWith(p + '/');
+  });
+  if (isOpen) return next();
   return authMiddleware(req, res, next);
 });
 console.log(
@@ -796,17 +788,19 @@ app.delete('/api/device-projects/:id', async (req: Request, res: Response) => {
 console.log('✅ /api/device-projects CRUD routes mounted');
 
 // Register template routes
-import templateRoutes from './api/templates/routes.ts';
+import templateRoutes from './api/templates/routes';
 app.use('/api/templates', templateRoutes);
 
-// Template usage routes deprecated - consolidated into templateRoutes
-// import templatesUsageRoutes from './routes/templates-usage.js';
-// app.use('/api', templatesUsageRoutes);
-
-// Import and mount AI routes
-import aiRoutes from './api/ai/routes.ts';
+// Import and mount AI routes — protected by circuit breaker for fault isolation
+import aiRoutes from './api/ai/routes';
 import phase3Routes from './api/ai/phase3-routes.js';
-app.use('/api/ai', aiRoutes);
+import { createCircuitBreakerMiddleware } from './middleware/circuitBreaker';
+const aiCircuitBreaker = createCircuitBreakerMiddleware('ai-service', {
+  failureThreshold: 10,
+  resetTimeout: 30_000,
+  maxTimeout: 60_000, // AI calls can be slow
+});
+app.use('/api/ai', aiCircuitBreaker, aiRoutes);
 app.use('/api/test-assembly', testAssemblyRoutes(pool));
 // Mount Phase 3 AI routes
 app.use('/api', phase3Routes);
@@ -820,6 +814,10 @@ app.use('/api/enterprise/rbac', rbacRoutes);
 
 // Mount CMC Module routes (Chemistry, Manufacturing & Controls)
 try {
+  // Both routers share /api/cmc but define non-overlapping sub-routes:
+  //   cmcAggregatorRoutes: /blueprint-generator, /change-impact-simulator, /manufacturing-tuner, etc.
+  //   cmcProjectRoutes:    /projects, /projects/:id, /projects/:projectId/substances, etc.
+  app.use('/api/cmc', cmcCoreRoutes);
   app.use('/api/cmc', cmcAggregatorRoutes);
   app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
@@ -832,7 +830,12 @@ try {
 
 // Mount AI Assistance routes
 try {
-  app.use('/api/ai-assistance', aiAssistanceRoutes);
+  app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
+  // Initialize the AI provider router and inject into AI assistance module
+  aiProviderRouter = getAIRouter(pool);
+  if (aiProviderRouter) {
+    setAIService(aiProviderRouter);
+  }
   console.log('✅ AI Assistance API routes mounted');
 } catch (error) {
   console.error('❌ Failed to mount AI Assistance routes:', error);
@@ -840,7 +843,7 @@ try {
 
 // Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
 try {
-  const lumenCortexRoutes = await import('./routes/lumen-cortex.ts');
+  const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
   console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
@@ -866,19 +869,20 @@ try {
 // Mount Lumen Cortex (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
-  const markDeprecated = (req: Request, res: Response, next: () => void) => {
+  // Shared deprecation middleware for all Foresight/Lumen legacy routes
+  const foresightDeprecation = (req: Request, res: Response, next: () => void) => {
     res.setHeader('Deprecation', 'true');
     res.setHeader('Sunset', '2026-04-01');
     res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
     next();
   };
 
-  app.use('/api/foresight', markDeprecated, foresightApiRoutes);
-  app.use('/api/foresight-ai', markDeprecated, foresightAIAdvancedRoutes);
-  app.use('/api/foresight-feedback', markDeprecated, foresightFeedbackRoutes);
+  app.use('/api/foresight', foresightDeprecation, foresightApiRoutes);
+  app.use('/api/foresight-ai', foresightDeprecation, foresightAIAdvancedRoutes);
+  app.use('/api/foresight-feedback', foresightDeprecation, foresightFeedbackRoutes);
   app.use(
     '/api/foresight-ai/feedback',
-    markDeprecated,
+    foresightDeprecation,
     (req, _res, next) => {
       req.url = `/feedback${req.url}`;
       next();
@@ -886,8 +890,8 @@ try {
     foresightFeedbackRoutes
   );
   // New Lumen Cortex aliases
-  app.use('/api/lumen', markDeprecated, foresightApiRoutes);
-  app.use('/api/lumen-ai', markDeprecated, foresightAIAdvancedRoutes);
+  app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
+  app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
   console.log('✅ Lumen Cortex™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
   console.error('Failed to mount Lumen Cortex routes:', error);
@@ -896,14 +900,14 @@ try {
 // Mount Lumen Cortex RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
-  const markDeprecated = (req: Request, res: Response, next: () => void) => {
+  const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
     res.setHeader('Deprecation', 'true');
     res.setHeader('Sunset', '2026-04-01');
     res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
     next();
   };
-  app.use('/api/foresight/rag', markDeprecated, foresightRagRoutes.default);
-  app.use('/api/lumen/rag', markDeprecated, foresightRagRoutes.default); // New alias
+  app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
+  app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
   console.log('✅ Lumen Cortex RAG API routes mounted successfully');
 } catch (error) {
   console.error('Failed to mount Lumen Cortex RAG routes:', error);
@@ -940,7 +944,7 @@ try {
 
 // Mount FDA 510(k) eSTAR export routes
 try {
-  const estarModule = await import('./routes/510k-estar-routes.ts');
+  const estarModule = await import('./routes/510k-estar-routes');
   const estarRoutes = estarModule.default;
   app.use('/api/510k/estar', estarRoutes);
   console.log('✅ FDA 510(k) eSTAR export routes mounted successfully');
@@ -950,7 +954,7 @@ try {
 
 // Mount unified CERV2 Export routes (PDF, DOCX, ZIP for all doc types)
 try {
-  const cerv2ExportModule = await import('./routes/cerv2-export-routes.ts');
+  const cerv2ExportModule = await import('./routes/cerv2-export-routes');
   const cerv2ExportRoutes = cerv2ExportModule.default;
   app.use('/api/cerv2/export', cerv2ExportRoutes);
   console.log('✅ CERV2 unified export routes mounted (PDF/DOCX/ZIP for 510k, PMA, CER)');
@@ -960,7 +964,7 @@ try {
 
 // Mount CERV2 AI auto-populate stub routes (suggest, equivalence, benefit-risk, templates)
 try {
-  const cerv2AiModule = await import('./routes/cerv2-ai-routes.ts');
+  const cerv2AiModule = await import('./routes/cerv2-ai-routes');
   const cerv2AiRoutes = cerv2AiModule.default;
   app.use('/api/cerv2/ai', cerv2AiRoutes);
   console.log('✅ CERV2 AI auto-populate routes mounted (suggest, equivalence, benefit-risk)');
@@ -972,6 +976,7 @@ try {
 try {
   const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
   const docOrchestrationRoutes = docOrchestrationModule.default;
+  // Routes define absolute paths internally (e.g., /api/510k/:projectId/generate-documents, ...)
   app.use(docOrchestrationRoutes);
   console.log('✅ Document Orchestration API routes mounted successfully (510k auto-population)');
 } catch (error) {
@@ -982,6 +987,7 @@ try {
 try {
   const esgSubmissionModule = await import('./routes/esgSubmissionRoutes.js');
   const esgSubmissionRoutes = esgSubmissionModule.default;
+  // Routes define absolute paths internally (e.g., /api/510k/:projectId/esg/submit, ...)
   app.use(esgSubmissionRoutes);
   console.log('✅ ESG Submission API routes mounted successfully (FDA gateway integration)');
 } catch (error) {
@@ -1003,7 +1009,7 @@ try {
 // Mount IVDR (In Vitro Diagnostic Regulation EU 2017/746) routes
 // Triple-gated: auth → feature flag → module entitlement → RBAC
 try {
-  const ivdrModule = await import('./routes/ivdr-routes.ts');
+  const ivdrModule = await import('./routes/ivdr-routes');
   const createIVDRRoutes = ivdrModule.default;
 
   /**
@@ -1149,7 +1155,7 @@ try {
 
   // Mount IVDR Evidence Binder + Pack Builder routes (same middleware gate)
   try {
-    const binderModule = await import('./routes/ivdr-binder-routes.ts');
+    const binderModule = await import('./routes/ivdr-binder-routes');
     const createBinderRoutes = binderModule.default;
     app.use('/api/ivdr', requireIVDRAccess, createBinderRoutes(pool));
     console.log('✅ IVDR Evidence Binder + Pack Builder routes mounted');
@@ -1159,7 +1165,7 @@ try {
 
   // Start IVDR Pack Build Worker (async in-process job processor)
   try {
-    const workerModule = await import('./workers/ivdr-pack-worker.ts');
+    const workerModule = await import('./workers/ivdr-pack-worker');
     workerModule.startPackBuildWorker(pool, 2000);
     console.log('✅ IVDR Pack Build Worker started (2s interval)');
   } catch (workerErr) {
@@ -1171,7 +1177,7 @@ try {
 
 // Mount FDA Integration routes
 try {
-  const fdaIntegrationModule = await import('./routes/fda-integration-simple.ts');
+  const fdaIntegrationModule = await import('./routes/fda-integration-simple');
   const fdaIntegrationRoutes = fdaIntegrationModule.default;
   app.use('/api/fda', fdaIntegrationRoutes);
   console.log('✅ FDA Integration API routes mounted successfully (ESG-ready)');
@@ -1205,7 +1211,7 @@ try {
 
 // CERV2 Unified Document Routes
 try {
-  const cerv2DocumentModule = await import('./routes/cerv2-document-routes.ts');
+  const cerv2DocumentModule = await import('./routes/cerv2-document-routes');
   const cerv2DocumentRoutes = cerv2DocumentModule.default;
   app.use('/api/cerv2', cerv2DocumentRoutes);
   console.log('✅ CERV2 unified document routes mounted successfully');
@@ -1215,7 +1221,7 @@ try {
 
 // Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
 try {
-  const pubmedModule = await import('./routes/pubmed.ts');
+  const pubmedModule = await import('./routes/pubmed');
   const pubmedRoutes = pubmedModule.default;
   app.use('/api/pubmed', pubmedRoutes);
   console.log(
@@ -1227,7 +1233,7 @@ try {
 
 // Mount Literature Review routes
 try {
-  const literatureReviewModule = await import('./routes/literature-review.ts');
+  const literatureReviewModule = await import('./routes/literature-review');
   const literatureReviewRoutes = literatureReviewModule.default;
   app.use('/api/literature-review', literatureReviewRoutes);
   console.log('✅ Literature Review API routes mounted successfully (AI-powered appraisal)');
@@ -1239,6 +1245,7 @@ try {
 try {
   const licenseModule = await import('./routes/license-routes.js');
   const licenseRoutes = licenseModule.default;
+  // Routes define absolute paths internally (e.g., /api/licenses/:id, /api/licenses/client/:clientId, ...)
   app.use('/', licenseRoutes);
   console.log('✅ License Management API routes mounted successfully');
 } catch (error) {
@@ -1253,6 +1260,26 @@ try {
   console.log('✅ Module Subscriptions & User Intelligence API routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount Module Subscriptions routes:', error);
+}
+
+// Mount Billing routes (Stripe Checkout + Link, webhooks, customer portal)
+try {
+  const billingModule = await import('./routes/billing.js');
+  const billingRouter = billingModule.default;
+  app.use('/api/billing', billingRouter);
+  console.log('✅ Billing API routes mounted (Stripe Checkout + Link, Customer Portal, Webhooks)');
+} catch (error) {
+  console.error('❌ Failed to mount Billing routes:', error);
+}
+
+// Mount Deep Research routes (connectors, orchestrator, usage metering)
+try {
+  const deepResearchModule = await import('./routes/deep-research.js');
+  const deepResearchRouter = deepResearchModule.default;
+  app.use('/api/deep-research', deepResearchRouter);
+  console.log('✅ Deep Research API routes mounted (connectors, jobs, usage)');
+} catch (error) {
+  console.error('❌ Failed to mount Deep Research routes:', error);
 }
 
 // Mount stability routes
@@ -1304,7 +1331,7 @@ try {
 
 // Mount eCTD Co-Author routes with database persistence
 try {
-  const coauthorModule = await import('./routes/coauthor.ts');
+  const coauthorModule = await import('./routes/coauthor');
   const coauthorRoutes = coauthorModule.default;
   app.use('/api/coauthor', coauthorRoutes);
   console.log('✅ eCTD Co-Author API routes mounted successfully (database-backed)');
@@ -1314,7 +1341,7 @@ try {
 
 // Mount eCTD Document Management routes with version control
 try {
-  const ectdDocumentsModule = await import('./routes/ectd-documents.ts');
+  const ectdDocumentsModule = await import('./routes/ectd-documents');
   const ectdDocumentsRoutes = ectdDocumentsModule.default;
   app.use('/api/ectd-documents', ectdDocumentsRoutes);
   console.log('✅ eCTD Documents routes loaded (version control & lineage tracking)');
@@ -1324,7 +1351,7 @@ try {
 
 // Mount eCTD 4.0 Validation & Backbone routes
 try {
-  const ectdValidateModule = await import('./routes/ectd-validate.ts');
+  const ectdValidateModule = await import('./routes/ectd-validate');
   const ectdValidateRoutes = ectdValidateModule.default;
   app.use('/api/ectd-validate', ectdValidateRoutes);
   console.log('✅ eCTD 4.0 Validation & Backbone routes loaded');
@@ -1334,7 +1361,7 @@ try {
 
 // Mount eCTD Compile routes (INDWorkspace compile button backend)
 try {
-  const ectdCompileModule = await import('./routes/ectd-compile.ts');
+  const ectdCompileModule = await import('./routes/ectd-compile');
   const ectdCompileRoutes = ectdCompileModule.default;
   app.use('/api/ectd-compile', ectdCompileRoutes);
   console.log('✅ eCTD Compile routes mounted (compile, validate, readiness, history)');
@@ -1342,9 +1369,19 @@ try {
   console.error('❌ Failed to mount eCTD Compile routes:', error);
 }
 
+// Mount eCTD Export routes (ICH M8 v4.0 ZIP package generation)
+try {
+  const ectdExportModule = await import('./routes/ectd-export');
+  const ectdExportRoutes = ectdExportModule.default;
+  app.use('/api/ectd/export', ectdExportRoutes);
+  console.log('✅ eCTD Export routes mounted (ICH M8 v4.0 packaging)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Export routes:', error);
+}
+
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
 try {
-  const indPdfModule = await import('./routes/ind-pdf.ts');
+  const indPdfModule = await import('./routes/ind-pdf');
   const indPdfRoutes = indPdfModule.default;
   app.use('/api/ind-pdf', indPdfRoutes);
   console.log('✅ IND PDF generation routes mounted (Puppeteer-powered)');
@@ -1354,7 +1391,7 @@ try {
 
 // Mount IND Sections API (live CTD section map with document status)
 try {
-  const indSectionsModule = await import('./routes/ind-sections.ts');
+  const indSectionsModule = await import('./routes/ind-sections');
   const indSectionsRoutes = indSectionsModule.default;
   app.use('/api/ind-sections', indSectionsRoutes);
   console.log('✅ IND Sections API routes loaded');
@@ -1364,7 +1401,7 @@ try {
 
 // Mount Project Sections API (section tracking, assignments, comments, audit trail)
 try {
-  const projectSectionsModule = await import('./routes/project-sections.ts');
+  const projectSectionsModule = await import('./routes/project-sections');
   const projectSectionsRoutes = projectSectionsModule.default;
   app.use('/api/project-sections', projectSectionsRoutes);
   console.log('✅ Project Sections API routes loaded');
@@ -1558,7 +1595,7 @@ try {
 
 // Mount Collaboration Center routes for 510(k) activity tracking
 try {
-  const collaborationModule = await import('./routes/collaboration.ts');
+  const collaborationModule = await import('./routes/collaboration');
   const collaborationRoutes = collaborationModule.default;
   app.use('/api/collaboration', collaborationRoutes);
   console.log(
@@ -1570,7 +1607,7 @@ try {
 
 // Mount CERV2 Sections routes for 510(k) section management
 try {
-  const cerv2SectionsModule = await import('./routes/cerv2-sections.ts');
+  const cerv2SectionsModule = await import('./routes/cerv2-sections');
   const cerv2SectionsRoutes = cerv2SectionsModule.default;
   app.use('/api/cerv2-sections', cerv2SectionsRoutes);
   console.log('✅ CERV2 Sections API routes mounted successfully (510(k) section tree navigation)');
@@ -1580,12 +1617,32 @@ try {
 
 // Mount CERV2 Versions routes for version tracking and multi-section editing
 try {
-  const cerv2VersionsModule = await import('./routes/cerv2-versions.ts');
+  const cerv2VersionsModule = await import('./routes/cerv2-versions');
   const cerv2VersionsRoutes = cerv2VersionsModule.default;
   app.use('/api/cerv2-versions', cerv2VersionsRoutes);
   console.log('✅ CERV2 Versions API routes mounted successfully (version history & sessions)');
 } catch (error) {
   console.error('❌ Failed to mount CERV2 Versions routes:', error);
+}
+
+// Mount Version Diff routes (document version comparison engine)
+try {
+  const versionDiffModule = await import('./routes/versionDiff');
+  const versionDiffRoutes = versionDiffModule.default;
+  app.use('/api/documents', versionDiffRoutes);
+  console.log('✅ Version Diff API routes mounted successfully (document version comparison)');
+} catch (error) {
+  console.error('❌ Failed to mount Version Diff routes:', error);
+}
+
+// Mount Biostatistics Platform routes (7 capabilities: continuum, optimizer, estimand, SAP, external controls, adaptive, knowledge graph)
+try {
+  const biostatModule = await import('./routes/biostatPlatform');
+  const biostatRoutes = biostatModule.default;
+  app.use('/api/biostat', biostatRoutes);
+  console.log('✅ Biostatistics Platform routes mounted successfully (7 capabilities)');
+} catch (error) {
+  console.error('❌ Failed to mount Biostatistics Platform routes:', error);
 }
 
 // Mount Content Atoms API routes
@@ -1600,7 +1657,7 @@ try {
 
 // Mount Workflow API routes
 try {
-  const workflowModule = await import('./routes/workflow.ts');
+  const workflowModule = await import('./routes/workflow');
   const workflowRoutes = workflowModule.default;
   app.use('/api/workflow', workflowRoutes);
   console.log('✅ Workflow API routes mounted successfully');
@@ -1610,7 +1667,7 @@ try {
 
 // Mount AI Drafting API routes
 try {
-  const draftingModule = await import('./routes/drafting.ts');
+  const draftingModule = await import('./routes/drafting');
   const draftingRoutes = draftingModule.default;
   app.use('/api/v1/drafting', draftingRoutes);
   console.log('✅ AI Drafting API routes mounted successfully');
@@ -1630,7 +1687,7 @@ try {
     console.log('✅ Cortex Query API initialized with database pool');
   }
 
-  const cortexUnifiedModule = await import('./routes/cortex-unified.ts');
+  const cortexUnifiedModule = await import('./routes/cortex-unified');
   const cortexUnifiedRoutes = cortexUnifiedModule.default;
   app.use('/api/cortex', cortexUnifiedRoutes);
   console.log('✅ Cortex Unified API gateway mounted at /api/cortex');
@@ -1657,7 +1714,7 @@ console.log('🧠 Cortex Prime AI Brain fully initialized with unified gateway')
 
 // Mount Unified Document Management System routes
 try {
-  const documentManagementRouter = await import('./routes/document-management.ts');
+  const documentManagementRouter = await import('./routes/document-management');
   const folderManagementRouter = await import('./routes/folder-management.js');
   const templateManagementRouter = await import('./routes/template-management.js');
 
@@ -1748,49 +1805,67 @@ app.get('/api/csr-intelligence', (req: Request, res: Response) => {
   res.json({ message: 'CSR Intelligence API available', timestamp: new Date() });
 });
 
-// CSR Intelligence analytics endpoint
+// CSR Intelligence analytics endpoint - real database queries
 app.get('/api/csr-intelligence/analytics', async (req: Request, res: Response) => {
   try {
     const { type = 'dashboard' } = req.query;
     debugLog('CSR intelligence analytics endpoint called', { type });
 
+    // Query real counts from csr_reports table
+    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const totalCSRs = totalResult.rows[0]?.total ?? 0;
+
+    const todayResult = await pool.query(
+      "SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND upload_date >= CURRENT_DATE"
+    );
+    const processedToday = todayResult.rows[0]?.cnt ?? 0;
+
+    // Therapeutic area breakdown from real data
+    const taResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 10`
+    );
+    const therapeuticAreas: Record<string, { count: number }> = {};
+    for (const row of taResult.rows) {
+      therapeuticAreas[row.area] = { count: row.count };
+    }
+
+    // Phase breakdown
+    const phaseResult = await pool.query(
+      `SELECT COALESCE(phase, 'Unknown') AS phase, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY count DESC`
+    );
+    const phaseBreakdown = phaseResult.rows.map((r: any) => ({
+      phase: r.phase,
+      count: r.count,
+      percentage: totalCSRs > 0 ? Math.round((r.count / totalCSRs) * 1000) / 10 : 0,
+    }));
+
     const analyticsData = {
       success: true,
       data: {
         dashboard: {
-          totalCSRs: 3021,
-          processedToday: 47,
-          avgProcessingTime: 4.2,
-          successRate: 94.7,
-          criticalInsights: 23,
-          activeAnalyses: 156,
+          totalCSRs,
+          processedToday,
+          avgProcessingTime: 0,
+          successRate: 0,
+          criticalInsights: 0,
+          activeAnalyses: 0,
         },
-        temporalTrends: {
-          '2023': { count: 892, successRate: 91.2 },
-          '2024': { count: 1456, successRate: 93.8 },
-          '2025': { count: 673, successRate: 96.1 },
-        },
-        therapeuticAreas: {
-          oncology: { count: 678, avgSuccessRate: 89.4, avgDuration: 24.3 },
-          neurology: { count: 542, avgSuccessRate: 92.1, avgDuration: 21.7 },
-          cardiology: { count: 445, avgSuccessRate: 88.7, avgDuration: 19.2 },
-          immunology: { count: 398, avgSuccessRate: 90.9, avgDuration: 22.8 },
-          endocrinology: { count: 356, avgSuccessRate: 94.2, avgDuration: 18.5 },
-        },
-        biomarkerAnalysis: {
-          'PD-L1': { studies: 145, successRate: 92.4 },
-          TMB: { studies: 98, successRate: 89.8 },
-          MSI: { studies: 76, successRate: 94.1 },
-          KRAS: { studies: 112, successRate: 87.5 },
-          EGFR: { studies: 134, successRate: 91.8 },
-        },
+        temporalTrends: {},
+        therapeuticAreas,
+        biomarkerAnalysis: {},
         qualityMetrics: {
-          dataCompleteness: 94.2,
-          dataConsistency: 89.7,
-          dataAccuracy: 92.1,
-          processingEfficiency: 91.5,
+          dataCompleteness: 0,
+          dataConsistency: 0,
+          dataAccuracy: 0,
+          processingEfficiency: 0,
         },
+        phaseBreakdown,
       },
+      source: 'database',
       timestamp: new Date().toISOString(),
     };
 
@@ -1805,58 +1880,91 @@ app.get('/api/csr-intelligence/analytics', async (req: Request, res: Response) =
   }
 });
 
-// CSR Intelligence stats endpoint
+// CSR Intelligence stats endpoint - real database queries
 app.get('/api/csr-intelligence/stats', async (req: Request, res: Response) => {
   try {
     debugLog('CSR intelligence stats endpoint called');
+
+    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const csrCount = totalResult.rows[0]?.total ?? 0;
+
+    const taCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT indication)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL'
+    );
+    const therapeuticAreaCount = taCountResult.rows[0]?.cnt ?? 0;
+
+    const sponsorCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT sponsor)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND sponsor IS NOT NULL'
+    );
+    const uniqueSponsors = sponsorCountResult.rows[0]?.cnt ?? 0;
+
+    // Phase breakdown from real data
+    const phaseResult = await pool.query(
+      `SELECT COALESCE(phase, 'Unknown') AS phase, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY count DESC`
+    );
+    const phaseBreakdown = phaseResult.rows.map((r: any) => ({
+      phase: r.phase,
+      count: r.count,
+      percentage: csrCount > 0 ? Math.round((r.count / csrCount) * 1000) / 10 : 0,
+    }));
+
+    // Therapeutic area breakdown from real data
+    const taResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 10`
+    );
+    const therapeuticAreas = taResult.rows.map((r: any) => ({
+      area: r.area,
+      count: r.count,
+      percentage: csrCount > 0 ? Math.round((r.count / csrCount) * 1000) / 10 : 0,
+    }));
+
+    const completedResult = await pool.query(
+      "SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND status = 'approved'"
+    );
+    const completedReviews = completedResult.rows[0]?.cnt ?? 0;
 
     const statsData = {
       success: true,
       data: {
         overview: {
-          csrCount: 3021,
-          therapeuticAreas: 34,
-          protocolsOptimized: 427,
-          benchmarks: 892,
-          aiModels: 14,
-          totalStudies: 3021,
-          activeAnalyses: 156,
-          completedReviews: 2865,
+          csrCount,
+          therapeuticAreas: therapeuticAreaCount,
+          protocolsOptimized: 0,
+          benchmarks: 0,
+          aiModels: 0,
+          totalStudies: csrCount,
+          activeAnalyses: 0,
+          completedReviews,
+          uniqueSponsors,
         },
         analytics: {
-          successRate: 85.2,
-          avgProcessingTime: 12.4,
-          dataQuality: 94.7,
-          automationLevel: 78.3,
+          successRate: 0,
+          avgProcessingTime: 0,
+          dataQuality: 0,
+          automationLevel: 0,
         },
         distribution: {
-          phaseBreakdown: [
-            { phase: 'Phase I', count: 412, percentage: 13.6 },
-            { phase: 'Phase II', count: 985, percentage: 32.6 },
-            { phase: 'Phase III', count: 1124, percentage: 37.2 },
-            { phase: 'Phase IV', count: 500, percentage: 16.6 },
-          ],
-          therapeuticAreas: [
-            { area: 'Oncology', count: 678, percentage: 22.4 },
-            { area: 'Neurology', count: 542, percentage: 17.9 },
-            { area: 'Cardiology', count: 445, percentage: 14.7 },
-            { area: 'Immunology', count: 398, percentage: 13.2 },
-            { area: 'Endocrinology', count: 356, percentage: 11.8 },
-          ],
+          phaseBreakdown,
+          therapeuticAreas,
         },
         quality: {
-          completeness: 94.2,
-          consistency: 89.7,
-          accuracy: 92.1,
-          timeliness: 96.3,
+          completeness: 0,
+          consistency: 0,
+          accuracy: 0,
+          timeliness: 0,
         },
         performance: {
-          avgAnalysisTime: '4.2 minutes',
-          processingEfficiency: 91.5,
-          errorRate: 0.08,
-          uptime: 99.7,
+          avgAnalysisTime: '0 minutes',
+          processingEfficiency: 0,
+          errorRate: 0,
+          uptime: 0,
         },
       },
+      source: 'database',
       timestamp: new Date().toISOString(),
     };
 
@@ -1871,40 +1979,54 @@ app.get('/api/csr-intelligence/stats', async (req: Request, res: Response) => {
   }
 });
 
-// CSR Intelligence factual insights endpoint
+// CSR Intelligence factual insights endpoint - real database queries
 app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Response) => {
   try {
     debugLog('Factual insights endpoint called');
 
-    // For now, return a structured response until we can import the service
+    // Aggregate real insights from csr_reports
+    const avgSampleResult = await pool.query(
+      'SELECT AVG(sample_size)::int AS avg_sample, AVG(duration_weeks)::int AS avg_duration FROM csr_reports WHERE deleted_at IS NULL AND sample_size IS NOT NULL'
+    );
+    const avgSample = avgSampleResult.rows[0]?.avg_sample ?? 0;
+    const avgDurationWeeks = avgSampleResult.rows[0]?.avg_duration ?? 0;
+
+    // Top indications by count
+    const topIndicationsResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS studies, AVG(sample_size)::int AS avg_sample
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY studies DESC LIMIT 5`
+    );
+    const indicationInsights: Record<string, { studies: number; avgSampleSize: number }> = {};
+    for (const row of topIndicationsResult.rows) {
+      indicationInsights[row.area] = { studies: row.studies, avgSampleSize: row.avg_sample ?? 0 };
+    }
+
+    // Most common phase
+    const topPhaseResult = await pool.query(
+      `SELECT phase, COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY cnt DESC LIMIT 1`
+    );
+    const mostCommonPhase = topPhaseResult.rows[0]?.phase ?? 'N/A';
+
     const factualInsights = {
       studyDesignPatterns: {
-        mostSuccessfulPhase: 'Phase 2',
-        optimalSampleSizeRange: '100-300 patients',
-        effectiveBiomarkers: ['PD-L1', 'TMB', 'MSI'],
-        averageStudyDuration: '18 months',
-        enrollmentRateOptimal: '85%',
+        mostCommonPhase,
+        averageSampleSize: avgSample,
+        averageStudyDurationWeeks: avgDurationWeeks,
       },
-      therapeuticAreaInsights: {
-        highestSuccessRate: { area: 'Endocrinology', rate: '84%' },
-        largestDataSet: { area: 'Oncology', studies: 13 },
-        avgSampleSizes: {
-          oncology: 245,
-          neurology: 189,
-          cardiology: 312,
-        },
-      },
+      therapeuticAreaInsights: indicationInsights,
       riskFactors: {
-        lowSuccessRateIndicators: ['Enrollment delays', 'Regulatory feedback loops'],
-        commonAEPatterns: ['Fatigue', 'Nausea', 'Headache'],
-        enrollmentChallenges: ['Site activation delays', 'Protocol complexity'],
-        regulatoryRisks: ['Incomplete safety data', 'Unclear efficacy endpoints'],
+        lowSuccessRateIndicators: [],
+        commonAEPatterns: [],
+        enrollmentChallenges: [],
+        regulatoryRisks: [],
       },
       dataQualityAssessment: {
-        completenessScore: 94,
-        consistencyScore: 89,
-        accuracyScore: 92,
-        dataSource: 'verified_csr_repository',
+        completenessScore: 0,
+        consistencyScore: 0,
+        accuracyScore: 0,
+        dataSource: 'csr_reports_table',
         lastVerified: new Date().toISOString(),
       },
     };
@@ -1913,6 +2035,7 @@ app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Resp
     res.json({
       success: true,
       data: factualInsights,
+      source: 'database',
     });
   } catch (error) {
     console.error('Error getting factual insights:', error);
@@ -1923,72 +2046,34 @@ app.get('/api/csr-intelligence/factual-insights', async (req: Request, res: Resp
   }
 });
 
-// CSR real data ALL endpoint - fallback when file-based route not available
+// CSR real data ALL endpoint - real database query
 app.get('/api/csr-real-data/all', async (req: Request, res: Response) => {
   try {
     const { limit = 10 } = req.query;
     debugLog('CSR real data all endpoint called', { limit });
 
-    // Mock CSR data fallback when files not available
-    const mockCSRData = [
-      {
-        id: 'CSR001',
-        title: 'Phase II Study of Pembrolizumab in Advanced Non-Small Cell Lung Cancer',
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase II',
-        sponsor: 'Merck & Co',
-        therapeutic_area: 'Oncology',
-        sample_size: 105,
-        duration: '24 months',
-        status: 'Completed',
-        drugName: 'Pembrolizumab',
-        nctrialId: 'NCT02220894',
-        study_phase: 'Phase II',
-        csr_id: 'CSR001',
-      },
-      {
-        id: 'CSR002',
-        title: 'Phase III Study of Nivolumab plus Ipilimumab in Melanoma',
-        indication: 'Melanoma',
-        phase: 'Phase III',
-        sponsor: 'Bristol Myers Squibb',
-        therapeutic_area: 'Oncology',
-        sample_size: 299,
-        duration: '36 months',
-        status: 'Completed',
-        drugName: 'Nivolumab + Ipilimumab',
-        nctrialId: 'NCT01844505',
-        study_phase: 'Phase III',
-        csr_id: 'CSR002',
-      },
-      {
-        id: 'CSR003',
-        title: 'Phase I/II Study of Osimertinib in EGFR-Mutated NSCLC',
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase I/II',
-        sponsor: 'AstraZeneca',
-        therapeutic_area: 'Oncology',
-        sample_size: 253,
-        duration: '30 months',
-        status: 'Completed',
-        drugName: 'Osimertinib',
-        nctrialId: 'NCT01802632',
-        study_phase: 'Phase I/II',
-        csr_id: 'CSR003',
-      },
-    ];
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 10, 1), 100);
 
-    // Apply limit
-    const limitNum = parseInt(limit as string, 10);
-    const limitedData = mockCSRData.slice(0, limitNum);
+    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const total = countResult.rows[0]?.total ?? 0;
 
-    debugLog('CSR real data all response', { count: limitedData.length, limit });
+    const dataResult = await pool.query(
+      `SELECT id, report_id AS "reportId", report_title AS title, indication, phase,
+              sponsor, sample_size, duration_weeks, status, study_id AS "studyId",
+              upload_date AS "uploadDate"
+       FROM csr_reports WHERE deleted_at IS NULL
+       ORDER BY upload_date DESC NULLS LAST
+       LIMIT $1`,
+      [limitNum]
+    );
+
+    debugLog('CSR real data all response', { count: dataResult.rows.length, total });
     res.json({
       success: true,
-      data: limitedData,
-      count: limitedData.length,
-      total: mockCSRData.length,
-      source: 'fallback_data',
+      data: dataResult.rows,
+      count: dataResult.rows.length,
+      total,
+      source: 'database',
     });
   } catch (error) {
     console.error('Error in CSR real data all:', error);
@@ -1999,43 +2084,81 @@ app.get('/api/csr-real-data/all', async (req: Request, res: Response) => {
   }
 });
 
-// CSR real data stats endpoint for dashboard metrics
+// CSR real data stats endpoint for dashboard metrics - real database queries
 app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
   try {
     debugLog('CSR real data stats endpoint called');
+
+    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const totalReports = totalResult.rows[0]?.total ?? 0;
+
+    const processedResult = await pool.query(
+      "SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND status IN ('approved', 'submitted')"
+    );
+    const processedReports = processedResult.rows[0]?.cnt ?? 0;
+
+    const indicationCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT indication)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL'
+    );
+    const uniqueIndications = indicationCountResult.rows[0]?.cnt ?? 0;
+
+    const sponsorCountResult = await pool.query(
+      'SELECT COUNT(DISTINCT sponsor)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND sponsor IS NOT NULL'
+    );
+    const uniqueSponsors = sponsorCountResult.rows[0]?.cnt ?? 0;
+
+    const phasesResult = await pool.query(
+      'SELECT DISTINCT phase FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL ORDER BY phase'
+    );
+    const phases = phasesResult.rows.map((r: any) => r.phase);
+
+    // Top indications
+    const topIndicationsResult = await pool.query(
+      `SELECT indication AS name, COUNT(*)::int AS count,
+              (SELECT phase FROM csr_reports cr2 WHERE cr2.indication = cr.indication AND cr2.deleted_at IS NULL AND cr2.phase IS NOT NULL GROUP BY phase ORDER BY COUNT(*) DESC LIMIT 1) AS phase
+       FROM csr_reports cr WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 5`
+    );
+
+    // Phase distribution
+    const phaseDistResult = await pool.query(
+      `SELECT COALESCE(phase, 'Unknown') AS phase, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND phase IS NOT NULL
+       GROUP BY phase ORDER BY count DESC`
+    );
+    const phaseDistribution = phaseDistResult.rows.map((r: any) => ({
+      phase: r.phase,
+      count: r.count,
+      percentage: totalReports > 0 ? Math.round((r.count / totalReports) * 100) : 0,
+    }));
+
+    // Therapeutic areas (by indication)
+    const taResult = await pool.query(
+      `SELECT COALESCE(indication, 'Unknown') AS area, COUNT(*)::int AS count
+       FROM csr_reports WHERE deleted_at IS NULL AND indication IS NOT NULL
+       GROUP BY indication ORDER BY count DESC LIMIT 10`
+    );
+    const therapeuticAreas = taResult.rows.map((r: any) => ({
+      area: r.area,
+      count: r.count,
+      percentage: totalReports > 0 ? Math.round((r.count / totalReports) * 100) : 0,
+    }));
 
     const statsData = {
       success: true,
       data: {
         overview: {
-          total_reports: 3021,
-          processed_reports: 2854,
-          unique_indications: 136,
-          unique_sponsors: 140,
-          phases: ['Phase I', 'Phase II', 'Phase III', 'Phase IV'],
+          total_reports: totalReports,
+          processed_reports: processedReports,
+          unique_indications: uniqueIndications,
+          unique_sponsors: uniqueSponsors,
+          phases,
         },
-        topIndications: [
-          { name: 'Alzheimer Disease', count: 45, phase: 'Phase III' },
-          { name: 'Non-Small Cell Lung Cancer', count: 38, phase: 'Phase II' },
-          { name: 'Type 2 Diabetes', count: 32, phase: 'Phase III' },
-          { name: 'Rheumatoid Arthritis', count: 28, phase: 'Phase II' },
-          { name: 'Multiple Sclerosis', count: 24, phase: 'Phase III' },
-        ],
-        phaseDistribution: [
-          { phase: 'Phase I', count: 412, percentage: 14 },
-          { phase: 'Phase II', count: 985, percentage: 33 },
-          { phase: 'Phase III', count: 1124, percentage: 37 },
-          { phase: 'Phase IV', count: 500, percentage: 16 },
-        ],
-        therapeuticAreas: [
-          { area: 'Oncology', count: 678, percentage: 22 },
-          { area: 'Neurology', count: 542, percentage: 18 },
-          { area: 'Cardiology', count: 445, percentage: 15 },
-          { area: 'Immunology', count: 398, percentage: 13 },
-          { area: 'Endocrinology', count: 356, percentage: 12 },
-        ],
+        topIndications: topIndicationsResult.rows,
+        phaseDistribution,
+        therapeuticAreas,
       },
-      source: 'verified_csr_repository',
+      source: 'database',
       lastUpdated: new Date().toISOString(),
     };
 
@@ -2531,23 +2654,143 @@ app.get('/api/audit', async (req: Request, res: Response) => {
 
 app.get('/api/audit/export', async (req: Request, res: Response) => {
   try {
-    const { rows } = await queryAuditEvents(req.query, 10000, 0);
-    const logs = rows.map(formatAuditRow);
-    const headers = ['timestamp', 'userName', 'action', 'component', 'details', 'ipAddress'];
+    // Use signed export service for tamper-evident audit packages
+    const { generateSignedAuditExport } = await import('./services/audit/signedAuditExport.js');
+    const format = (req.query.format === 'json' ? 'json' : 'csv') as 'csv' | 'json';
+    const userId = (req as any).userId || (req as any).user?.id || 'unknown';
+    const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
-    const csvRows = logs.map((log: any) =>
-      [log.timestamp, log.userName, log.action, log.component, log.details, log.ipAddress]
-        .map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`)
-        .join(',')
-    );
+    const signedExport = await generateSignedAuditExport(pool, {
+      organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+      startDate: req.query.start_date ? String(req.query.start_date) : undefined,
+      endDate: req.query.end_date ? String(req.query.end_date) : undefined,
+      eventType: req.query.event_type ? String(req.query.event_type) : undefined,
+      userId: req.query.user_id ? parseInt(String(req.query.user_id), 10) : undefined,
+      format,
+      exportedBy: userName,
+      exportedByRole: (req as any).userRole || (req as any).user?.role || 'unknown',
+      ipAddress: req.ip || 'unknown',
+    });
 
-    const csv = [headers.join(','), ...csvRows].join('\n');
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="audit_logs.csv"');
-    return res.send(csv);
+    // Set integrity headers so the manifest travels with the download
+    res.setHeader('Content-Type', signedExport.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${signedExport.filename}"`);
+    res.setHeader('X-Audit-Export-Id', signedExport.manifest.exportId);
+    res.setHeader('X-Audit-Data-Hash', signedExport.manifest.dataHash);
+    res.setHeader('X-Audit-Signature', signedExport.signature);
+    res.setHeader('X-Audit-Chain-Status', signedExport.manifest.chainIntegrity.status);
+    res.setHeader('X-Audit-Row-Count', String(signedExport.manifest.rowCount));
+    return res.send(signedExport.data);
   } catch (error) {
     console.error('Failed to export audit logs:', error);
     return res.status(500).json({ error: 'Failed to export audit logs' });
+  }
+});
+
+/**
+ * GET /api/audit/export/signed
+ * Full signed export — returns JSON bundle with data + manifest + signature.
+ * This is the inspection-ready endpoint: an inspector can independently verify
+ * the HMAC signature and data hash to confirm nothing was tampered.
+ */
+app.get('/api/audit/export/signed', async (req: Request, res: Response) => {
+  try {
+    const { generateSignedAuditExport } = await import('./services/audit/signedAuditExport.js');
+    const format = (req.query.format === 'csv' ? 'csv' : 'json') as 'csv' | 'json';
+    const userId = (req as any).userId || (req as any).user?.id || 'unknown';
+    const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
+
+    const signedExport = await generateSignedAuditExport(pool, {
+      organizationId: req.query.org_id ? parseInt(String(req.query.org_id), 10) : undefined,
+      startDate: req.query.start_date ? String(req.query.start_date) : undefined,
+      endDate: req.query.end_date ? String(req.query.end_date) : undefined,
+      eventType: req.query.event_type ? String(req.query.event_type) : undefined,
+      userId: req.query.user_id ? parseInt(String(req.query.user_id), 10) : undefined,
+      format,
+      exportedBy: userName,
+      exportedByRole: (req as any).userRole || (req as any).user?.role || 'unknown',
+      ipAddress: req.ip || 'unknown',
+    });
+
+    res.json({
+      success: true,
+      export: {
+        data: signedExport.data,
+        manifest: signedExport.manifest,
+        signature: signedExport.signature,
+        verification: {
+          instruction: 'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the server signing key, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash.',
+          algorithm: 'HMAC-SHA256',
+          hashAlgorithm: 'SHA-256',
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Failed to generate signed audit export:', error);
+    return res.status(500).json({ error: 'Failed to generate signed audit export' });
+  }
+});
+
+/**
+ * POST /api/audit/export/verify
+ * Verify a previously exported audit package.
+ * Accepts { data, manifest, signature } and confirms integrity.
+ */
+app.post('/api/audit/export/verify', async (req: Request, res: Response) => {
+  try {
+    const { verifySignedAuditExport } = await import('./services/audit/signedAuditExport.js');
+    const { data, manifest, signature } = req.body;
+
+    if (!data || !manifest || !signature) {
+      return res.status(400).json({ error: 'data, manifest, and signature are required' });
+    }
+
+    const result = verifySignedAuditExport(data, manifest, signature);
+    res.json({
+      success: true,
+      verification: {
+        valid: result.valid,
+        errors: result.errors,
+        verifiedAt: new Date().toISOString(),
+        compliance: {
+          standard: '21 CFR Part 11 §11.10(e)',
+          description: result.valid
+            ? 'Export integrity verified — data has not been modified since generation'
+            : 'INTEGRITY FAILURE — export data or manifest has been tampered with',
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Failed to verify audit export:', error);
+    return res.status(500).json({ error: 'Failed to verify audit export' });
+  }
+});
+
+/**
+ * GET /api/audit/chain-monitor/status
+ * Returns the current status of the background chain integrity monitor.
+ */
+app.get('/api/audit/chain-monitor/status', async (_req: Request, res: Response) => {
+  try {
+    const { getChainMonitorStatus } = await import('./services/audit/chainIntegrityMonitor.js');
+    const status = getChainMonitorStatus();
+    res.json({ success: true, data: status });
+  } catch {
+    res.json({ success: true, data: { status: 'not_started' } });
+  }
+});
+
+/**
+ * POST /api/audit/chain-monitor/check
+ * Trigger an on-demand chain integrity check.
+ */
+app.post('/api/audit/chain-monitor/check', async (_req: Request, res: Response) => {
+  try {
+    const { runOnDemandCheck } = await import('./services/audit/chainIntegrityMonitor.js');
+    const status = await runOnDemandCheck();
+    res.json({ success: true, data: status });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Chain integrity check failed', details: err.message });
   }
 });
 
@@ -2857,13 +3100,13 @@ console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
 // Mount Lumen Cortex Chat routes
-import chatRoutes from './routes/chat.ts';
+import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
 console.log('✅ Lumen Cortex Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
-  const claimsModule = await import('./routes/ai-claims-routes.ts');
+  const claimsModule = await import('./routes/ai-claims-routes');
   const createAIClaimsRoutes = claimsModule.default;
   app.use('/api/ai', createAIClaimsRoutes(pool));
   console.log('✅ AI Claims → Binder routes mounted (/api/ai/claims)');
@@ -2884,6 +3127,21 @@ try {
 import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
+
+// Mount Client Intelligence Memory routes
+import clientIntelligenceRoutes from './routes/client-intelligence';
+app.use('/api/client-intelligence', clientIntelligenceRoutes);
+console.log('✅ Client Intelligence Memory API routes mounted successfully');
+
+// Mount Account Intelligence routes (canon, event ledger, skill bundles, terms, templates)
+import accountIntelligenceRoutes from './routes/account-intelligence';
+app.use('/api/account-intelligence', accountIntelligenceRoutes);
+console.log('✅ Account Intelligence API routes mounted successfully');
+
+// Mount Universal Packager routes
+import universalPackagerRoutes from './routes/universal-packager';
+app.use('/api/packager', universalPackagerRoutes);
+console.log('✅ Universal Packager API routes mounted successfully');
 
 // Mount Regulatory Precedent Engine
 import precedentEngineRoutes from './routes/precedent-engine';
@@ -3189,7 +3447,7 @@ app.get('/api/510k-workflow', async (req, res) => {
 // GET 510k workflow data
 app.get('/api/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
+  const organizationId = (req.query.organizationId || req.headers['x-organization-id']) as string;
 
   if (!organizationId) {
     return res.status(400).json({ success: false, error: 'Organization ID required' });
@@ -3207,7 +3465,7 @@ app.get('/api/510k-workflow/:projectId', async (req, res) => {
     };
 
     // For now, return empty sections array
-    const sections = [];
+    const sections: any[] = [];
 
     res.status(200).json({
       success: true,
@@ -3239,7 +3497,7 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
     };
 
     // Get all sections - for now use empty array
-    const sections = [];
+    const sections: any[] = [];
 
     // Map workflow data to FDA eSTAR template format
     const templateData = TemplateMapper.mapWorkflowToTemplate(workflowData.workflowData || {});
@@ -3254,7 +3512,7 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
     }));
 
     // Save the mapped template data
-    await storage.createCerv2510kSection({
+    await storage.createCerSection({
       organizationId: parseInt(organizationId),
       submissionId: parseInt(projectId),
       sectionCode: 'TEMPLATE_MAPPING',
@@ -5631,7 +5889,9 @@ async function startServer() {
     console.log('   Proof system will operate with in-memory audit (not compliant for production)');
   }
 
-  // Ensure auth tables have the columns auth routes expect (idempotent)
+  // Ensure auth tables have the columns auth routes expect (idempotent).
+  // IMPORTANT: This must complete before app.listen() so that auth routes
+  // (mounted earlier at top level) never handle requests against missing columns.
   try {
     const { ensureAuthTables } = await import('./db.js');
     await ensureAuthTables();
@@ -5656,7 +5916,7 @@ async function startServer() {
   }
 
   try {
-    const multiAgencyValidationRoutes = await import('./routes/multiAgencyValidation.ts');
+    const multiAgencyValidationRoutes = await import('./routes/multiAgencyValidation');
     app.use('/api/multi-agency-validation', multiAgencyValidationRoutes.default);
     console.log('✅ Multi-agency validation routes mounted successfully');
   } catch (error) {
@@ -5681,7 +5941,7 @@ async function startServer() {
 
   // Mount IND routes
   try {
-    const indRoutes = await import('./routes/ind.ts');
+    const indRoutes = await import('./routes/ind');
     app.use('/api/ind', indRoutes.default);
     console.log('✅ IND routes mounted successfully');
   } catch (error) {
@@ -5715,7 +5975,7 @@ async function startServer() {
 
   // Mount Validation routes
   try {
-    const validationRoutes = await import('./routes/validation.ts');
+    const validationRoutes = await import('./routes/validation');
     app.use('/api', validationRoutes.default);
     console.log('✅ Validation routes mounted successfully');
   } catch (error) {
@@ -5724,7 +5984,7 @@ async function startServer() {
 
   // Mount docs routes
   try {
-    const docsRoutes = await import('./routes/docs.ts');
+    const docsRoutes = await import('./routes/docs');
     app.use('/api/docs', docsRoutes.default);
     console.log('✅ Docs routes mounted successfully');
   } catch (error) {
@@ -5808,7 +6068,7 @@ async function startServer() {
   // ──────────────────────────────────────────────────────────────────────────
 
   try {
-    const qualityMgmtApi = await import('./routes/quality-management-api.ts');
+    const qualityMgmtApi = await import('./routes/quality-management-api');
     app.use('/api/quality', qualityMgmtApi.default);
     console.log('✅ Quality Management API routes mounted at /api/quality');
   } catch (error) {
@@ -5816,7 +6076,7 @@ async function startServer() {
   }
 
   try {
-    const analyticsRoutes = await import('./routes/analytics-routes.ts');
+    const analyticsRoutes = await import('./routes/analytics-routes');
     app.use('/api/analytics', analyticsRoutes.default);
     console.log('✅ Analytics routes mounted at /api/analytics');
   } catch (error) {
@@ -5824,7 +6084,7 @@ async function startServer() {
   }
 
   try {
-    const vaultAutoRoutes = await import('./routes/vault-auto.ts');
+    const vaultAutoRoutes = await import('./routes/vault-auto');
     app.use('/api/vault', vaultAutoRoutes.default);
     console.log('✅ Vault routes mounted at /api/vault');
   } catch (error) {
@@ -5832,7 +6092,7 @@ async function startServer() {
   }
 
   try {
-    const documentsUnified = await import('./routes/documents-unified.ts');
+    const documentsUnified = await import('./routes/documents-unified');
     app.use('/api/documents', documentsUnified.default);
     console.log('✅ Documents-unified routes mounted at /api/documents');
   } catch (error) {
@@ -5840,7 +6100,15 @@ async function startServer() {
   }
 
   try {
-    const { protocolRoutes } = await import('./routes/protocol_routes.ts');
+    const sourceLinksRoutes = await import('./routes/sourceLinks');
+    app.use('/api/documents', sourceLinksRoutes.default);
+    console.log('✅ Source Links routes mounted at /api/documents/:id/sources');
+  } catch (error) {
+    console.error('Failed to mount source links routes:', error);
+  }
+
+  try {
+    const { protocolRoutes } = await import('./routes/protocol_routes');
     app.use('/api/protocol', protocolRoutes);
     console.log('✅ Protocol routes mounted at /api/protocol');
   } catch (error) {
@@ -5848,7 +6116,7 @@ async function startServer() {
   }
 
   try {
-    const qcRoutes = await import('./routes/qc.routes.ts');
+    const qcRoutes = await import('./routes/qc.routes');
     app.use('/api/qc', qcRoutes.default);
     console.log('✅ QC routes mounted at /api/qc');
   } catch (error) {
@@ -5856,7 +6124,7 @@ async function startServer() {
   }
 
   try {
-    const moduleIntegrationRoutes = await import('./routes/moduleIntegrationRoutes.ts');
+    const moduleIntegrationRoutes = await import('./routes/moduleIntegrationRoutes');
     app.use('/api/module-integration', moduleIntegrationRoutes.default);
     console.log('✅ Module Integration routes mounted at /api/module-integration');
   } catch (error) {
@@ -5864,7 +6132,7 @@ async function startServer() {
   }
 
   try {
-    const regulatoryRoutesModule = await import('./routes/regulatoryRoutes.ts');
+    const regulatoryRoutesModule = await import('./routes/regulatoryRoutes');
     app.use('/api/regulatory', regulatoryRoutesModule.default);
     console.log('✅ Regulatory routes mounted at /api/regulatory');
   } catch (error) {
@@ -5872,7 +6140,7 @@ async function startServer() {
   }
 
   try {
-    const innovationRoutes = await import('./routes/innovation-routes.ts');
+    const innovationRoutes = await import('./routes/innovation-routes');
     app.use('/api/innovation', innovationRoutes.default);
     console.log('✅ Innovation routes mounted at /api/innovation');
   } catch (error) {
@@ -5880,7 +6148,7 @@ async function startServer() {
   }
 
   try {
-    const notificationRoutes = await import('./routes/notification_routes.ts');
+    const notificationRoutes = await import('./routes/notification_routes');
     // notification_routes exports a function(app) that registers routes directly
     if (
       typeof notificationRoutes.default === 'function' &&
@@ -5896,7 +6164,7 @@ async function startServer() {
   }
 
   try {
-    const indUnifiedRoutes = await import('./routes/ind-unified.ts');
+    const indUnifiedRoutes = await import('./routes/ind-unified');
     app.use('/api/ind-wizard', indUnifiedRoutes.default);
     console.log('✅ IND Unified routes mounted at /api/ind-wizard');
   } catch (error) {
@@ -5904,7 +6172,7 @@ async function startServer() {
   }
 
   try {
-    const indTemplatesRoutes = await import('./routes/ind-templates.ts');
+    const indTemplatesRoutes = await import('./routes/ind-templates');
     app.use('/api/ind-templates', indTemplatesRoutes.default);
     console.log('✅ IND Templates routes mounted at /api/ind-templates');
   } catch (error) {
@@ -5912,7 +6180,7 @@ async function startServer() {
   }
 
   try {
-    const indSubmissionsRoutes = await import('./routes/ind-submissions.routes.ts');
+    const indSubmissionsRoutes = await import('./routes/ind-submissions.routes');
     app.use('/api/ind-submissions', indSubmissionsRoutes.default);
     console.log('✅ IND Submissions routes mounted at /api/ind-submissions');
   } catch (error) {
@@ -5920,7 +6188,7 @@ async function startServer() {
   }
 
   try {
-    const indDatabaseRoutes = await import('./routes/ind-database.routes.ts');
+    const indDatabaseRoutes = await import('./routes/ind-database.routes');
     app.use('/api/ind-database', indDatabaseRoutes.default);
     console.log('✅ IND Database routes mounted at /api/ind-database');
   } catch (error) {
@@ -5928,7 +6196,7 @@ async function startServer() {
   }
 
   try {
-    const plannerRoutes = await import('./routes/planner-routes.ts');
+    const plannerRoutes = await import('./routes/planner-routes');
     app.use('/api/planner', plannerRoutes.default);
     console.log('✅ Planner routes mounted at /api/planner');
   } catch (error) {
@@ -5936,7 +6204,7 @@ async function startServer() {
   }
 
   try {
-    const tenantSectionGating = await import('./routes/tenant-section-gating.ts');
+    const tenantSectionGating = await import('./routes/tenant-section-gating');
     app.use('/api/tenant-section-gating', tenantSectionGating.default);
     console.log('✅ Tenant Section Gating routes mounted at /api/tenant-section-gating');
   } catch (error) {
@@ -5944,7 +6212,7 @@ async function startServer() {
   }
 
   try {
-    const tenantConfig = await import('./routes/tenant-config.ts');
+    const tenantConfig = await import('./routes/tenant-config');
     app.use('/api/tenant-config', tenantConfig.default);
     console.log('✅ Tenant Config routes mounted at /api/tenant-config');
   } catch (error) {
@@ -5952,7 +6220,7 @@ async function startServer() {
   }
 
   try {
-    const tenantStats = await import('./routes/tenant-stats.ts');
+    const tenantStats = await import('./routes/tenant-stats');
     app.use('/api/tenant-stats', tenantStats.default);
     console.log('✅ Tenant Stats routes mounted at /api/tenant-stats');
   } catch (error) {
@@ -5960,7 +6228,7 @@ async function startServer() {
   }
 
   try {
-    const tenantTraceability = await import('./routes/tenant-traceability.ts');
+    const tenantTraceability = await import('./routes/tenant-traceability');
     app.use('/api/tenant-traceability', tenantTraceability.default);
     console.log('✅ Tenant Traceability routes mounted at /api/tenant-traceability');
   } catch (error) {
@@ -5968,7 +6236,7 @@ async function startServer() {
   }
 
   try {
-    const tenantQualityValidation = await import('./routes/tenant-quality-validation.ts');
+    const tenantQualityValidation = await import('./routes/tenant-quality-validation');
     app.use('/api/tenant-quality-validation', tenantQualityValidation.default);
     console.log('✅ Tenant Quality Validation routes mounted at /api/tenant-quality-validation');
   } catch (error) {
@@ -5976,7 +6244,7 @@ async function startServer() {
   }
 
   try {
-    const tenantCtqFactors = await import('./routes/tenant-ctq-factors.ts');
+    const tenantCtqFactors = await import('./routes/tenant-ctq-factors');
     app.use('/api/tenant-ctq-factors', tenantCtqFactors.default);
     console.log('✅ Tenant CTQ Factors routes mounted at /api/tenant-ctq-factors');
   } catch (error) {
@@ -5984,7 +6252,7 @@ async function startServer() {
   }
 
   try {
-    const indAutomationRoutes = await import('./routes/ind_automation_routes.ts');
+    const indAutomationRoutes = await import('./routes/ind_automation_routes');
     app.use('/api/ind-automation', indAutomationRoutes.default);
     console.log('✅ IND Automation routes mounted at /api/ind-automation');
   } catch (error) {
@@ -6004,7 +6272,7 @@ async function startServer() {
 
   // Mount Integration Test routes (development/QA only — full-flow smoke test)
   try {
-    const integrationTestModule = await import('./routes/integration-test.ts');
+    const integrationTestModule = await import('./routes/integration-test');
     app.use('/api/integration-test', integrationTestModule.default);
     console.log('✅ Integration Test routes mounted (health, full-flow)');
   } catch (error) {
@@ -6015,7 +6283,7 @@ async function startServer() {
   // ADVANCED PLATFORM CAPABILITIES (GraphRAG, Digital Twin, RWE, etc.)
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const realtimeCollabRoutes = await import('./routes/realtime-collab.ts');
+    const realtimeCollabRoutes = await import('./routes/realtime-collab');
     app.use('/api/realtime-collab', realtimeCollabRoutes.default);
     console.log('✅ Real-time Collaboration routes mounted at /api/realtime-collab');
   } catch (error) {
@@ -6023,7 +6291,7 @@ async function startServer() {
   }
 
   try {
-    const graphragRoutes = await import('./routes/graphrag.ts');
+    const graphragRoutes = await import('./routes/graphrag');
     app.use('/api/graphrag', graphragRoutes.default);
     console.log('✅ GraphRAG routes mounted at /api/graphrag');
   } catch (error) {
@@ -6031,7 +6299,7 @@ async function startServer() {
   }
 
   try {
-    const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft.ts');
+    const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
     console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
@@ -6039,7 +6307,9 @@ async function startServer() {
   }
 
   try {
-    const part11Routes = await import('./routes/part11-compliance.ts');
+    const part11Routes = await import('./routes/part11-compliance');
+    // Wire up DB pool so audit entries persist to audit_events table
+    if (part11Routes.setAuditPool) part11Routes.setAuditPool(pool);
     app.use('/api/part11', part11Routes.default);
     console.log('✅ 21 CFR Part 11 Compliance routes mounted at /api/part11');
   } catch (error) {
@@ -6047,7 +6317,15 @@ async function startServer() {
   }
 
   try {
-    const docUnderstandingRoutes = await import('./routes/document-understanding.ts');
+    const globalComplianceRoutes = await import('./routes/global-compliance.js');
+    app.use('/api/compliance', globalComplianceRoutes.default);
+    console.log('✅ Global Regulatory Compliance routes mounted at /api/compliance');
+  } catch (error) {
+    console.error('❌ Failed to mount Global Compliance routes:', error);
+  }
+
+  try {
+    const docUnderstandingRoutes = await import('./routes/document-understanding');
     app.use('/api/document-understanding', docUnderstandingRoutes.default);
     console.log('✅ Document Understanding routes mounted at /api/document-understanding');
   } catch (error) {
@@ -6055,7 +6333,7 @@ async function startServer() {
   }
 
   try {
-    const agentSwarmRoutes = await import('./routes/agent-swarm.ts');
+    const agentSwarmRoutes = await import('./routes/agent-swarm');
     app.use('/api/agent-swarm', agentSwarmRoutes.default);
     console.log('✅ Agent Swarm routes mounted at /api/agent-swarm');
   } catch (error) {
@@ -6063,7 +6341,7 @@ async function startServer() {
   }
 
   try {
-    const rweRoutes = await import('./routes/real-world-evidence.ts');
+    const rweRoutes = await import('./routes/real-world-evidence');
     app.use('/api/real-world-evidence', rweRoutes.default);
     console.log('✅ Real-World Evidence routes mounted at /api/real-world-evidence');
   } catch (error) {
@@ -6071,7 +6349,7 @@ async function startServer() {
   }
 
   try {
-    const digitalTwinRoutes = await import('./routes/regulatory-digital-twin.ts');
+    const digitalTwinRoutes = await import('./routes/regulatory-digital-twin');
     app.use('/api/regulatory-digital-twin', digitalTwinRoutes.default);
     console.log('✅ Regulatory Digital Twin routes mounted at /api/regulatory-digital-twin');
   } catch (error) {
@@ -6079,14 +6357,25 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // SUBMISSION TWIN — Living Submission Intelligence Layer
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const submissionTwinRoutes = await import('./routes/submission-twin');
+    app.use('/api/submission-twin', submissionTwinRoutes.default);
+    console.log('✅ Submission Twin routes mounted at /api/submission-twin');
+  } catch (error) {
+    console.error('❌ Failed to mount Submission Twin routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // MISSION CONTROL — Program OS (PM ecosystem)
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const missionControlRoutes = await import('./routes/mission-control.ts');
+    const missionControlRoutes = await import('./routes/mission-control');
     app.use('/api/mission-control', missionControlRoutes.default);
     console.log('✅ Mission Control routes mounted at /api/mission-control');
 
-    const snowglobeRoutes = await import('./routes/snowglobe.ts');
+    const snowglobeRoutes = await import('./routes/snowglobe');
     app.use('/api/snowglobe', snowglobeRoutes.default);
     console.log('✅ Snow Globe routes mounted at /api/snowglobe');
   } catch (error) {
@@ -6098,7 +6387,7 @@ async function startServer() {
   // Must be registered BEFORE the catch-all 404 handler
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const c2cMissingRoutes = await import('./routes/c2c-missing-routes.ts');
+    const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
     app.use('/api', c2cMissingRoutes.default);
     console.log(
       '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
@@ -6111,7 +6400,7 @@ async function startServer() {
   // WORKSPACE SUMMARY — GET /api/workspace/summary
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const workspaceSummaryRoutes = await import('./routes/workspace-summary.ts');
+    const workspaceSummaryRoutes = await import('./routes/workspace-summary');
     app.use('/api', workspaceSummaryRoutes.default);
     console.log('✅ Workspace summary route registered (GET /api/workspace/summary)');
   } catch (error) {
@@ -6122,7 +6411,7 @@ async function startServer() {
   // CHAT ACTIONS — POST /api/chat/actions/run
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const chatActionsRoutes = await import('./routes/chat-actions.ts');
+    const chatActionsRoutes = await import('./routes/chat-actions');
     app.use('/api', chatActionsRoutes.default);
     console.log('✅ Chat actions route registered (POST /api/chat/actions/run)');
   } catch (error) {
@@ -6306,8 +6595,17 @@ async function startServer() {
     console.log('⚠️ SKIP_VITE enabled - skipping Vite middleware setup');
   }
 
+  // Start audit chain integrity monitor (background job every 5 min)
+  try {
+    const { startChainMonitor } = await import('./services/audit/chainIntegrityMonitor.js');
+    startChainMonitor(pool, 5 * 60 * 1000);
+    console.log('✅ Audit chain integrity monitor started (5-min interval)');
+  } catch (err) {
+    console.warn('⚠️ Chain integrity monitor failed to start:', err);
+  }
+
   // Start the HTTP server
-  httpServer.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
     console.log(`🔐 Login: http://localhost:${PORT}/auth`);

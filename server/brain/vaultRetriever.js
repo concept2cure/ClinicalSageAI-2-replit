@@ -83,15 +83,16 @@ async function loadEmbeddings(docId) {
 export async function retrieveContext(query, k = 5) {
   try {
     // Import OpenAI for embeddings
-    const OpenAI = (await import('openai')).default;
+    const { getOpenAIClient } = await import('../services/openai-client');
     const { getPool } = await import('../db.ts');
 
-    if (!process.env.OPENAI_API_KEY) {
+    let openai;
+    try {
+      openai = getOpenAIClient();
+    } catch {
       console.warn('No OpenAI API key found, using fallback');
       return mockRetrieveContext(query, k);
     }
-
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const pool = getPool();
 
     try {

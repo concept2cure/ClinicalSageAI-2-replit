@@ -191,22 +191,10 @@ export class ExportService {
    */
   private async getStudyInsights(studyId: string): Promise<any[]> {
     try {
-      // This would typically be a database call
-      // For simplicity, we'll return a placeholder
-      return [
-        {
-          title: 'Protocol Validation',
-          summary: 'Protocol validated against regulatory standards',
-          timestamp: new Date().toISOString(),
-          status: 'completed',
-        },
-        {
-          title: 'Sample Size Calculation',
-          summary: 'Calculated sample size of 120 total (60 per group)',
-          timestamp: new Date().toISOString(),
-          status: 'completed',
-        },
-      ];
+      // TODO: Implement actual database query for study insights
+      // (e.g., db.query.studyInsights.findMany({ where: ... }))
+      console.warn(`getStudyInsights: No insight storage implemented yet for study ${studyId}. Returning empty array.`);
+      return [];
     } catch (error) {
       console.error('Error fetching insights:', error);
       return [];

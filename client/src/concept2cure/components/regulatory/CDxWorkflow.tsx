@@ -152,7 +152,7 @@ const CDX_STAGES: Array<{
 ];
 
 const STATUS_COLORS: Record<CDxStatus, string> = {
-  initiation: 'bg-slate-100 text-slate-700',
+  initiation: 'bg-zinc-100 text-zinc-700',
   analytical_validation: 'bg-blue-100 text-blue-700',
   clinical_validation: 'bg-purple-100 text-purple-700',
   notified_body_review: 'bg-amber-100 text-amber-700',

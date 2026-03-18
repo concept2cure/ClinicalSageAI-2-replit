@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
 import OpenAI from 'openai';
 
 // Database connection

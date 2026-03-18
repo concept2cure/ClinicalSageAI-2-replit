@@ -174,22 +174,22 @@ const ConnectionStatusBadge: React.FC<{
     connected: {
       icon: CheckCircle,
       label: 'Connected',
-      color: 'text-green-500 bg-green-50 dark:bg-green-900/20',
+      color: 'text-green-500 bg-green-50',
     },
     available: {
       icon: Download,
       label: 'Available',
-      color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20',
+      color: 'text-blue-500 bg-blue-50',
     },
     'needs-update': {
       icon: RefreshCw,
       label: 'Update',
-      color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
+      color: 'text-amber-500 bg-amber-50',
     },
     missing: {
       icon: Unplug,
       label: 'No Data',
-      color: 'text-slate-400 bg-slate-50 dark:bg-slate-800',
+      color: 'text-zinc-400 bg-zinc-50',
     },
   };
 
@@ -233,7 +233,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
     green: 'bg-green-500',
     orange: 'bg-orange-500',
     purple: 'bg-purple-500',
-    slate: 'bg-slate-500',
+    slate: 'bg-zinc-500',
     red: 'bg-red-500',
     amber: 'bg-amber-500',
     indigo: 'bg-indigo-500',
@@ -243,14 +243,14 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
 
   if (compact) {
     return (
-      <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-zinc-200">
         <div className="flex items-center gap-2">
           <div
             className={`p-1.5 rounded ${colorClasses[config.color as keyof typeof colorClasses]}`}
           >
             <Icon className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span className="text-sm font-medium text-zinc-700">
             {config.name}
           </span>
         </div>
@@ -258,7 +258,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
         <div className="flex items-center gap-2">
           <ConnectionStatusBadge status={connection?.status || 'missing'} compact />
           {connection?.status === 'connected' && (
-            <span className="text-xs text-slate-500">{connection.itemCount} items</span>
+            <span className="text-xs text-zinc-500">{connection.itemCount} items</span>
           )}
         </div>
       </div>
@@ -266,7 +266,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
   }
 
   return (
-    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+    <div className="p-4 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div
@@ -275,17 +275,17 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
             <Icon className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h4 className="font-medium text-slate-800 dark:text-slate-200">{config.name}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{config.description}</p>
+            <h4 className="font-medium text-zinc-800">{config.name}</h4>
+            <p className="text-xs text-zinc-500">{config.description}</p>
           </div>
         </div>
         <ConnectionStatusBadge status={connection?.status || 'missing'} />
       </div>
 
       {connection && connection.status !== 'missing' && (
-        <div className="mb-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-          <p className="text-sm text-slate-600 dark:text-slate-400">{connection.preview}</p>
-          <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+        <div className="mb-3 p-3 bg-zinc-50 rounded-lg">
+          <p className="text-sm text-zinc-600">{connection.preview}</p>
+          <div className="flex items-center gap-4 mt-2 text-xs text-zinc-500">
             <span className="flex items-center gap-1">
               <Database className="w-3 h-3" />
               {connection.itemCount} items
@@ -306,7 +306,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
             <button
               onClick={onSync}
               disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               data-testid={`button-bridge-sync-${config.id}`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -314,7 +314,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
             </button>
             <button
               onClick={onNavigate}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
               data-testid={`button-bridge-view-${config.id}`}
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -352,7 +352,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
         ) : (
           <button
             onClick={onNavigate}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-zinc-100 text-zinc-600 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors"
             data-testid={`button-bridge-go-module-${config.id}`}
           >
             <ArrowRight className="w-4 h-4" />
@@ -376,17 +376,17 @@ const DataFlowDiagram: React.FC<{
   const totalSources = connections.reduce((sum, c) => sum + c.itemCount, 0);
 
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-slate-800 dark:text-slate-200">Data Flow Overview</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <h3 className="font-semibold text-zinc-800">Data Flow Overview</h3>
+          <p className="text-sm text-zinc-600">
             Sources flowing into your {submissionType} document
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalSources}</p>
-          <p className="text-xs text-slate-500">Total Sources</p>
+          <p className="text-2xl font-bold text-blue-600">{totalSources}</p>
+          <p className="text-xs text-zinc-500">Total Sources</p>
         </div>
       </div>
 
@@ -400,8 +400,8 @@ const DataFlowDiagram: React.FC<{
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm
                 ${
                   conn.status === 'connected'
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-zinc-100 text-zinc-500'
                 }`}
             >
               <Database className="w-4 h-4" />
@@ -422,21 +422,21 @@ const DataFlowDiagram: React.FC<{
         </div>
 
         {/* Document */}
-        <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-500 shadow-lg">
+        <div className="p-4 bg-white rounded-xl border-2 border-blue-500 shadow-lg">
           <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 text-center">
+          <p className="text-sm font-medium text-zinc-700 text-center">
             {submissionType}
           </p>
-          <p className="text-xs text-slate-500 text-center">Document</p>
+          <p className="text-xs text-zinc-500 text-center">Document</p>
         </div>
       </div>
 
       <div className="flex items-center justify-center gap-6 mt-4 text-sm">
-        <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+        <span className="flex items-center gap-1.5 text-green-600">
           <CheckCircle className="w-4 h-4" />
           {connectedCount} modules connected
         </span>
-        <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+        <span className="flex items-center gap-1.5 text-blue-600">
           <Link2 className="w-4 h-4" />
           Auto-syncing enabled
         </span>
@@ -696,7 +696,7 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
   if (compact) {
     return (
       <div className={`space-y-2 ${className}`}>
-        <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 px-1">
+        <h4 className="text-sm font-medium text-zinc-700 px-1">
           Connected Data Sources
         </h4>
         {connections
@@ -725,14 +725,14 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <div className="p-4 rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white dark:bg-slate-800 shadow-sm flex items-center justify-between">
+      <div className="p-4 rounded-2xl border border-zinc-200/70 bg-white shadow-sm flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Data Bridges</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <h3 className="text-lg font-semibold text-zinc-800">Data Bridges</h3>
+          <p className="text-sm text-zinc-500">
             Keep sources in sync across modules.
           </p>
         </div>
-        <div className="text-sm text-slate-600 dark:text-slate-300">
+        <div className="text-sm text-zinc-600">
           {connections.filter(c => c.status === 'connected').length} connected ·{' '}
           {connections.filter(c => c.status === 'needs-update').length} needs update
         </div>
@@ -745,7 +745,7 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
 
       {/* Module Connections */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+        <h3 className="text-lg font-semibold text-zinc-800 mb-4">
           Module Connections
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

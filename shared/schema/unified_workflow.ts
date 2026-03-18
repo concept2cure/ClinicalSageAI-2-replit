@@ -7,6 +7,7 @@
 
 import { relations, sql } from 'drizzle-orm';
 import {
+  index,
   integer,
   json,
   pgEnum,
@@ -65,7 +66,9 @@ export const unifiedDocuments = pgTable('unified_documents', {
   organizationId: text('organization_id').notNull(),
   latestVersion: integer('latest_version').notNull().default(1),
   metadata: json('metadata').$type<Record<string, any>>().default({}),
-});
+}, table => ({
+  orgStatusIdx: index('idx_unified_docs_org_status').on(table.organizationId, table.status),
+}));
 
 export const workflowDocumentVersions = pgTable(
   'workflow_document_versions',
@@ -119,7 +122,9 @@ export const documentAuditLogs = pgTable('document_audit_logs', {
   performedBy: text('performed_by').notNull(),
   performedAt: timestamp('performed_at').defaultNow().notNull(),
   details: json('details').$type<Record<string, any>>().default({}),
-});
+}, table => ({
+  docTimeIdx: index('idx_audit_logs_doc_time').on(table.documentId, table.performedAt),
+}));
 
 export const workflowTemplates = pgTable('workflow_templates', {
   id: serial('id').primaryKey(),
@@ -167,7 +172,10 @@ export const documentWorkflows = pgTable('document_workflows', {
   rejectedAt: timestamp('rejected_at'),
   organizationId: text('organization_id').notNull(),
   metadata: json('metadata').$type<Record<string, any>>().default({}),
-});
+}, table => ({
+  orgStatusIdx: index('idx_doc_workflows_org_status').on(table.organizationId, table.status),
+  documentIdx: index('idx_doc_workflows_document_id').on(table.documentId),
+}));
 
 export const workflowApprovals = pgTable('workflow_approvals', {
   id: serial('id').primaryKey(),
@@ -185,7 +193,9 @@ export const workflowApprovals = pgTable('workflow_approvals', {
   completedBy: text('completed_by'),
   completedAt: timestamp('completed_at'),
   comments: text('comments'),
-});
+}, table => ({
+  workflowStatusIdx: index('idx_wf_approvals_workflow_status').on(table.workflowId, table.status),
+}));
 
 export const workflowHistory = pgTable('workflow_history', {
   id: serial('id').primaryKey(),

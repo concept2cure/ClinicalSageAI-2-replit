@@ -1,7 +1,7 @@
 // @ts-nocheck - Uses optional puppeteer-cluster and bull; OpenAI SDK v4
 // server/services/cerGenerator.ts
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { Cluster } from 'puppeteer-cluster';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
@@ -10,7 +10,7 @@ import type { Pool } from 'pg';
 import { pool as sharedPool } from '../db';
 
 // Initialize OpenAI client
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 // Puppeteer-Cluster for performance
 let clusterInstance: Cluster | null = null;

@@ -16,16 +16,14 @@ import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
 import { pool as dbPool } from '../utils/database.js';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import PDFParser from 'pdf-parse';
 import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // Document storage configuration
 const uploadDir = path.join(process.cwd(), 'uploads', 'documents');

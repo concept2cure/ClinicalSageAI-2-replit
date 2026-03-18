@@ -6,7 +6,7 @@
 import express from 'express';
 import multer from 'multer';
 import crypto from 'crypto';
-import { db } from '../db/index.js';
+import { db } from '../db';
 import { sql } from 'drizzle-orm';
 
 const router = express.Router();
@@ -93,10 +93,16 @@ router.get('/files', async (req, res) => {
 
     // Execute main query
     const result = await db.execute(sql`
-      SELECT * FROM device_data_center 
+      SELECT id, organization_id, file_name, file_type, file_size, storage_url, checksum,
+             device_name, device_model, device_identifier, category, subcategory,
+             categories, components, standard_ref, metadata,
+             test_standards, test_type, test_date, test_lab_name, test_lab_certification,
+             device_components, component_version, tags, comments, predicate_device,
+             regulatory_status, uploaded_by, created_at, updated_at
+      FROM device_data_center
       ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT ${parseInt(limit)} 
+      ORDER BY created_at DESC
+      LIMIT ${parseInt(limit)}
       OFFSET ${parseInt(offset)}
     `);
     
@@ -432,7 +438,13 @@ router.get('/search/deep', async (req, res) => {
 
     // Perform deep search across all text fields and arrays
     const result = await db.execute(sql`
-      SELECT * FROM device_data_center 
+      SELECT id, organization_id, file_name, file_type, file_size, storage_url, checksum,
+             device_name, device_model, device_identifier, category, subcategory,
+             categories, components, standard_ref, metadata,
+             test_standards, test_type, test_date, test_lab_name, test_lab_certification,
+             device_components, component_version, tags, comments, predicate_device,
+             regulatory_status, uploaded_by, created_at, updated_at
+      FROM device_data_center
       WHERE organization_id = ${req.organizationId}
       AND (
         file_name ILIKE ${'%' + searchQuery + '%'}
@@ -445,15 +457,15 @@ router.get('/search/deep', async (req, res) => {
         OR comments ILIKE ${'%' + searchQuery + '%'}
         OR searchable_content ILIKE ${'%' + searchQuery + '%'}
         OR EXISTS (
-          SELECT 1 FROM unnest(tags) AS tag 
+          SELECT 1 FROM unnest(tags) AS tag
           WHERE tag ILIKE ${'%' + searchQuery + '%'}
         )
         OR EXISTS (
-          SELECT 1 FROM unnest(test_standards) AS std 
+          SELECT 1 FROM unnest(test_standards) AS std
           WHERE std ILIKE ${'%' + searchQuery + '%'}
         )
         OR EXISTS (
-          SELECT 1 FROM unnest(device_components) AS comp 
+          SELECT 1 FROM unnest(device_components) AS comp
           WHERE comp ILIKE ${'%' + searchQuery + '%'}
         )
       )

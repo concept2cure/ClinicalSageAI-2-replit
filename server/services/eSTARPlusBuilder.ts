@@ -7,12 +7,11 @@ const xmlbuilder2 = require('xmlbuilder2');
 const Ajv = require('ajv');
 
 // Import OpenAI
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 
 // Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 import { db } from '../db';
 import { fda510kSections, fda510kProjects } from '../../shared/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -843,15 +842,11 @@ export class eSTARPlusBuilder {
         submissionDate: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Error fetching project metadata:', error);
-      
-      // Return mock data if not found (for development)
-      return {
-        manufacturer: 'Example Medical Devices, Inc.',
-        deviceName: 'ExampleMed Device',
-        sequence: '001',
-        submissionDate: new Date().toISOString()
-      };
+      console.error(`Error fetching project metadata for ${projectId}:`, error);
+      throw new Error(
+        `Unable to retrieve project metadata for project ${projectId}. ` +
+        'Ensure the project exists and the database connection is available.'
+      );
     }
   }
   
@@ -1037,10 +1032,12 @@ export class eSTARPlusBuilder {
         statement about the device type and intended use.
       `;
       
+      // Inject client/project intelligence so eSTAR reads SKILL/.MD context
+      const intelligencePrefix = await getIntelligencePrefix().catch(() => '');
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert in FDA regulatory submissions.' },
+          { role: 'system', content: intelligencePrefix + 'You are an expert in FDA regulatory submissions.' },
           { role: 'user', content: coverPrompt }
         ],
         max_tokens: 700
@@ -1266,10 +1263,12 @@ ${meta.manufacturer}
         Format the report in a professional, well-structured manner suitable for a regulatory context.
       `;
       
+      // Inject client/project intelligence so compliance report reads SKILL/.MD context
+      const intelligencePrefix2 = await getIntelligencePrefix().catch(() => '');
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert FDA regulatory consultant specializing in 510(k) submissions.' },
+          { role: 'system', content: intelligencePrefix2 + 'You are an expert FDA regulatory consultant specializing in 510(k) submissions.' },
           { role: 'user', content: prompt }
         ],
         max_tokens: 1000

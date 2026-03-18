@@ -7,7 +7,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { pool } from '../db/setupLiterature';
 import literatureAggregator, { LiteratureEntry } from './LiteratureAggregatorService';
 import dotenv from 'dotenv';
@@ -16,9 +16,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Initialize OpenAI client
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
+let openai: ReturnType<typeof getOpenAIClient> | null = null;
+try { openai = getOpenAIClient(); } catch {}
 
 // Summary types and their descriptions
 const SUMMARY_TYPES = {

@@ -28,7 +28,8 @@
 
 import { Pool } from 'pg';
 import crypto from 'crypto';
-import OpenAI from 'openai';
+import type OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -172,9 +173,9 @@ export class CitationEnforcementService {
     this.pool = pool;
 
     // Initialize OpenAI if available
-    if (process.env.OPENAI_API_KEY) {
-      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    }
+    try {
+      this.openai = getOpenAIClient();
+    } catch {}
 
     console.log('✅ Citation Enforcement Service initialized (Part 11 compliant)');
   }

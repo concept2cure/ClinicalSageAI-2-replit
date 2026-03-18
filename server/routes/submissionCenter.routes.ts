@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { pool, query } from '../db';
 import { z } from 'zod';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -32,11 +33,12 @@ const createTaskSchema = z.object({
 });
 
 // Get all projects
-router.get('/projects', async (req: Request, res: Response) => {
-  try {
+router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
     const result = await query(`
       SELECT
-        p.*,
+        p.id, p.name, p.description, p.submission_type, p.status, p.stage,
+        p.target_agency, p.target_date, p.priority, p.completion_percentage,
+        p.created_by, p.created_at, p.updated_at,
         COUNT(DISTINCT t.id) as total_tasks,
         COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
         COUNT(DISTINCT CASE WHEN t.status = 'in-progress' THEN t.id END) as in_progress_tasks
@@ -60,18 +62,10 @@ router.get('/projects', async (req: Request, res: Response) => {
       success: true,
       data: projects,
     });
-  } catch (error) {
-    console.error('Error fetching projects:', error);
-    res.json({
-      success: true,
-      data: [], // Return empty array on error to keep UI working
-    });
-  }
-});
+}));
 
 // Create new project
-router.post('/projects', async (req: Request, res: Response) => {
-  try {
+router.post('/projects', asyncHandler(async (req: Request, res: Response) => {
     const validatedData = createProjectSchema.parse(req.body);
 
     const result = await query(
@@ -116,22 +110,17 @@ router.post('/projects', async (req: Request, res: Response) => {
       success: true,
       data: newProject,
     });
-  } catch (error) {
-    console.error('Error creating project:', error);
-    res.status(400).json({
-      success: false,
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create project',
-    });
-  }
-});
+}));
 
 // Get tasks for a project or all tasks
-router.get('/tasks', async (req: Request, res: Response) => {
-  try {
+router.get('/tasks', asyncHandler(async (req: Request, res: Response) => {
     const projectId = req.query.projectId;
 
     let queryText = `
-      SELECT t.*, p.name as project_name, p.submission_type
+      SELECT t.id, t.project_id, t.title, t.description, t.status, t.priority,
+             t.module_type, t.category, t.type, t.assigned_to, t.assigned_email,
+             t.due_date, t.estimated_hours, t.completion_percentage, t.created_at, t.updated_at,
+             p.name as project_name, p.submission_type
       FROM submission_tasks t
       LEFT JOIN submission_projects p ON t.project_id = p.id
     `;
@@ -150,18 +139,10 @@ router.get('/tasks', async (req: Request, res: Response) => {
       success: true,
       data: result.rows,
     });
-  } catch (error) {
-    console.error('Error fetching tasks:', error);
-    res.json({
-      success: true,
-      data: [],
-    });
-  }
-});
+}));
 
 // Create new task
-router.post('/tasks', async (req: Request, res: Response) => {
-  try {
+router.post('/tasks', asyncHandler(async (req: Request, res: Response) => {
     const validatedData = createTaskSchema.parse(req.body);
 
     const result = await query(
@@ -188,18 +169,10 @@ router.post('/tasks', async (req: Request, res: Response) => {
       success: true,
       data: result.rows[0],
     });
-  } catch (error) {
-    console.error('Error creating task:', error);
-    res.status(400).json({
-      success: false,
-      error: 'Failed to create task',
-    });
-  }
-});
+}));
 
 // Update task status
-router.put('/tasks/:id', async (req: Request, res: Response) => {
-  try {
+router.put('/tasks/:id', asyncHandler(async (req: Request, res: Response) => {
     const taskId = req.params.id;
     const { status, completion_percentage } = req.body;
 
@@ -215,44 +188,26 @@ router.put('/tasks/:id', async (req: Request, res: Response) => {
       success: true,
       data: result.rows[0],
     });
-  } catch (error) {
-    console.error('Error updating task:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update task',
-    });
-  }
-});
+}));
 
 // Get regulatory intelligence feed
-router.get('/regulatory-intelligence', async (req: Request, res: Response) => {
-  try {
+router.get('/regulatory-intelligence', asyncHandler(async (req: Request, res: Response) => {
     const result = await query(`
-      SELECT * FROM regulatory_intelligence
+      SELECT id, title, description, category, impact_level, published_date
+      FROM regulatory_intelligence
       ORDER BY published_date DESC
       LIMIT 20
     `);
 
-    // If no data, return mock data for demo
-    const data = result.rows.length > 0 ? result.rows : getMockRegulatoryIntelligence();
-
     res.json({
       success: true,
-      data: data,
+      data: result.rows,
+      message: result.rows.length === 0 ? 'No regulatory intelligence entries found. Data will appear here as it is ingested.' : undefined,
     });
-  } catch (error) {
-    console.error('Error fetching regulatory intelligence:', error);
-    // Return mock data on error for demo
-    res.json({
-      success: true,
-      data: getMockRegulatoryIntelligence(),
-    });
-  }
-});
+}));
 
 // Get pipeline status
-router.get('/pipeline', async (req: Request, res: Response) => {
-  try {
+router.get('/pipeline', asyncHandler(async (req: Request, res: Response) => {
     const result = await query(`
       SELECT
         stage,
@@ -291,18 +246,10 @@ router.get('/pipeline', async (req: Request, res: Response) => {
       success: true,
       data: pipeline,
     });
-  } catch (error) {
-    console.error('Error fetching pipeline:', error);
-    res.json({
-      success: true,
-      data: [],
-    });
-  }
-});
+}));
 
 // Update project workflow stage (for drag-and-drop)
-router.post('/workflow/transition', async (req: Request, res: Response) => {
-  try {
+router.post('/workflow/transition', asyncHandler(async (req: Request, res: Response) => {
     const { projectId, newStage } = req.body;
 
     const result = await query(
@@ -324,14 +271,7 @@ router.post('/workflow/transition', async (req: Request, res: Response) => {
       success: true,
       data: result.rows[0],
     });
-  } catch (error) {
-    console.error('Error updating workflow stage:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update workflow stage',
-    });
-  }
-});
+}));
 
 // Helper function to generate initial tasks based on submission type
 function getInitialTasksForProject(submissionType: string) {
@@ -540,35 +480,6 @@ function getInitialTasksForProject(submissionType: string) {
   return taskTemplates[submissionType] || [];
 }
 
-// Mock regulatory intelligence for demo
-function getMockRegulatoryIntelligence() {
-  return [
-    {
-      id: 1,
-      title: 'FDA Publishes New Guidance on Digital Health Technologies',
-      description:
-        'FDA released comprehensive guidance on software as medical device (SaMD) regulatory requirements',
-      category: 'FDA',
-      impact_level: 'high',
-      published_date: new Date('2025-10-20'),
-    },
-    {
-      id: 2,
-      title: 'EMA Updates Clinical Trial Regulation Requirements',
-      description: 'New requirements for clinical trial applications in EU effective January 2026',
-      category: 'EMA',
-      impact_level: 'critical',
-      published_date: new Date('2025-10-18'),
-    },
-    {
-      id: 3,
-      title: 'ICH Q14 Analytical Procedure Development Finalized',
-      description: 'ICH harmonized guideline on analytical procedure development now in effect',
-      category: 'ICH',
-      impact_level: 'medium',
-      published_date: new Date('2025-10-15'),
-    },
-  ];
-}
+// Mock regulatory intelligence removed — returns real DB data or empty array.
 
 export default router;

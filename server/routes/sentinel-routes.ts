@@ -16,7 +16,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import { getTenantContext } from '../utils/tenantContext';
 import { getSentinelScheduler } from '../services/sentinel/scheduler';
 import type { SentinelAnalyzerType } from '../services/sentinel/types';

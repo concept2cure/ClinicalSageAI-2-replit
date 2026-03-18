@@ -7,11 +7,11 @@
  */
 
 import axios from 'axios';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { storage } from '../storage.js';
 
 // Initialize OpenAI with API key from environment variable
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 /**
  * Search PubMed for scientific literature

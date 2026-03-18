@@ -1,4 +1,4 @@
-import { query } from '../db/pool';
+import { query } from '../db';
 
 export async function getOrganizationIdFromProgram(programId: string): Promise<number> {
   if (!programId) {

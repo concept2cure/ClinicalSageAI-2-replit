@@ -12,6 +12,7 @@ import { users } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
 import { db } from './db';
 import jwt from 'jsonwebtoken';
+import { config } from './config/environment';
 
 const logger = createScopedLogger('auth');
 
@@ -69,13 +70,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   try {
     // 1. Try JWT verification first (primary auth method)
-    const JWT_SECRET =
-      process.env.JWT_SECRET ||
-      process.env.SESSION_SECRET ||
-      'trialsage-dev-secret-key-change-in-production';
-
     try {
-      const decoded = jwt.verify(apiKey, JWT_SECRET) as {
+      const decoded = jwt.verify(apiKey, config.jwt.secret) as {
         userId?: string;
         email?: string;
         organizationId?: string;
@@ -87,6 +83,16 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         req.userRole = decoded.role || 'user';
         req.userEmail = decoded.email;
         req.tenantId = parseInt(decoded.organizationId || '1') || 1;
+        // SECURITY: Set req.user with organizationId from JWT so that
+        // downstream tenant middleware (tenantContextMiddleware,
+        // tenantIsolationMiddleware) derives org context from the token.
+        req.user = {
+          id: req.userId,
+          userId: req.userId,
+          email: decoded.email,
+          role: decoded.role || 'user',
+          organizationId: decoded.organizationId || '1',
+        };
         req.tenantContext = {
           organizationId: parseInt(decoded.organizationId || '1') || 1,
           userId: req.userId,
@@ -99,18 +105,30 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
 
     // 2. Fallback to DEV_API_KEY (for automated tools / CI)
+    // SECURITY: Only allow in non-production environments to prevent auth bypass
     const devApiKey = process.env.DEV_API_KEY;
     if (devApiKey && apiKey === devApiKey) {
+      if (process.env.NODE_ENV === 'production') {
+        logger.warn('DEV_API_KEY authentication attempted in production — rejected');
+        return res.status(401).json({ error: 'Invalid token or API key' });
+      }
       req.userId = 1;
       req.userRole = 'admin';
       req.userEmail = 'dev@example.com';
       req.tenantId = 1;
+      req.user = {
+        id: 1,
+        userId: 1,
+        email: 'dev@example.com',
+        role: 'admin',
+        organizationId: '1',
+      };
       req.tenantContext = {
         organizationId: 1,
         userId: 1,
         role: 'admin',
       };
-      logger.debug('Authenticated via DEV_API_KEY');
+      logger.debug('Authenticated via DEV_API_KEY (non-production)');
       return next();
     }
 
@@ -234,12 +252,12 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
   try {
     const bcrypt = await import('bcryptjs');
 
-    // Handle legacy temp_ prefix passwords — compare after stripping prefix
+    // SECURITY FIX: Reject legacy temp_ prefix passwords entirely.
+    // Plaintext comparison was a security hole. Users with temp_ passwords
+    // must reset their password via the forgot-password flow.
     if (hash.startsWith('temp_')) {
-      // Temporary passwords should still be bcrypt-compared when re-hashed
-      // For migration: accept plaintext temp passwords but log deprecation warning
-      logger.warn('Legacy temp_ password detected — scheduling for bcrypt migration');
-      return password === hash.substring(5);
+      logger.warn('Legacy temp_ password rejected — user must reset password via forgot-password flow');
+      return false;
     }
 
     // Standard bcrypt comparison

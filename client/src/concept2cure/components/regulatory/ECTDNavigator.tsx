@@ -463,7 +463,7 @@ const STATUS_CONFIG: Record<
   DocumentStatus,
   { label: string; color: string; icon: React.ReactNode }
 > = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: <File className="w-4 h-4" /> },
+  draft: { label: 'Draft', color: 'bg-zinc-100 text-zinc-700', icon: <File className="w-4 h-4" /> },
   in_review: {
     label: 'In Review',
     color: 'bg-yellow-100 text-yellow-700',
@@ -481,7 +481,7 @@ const STATUS_CONFIG: Record<
   },
   not_applicable: {
     label: 'N/A',
-    color: 'bg-gray-50 text-gray-500',
+    color: 'bg-zinc-50 text-zinc-500',
     icon: <File className="w-4 h-4" />,
   },
   not_started: {
@@ -568,7 +568,7 @@ function SectionNode({
               <Folder className="h-4 w-4 text-blue-500" />
             )
           ) : (
-            <File className="h-4 w-4 text-gray-400" />
+            <File className="h-4 w-4 text-zinc-400" />
           )}
 
           <span
@@ -591,7 +591,7 @@ function SectionNode({
                 </Badge>
               )}
               {counts.draft > 0 && (
-                <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600">
+                <Badge variant="outline" className="text-xs bg-zinc-50 text-zinc-600">
                   {counts.draft} ✎
                 </Badge>
               )}
@@ -940,9 +940,9 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Draft</p>
-                <p className="text-2xl font-bold text-gray-600">{overallStats.draft}</p>
+                <p className="text-2xl font-bold text-zinc-600">{overallStats.draft}</p>
               </div>
-              <File className="w-8 h-8 text-gray-500" />
+              <File className="w-8 h-8 text-zinc-500" />
             </div>
           </div>
         </div>

@@ -824,7 +824,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
         =================================================================== */}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 shadow-md">
+            <div className="rounded-xl bg-blue-600 p-2.5 shadow-md">
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>

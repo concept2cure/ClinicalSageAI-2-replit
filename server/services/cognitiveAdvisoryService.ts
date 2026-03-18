@@ -21,6 +21,7 @@
  */
 
 import { getGateway } from './ai-gateway/index.js';
+import { getIntelligencePrefix } from './lumen-context-builder.js';
 import { pool } from '../db';
 
 // AI Gateway instance (replaces direct OpenAI client)
@@ -32,6 +33,7 @@ const getGw = () => getGateway();
 
 interface ProjectContext {
   id: string;
+  organizationId?: number;
   name: string;
   submissionType: 'ind' | 'nda' | 'bla' | '510k' | 'pma' | 'de_novo';
   therapeuticArea: string;
@@ -401,6 +403,7 @@ async function getProjectContext(projectId: string): Promise<ProjectContext | nu
     const row = result.rows[0];
     return {
       id: row.id,
+      organizationId: row.organization_id ? Number(row.organization_id) : undefined,
       name: row.name,
       submissionType: row.submission_type || 'ind',
       therapeuticArea: row.therapeutic_area || 'unknown',
@@ -728,7 +731,13 @@ async function generateAISuggestions(
   }
 
   try {
-    const systemPrompt = `You are a senior regulatory affairs expert with 20+ years of FDA experience.
+    // Inject client/project intelligence so the advisory reads SKILL/.MD context
+    const intelligencePrefix = await getIntelligencePrefix(
+      context.organizationId,
+      context.id
+    ).catch(() => '');
+
+    const systemPrompt = `${intelligencePrefix}You are a senior regulatory affairs expert with 20+ years of FDA experience.
 You specialize in ${context.submissionType.toUpperCase()} submissions for ${context.therapeuticArea}.
 Your role is to provide proactive, actionable guidance to prevent regulatory rejections.
 
@@ -768,7 +777,7 @@ Format as JSON array with fields: title, description, actionItems (array), prior
       jsonMode: true,
       temperature: 0.3,
       callerModule: 'cognitiveAdvisoryService',
-      organizationId: context.id,
+      organizationId: context.organizationId,
     });
 
     const content = gwResponse.content;

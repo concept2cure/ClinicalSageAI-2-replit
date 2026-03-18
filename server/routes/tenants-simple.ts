@@ -254,6 +254,15 @@ router.delete('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid organization ID' });
     }
 
+    // SAFETY: Require explicit confirmation header for destructive tenant deletion
+    const confirmation = req.headers['x-confirm-delete'] as string;
+    if (confirmation !== `delete-org-${tenantId}`) {
+      return res.status(400).json({
+        error: 'Destructive operation requires confirmation',
+        hint: `Set header x-confirm-delete: delete-org-${tenantId}`,
+      });
+    }
+
     // Use transaction with postgres
     await sql.begin(async sql => {
       // Check if organization exists

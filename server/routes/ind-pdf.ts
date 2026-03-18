@@ -666,6 +666,74 @@ router.post('/:projectId/import-content', upload.single('file'), async (req: Req
 });
 
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCX-TO-PDF CONVERSION (LibreOffice headless)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /conversion/health — Check if DOCX-to-PDF conversion is available
+ */
+router.get('/conversion/health', async (_req: Request, res: Response) => {
+  try {
+    const { isPdfConversionAvailable } = await import('../services/pdfConversionService.js');
+    const available = await isPdfConversionAvailable();
+    res.json({
+      service: 'docx-to-pdf',
+      available,
+      engine: available ? 'libreoffice-headless' : null,
+      message: available
+        ? 'LibreOffice headless is ready for DOCX-to-PDF conversion.'
+        : 'LibreOffice not installed. Install with: apt-get install -y libreoffice-common libreoffice-writer',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      service: 'docx-to-pdf',
+      available: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /convert/docx-to-pdf — Convert an uploaded DOCX file to PDF
+ *
+ * Body: multipart/form-data, field "file" (DOCX)
+ */
+const docxUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowed = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/octet-stream',
+    ];
+    cb(null, allowed.includes(file.mimetype) || file.originalname.endsWith('.docx'));
+  },
+});
+
+router.post('/convert/docx-to-pdf', docxUpload.single('file'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No DOCX file provided. Use field name "file".' });
+    }
+
+    const { convertDocxToPdf } = await import('../services/pdfConversionService.js');
+    const pdfBuffer = await convertDocxToPdf(req.file.buffer);
+
+    const baseName = path.basename(req.file.originalname, '.docx');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${baseName}.pdf"`);
+    res.setHeader('Content-Length', String(pdfBuffer.length));
+    res.send(pdfBuffer);
+  } catch (error: any) {
+    console.error('[IND-PDF] DOCX-to-PDF conversion failed:', error);
+    res.status(500).json({
+      error: 'DOCX-to-PDF conversion failed',
+      message: error.message,
+    });
+  }
+});
+
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const OpenAI = require('openai');
+const { getOpenAIClient } = require('../services/openai-client');
 const logger = require('../utils/logger');
 
 /**
@@ -12,9 +12,7 @@ const logger = require('../utils/logger');
  */
 
 // Configure OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 /**
  * Generate a State of the Art section based on provided medical and device information

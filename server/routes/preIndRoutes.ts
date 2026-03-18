@@ -39,7 +39,11 @@ const dbOps = {
       // Run a raw SQL query to fetch pre-ind data
       // In production, you should use prepared statements and parameterization
       const preIndDataQuery = sql`
-        SELECT * FROM ind_pre_ind_data
+        SELECT id, draft_id, project_name, therapeutic_area, project_objective,
+               target_pre_ind_meeting_date, pre_ind_meeting_objective,
+               pre_ind_agenda_topics, pre_ind_attendees, fda_interaction_notes,
+               created_at, updated_at
+        FROM ind_pre_ind_data
         WHERE draft_id = ${draftId}
       `;
 
@@ -53,7 +57,8 @@ const dbOps = {
 
       // Fetch associated milestones
       const milestonesQuery = sql`
-        SELECT * FROM ind_milestones
+        SELECT id, title, due_date, status, description
+        FROM ind_milestones
         WHERE pre_ind_data_id = ${preIndRecord.id}
         ORDER BY due_date ASC
       `;

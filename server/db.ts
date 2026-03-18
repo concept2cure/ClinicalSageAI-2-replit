@@ -29,12 +29,15 @@ try {
   // Check if database URL is available
   if (databaseUrl) {
     logger.info('Initializing PostgreSQL connection pool');
+    const isProduction = process.env.NODE_ENV === 'production';
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
-      max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-      connectionTimeoutMillis: 5000, // How long to wait for a connection to become available
+      max: isProduction ? 40 : 20, // Scale pool for production concurrency
+      idleTimeoutMillis: 15000, // Release idle connections faster (was 30s)
+      connectionTimeoutMillis: 5000,
+      statement_timeout: 30000, // Kill queries running longer than 30s
+      idle_in_transaction_session_timeout: 60000, // Kill idle-in-transaction after 60s
     });
 
     // Test connection with retry mechanism
@@ -159,6 +162,12 @@ export async function ensureAuthTables(): Promise<void> {
         ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
         ADD COLUMN IF NOT EXISTS settings      JSONB,
         ADD COLUMN IF NOT EXISTS api_key       TEXT,
+        ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT,
+        ADD COLUMN IF NOT EXISTS billing_cycle TEXT DEFAULT 'monthly',
+        ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'incomplete',
+        ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS next_billing_date TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS seats_purchased INTEGER DEFAULT 5,
         ADD COLUMN IF NOT EXISTS tier          TEXT DEFAULT 'standard' NOT NULL,
         ADD COLUMN IF NOT EXISTS status        TEXT DEFAULT 'active'   NOT NULL,
         ADD COLUMN IF NOT EXISTS max_users     INTEGER DEFAULT 5,
@@ -192,7 +201,20 @@ export async function ensureAuthTables(): Promise<void> {
         ADD COLUMN IF NOT EXISTS last_login               TIMESTAMP,
         ADD COLUMN IF NOT EXISTS default_organization_id  INTEGER REFERENCES organizations(id),
         ADD COLUMN IF NOT EXISTS preferences              JSONB,
-        ADD COLUMN IF NOT EXISTS updated_at               TIMESTAMP DEFAULT NOW() NOT NULL
+        ADD COLUMN IF NOT EXISTS updated_at               TIMESTAMP DEFAULT NOW() NOT NULL,
+        ADD COLUMN IF NOT EXISTS mfa_enabled              BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS mfa_secret               TEXT,
+        ADD COLUMN IF NOT EXISTS mfa_backup_codes         JSONB,
+        ADD COLUMN IF NOT EXISTS mfa_method               TEXT DEFAULT 'totp',
+        ADD COLUMN IF NOT EXISTS mfa_verified_at          TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS failed_login_attempts    INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS locked_until             TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS last_failed_login        TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS password_changed_at      TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS password_history         JSONB,
+        ADD COLUMN IF NOT EXISTS must_change_password     BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS reset_token              TEXT,
+        ADD COLUMN IF NOT EXISTS reset_token_expires_at   TIMESTAMP
     `);
     // unique constraint on email (needed for ON CONFLICT)
     await client.query(`
@@ -211,11 +233,17 @@ export async function ensureAuthTables(): Promise<void> {
         id              SERIAL PRIMARY KEY,
         organization_id INTEGER NOT NULL REFERENCES organizations(id),
         user_id         INTEGER NOT NULL REFERENCES users(id),
-        role            TEXT DEFAULT 'user' NOT NULL,
+        role            TEXT DEFAULT 'member' NOT NULL,
+        permissions     JSONB,
         created_at      TIMESTAMP DEFAULT NOW() NOT NULL,
         updated_at      TIMESTAMP DEFAULT NOW() NOT NULL,
         UNIQUE(organization_id, user_id)
       )
+    `);
+    // Add permissions column if missing (for tables created before this migration)
+    await client.query(`
+      ALTER TABLE organization_users
+        ADD COLUMN IF NOT EXISTS permissions JSONB
     `);
 
     // ── Guarantee at least one org exists ───────────────────────────────
@@ -225,11 +253,47 @@ export async function ensureAuthTables(): Promise<void> {
       ON CONFLICT DO NOTHING
     `);
 
-    // ── Ensure Concept2Cure org has biotech industry_mode ──────────────
+    // ── Ensure Concept2Cure Therapeutics org exists ─────────────────────
     await client.query(`
-      UPDATE organizations SET industry_mode = 'biotech'
-      WHERE slug = 'concept2cure' AND (industry_mode IS NULL OR industry_mode = '')
+      INSERT INTO organizations (name, slug, industry_mode, tier, status, max_users, max_projects, max_storage)
+      VALUES ('Concept2Cure Therapeutics', 'concept2cure', 'biotech', 'enterprise', 'active', 25, 50, 100)
+      ON CONFLICT (slug) DO UPDATE SET
+        industry_mode = COALESCE(NULLIF(organizations.industry_mode, ''), 'biotech'),
+        tier = 'enterprise'
     `);
+
+    // ── Seed GA demo admin user (jm.smith@concept2cure.pro) ─────────
+    // bcrypt hash of "pass-word" with 12 rounds (pre-computed for startup speed)
+    const demoHash = '$2b$12$ZE1acJqmLIAbDLl2h2eUiOeXLXCunsidscRZDA7Wt4.kiYBiNgFnu';
+    const demoEmail = 'jm.smith@concept2cure.pro';
+    const demoName = 'JM Smith';
+
+    // Get the Concept2Cure org id
+    const c2cOrg = await client.query(`SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`);
+    const c2cOrgId = c2cOrg.rows[0]?.id;
+
+    if (c2cOrgId) {
+      // Upsert demo user
+      await client.query(`
+        INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id, password_changed_at)
+        VALUES ($1, $2, $3, 'Chief Science Officer', 'Executive Leadership', 'active', $4, NOW())
+        ON CONFLICT (email) DO UPDATE SET
+          password_hash = CASE WHEN users.password_hash IS NULL OR users.password_hash = '' THEN $3 ELSE users.password_hash END,
+          default_organization_id = COALESCE(users.default_organization_id, $4),
+          status = 'active'
+      `, [demoEmail, demoName, demoHash, c2cOrgId]);
+
+      // Ensure admin membership
+      const demoUser = await client.query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [demoEmail]);
+      if (demoUser.rows[0]) {
+        await client.query(`
+          INSERT INTO organization_users (organization_id, user_id, role)
+          VALUES ($1, $2, 'admin')
+          ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'admin'
+        `, [c2cOrgId, demoUser.rows[0].id]);
+      }
+      logger.info(`ensureAuthTables: GA demo user verified (${demoEmail})`);
+    }
 
     // ── available_modules catalog ──────────────────────────────────────
     await client.query(`
@@ -282,8 +346,10 @@ export async function query(text: string, params: any[] = []): Promise<any> {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
 
-    // Log slow queries (>100ms)
-    if (duration > 100) {
+    // Log slow queries (configurable, default 250ms prod / 100ms dev)
+    const slowThreshold = parseInt(process.env.SLOW_QUERY_THRESHOLD_MS || '', 10)
+      || (process.env.NODE_ENV === 'production' ? 250 : 100);
+    if (duration > slowThreshold) {
       logger.warn('Slow query detected', {
         duration,
         query: text,

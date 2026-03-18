@@ -1,5 +1,5 @@
 import express from 'express';
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 import logger from '../utils/logger.js';
 
 /**
@@ -13,9 +13,7 @@ const router = express.Router();
 
 // Configure OpenAI with the newest SDK
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 /**
  * Generate a feature-specific rationale for comparing a subject device feature

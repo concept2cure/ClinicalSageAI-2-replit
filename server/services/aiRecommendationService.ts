@@ -1,5 +1,5 @@
 // server/services/aiRecommendationService.ts
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import { storage } from '../storage';
 import {
   InsertAiInsight,
@@ -10,9 +10,7 @@ import {
 } from '../../shared/schema';
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const MODEL = 'gpt-4o';

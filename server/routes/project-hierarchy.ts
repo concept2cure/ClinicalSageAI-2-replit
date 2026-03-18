@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { db } from '../db';
 import { projects, auditEvents } from '@shared/schema';
 import { and, eq, isNull, sql, asc, desc } from 'drizzle-orm';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { ProjectRollupService } from '../services/project-rollup-service';
 
@@ -350,7 +350,15 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
 
     // Verify project exists and belongs to org
     const projResult = await pool.query(
-      `SELECT * FROM projects WHERE id = $1 AND organization_id = $2`,
+      `SELECT id, organization_id, client_workspace_id, parent_project_id, depth, path,
+              name, code, description, status, priority, type,
+              start_date, target_end_date, actual_end_date, progress,
+              budget, budget_currency, budget_status,
+              created_by_id, owner_id, sponsors, tags,
+              critical_to_quality_factors, risk_level, risk_assessment,
+              quality_targets, module_references, settings, metadata,
+              created_at, updated_at
+       FROM projects WHERE id = $1 AND organization_id = $2`,
       [projectId, organizationId]
     );
     if (projResult.rows.length === 0) return res.status(404).json({ error: 'Project not found' });
@@ -372,7 +380,15 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
     } else {
       // Verify new parent belongs to same org
       const newParentResult = await pool.query(
-        `SELECT * FROM projects WHERE id = $1 AND organization_id = $2`,
+        `SELECT id, organization_id, client_workspace_id, parent_project_id, depth, path,
+                name, code, description, status, priority, type,
+                start_date, target_end_date, actual_end_date, progress,
+                budget, budget_currency, budget_status,
+                created_by_id, owner_id, sponsors, tags,
+                critical_to_quality_factors, risk_level, risk_assessment,
+                quality_targets, module_references, settings, metadata,
+                created_at, updated_at
+         FROM projects WHERE id = $1 AND organization_id = $2`,
         [newParentId, organizationId]
       );
       if (newParentResult.rows.length === 0) {
@@ -427,7 +443,18 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
     }
 
     // Return updated project
-    const updated = await pool.query(`SELECT * FROM projects WHERE id = $1`, [projectId]);
+    const updated = await pool.query(
+      `SELECT id, organization_id, client_workspace_id, parent_project_id, depth, path,
+              name, code, description, status, priority, type,
+              start_date, target_end_date, actual_end_date, progress,
+              budget, budget_currency, budget_status,
+              created_by_id, owner_id, sponsors, tags,
+              critical_to_quality_factors, risk_level, risk_assessment,
+              quality_targets, module_references, settings, metadata,
+              created_at, updated_at
+       FROM projects WHERE id = $1`,
+      [projectId]
+    );
     console.log(`[HierarchyRoutes] Moved project ${projectId} to parent ${newParentId || 'root'}`);
     res.json(updated.rows[0]);
   } catch (error) {

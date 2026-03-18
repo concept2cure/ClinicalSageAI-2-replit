@@ -1,6 +1,12 @@
 /**
- * @fileoverview Lumen Sidebar — Claude.ai-style, regulatory-focused
+ * @fileoverview Zen Sidebar — Claude.ai-style, intent-organized navigation
  * @module concept2cure/components/sidebar/ZenSidebar
+ *
+ * Navigation restructured around user intent:
+ *   WORK     → Copilot, Author
+ *   RESEARCH → Intelligence (Alerts, Evidence, Precedents, Pathways)
+ *   ASSURE   → Review & Readiness
+ *   MANAGE   → Command Center, Academy
  */
 
 import React, { useState } from 'react';
@@ -15,18 +21,30 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
-  FileText,
-  Beaker,
-  FlaskConical,
-  Search,
-  ShieldAlert,
   Brain,
-  Archive,
   PenLine,
+  Search,
+  ShieldCheck,
+  BarChart3,
+  GraduationCap,
+  Building2,
+  Users,
+  FlaskConical,
+  BookOpen,
+  Snowflake,
+  Bot,
+  Compass,
+  Activity,
+  Upload,
+  FileStack,
+  Scale,
+  Rocket,
+  Beaker,
+  Layers,
+  FileText,
   ClipboardList,
   Shield,
   Globe,
-  BookOpen,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -65,9 +83,7 @@ export interface ZenSidebarProps {
   onNavigate?: (id: string) => void;
   userName?: string;
   userEmail?: string;
-  /** Which product nav item is currently active */
   activeNavId?: string;
-  /** Organization industry mode — drives which nav items are shown */
   industryMode?: string;
 }
 
@@ -107,8 +123,9 @@ const NavItem: React.FC<{
   active?: boolean;
   accentColor?: 'blue' | 'violet' | 'emerald';
   badge?: string;
+  subtitle?: string;
   onClick: () => void;
-}> = ({ icon, label, active, accentColor, badge, onClick }) => {
+}> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
   const accentMap = {
     blue: { bg: 'bg-blue-50', text: 'text-blue-700', iconColor: 'text-blue-500' },
     violet: { bg: 'bg-violet-50', text: 'text-violet-700', iconColor: 'text-violet-500' },
@@ -144,7 +161,12 @@ const NavItem: React.FC<{
       >
         {icon}
       </span>
-      <span className="flex-1 text-left truncate">{label}</span>
+      <div className="flex-1 min-w-0 text-left">
+        <span className="block truncate">{label}</span>
+        {subtitle && (
+          <span className="block text-[10px] text-zinc-400 truncate leading-tight">{subtitle}</span>
+        )}
+      </div>
       {badge && (
         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
           {badge}
@@ -229,43 +251,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   userName,
   userEmail,
   activeNavId,
-  industryMode = 'biotech',
 }) => {
   const displayName = userName || 'My Account';
   const avatarInitial = displayName[0].toUpperCase();
 
-  const isBiotech = industryMode === 'biotech' || industryMode === 'pharma';
-
-  // Track-aware workspace label based on industry mode and current URL
-  const workspaceLabel = (() => {
-    if (isBiotech) {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');
-        const labels: Record<string, string> = {
-          nda: 'NDA Workspace',
-          bla: 'BLA Workspace',
-          ind: 'IND Workspace',
-        };
-        return labels[mode || ''] || 'IND Workspace';
-      } catch {
-        return 'IND Workspace';
-      }
-    }
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const mode = params.get('mode');
-      const labels: Record<string, string> = {
-        pma: 'PMA Workspace',
-        de_novo: 'De Novo Workspace',
-        hde: 'HDE Workspace',
-        cer: 'CER Workspace',
-      };
-      return labels[mode || ''] || '510(k) Workspace';
-    } catch {
-      return '510(k) Workspace';
-    }
-  })();
   // Group conversations by time
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -309,6 +298,60 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         >
           <FolderOpen className="w-4 h-4" />
         </button>
+
+        {/* Core module icons */}
+        <div className="w-8 border-t border-zinc-200 my-1" />
+        <button
+          onClick={() => onNavigate?.('agent-hub')}
+          aria-label="AI Agents"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'agent-hub' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Bot className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('snowglobe')}
+          aria-label="SnowGlobe"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'snowglobe' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Snowflake className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('collaboration-hub')}
+          aria-label="Collaboration"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'collaboration-hub' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Users className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('artifacts')}
+          aria-label="Artifacts"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'artifacts' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Layers className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('knowledge-base')}
+          aria-label="Knowledge Base"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'knowledge-base' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Upload className="w-4 h-4" />
+        </button>
+
         <button
           onClick={onToggleCollapse}
           aria-label="Expand sidebar"
@@ -354,14 +397,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </button>
         </div>
 
-        {/* New conversation */}
+        {/* New workspace thread */}
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[12px] font-medium hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
-            New conversation
+            New workspace thread
           </button>
         </div>
 
@@ -378,13 +421,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-2 border-t border-zinc-100 flex-shrink-0" />
 
-        {/* ── Grouped product navigation ──────────────────────────────── */}
+        {/* ── Intent-organized navigation ──────────────────────────────── */}
         <div
           className="flex-1 overflow-y-auto min-h-0 zen-scroll py-1"
           style={{ scrollbarWidth: 'thin' }}
         >
-          {/* ── Workspaces ──────────────────────────────────────── */}
-          <WorkspaceGroup label="Workspaces">
+          {/* ── WORK — what I'm building ─────────────────────────── */}
+          <WorkspaceGroup label="Work">
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
               label="AnA RI Copilot"
@@ -392,97 +435,191 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               accentColor="blue"
               onClick={() => onNavigate?.('ai-copilot')}
             />
-            {isBiotech ? (
-              <>
-                <NavItem
-                  icon={<ShieldAlert className="w-3.5 h-3.5" />}
-                  label={workspaceLabel}
-                  active={activeNavId === 'ind-workspace'}
-                  onClick={() => onNavigate?.('ind-workspace')}
-                />
-                <NavItem
-                  icon={<PenLine className="w-3.5 h-3.5" />}
-                  label="eCTD Co-Author"
-                  active={activeNavId === 'ectd-coauthor'}
-                  onClick={() => onNavigate?.('ectd-coauthor')}
-                />
-                <NavItem
-                  icon={<Beaker className="w-3.5 h-3.5" />}
-                  label="CMC Platform"
-                  active={activeNavId === 'cmc'}
-                  onClick={() => onNavigate?.('cmc')}
-                />
-                <NavItem
-                  icon={<FlaskConical className="w-3.5 h-3.5" />}
-                  label="Clinical Trial Hub"
-                  active={activeNavId === 'clinical-trial'}
-                  onClick={() => onNavigate?.('clinical-trial')}
-                />
-              </>
-            ) : (
-              <>
-                <NavItem
-                  icon={<ShieldAlert className="w-3.5 h-3.5" />}
-                  label={workspaceLabel}
-                  onClick={() => onNavigate?.('510k-workspace')}
-                />
-                <NavItem
-                  icon={<FileText className="w-3.5 h-3.5" />}
-                  label="CER Generator"
-                  onClick={() => onNavigate?.('cer-generator')}
-                />
-                <NavItem
-                  icon={<PenLine className="w-3.5 h-3.5" />}
-                  label="eCTD Co-Author"
-                  active={activeNavId === 'ectd-coauthor'}
-                  badge="Early Access"
-                  onClick={() => onNavigate?.('ectd-coauthor')}
-                />
-              </>
-            )}
+            <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Author"
+              subtitle="Dossier · eCTD · CMC"
+              active={activeNavId === 'author'}
+              onClick={() => onNavigate?.('author')}
+            />
+            <NavItem
+              icon={<Compass className="w-3.5 h-3.5" />}
+              label="Document Sherpa"
+              subtitle="Guided authoring · AI assist"
+              active={activeNavId === 'document-sherpa'}
+              onClick={() => onNavigate?.('document-sherpa')}
+            />
+            <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Document Builder"
+              subtitle="CSR · CTD · Multi-agency"
+              active={activeNavId === 'document-builder'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('document-builder')}
+            />
+            <NavItem
+              icon={<Users className="w-3.5 h-3.5" />}
+              label="Collaboration"
+              subtitle="Threads · Reviews · Decisions"
+              active={activeNavId === 'collaboration-hub'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('collaboration-hub')}
+            />
           </WorkspaceGroup>
 
-          {/* ── Intelligence ────────────────────────────────────── */}
-          <WorkspaceGroup label="Intelligence">
+          {/* ── AI — agents & intelligence ──────────────────────── */}
+          <WorkspaceGroup label="AI Agents">
             <NavItem
-              icon={<Globe className="w-3.5 h-3.5" />}
-              label="Snow Globe"
+              icon={<Bot className="w-3.5 h-3.5" />}
+              label="Agent Swarm"
+              subtitle="AI Agent Swarm"
+              active={activeNavId === 'agent-hub'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('agent-hub')}
+            />
+            <NavItem
+              icon={<Snowflake className="w-3.5 h-3.5" />}
+              label="SnowGlobe"
+              subtitle="Predictions · Simulations"
               active={activeNavId === 'snowglobe'}
+              accentColor="blue"
               onClick={() => onNavigate?.('snowglobe')}
             />
+            <NavItem
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="Review Pulse"
+              subtitle="Signals · Readiness · Risk"
+              active={activeNavId === 'review-pulse'}
+              onClick={() => onNavigate?.('review-pulse')}
+            />
           </WorkspaceGroup>
 
-          {/* ── Evidence ────────────────────────────────────────── */}
-          <WorkspaceGroup label="Evidence">
+          {/* ── RESEARCH — what I need to know ───────────────────── */}
+          <WorkspaceGroup label="Research">
             <NavItem
               icon={<Search className="w-3.5 h-3.5" />}
-              label="Evidence Search"
-              onClick={() => onNavigate?.('evidence-search')}
+              label="Deep Research"
+              subtitle="Multi-source · Connectors · AI"
+              active={activeNavId === 'deep-research'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('deep-research')}
+            />
+            <NavItem
+              icon={<Search className="w-3.5 h-3.5" />}
+              label="Intelligence"
+              subtitle="Evidence · Precedents · Alerts"
+              active={activeNavId === 'intelligence-hub'}
+              onClick={() => onNavigate?.('intelligence-hub')}
+            />
+            <NavItem
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="Biostatistics"
+              subtitle="Power · Endpoints · Design"
+              active={activeNavId === 'biostatistics'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('biostatistics')}
+            />
+            <NavItem
+              icon={<Beaker className="w-3.5 h-3.5" />}
+              label="CMC Platform"
+              subtitle="Chemistry · Manufacturing"
+              active={activeNavId === 'cmc'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('cmc')}
             />
           </WorkspaceGroup>
 
-          {/* ── Documents ───────────────────────────────────────── */}
-          <WorkspaceGroup label="Documents">
+          {/* ── ASSURE — quality & compliance ─────────────────────── */}
+          <WorkspaceGroup label="Assure">
             <NavItem
-              icon={<Archive className="w-3.5 h-3.5" />}
-              label="Document Vault"
-              active={activeNavId === 'document-vault'}
-              onClick={() => onNavigate?.('document-vault')}
+              icon={<ShieldCheck className="w-3.5 h-3.5" />}
+              label="Review & Readiness"
+              subtitle="Quality · Compliance · Audit"
+              active={activeNavId === 'review-readiness'}
+              onClick={() => onNavigate?.('review-readiness')}
+            />
+            <NavItem
+              icon={<Scale className="w-3.5 h-3.5" />}
+              label="Legal Center"
+              subtitle="IP · Contracts · Regulatory law"
+              active={activeNavId === 'legal-center'}
+              onClick={() => onNavigate?.('legal-center')}
+            />
+            <NavItem
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="Report Engine"
+              subtitle="Immutable · Provenance · Indemnify"
+              active={activeNavId === 'report-engine'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('report-engine')}
             />
           </WorkspaceGroup>
 
-          {/* ── Governance ──────────────────────────────────────── */}
-          <WorkspaceGroup label="Governance" defaultOpen={false}>
+          {/* ── MANAGE — operations & governance ──────────────────── */}
+          <WorkspaceGroup label="Manage">
             <NavItem
-              icon={<ClipboardList className="w-3.5 h-3.5" />}
-              label="Mission Control"
-              onClick={() => onNavigate?.('mission-control')}
+              icon={<Building2 className="w-3.5 h-3.5" />}
+              label="Client Intelligence"
+              subtitle="Persona · Memory · Context"
+              active={activeNavId === 'client-intelligence'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('client-intelligence')}
             />
             <NavItem
-              icon={<Shield className="w-3.5 h-3.5" />}
-              label="Submission Ops"
-              active={activeNavId === 'submission-workspace'}
-              onClick={() => onNavigate?.('submission-workspace')}
+              icon={<BarChart3 className="w-3.5 h-3.5" />}
+              label="Command Center"
+              subtitle="Submissions · Workflows · Ops"
+              active={activeNavId === 'command-center'}
+              onClick={() => onNavigate?.('command-center')}
+            />
+            <NavItem
+              icon={<Layers className="w-3.5 h-3.5" />}
+              label="Artifacts"
+              subtitle="Outputs · Documents · Templates"
+              active={activeNavId === 'artifacts'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('artifacts')}
+            />
+            <NavItem
+              icon={<Upload className="w-3.5 h-3.5" />}
+              label="Knowledge Base"
+              subtitle="Skills · .MD · Materials"
+              active={activeNavId === 'knowledge-base'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('knowledge-base')}
+            />
+            <NavItem
+              icon={<FileStack className="w-3.5 h-3.5" />}
+              label="Project Knowledge"
+              subtitle="Context · Uploads · Sources"
+              active={activeNavId === 'project-knowledge'}
+              onClick={() => onNavigate?.('project-knowledge')}
+            />
+          </WorkspaceGroup>
+
+          {/* ── LEARN — enablement & onboarding ────────────────────── */}
+          <WorkspaceGroup label="Learn">
+            <NavItem
+              icon={<GraduationCap className="w-3.5 h-3.5" />}
+              label="Academy"
+              subtitle="Dr. Sage · AnA guides"
+              active={activeNavId === 'enablement-center'}
+              onClick={() => onNavigate?.('enablement-center')}
+            />
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="Training Center"
+              subtitle="Courses · Certifications"
+              active={activeNavId === 'training-center'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('training-center')}
+            />
+            <NavItem
+              icon={<Rocket className="w-3.5 h-3.5" />}
+              label="Client Onboarding"
+              subtitle="Setup · Configuration"
+              active={activeNavId === 'client-onboarding'}
+              onClick={() => onNavigate?.('client-onboarding')}
             />
           </WorkspaceGroup>
 

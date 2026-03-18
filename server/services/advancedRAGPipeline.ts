@@ -22,7 +22,8 @@
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import OpenAI from 'openai';
+import type OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';
@@ -137,10 +138,7 @@ export class AdvancedRAGPipeline {
     this.embeddingService = getEmbeddingService(pool);
     this.aiRouter = getAIRouter(pool);
 
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY required for RAG pipeline');
-    }
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    this.openai = getOpenAIClient();
 
     console.log('✅ Advanced RAG Pipeline initialized');
   }

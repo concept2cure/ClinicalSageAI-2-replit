@@ -17,7 +17,7 @@
  */
 
 import express, { Request, Response, NextFunction } from 'express';
-import { getPool } from '../db/pool';
+import { getPool } from '../db';
 import * as dotenv from 'dotenv';
 import { z } from 'zod';
 import { fromZodError } from 'zod-validation-error';

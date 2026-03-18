@@ -1,6 +1,9 @@
 import { Router } from 'express';
-import { getPool } from '../../db/pool';
+import { getPool } from '../../db';
+import { createScopedLogger } from '../../utils/logger';
 import { gatherUpstream, computeLinks } from '../services/reg/upstream';
+
+const regLogger = createScopedLogger('regulatory-router');
 import { aiDraftSection } from '../services/ai/secDraft';
 import { aiClassifyChange, aiExtractQuestions, aiDraftResponse } from '../services/ai/regulatory';
 import { computeImpacts, buildChecklist } from '../services/reg/impact';
@@ -216,7 +219,7 @@ router.post('/sections/:secId/automap', async (req, res) => {
       await q(
         `insert into reg_m3_links (sec_id, kind, ref_id, meta_json) values ($1,$2,$3,$4) on conflict do nothing`,
         [sid, l.kind, l.ref_id, l.meta || {}]
-      ).catch(() => {});
+      ).catch((err: any) => regLogger.warn('Non-critical regulatory DB op failed', { error: err.message }));
     }
 
     await q(
@@ -434,7 +437,7 @@ router.post('/changes/:id/impact', async (req, res) => {
       `insert into reg_change_impacts (change_id, sub_id, entity, entity_id, code, meta_json)
              values ($1,$2,$3,$4,$5,$6)`,
       [id, im.sub_id || null, im.entity, im.entity_id, im.code || null, im.meta || {}]
-    ).catch(() => {});
+    ).catch((err: any) => regLogger.warn('Non-critical regulatory DB op failed', { error: err.message }));
   }
   const { rows } = await q<any>(
     `update reg_changes set impacted_json=$2 where change_id=$1 returning *`,
@@ -461,7 +464,7 @@ router.post('/changes/:id/tasks', async (req, res) => {
       `insert into reg_tasks (sub_id, entity, entity_id, title, priority, status, due_date)
              values ($1,'CHANGE',$2,$3,'High','OPEN', (now() + ($4 || 7) * interval '1 day')::date)`,
       [subId, ch.change_id, item.title, item.dueOffsetDays || 7]
-    ).catch(() => {});
+    ).catch((err: any) => regLogger.warn('Non-critical regulatory DB op failed', { error: err.message }));
     created++;
   }
   await q(
@@ -520,7 +523,7 @@ router.post('/changes/:id/assess', async (req, res) => {
       `insert into reg_change_impacts (change_id, sub_id, entity, entity_id, code, meta_json)
              values ($1,$2,$3,$4,$5,$6)`,
       [id, im.sub_id || null, im.entity, im.entity_id, im.code || null, im.meta || {}]
-    ).catch(() => {});
+    ).catch((err: any) => regLogger.warn('Non-critical regulatory DB op failed', { error: err.message }));
   }
   const { rows } = await q<any>(
     `update reg_changes set impacted_json=$2 where change_id=$1 returning *`,
@@ -584,7 +587,7 @@ router.post(
         meta.due || null,
         (req.headers['x-user-name'] || 'user').toString(),
       ]
-    ).catch(() => {});
+    ).catch((err: any) => regLogger.warn('Non-critical regulatory DB op failed', { error: err.message }));
     created++;
   }
 

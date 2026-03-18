@@ -5,10 +5,10 @@
  * to demonstrate the enhanced vector search capabilities in the CoAuthor module.
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 import { getPool } from '../db.ts';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 const pool = getPool();
 
 const SAMPLE_REGULATORY_DOCUMENTS = [

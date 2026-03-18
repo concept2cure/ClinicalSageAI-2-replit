@@ -2,16 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pdfParse from 'pdf-parse';
-import { OpenAI } from 'openai';
+import { getOpenAIClient } from '../services/openai-client';
 
 // Get the directory path for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 1) Configure OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getOpenAIClient();
 
 // 2) Paths
 const METADATA_FILE = path.join(__dirname, '../vault/metadata.json');

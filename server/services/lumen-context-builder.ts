@@ -27,6 +27,8 @@ import {
   detectActiveModule,
 } from './module-intelligence.js';
 import { assembleInstructionEnginePrompt } from './lumen-instruction-engine.js';
+import { buildClientIntelligenceContext, buildProjectIntelligenceContext } from './client-intelligence-memory.js';
+import { resolveAccountContext, formatResolvedContextForPrompt } from './account-canon.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -83,6 +85,9 @@ export interface LumenContext {
   userName: string | null;
   organizationName: string | null;
   userIntelligence: UserIntelligence | null;
+  accountCanon: string | null; // Selectively resolved account-level governed memory
+  clientIntelligence: string | null;
+  projectIntelligence: string | null;
   timestamp: string;
 }
 
@@ -105,13 +110,63 @@ You possess deep, authoritative knowledge of:
 - **Cross-jurisdictional strategy**: Access Consortium, Project Orbis, reliance/recognition procedures, bridging study requirements, WHO prequalification
 
 ## You Accept Instructions and Execute Them
-When a user instructs you to generate a table, draft a section, create a figure, or analyze data — you EXECUTE it immediately. You are an authoring intelligence, not a search tool. You produce regulatory-grade output on command:
-- "Draft Module 2.5" → You generate the complete Clinical Overview
-- "Create Table 2.7.4.1-1" → You produce the formatted regulatory table
-- "Compare our safety data against..." → You deliver a structured analysis
-- "Start a new IND draft" → You begin structuring the submission
-- "What does NMPA require for approval?" → You deliver a comprehensive, agency-specific regulatory strategy
-- "Design a global regulatory strategy for..." → You produce a multi-agency submission plan with timelines, document requirements, and regional considerations
+When a user instructs you to generate a table, draft a section, create a figure, or analyze data — you EXECUTE it immediately. You are an authoring intelligence, not a search tool. You produce regulatory-grade output on command.
+
+### Document Types You Draft On Demand
+You can draft complete, submission-ready versions of ANY regulatory document. When asked, you generate the full document with proper structure, section numbering, and content — not just an outline. Key document types include:
+
+**Pharma / Biotech (IND, NDA, BLA, MAA):**
+- IND Cover Letter (FDA Form 1571), Introductory Statement & Investigational Plan
+- Investigator's Brochure (IB) per ICH E6(R2) — full nonclinical + clinical compilation
+- Clinical Study Protocol per ICH E6(R2)/E8(R1) — objectives, design, endpoints, statistical plan
+- Statistical Analysis Plan (SAP) per ICH E9(R1) — estimands, populations, methods, TFL shells
+- Clinical Study Report (CSR) per ICH E3 — synopsis through appendices
+- Informed Consent Form (ICF) per 21 CFR 50 and ICH E6
+- Quality Overall Summary (M2.3) per ICH M4Q — drug substance and drug product
+- Nonclinical Overview (M2.4) per ICH M4S — pharmacology, PK, toxicology
+- Clinical Overview (M2.5) per ICH M4E — integrated clinical with benefit-risk
+- Clinical Summary (M2.7) — biopharmaceutics, clinical pharmacology, efficacy, safety
+- Drug Substance (M3.2.S) and Drug Product (M3.2.P) — complete CMC modules
+- Pharmacology, PK, and Toxicology Written Summaries (M2.6)
+- DSUR (ICH E2F), PSUR/PBRER (ICH E2C(R2))
+- Integrated Summary of Safety (ISS) and Effectiveness (ISE)
+- Prescribing Information / Label per PLR format
+- REMS elements, Medication Guides
+- Pre-IND / Type B Meeting Briefing Documents
+- Regulatory Response Letters (RTF, CR, AI/CRL point-by-point)
+- Standard Operating Procedures (SOPs) — GxP compliant
+- Data Management Plans, Monitoring Plans
+
+**MedTech / Diagnostics (510(k), PMA, De Novo, EU MDR, IVDR):**
+- 510(k) Cover Letter, Device Description, Substantial Equivalence Summary
+- eSTAR submission packages
+- PMA Summary of Safety & Effectiveness Data (SSED)
+- Biocompatibility Assessment per ISO 10993-1
+- Software Documentation per IEC 62304 (SRS, SAD, V&V)
+- Sterilization Validation Reports per ISO 11135/11137/17665
+- Risk Management File per ISO 14971
+- Clinical Evaluation Report (CER) per MEDDEV 2.7/1 Rev 4 / EU MDR
+- IVDR Technical Documentation per EU 2017/746 Annex II & III
+- Usability Engineering File per IEC 62366
+- Requirements Traceability Matrix
+- Performance Testing Reports
+
+**Cross-Segment:**
+- Regulatory Strategy Documents — global multi-agency submission plans
+- Gap Analysis Reports — submission readiness assessment
+- Competitive Intelligence Briefings
+- Regulatory Response Letters for any agency
+- SOPs for any GxP process
+
+### Execution Examples
+- "Draft Module 2.5" → You generate the complete Clinical Overview with all sections
+- "Write a Phase 2 protocol for [drug] in [indication]" → Full ICH E6(R2) protocol
+- "Create the IB for our compound" → Complete Investigator's Brochure
+- "Draft the 510(k) substantial equivalence argument" → Full SE comparison document
+- "Write a CER for our device under EU MDR" → Complete MEDDEV 2.7/1 CER
+- "Generate our NDA labeling" → Full PI with Highlights and Medication Guide
+- "Create an SOP for deviation management" → GxP-compliant SOP
+- "Design a global regulatory strategy for..." → Multi-agency plan with timelines
 
 ## One Intelligent, Connected Workspace
 Everything in the Concept2Cure platform flows together:
@@ -370,8 +425,8 @@ export async function buildLumenContext(params: {
   const { organizationId, userId } = params;
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
-  // Load all context in parallel for speed — including full user intelligence
-  const [project, documents, conversation, userInfo, orgName, userIntelligence] = await Promise.all(
+  // Load all context in parallel for speed — including full user intelligence, client intelligence, & account canon
+  const [project, documents, conversation, userInfo, orgName, userIntelligence, clientIntelligence, projectIntelligence, accountCanonResolved] = await Promise.all(
     [
       projectId && organizationId
         ? loadProjectContext(projectId, organizationId)
@@ -390,6 +445,26 @@ export async function buildLumenContext(params: {
             organizationId,
             activeProjectId: projectId || undefined,
           })
+        : Promise.resolve(null),
+      // Client Intelligence Memory — deep knowledge of the client organization
+      organizationId
+        ? buildClientIntelligenceContext(organizationId).catch(() => null)
+        : Promise.resolve(null),
+      // Project Intelligence Memory — deep knowledge specific to the active project
+      projectId
+        ? buildProjectIntelligenceContext(projectId).catch(() => null)
+        : Promise.resolve(null),
+      // Account Canon — selectively resolved governed memory (canon items, terms, bundles)
+      organizationId
+        ? resolveAccountContext({
+            organizationId,
+            submissionType: params.submissionType || undefined,
+            projectId: projectId || undefined,
+          }).then(resolved =>
+            resolved.canonItems.length > 0 || resolved.terms.length > 0 || resolved.bundles.length > 0
+              ? formatResolvedContextForPrompt(resolved)
+              : null
+          ).catch(() => null)
         : Promise.resolve(null),
     ]
   );
@@ -413,6 +488,9 @@ export async function buildLumenContext(params: {
     userName: userInfo.name,
     organizationName: orgName,
     userIntelligence,
+    accountCanon: accountCanonResolved,
+    clientIntelligence,
+    projectIntelligence,
     timestamp: new Date().toISOString(),
   };
 }
@@ -555,6 +633,26 @@ When the user asks "what should I work on?" or you're providing proactive guidan
     }
 
 Use conversation history to avoid re-asking for information the user has already provided.`);
+  }
+
+  // ── Account Canon (Governed Memory) ──────────────────────────────────────
+  // Selectively resolved account-level truths: canon items, locked terminology,
+  // skill bundle instructions, evidence preferences. Takes precedence over
+  // learned intelligence below.
+  if (context.accountCanon) {
+    parts.push(context.accountCanon);
+  }
+
+  // ── Client Intelligence Memory ─────────────────────────────────────────
+  // Deep knowledge of the client organization, learned from ingested documents
+  if (context.clientIntelligence) {
+    parts.push(context.clientIntelligence);
+  }
+
+  // ── Project Intelligence Memory ───────────────────────────────────────
+  // Deep knowledge specific to the active project, learned from project documents
+  if (context.projectIntelligence) {
+    parts.push(context.projectIntelligence);
   }
 
   // ── Document Context ─────────────────────────────────────────────────────
@@ -1323,4 +1421,69 @@ Reference ICH E-series guidelines for study design and reporting.`,
   };
 
   return MODULE_GUIDES[moduleNum] || null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTELLIGENCE PREFIX — Lightweight helper for ALL AI services
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get a compact intelligence context prefix that can be prepended to
+ * ANY agent's system prompt. This is the universal "read your SKILL.md"
+ * function — every AI invocation in the platform should call this.
+ *
+ * Returns a string containing:
+ *   - Client intelligence (company persona, pipeline, regulatory profile)
+ *   - Project intelligence (strategy, endpoints, constraints, learned insights)
+ *
+ * Lightweight: only loads intelligence context, not the full Lumen prompt.
+ * For the full experience, use buildContextAwarePrompt() instead.
+ *
+ * @param organizationId - The client's organization ID
+ * @param projectId - Optional active project ID
+ * @returns Intelligence context string to prepend to system prompt, or empty string
+ */
+export async function getIntelligencePrefix(
+  organizationId?: number,
+  projectId?: number | string
+): Promise<string> {
+  if (!organizationId) return '';
+
+  const parsedProjectId = projectId ? parseInt(String(projectId), 10) : null;
+
+  try {
+    const [clientCtx, projectCtx] = await Promise.all([
+      buildClientIntelligenceContext(organizationId).catch(() => null),
+      parsedProjectId
+        ? buildProjectIntelligenceContext(parsedProjectId).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+    const parts: string[] = [];
+
+    if (clientCtx) {
+      parts.push(`
+---
+## IMPORTANT: Client Intelligence (Read Before Responding)
+The following is learned intelligence about this client organization.
+Use it to personalize every response and recommendation.
+${clientCtx}
+---`);
+    }
+
+    if (projectCtx) {
+      parts.push(`
+---
+## IMPORTANT: Project Intelligence (Read Before Responding)
+The following is learned intelligence about the active project.
+Use it to tailor analysis, drafting, and guidance to this specific submission.
+${projectCtx}
+---`);
+    }
+
+    return parts.join('\n');
+  } catch (err) {
+    console.warn('[IntelligencePrefix] Failed to load intelligence context:', err);
+    return '';
+  }
 }

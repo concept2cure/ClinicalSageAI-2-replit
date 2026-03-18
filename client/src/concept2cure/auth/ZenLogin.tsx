@@ -424,12 +424,21 @@ export const ZenLogin: React.FC = () => {
   // Demo / Quick access login
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const handleDemoLogin = useCallback(async () => {
+  const demoPersonas = [
+    { email: 'jm.smith@concept2cure.pro', name: 'JM Smith', role: 'Admin', title: 'Founder', icon: '👤' },
+    { email: 'sarah.chen@concept2cure.pro', name: 'Sarah Chen', role: 'Editor', title: 'Regulatory Affairs Director', icon: '📋' },
+    { email: 'mike.torres@concept2cure.pro', name: 'Mike Torres', role: 'Member', title: 'Clinical Data Analyst', icon: '📊' },
+    { email: 'demo@concept2cure.pro', name: 'Demo User', role: 'Member', title: 'Demo Account', icon: '⚡' },
+  ];
+
+  const [showPersonas, setShowPersonas] = useState(false);
+
+  const handleDemoLogin = useCallback(async (demoEmail = 'jm.smith@concept2cure.pro') => {
     setIsLoading(true);
     setError(null);
     try {
       const result = await login({
-        email: 'jm.smith@concept2cure.pro',
+        email: demoEmail,
         password: 'demo123',
         rememberDevice: true,
       });
@@ -574,8 +583,8 @@ export const ZenLogin: React.FC = () => {
           w-full py-3.5 px-4
           flex items-center justify-center gap-2
           text-base font-semibold text-white
-          bg-gradient-to-r from-blue-600 to-indigo-600
-          hover:from-blue-700 hover:to-indigo-700
+          bg-zinc-900
+          hover:bg-zinc-800
           shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
           rounded-xl
           transition-all duration-200
@@ -599,35 +608,80 @@ export const ZenLogin: React.FC = () => {
       </div>
 
       {/* Quick Demo Access */}
-      <button
-        onClick={handleDemoLogin}
-        disabled={isLoading}
-        className={`
-          w-full py-3 px-4
-          flex items-center justify-center gap-2
-          text-sm font-semibold
-          text-emerald-700 bg-emerald-50 border-2 border-emerald-200
-          hover:bg-emerald-100 hover:border-emerald-300
-          rounded-xl transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
-      >
-        {isLoading ? (
-          <SpinnerIcon />
-        ) : (
-          <>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            Quick Demo Access — jm.smith@concept2cure.pro
-          </>
+      <div className="space-y-2">
+        <button
+          onClick={() => setShowPersonas(!showPersonas)}
+          disabled={isLoading}
+          className={`
+            w-full py-3 px-4
+            flex items-center justify-center gap-2
+            text-sm font-semibold
+            text-emerald-700 bg-emerald-50 border-2 border-emerald-200
+            hover:bg-emerald-100 hover:border-emerald-300
+            rounded-xl transition-all duration-200
+            disabled:opacity-50 disabled:cursor-not-allowed
+          `}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            />
+          </svg>
+          Quick Demo Access
+          <svg
+            className={`w-4 h-4 transition-transform duration-200 ${showPersonas ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {showPersonas && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-1.5 overflow-hidden"
+          >
+            {demoPersonas.map((persona) => (
+              <button
+                key={persona.email}
+                onClick={() => handleDemoLogin(persona.email)}
+                disabled={isLoading}
+                className={`
+                  w-full py-2.5 px-4
+                  flex items-center gap-3
+                  text-left text-sm
+                  bg-white border border-zinc-200 rounded-lg
+                  hover:bg-zinc-50 hover:border-zinc-300
+                  transition-all duration-150
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+              >
+                <span className="text-lg">{persona.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-zinc-900 truncate">{persona.name}</div>
+                  <div className="text-xs text-zinc-500 truncate">{persona.title}</div>
+                </div>
+                <span className={`
+                  text-xs font-medium px-2 py-0.5 rounded-full
+                  ${persona.role === 'Admin' ? 'bg-purple-100 text-purple-700' :
+                    persona.role === 'Editor' ? 'bg-blue-100 text-blue-700' :
+                    'bg-zinc-100 text-zinc-600'}
+                `}>
+                  {persona.role}
+                </span>
+              </button>
+            ))}
+            <p className="text-xs text-center text-zinc-400 pt-1">Password: demo123</p>
+          </motion.div>
         )}
-      </button>
+      </div>
 
       {/* SSO Buttons */}
       <div className="grid grid-cols-2 gap-3">
@@ -783,8 +837,8 @@ export const ZenLogin: React.FC = () => {
           w-full py-3.5 px-4
           flex items-center justify-center gap-2
           text-base font-semibold text-white
-          bg-gradient-to-r from-blue-600 to-indigo-600
-          hover:from-blue-700 hover:to-indigo-700
+          bg-zinc-900
+          hover:bg-zinc-800
           shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
           rounded-xl
           transition-all duration-200
@@ -1001,7 +1055,7 @@ export const ZenLogin: React.FC = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left panel — branding / hero */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-zinc-900 via-blue-950 to-indigo-950">
         {/* Decorative grid */}
         <div
           className="absolute inset-0 opacity-[0.04]"

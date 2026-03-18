@@ -5,9 +5,9 @@
  * for next sections based on regulatory patterns, AI analysis, and ICH guidelines.
  */
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 interface DocumentContext {
   currentSection?: string;
