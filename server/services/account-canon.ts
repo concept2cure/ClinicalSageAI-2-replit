@@ -259,7 +259,7 @@ export async function lockCanonFact(
 
   await appendEvent({
     organizationId,
-    eventType: 'account_term_locked',
+    eventType: 'account_fact_locked',
     canonItemId,
     targetType: 'canon_item',
     description: `Canon fact locked by ${actorName || 'user'}`,
@@ -409,8 +409,8 @@ export async function appendEvent(input: AccountEventInput): Promise<string> {
        WHERE organization_id = $1`,
       [input.organizationId]
     );
-  } catch {
-    // Projection may not exist yet
+  } catch (error) {
+    logger.debug(`Projection counter update skipped: ${error instanceof Error ? error.message : 'projection may not exist'}`);
   }
 
   return eventId;
@@ -840,7 +840,8 @@ export async function getProjection(
       [organizationId]
     );
     return result.rows[0] || null;
-  } catch {
+  } catch (error) {
+    logger.warn(`Failed to get projection for org ${organizationId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     return null;
   }
 }

@@ -232,7 +232,7 @@ export async function addTerm(input: TermInput): Promise<Record<string, unknown>
 
   await appendEvent({
     organizationId: input.organizationId,
-    eventType: 'account_term_locked',
+    eventType: 'account_term_added',
     targetType: 'term_entry',
     targetId: String(result.rows[0].id),
     newValue: { term: input.term, definition: input.definition },

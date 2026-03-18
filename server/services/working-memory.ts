@@ -17,6 +17,9 @@
  */
 
 import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('working-memory');
 
 export interface WorkingMemory {
   id?: number;
@@ -116,13 +119,13 @@ export async function getLatestWorkingMemory(
       organizationId: row.organization_id,
       summary: row.summary,
       structured: typeof row.structured_data === 'string'
-        ? JSON.parse(row.structured_data)
+        ? (() => { try { return JSON.parse(row.structured_data); } catch { return null; } })()
         : row.structured_data,
       messageCountAtGeneration: row.message_count_at_generation,
       generatedAt: row.generated_at?.toISOString(),
     };
-  } catch {
-    // Table may not exist yet
+  } catch (error) {
+    logger.warn(`Failed to get working memory for conversation ${conversationId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     return null;
   }
 }
@@ -140,7 +143,8 @@ export async function getLatestWorkingMemoryByThread(
       [threadId]
     );
     return result.rows.length > 0 ? result.rows[0].summary : null;
-  } catch {
+  } catch (error) {
+    logger.debug(`Working memory by thread query failed: ${error instanceof Error ? error.message : 'table may not exist'}`);
     return null;
   }
 }

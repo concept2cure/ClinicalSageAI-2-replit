@@ -36,10 +36,15 @@ import {
 const logger = createScopedLogger('account-intelligence');
 const router = Router();
 
-const getOrgId = (req: Request): number =>
-  (req as any).organizationId ||
-  parseInt(req.headers['x-organization-id'] as string, 10) ||
-  1;
+const getOrgId = (req: Request): number => {
+  const orgId = (req as any).organizationId;
+  if (!orgId || typeof orgId !== 'number') {
+    const err = new Error('Organization ID not available from authenticated session');
+    (err as any).statusCode = 403;
+    throw err;
+  }
+  return orgId;
+};
 
 const getUserId = (req: Request): number | null =>
   (req as any).userId || (req as any).user?.id || null;
@@ -89,7 +94,7 @@ router.post('/canon', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ success: true, data: item });
   } catch (error: any) {
     logger.error(`Failed to assert canon fact: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to assert canon fact' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to assert canon fact' } });
   }
 });
 
@@ -108,7 +113,7 @@ router.get('/canon', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ success: true, data: result.items, meta: { total: result.total } });
   } catch (error: any) {
     logger.error(`Failed to get canon items: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to get canon items' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to get canon items' } });
   }
 });
 
@@ -119,6 +124,7 @@ router.get('/canon', authMiddleware, async (req: Request, res: Response) => {
 router.post('/canon/:id/validate', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ success: false, error: { message: 'Invalid canon item ID' } });
     const actorId = getUserId(req);
     if (!actorId) return res.status(401).json({ success: false, error: { message: 'User required' } });
 
@@ -126,7 +132,7 @@ router.post('/canon/:id/validate', authMiddleware, async (req: Request, res: Res
     return res.json({ success: true, data: { validated: true } });
   } catch (error: any) {
     logger.error(`Failed to validate canon fact: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to validate canon fact' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to validate canon fact' } });
   }
 });
 
@@ -137,6 +143,7 @@ router.post('/canon/:id/validate', authMiddleware, async (req: Request, res: Res
 router.post('/canon/:id/lock', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ success: false, error: { message: 'Invalid canon item ID' } });
     const actorId = getUserId(req);
     if (!actorId) return res.status(401).json({ success: false, error: { message: 'User required' } });
 
@@ -144,7 +151,7 @@ router.post('/canon/:id/lock', authMiddleware, async (req: Request, res: Respons
     return res.json({ success: true, data: { locked: true } });
   } catch (error: any) {
     logger.error(`Failed to lock canon fact: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to lock canon fact' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to lock canon fact' } });
   }
 });
 
@@ -155,6 +162,7 @@ router.post('/canon/:id/lock', authMiddleware, async (req: Request, res: Respons
 router.post('/canon/:id/supersede', authMiddleware, async (req: Request, res: Response) => {
   try {
     const oldId = parseInt(req.params.id, 10);
+    if (isNaN(oldId)) return res.status(400).json({ success: false, error: { message: 'Invalid canon item ID' } });
     const schema = z.object({
       category: z.string().min(1),
       subcategory: z.string().optional(),
@@ -185,7 +193,7 @@ router.post('/canon/:id/supersede', authMiddleware, async (req: Request, res: Re
     return res.json({ success: true, data: newItem });
   } catch (error: any) {
     logger.error(`Failed to supersede canon fact: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: error.message || 'Failed to supersede canon fact' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.message || 'Failed to supersede canon fact' } });
   }
 });
 
@@ -208,7 +216,7 @@ router.get('/events', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ success: true, data: events });
   } catch (error: any) {
     logger.error(`Failed to get events: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to get events' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to get events' } });
   }
 });
 
@@ -226,7 +234,7 @@ router.get('/projection', authMiddleware, async (req: Request, res: Response) =>
     return res.json({ success: true, data: projection });
   } catch (error: any) {
     logger.error(`Failed to get projection: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to get projection' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to get projection' } });
   }
 });
 
@@ -241,7 +249,7 @@ router.post('/projection/rebuild', authMiddleware, async (req: Request, res: Res
     return res.json({ success: true, data: projection });
   } catch (error: any) {
     logger.error(`Failed to rebuild projection: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to rebuild projection' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to rebuild projection' } });
   }
 });
 
@@ -289,7 +297,7 @@ router.post('/resolve', authMiddleware, async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error(`Failed to resolve context: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to resolve context' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to resolve context' } });
   }
 });
 
@@ -344,7 +352,7 @@ router.post('/bundles', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ success: true, data: bundle });
   } catch (error: any) {
     logger.error(`Failed to create skill bundle: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to create skill bundle' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to create skill bundle' } });
   }
 });
 
@@ -361,7 +369,7 @@ router.get('/bundles', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ success: true, data: bundles });
   } catch (error: any) {
     logger.error(`Failed to get skill bundles: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to get skill bundles' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to get skill bundles' } });
   }
 });
 
@@ -372,17 +380,50 @@ router.get('/bundles', authMiddleware, async (req: Request, res: Response) => {
 router.patch('/bundles/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ success: false, error: { message: 'Invalid bundle ID' } });
+
+    const updateSchema = z.object({
+      name: z.string().min(1).max(200).optional(),
+      description: z.string().optional(),
+      bundleType: z.string().min(1).optional(),
+      submissionTypes: z.array(z.string()).optional(),
+      moduleTypes: z.array(z.string()).optional(),
+      workTypes: z.array(z.string()).optional(),
+      regulatoryRegions: z.array(z.string()).optional(),
+      promptFragments: z.array(z.object({
+        role: z.string(),
+        content: z.string(),
+        priority: z.number(),
+      })).optional(),
+      outputStructure: z.record(z.unknown()).optional(),
+      evidencePreferences: z.record(z.unknown()).optional(),
+      authorityResponseStyle: z.record(z.unknown()).optional(),
+      policyBindings: z.array(z.object({
+        policyType: z.string(),
+        description: z.string(),
+        enforcement: z.string(),
+      })).optional(),
+      artifactDefaults: z.record(z.unknown()).optional(),
+      reviewerRequirements: z.record(z.unknown()).optional(),
+      metadata: z.record(z.unknown()).optional(),
+    });
+
+    const parsed = updateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: { message: 'Validation failed', details: parsed.error.format() } });
+    }
+
     const bundle = await updateSkillBundle(
       id,
       getOrgId(req),
-      req.body,
+      parsed.data,
       getUserId(req) || undefined,
       getUserName(req) || undefined
     );
     return res.json({ success: true, data: bundle });
   } catch (error: any) {
     logger.error(`Failed to update skill bundle: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: error.message || 'Failed to update skill bundle' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.message || 'Failed to update skill bundle' } });
   }
 });
 
@@ -423,7 +464,7 @@ router.post('/terms', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ success: true, data: term });
   } catch (error: any) {
     logger.error(`Failed to add term: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to add term' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to add term' } });
   }
 });
 
@@ -440,7 +481,7 @@ router.get('/terms', authMiddleware, async (req: Request, res: Response) => {
     return res.json({ success: true, data: terms });
   } catch (error: any) {
     logger.error(`Failed to get terms: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to get terms' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to get terms' } });
   }
 });
 
@@ -489,7 +530,7 @@ router.post('/templates', authMiddleware, async (req: Request, res: Response) =>
     return res.json({ success: true, data: template });
   } catch (error: any) {
     logger.error(`Failed to add template: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to add template' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to add template' } });
   }
 });
 
@@ -506,7 +547,7 @@ router.get('/templates', authMiddleware, async (req: Request, res: Response) => 
     return res.json({ success: true, data: templates });
   } catch (error: any) {
     logger.error(`Failed to get templates: ${error.message}`);
-    return res.status(500).json({ success: false, error: { message: 'Failed to get templates' } });
+    return res.status(error.statusCode || 500).json({ success: false, error: { message: error.statusCode ? error.message : 'Failed to get templates' } });
   }
 });
 

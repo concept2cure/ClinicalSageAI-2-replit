@@ -11,6 +11,9 @@
  */
 
 import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('conversation-health');
 
 export type HealthState = 'healthy' | 'heavy' | 'degrading' | 'at_risk';
 
@@ -143,8 +146,8 @@ export async function computeConversationHealth(
     if (ragResult.rows[0]?.avg_score) {
       retrievalConfidence = Math.round(parseFloat(ragResult.rows[0].avg_score) * 100);
     }
-  } catch {
-    // RAG table may not exist
+  } catch (error) {
+    logger.debug(`RAG retrieval confidence query skipped: ${error instanceof Error ? error.message : 'table may not exist'}`);
   }
 
   // Compute health score (0-100, higher is better)
@@ -226,8 +229,8 @@ export async function computeConversationHealth(
         organizationId,
       ]
     );
-  } catch {
-    // Non-critical — health still returned even if storage fails
+  } catch (error) {
+    logger.warn(`Failed to persist health score for conversation ${conversationId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
   return {
