@@ -250,17 +250,17 @@ interface MetricCardProps {
 const COLOR_BG_100: Record<string, string> = {
   blue: 'bg-blue-100', indigo: 'bg-indigo-100', green: 'bg-green-100', purple: 'bg-purple-100',
   violet: 'bg-violet-100', amber: 'bg-amber-100', teal: 'bg-teal-100', cyan: 'bg-cyan-100',
-  rose: 'bg-rose-100', slate: 'bg-slate-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
+  rose: 'bg-rose-100', slate: 'bg-zinc-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
 };
 const COLOR_TEXT_600: Record<string, string> = {
   blue: 'text-blue-600', indigo: 'text-indigo-600', green: 'text-green-600', purple: 'text-purple-600',
   violet: 'text-violet-600', amber: 'text-amber-600', teal: 'text-teal-600', cyan: 'text-cyan-600',
-  rose: 'text-rose-600', slate: 'text-slate-600', sky: 'text-sky-600', orange: 'text-orange-600',
+  rose: 'text-rose-600', slate: 'text-zinc-600', sky: 'text-sky-600', orange: 'text-orange-600',
 };
 const COLOR_TEXT_700: Record<string, string> = {
   blue: 'text-blue-700', indigo: 'text-indigo-700', green: 'text-green-700', purple: 'text-purple-700',
   violet: 'text-violet-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
-  rose: 'text-rose-700', slate: 'text-slate-700', sky: 'text-sky-700', orange: 'text-orange-700',
+  rose: 'text-rose-700', slate: 'text-zinc-700', sky: 'text-sky-700', orange: 'text-orange-700',
 };
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
@@ -269,8 +269,8 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
       <div className="p-3">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-gray-500 font-medium">{metric.label}</p>
-            <p className={cn('text-2xl font-bold mt-1', COLOR_TEXT_700[colorClass] || 'text-gray-700')}>
+            <p className="text-xs text-zinc-500 font-medium">{metric.label}</p>
+            <p className={cn('text-2xl font-bold mt-1', COLOR_TEXT_700[colorClass] || 'text-zinc-700')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
@@ -288,7 +288,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
                 'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
                 metric.trend === 'up' && 'bg-green-100 text-green-700',
                 metric.trend === 'down' && 'bg-red-100 text-red-700',
-                metric.trend === 'stable' && 'bg-gray-100 text-gray-700'
+                metric.trend === 'stable' && 'bg-zinc-100 text-zinc-700'
               )}
             >
               <TrendingUp
@@ -304,7 +304,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
         </div>
         {metric.target && (
           <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+            <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
               <span>Target: {metric.target}</span>
               <span>{Math.round((metric.value / metric.target) * 100)}%</span>
             </div>
@@ -330,11 +330,11 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
     critical: 'bg-red-100 text-red-700 border-red-200',
     high: 'bg-orange-100 text-orange-700 border-orange-200',
     medium: 'bg-amber-100 text-amber-700 border-amber-200',
-    low: 'bg-gray-100 text-gray-700 border-gray-200',
+    low: 'bg-zinc-100 text-zinc-700 border-zinc-200',
   };
 
   const statusColors = {
-    pending: 'bg-gray-50 border-gray-200',
+    pending: 'bg-zinc-50 border-zinc-200',
     in_progress: 'bg-blue-50 border-blue-200',
     review: 'bg-purple-50 border-purple-200',
     blocked: 'bg-red-50 border-red-200',
@@ -365,7 +365,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 truncate">{task.title}</span>
+                <span className="text-sm font-medium text-zinc-900 truncate">{task.title}</span>
                 <Badge
                   variant="outline"
                   className={cn('text-[10px] shrink-0', priorityColors[task.priority])}
@@ -373,7 +373,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
                   {task.priority}
                 </Badge>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-zinc-500 mt-1">
                 {task.project} · {task.submissionType}
               </p>
             </div>
@@ -489,7 +489,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) =
             <button
               key={idx}
               onClick={() => onAskAnA(suggestion)}
-              className="w-full text-left p-2 text-xs text-gray-600 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              className="w-full text-left p-2 text-xs text-zinc-600 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
             >
               {suggestion}
             </button>
@@ -621,12 +621,12 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', COLOR_BG_100[roleConfig.color] || 'bg-gray-100')}>
-            <RoleIcon className={cn('h-5 w-5', COLOR_TEXT_600[roleConfig.color] || 'text-gray-600')} />
+          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', COLOR_BG_100[roleConfig.color] || 'bg-zinc-100')}>
+            <RoleIcon className={cn('h-5 w-5', COLOR_TEXT_600[roleConfig.color] || 'text-zinc-600')} />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">{roleConfig.title}</h1>
-            <p className="text-xs text-gray-500">{roleConfig.description}</p>
+            <h1 className="text-lg font-semibold text-zinc-900">{roleConfig.title}</h1>
+            <p className="text-xs text-zinc-500">{roleConfig.description}</p>
           </div>
         </div>
         <Select value={currentRole} onValueChange={v => handleRoleChange(v as UserRole)}>
@@ -651,7 +651,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
         <div className="p-4 space-y-6">
           {/* Metrics Grid */}
           <div>
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Key Metrics</h2>
+            <h2 className="text-sm font-semibold text-zinc-700 mb-3">Key Metrics</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {metrics.map(metric => (
                 <MetricCard key={metric.id} metric={metric} colorClass={roleConfig.color} />

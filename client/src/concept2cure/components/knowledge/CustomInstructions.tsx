@@ -173,21 +173,21 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
           <button
             className={cn(
               'w-full flex items-center justify-between p-3 rounded-lg transition-colors',
-              'hover:bg-gray-50 text-left',
-              isOpen && 'bg-gray-50'
+              'hover:bg-zinc-50 text-left',
+              isOpen && 'bg-zinc-50'
             )}
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-gray-900">Custom Instructions</span>
+              <span className="text-sm font-medium text-zinc-900">Custom Instructions</span>
               {value && !isOpen && (
-                <span className="text-xs text-gray-500 truncate max-w-[150px]">(configured)</span>
+                <span className="text-xs text-zinc-500 truncate max-w-[150px]">(configured)</span>
               )}
             </div>
             {isOpen ? (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+              <ChevronDown className="h-4 w-4 text-zinc-500" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-gray-500" />
+              <ChevronRight className="h-4 w-4 text-zinc-500" />
             )}
           </button>
         </CollapsibleTrigger>
@@ -195,7 +195,7 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
         <CollapsibleContent>
           <div className="p-3 pt-0 space-y-3">
             {/* Info */}
-            <div className="flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
+            <div className="flex items-start gap-2 text-xs text-zinc-500 bg-zinc-50 p-2 rounded-lg">
               <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
               <span>
                 Custom instructions tell AnA how to behave for this specific project.
@@ -237,7 +237,7 @@ Example:
                   'absolute bottom-2 right-2 text-xs',
                   isOverLimit && 'text-red-600',
                   isNearLimit && !isOverLimit && 'text-amber-600',
-                  !isNearLimit && 'text-gray-400'
+                  !isNearLimit && 'text-zinc-400'
                 )}
               >
                 {characterCount.toLocaleString()} / {maxCharacters.toLocaleString()}

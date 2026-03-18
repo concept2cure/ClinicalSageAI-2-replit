@@ -517,12 +517,74 @@ class Part11ComplianceService {
   // Helper methods
 
   /**
-   * Verify user credentials
+   * Verify user credentials against stored password hash.
+   * Required by 21 CFR Part 11 §11.200 — electronic signatures must
+   * be based on at least two distinct identification components
+   * (user ID + password).
    */
-  async verifyUserCredentials(userId: number, password: string) {
-    // In production, verify against secure password storage
-    // For now, return true for demonstration
-    return true;
+  async verifyUserCredentials(userId: number, password: string): Promise<boolean> {
+    if (!password || typeof password !== 'string' || password.length === 0) {
+      return false;
+    }
+
+    try {
+      const dbInstance = this.getDb();
+      const [user] = await dbInstance
+        .select({
+          id: users.id,
+          passwordHash: users.passwordHash,
+          status: users.status,
+          lockedUntil: users.lockedUntil,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!user) {
+        return false;
+      }
+
+      // Check account status — suspended/inactive accounts cannot sign
+      if (user.status !== 'active') {
+        return false;
+      }
+
+      // Check account lockout
+      if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+        return false;
+      }
+
+      // Verify password against stored bcrypt hash
+      if (!user.passwordHash) {
+        return false;
+      }
+
+      const bcrypt = await import('bcryptjs');
+      const isValid = await bcrypt.compare(password, user.passwordHash);
+
+      if (!isValid) {
+        // Increment failed login attempts for lockout tracking
+        try {
+          const { failedLoginAttempts } = users;
+          await dbInstance
+            .update(users)
+            .set({
+              failedLoginAttempts: (user as any).failedLoginAttempts
+                ? (user as any).failedLoginAttempts + 1
+                : 1,
+              lastFailedLogin: new Date(),
+            })
+            .where(eq(users.id, userId));
+        } catch {
+          // Non-blocking — audit trail will capture the failure separately
+        }
+      }
+
+      return isValid;
+    } catch (error) {
+      console.error('[Part11] Credential verification error:', error);
+      return false;
+    }
   }
 
   /**

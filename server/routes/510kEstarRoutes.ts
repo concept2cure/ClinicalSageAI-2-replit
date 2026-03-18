@@ -12,7 +12,7 @@
  */
 
 import { Router } from 'express';
-import { createScopedLogger } from '../utils/logger.ts';
+import { createScopedLogger } from '../utils/logger';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
 import * as path from 'path';
 import * as fs from 'fs';

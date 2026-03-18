@@ -145,7 +145,7 @@ const MODULE_CONFIG: Record<
     bgColor: string;
   }
 > = {
-  m1: { label: 'M1', fullName: 'Administrative', color: 'text-slate-600', bgColor: 'bg-slate-100' },
+  m1: { label: 'M1', fullName: 'Administrative', color: 'text-zinc-600', bgColor: 'bg-zinc-100' },
   m2: { label: 'M2', fullName: 'Summaries', color: 'text-blue-600', bgColor: 'bg-blue-100' },
   m3: { label: 'M3', fullName: 'Quality (CMC)', color: 'text-green-600', bgColor: 'bg-green-100' },
   m4: { label: 'M4', fullName: 'Nonclinical', color: 'text-amber-600', bgColor: 'bg-amber-100' },
@@ -163,9 +163,9 @@ const STATUS_CONFIG: Record<
 > = {
   empty: {
     label: 'Empty',
-    color: 'text-slate-400',
-    bgColor: 'bg-slate-50',
-    icon: <div className="w-3 h-3 rounded-full border-2 border-dashed border-slate-300" />,
+    color: 'text-zinc-400',
+    bgColor: 'bg-zinc-50',
+    icon: <div className="w-3 h-3 rounded-full border-2 border-dashed border-zinc-300" />,
   },
   ai_drafting: {
     label: 'RI Drafting...',
@@ -199,8 +199,8 @@ const STATUS_CONFIG: Record<
   },
   locked: {
     label: 'Locked',
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-100',
+    color: 'text-zinc-600',
+    bgColor: 'bg-zinc-100',
     icon: <Shield className="w-3 h-3" />,
   },
 };
@@ -212,21 +212,21 @@ const STATUS_CONFIG: Record<
 const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting }) => (
   <div className="flex-1 flex items-center justify-center p-8">
     <div className="text-center max-w-md">
-      <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-slate-900 flex items-center justify-center shadow-sm">
+      <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-zinc-900 flex items-center justify-center shadow-sm">
         <Mountain className="w-8 h-8 text-white" />
       </div>
-      <h2 className="text-xl font-semibold text-slate-900 mb-3">Your Sherpa is Ready</h2>
-      <p className="text-slate-600 mb-6 leading-relaxed">
+      <h2 className="text-xl font-semibold text-zinc-900 mb-3">Your Sherpa is Ready</h2>
+      <p className="text-zinc-600 mb-6 leading-relaxed">
         I'll help you draft your regulatory documents, verify every claim against your source data,
         and ensure you reach the summit of approval safely.
       </p>
-      <p className="text-sm text-slate-500 mb-6 italic">
+      <p className="text-sm text-zinc-500 mb-6 italic">
         "You don't write from scratch. Click 'Draft' and I'll carry the burden of the first draft -
         citing every claim with Smart Tags that connect you to your data."
       </p>
       <button
         onClick={onStartDrafting}
-        className="px-5 py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 shadow-sm transition-colors flex items-center gap-2 mx-auto"
+        className="px-5 py-2.5 bg-zinc-900 text-white rounded-lg font-semibold hover:bg-zinc-800 shadow-sm transition-colors flex items-center gap-2 mx-auto"
       >
         <Sparkles className="w-4 h-4" />
         Start Drafting with RI
@@ -262,7 +262,7 @@ const OutlineTree: React.FC<{
               onClick={() => onSelect(section)}
               className={cn(
                 'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors',
-                'hover:bg-slate-100',
+                'hover:bg-zinc-100',
                 isSelected && 'bg-blue-50 ring-1 ring-blue-200'
               )}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
@@ -274,12 +274,12 @@ const OutlineTree: React.FC<{
                     e.stopPropagation();
                     setExpanded(prev => ({ ...prev, [section.id]: !isExpanded }));
                   }}
-                  className="p-0.5 hover:bg-slate-200 rounded"
+                  className="p-0.5 hover:bg-zinc-200 rounded"
                 >
                   {isExpanded ? (
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                    <ChevronDown className="w-3 h-3 text-zinc-400" />
                   ) : (
-                    <ChevronRight className="w-3 h-3 text-slate-400" />
+                    <ChevronRight className="w-3 h-3 text-zinc-400" />
                   )}
                 </button>
               ) : (
@@ -291,11 +291,11 @@ const OutlineTree: React.FC<{
 
               {/* Section Number & Title */}
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-mono text-slate-400 mr-2">{section.number}</span>
+                <span className="text-xs font-mono text-zinc-400 mr-2">{section.number}</span>
                 <span
                   className={cn(
                     'text-sm truncate',
-                    isSelected ? 'font-medium text-blue-700' : 'text-slate-700'
+                    isSelected ? 'font-medium text-blue-700' : 'text-zinc-700'
                   )}
                 >
                   {section.title}
@@ -448,9 +448,9 @@ const SectionEditor: React.FC<{
   const moduleConfig = MODULE_CONFIG[section.module];
 
   return (
-    <div className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div className="flex-1 flex flex-col bg-white rounded-xl border border-zinc-200 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+      <div className="flex items-center justify-between p-4 border-b border-zinc-200 bg-zinc-50">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span
@@ -462,9 +462,9 @@ const SectionEditor: React.FC<{
             >
               {moduleConfig.label}
             </span>
-            <span className="text-sm font-mono text-slate-500">{section.number}</span>
+            <span className="text-sm font-mono text-zinc-500">{section.number}</span>
           </div>
-          <h2 className="text-lg font-semibold text-slate-800">{section.title}</h2>
+          <h2 className="text-lg font-semibold text-zinc-800">{section.title}</h2>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -481,10 +481,10 @@ const SectionEditor: React.FC<{
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-2 p-3 border-b border-slate-200 bg-slate-50/50">
+      <div className="flex items-center gap-2 p-3 border-b border-zinc-200 bg-zinc-50/50">
         <button
           onClick={onDraft}
-          className="px-3 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 flex items-center gap-2"
+          className="px-3 py-1.5 text-sm font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 flex items-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
           {section.status === 'empty' ? 'Draft with RI' : 'Regenerate'}
@@ -506,7 +506,7 @@ const SectionEditor: React.FC<{
 
       {/* Redline Alerts */}
       {section.redlineAlerts && section.redlineAlerts.length > 0 && (
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-zinc-200">
           <RedlineAlertPanel alerts={section.redlineAlerts} onResolve={onResolveAlert} />
         </div>
       )}
@@ -515,11 +515,11 @@ const SectionEditor: React.FC<{
       <div className="flex-1 overflow-auto p-6">
         {section.status === 'empty' ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-slate-400" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-100 flex items-center justify-center">
+              <FileText className="w-8 h-8 text-zinc-400" />
             </div>
-            <h3 className="text-lg font-medium text-slate-600 mb-2">Section Not Yet Drafted</h3>
-            <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">
+            <h3 className="text-lg font-medium text-zinc-600 mb-2">Section Not Yet Drafted</h3>
+            <p className="text-sm text-zinc-500 mb-4 max-w-sm mx-auto">
               Click "Draft with RI" and your Sherpa will carry the burden of the first draft, citing
               every claim against your source documents.
             </p>
@@ -545,7 +545,7 @@ const SectionEditor: React.FC<{
               <Sparkles className="w-8 h-8 text-blue-600" />
             </div>
             <h3 className="text-lg font-medium text-blue-700 mb-2">RI is Drafting...</h3>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-zinc-500">
               Analyzing source documents and generating content with Smart Tags
             </p>
           </div>
@@ -553,17 +553,17 @@ const SectionEditor: React.FC<{
           <div className="prose prose-sm max-w-none">
             {section.content ? (
               <div
-                className="text-slate-700 leading-relaxed"
+                className="text-zinc-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
             ) : (
-              <p className="text-slate-400 italic">No content available</p>
+              <p className="text-zinc-400 italic">No content available</p>
             )}
 
             {/* Smart Tags Display */}
             {section.smartTags.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-slate-200">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              <div className="mt-6 pt-4 border-t border-zinc-200">
+                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
                   Smart Tags ({section.smartTags.length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -578,7 +578,7 @@ const SectionEditor: React.FC<{
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
+      <div className="flex items-center justify-between p-3 border-t border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
         <div className="flex items-center gap-4">
           <span>{section.wordCount.toLocaleString()} words</span>
           {section.lastEdited && <span>Last edited: {section.lastEdited}</span>}
@@ -762,21 +762,21 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
   };
 
   return (
-    <div className={cn('flex h-full bg-slate-50', className)} data-testid="ectd-coauthor-content">
+    <div className={cn('flex h-full bg-zinc-50', className)} data-testid="ectd-coauthor-content">
       {/* Left Panel: Document Outline */}
       <div
-        className="w-80 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col"
+        className="w-80 flex-shrink-0 bg-white border-r border-zinc-200 flex flex-col"
         data-testid="ectd-coauthor-outline"
       >
         {/* Header */}
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-zinc-200">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+            <div className="p-2 bg-blue-600 rounded-lg">
               <Layers className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-800">{document.name}</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="font-semibold text-zinc-800">{document.name}</h2>
+              <p className="text-xs text-zinc-500">
                 {document.submissionType} • v{document.version}
               </p>
             </div>
@@ -785,12 +785,12 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
           {/* Progress */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-slate-500">Progress</span>
-              <span className="font-medium text-slate-700">{document.overallProgress}%</span>
+              <span className="text-zinc-500">Progress</span>
+              <span className="font-medium text-zinc-700">{document.overallProgress}%</span>
             </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
+                className="h-full bg-blue-500 rounded-full"
                 style={{ width: `${document.overallProgress}%` }}
               />
             </div>
@@ -825,7 +825,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
         </div>
 
         {/* Add Section */}
-        <div className="p-3 border-t border-slate-200">
+        <div className="p-3 border-t border-zinc-200">
           <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
             <Plus className="w-4 h-4" />
             Add Section

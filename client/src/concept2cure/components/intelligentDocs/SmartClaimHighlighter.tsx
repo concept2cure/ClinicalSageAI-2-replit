@@ -41,9 +41,9 @@ export const ClaimHighlightMark = Mark.create({
     const { sourceStatus } = HTMLAttributes;
     
     const statusClasses = {
-      supported: 'bg-green-100 dark:bg-green-900/30 border-b-2 border-green-500',
-      'needs-source': 'bg-amber-100 dark:bg-amber-900/30 border-b-2 border-amber-500 border-dashed',
-      unsupported: 'bg-red-100 dark:bg-red-900/30 border-b-2 border-red-500',
+      supported: 'bg-green-100 border-b-2 border-green-500',
+      'needs-source': 'bg-amber-100 border-b-2 border-amber-500 border-dashed',
+      unsupported: 'bg-red-100 border-b-2 border-red-500',
     };
     
     return [
@@ -128,14 +128,14 @@ export const ClaimSummaryStrip: React.FC<{
   if (claims.length === 0) return null;
   
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-sm">
+    <div className="flex items-center justify-between px-4 py-2 bg-white border-t border-zinc-200 shadow-sm">
       <div className="flex items-center gap-4 text-sm">
-        <span className="text-slate-600 dark:text-slate-400">
+        <span className="text-zinc-600">
           {claims.length} claims detected
         </span>
         
         {supported > 0 && (
-          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+          <span className="flex items-center gap-1 text-green-600">
             <span className="w-2 h-2 rounded-full bg-green-500" />
             {supported} sourced
           </span>
@@ -147,7 +147,7 @@ export const ClaimSummaryStrip: React.FC<{
               const firstNeedsSource = claims.find(c => c.sourceStatus === 'needs-source');
               if (firstNeedsSource) onClaimClick(firstNeedsSource);
             }}
-            className="flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline"
+            className="flex items-center gap-1 text-amber-600 hover:underline"
             data-testid="button-claim-needs-source"
           >
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -156,14 +156,14 @@ export const ClaimSummaryStrip: React.FC<{
         )}
         
         {unsupported > 0 && (
-          <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
+          <span className="flex items-center gap-1 text-red-600">
             <span className="w-2 h-2 rounded-full bg-red-500" />
             {unsupported} unsupported
           </span>
         )}
       </div>
       
-      <div className="text-xs text-slate-500">
+      <div className="text-xs text-zinc-500">
         {Math.round((supported / claims.length) * 100)}% traceable
       </div>
     </div>
@@ -193,7 +193,7 @@ export const ClaimTooltip: React.FC<{
   
   return (
     <div
-      className="fixed z-50 w-72 p-3 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700"
+      className="fixed z-50 w-72 p-3 bg-white rounded-lg shadow-xl border border-zinc-200"
       style={{
         left: position.x,
         top: position.y,
@@ -201,12 +201,12 @@ export const ClaimTooltip: React.FC<{
       }}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-medium text-zinc-500">
           {claimTypeLabels[claim.claimType]}
         </span>
         <button
           onClick={onDismiss}
-          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          className="p-1 text-zinc-400 hover:text-zinc-600"
           data-testid={`button-dismiss-claim-tooltip-${claim.id}`}
           aria-label="Dismiss claim tooltip"
         >
@@ -214,12 +214,12 @@ export const ClaimTooltip: React.FC<{
         </button>
       </div>
       
-      <p className="text-sm text-slate-700 dark:text-slate-300 mb-3 line-clamp-2">
+      <p className="text-sm text-zinc-700 mb-3 line-clamp-2">
         "{claim.text}"
       </p>
       
       {claim.sourceStatus === 'supported' ? (
-        <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
+        <div className="flex items-center gap-2 text-green-600 text-sm">
           <span className="w-2 h-2 rounded-full bg-green-500" />
           {claim.linkedSources.length} source{claim.linkedSources.length > 1 ? 's' : ''} linked
         </div>

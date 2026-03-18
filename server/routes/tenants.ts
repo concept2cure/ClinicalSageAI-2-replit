@@ -65,48 +65,6 @@ router.use(authMiddleware);
  */
 router.get('/', async (req, res) => {
   try {
-    // For development, return mock data
-    if (process.env.NODE_ENV === 'development') {
-      return res.json([
-        {
-          id: 1,
-          name: 'Acme Medical Devices',
-          slug: 'acme-medical',
-          domain: 'acme-medical.example.com',
-          logo: null,
-          tier: 'professional',
-          maxUsers: 10,
-          maxProjects: 20,
-          maxStorage: 50,
-          status: 'active',
-        },
-        {
-          id: 2,
-          name: 'BioTech Solutions',
-          slug: 'biotech',
-          domain: null,
-          logo: null,
-          tier: 'enterprise',
-          maxUsers: 50,
-          maxProjects: 100,
-          maxStorage: 200,
-          status: 'active',
-        },
-        {
-          id: 3,
-          name: 'MedSoft Research',
-          slug: 'medsoft',
-          domain: 'research.medsoft.com',
-          logo: null,
-          tier: 'standard',
-          maxUsers: 5,
-          maxProjects: 10,
-          maxStorage: 5,
-          status: 'active',
-        },
-      ]);
-    }
-
     // If user is super admin, get all tenants
     if (req.userRole === 'super_admin') {
       const allTenants = await db.select().from(organizations);
@@ -143,28 +101,6 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
   const tenantId = parseInt(req.params.id);
 
   try {
-    // For development, return mock data
-    if (process.env.NODE_ENV === 'development' && tenantId === 1) {
-      return res.json({
-        id: 1,
-        name: 'Acme Medical Devices',
-        slug: 'acme-medical',
-        domain: 'acme-medical.example.com',
-        logo: null,
-        apiKey: process.env.ACME_DEV_API_KEY || '[REDACTED-USE-ENV-VAR]',
-        tier: 'professional',
-        maxUsers: 10,
-        maxProjects: 20,
-        maxStorage: 50,
-        status: 'active',
-        settings: {
-          brandColor: '#4f46e5',
-          enableNotifications: true,
-          allowGuests: false,
-        },
-      });
-    }
-
     const tenant = await db
       .select()
       .from(organizations)
@@ -280,17 +216,6 @@ router.patch('/:id', validateTenantAccessMiddleware, requireAdminRole, async (re
     // Validate request body
     const validatedData = updateTenantSchema.parse(req.body);
 
-    // Mock response for development
-    if (process.env.NODE_ENV === 'development' && tenantId === 1) {
-      return res.json({
-        id: 1,
-        ...validatedData,
-        apiKey: process.env.ACME_DEV_API_KEY || '[REDACTED-USE-ENV-VAR]',
-        status: 'active',
-        updatedAt: new Date().toISOString(),
-      });
-    }
-
     // Check if tenant exists
     const existingTenant = await db
       .select()
@@ -374,14 +299,6 @@ router.post('/:id/api-key', validateTenantAccessMiddleware, requireAdminRole, as
   const tenantId = parseInt(req.params.id);
 
   try {
-    // Mock response for development
-    if (process.env.NODE_ENV === 'development' && tenantId === 1) {
-      return res.json({
-        id: 1,
-        apiKey: 'acme-dev-api-key-' + Math.random().toString(36).substring(2, 15),
-      });
-    }
-
     // Check if tenant exists
     const existingTenant = await db
       .select()

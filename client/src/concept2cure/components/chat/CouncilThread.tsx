@@ -111,8 +111,8 @@ const AGENTS: Record<
   USER: {
     name: 'You',
     title: 'Team Lead',
-    color: 'text-slate-700',
-    bgColor: 'bg-slate-100',
+    color: 'text-zinc-700',
+    bgColor: 'bg-zinc-100',
     bubbleColor: 'bg-blue-600 text-white',
     icon: <User className="w-4 h-4" />,
   },
@@ -121,7 +121,7 @@ const AGENTS: Record<
     title: 'The Heavy Lifter',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
-    bubbleColor: 'bg-white border border-blue-200 text-slate-700',
+    bubbleColor: 'bg-white border border-blue-200 text-zinc-700',
     icon: <FileText className="w-4 h-4" />,
   },
   STATISTICIAN: {
@@ -145,7 +145,7 @@ const AGENTS: Record<
     title: 'Expedition Leader',
     color: 'text-purple-700',
     bgColor: 'bg-purple-100',
-    bubbleColor: 'bg-white border border-purple-200 text-slate-700',
+    bubbleColor: 'bg-white border border-purple-200 text-zinc-700',
     icon: <Sparkles className="w-4 h-4" />,
   },
   PATHFINDER: {
@@ -209,11 +209,11 @@ const AttachmentBadge: React.FC<{ attachment: Attachment }> = ({ attachment }) =
   return (
     <button
       onClick={attachment.onClick}
-      className="flex items-center gap-2 px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-blue-300 transition-colors shadow-sm"
+      className="flex items-center gap-2 px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:border-blue-300 transition-colors shadow-sm"
     >
       <div className="text-blue-600">{icons[attachment.type]}</div>
-      <span className="font-medium text-slate-700">{attachment.name}</span>
-      <ChevronRight className="w-3 h-3 text-slate-400" />
+      <span className="font-medium text-zinc-700">{attachment.name}</span>
+      <ChevronRight className="w-3 h-3 text-zinc-400" />
     </button>
   );
 };
@@ -238,7 +238,7 @@ const MessageBubble: React.FC<{
       <div
         className={cn(
           'mt-1 w-9 h-9 rounded-full flex items-center justify-center shadow-sm shrink-0',
-          'border-2 border-white ring-1 ring-slate-100',
+          'border-2 border-white ring-1 ring-zinc-100',
           persona.bgColor,
           persona.color
         )}
@@ -252,12 +252,12 @@ const MessageBubble: React.FC<{
         <div
           className={cn('flex items-baseline gap-2 mb-1', isUser ? 'justify-end' : 'justify-start')}
         >
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
             {persona.name}
           </span>
-          {!isUser && <span className="text-[10px] text-slate-300">{persona.title}</span>}
+          {!isUser && <span className="text-[10px] text-zinc-300">{persona.title}</span>}
           {message.timestamp && (
-            <span className="text-[10px] text-slate-300">{message.timestamp}</span>
+            <span className="text-[10px] text-zinc-300">{message.timestamp}</span>
           )}
         </div>
 
@@ -277,10 +277,10 @@ const MessageBubble: React.FC<{
 
               {/* Confidence Indicator */}
               {message.confidence !== undefined && (
-                <div className="mt-2 pt-2 border-t border-slate-200/50">
+                <div className="mt-2 pt-2 border-t border-zinc-200/50">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-slate-400">Confidence:</span>
-                    <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <span className="text-[10px] text-zinc-400">Confidence:</span>
+                    <div className="flex-1 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
                       <div
                         className={cn(
                           'h-full rounded-full transition-all',
@@ -292,7 +292,7 @@ const MessageBubble: React.FC<{
                         style={{ width: `${message.confidence}%` }}
                       />
                     </div>
-                    <span className="text-[10px] font-mono font-medium text-slate-500">
+                    <span className="text-[10px] font-mono font-medium text-zinc-500">
                       {message.confidence}%
                     </span>
                   </div>
@@ -301,7 +301,7 @@ const MessageBubble: React.FC<{
 
               {/* Citations */}
               {message.citations && message.citations.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-slate-200/50">
+                <div className="mt-3 pt-2 border-t border-zinc-200/50">
                   <div className="flex flex-wrap gap-1.5">
                     {message.citations.map(citation => (
                       <CitationBadge key={citation.id} citation={citation} />
@@ -335,7 +335,7 @@ const MessageBubble: React.FC<{
                   action.variant === 'primary' && 'bg-blue-600 text-white hover:bg-blue-700',
                   action.variant === 'danger' && 'bg-red-100 text-red-700 hover:bg-red-200',
                   !action.variant &&
-                    'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-blue-300'
+                    'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:border-blue-300'
                 )}
               >
                 {action.icon}
@@ -350,28 +350,28 @@ const MessageBubble: React.FC<{
           <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onFeedback?.(true)}
-              className="p-1 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
               title="Good response"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onFeedback?.(false)}
-              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="Poor response"
             >
               <ThumbsDown className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onCopy}
-              className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
               title="Copy"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onRetry}
-              className="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
               title="Regenerate"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -401,8 +401,8 @@ export const CouncilThread: React.FC<CouncilThreadProps> = ({
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-1">Your Sherpa Team is Ready</h3>
-          <p className="text-sm text-slate-500 max-w-sm mx-auto">
+          <h3 className="text-lg font-semibold text-zinc-800 mb-1">Your Sherpa Team is Ready</h3>
+          <p className="text-sm text-zinc-500 max-w-sm mx-auto">
             Start a conversation and your team of expert agents will guide you through the
             regulatory mountain.
           </p>
