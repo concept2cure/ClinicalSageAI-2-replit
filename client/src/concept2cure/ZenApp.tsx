@@ -42,6 +42,7 @@ import { WorkflowTimeline } from './components/workflow';
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
 import { CustomInstructions } from './components/knowledge/CustomInstructions';
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
+import { useProjectTasks } from './hooks/useProjectTasks';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
@@ -134,12 +135,8 @@ const FirstRunExperience = lazy(() =>
 );
 
 // Snow Globe — Cross-platform prediction & intelligence
-const SnowGlobeHome = lazy(() =>
-  import('./pages/SnowGlobe/SnowGlobeHome')
-);
-const SnowGlobeChambers = lazy(() =>
-  import('./pages/SnowGlobe/SnowGlobeChambers')
-);
+const SnowGlobeHome = lazy(() => import('./pages/SnowGlobe/SnowGlobeHome'));
+const SnowGlobeChambers = lazy(() => import('./pages/SnowGlobe/SnowGlobeChambers'));
 
 // Lazy load Phase 7 Mission Control components
 const MissionControl = lazy(() =>
@@ -1597,8 +1594,17 @@ export const ZenApp: React.FC = () => {
 
           {/* Snow Globe — Prediction & Intelligence Engine */}
           {!embeddedModule && layoutMode === 'snowglobe' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-snowglobe"
+            >
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center bg-white">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
+                  </div>
+                }
+              >
                 <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
               </Suspense>
             </div>
@@ -1606,8 +1612,17 @@ export const ZenApp: React.FC = () => {
 
           {/* Snow Globe — Chamber Detail View */}
           {!embeddedModule && layoutMode === 'snowglobe-chambers' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe-chambers">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-snowglobe-chambers"
+            >
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center bg-white">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
+                  </div>
+                }
+              >
                 <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
               </Suspense>
             </div>

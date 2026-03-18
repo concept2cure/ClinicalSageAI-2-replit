@@ -388,24 +388,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [activeArtifact?.content, activeArtifact?.title, onContentChange]);
 
-  // ── Global keyboard shortcuts ───────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      // Ctrl/Cmd+S — save
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        if (activeArtifact) handleSave(activeArtifact.content, {});
-      }
-      // Escape — close menus
-      if (e.key === 'Escape') {
-        setOverflowOpen(false);
-        setAiMenuOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [activeArtifact, handleSave]);
-
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
@@ -455,6 +437,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     },
     [projectId, activeArtifact, loadArtifacts]
   );
+
+  // ── Global keyboard shortcuts ───────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+S — save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (activeArtifact) handleSave(activeArtifact.content, {});
+      }
+      // Escape — close menus
+      if (e.key === 'Escape') {
+        setOverflowOpen(false);
+        setAiMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeArtifact, handleSave]);
 
   // ── Create new document ──────────────────────────────────────────────────
   const handleCreateNew = useCallback(async () => {
