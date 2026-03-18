@@ -564,10 +564,20 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
     );
   }, [members, searchQuery]);
 
+  // ── Workload data from API ─────────────────────────────────────────────
+  const { data: workloadData = [], isLoading: workloadLoading } = useQuery<WorkloadEntry[]>({
+    queryKey: ['concept2cure', 'team', 'workload'],
+    queryFn: async () => {
+      const res = await fetch('/api/concept2cure/team/workload');
+      if (!res.ok) throw new Error('Failed to fetch workload data');
+      return res.json();
+    },
+  });
+
   // ── Workload max for bar scaling ────────────────────────────────────────
   const workloadMax = useMemo(() => {
-    return Math.max(...MOCK_WORKLOAD.map((w) => w.assigned + w.inReview + w.overdue), 1);
-  }, []);
+    return Math.max(...workloadData.map((w) => w.assigned + w.inReview + w.overdue), 1);
+  }, [workloadData]);
 
   // ── No program selected ────────────────────────────────────────────────
   if (!programId) {
@@ -822,7 +832,17 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
               </div>
             </div>
 
-            {MOCK_WORKLOAD.map((entry) => {
+            {workloadLoading && (
+              <div className="flex items-center justify-center py-8">
+                <span className="text-sm text-zinc-400">Loading workload data...</span>
+              </div>
+            )}
+            {!workloadLoading && workloadData.length === 0 && (
+              <div className="flex items-center justify-center py-8">
+                <span className="text-sm text-zinc-400">No workload data available.</span>
+              </div>
+            )}
+            {workloadData.map((entry) => {
               const total = entry.assigned + entry.inReview + entry.overdue;
               const wScore = getWorkloadScore(entry);
               const member = members.find((m) => m.id === entry.memberId);
