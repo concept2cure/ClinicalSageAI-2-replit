@@ -199,12 +199,10 @@ router.get('/regulatory-intelligence', asyncHandler(async (req: Request, res: Re
       LIMIT 20
     `);
 
-    // If no data, return mock data for demo
-    const data = result.rows.length > 0 ? result.rows : getMockRegulatoryIntelligence();
-
     res.json({
       success: true,
-      data: data,
+      data: result.rows,
+      message: result.rows.length === 0 ? 'No regulatory intelligence entries found. Data will appear here as it is ingested.' : undefined,
     });
 }));
 
@@ -482,35 +480,6 @@ function getInitialTasksForProject(submissionType: string) {
   return taskTemplates[submissionType] || [];
 }
 
-// Mock regulatory intelligence for demo
-function getMockRegulatoryIntelligence() {
-  return [
-    {
-      id: 1,
-      title: 'FDA Publishes New Guidance on Digital Health Technologies',
-      description:
-        'FDA released comprehensive guidance on software as medical device (SaMD) regulatory requirements',
-      category: 'FDA',
-      impact_level: 'high',
-      published_date: new Date('2025-10-20'),
-    },
-    {
-      id: 2,
-      title: 'EMA Updates Clinical Trial Regulation Requirements',
-      description: 'New requirements for clinical trial applications in EU effective January 2026',
-      category: 'EMA',
-      impact_level: 'critical',
-      published_date: new Date('2025-10-18'),
-    },
-    {
-      id: 3,
-      title: 'ICH Q14 Analytical Procedure Development Finalized',
-      description: 'ICH harmonized guideline on analytical procedure development now in effect',
-      category: 'ICH',
-      impact_level: 'medium',
-      published_date: new Date('2025-10-15'),
-    },
-  ];
-}
+// Mock regulatory intelligence removed — returns real DB data or empty array.
 
 export default router;

@@ -264,6 +264,62 @@ ${granuleElements}
 }
 
 // ---------------------------------------------------------------------------
+// Structured Document Generation (replaces generic placeholders)
+// ---------------------------------------------------------------------------
+
+function generateStructuredDocument(opts: {
+  sectionCode: string;
+  title: string;
+  status: string;
+  version: string;
+  moduleName: string;
+  wordCount: number | null;
+  generatedAt: string;
+}): string {
+  const moduleNum = opts.sectionCode.split('.')[0];
+  const moduleDef = MODULE_DEFS[moduleNum];
+  const moduleLabel = moduleDef ? `Module ${moduleNum}: ${moduleDef.name}` : `Module ${moduleNum}`;
+
+  return [
+    `${'='.repeat(72)}`,
+    `  ${opts.title}`,
+    `${'='.repeat(72)}`,
+    ``,
+    `  Document Metadata`,
+    `  ${'─'.repeat(40)}`,
+    `  Section Code:    ${opts.sectionCode}`,
+    `  Module:          ${moduleLabel}`,
+    `  Version:         ${opts.version}`,
+    `  Status:          ${opts.status}`,
+    `  Generated:       ${opts.generatedAt}`,
+    opts.wordCount ? `  Word Count:      ${opts.wordCount.toLocaleString()}` : null,
+    ``,
+    `  ${'─'.repeat(40)}`,
+    `  Content Status: PENDING`,
+    ``,
+    `  This document is part of the eCTD submission package for`,
+    `  ${moduleLabel}.`,
+    ``,
+    `  The document content has not yet been finalized in the document`,
+    `  management system. When the authoring workflow for this section`,
+    `  is complete, the content will be automatically included in`,
+    `  subsequent export builds.`,
+    ``,
+    `  Section: ${opts.sectionCode} — ${opts.title}`,
+    ``,
+    `  Required Actions:`,
+    `    1. Complete document authoring for section ${opts.sectionCode}`,
+    `    2. Submit document through the review/approval workflow`,
+    `    3. Re-export the eCTD package to include final content`,
+    ``,
+    `${'='.repeat(72)}`,
+    `  ClinicalSageAI eCTD Export Service — ICH M8 v4.0`,
+    `${'='.repeat(72)}`,
+    ``,
+  ].filter(line => line !== null).join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // Core Export Logic
 // ---------------------------------------------------------------------------
 
