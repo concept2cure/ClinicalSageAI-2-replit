@@ -69,35 +69,35 @@ const debugLog = (message: string, data?: any) => {
 };
 
 // Import CMC route handlers
-import cmcProjectRoutes from './api/cmc/projectRoutes.ts';
-import cmcBlueprintRoutes from './api/cmc/blueprintRoutes.ts';
-import cmcDashboardRoutes from './routes/cmc-dashboard.ts';
+import cmcProjectRoutes from './api/cmc/projectRoutes';
+import cmcBlueprintRoutes from './api/cmc/blueprintRoutes';
+import cmcDashboardRoutes from './routes/cmc-dashboard';
 import cmcAggregatorRoutes from './api/cmc/index.js';
-import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
-import cmcCoreRoutes from './api/cmc/routes.ts';
+import cmcDashboardPrisma from './routes/cmc-dashboard-prisma';
+import cmcCoreRoutes from './api/cmc/routes';
 
 // Import AI assistance routes
-import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance.ts';
+import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
 // Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
 
-import predictiveSectionsRoutes from './routes/predictive-sections.ts';
+import predictiveSectionsRoutes from './routes/predictive-sections';
 
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
 
 // Import ForesightAI routes
-import foresightApiRoutes from './routes/foresight-api.ts';
-import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced.ts';
-import foresightFeedbackRoutes from './routes/foresight-feedback.ts';
+import foresightApiRoutes from './routes/foresight-api';
+import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
+import foresightFeedbackRoutes from './routes/foresight-feedback';
 
 // Import Phase 5: Intelligent Document System routes
-import intelligentDocsRoutes from './routes/intelligentDocs.ts';
+import intelligentDocsRoutes from './routes/intelligentDocs';
 import { testAssemblyRoutes } from './routes/test-assembly';
 
 // Import Phase 5: PM Settings & Configuration routes
 import pmSettingsRouter from './src/routes/pm-settings.router';
-import reportsManifestRoutes from './routes/reports/manifest-routes.ts';
-import reportsGenerationRoutes from './routes/reports/generate-report.ts';
+import reportsManifestRoutes from './routes/reports/manifest-routes';
+import reportsGenerationRoutes from './routes/reports/generate-report';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -354,10 +354,10 @@ app.get('/api/diag', (_req: Request, res: Response) => {
 
 // Mount authentication routes (SECURE)
 try {
-  const authModule = await import('./routes/auth.ts');
+  const authModule = await import('./routes/auth');
   const authRouter = authModule.default;
   // Express Router is an object with handle method, not strictly a function
-  if (authRouter && (typeof authRouter === 'function' || authRouter.handle)) {
+  if (authRouter && (typeof authRouter === 'function' || (authRouter as any).handle)) {
     app.use('/api/auth', authRouter);
     // Also mount on /api/v1/auth for client compatibility
     app.use('/api/v1/auth', authRouter);
@@ -373,9 +373,9 @@ try {
 
 // Mount Users routes
 try {
-  const usersModule = await import('./routes/users.ts');
+  const usersModule = await import('./routes/users');
   const usersRouter = usersModule.default;
-  if (usersRouter && (typeof usersRouter === 'function' || usersRouter.handle)) {
+  if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
     app.use('/api/users', usersRouter);
     app.use('/api/user', usersRouter); // Alias for /api/users/me
     // DO NOT mount at /api - it breaks /api/tenants and other routes
@@ -402,11 +402,11 @@ app.post('/api/register', (req, res) => {
 
 // Mount Enterprise Authentication routes (21 CFR Part 11 Compliant)
 try {
-  const authEnterpriseModule = await import('./routes/authEnterprise.ts');
+  const authEnterpriseModule = await import('./routes/authEnterprise');
   const authEnterpriseRouter = authEnterpriseModule.default;
   if (
     authEnterpriseRouter &&
-    (typeof authEnterpriseRouter === 'function' || authEnterpriseRouter.handle)
+    (typeof authEnterpriseRouter === 'function' || (authEnterpriseRouter as any).handle)
   ) {
     app.use('/api/auth/enterprise', authEnterpriseRouter);
     console.log('✅ Enterprise Authentication routes mounted at /api/auth/enterprise');
@@ -423,9 +423,9 @@ try {
 
 // Mount SSO helper routes (/api/auth/sso) for developer/testing
 try {
-  const ssoModule = await import('./routes/sso.ts');
+  const ssoModule = await import('./routes/sso');
   const ssoRouter = ssoModule.default;
-  if (ssoRouter && (typeof ssoRouter === 'function' || ssoRouter.handle)) {
+  if (ssoRouter && (typeof ssoRouter === 'function' || (ssoRouter as any).handle)) {
     app.use('/api/auth/sso', ssoRouter);
     console.log('✅ SSO helper routes mounted at /api/auth/sso');
   }
@@ -791,11 +791,11 @@ app.delete('/api/device-projects/:id', async (req: Request, res: Response) => {
 console.log('✅ /api/device-projects CRUD routes mounted');
 
 // Register template routes
-import templateRoutes from './api/templates/routes.ts';
+import templateRoutes from './api/templates/routes';
 app.use('/api/templates', templateRoutes);
 
 // Import and mount AI routes — protected by circuit breaker for fault isolation
-import aiRoutes from './api/ai/routes.ts';
+import aiRoutes from './api/ai/routes';
 import phase3Routes from './api/ai/phase3-routes.js';
 import { createCircuitBreakerMiddleware } from './middleware/circuitBreaker';
 const aiCircuitBreaker = createCircuitBreakerMiddleware('ai-service', {
@@ -846,7 +846,7 @@ try {
 
 // Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
 try {
-  const lumenCortexRoutes = await import('./routes/lumen-cortex.ts');
+  const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
   console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
@@ -947,7 +947,7 @@ try {
 
 // Mount FDA 510(k) eSTAR export routes
 try {
-  const estarModule = await import('./routes/510k-estar-routes.ts');
+  const estarModule = await import('./routes/510k-estar-routes');
   const estarRoutes = estarModule.default;
   app.use('/api/510k/estar', estarRoutes);
   console.log('✅ FDA 510(k) eSTAR export routes mounted successfully');
@@ -957,7 +957,7 @@ try {
 
 // Mount unified CERV2 Export routes (PDF, DOCX, ZIP for all doc types)
 try {
-  const cerv2ExportModule = await import('./routes/cerv2-export-routes.ts');
+  const cerv2ExportModule = await import('./routes/cerv2-export-routes');
   const cerv2ExportRoutes = cerv2ExportModule.default;
   app.use('/api/cerv2/export', cerv2ExportRoutes);
   console.log('✅ CERV2 unified export routes mounted (PDF/DOCX/ZIP for 510k, PMA, CER)');
@@ -967,7 +967,7 @@ try {
 
 // Mount CERV2 AI auto-populate stub routes (suggest, equivalence, benefit-risk, templates)
 try {
-  const cerv2AiModule = await import('./routes/cerv2-ai-routes.ts');
+  const cerv2AiModule = await import('./routes/cerv2-ai-routes');
   const cerv2AiRoutes = cerv2AiModule.default;
   app.use('/api/cerv2/ai', cerv2AiRoutes);
   console.log('✅ CERV2 AI auto-populate routes mounted (suggest, equivalence, benefit-risk)');
@@ -1012,7 +1012,7 @@ try {
 // Mount IVDR (In Vitro Diagnostic Regulation EU 2017/746) routes
 // Triple-gated: auth → feature flag → module entitlement → RBAC
 try {
-  const ivdrModule = await import('./routes/ivdr-routes.ts');
+  const ivdrModule = await import('./routes/ivdr-routes');
   const createIVDRRoutes = ivdrModule.default;
 
   /**
@@ -1158,7 +1158,7 @@ try {
 
   // Mount IVDR Evidence Binder + Pack Builder routes (same middleware gate)
   try {
-    const binderModule = await import('./routes/ivdr-binder-routes.ts');
+    const binderModule = await import('./routes/ivdr-binder-routes');
     const createBinderRoutes = binderModule.default;
     app.use('/api/ivdr', requireIVDRAccess, createBinderRoutes(pool));
     console.log('✅ IVDR Evidence Binder + Pack Builder routes mounted');
@@ -1168,7 +1168,7 @@ try {
 
   // Start IVDR Pack Build Worker (async in-process job processor)
   try {
-    const workerModule = await import('./workers/ivdr-pack-worker.ts');
+    const workerModule = await import('./workers/ivdr-pack-worker');
     workerModule.startPackBuildWorker(pool, 2000);
     console.log('✅ IVDR Pack Build Worker started (2s interval)');
   } catch (workerErr) {
@@ -1180,7 +1180,7 @@ try {
 
 // Mount FDA Integration routes
 try {
-  const fdaIntegrationModule = await import('./routes/fda-integration-simple.ts');
+  const fdaIntegrationModule = await import('./routes/fda-integration-simple');
   const fdaIntegrationRoutes = fdaIntegrationModule.default;
   app.use('/api/fda', fdaIntegrationRoutes);
   console.log('✅ FDA Integration API routes mounted successfully (ESG-ready)');
@@ -1214,7 +1214,7 @@ try {
 
 // CERV2 Unified Document Routes
 try {
-  const cerv2DocumentModule = await import('./routes/cerv2-document-routes.ts');
+  const cerv2DocumentModule = await import('./routes/cerv2-document-routes');
   const cerv2DocumentRoutes = cerv2DocumentModule.default;
   app.use('/api/cerv2', cerv2DocumentRoutes);
   console.log('✅ CERV2 unified document routes mounted successfully');
@@ -1224,7 +1224,7 @@ try {
 
 // Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
 try {
-  const pubmedModule = await import('./routes/pubmed.ts');
+  const pubmedModule = await import('./routes/pubmed');
   const pubmedRoutes = pubmedModule.default;
   app.use('/api/pubmed', pubmedRoutes);
   console.log(
@@ -1236,7 +1236,7 @@ try {
 
 // Mount Literature Review routes
 try {
-  const literatureReviewModule = await import('./routes/literature-review.ts');
+  const literatureReviewModule = await import('./routes/literature-review');
   const literatureReviewRoutes = literatureReviewModule.default;
   app.use('/api/literature-review', literatureReviewRoutes);
   console.log('✅ Literature Review API routes mounted successfully (AI-powered appraisal)');
@@ -1334,7 +1334,7 @@ try {
 
 // Mount eCTD Co-Author routes with database persistence
 try {
-  const coauthorModule = await import('./routes/coauthor.ts');
+  const coauthorModule = await import('./routes/coauthor');
   const coauthorRoutes = coauthorModule.default;
   app.use('/api/coauthor', coauthorRoutes);
   console.log('✅ eCTD Co-Author API routes mounted successfully (database-backed)');
@@ -1344,7 +1344,7 @@ try {
 
 // Mount eCTD Document Management routes with version control
 try {
-  const ectdDocumentsModule = await import('./routes/ectd-documents.ts');
+  const ectdDocumentsModule = await import('./routes/ectd-documents');
   const ectdDocumentsRoutes = ectdDocumentsModule.default;
   app.use('/api/ectd-documents', ectdDocumentsRoutes);
   console.log('✅ eCTD Documents routes loaded (version control & lineage tracking)');
@@ -1354,7 +1354,7 @@ try {
 
 // Mount eCTD 4.0 Validation & Backbone routes
 try {
-  const ectdValidateModule = await import('./routes/ectd-validate.ts');
+  const ectdValidateModule = await import('./routes/ectd-validate');
   const ectdValidateRoutes = ectdValidateModule.default;
   app.use('/api/ectd-validate', ectdValidateRoutes);
   console.log('✅ eCTD 4.0 Validation & Backbone routes loaded');
@@ -1364,7 +1364,7 @@ try {
 
 // Mount eCTD Compile routes (INDWorkspace compile button backend)
 try {
-  const ectdCompileModule = await import('./routes/ectd-compile.ts');
+  const ectdCompileModule = await import('./routes/ectd-compile');
   const ectdCompileRoutes = ectdCompileModule.default;
   app.use('/api/ectd-compile', ectdCompileRoutes);
   console.log('✅ eCTD Compile routes mounted (compile, validate, readiness, history)');
@@ -1374,7 +1374,7 @@ try {
 
 // Mount eCTD Export routes (ICH M8 v4.0 ZIP package generation)
 try {
-  const ectdExportModule = await import('./routes/ectd-export.ts');
+  const ectdExportModule = await import('./routes/ectd-export');
   const ectdExportRoutes = ectdExportModule.default;
   app.use('/api/ectd/export', ectdExportRoutes);
   console.log('✅ eCTD Export routes mounted (ICH M8 v4.0 packaging)');
@@ -1384,7 +1384,7 @@ try {
 
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
 try {
-  const indPdfModule = await import('./routes/ind-pdf.ts');
+  const indPdfModule = await import('./routes/ind-pdf');
   const indPdfRoutes = indPdfModule.default;
   app.use('/api/ind-pdf', indPdfRoutes);
   console.log('✅ IND PDF generation routes mounted (Puppeteer-powered)');
@@ -1394,7 +1394,7 @@ try {
 
 // Mount IND Sections API (live CTD section map with document status)
 try {
-  const indSectionsModule = await import('./routes/ind-sections.ts');
+  const indSectionsModule = await import('./routes/ind-sections');
   const indSectionsRoutes = indSectionsModule.default;
   app.use('/api/ind-sections', indSectionsRoutes);
   console.log('✅ IND Sections API routes loaded');
@@ -1404,7 +1404,7 @@ try {
 
 // Mount Project Sections API (section tracking, assignments, comments, audit trail)
 try {
-  const projectSectionsModule = await import('./routes/project-sections.ts');
+  const projectSectionsModule = await import('./routes/project-sections');
   const projectSectionsRoutes = projectSectionsModule.default;
   app.use('/api/project-sections', projectSectionsRoutes);
   console.log('✅ Project Sections API routes loaded');
@@ -1598,7 +1598,7 @@ try {
 
 // Mount Collaboration Center routes for 510(k) activity tracking
 try {
-  const collaborationModule = await import('./routes/collaboration.ts');
+  const collaborationModule = await import('./routes/collaboration');
   const collaborationRoutes = collaborationModule.default;
   app.use('/api/collaboration', collaborationRoutes);
   console.log(
@@ -1610,7 +1610,7 @@ try {
 
 // Mount CERV2 Sections routes for 510(k) section management
 try {
-  const cerv2SectionsModule = await import('./routes/cerv2-sections.ts');
+  const cerv2SectionsModule = await import('./routes/cerv2-sections');
   const cerv2SectionsRoutes = cerv2SectionsModule.default;
   app.use('/api/cerv2-sections', cerv2SectionsRoutes);
   console.log('✅ CERV2 Sections API routes mounted successfully (510(k) section tree navigation)');
@@ -1620,7 +1620,7 @@ try {
 
 // Mount CERV2 Versions routes for version tracking and multi-section editing
 try {
-  const cerv2VersionsModule = await import('./routes/cerv2-versions.ts');
+  const cerv2VersionsModule = await import('./routes/cerv2-versions');
   const cerv2VersionsRoutes = cerv2VersionsModule.default;
   app.use('/api/cerv2-versions', cerv2VersionsRoutes);
   console.log('✅ CERV2 Versions API routes mounted successfully (version history & sessions)');
@@ -1630,7 +1630,7 @@ try {
 
 // Mount Version Diff routes (document version comparison engine)
 try {
-  const versionDiffModule = await import('./routes/versionDiff.ts');
+  const versionDiffModule = await import('./routes/versionDiff');
   const versionDiffRoutes = versionDiffModule.default;
   app.use('/api/documents', versionDiffRoutes);
   console.log('✅ Version Diff API routes mounted successfully (document version comparison)');
@@ -1640,7 +1640,7 @@ try {
 
 // Mount Biostatistics Platform routes (7 capabilities: continuum, optimizer, estimand, SAP, external controls, adaptive, knowledge graph)
 try {
-  const biostatModule = await import('./routes/biostatPlatform.ts');
+  const biostatModule = await import('./routes/biostatPlatform');
   const biostatRoutes = biostatModule.default;
   app.use('/api/biostat', biostatRoutes);
   console.log('✅ Biostatistics Platform routes mounted successfully (7 capabilities)');
@@ -1660,7 +1660,7 @@ try {
 
 // Mount Workflow API routes
 try {
-  const workflowModule = await import('./routes/workflow.ts');
+  const workflowModule = await import('./routes/workflow');
   const workflowRoutes = workflowModule.default;
   app.use('/api/workflow', workflowRoutes);
   console.log('✅ Workflow API routes mounted successfully');
@@ -1670,7 +1670,7 @@ try {
 
 // Mount AI Drafting API routes
 try {
-  const draftingModule = await import('./routes/drafting.ts');
+  const draftingModule = await import('./routes/drafting');
   const draftingRoutes = draftingModule.default;
   app.use('/api/v1/drafting', draftingRoutes);
   console.log('✅ AI Drafting API routes mounted successfully');
@@ -1690,7 +1690,7 @@ try {
     console.log('✅ Cortex Query API initialized with database pool');
   }
 
-  const cortexUnifiedModule = await import('./routes/cortex-unified.ts');
+  const cortexUnifiedModule = await import('./routes/cortex-unified');
   const cortexUnifiedRoutes = cortexUnifiedModule.default;
   app.use('/api/cortex', cortexUnifiedRoutes);
   console.log('✅ Cortex Unified API gateway mounted at /api/cortex');
@@ -1717,7 +1717,7 @@ console.log('🧠 Cortex Prime AI Brain fully initialized with unified gateway')
 
 // Mount Unified Document Management System routes
 try {
-  const documentManagementRouter = await import('./routes/document-management.ts');
+  const documentManagementRouter = await import('./routes/document-management');
   const folderManagementRouter = await import('./routes/folder-management.js');
   const templateManagementRouter = await import('./routes/template-management.js');
 
@@ -3103,13 +3103,13 @@ console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
 // Mount Lumen Cortex Chat routes
-import chatRoutes from './routes/chat.ts';
+import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
 console.log('✅ Lumen Cortex Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
-  const claimsModule = await import('./routes/ai-claims-routes.ts');
+  const claimsModule = await import('./routes/ai-claims-routes');
   const createAIClaimsRoutes = claimsModule.default;
   app.use('/api/ai', createAIClaimsRoutes(pool));
   console.log('✅ AI Claims → Binder routes mounted (/api/ai/claims)');
@@ -3441,7 +3441,7 @@ app.get('/api/510k-workflow', async (req, res) => {
 // GET 510k workflow data
 app.get('/api/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
+  const organizationId = (req.query.organizationId || req.headers['x-organization-id']) as string;
 
   if (!organizationId) {
     return res.status(400).json({ success: false, error: 'Organization ID required' });
@@ -3459,7 +3459,7 @@ app.get('/api/510k-workflow/:projectId', async (req, res) => {
     };
 
     // For now, return empty sections array
-    const sections = [];
+    const sections: any[] = [];
 
     res.status(200).json({
       success: true,
@@ -3491,7 +3491,7 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
     };
 
     // Get all sections - for now use empty array
-    const sections = [];
+    const sections: any[] = [];
 
     // Map workflow data to FDA eSTAR template format
     const templateData = TemplateMapper.mapWorkflowToTemplate(workflowData.workflowData || {});
@@ -3506,7 +3506,7 @@ app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => 
     }));
 
     // Save the mapped template data
-    await storage.createCerv2510kSection({
+    await storage.createCerSection({
       organizationId: parseInt(organizationId),
       submissionId: parseInt(projectId),
       sectionCode: 'TEMPLATE_MAPPING',
@@ -5910,7 +5910,7 @@ async function startServer() {
   }
 
   try {
-    const multiAgencyValidationRoutes = await import('./routes/multiAgencyValidation.ts');
+    const multiAgencyValidationRoutes = await import('./routes/multiAgencyValidation');
     app.use('/api/multi-agency-validation', multiAgencyValidationRoutes.default);
     console.log('✅ Multi-agency validation routes mounted successfully');
   } catch (error) {
@@ -5935,7 +5935,7 @@ async function startServer() {
 
   // Mount IND routes
   try {
-    const indRoutes = await import('./routes/ind.ts');
+    const indRoutes = await import('./routes/ind');
     app.use('/api/ind', indRoutes.default);
     console.log('✅ IND routes mounted successfully');
   } catch (error) {
@@ -5969,7 +5969,7 @@ async function startServer() {
 
   // Mount Validation routes
   try {
-    const validationRoutes = await import('./routes/validation.ts');
+    const validationRoutes = await import('./routes/validation');
     app.use('/api', validationRoutes.default);
     console.log('✅ Validation routes mounted successfully');
   } catch (error) {
@@ -5978,7 +5978,7 @@ async function startServer() {
 
   // Mount docs routes
   try {
-    const docsRoutes = await import('./routes/docs.ts');
+    const docsRoutes = await import('./routes/docs');
     app.use('/api/docs', docsRoutes.default);
     console.log('✅ Docs routes mounted successfully');
   } catch (error) {
@@ -6062,7 +6062,7 @@ async function startServer() {
   // ──────────────────────────────────────────────────────────────────────────
 
   try {
-    const qualityMgmtApi = await import('./routes/quality-management-api.ts');
+    const qualityMgmtApi = await import('./routes/quality-management-api');
     app.use('/api/quality', qualityMgmtApi.default);
     console.log('✅ Quality Management API routes mounted at /api/quality');
   } catch (error) {
@@ -6070,7 +6070,7 @@ async function startServer() {
   }
 
   try {
-    const analyticsRoutes = await import('./routes/analytics-routes.ts');
+    const analyticsRoutes = await import('./routes/analytics-routes');
     app.use('/api/analytics', analyticsRoutes.default);
     console.log('✅ Analytics routes mounted at /api/analytics');
   } catch (error) {
@@ -6078,7 +6078,7 @@ async function startServer() {
   }
 
   try {
-    const vaultAutoRoutes = await import('./routes/vault-auto.ts');
+    const vaultAutoRoutes = await import('./routes/vault-auto');
     app.use('/api/vault', vaultAutoRoutes.default);
     console.log('✅ Vault routes mounted at /api/vault');
   } catch (error) {
@@ -6086,7 +6086,7 @@ async function startServer() {
   }
 
   try {
-    const documentsUnified = await import('./routes/documents-unified.ts');
+    const documentsUnified = await import('./routes/documents-unified');
     app.use('/api/documents', documentsUnified.default);
     console.log('✅ Documents-unified routes mounted at /api/documents');
   } catch (error) {
@@ -6094,7 +6094,7 @@ async function startServer() {
   }
 
   try {
-    const sourceLinksRoutes = await import('./routes/sourceLinks.ts');
+    const sourceLinksRoutes = await import('./routes/sourceLinks');
     app.use('/api/documents', sourceLinksRoutes.default);
     console.log('✅ Source Links routes mounted at /api/documents/:id/sources');
   } catch (error) {
@@ -6102,7 +6102,7 @@ async function startServer() {
   }
 
   try {
-    const { protocolRoutes } = await import('./routes/protocol_routes.ts');
+    const { protocolRoutes } = await import('./routes/protocol_routes');
     app.use('/api/protocol', protocolRoutes);
     console.log('✅ Protocol routes mounted at /api/protocol');
   } catch (error) {
@@ -6110,7 +6110,7 @@ async function startServer() {
   }
 
   try {
-    const qcRoutes = await import('./routes/qc.routes.ts');
+    const qcRoutes = await import('./routes/qc.routes');
     app.use('/api/qc', qcRoutes.default);
     console.log('✅ QC routes mounted at /api/qc');
   } catch (error) {
@@ -6118,7 +6118,7 @@ async function startServer() {
   }
 
   try {
-    const moduleIntegrationRoutes = await import('./routes/moduleIntegrationRoutes.ts');
+    const moduleIntegrationRoutes = await import('./routes/moduleIntegrationRoutes');
     app.use('/api/module-integration', moduleIntegrationRoutes.default);
     console.log('✅ Module Integration routes mounted at /api/module-integration');
   } catch (error) {
@@ -6126,7 +6126,7 @@ async function startServer() {
   }
 
   try {
-    const regulatoryRoutesModule = await import('./routes/regulatoryRoutes.ts');
+    const regulatoryRoutesModule = await import('./routes/regulatoryRoutes');
     app.use('/api/regulatory', regulatoryRoutesModule.default);
     console.log('✅ Regulatory routes mounted at /api/regulatory');
   } catch (error) {
@@ -6134,7 +6134,7 @@ async function startServer() {
   }
 
   try {
-    const innovationRoutes = await import('./routes/innovation-routes.ts');
+    const innovationRoutes = await import('./routes/innovation-routes');
     app.use('/api/innovation', innovationRoutes.default);
     console.log('✅ Innovation routes mounted at /api/innovation');
   } catch (error) {
@@ -6142,7 +6142,7 @@ async function startServer() {
   }
 
   try {
-    const notificationRoutes = await import('./routes/notification_routes.ts');
+    const notificationRoutes = await import('./routes/notification_routes');
     // notification_routes exports a function(app) that registers routes directly
     if (
       typeof notificationRoutes.default === 'function' &&
@@ -6158,7 +6158,7 @@ async function startServer() {
   }
 
   try {
-    const indUnifiedRoutes = await import('./routes/ind-unified.ts');
+    const indUnifiedRoutes = await import('./routes/ind-unified');
     app.use('/api/ind-wizard', indUnifiedRoutes.default);
     console.log('✅ IND Unified routes mounted at /api/ind-wizard');
   } catch (error) {
@@ -6166,7 +6166,7 @@ async function startServer() {
   }
 
   try {
-    const indTemplatesRoutes = await import('./routes/ind-templates.ts');
+    const indTemplatesRoutes = await import('./routes/ind-templates');
     app.use('/api/ind-templates', indTemplatesRoutes.default);
     console.log('✅ IND Templates routes mounted at /api/ind-templates');
   } catch (error) {
@@ -6174,7 +6174,7 @@ async function startServer() {
   }
 
   try {
-    const indSubmissionsRoutes = await import('./routes/ind-submissions.routes.ts');
+    const indSubmissionsRoutes = await import('./routes/ind-submissions.routes');
     app.use('/api/ind-submissions', indSubmissionsRoutes.default);
     console.log('✅ IND Submissions routes mounted at /api/ind-submissions');
   } catch (error) {
@@ -6182,7 +6182,7 @@ async function startServer() {
   }
 
   try {
-    const indDatabaseRoutes = await import('./routes/ind-database.routes.ts');
+    const indDatabaseRoutes = await import('./routes/ind-database.routes');
     app.use('/api/ind-database', indDatabaseRoutes.default);
     console.log('✅ IND Database routes mounted at /api/ind-database');
   } catch (error) {
@@ -6190,7 +6190,7 @@ async function startServer() {
   }
 
   try {
-    const plannerRoutes = await import('./routes/planner-routes.ts');
+    const plannerRoutes = await import('./routes/planner-routes');
     app.use('/api/planner', plannerRoutes.default);
     console.log('✅ Planner routes mounted at /api/planner');
   } catch (error) {
@@ -6198,7 +6198,7 @@ async function startServer() {
   }
 
   try {
-    const tenantSectionGating = await import('./routes/tenant-section-gating.ts');
+    const tenantSectionGating = await import('./routes/tenant-section-gating');
     app.use('/api/tenant-section-gating', tenantSectionGating.default);
     console.log('✅ Tenant Section Gating routes mounted at /api/tenant-section-gating');
   } catch (error) {
@@ -6206,7 +6206,7 @@ async function startServer() {
   }
 
   try {
-    const tenantConfig = await import('./routes/tenant-config.ts');
+    const tenantConfig = await import('./routes/tenant-config');
     app.use('/api/tenant-config', tenantConfig.default);
     console.log('✅ Tenant Config routes mounted at /api/tenant-config');
   } catch (error) {
@@ -6214,7 +6214,7 @@ async function startServer() {
   }
 
   try {
-    const tenantStats = await import('./routes/tenant-stats.ts');
+    const tenantStats = await import('./routes/tenant-stats');
     app.use('/api/tenant-stats', tenantStats.default);
     console.log('✅ Tenant Stats routes mounted at /api/tenant-stats');
   } catch (error) {
@@ -6222,7 +6222,7 @@ async function startServer() {
   }
 
   try {
-    const tenantTraceability = await import('./routes/tenant-traceability.ts');
+    const tenantTraceability = await import('./routes/tenant-traceability');
     app.use('/api/tenant-traceability', tenantTraceability.default);
     console.log('✅ Tenant Traceability routes mounted at /api/tenant-traceability');
   } catch (error) {
@@ -6230,7 +6230,7 @@ async function startServer() {
   }
 
   try {
-    const tenantQualityValidation = await import('./routes/tenant-quality-validation.ts');
+    const tenantQualityValidation = await import('./routes/tenant-quality-validation');
     app.use('/api/tenant-quality-validation', tenantQualityValidation.default);
     console.log('✅ Tenant Quality Validation routes mounted at /api/tenant-quality-validation');
   } catch (error) {
@@ -6238,7 +6238,7 @@ async function startServer() {
   }
 
   try {
-    const tenantCtqFactors = await import('./routes/tenant-ctq-factors.ts');
+    const tenantCtqFactors = await import('./routes/tenant-ctq-factors');
     app.use('/api/tenant-ctq-factors', tenantCtqFactors.default);
     console.log('✅ Tenant CTQ Factors routes mounted at /api/tenant-ctq-factors');
   } catch (error) {
@@ -6246,7 +6246,7 @@ async function startServer() {
   }
 
   try {
-    const indAutomationRoutes = await import('./routes/ind_automation_routes.ts');
+    const indAutomationRoutes = await import('./routes/ind_automation_routes');
     app.use('/api/ind-automation', indAutomationRoutes.default);
     console.log('✅ IND Automation routes mounted at /api/ind-automation');
   } catch (error) {
@@ -6266,7 +6266,7 @@ async function startServer() {
 
   // Mount Integration Test routes (development/QA only — full-flow smoke test)
   try {
-    const integrationTestModule = await import('./routes/integration-test.ts');
+    const integrationTestModule = await import('./routes/integration-test');
     app.use('/api/integration-test', integrationTestModule.default);
     console.log('✅ Integration Test routes mounted (health, full-flow)');
   } catch (error) {
@@ -6277,7 +6277,7 @@ async function startServer() {
   // ADVANCED PLATFORM CAPABILITIES (GraphRAG, Digital Twin, RWE, etc.)
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const realtimeCollabRoutes = await import('./routes/realtime-collab.ts');
+    const realtimeCollabRoutes = await import('./routes/realtime-collab');
     app.use('/api/realtime-collab', realtimeCollabRoutes.default);
     console.log('✅ Real-time Collaboration routes mounted at /api/realtime-collab');
   } catch (error) {
@@ -6285,7 +6285,7 @@ async function startServer() {
   }
 
   try {
-    const graphragRoutes = await import('./routes/graphrag.ts');
+    const graphragRoutes = await import('./routes/graphrag');
     app.use('/api/graphrag', graphragRoutes.default);
     console.log('✅ GraphRAG routes mounted at /api/graphrag');
   } catch (error) {
@@ -6293,7 +6293,7 @@ async function startServer() {
   }
 
   try {
-    const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft.ts');
+    const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
     console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
@@ -6301,7 +6301,7 @@ async function startServer() {
   }
 
   try {
-    const part11Routes = await import('./routes/part11-compliance.ts');
+    const part11Routes = await import('./routes/part11-compliance');
     // Wire up DB pool so audit entries persist to audit_events table
     if (part11Routes.setAuditPool) part11Routes.setAuditPool(pool);
     app.use('/api/part11', part11Routes.default);
@@ -6319,7 +6319,7 @@ async function startServer() {
   }
 
   try {
-    const docUnderstandingRoutes = await import('./routes/document-understanding.ts');
+    const docUnderstandingRoutes = await import('./routes/document-understanding');
     app.use('/api/document-understanding', docUnderstandingRoutes.default);
     console.log('✅ Document Understanding routes mounted at /api/document-understanding');
   } catch (error) {
@@ -6327,7 +6327,7 @@ async function startServer() {
   }
 
   try {
-    const agentSwarmRoutes = await import('./routes/agent-swarm.ts');
+    const agentSwarmRoutes = await import('./routes/agent-swarm');
     app.use('/api/agent-swarm', agentSwarmRoutes.default);
     console.log('✅ Agent Swarm routes mounted at /api/agent-swarm');
   } catch (error) {
@@ -6335,7 +6335,7 @@ async function startServer() {
   }
 
   try {
-    const rweRoutes = await import('./routes/real-world-evidence.ts');
+    const rweRoutes = await import('./routes/real-world-evidence');
     app.use('/api/real-world-evidence', rweRoutes.default);
     console.log('✅ Real-World Evidence routes mounted at /api/real-world-evidence');
   } catch (error) {
@@ -6343,7 +6343,7 @@ async function startServer() {
   }
 
   try {
-    const digitalTwinRoutes = await import('./routes/regulatory-digital-twin.ts');
+    const digitalTwinRoutes = await import('./routes/regulatory-digital-twin');
     app.use('/api/regulatory-digital-twin', digitalTwinRoutes.default);
     console.log('✅ Regulatory Digital Twin routes mounted at /api/regulatory-digital-twin');
   } catch (error) {
@@ -6354,7 +6354,7 @@ async function startServer() {
   // SUBMISSION TWIN — Living Submission Intelligence Layer
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const submissionTwinRoutes = await import('./routes/submission-twin.ts');
+    const submissionTwinRoutes = await import('./routes/submission-twin');
     app.use('/api/submission-twin', submissionTwinRoutes.default);
     console.log('✅ Submission Twin routes mounted at /api/submission-twin');
   } catch (error) {
@@ -6365,11 +6365,11 @@ async function startServer() {
   // MISSION CONTROL — Program OS (PM ecosystem)
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const missionControlRoutes = await import('./routes/mission-control.ts');
+    const missionControlRoutes = await import('./routes/mission-control');
     app.use('/api/mission-control', missionControlRoutes.default);
     console.log('✅ Mission Control routes mounted at /api/mission-control');
 
-    const snowglobeRoutes = await import('./routes/snowglobe.ts');
+    const snowglobeRoutes = await import('./routes/snowglobe');
     app.use('/api/snowglobe', snowglobeRoutes.default);
     console.log('✅ Snow Globe routes mounted at /api/snowglobe');
   } catch (error) {
@@ -6381,7 +6381,7 @@ async function startServer() {
   // Must be registered BEFORE the catch-all 404 handler
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const c2cMissingRoutes = await import('./routes/c2c-missing-routes.ts');
+    const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
     app.use('/api', c2cMissingRoutes.default);
     console.log(
       '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
@@ -6394,7 +6394,7 @@ async function startServer() {
   // WORKSPACE SUMMARY — GET /api/workspace/summary
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const workspaceSummaryRoutes = await import('./routes/workspace-summary.ts');
+    const workspaceSummaryRoutes = await import('./routes/workspace-summary');
     app.use('/api', workspaceSummaryRoutes.default);
     console.log('✅ Workspace summary route registered (GET /api/workspace/summary)');
   } catch (error) {
@@ -6405,7 +6405,7 @@ async function startServer() {
   // CHAT ACTIONS — POST /api/chat/actions/run
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const chatActionsRoutes = await import('./routes/chat-actions.ts');
+    const chatActionsRoutes = await import('./routes/chat-actions');
     app.use('/api', chatActionsRoutes.default);
     console.log('✅ Chat actions route registered (POST /api/chat/actions/run)');
   } catch (error) {
@@ -6599,7 +6599,7 @@ async function startServer() {
   }
 
   // Start the HTTP server
-  httpServer.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
     console.log(`🔐 Login: http://localhost:${PORT}/auth`);
