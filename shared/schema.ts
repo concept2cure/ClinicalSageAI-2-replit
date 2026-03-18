@@ -5360,6 +5360,44 @@ export const concept2cureSubmissionSnapshots = pgTable(
   })
 );
 
+/**
+ * Conversation Working Memory Table
+ *
+ * Stores structured summaries of conversation context.
+ * Used to compress long conversations into compact working memory blocks
+ * that are injected into prompts, preventing token explosion.
+ */
+export const conversationWorkingMemory = pgTable(
+  'conversation_working_memory',
+  {
+    id: serial('id').primaryKey(),
+    conversationId: integer('conversation_id')
+      .references(() => concept2cureConversations.id, { onDelete: 'cascade' }),
+    threadId: text('thread_id'), // For legacy chat_threads integration
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    summary: text('summary').notNull(), // Human-readable markdown summary
+    structuredData: json('structured_data').$type<{
+      objective: string;
+      lockedFacts: string[];
+      decisions: string[];
+      openQuestions: string[];
+      nextActions: string[];
+      createdArtifacts: string[];
+      exclusions: string[];
+    }>(), // Machine-parseable structured memory
+    messageCountAtGeneration: integer('message_count_at_generation').notNull(),
+    generatedAt: timestamp('generated_at').defaultNow().notNull(),
+  },
+  table => ({
+    convIdx: index('cwm_conv_idx').on(table.conversationId),
+    threadIdx: index('cwm_thread_idx').on(table.threadId),
+    orgIdx: index('cwm_org_idx').on(table.organizationId),
+    generatedAtIdx: index('cwm_generated_at_idx').on(table.generatedAt),
+  })
+);
+
 // Insert Schemas
 export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
   concept2cureConversations,

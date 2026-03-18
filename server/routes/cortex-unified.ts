@@ -24,6 +24,7 @@ import type { GatewayResponse } from '../services/ai-gateway/types.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  getWindowedMessages,
   saveChatMessage,
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
@@ -210,17 +211,61 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // Get or create thread (prefix 'cortex' to distinguish from legacy chat)
     const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
-    const previousMessages = await getThreadMessages(threadId);
+
+    // Token budget: model max (128k for gpt-4o-mini) minus system prompt, new message, and response buffer
+    const MODEL_MAX_TOKENS = 128_000;
+    const RESPONSE_BUFFER = 4_000;
+    const systemTokenEstimate = Math.ceil(systemPrompt.length / 4);
+    const messageTokenEstimate = Math.ceil(message.length / 4);
+    const historyBudget = MODEL_MAX_TOKENS - systemTokenEstimate - messageTokenEstimate - RESPONSE_BUFFER;
+
+    // Load working memory summary if available
+    let workingMemorySummary: string | null = null;
+    try {
+      const wmResult = await pool.query(
+        `SELECT summary FROM conversation_working_memory
+         WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
+        [threadId]
+      );
+      if (wmResult.rows.length > 0) {
+        workingMemorySummary = wmResult.rows[0].summary;
+      }
+    } catch {
+      // Table may not exist yet — silently skip
+    }
+
+    // Use windowed messages to stay within token budget
+    const { messages: previousMessages, wasTruncated } = await getWindowedMessages(
+      threadId,
+      historyBudget,
+      workingMemorySummary
+    );
+
+    if (wasTruncated) {
+      logger.info(`Thread ${threadId}: conversation truncated to fit token budget`);
+    }
 
     // Shared message array for both paths
-    const aiMessages = [
-      { role: 'system' as const, content: systemPrompt },
+    const aiMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      { role: 'system', content: systemPrompt },
+    ];
+
+    // Inject working memory summary between system prompt and history
+    if (workingMemorySummary) {
+      aiMessages.push({
+        role: 'system',
+        content: `[Conversation Working Memory]\n${workingMemorySummary}`,
+      });
+    }
+
+    // Add windowed history + new message
+    aiMessages.push(
       ...previousMessages.map((m: any) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-      { role: 'user' as const, content: message },
-    ];
+      { role: 'user', content: message },
+    );
 
     // ── STREAMING PATH (SSE) ────────────────────────────────────────────────
     if (stream === true) {

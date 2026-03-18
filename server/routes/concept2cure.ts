@@ -64,8 +64,17 @@ import {
   projectActivities,
   c2cProjectWorkItems,
   concept2cureNotifications,
+  conversationWorkingMemory,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
+import { computeConversationHealth } from '../services/conversation-health.js';
+import {
+  buildWorkingMemoryPrompt,
+  storeWorkingMemory,
+  getLatestWorkingMemory,
+  formatWorkingMemoryForPrompt,
+  needsWorkingMemoryRefresh,
+} from '../services/working-memory.js';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
@@ -10206,6 +10215,404 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
   } catch (error: any) {
     logConcept2cureError('escalation process', error);
     return sendError(res, 500, 'Failed to process escalations');
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// CONTEXT INTEGRITY LAYER ENDPOINTS
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/concept2cure/conversations/:conversationId/health
+ * Compute and return conversation health report.
+ */
+router.get('/conversations/:conversationId/health', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const conversationId = parseInt(req.params.conversationId, 10);
+    const organizationId =
+      (req as any).organizationId ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+
+    if (!conversationId || isNaN(conversationId)) {
+      return sendError(res, 400, 'Invalid conversation ID');
+    }
+
+    const report = await computeConversationHealth(conversationId, organizationId);
+    return sendSuccess(res, report);
+  } catch (error: any) {
+    logConcept2cureError('conversation health', error);
+    return sendError(res, 500, 'Failed to compute conversation health');
+  }
+});
+
+/**
+ * GET /api/concept2cure/conversations/:conversationId/working-memory
+ * Get the latest working memory summary for a conversation.
+ */
+router.get('/conversations/:conversationId/working-memory', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const conversationId = parseInt(req.params.conversationId, 10);
+    const organizationId =
+      (req as any).organizationId ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+
+    if (!conversationId || isNaN(conversationId)) {
+      return sendError(res, 400, 'Invalid conversation ID');
+    }
+
+    const memory = await getLatestWorkingMemory(conversationId, organizationId);
+    if (!memory) {
+      return sendSuccess(res, null, { message: 'No working memory generated yet' });
+    }
+
+    return sendSuccess(res, {
+      ...memory,
+      formatted: formatWorkingMemoryForPrompt(memory),
+    });
+  } catch (error: any) {
+    logConcept2cureError('working memory retrieval', error);
+    return sendError(res, 500, 'Failed to retrieve working memory');
+  }
+});
+
+/**
+ * POST /api/concept2cure/conversations/:conversationId/summarize
+ * Generate or refresh the working memory summary for a conversation.
+ * Uses AI to analyze conversation messages and produce a structured summary.
+ */
+router.post('/conversations/:conversationId/summarize', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const conversationId = parseInt(req.params.conversationId, 10);
+    const organizationId =
+      (req as any).organizationId ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+
+    if (!conversationId || isNaN(conversationId)) {
+      return sendError(res, 400, 'Invalid conversation ID');
+    }
+
+    // Load conversation messages
+    const messagesResult = await pool.query(
+      `SELECT role, content FROM concept2cure_messages
+       WHERE conversation_id = $1 AND organization_id = $2
+       ORDER BY created_at ASC`,
+      [conversationId, organizationId]
+    );
+    const messages = messagesResult.rows;
+
+    if (messages.length === 0) {
+      return sendError(res, 404, 'No messages found for this conversation');
+    }
+
+    // Get previous summary for chaining
+    const existingMemory = await getLatestWorkingMemory(conversationId, organizationId);
+    const previousSummary = existingMemory
+      ? formatWorkingMemoryForPrompt(existingMemory)
+      : undefined;
+
+    // Build the summarization prompt
+    const summaryPrompt = buildWorkingMemoryPrompt(messages, previousSummary);
+
+    // Use OpenAI to generate the structured summary
+    let structured: any;
+    try {
+      const { getOpenAIClient } = await import('../services/openai-client');
+      const openai = getOpenAIClient();
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a regulatory affairs analyst. Produce concise, structured summaries.' },
+          { role: 'user', content: summaryPrompt },
+        ],
+        max_tokens: 2000,
+        temperature: 0.3,
+      });
+
+      const responseText = completion.choices[0]?.message?.content || '{}';
+      // Extract JSON from response (handle markdown code blocks)
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      structured = jsonMatch ? JSON.parse(jsonMatch[0]) : {
+        objective: 'Unable to parse summary',
+        lockedFacts: [],
+        decisions: [],
+        openQuestions: [],
+        nextActions: [],
+        createdArtifacts: [],
+        exclusions: [],
+      };
+    } catch (aiError: any) {
+      logger.error(`AI summarization failed: ${aiError.message}`);
+      // Fallback: generate a basic summary without AI
+      structured = {
+        objective: `Conversation with ${messages.length} messages`,
+        lockedFacts: [],
+        decisions: [],
+        openQuestions: messages
+          .filter((m: any) => m.role === 'user' && m.content?.trim().endsWith('?'))
+          .slice(-5)
+          .map((m: any) => m.content.trim().slice(0, 200)),
+        nextActions: [],
+        createdArtifacts: [],
+        exclusions: [],
+      };
+    }
+
+    // Format as readable summary
+    const formattedSummary = [
+      `**Objective**: ${structured.objective}`,
+      structured.lockedFacts?.length > 0
+        ? `**Key Facts**: ${structured.lockedFacts.join('; ')}`
+        : '',
+      structured.decisions?.length > 0
+        ? `**Decisions**: ${structured.decisions.join('; ')}`
+        : '',
+      structured.openQuestions?.length > 0
+        ? `**Open Questions**: ${structured.openQuestions.join('; ')}`
+        : '',
+    ].filter(Boolean).join('\n');
+
+    // Get thread ID for cross-system linking
+    const convResult = await pool.query(
+      'SELECT thread_id FROM concept2cure_conversations WHERE id = $1',
+      [conversationId]
+    );
+    const threadId = convResult.rows[0]?.thread_id || null;
+
+    // Store
+    await storeWorkingMemory({
+      conversationId,
+      threadId,
+      organizationId,
+      summary: formattedSummary,
+      structured,
+      messageCountAtGeneration: messages.length,
+    });
+
+    return sendSuccess(res, {
+      summary: formattedSummary,
+      structured,
+      messageCount: messages.length,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    logConcept2cureError('working memory generation', error);
+    return sendError(res, 500, 'Failed to generate working memory summary');
+  }
+});
+
+/**
+ * POST /api/concept2cure/conversations/:conversationId/promote
+ * Promote conversation content to a governed artifact.
+ */
+router.post('/conversations/:conversationId/promote', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const conversationId = parseInt(req.params.conversationId, 10);
+    const organizationId =
+      (req as any).organizationId ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+
+    const promoteSchema = z.object({
+      type: z.enum(['strategy_memo', 'evidence_brief', 'module_draft', 'decision_log', 'handoff_memo']),
+      title: z.string().min(1).max(500),
+      messageStart: z.number().optional(),
+      messageEnd: z.number().optional(),
+    });
+
+    const parsed = promoteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(res, 400, 'Invalid promotion request', parsed.error.format());
+    }
+    const { type, title, messageStart, messageEnd } = parsed.data;
+
+    if (!conversationId || isNaN(conversationId)) {
+      return sendError(res, 400, 'Invalid conversation ID');
+    }
+
+    // Load conversation and verify it belongs to this org
+    const convResult = await pool.query(
+      'SELECT id, project_id, conversation_id FROM concept2cure_conversations WHERE id = $1 AND organization_id = $2',
+      [conversationId, organizationId]
+    );
+    if (convResult.rows.length === 0) {
+      return sendError(res, 404, 'Conversation not found');
+    }
+    const conversation = convResult.rows[0];
+
+    // Load messages (optionally filtered by range)
+    let messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
+       WHERE conversation_id = $1 AND organization_id = $2
+       ORDER BY created_at ASC`;
+    const messagesResult = await pool.query(messagesQuery, [conversationId, organizationId]);
+    let messages = messagesResult.rows;
+
+    if (messageStart !== undefined || messageEnd !== undefined) {
+      const start = messageStart ?? 0;
+      const end = messageEnd ?? messages.length;
+      messages = messages.slice(start, end);
+    }
+
+    if (messages.length === 0) {
+      return sendError(res, 404, 'No messages in specified range');
+    }
+
+    // Generate document content using AI
+    let documentContent: string;
+    try {
+      const { getOpenAIClient } = await import('../services/openai-client');
+      const openai = getOpenAIClient();
+      const conversationText = messages
+        .map((m: any) => `[${m.role}]: ${m.content}`)
+        .join('\n\n');
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(/_/g, ' ')} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`,
+          },
+          {
+            role: 'user',
+            content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
+          },
+        ],
+        max_tokens: 4000,
+        temperature: 0.3,
+      });
+      documentContent = completion.choices[0]?.message?.content || '';
+    } catch {
+      // Fallback: raw conversation export
+      documentContent = `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
+        messages.map((m: any) =>
+          `### ${m.role === 'user' ? 'User' : 'Assistant'} (${new Date(m.created_at).toLocaleString()})\n\n${m.content}`
+        ).join('\n\n---\n\n');
+    }
+
+    // Create artifact
+    const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
+
+    const artifactResult = await db.insert(concept2cureArtifacts).values({
+      artifactId,
+      projectId: conversation.project_id,
+      conversationId,
+      organizationId,
+      type: 'markdown',
+      category: 'document',
+      title: DOMPurify.sanitize(title),
+      content: documentContent,
+      contentHash,
+      version: 1,
+      status: 'draft',
+      createdById: userId,
+      metadata: { promotedFrom: type, sourceMessageCount: messages.length },
+    }).returning();
+
+    // Log provenance event
+    if (artifactResult.length > 0) {
+      await db.insert(concept2cureProvenanceEvents).values({
+        eventId: `prov_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        artifactId: artifactResult[0].id,
+        organizationId,
+        eventType: 'creation',
+        eventAction: 'promoted_from_conversation',
+        actorId: userId || undefined,
+        actorName: 'User',
+        sourceDescription: `Promoted from conversation ${conversationId} as ${type}`,
+        details: {
+          conversationId,
+          messageRange: { start: messageStart ?? 0, end: messageEnd ?? messages.length },
+          sourceType: type,
+        },
+        backendService: 'concept2cure',
+        backendRoute: `POST /api/concept2cure/conversations/${conversationId}/promote`,
+      });
+    }
+
+    return sendSuccess(res, {
+      artifact: artifactResult[0],
+      artifactId,
+      title,
+      type,
+      messageCount: messages.length,
+    });
+  } catch (error: any) {
+    logConcept2cureError('document promotion', error);
+    return sendError(res, 500, 'Failed to promote conversation to document');
+  }
+});
+
+/**
+ * POST /api/concept2cure/conversations/:conversationId/extract-decisions
+ * Extract decisions, risks, and open questions from a conversation.
+ */
+router.post('/conversations/:conversationId/extract-decisions', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const conversationId = parseInt(req.params.conversationId, 10);
+    const organizationId =
+      (req as any).organizationId ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+
+    if (!conversationId || isNaN(conversationId)) {
+      return sendError(res, 400, 'Invalid conversation ID');
+    }
+
+    // Load messages
+    const messagesResult = await pool.query(
+      `SELECT role, content FROM concept2cure_messages
+       WHERE conversation_id = $1 AND organization_id = $2
+       ORDER BY created_at ASC`,
+      [conversationId, organizationId]
+    );
+    const messages = messagesResult.rows;
+
+    if (messages.length === 0) {
+      return sendError(res, 404, 'No messages found');
+    }
+
+    try {
+      const { getOpenAIClient } = await import('../services/openai-client');
+      const openai = getOpenAIClient();
+      const conversationText = messages
+        .map((m: any) => `[${m.role}]: ${m.content}`)
+        .join('\n\n');
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Extract structured information from this regulatory conversation. Return ONLY valid JSON.',
+          },
+          {
+            role: 'user',
+            content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...] }`,
+          },
+        ],
+        max_tokens: 2000,
+        temperature: 0.2,
+      });
+
+      const responseText = completion.choices[0]?.message?.content || '{}';
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const extracted = jsonMatch ? JSON.parse(jsonMatch[0]) : {
+        decisions: [], risks: [], openQuestions: [], actionItems: [],
+      };
+
+      return sendSuccess(res, extracted);
+    } catch (aiError: any) {
+      logger.error(`Decision extraction failed: ${aiError.message}`);
+      return sendError(res, 500, 'AI extraction failed');
+    }
+  } catch (error: any) {
+    logConcept2cureError('decision extraction', error);
+    return sendError(res, 500, 'Failed to extract decisions');
   }
 });
 
