@@ -390,4 +390,83 @@ router.post('/compliance/check-rules', async (req, res) => {
   }
 });
 
+// =====================================================
+// Comparability Studies Routes (in-memory until DB table is created)
+// =====================================================
+interface ComparabilityStudy {
+  id: string;
+  title: string;
+  product: string;
+  type: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  methods: string[];
+  outcome: string | null;
+  owner: string;
+  organizationId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const comparabilityStudiesStore: ComparabilityStudy[] = [];
+let csNextId = 1;
+
+router.get('/comparability-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const studies = comparabilityStudiesStore.filter(s => s.organizationId === orgId);
+    res.json({ success: true, data: studies });
+  } catch (error) {
+    console.error('Error fetching comparability studies:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch comparability studies' });
+  }
+});
+
+router.post('/comparability-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const now = new Date().toISOString();
+    const study: ComparabilityStudy = {
+      id: `CS-${String(csNextId++).padStart(3, '0')}`,
+      title: req.body.title || '',
+      product: req.body.product || '',
+      type: req.body.type || '',
+      status: req.body.status || 'planned',
+      startDate: req.body.startDate || null,
+      endDate: req.body.endDate || null,
+      methods: req.body.methods || [],
+      outcome: req.body.outcome || null,
+      owner: req.body.owner || '',
+      organizationId: orgId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    comparabilityStudiesStore.push(study);
+    res.json({ success: true, data: study });
+  } catch (error) {
+    console.error('Error creating comparability study:', error);
+    res.status(500).json({ success: false, error: 'Failed to create comparability study' });
+  }
+});
+
+router.put('/comparability-studies/:id', async (req, res) => {
+  try {
+    const idx = comparabilityStudiesStore.findIndex(s => s.id === req.params.id);
+    if (idx === -1) {
+      return res.status(404).json({ success: false, error: 'Study not found' });
+    }
+    const updated = {
+      ...comparabilityStudiesStore[idx],
+      ...req.body,
+      updatedAt: new Date().toISOString(),
+    };
+    comparabilityStudiesStore[idx] = updated;
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Error updating comparability study:', error);
+    res.status(500).json({ success: false, error: 'Failed to update comparability study' });
+  }
+});
+
 export default router;
