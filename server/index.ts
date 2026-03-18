@@ -74,6 +74,7 @@ import cmcBlueprintRoutes from './api/cmc/blueprintRoutes.ts';
 import cmcDashboardRoutes from './routes/cmc-dashboard.ts';
 import cmcAggregatorRoutes from './api/cmc/index.js';
 import cmcDashboardPrisma from './routes/cmc-dashboard-prisma.ts';
+import cmcCoreRoutes from './api/cmc/routes.ts';
 
 // Import AI assistance routes
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance.ts';
@@ -819,6 +820,7 @@ try {
   // Both routers share /api/cmc but define non-overlapping sub-routes:
   //   cmcAggregatorRoutes: /blueprint-generator, /change-impact-simulator, /manufacturing-tuner, etc.
   //   cmcProjectRoutes:    /projects, /projects/:id, /projects/:projectId/substances, etc.
+  app.use('/api/cmc', cmcCoreRoutes);
   app.use('/api/cmc', cmcAggregatorRoutes);
   app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
