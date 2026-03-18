@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { securityLogger } from '../../utils/logger';
 import {
   Shield,
@@ -49,44 +50,7 @@ import type {
 } from '../../core/regulatoryCompliance';
 import { COMPLIANCE_CATEGORY_CONFIG, getComplianceCategory } from '../../core/regulatoryCompliance';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MOCK_COMPLIANCE_HEALTH: ComplianceHealth = {
-  overallScore: 87,
-  category: 'good',
-  metrics: {
-    signatureIntegrity: 100,
-    auditCompleteness: 95,
-    trainingCurrency: 72,
-    passwordCompliance: 85,
-    sodCompliance: 100,
-    dataIntegrity: 92,
-  },
-  findings: [
-    {
-      id: 'finding_001',
-      severity: 'major',
-      category: 'Training',
-      description: '3 users have expired training certifications',
-      remediation: 'Assign required training courses to affected users',
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    },
-    {
-      id: 'finding_002',
-      severity: 'minor',
-      category: 'Password',
-      description: '2 users approaching password expiration',
-      remediation: 'Notify users to update passwords before expiration',
-    },
-  ],
-  recommendations: [
-    'Enable hardware key MFA for all administrator accounts',
-    'Consider reducing session timeout for higher security',
-    'Schedule periodic access review for external partners',
-  ],
-};
+// Compliance health data fetched via useQuery in SecuritySettings
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT

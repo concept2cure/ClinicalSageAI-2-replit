@@ -496,10 +496,22 @@ const FindingCard: React.FC<{
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ComplianceDashboard: React.FC = () => {
-  const [areas] = useState<ComplianceArea[]>(MOCK_COMPLIANCE_AREAS);
+  const { data: areas = [], isLoading: areasLoading } = useQuery<ComplianceArea[]>({
+    queryKey: ['compliance', 'areas'],
+    queryFn: async () => {
+      const res = await fetch('/api/compliance/areas');
+      if (!res.ok) throw new Error('Failed to fetch compliance areas');
+      const data = await res.json();
+      return data.map((area: any) => ({
+        ...area,
+        lastAssessed: new Date(area.lastAssessed),
+        nextAssessment: new Date(area.nextAssessment),
+      }));
+    },
+  });
   const [findings] = useState<ComplianceFinding[]>(MOCK_FINDINGS);
   const [metrics] = useState<ComplianceMetric[]>(MOCK_METRICS);
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = areasLoading;
   const [activeTab, setActiveTab] = useState('overview');
 
   // Calculate stats
