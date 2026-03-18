@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 // Import new components
+import NanoBananaImageGenerator from './NanoBananaImageGenerator';
 import StudyDesignAssistant from './StudyDesignAssistant';
 import ConversationalAssistant from './ConversationalAssistant';
 import KnowledgeBasePanel from './KnowledgeBasePanel';
@@ -43,6 +44,7 @@ export default function IntelDashboard() {
   const [successMetrics, setSuccessMetrics] = useState(null);
   const [selectedTab, setSelectedTab] = useState('protocol');
   const [showStudyDesignAssistant, setShowStudyDesignAssistant] = useState(false);
+  const [showNanoBanana, setShowNanoBanana] = useState(false);
   const pdfRef = useRef(null);
 
   useEffect(() => {
@@ -367,9 +369,18 @@ export default function IntelDashboard() {
                   <Save className="mr-2 h-4 w-4" />
                   Export Report
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNanoBanana(prev => !prev)}
+                  className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 hover:from-amber-100 hover:to-orange-100"
+                >
+                  <Sparkles className="mr-2 h-4 w-4 text-amber-600" />
+                  AI Visual
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowStudyDesignAssistant(true)}
                   className="bg-gradient-to-r from-blue-100 to-violet-100 border-blue-300 hover:from-blue-200 hover:to-violet-200"
                 >
@@ -490,6 +501,17 @@ export default function IntelDashboard() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Nano Banana Visual AI Panel */}
+      {showNanoBanana && (
+        <div className="mb-6">
+          <NanoBananaImageGenerator
+            context={indication ? `Study intelligence for ${indication} — trial design, success metrics, and regulatory landscape` : 'Clinical trial intelligence dashboard overview'}
+            mode="infographic"
+            promptSuffix="Professional scientific infographic for regulatory intelligence. Data-rich, publication-ready."
+          />
+        </div>
       )}
 
       <div ref={pdfRef}>

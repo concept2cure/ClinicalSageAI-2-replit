@@ -15,12 +15,21 @@ import {
   chatWithNanoBanana,
   isConfigured,
 } from '../services/nanoBananaService';
+import {
+  nanoBananaRateLimit,
+  nanoBananaCache,
+  getUsageStats,
+} from '../middleware/nanoBananaGuard';
 
 const router = Router();
+
+// Apply rate limiting to all routes, caching to generation routes
+router.use(nanoBananaRateLimit);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 router.get('/health', (_req: Request, res: Response) => {
+  const stats = getUsageStats();
   res.json({
     service: 'nano-banana',
     configured: isConfigured(),
@@ -28,12 +37,13 @@ router.get('/health', (_req: Request, res: Response) => {
       fast: 'gemini-2.0-flash-preview-image-generation',
       pro: 'gemini-2.0-flash-exp',
     },
+    usage: stats,
   });
 });
 
 // ─── Generate Image ───────────────────────────────────────────────────────────
 
-router.post('/generate', async (req: Request, res: Response) => {
+router.post('/generate', nanoBananaCache, async (req: Request, res: Response) => {
   try {
     const { prompt, quality, count, style } = req.body;
 
@@ -133,7 +143,7 @@ router.post('/presentation', async (req: Request, res: Response) => {
 
 // ─── Conversational Chat Mode ─────────────────────────────────────────────────
 
-router.post('/chat', async (req: Request, res: Response) => {
+router.post('/chat', nanoBananaCache, async (req: Request, res: Response) => {
   try {
     const { message, conversationHistory } = req.body;
 

@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 import {
   FileText, Shield, Lock, CheckCircle2, AlertTriangle,
   ChevronRight, Globe2, Atom, Hash, Fingerprint,
@@ -182,6 +183,7 @@ export default function IntelligentReportGenerator() {
 
   // Export state
   const [exporting, setExporting] = useState(false);
+  const [showVisualGen, setShowVisualGen] = useState(false);
 
   // Supersede/revoke state
   const [superseding, setSuperseding] = useState(false);
@@ -859,6 +861,14 @@ export default function IntelligentReportGenerator() {
                     <FileSignature className="w-4 h-4 text-purple-500" />
                     Integrity Manifest
                   </button>
+                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <button
+                    onClick={() => setShowVisualGen(prev => !prev)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-zinc-700 hover:bg-amber-50"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    AI Visual / Infographic
+                  </button>
                 </div>
               </div>
 
@@ -937,6 +947,17 @@ export default function IntelligentReportGenerator() {
                     Cancel
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Nano Banana Visual AI */}
+            {showVisualGen && (
+              <div className="mt-4">
+                <NanoBananaImageGenerator
+                  context={`${selectedDomain?.label || 'Regulatory'} report: ${reportTitle || 'compliance report'} — compliance score ${generatedReport.complianceScore}%, ${selectedBodies.map(b => b.code).join(', ')} targeting`}
+                  mode="infographic"
+                  promptSuffix="Regulatory compliance infographic. Publication-ready, professional, data-rich."
+                />
               </div>
             )}
 

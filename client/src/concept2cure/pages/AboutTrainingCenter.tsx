@@ -371,6 +371,24 @@ const TRAINING_MODULES: TrainingModule[] = [
     lessons: ['Electronic records requirements', 'Audit trail interpretation', 'E-signature workflows', 'Data integrity controls', 'Inspection readiness'],
     certification: 'Compliance Champion',
   },
+  {
+    id: 'nano-banana-visual-ai',
+    title: 'Nano Banana Visual AI',
+    description: 'Generate publication-ready infographics, regulatory diagrams, and slide decks using Google Gemini image generation — directly from any module.',
+    duration: '15 min',
+    level: 'beginner',
+    category: 'AI & Intelligence',
+    icon: Sparkles,
+    lessons: [
+      'Switching to Nano Banana mode in AnA chat',
+      'Generating infographics with style presets',
+      'Creating slide decks from a single prompt',
+      'Editing images with natural language',
+      'Using the visual generator in Reports & Builder',
+      'Understanding rate limits and cost controls',
+    ],
+    certification: 'Visual AI Creator',
+  },
 ];
 
 const CERTIFICATIONS: CertificationBadge[] = [

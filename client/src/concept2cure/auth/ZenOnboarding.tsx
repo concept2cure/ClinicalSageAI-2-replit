@@ -210,6 +210,12 @@ const TOUR_FEATURES = [
     icon: '👥',
   },
   {
+    title: 'Nano Banana Visual AI',
+    description:
+      'Generate infographics, regulatory diagrams, and slide decks on demand — powered by Google Gemini.',
+    icon: '🍌',
+  },
+  {
     title: 'Compliance Validation',
     description: 'Automatic checks against FDA, EMA, and PMDA requirements before submission.',
     icon: '✅',
