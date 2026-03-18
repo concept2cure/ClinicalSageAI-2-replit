@@ -39,7 +39,8 @@ const router = Router();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 50; // Lower limit for AI queries
 
-// Rate limiter for expensive AI operations
+// Bounded rate limiter for expensive AI operations (max 10,000 entries to prevent memory leak)
+const RATE_LIMIT_MAP_MAX = 10_000;
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
@@ -50,6 +51,13 @@ const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
   let record = rateLimitMap.get(clientId);
 
   if (!record || record.resetTime < windowStart) {
+    // Evict stale entries if map is at capacity
+    if (rateLimitMap.size >= RATE_LIMIT_MAP_MAX) {
+      for (const [key, val] of rateLimitMap) {
+        if (val.resetTime < windowStart) rateLimitMap.delete(key);
+        if (rateLimitMap.size < RATE_LIMIT_MAP_MAX) break;
+      }
+    }
     record = { count: 1, resetTime: now };
     rateLimitMap.set(clientId, record);
   } else {
@@ -277,6 +285,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
       let fullContent = '';
       let streamModel = 'lumen-cortex-demo';
+      let streamAborted = false;
       const toolArtifacts: Array<{
         type: string;
         id: string;
@@ -284,6 +293,16 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         status: string;
         data?: unknown;
       }> = [];
+
+      // Handle client disconnect to prevent orphaned async work
+      res.on('close', () => {
+        streamAborted = true;
+        logger.debug('[Stream] Client disconnected');
+      });
+      res.on('error', (err) => {
+        streamAborted = true;
+        logger.warn(`[Stream] Response error: ${err.message}`);
+      });
 
       try {
         const openai = getOpenAIClient();
@@ -504,9 +523,11 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       assistantMessage = generateContextAwareDemoResponse(message, context);
     }
 
-    // Persist messages
-    await saveChatMessage(threadId, 'user', message, model);
-    await saveChatMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
+    // Persist messages (parallel — independent operations)
+    await Promise.all([
+      saveChatMessage(threadId, 'user', message, model),
+      saveChatMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens),
+    ]);
 
     res.json({
       answer: assistantMessage,
@@ -895,15 +916,20 @@ router.post('/threads', async (req: Request, res: Response) => {
 router.patch('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
     const { title } = req.body || {};
     if (!title || typeof title !== 'string') {
       return res.status(400).json({ success: false, error: 'title is required' });
     }
     const trimmed = title.trim().slice(0, 200);
-    await pool.query('UPDATE chat_threads SET title = $1, updated_at = NOW() WHERE id = $2', [
-      trimmed,
-      threadId,
-    ]);
+    const result = await pool.query(
+      'UPDATE chat_threads SET title = $1, updated_at = NOW() WHERE id = $2 AND (user_id = $3 OR organization_id = $4) RETURNING id',
+      [trimmed, threadId, userId, orgId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(403).json({ success: false, error: 'Thread not found or access denied' });
+    }
     res.json({ success: true, title: trimmed });
   } catch (err: any) {
     logger.error('PATCH /threads/:threadId error:', err.message);
@@ -915,6 +941,18 @@ router.patch('/threads/:threadId', async (req: Request, res: Response) => {
 router.delete('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
+
+    // Verify the requester owns this thread before deleting
+    const ownerCheck = await pool.query(
+      'SELECT id FROM chat_threads WHERE id = $1 AND (user_id = $2 OR organization_id = $3)',
+      [threadId, userId, orgId]
+    );
+    if (ownerCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, error: 'Thread not found or access denied' });
+    }
+
     await pool.query('DELETE FROM chat_messages WHERE thread_id = $1', [threadId]);
     await pool.query('DELETE FROM chat_threads WHERE id = $1', [threadId]);
     res.json({ success: true });

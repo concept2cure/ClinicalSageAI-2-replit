@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     API_NAME: str = "RegIntel API"
     API_DESCRIPTION: str = "RegIntel provides document validation and explanation services for regulatory document compliance"
     
-    # JWT settings
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "regintel_development_key")
+    # JWT settings — no insecure default; must be set via environment variable
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
     
@@ -37,6 +37,15 @@ class Settings(BaseSettings):
 
 # Create settings instance
 settings = Settings()
+
+# Validate critical configuration at startup
+if not settings.JWT_SECRET_KEY or settings.JWT_SECRET_KEY == "regintel_development_key":
+    import warnings
+    warnings.warn(
+        "JWT_SECRET_KEY is not set or uses the insecure default. "
+        "Set JWT_SECRET_KEY environment variable with a strong random key.",
+        stacklevel=1,
+    )
 
 # Ensure directories exist
 for directory in [settings.UPLOAD_DIR, settings.VALIDATION_LOGS_DIR, settings.DEFINE_OUTPUT_DIR]:

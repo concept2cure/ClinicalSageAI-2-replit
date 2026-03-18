@@ -183,8 +183,8 @@ async function logAuditEntry(
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
     const timestamp = new Date();
     const orgId = req.tenantContext?.organizationId
-      ? parseInt(req.tenantContext.organizationId, 10)
-      : req.tenantId || 1;
+      ? parseInt(req.tenantContext.organizationId as string, 10)
+      : (req.tenantId as number) || 0;
 
     // Calculate tamper-evident integrity hash
     const hashData = JSON.stringify({
@@ -10413,7 +10413,10 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
     const organizationId =
       (req as any).organizationId ||
       parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+      null;
+    if (!organizationId) {
+      return sendError(res, 403, 'Organization context required');
+    }
     const userId = (req as any).userId || (req as any).user?.id || null;
 
     const promoteSchema = z.object({

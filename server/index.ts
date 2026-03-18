@@ -27,14 +27,10 @@ import { initializeProofDatabasePersistence } from '../services/proof/database-s
 // Enterprise Security & Performance Middleware
 import {
   applySecurityMiddleware,
-  securityHeaders,
-  corsMiddleware,
   auditLog,
 } from './middleware/enterprise-security.js';
 import {
   applyPerformanceMiddleware,
-  compressionMiddleware,
-  monitorPerformance,
   cleanup as cleanupPerformance,
 } from './middleware/enterprise-performance.js';
 import {
@@ -49,10 +45,9 @@ import {
 import { AIProviderRouter, getAIRouter } from './services/aiProviderRouter.js';
 // aiProviderRouter will be initialized after database connection
 let aiProviderRouter: AIProviderRouter | null = null;
-// Backward compatibility alias for existing code
-const openaiService = { getRouter: () => aiProviderRouter };
-import auditService from './services/auditService.js';
-import rbacService from './services/roleBasedAccess.js';
+// Side-effect imports: constructor initializes audit tables and RBAC cache
+import './services/auditService.js';
+import './services/roleBasedAccess.js';
 import { authMiddleware } from './auth.js';
 
 // Import database and schema for workflow persistence

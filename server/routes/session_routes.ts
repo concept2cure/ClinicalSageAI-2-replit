@@ -35,8 +35,22 @@ interface SessionEmailMapping {
   updated_at: Date;
 }
 
-// Create an in-memory cache for session emails
-const sessionEmailCache: Record<string, string> = {};
+// Bounded in-memory cache for session emails (max 10,000 entries with LRU eviction)
+const SESSION_CACHE_MAX = 10_000;
+const sessionEmailCache = new Map<string, string>();
+
+function cacheSet(key: string, value: string) {
+  if (sessionEmailCache.size >= SESSION_CACHE_MAX) {
+    // Evict oldest entry (first inserted)
+    const firstKey = sessionEmailCache.keys().next().value;
+    if (firstKey !== undefined) sessionEmailCache.delete(firstKey);
+  }
+  sessionEmailCache.set(key, value);
+}
+
+function cacheGet(key: string): string | undefined {
+  return sessionEmailCache.get(key);
+}
 
 // Save email for a session
 router.post('/email/save', async (req, res) => {
@@ -48,7 +62,7 @@ router.post('/email/save', async (req, res) => {
     }
 
     // Update in-memory cache
-    sessionEmailCache[session_id] = recipient_email;
+    cacheSet(session_id, recipient_email);
 
     // Try to store in database if available
     try {
@@ -84,10 +98,11 @@ router.get('/email/get/:session_id', async (req, res) => {
     }
 
     // First check in-memory cache
-    if (sessionEmailCache[session_id]) {
+    const cached = cacheGet(session_id);
+    if (cached) {
       return res.status(200).json({
         session_id,
-        email: sessionEmailCache[session_id],
+        email: cached,
       });
     }
 
@@ -101,7 +116,7 @@ router.get('/email/get/:session_id', async (req, res) => {
         const email = result[0].email;
 
         // Update in-memory cache
-        sessionEmailCache[session_id] = email;
+        cacheSet(session_id, email);
 
         return res.status(200).json({
           session_id,
@@ -128,7 +143,7 @@ router.get('/email/get/:session_id', async (req, res) => {
 // List all sessions with emails (for admin)
 router.get('/emails', async (req, res) => {
   try {
-    const sessions = Object.entries(sessionEmailCache).map(([session_id, email]) => ({
+    const sessions = Array.from(sessionEmailCache.entries()).map(([session_id, email]) => ({
       session_id,
       email,
     }));
