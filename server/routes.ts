@@ -290,39 +290,52 @@ router.post('/510k-workflow/:projectId/generate-document', async (req, res) => {
   }
 });
 
-// Submission center status endpoint
-router.get('/submission-status', (req, res) => {
-  // Return the current status of all modules
-  res.json({
-    ind: { 
-      complete: req.query.indSteps || 2, 
-      total: 7, 
-      status: 'in-progress' 
-    },
-    cmc: { 
-      complete: req.query.cmcSteps || 1, 
-      total: 6, 
-      status: 'pending' 
-    },
-    csr: { 
-      complete: req.query.csrSteps || 0, 
-      total: 5, 
-      status: 'pending' 
-    },
-    ectd: { 
-      complete: req.query.ectdDocs || 0, 
-      total: 8, 
-      status: 'pending' 
-    },
-    vault: { 
-      documents: 12, 
-      status: 'active' 
-    },
-    compliance: { 
-      score: 75, 
-      status: 'in-progress' 
+// Submission center status endpoint - queries actual DB counts
+router.get('/submission-status', async (req, res) => {
+  try {
+    const { pool } = require('./db');
+    if (!pool) {
+      return res.json({
+        ind: { complete: 0, total: 7, status: 'pending' },
+        cmc: { complete: 0, total: 6, status: 'pending' },
+        csr: { complete: 0, total: 5, status: 'pending' },
+        ectd: { complete: 0, total: 8, status: 'pending' },
+        vault: { documents: 0, status: 'pending' },
+        compliance: { score: 0, status: 'pending' },
+      });
     }
-  });
+
+    // Query actual counts from DB tables, falling back to 0 on error
+    const safeCount = async (query: string): Promise<number> => {
+      try {
+        const r = await pool.query(query);
+        return parseInt(r.rows[0]?.count ?? '0', 10);
+      } catch { return 0; }
+    };
+
+    const [indComplete, cmcComplete, csrComplete, ectdComplete, vaultDocs] = await Promise.all([
+      safeCount("SELECT COUNT(*) AS count FROM ind_sections WHERE status = 'completed'"),
+      safeCount("SELECT COUNT(*) AS count FROM ind_sections WHERE module = 'cmc' AND status = 'completed'"),
+      safeCount("SELECT COUNT(*) AS count FROM cer_reports WHERE status IN ('completed','approved')"),
+      safeCount("SELECT COUNT(*) AS count FROM ectd_submissions WHERE status = 'completed'"),
+      safeCount("SELECT COUNT(*) AS count FROM documents"),
+    ]);
+
+    const deriveStatus = (complete: number): string =>
+      complete === 0 ? 'pending' : 'in-progress';
+
+    res.json({
+      ind: { complete: indComplete, total: 7, status: deriveStatus(indComplete) },
+      cmc: { complete: cmcComplete, total: 6, status: deriveStatus(cmcComplete) },
+      csr: { complete: csrComplete, total: 5, status: deriveStatus(csrComplete) },
+      ectd: { complete: ectdComplete, total: 8, status: deriveStatus(ectdComplete) },
+      vault: { documents: vaultDocs, status: vaultDocs > 0 ? 'active' : 'pending' },
+      compliance: { score: 0, status: 'pending' },
+    });
+  } catch (error) {
+    console.error('Error fetching submission status:', error);
+    res.status(500).json({ error: 'Failed to fetch submission status' });
+  }
 });
 
 // Audit log endpoint for tracking user actions
