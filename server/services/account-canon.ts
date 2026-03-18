@@ -16,8 +16,12 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { getPromptInjectionProtection } from '../lib/prompt-injection-protection.js';
 
 const logger = createScopedLogger('account-canon');
+
+/** Maximum token budget for resolved context — prevents prompt overflow */
+const MAX_CONTEXT_TOKENS = 80_000;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -164,6 +168,23 @@ export async function assertCanonFact(input: {
   actorEmail?: string;
   metadata?: Record<string, unknown>;
 }): Promise<CanonItem> {
+  // ── Injection scanning — canon content becomes system prompt material ──
+  const protection = getPromptInjectionProtection();
+  const analysis = protection.analyze(input.content);
+  if (analysis.blocked) {
+    throw new Error(
+      `Canon fact content blocked by prompt injection protection (risk score: ${analysis.riskScore}). ` +
+      `Detections: ${analysis.detected.map(d => d.description).join('; ')}`
+    );
+  }
+  if (analysis.detected.length > 0) {
+    logger.warn(
+      `Canon fact "${input.title}" contains ${analysis.detected.length} prompt injection signals ` +
+      `(risk score: ${analysis.riskScore}, threshold: 7). Proceeding with sanitized content.`
+    );
+  }
+  const sanitizedContent = analysis.detected.length > 0 ? analysis.sanitized : input.content;
+
   const canonId = generateId('canon');
 
   const result = await pool.query(
@@ -183,7 +204,7 @@ export async function assertCanonFact(input: {
       input.subcategory || null,
       input.key,
       input.title,
-      input.content,
+      sanitizedContent,
       input.submissionTypes ? JSON.stringify(input.submissionTypes) : null,
       input.moduleTypes ? JSON.stringify(input.moduleTypes) : null,
       input.workTypes ? JSON.stringify(input.workTypes) : null,
@@ -276,49 +297,98 @@ export async function supersedeCanonFact(
   oldCanonItemId: number,
   newInput: Parameters<typeof assertCanonFact>[0]
 ): Promise<CanonItem> {
-  // Get the old item's version
-  const oldResult = await pool.query(
-    'SELECT version, canon_id FROM account_canon_items WHERE id = $1 AND organization_id = $2',
-    [oldCanonItemId, newInput.organizationId]
-  );
-  if (oldResult.rows.length === 0) {
-    throw new Error(`Canon item ${oldCanonItemId} not found`);
+  // Use a dedicated client for transaction isolation — all 4 operations
+  // (read old, insert new, update version, mark superseded) must be atomic.
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get the old item's version
+    const oldResult = await client.query(
+      'SELECT version, canon_id FROM account_canon_items WHERE id = $1 AND organization_id = $2 FOR UPDATE',
+      [oldCanonItemId, newInput.organizationId]
+    );
+    if (oldResult.rows.length === 0) {
+      throw new Error(`Canon item ${oldCanonItemId} not found`);
+    }
+    const oldVersion = oldResult.rows[0].version;
+
+    // Create the new version (uses pool internally, but we need it in this txn)
+    // Inline the insert to use the transaction client
+    const protection = getPromptInjectionProtection();
+    const analysis = protection.analyze(newInput.content);
+    if (analysis.blocked) {
+      throw new Error(
+        `Canon fact content blocked by prompt injection protection (risk score: ${analysis.riskScore}).`
+      );
+    }
+    const sanitizedContent = analysis.detected.length > 0 ? analysis.sanitized : newInput.content;
+    const canonId = generateId('canon');
+    const metadata = { ...newInput.metadata, previousVersion: oldCanonItemId };
+
+    const insertResult = await client.query(
+      `INSERT INTO account_canon_items
+       (canon_id, organization_id, profile_id, category, subcategory, key, title, content,
+        submission_types, module_types, work_types, regulatory_regions,
+        version, status, source_type, source_document_id, source_description,
+        confidence_score, metadata, created_by_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+               $13, 'active', $14, $15, $16, $17, $18, $19, NOW(), NOW())
+       RETURNING *`,
+      [
+        canonId,
+        newInput.organizationId,
+        newInput.profileId || null,
+        newInput.category,
+        newInput.subcategory || null,
+        newInput.key,
+        newInput.title,
+        sanitizedContent,
+        newInput.submissionTypes ? JSON.stringify(newInput.submissionTypes) : null,
+        newInput.moduleTypes ? JSON.stringify(newInput.moduleTypes) : null,
+        newInput.workTypes ? JSON.stringify(newInput.workTypes) : null,
+        newInput.regulatoryRegions ? JSON.stringify(newInput.regulatoryRegions) : null,
+        oldVersion + 1,
+        newInput.sourceType || 'manual',
+        (newInput as any).sourceDocumentId || null,
+        newInput.sourceDescription || null,
+        newInput.confidenceScore ?? 0.9,
+        JSON.stringify(metadata),
+        newInput.actorId || null,
+      ]
+    );
+    const newItem = insertResult.rows[0];
+
+    // Mark the old item as superseded
+    await client.query(
+      `UPDATE account_canon_items SET status = 'superseded', superseded_by_id = $1, updated_at = NOW()
+       WHERE id = $2 AND organization_id = $3`,
+      [newItem.id, oldCanonItemId, newInput.organizationId]
+    );
+
+    await client.query('COMMIT');
+
+    // Event logging outside transaction — non-critical, should not roll back the supersession
+    await appendEvent({
+      organizationId: newInput.organizationId,
+      eventType: 'account_fact_superseded',
+      canonItemId: oldCanonItemId,
+      targetType: 'canon_item',
+      targetId: oldResult.rows[0].canon_id,
+      previousValue: { version: oldVersion },
+      newValue: { newCanonItemId: newItem.id, version: oldVersion + 1 },
+      description: `Canon fact superseded: v${oldVersion} → v${oldVersion + 1}`,
+      actorId: newInput.actorId,
+      actorName: newInput.actorName,
+    });
+
+    return newItem;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
   }
-  const oldVersion = oldResult.rows[0].version;
-
-  // Create the new version
-  const newItem = await assertCanonFact({
-    ...newInput,
-    metadata: { ...newInput.metadata, previousVersion: oldCanonItemId },
-  });
-
-  // Update the new item's version number
-  await pool.query(
-    'UPDATE account_canon_items SET version = $1 WHERE id = $2',
-    [oldVersion + 1, newItem.id]
-  );
-
-  // Mark the old item as superseded
-  await pool.query(
-    `UPDATE account_canon_items SET status = 'superseded', superseded_by_id = $1, updated_at = NOW()
-     WHERE id = $2 AND organization_id = $3`,
-    [newItem.id, oldCanonItemId, newInput.organizationId]
-  );
-
-  await appendEvent({
-    organizationId: newInput.organizationId,
-    eventType: 'account_fact_superseded',
-    canonItemId: oldCanonItemId,
-    targetType: 'canon_item',
-    targetId: oldResult.rows[0].canon_id,
-    previousValue: { version: oldVersion },
-    newValue: { newCanonItemId: newItem.id, version: oldVersion + 1 },
-    description: `Canon fact superseded: v${oldVersion} → v${oldVersion + 1}`,
-    actorId: newInput.actorId,
-    actorName: newInput.actorName,
-  });
-
-  return newItem;
 }
 
 /**
@@ -617,35 +687,47 @@ export async function resolveAccountContext(
     requestId,
   };
 
-  // ── Log resolution for audit trail ──────────────────────────────────
-  try {
-    await pool.query(
-      `INSERT INTO account_canon_resolution_log
-       (organization_id, request_id, project_id, conversation_id, thread_id,
-        resolved_canon_ids, resolved_bundle_ids, resolved_term_ids, resolved_template_ids,
-        submission_type, module_type, work_type, regulatory_region,
-        total_tokens_injected, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())`,
-      [
-        ctx.organizationId,
-        requestId,
-        ctx.projectId || null,
-        ctx.conversationId || null,
-        ctx.threadId || null,
-        JSON.stringify(resolved.canonItems.map(c => c.id)),
-        JSON.stringify(resolved.bundles.map(b => b.id)),
-        JSON.stringify(resolved.terms.map(t => t.id)),
-        JSON.stringify(resolved.templates.map(t => t.id)),
-        ctx.submissionType || null,
-        ctx.moduleType || null,
-        ctx.workType || null,
-        ctx.regulatoryRegion || null,
-        tokensEstimate,
-      ]
+  // ── Enforce token budget — prevent prompt overflow ──────────────────
+  if (tokensEstimate > MAX_CONTEXT_TOKENS) {
+    logger.warn(
+      `Canon resolution for org ${ctx.organizationId} produced ${tokensEstimate} tokens ` +
+      `(max: ${MAX_CONTEXT_TOKENS}). Truncating to fit budget.`
     );
-  } catch (err) {
-    logger.warn(`Failed to log canon resolution: ${err}`);
+    // Trim canon items (lowest priority first — they're sorted locked-first, confidence DESC)
+    while (tokensEstimate > MAX_CONTEXT_TOKENS && resolved.canonItems.length > 0) {
+      const removed = resolved.canonItems.pop()!;
+      tokensEstimate -= estimateTokens(removed.content || '');
+    }
+    resolved.tokensEstimate = tokensEstimate;
   }
+
+  // ── Log resolution for audit trail ──────────────────────────────────
+  // Resolution logging is mandatory for regulatory compliance — failure
+  // must propagate, not be silently swallowed.
+  await pool.query(
+    `INSERT INTO account_canon_resolution_log
+     (organization_id, request_id, project_id, conversation_id, thread_id,
+      resolved_canon_ids, resolved_bundle_ids, resolved_term_ids, resolved_template_ids,
+      submission_type, module_type, work_type, regulatory_region,
+      total_tokens_injected, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())`,
+    [
+      ctx.organizationId,
+      requestId,
+      ctx.projectId || null,
+      ctx.conversationId || null,
+      ctx.threadId || null,
+      JSON.stringify(resolved.canonItems.map(c => c.id)),
+      JSON.stringify(resolved.bundles.map(b => b.id)),
+      JSON.stringify(resolved.terms.map(t => t.id)),
+      JSON.stringify(resolved.templates.map(t => t.id)),
+      ctx.submissionType || null,
+      ctx.moduleType || null,
+      ctx.workType || null,
+      ctx.regulatoryRegion || null,
+      tokensEstimate,
+    ]
+  );
 
   return resolved;
 }
@@ -675,7 +757,8 @@ export function formatResolvedContextForPrompt(resolved: ResolvedAccountContext)
       parts.push(`### ${label}`);
       for (const item of items) {
         const locked = item.status === 'locked' ? ' [LOCKED]' : '';
-        parts.push(`- **${item.title}**${locked}: ${item.content}`);
+        const provisional = item.confidenceScore < 0.9 ? ' [PROVISIONAL — not yet validated]' : '';
+        parts.push(`- **${item.title}**${locked}${provisional}: ${item.content}`);
       }
       parts.push('');
     }
