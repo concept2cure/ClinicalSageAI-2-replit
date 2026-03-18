@@ -27,6 +27,7 @@ import cerv2SectionsRoutes from './routes/cerv2-sections.js';
 import aiAssistanceRoutes from './routes/ai-assistance.js';
 // @ts-ignore - JavaScript route file
 import contentPlanRoutes from './routes/content-plan.js';
+import intelligentReportsRoutes from './routes/intelligent-reports';
 
 // Create a simple router for basic API routes
 const router = express.Router();
@@ -463,6 +464,9 @@ export default function registerRoutes(app: Express): void {
   
   // Mount Content Plan routes
   app.use('/api/content-plan', contentPlanRoutes);
+
+  // Mount Intelligent Report Engine routes (immutable records, quasi-indemnification, atom provenance)
+  app.use('/api/intelligent-reports', intelligentReportsRoutes);
   
   // Basic health and status routes are now available
   console.log('✅ Basic API routes mounted');

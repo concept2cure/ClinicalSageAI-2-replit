@@ -41,6 +41,7 @@ import {
   Rocket,
   Beaker,
   Layers,
+  FileText,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -540,6 +541,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="IP · Contracts · Regulatory law"
               active={activeNavId === 'legal-center'}
               onClick={() => onNavigate?.('legal-center')}
+            />
+            <NavItem
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="Report Engine"
+              subtitle="Immutable · Provenance · Indemnify"
+              active={activeNavId === 'report-engine'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('report-engine')}
             />
           </WorkspaceGroup>
 

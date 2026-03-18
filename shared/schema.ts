@@ -16721,3 +16721,321 @@ export const insertSubmissionTwinAssessmentSchema = createInsertSchemaOmit(submi
   createdAt: true,
 });
 export type SubmissionTwinAssessment = InferSelectModel<typeof submissionTwinAssessments>;
+
+// ============================================================
+// INTELLIGENT REPORT ENGINE — Immutable Records & Quasi-Indemnification
+// ============================================================
+
+/** Report domain categories across the entire platform */
+export const reportDomainEnum = pgEnum('report_domain', [
+  'regulatory_submission',   // eCTD, IND, NDA, BLA, 510k, PMA, CER
+  'clinical_study',          // CSR, IDMC, protocol, SAP
+  'cmc_manufacturing',       // CMC Module 3, stability, analytical
+  'pharmacovigilance',       // PSUR, DSUR, CIOMS, MedWatch
+  'quality_management',      // QMP, CAPA, deviation, audit
+  'compliance_attestation',  // 21 CFR Part 11, GDPR, SOC 2, GxP
+  'strategic_intelligence',  // competitive, pipeline, market access
+  'provenance_audit',        // document lineage, data provenance
+  'device_regulatory',       // MDR, IVDR, 510k, PMA, De Novo
+  'biostatistics',           // SAP, interim, futility, sample size
+  'environmental_safety',    // ESG, environmental impact
+  'cross_functional',        // multi-domain composite reports
+]);
+
+/** Immutability seal status for records */
+export const sealStatusEnum = pgEnum('seal_status', [
+  'draft',        // mutable, not yet sealed
+  'pending_seal', // awaiting signatures before seal
+  'sealed',       // immutable — cryptographically locked
+  'superseded',   // replaced by newer sealed version
+  'revoked',      // invalidated (with justification)
+]);
+
+/** Regulatory body that the report targets */
+export const regulatoryBodyEnum = pgEnum('regulatory_body', [
+  'FDA', 'EMA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada',
+  'MHRA', 'ANVISA', 'MFDS', 'Swissmedic', 'ICH', 'WHO_PQ',
+  'CDSCO', 'HSA', 'SAHPRA', 'COFEPRIS', 'multi_regional',
+]);
+
+/**
+ * Immutable Report Records — the master ledger
+ * Every report generated anywhere in the platform is registered here.
+ * Once sealed, the record becomes cryptographically immutable.
+ */
+export const immutableReportRecords = pgTable(
+  'immutable_report_records',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    clientWorkspaceId: integer('client_workspace_id')
+      .references(() => clientWorkspaces.id),
+    projectId: integer('project_id')
+      .references(() => projects.id),
+
+    // Report identity
+    reportUuid: uuid('report_uuid').defaultRandom().notNull().unique(),
+    reportCode: text('report_code').notNull(),          // e.g. "RPT-2026-0318-CSR-001"
+    reportTitle: text('report_title').notNull(),
+    reportDomain: reportDomainEnum('report_domain').notNull(),
+    reportSubtype: text('report_subtype'),               // e.g. "ICH E3 CSR", "510(k) Summary"
+    version: text('version').notNull().default('1.0.0'),
+    previousVersionId: integer('previous_version_id'),   // links to superseded version
+
+    // Regulatory targeting
+    targetRegulatory: regulatoryBodyEnum('target_regulatory'),
+    applicableGuidelines: json('applicable_guidelines'),  // [{code, title, version}]
+    complianceFrameworks: json('compliance_frameworks'),   // ["21 CFR Part 11", "ICH E6(R3)", ...]
+
+    // Content
+    content: json('content').notNull(),                   // full report payload
+    executiveSummary: text('executive_summary'),
+    sections: json('sections'),                           // [{sectionId, title, content, atomRefs[]}]
+    metadata: json('metadata'),                           // flexible metadata
+
+    // Atom-level provenance
+    atomReferences: json('atom_references'),              // [{atomId, atomType, sourceTable, sourceId, fieldPath, value, confidence}]
+    dataLineageSnapshot: json('data_lineage_snapshot'),   // frozen lineage at generation time
+    sourceDocumentIds: json('source_document_ids'),       // [documentId, ...] inputs used
+
+    // Immutability & cryptographic integrity
+    sealStatus: sealStatusEnum('seal_status').notNull().default('draft'),
+    contentHash: text('content_hash'),                    // SHA-256 of canonical content
+    previousHash: text('previous_hash'),                  // hash chain link
+    merkleRoot: text('merkle_root'),                      // merkle root of all section hashes
+    sealedAt: timestamp('sealed_at'),
+    sealedById: integer('sealed_by_id')
+      .references(() => users.id),
+    sealJustification: text('seal_justification'),
+
+    // Quasi-indemnification attestation
+    complianceScore: real('compliance_score'),             // 0-100
+    attestationStatement: text('attestation_statement'),   // legal disclaimer + compliance attestation
+    regulatoryBasis: json('regulatory_basis'),             // [{regulation, section, requirement, status}]
+    riskDisclosures: json('risk_disclosures'),             // [{riskId, category, description, mitigation}]
+    methodologyDeclaration: text('methodology_declaration'), // how report was generated
+    aiDisclosure: json('ai_disclosure'),                   // {model, version, promptHash, humanReviewStatus}
+    indemnificationTier: text('indemnification_tier'),      // 'full_audit_trail', 'partial', 'advisory_only'
+
+    // Signatures (references to electronic_signatures)
+    requiredSignatures: json('required_signatures'),       // [{role, userId, status}]
+    signatureCount: integer('signature_count').default(0),
+    allSignaturesCollected: boolean('all_signatures_collected').default(false),
+
+    // Generation metadata
+    generatedBy: text('generated_by'),                     // 'system', 'ai_assisted', 'manual'
+    generationContext: json('generation_context'),          // {triggeredFrom, persona, parameters}
+    generationDurationMs: integer('generation_duration_ms'),
+
+    // Lifecycle
+    status: text('status').notNull().default('draft'),     // draft, generated, review, sealed, distributed
+    createdById: integer('created_by_id')
+      .references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('irr_org_idx').on(table.organizationId),
+    projectIdx: index('irr_project_idx').on(table.projectId),
+    domainIdx: index('irr_domain_idx').on(table.reportDomain),
+    sealIdx: index('irr_seal_idx').on(table.sealStatus),
+    hashIdx: index('irr_hash_idx').on(table.contentHash),
+    regulatoryIdx: index('irr_regulatory_idx').on(table.targetRegulatory),
+    codeIdx: index('irr_code_idx').on(table.reportCode),
+    createdIdx: index('irr_created_idx').on(table.createdAt),
+  })
+);
+
+export const insertImmutableReportRecordSchema = createInsertSchemaOmit(immutableReportRecords, {
+  id: true,
+  reportUuid: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ImmutableReportRecord = InferSelectModel<typeof immutableReportRecords>;
+
+/**
+ * Report Atom Provenance — atom-level traceability for every data point in a report
+ * Links each field/claim in a report to its source atom(s) in lumen_data_atoms or raw tables.
+ */
+export const reportAtomProvenance = pgTable(
+  'report_atom_provenance',
+  {
+    id: serial('id').primaryKey(),
+    reportId: integer('report_id')
+      .notNull()
+      .references(() => immutableReportRecords.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // Where in the report
+    sectionPath: text('section_path').notNull(),          // e.g. "sections[2].efficacy.primaryEndpoint"
+    fieldLabel: text('field_label'),                       // human-readable label
+    reportedValue: text('reported_value'),                 // the value as it appears in the report
+
+    // Source atom reference
+    atomId: integer('atom_id'),                            // FK to lumen_data_atoms if applicable
+    sourceTable: text('source_table').notNull(),           // e.g. "csr_details", "cer_reports", "lumen_data_atoms"
+    sourceRecordId: text('source_record_id').notNull(),    // PK in source table
+    sourceField: text('source_field').notNull(),           // column/path in source
+    sourceValue: text('source_value'),                     // original value at source
+    valueHash: text('value_hash'),                         // SHA-256 of source value for drift detection
+
+    // Transformation
+    transformationType: text('transformation_type'),       // 'direct_copy', 'aggregation', 'calculation', 'ai_generated', 'manual_entry'
+    transformationRule: text('transformation_rule'),        // description of how value was derived
+    confidence: real('confidence'),                         // 0.0-1.0
+
+    // Integrity
+    verified: boolean('verified').default(false),
+    verifiedAt: timestamp('verified_at'),
+    verifiedById: integer('verified_by_id')
+      .references(() => users.id),
+    driftDetected: boolean('drift_detected').default(false), // source changed since report generated
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    reportIdx: index('rap_report_idx').on(table.reportId),
+    orgIdx: index('rap_org_idx').on(table.organizationId),
+    atomIdx: index('rap_atom_idx').on(table.atomId),
+    sourceIdx: index('rap_source_idx').on(table.sourceTable, table.sourceRecordId),
+    driftIdx: index('rap_drift_idx').on(table.driftDetected),
+  })
+);
+
+export const insertReportAtomProvenanceSchema = createInsertSchemaOmit(reportAtomProvenance, {
+  id: true,
+  createdAt: true,
+});
+export type ReportAtomProvenance = InferSelectModel<typeof reportAtomProvenance>;
+
+/**
+ * Report Seal Events — immutable log of every seal/unseal/revocation
+ * This is the chain-of-custody for report immutability.
+ */
+export const reportSealEvents = pgTable(
+  'report_seal_events',
+  {
+    id: serial('id').primaryKey(),
+    reportId: integer('report_id')
+      .notNull()
+      .references(() => immutableReportRecords.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    eventType: text('event_type').notNull(),               // 'sealed', 'superseded', 'revoked', 'signature_added', 'verification_passed', 'verification_failed'
+    previousSealStatus: text('previous_seal_status'),
+    newSealStatus: text('new_seal_status'),
+
+    // Cryptographic proof
+    contentHashAtEvent: text('content_hash_at_event'),     // hash snapshot at time of event
+    chainHash: text('chain_hash'),                         // hash of this event chained to previous
+    previousEventHash: text('previous_event_hash'),        // link to prior event hash
+
+    // Actor
+    performedById: integer('performed_by_id')
+      .references(() => users.id),
+    performedByName: text('performed_by_name'),
+    performedByRole: text('performed_by_role'),
+
+    // Context
+    justification: text('justification'),
+    regulatoryContext: text('regulatory_context'),          // which regulation triggered this action
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    reportIdx: index('rse_report_idx').on(table.reportId),
+    orgIdx: index('rse_org_idx').on(table.organizationId),
+    eventIdx: index('rse_event_idx').on(table.eventType),
+    chainIdx: index('rse_chain_idx').on(table.chainHash),
+    createdIdx: index('rse_created_idx').on(table.createdAt),
+  })
+);
+
+export const insertReportSealEventSchema = createInsertSchemaOmit(reportSealEvents, {
+  id: true,
+  createdAt: true,
+});
+export type ReportSealEvent = InferSelectModel<typeof reportSealEvents>;
+
+/**
+ * Indemnification Attestations — quasi-legal compliance records
+ * Each attestation binds a report to specific regulatory requirements
+ * and records that compliance was verified at generation time.
+ */
+export const indemnificationAttestations = pgTable(
+  'indemnification_attestations',
+  {
+    id: serial('id').primaryKey(),
+    reportId: integer('report_id')
+      .notNull()
+      .references(() => immutableReportRecords.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // Attestation identity
+    attestationUuid: uuid('attestation_uuid').defaultRandom().notNull().unique(),
+    attestationType: text('attestation_type').notNull(),   // 'regulatory_compliance', 'data_integrity', 'methodology', 'ai_transparency', 'provenance_complete', 'signature_authority'
+
+    // What is being attested
+    regulatoryBody: regulatoryBodyEnum('regulatory_body'),
+    regulationCode: text('regulation_code'),               // e.g. "21 CFR 312.23(a)(6)"
+    regulationTitle: text('regulation_title'),
+    requirementDescription: text('requirement_description'),
+    guidelineReference: text('guideline_reference'),        // e.g. "ICH E3 Section 11.4"
+
+    // Attestation result
+    complianceStatus: text('compliance_status').notNull(),  // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'
+    complianceScore: real('compliance_score'),               // 0-100
+    findings: json('findings'),                              // [{finding, severity, recommendation}]
+    evidenceReferences: json('evidence_references'),         // [{type, id, description}] pointers to supporting evidence
+    gapDescription: text('gap_description'),                 // if not fully compliant
+    mitigationPlan: text('mitigation_plan'),                 // remediation steps
+
+    // Legal language
+    disclaimerText: text('disclaimer_text'),                 // platform liability disclaimer
+    attestationStatement: text('attestation_statement'),     // formal attestation language
+    scopeLimitations: text('scope_limitations'),             // what this attestation does NOT cover
+    indemnificationScope: text('indemnification_scope'),     // 'full', 'limited', 'advisory'
+
+    // Verification
+    verifiedBySystem: boolean('verified_by_system').default(false),
+    verifiedByHuman: boolean('verified_by_human').default(false),
+    verifierId: integer('verifier_id')
+      .references(() => users.id),
+    verifiedAt: timestamp('verified_at'),
+
+    // Integrity
+    attestationHash: text('attestation_hash'),              // SHA-256 of canonical attestation content
+    sealed: boolean('sealed').default(false),
+    sealedAt: timestamp('sealed_at'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    reportIdx: index('ia_report_idx').on(table.reportId),
+    orgIdx: index('ia_org_idx').on(table.organizationId),
+    typeIdx: index('ia_type_idx').on(table.attestationType),
+    bodyIdx: index('ia_body_idx').on(table.regulatoryBody),
+    statusIdx: index('ia_status_idx').on(table.complianceStatus),
+    sealedIdx: index('ia_sealed_idx').on(table.sealed),
+  })
+);
+
+export const insertIndemnificationAttestationSchema = createInsertSchemaOmit(indemnificationAttestations, {
+  id: true,
+  attestationUuid: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type IndemnificationAttestation = InferSelectModel<typeof indemnificationAttestations>;

@@ -237,6 +237,10 @@ const TemplateLibraryInline = lazy(() =>
   import('./components/templates/TemplateLibraryInline').then(m => ({ default: m.TemplateLibraryInline }))
 );
 
+const IntelligentReportGenerator = lazy(() =>
+  import('./components/reports/IntelligentReportGenerator')
+);
+
 const ProjectKnowledgePanel = lazy(() =>
   import('./components/workspace/ProjectKnowledgePanel').then(m => ({ default: m.ProjectKnowledgePanel }))
 );
@@ -401,7 +405,8 @@ type LayoutMode =
   | 'legal-center'
   | 'artifacts'
   | 'document-builder'
-  | 'deep-research';
+  | 'deep-research'
+  | 'report-engine';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1248,6 +1253,7 @@ export const ZenApp: React.FC = () => {
         'go-training': 'training-center',
         'go-onboarding': 'client-onboarding',
         'go-home': 'projects',
+        'go-report-engine': 'report-engine',
       };
 
       if (MODULE_ROUTES[actionId]) {
@@ -1756,6 +1762,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'document-builder':
               setLayoutMode('document-builder');
+              break;
+            case 'report-engine':
+              setLayoutMode('report-engine');
               break;
             default:
               break;
@@ -2877,6 +2886,15 @@ export const ZenApp: React.FC = () => {
               </div>
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <FullDocumentBuilder />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Intelligent Report Engine — immutable records, atom provenance, quasi-indemnification ── */}
+          {!embeddedModule && layoutMode === 'report-engine' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-report-engine">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <IntelligentReportGenerator />
               </Suspense>
             </div>
           )}
