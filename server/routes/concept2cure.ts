@@ -1559,13 +1559,11 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const data = aiEditSchema.parse(req.body);
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return sendError(res, 503, 'AI service not configured');
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured — set ANTHROPIC_API_KEY');
     }
-
-    const { getOpenAIClient } = await import('../services/openai-client');
-    const openai = getOpenAIClient();
 
     const actionPrompts: Record<string, string> = {
       rewrite:
@@ -1590,17 +1588,18 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       .filter(Boolean)
       .join(' ');
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const gwResponse = await gw.route({
+      taskType: 'document_drafting',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: data.text },
       ],
       temperature: data.action === 'summarize' ? 0.3 : 0.4,
-      max_tokens: 4000,
+      maxTokens: 4000,
+      callerModule: 'concept2cure/ai-edit-section',
     });
 
-    const result = completion.choices[0]?.message?.content || '';
+    const result = gwResponse.content || '';
 
     // Audit log
     await logAuditEntry(req, 'AI_EDIT', 'document_section', `ai-edit-${Date.now()}`, null, {
@@ -1608,7 +1607,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       sectionTitle: data.sectionTitle || null,
       inputLength: data.text.length,
       outputLength: result.length,
-      model: 'gpt-4o-mini',
+      model: gwResponse.model,
     });
 
     logger.info('AI edit completed', { action: data.action, userId });

@@ -439,6 +439,8 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     '/api/register',
     '/api/health',
     '/api/cortex/health',
+    '/api/claude/health',
+    '/api/claude/models',
   ];
   const fullPath = req.baseUrl + req.path;
   const isOpen = openPrefixes.some(p => {
@@ -3110,6 +3112,15 @@ try {
   console.log('✅ AI Claims → Binder routes mounted (/api/ai/claims)');
 } catch (claimsErr) {
   console.error('❌ Failed to mount AI Claims routes:', claimsErr);
+}
+
+// Mount Claude Intelligence API routes (document drafting, streaming, vision, batch)
+try {
+  const claudeIntelligenceRoutes = await import('./routes/claude-intelligence.ts');
+  app.use('/api/claude', claudeIntelligenceRoutes.default);
+  console.log('✅ Claude Intelligence API routes mounted (draft, stream, review, vision, batch)');
+} catch (error) {
+  console.error('❌ Failed to mount Claude Intelligence routes:', error);
 }
 
 // Mount Concept2Cure routes (Claude.ai-style regulatory interface)
