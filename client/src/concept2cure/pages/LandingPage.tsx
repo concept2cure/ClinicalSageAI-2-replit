@@ -161,6 +161,64 @@ const FEATURES = [
   },
 ];
 
+// Extended module showcase — the complete platform
+const PLATFORM_MODULES = [
+  {
+    category: 'Research & Intelligence',
+    modules: [
+      { name: 'Deep Research Engine', desc: 'AI-powered literature search across PubMed, ClinicalTrials.gov, and regulatory databases. Auto-extract endpoints, populations, and safety data.' },
+      { name: 'Predicate Intelligence', desc: '510(k) predicate device analysis with automated substantial equivalence mapping, FDA MAUDE adverse event mining, and recall tracking.' },
+      { name: 'CSR Intelligence', desc: 'Search, compare, and analyze Clinical Study Reports. AI extracts key findings, endpoints, and statistical results across thousands of studies.' },
+      { name: 'Regulatory Intelligence Hub', desc: 'Real-time monitoring of FDA guidances, EMA opinions, PMDA reviews, advisory committee meetings, CRLs, and warning letters.' },
+    ],
+  },
+  {
+    category: 'Document Authoring',
+    modules: [
+      { name: 'eCTD Co-Author', desc: 'AI-assisted authoring for all CTD modules (1-5). SmartTags, version control, tracked changes, and real-time collaboration with regulatory-aware AI suggestions.' },
+      { name: 'CSR Builder', desc: 'Full ICH E3-compliant Clinical Study Report generation. AI drafts sections from study data, auto-generates tables/figures, and validates cross-references.' },
+      { name: 'Document Vault', desc: 'GxP-compliant document management with version control, approval workflows, hash-chain verification, and full audit trail for inspection readiness.' },
+      { name: 'DOCX Factory', desc: 'One-click export of regulatory documents to Word format with agency-specific formatting, headers, TOC, and appendix generation.' },
+    ],
+  },
+  {
+    category: 'Submission & Compliance',
+    modules: [
+      { name: 'eCTD Submission Builder', desc: 'Assemble, validate, and export eCTD v4 packages for FDA, EMA, PMDA, and NMPA. Automated gateway validation with zero-rejection guarantee.' },
+      { name: '510(k) Automation', desc: 'End-to-end 510(k) workflow: predicate search, substantial equivalence analysis, comparison tables, decision trees, and pre-submission package assembly.' },
+      { name: 'IND/NDA Wizard', desc: 'Guided IND and NDA assembly with module-by-module checklists, cross-reference validation, and automated completeness checks.' },
+      { name: 'IVDR Compliance', desc: 'EU IVDR 2017/746 compliance management for in-vitro diagnostics: classification, GSPR mapping, technical documentation, and notified body readiness.' },
+    ],
+  },
+  {
+    category: 'Quality & Manufacturing',
+    modules: [
+      { name: 'CMC Platform', desc: 'Comprehensive Chemistry, Manufacturing, and Controls management. Drug substance/product specs, analytical methods, stability data, and batch records.' },
+      { name: 'Stability Tracking', desc: 'ICH Q1A-compliant stability study management with automated trending, out-of-spec alerts, shelf-life predictions, and graphical reporting.' },
+      { name: 'Analytical Methods', desc: 'Method validation, transfer tracking, and analytical procedure lifecycle management per ICH Q2/Q14 guidelines.' },
+      { name: 'Blueprint Generator', desc: 'AI-generated CMC blueprints from product specifications. Auto-drafts Module 3 sections including manufacturing process descriptions and control strategies.' },
+    ],
+  },
+  {
+    category: 'Project & Portfolio',
+    modules: [
+      { name: 'Mission Control', desc: 'Real-time portfolio dashboard showing submission readiness scores, PDUFA dates, active agents, milestone tracking, and risk heatmaps across all programs.' },
+      { name: 'Regulatory Risk Dashboard', desc: 'AI-powered risk scoring across your portfolio. Identifies gaps, flags approaching deadlines, and recommends prioritization strategies.' },
+      { name: 'Timeline & Canvas', desc: 'Visual regulatory timeline planning with dependency mapping, critical path analysis, and interactive canvas for submission strategy visualization.' },
+      { name: 'Convergent Canvas', desc: 'Multi-agent workspace where AI research, drafting, and review agents converge. Morning briefings, council threads, and industry-specific workspaces.' },
+    ],
+  },
+  {
+    category: 'Security & Audit',
+    modules: [
+      { name: '21 CFR Part 11', desc: 'Complete electronic records compliance: immutable audit trails, digital e-signatures, access controls, session management, and password policies per NIST 800-63B.' },
+      { name: 'Proof Certificates', desc: 'Blockchain-anchored proof certificates for every document version. Cryptographic hash chains provide tamper-evident verification for regulatory inspections.' },
+      { name: 'RBAC & SSO', desc: 'Enterprise role-based access control with Microsoft and Google SSO. Granular permissions per project, module, and document with full activity logging.' },
+      { name: 'Audit Trail Dashboard', desc: 'Inspection-ready audit trail with advanced filtering, export to PDF/CSV, user activity analytics, and compliance verification reports.' },
+    ],
+  },
+];
+
 const AI_CAPABILITIES = [
   { name: 'Predicate Researcher', desc: 'Finds and analyzes predicate devices across FDA databases' },
   { name: 'Evidence Agent', desc: 'Gathers and validates clinical evidence from literature' },
@@ -168,6 +226,12 @@ const AI_CAPABILITIES = [
   { name: 'Document Drafter', desc: 'AI co-writes submission-ready regulatory documents' },
   { name: 'QC Agent', desc: 'Automated quality checks across all submission modules' },
   { name: 'Compliance Agent', desc: 'Monitors regulatory requirements and flags gaps' },
+  { name: 'CMC Specialist', desc: 'Generates CMC blueprints, stability summaries, and Module 3 drafts' },
+  { name: 'Cross-Ref Validator', desc: 'Validates cross-references, citations, and data consistency' },
+  { name: 'eCTD Assembler', desc: 'Packages and validates eCTD submissions for gateway acceptance' },
+  { name: 'Risk Scorer', desc: 'Real-time regulatory risk scoring across your portfolio' },
+  { name: 'Morning Briefing', desc: 'Daily intelligence digest of regulatory changes affecting your programs' },
+  { name: 'Audit Sentinel', desc: 'Continuous monitoring of 21 CFR Part 11 compliance across all activities' },
 ];
 
 const SOLUTIONS_BY_PERSONA = [
@@ -815,50 +879,83 @@ export const LandingPage: React.FC = () => {
         </div>
       </Section>
 
-      {/* ─── CONSOLIDATION SECTION ─── */}
+      {/* ─── NARRATIVE / LIFECYCLE ─── */}
       <Section className="py-20 px-6 bg-gradient-to-b from-zinc-900 to-zinc-800 text-white">
         <div className="max-w-5xl mx-auto">
-          <motion.div variants={fadeUp} className="text-center mb-12">
+          <motion.div variants={fadeUp} className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-white/10 border border-white/10">
-              <span className="text-sm font-medium text-blue-300">Why teams switch to Concept2Cure</span>
+              <span className="text-sm font-medium text-blue-300">The only platform built for the full regulatory lifecycle</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Replace <span className="text-blue-400">12+ disconnected tools</span><br />
-              with one intelligent platform
+              Don't just assemble data.<br />
+              <span className="text-blue-400">Tell the story of your therapeutic.</span>
             </h2>
             <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-              Your team is juggling too many tools. Regulatory submissions shouldn't require
-              a dozen logins and manual data transfers.
+              From preclinical research through post-market surveillance, Concept2Cure manages
+              your regulatory content across the entire lifecycle — in minutes, not months.
             </p>
           </motion.div>
 
-          <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-10">
+          {/* Lifecycle stages */}
+          <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-12">
+            {[
+              { stage: 'Discovery', desc: 'Deep research & intelligence', active: true },
+              { stage: 'Preclinical', desc: 'CMC & protocol design', active: true },
+              { stage: 'IND/CTA', desc: 'First-in-human filings', active: true },
+              { stage: 'Clinical', desc: 'CSR & amendment mgmt', active: true },
+              { stage: 'NDA/MAA', desc: 'Global submissions', active: true },
+            ].map((s, i) => (
+              <motion.div
+                key={s.stage}
+                variants={fadeIn}
+                className="relative p-4 rounded-xl bg-white/5 border border-white/10 text-center group hover:bg-white/10 transition-all"
+              >
+                {i < 4 && <div className="absolute -right-2 top-1/2 -translate-y-1/2 text-zinc-600 hidden md:block">&rarr;</div>}
+                <div className="text-sm font-semibold text-white mb-1">{s.stage}</div>
+                <div className="text-xs text-zinc-400">{s.desc}</div>
+                <div className="mt-2 w-full h-1 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 opacity-60" />
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Tool consolidation */}
+          <motion.div variants={fadeUp} className="text-center mb-8">
+            <p className="text-sm text-zinc-500 uppercase tracking-widest font-semibold mb-6">
+              Replace 12+ disconnected tools
+            </p>
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 mb-10">
             {CONSOLIDATION_TOOLS.map((tool) => (
               <motion.div
                 key={tool}
                 variants={fadeIn}
-                className="relative px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-zinc-400"
+                className="relative px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-xs text-zinc-500 text-center"
               >
-                <span className="absolute top-2 right-2 text-red-400/60 text-xs">&#10005;</span>
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/80 flex items-center justify-center text-[8px] text-white">&#10005;</span>
                 {tool}
               </motion.div>
             ))}
           </motion.div>
 
           <motion.div variants={fadeUp} className="text-center">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-10 h-[2px] bg-zinc-600" />
-              <span className="text-zinc-500 text-sm">becomes</span>
-              <div className="w-10 h-[2px] bg-zinc-600" />
+            <div className="inline-flex items-center gap-3 mb-6">
+              <div className="w-12 h-[1px] bg-zinc-600" />
+              <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+              <div className="w-12 h-[1px] bg-zinc-600" />
             </div>
-            <div className="max-w-lg mx-auto p-6 rounded-2xl bg-gradient-to-br from-blue-600/20 to-violet-600/20 border border-blue-500/20">
-              <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="max-w-lg mx-auto p-8 rounded-2xl bg-gradient-to-br from-blue-600/20 to-violet-600/20 border border-blue-500/30 shadow-lg shadow-blue-500/10">
+              <div className="flex items-center justify-center gap-3 mb-4">
                 <Logo />
                 <span className="text-2xl font-bold text-white">Concept2Cure</span>
               </div>
-              <p className="text-blue-200 text-sm">
-                One platform. One AI co-pilot. One source of truth.<br />
-                <span className="text-zinc-400">From deep research to eCTD submission to post-market surveillance.</span>
+              <p className="text-blue-200 text-sm mb-3">
+                One AI-native platform. One source of truth. One connected workspace.
+              </p>
+              <p className="text-zinc-400 text-xs">
+                Deep research &middot; Document authoring &middot; CSR builder &middot; CTD assembly &middot; eCTD export &middot; CMC platform &middot; Compliance &middot; Post-market
               </p>
             </div>
           </motion.div>
@@ -869,11 +966,16 @@ export const LandingPage: React.FC = () => {
       <Section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeUp} className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-blue-50 border border-blue-100">
+              <span className="text-sm font-medium text-blue-700">Core Capabilities</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
-              Everything you need for global regulatory success
+              Create submission-ready content with<br />
+              speed, structure, and confidence
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
-              From deep research to eCTD export, one platform replaces your entire regulatory toolkit.
+              Concept2Cure adapts to evolving data, helping your team generate, revise, and organize
+              regulatory content that's ready for review — not someday, but today.
             </p>
           </motion.div>
 
@@ -901,6 +1003,62 @@ export const LandingPage: React.FC = () => {
               );
             })}
           </div>
+        </div>
+      </Section>
+
+      {/* ─── COMPREHENSIVE PLATFORM MODULES ─── */}
+      <Section className="py-24 px-6 bg-white border-t border-zinc-200/60">
+        <div className="max-w-6xl mx-auto">
+          <motion.div variants={fadeUp} className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-zinc-100 border border-zinc-200">
+              <span className="text-sm font-medium text-zinc-700">24+ integrated modules</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+              The complete regulatory platform
+            </h2>
+            <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+              Every module your team needs — from first literature search through post-market surveillance —
+              connected in one AI-native workspace. No integrations. No data silos.
+            </p>
+          </motion.div>
+
+          <div className="space-y-12">
+            {PLATFORM_MODULES.map(cat => (
+              <motion.div key={cat.category} variants={fadeUp}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-blue-500 to-violet-500" />
+                  <h3 className="text-lg font-bold text-zinc-900">{cat.category}</h3>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {cat.modules.map(mod => (
+                    <motion.div
+                      key={mod.name}
+                      variants={fadeIn}
+                      className="p-5 rounded-xl bg-zinc-50 border border-zinc-100 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all duration-200 group"
+                    >
+                      <h4 className="text-sm font-semibold text-zinc-900 mb-2 group-hover:text-blue-700 transition-colors">{mod.name}</h4>
+                      <p className="text-xs text-zinc-500 leading-relaxed">{mod.desc}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div variants={fadeUp} className="text-center mt-12 p-8 rounded-2xl bg-gradient-to-r from-zinc-50 to-blue-50/50 border border-zinc-100">
+            <p className="text-lg font-semibold text-zinc-900 mb-2">
+              All modules included in every plan. No upsells. No add-ons.
+            </p>
+            <p className="text-sm text-zinc-500 mb-4">
+              From Day 1, your team gets access to the entire platform.
+            </p>
+            <button
+              onClick={() => setLocation('/concept2cure/demo')}
+              className="group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md"
+            >
+              Explore All Modules <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </motion.div>
         </div>
       </Section>
 
