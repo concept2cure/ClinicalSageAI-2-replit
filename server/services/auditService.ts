@@ -142,7 +142,9 @@ class AuditService {
 
   constructor() {
     // Trigger lazy initialization on first import
-    ensureInitialized().catch(() => {});
+    ensureInitialized().catch((err) => {
+      logger.error('AUDIT SERVICE INITIALIZATION FAILED — audit trail may be non-functional', { error: err.message });
+    });
   }
 
   /**

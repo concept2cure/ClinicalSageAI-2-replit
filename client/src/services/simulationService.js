@@ -133,16 +133,14 @@ export const fetchVectorInsights = async (indication, phase, endpoint) => {
     });
 
     if (!response.ok) {
-      // If the API isn't implemented yet, return mock data
-      // This ensures the UI can still function during development
-      return getMockVectorInsights(indication, phase);
+      console.error('Failed to fetch vector insights:', response.status);
+      return { similarTrials: [], aggregateInsights: {} };
     }
 
     return await response.json();
   } catch (error) {
     console.error('Error fetching vector insights:', error);
-    // Return mock data if API fails
-    return getMockVectorInsights(indication, phase);
+    return { similarTrials: [], aggregateInsights: {} };
   }
 };
 
@@ -173,104 +171,14 @@ export const generateAIRecommendations = async (
     });
 
     if (!response.ok) {
-      // If the API isn't implemented yet, return mock data
-      // This ensures the UI can still function during development
-      return getMockAIRecommendations(studyParameters);
+      console.error('Failed to generate AI recommendations:', response.status);
+      return { summary: '', strengths: [], improvements: [], regulatoryInsights: [] };
     }
 
     return await response.json();
   } catch (error) {
     console.error('Error generating AI recommendations:', error);
-    // Return mock data if API fails
-    return getMockAIRecommendations(studyParameters);
+    return { summary: '', strengths: [], improvements: [], regulatoryInsights: [] };
   }
 };
 
-// Helper functions for mock data during development
-function getMockVectorInsights(indication, phase) {
-  return {
-    similarTrials: [
-      {
-        id: 'NCT01234567',
-        title: `A Randomized Trial for ${indication}`,
-        similarity: 0.92,
-        sampleSize: 120,
-        effectSize: 0.48,
-        design: 'Randomized, double-blind, placebo-controlled',
-        duration: '8 weeks',
-        outcomes: 'Significant improvement in primary endpoint (p=0.023)',
-      },
-      {
-        id: 'NCT02345678',
-        title: `Efficacy Study in ${indication}`,
-        similarity: 0.85,
-        sampleSize: 150,
-        effectSize: 0.52,
-        design: 'Multi-center, randomized, placebo-controlled',
-        duration: '12 weeks',
-        outcomes: 'Significant improvement in QoL measures (p=0.018)',
-      },
-      {
-        id: 'NCT03456789',
-        title: `${phase} Evaluation of Novel Treatment for ${indication}`,
-        similarity: 0.78,
-        sampleSize: 90,
-        effectSize: 0.55,
-        design: 'Double-blind, crossover',
-        duration: '6 weeks per arm',
-        outcomes: 'Modest improvement in symptom relief (p=0.067)',
-      },
-    ],
-    aggregateInsights: {
-      averageSampleSize: 120,
-      recommendedEffectSize: 0.5,
-      commonEndpoints: [
-        'Change in symptom scores from baseline',
-        'Quality of life assessment',
-        'Patient global impression of change',
-      ],
-      typicalDuration: '8-12 weeks',
-      keySafetyParameters: [
-        'Adverse events related to treatment',
-        'Laboratory abnormalities',
-        'Vital sign changes',
-      ],
-      successRate: 0.67,
-      commonInclusion: [
-        'Adults 18-65 years',
-        `Diagnosis of ${indication}`,
-        'Symptoms for at least 6 months',
-      ],
-      commonExclusion: [
-        'History of related surgery',
-        'Concurrent medications',
-        'Alarm symptoms (weight loss, bleeding)',
-      ],
-    },
-  };
-}
-
-function getMockAIRecommendations(studyParameters) {
-  return {
-    summary: `The proposed study design for ${studyParameters.indication} is well-aligned with regulatory expectations and prior successful studies. The sample size calculation is appropriate, although consideration for regional differences in response rates may be warranted.`,
-    strengths: [
-      'Sample size calculation based on established effect size',
-      'Primary endpoint aligns with FDA guidance',
-      'Appropriate statistical approach for superiority design',
-      'Duration sufficient to detect clinically meaningful changes',
-    ],
-    improvements: [
-      'Consider stratification by key baseline characteristics',
-      'Add exploratory biomarkers based on similar trial insights',
-      'Consider adaptive design elements for sample size reassessment',
-      'Include patient-reported digital diary for symptom tracking',
-    ],
-    regulatoryInsights: [
-      'Design meets FDA requirements for the proposed phase',
-      'Primary endpoint is accepted by regulators',
-      'Statistical approach aligns with ICH E9 guidance',
-      'Safety monitoring plan meets current expectations',
-    ],
-    vectorAlignmentScore: 0.89,
-  };
-}

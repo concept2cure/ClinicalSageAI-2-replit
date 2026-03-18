@@ -675,7 +675,8 @@ const EnhancedEquivalenceComparison = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => alert('PDF generation feature coming soon!')}
+                      disabled
+                      title="PDF generation requires a report to be generated first"
                     >
                       <Printer className="h-4 w-4 mr-1" />
                       Print PDF
@@ -683,7 +684,8 @@ const EnhancedEquivalenceComparison = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => alert('Chart export feature coming soon!')}
+                      disabled
+                      title="Chart export requires comparison data"
                     >
                       <BarChart className="h-4 w-4 mr-1" />
                       Charts

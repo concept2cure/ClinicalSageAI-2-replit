@@ -264,16 +264,8 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
     );
   }
 
-  if (!programId) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <MessageSquare className="w-10 h-10 text-zinc-200 mx-auto mb-3" />
-          <p className="text-sm text-zinc-500">Select a program to view collaboration</p>
-        </div>
-      </div>
-    );
-  }
+  // When no program is selected, show a cross-program collaboration view
+  // instead of a blank screen
 
   // ── Render ─────────────────────────────────────────────────────────────────
 

@@ -61,15 +61,15 @@ interface MobileHeaderProps {
 }
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({ onMenuClick }) => (
-  <div className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 md:hidden">
+  <div className="flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 md:hidden">
     <button
       onClick={onMenuClick}
-      className="p-2 -ml-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+      className="p-2 -ml-2 rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
       aria-label="Open menu"
     >
       <Menu className="h-5 w-5" />
     </button>
-    <span className="font-semibold text-gray-900">Concept2Cure</span>
+    <span className="font-semibold text-zinc-900">Concept2Cure</span>
     <div className="w-9" /> {/* Spacer for centering */}
   </div>
 );
@@ -99,7 +99,7 @@ export const Concept2CureLayout: React.FC<Concept2CureLayoutProps> = ({ children
             {/* Close button */}
             <button
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-3 right-3 z-10 p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              className="absolute top-3 right-3 z-10 p-2 rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
               aria-label="Close menu"
             >
               <X className="h-5 w-5" />

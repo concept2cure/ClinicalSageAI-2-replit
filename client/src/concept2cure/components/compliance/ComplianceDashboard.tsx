@@ -139,7 +139,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-slate-200 dark:text-slate-700"
+          className="text-zinc-200"
         />
         {/* Progress circle */}
         <circle
@@ -163,7 +163,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
           {score}
         </span>
         {label && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
+          <span className="text-xs text-zinc-500">{label}</span>
         )}
       </div>
     </div>
@@ -189,15 +189,15 @@ const CategoryScoreBar: React.FC<CategoryScoreBarProps> = ({ label, score, icon 
 
   return (
     <div className="flex items-center gap-3">
-      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
         {icon}
       </div>
       <div className="flex-1">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-          <span className="text-sm text-slate-500">{score}%</span>
+          <span className="text-sm font-medium text-zinc-700">{label}</span>
+          <span className="text-sm text-zinc-500">{score}%</span>
         </div>
-        <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-zinc-200 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${getScoreColor(score)}`}
             style={{ width: `${score}%` }}
@@ -228,20 +228,20 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
   const severityConfig = {
     error: {
       icon: AlertTriangle,
-      bgColor: 'bg-red-50 dark:bg-red-900/20',
-      borderColor: 'border-red-200 dark:border-red-800',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
       iconColor: 'text-red-500',
     },
     warning: {
       icon: AlertTriangle,
-      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
-      borderColor: 'border-yellow-200 dark:border-yellow-800',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
       iconColor: 'text-yellow-500',
     },
     info: {
       icon: Info,
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-      borderColor: 'border-blue-200 dark:border-blue-800',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
       iconColor: 'text-blue-500',
     },
   };
@@ -258,37 +258,37 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
         <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-medium text-zinc-500">
               {violation.ruleId}
             </span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-600">
               {violation.category}
             </span>
           </div>
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+          <p className="text-sm font-medium text-zinc-800">
             {violation.ruleName}
           </p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+          <p className="text-sm text-zinc-600 mt-0.5">
             {violation.message}
           </p>
         </div>
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <ChevronDown className="w-4 h-4 text-zinc-400 flex-shrink-0" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <ChevronRight className="w-4 h-4 text-zinc-400 flex-shrink-0" />
         )}
       </button>
 
       {isExpanded && (
         <div className="px-3 pb-3 ml-8 space-y-2">
           {violation.suggestion && (
-            <div className="p-2 bg-white dark:bg-slate-800 rounded-lg">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Suggestion:</p>
-              <p className="text-sm text-slate-700 dark:text-slate-300">{violation.suggestion}</p>
+            <div className="p-2 bg-white rounded-lg">
+              <p className="text-xs text-zinc-500 mb-1">Suggestion:</p>
+              <p className="text-sm text-zinc-700">{violation.suggestion}</p>
             </div>
           )}
           {violation.regulatoryReference && (
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-zinc-500">
               <BookOpen className="w-3 h-3" />
               <span>Reference: {violation.regulatoryReference}</span>
             </div>
@@ -340,7 +340,7 @@ const TrendIndicator: React.FC<TrendIndicatorProps> = ({ history }) => {
     );
   }
   return (
-    <span className="flex items-center gap-1 text-slate-400 text-sm">
+    <span className="flex items-center gap-1 text-zinc-400 text-sm">
       <Minus className="w-4 h-4" />
       No change
     </span>
@@ -410,18 +410,18 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full bg-white dark:bg-slate-900 ${className}`}>
+    <div className={`flex flex-col h-full bg-white ${className}`}>
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+      <div className="p-4 border-b border-zinc-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-800 dark:text-slate-200">Compliance Dashboard</h2>
+              <h2 className="font-semibold text-zinc-800">Compliance Dashboard</h2>
               {documentTitle && (
-                <p className="text-sm text-slate-500">{documentTitle}</p>
+                <p className="text-sm text-zinc-500">{documentTitle}</p>
               )}
             </div>
           </div>
@@ -430,19 +430,19 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
               <button
                 onClick={onRefresh}
                 disabled={isLoading}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-50"
                 title="Refresh"
               >
-                <RefreshCw className={`w-5 h-5 text-slate-600 dark:text-slate-400 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 text-zinc-600 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             )}
             {onExport && (
               <button
                 onClick={onExport}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
                 title="Export Report"
               >
-                <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                <Download className="w-5 h-5 text-zinc-600" />
               </button>
             )}
           </div>
@@ -450,13 +450,13 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       </div>
 
       {/* Score Overview */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+      <div className="p-4 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-6">
           <ScoreRing score={score.overall} label="Overall" />
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-3">
               {submissionType && (
-                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-medium rounded-full">
+                <span className="px-3 py-1 bg-blue-100 text-blue-600 text-sm font-medium rounded-full">
                   {submissionType}
                 </span>
               )}
@@ -475,11 +475,11 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
                 <Info className="w-4 h-4" />
                 {infoCount} info
               </span>
-              <span className="text-slate-400">
+              <span className="text-zinc-400">
                 {score.passedRules}/{score.totalRules} rules passed
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-zinc-400 mt-2">
               Last checked: {new Date(score.timestamp).toLocaleString()}
             </p>
           </div>
@@ -487,8 +487,8 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       </div>
 
       {/* Category Breakdown */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+      <div className="p-4 border-b border-zinc-200">
+        <h3 className="text-sm font-medium text-zinc-700 mb-3">
           Category Breakdown
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -506,12 +506,12 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       {/* Violations Section */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Filters */}
-        <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
+        <div className="p-3 border-b border-zinc-200 flex items-center gap-2">
+          <Filter className="w-4 h-4 text-zinc-400" />
           <select
             value={severityFilter}
             onChange={e => setSeverityFilter(e.target.value as typeof severityFilter)}
-            className="px-2 py-1 bg-slate-100 dark:bg-slate-700 border-0 rounded text-sm"
+            className="px-2 py-1 bg-zinc-100 border-0 rounded text-sm"
           >
             <option value="all">All Severities</option>
             <option value="error">Errors</option>
@@ -521,7 +521,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value as typeof categoryFilter)}
-            className="px-2 py-1 bg-slate-100 dark:bg-slate-700 border-0 rounded text-sm"
+            className="px-2 py-1 bg-zinc-100 border-0 rounded text-sm"
           >
             <option value="all">All Categories</option>
             <option value="structure">Structure</option>
@@ -533,7 +533,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
             <option value="data_integrity">Data Integrity</option>
             <option value="signature">Signatures</option>
           </select>
-          <span className="text-xs text-slate-500 ml-auto">
+          <span className="text-xs text-zinc-500 ml-auto">
             {filteredViolations.length} issues
           </span>
         </div>
@@ -541,7 +541,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
         {/* Violations List */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {filteredViolations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+            <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
               <CheckCircle className="w-12 h-12 mb-3 text-green-500" />
               <p className="font-medium">No Issues Found</p>
               <p className="text-sm">

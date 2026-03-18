@@ -34,6 +34,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
+export * from './schema/csr-knowledge-db';
 
 // ============================================================
 // SHARED ENUMS
@@ -187,6 +188,65 @@ export const stripeEvents = pgTable('stripe_events', {
 });
 
 export type StripeEvent = InferSelectModel<typeof stripeEvents>;
+
+// ============================================================
+// DEEP RESEARCH JOBS (premium research orchestration)
+// ============================================================
+
+export const deepResearchJobs = pgTable('deep_research_jobs', {
+  id: serial('id').primaryKey(),
+  uuid: uuid('uuid').default(sql`gen_random_uuid()`),
+  organizationId: integer('organization_id').references(() => organizations.id),
+  projectId: integer('project_id'),
+  userId: integer('user_id'),
+  status: text('status').default('queued').notNull(), // queued, running, synthesizing, complete, failed
+  query: json('query'),
+  progress: integer('progress').default(0),
+  results: json('results'),
+  synthesis: text('synthesis'),
+  creditsUsed: integer('credits_used').default(0),
+  connectorLogs: json('connector_logs'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+});
+
+export type DeepResearchJob = InferSelectModel<typeof deepResearchJobs>;
+
+// ============================================================
+// CONNECTOR CREDENTIALS (encrypted per-org, for Veeva/Medidata)
+// ============================================================
+
+export const connectorCredentials = pgTable('connector_credentials', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  connectorId: text('connector_id').notNull(), // veeva_vault, medidata_rave, etc.
+  credentials: text('credentials').notNull(), // AES-256-GCM encrypted JSON
+  isValid: boolean('is_valid').default(true),
+  lastValidatedAt: timestamp('last_validated_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqOrgConnector: unique().on(table.organizationId, table.connectorId),
+}));
+
+export type ConnectorCredential = InferSelectModel<typeof connectorCredentials>;
+
+// ============================================================
+// USAGE RECORDS (credit-based metering for deep research, builders)
+// ============================================================
+
+export const usageRecords = pgTable('usage_records', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  userId: integer('user_id'),
+  featureId: text('feature_id').notNull(), // deep_research, csr_builder, ctd_builder
+  creditsUsed: integer('credits_used').default(1),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  idxUsageOrg: index('idx_usage_org_feature').on(table.organizationId, table.featureId, table.createdAt),
+}));
+
+export type UsageRecord = InferSelectModel<typeof usageRecords>;
 
 /**
  * Audit Logs
@@ -5300,6 +5360,51 @@ export const concept2cureSubmissionSnapshots = pgTable(
     createdAtIdx: index('c2c_snap_created_at_idx').on(table.createdAt),
   })
 );
+
+/**
+ * Conversation Working Memory Table
+ *
+ * Stores structured summaries of conversation context.
+ * Used to compress long conversations into compact working memory blocks
+ * that are injected into prompts, preventing token explosion.
+ */
+export const conversationWorkingMemory = pgTable(
+  'conversation_working_memory',
+  {
+    id: serial('id').primaryKey(),
+    conversationId: integer('conversation_id')
+      .references(() => concept2cureConversations.id, { onDelete: 'cascade' }),
+    threadId: text('thread_id'), // For legacy chat_threads integration
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    summary: text('summary').notNull(), // Human-readable markdown summary
+    structuredData: json('structured_data').$type<{
+      objective: string;
+      lockedFacts: string[];
+      decisions: string[];
+      openQuestions: string[];
+      nextActions: string[];
+      createdArtifacts: string[];
+      exclusions: string[];
+    }>(), // Machine-parseable structured memory
+    messageCountAtGeneration: integer('message_count_at_generation').notNull(),
+    generatedAt: timestamp('generated_at').defaultNow().notNull(),
+  },
+  table => ({
+    convIdx: index('cwm_conv_idx').on(table.conversationId),
+    threadIdx: index('cwm_thread_idx').on(table.threadId),
+    orgIdx: index('cwm_org_idx').on(table.organizationId),
+    generatedAtIdx: index('cwm_generated_at_idx').on(table.generatedAt),
+  })
+);
+
+export type ConversationWorkingMemory = InferSelectModel<typeof conversationWorkingMemory>;
+
+export const insertConversationWorkingMemorySchema = createInsertSchemaOmit(conversationWorkingMemory, {
+  id: true,
+  generatedAt: true,
+});
 
 // Insert Schemas
 export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
@@ -15535,6 +15640,515 @@ export const projectIngestedDocuments = pgTable(
 export type ProjectIngestedDocument = InferSelectModel<typeof projectIngestedDocuments>;
 
 // ============================================================
+// ACCOUNT CANON + EVENT LEDGER
+// ============================================================
+
+/**
+ * Account Canon Items — Governed, versioned account-level truths.
+ *
+ * Each canon item is a durable piece of account knowledge that has been
+ * asserted and optionally validated. Canon items are immutable once locked;
+ * updates create new versions via the event ledger.
+ *
+ * Categories map to life sciences customer operating memory:
+ * - regulatory_region: authority preferences, market strategies
+ * - terminology: approved terms, naming conventions, locked language
+ * - submission_pattern: standard structures, filing approaches, eCTD conventions
+ * - evidence_preference: evidence types, citation style, data requirements
+ * - authority_position: prior agency feedback, deficiency patterns, response style
+ * - template_preference: SOP/template defaults, output structure preferences
+ * - compliance_constraint: customer-specific constraints, gating rules
+ * - reviewer_chain: approver/reviewer workflows, sign-off requirements
+ * - risk_pattern: recurring risks, deficiencies, remediation approaches
+ * - product_portfolio: device families, programs, molecules, pipeline map
+ */
+export const accountCanonItems = pgTable(
+  'account_canon_items',
+  {
+    id: serial('id').primaryKey(),
+    canonId: text('canon_id').notNull().unique(), // External ID (canon_xxx)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    profileId: integer('profile_id')
+      .references(() => clientIntelligenceProfiles.id), // Link to intelligence profile
+
+    // ── Canon Identity ──────────────────────────────────────────
+    category: text('category').notNull(), // regulatory_region, terminology, submission_pattern, evidence_preference, authority_position, template_preference, compliance_constraint, reviewer_chain, risk_pattern, product_portfolio
+    subcategory: text('subcategory'), // e.g. 'fda_510k', 'ema_cer', 'naming_convention'
+    key: text('key').notNull(), // Lookup key within category: 'preferred_predicate_strategy', 'cer_evidence_structure'
+    title: text('title').notNull(), // Human-readable label
+    content: text('content').notNull(), // Full canon content (markdown)
+
+    // ── Scope & Resolution ────────────────────────────────────────
+    submissionTypes: json('submission_types').$type<string[]>(), // ['510k', 'PMA'] — null = all
+    moduleTypes: json('module_types').$type<string[]>(), // ['cer', 'clinical', 'cmc'] — null = all
+    workTypes: json('work_types').$type<string[]>(), // ['drafting', 'review', 'analysis'] — null = all
+    regulatoryRegions: json('regulatory_regions').$type<string[]>(), // ['US-FDA', 'EU-EMA'] — null = all
+
+    // ── Governance ────────────────────────────────────────────────
+    version: integer('version').default(1).notNull(),
+    status: text('status').default('active').notNull(), // draft, active, locked, superseded, archived
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+    supersededById: integer('superseded_by_id')
+      .references((): any => accountCanonItems.id), // Points to newer version's ID
+
+    // ── Provenance ────────────────────────────────────────────────
+    sourceType: text('source_type'), // manual, ai_extracted, document_import, event_derived
+    sourceDocumentId: text('source_document_id'), // Reference to originating document
+    sourceDescription: text('source_description'),
+    confidenceScore: real('confidence_score').default(0.9),
+
+    // ── Vector Embedding (for semantic resolution) ────────────────
+    embedding: vector('embedding', { dimensions: 1536 }),
+
+    // ── Metadata ──────────────────────────────────────────────────
+    metadata: json('metadata').$type<Record<string, unknown>>(),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_canon_org_idx').on(table.organizationId),
+    categoryIdx: index('acct_canon_category_idx').on(table.category),
+    keyIdx: index('acct_canon_key_idx').on(table.key),
+    statusIdx: index('acct_canon_status_idx').on(table.status),
+    canonIdIdx: index('acct_canon_id_idx').on(table.canonId),
+    profileIdx: index('acct_canon_profile_idx').on(table.profileId),
+  })
+);
+
+export type AccountCanonItem = InferSelectModel<typeof accountCanonItems>;
+export const insertAccountCanonItemSchema = createInsertSchemaOmit(accountCanonItems, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Event Ledger — Append-only event log for account-level changes.
+ *
+ * Every mutation to account canon, preferences, templates, or terminology
+ * is recorded as an immutable event. The current state (projection) is
+ * derived from replaying these events.
+ *
+ * This follows the same provenance pattern as concept2cureProvenanceEvents
+ * but scoped to the account intelligence layer.
+ */
+export const accountEvents = pgTable(
+  'account_events',
+  {
+    id: serial('id').primaryKey(),
+    eventId: text('event_id').notNull().unique(), // External ID (aevt_xxx)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── Event Classification ─────────────────────────────────────
+    eventType: text('event_type').notNull(),
+    // account_fact_asserted — new fact added to canon
+    // account_fact_validated — fact verified by human
+    // account_fact_superseded — fact replaced by newer version
+    // account_template_approved — template preference confirmed
+    // account_term_locked — terminology locked (no further changes)
+    // account_preference_changed — evidence/citation/output preference updated
+    // account_submission_pattern_recorded — submission structure/approach captured
+    // account_authority_position_recorded — agency feedback/position logged
+    // account_skill_bundle_created — new execution bundle created
+    // account_skill_bundle_updated — bundle contents changed
+    // account_canon_resolved — canon items used in an AI run (audit trail)
+
+    // ── Target Reference ──────────────────────────────────────────
+    canonItemId: integer('canon_item_id')
+      .references(() => accountCanonItems.id),
+    skillBundleId: integer('skill_bundle_id')
+      .references(() => accountSkillBundles.id), // FK to skill bundles
+    targetType: text('target_type'), // canon_item, skill_bundle, term_entry, template_entry
+    targetId: text('target_id'), // External ID of the affected entity
+
+    // ── Event Payload ─────────────────────────────────────────────
+    previousValue: json('previous_value').$type<Record<string, unknown>>(),
+    newValue: json('new_value').$type<Record<string, unknown>>(),
+    description: text('description'), // Human-readable event description
+    details: json('details').$type<Record<string, unknown>>().default({}),
+
+    // ── Actor ─────────────────────────────────────────────────────
+    actorId: integer('actor_id').references(() => users.id),
+    actorName: text('actor_name'),
+    actorEmail: text('actor_email'),
+    actorType: text('actor_type').default('user'), // user, system, ai
+
+    // ── Correlation ───────────────────────────────────────────────
+    correlationId: text('correlation_id'), // Links related events (e.g., bulk import)
+    projectId: integer('project_id').references(() => projects.id), // If triggered from project context
+    conversationId: integer('conversation_id'), // If triggered from conversation
+
+    // ── Immutable ─────────────────────────────────────────────────
+    ipAddress: varchar('ip_address', { length: 45 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_evt_org_idx').on(table.organizationId),
+    eventTypeIdx: index('acct_evt_type_idx').on(table.eventType),
+    canonItemIdx: index('acct_evt_canon_idx').on(table.canonItemId),
+    targetIdx: index('acct_evt_target_idx').on(table.targetType, table.targetId),
+    createdAtIdx: index('acct_evt_created_at_idx').on(table.createdAt),
+    correlationIdx: index('acct_evt_correlation_idx').on(table.correlationId),
+  })
+);
+
+export type AccountEvent = InferSelectModel<typeof accountEvents>;
+
+export const insertAccountEventSchema = createInsertSchemaOmit(accountEvents, {
+  id: true,
+  createdAt: true,
+});
+
+/**
+ * Account Projection — Materialized state view computed from events.
+ *
+ * Stores the latest computed state for fast reads. Rebuilt from the
+ * event ledger on demand or after significant changes.
+ */
+export const accountProjection = pgTable(
+  'account_projection',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id)
+      .unique(), // One projection per org
+
+    // ── Computed State ────────────────────────────────────────────
+    activeCanonCount: integer('active_canon_count').default(0),
+    lockedCanonCount: integer('locked_canon_count').default(0),
+    activeSkillBundleCount: integer('active_skill_bundle_count').default(0),
+    termDictionarySize: integer('term_dictionary_size').default(0),
+    templateRegistrySize: integer('template_registry_size').default(0),
+
+    // ── Category Summaries ───────────────────────────────────────
+    canonByCategory: json('canon_by_category').$type<Record<string, number>>().default({}),
+    recentEvents: json('recent_events').$type<Array<{
+      eventId: string;
+      eventType: string;
+      description: string;
+      createdAt: string;
+    }>>().default([]),
+
+    // ── Health Metrics ────────────────────────────────────────────
+    lastEventAt: timestamp('last_event_at'),
+    lastProjectionAt: timestamp('last_projection_at'),
+    eventCountSinceProjection: integer('event_count_since_projection').default(0),
+    projectionVersion: integer('projection_version').default(1),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_proj_org_idx').on(table.organizationId),
+  })
+);
+
+export type AccountProjection = InferSelectModel<typeof accountProjection>;
+
+export const insertAccountProjectionSchema = createInsertSchemaOmit(accountProjection, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// ============================================================
+// ACCOUNT SKILL BUNDLES
+// ============================================================
+
+/**
+ * Account Skill Bundles — Reusable account-level execution bundles.
+ *
+ * Each bundle codifies "how this account does X" — e.g., how they write
+ * CER evidence summaries, their IND module drafting defaults, their
+ * FDA response letter style.
+ *
+ * Bundles are resolved by submission type + module + work type and
+ * injected into AI prompts as execution instructions.
+ */
+export const accountSkillBundles = pgTable(
+  'account_skill_bundles',
+  {
+    id: serial('id').primaryKey(),
+    bundleId: text('bundle_id').notNull().unique(), // External ID (bundle_xxx)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    profileId: integer('profile_id')
+      .references(() => clientIntelligenceProfiles.id),
+
+    // ── Bundle Identity ─────────────────────────────────────────
+    name: text('name').notNull(), // "FDA 510(k) Drafting Bundle"
+    description: text('description'), // What this bundle is for
+    bundleType: text('bundle_type').notNull(), // drafting, review, analysis, response, export, workflow
+
+    // ── Scope & Resolution ──────────────────────────────────────
+    submissionTypes: json('submission_types').$type<string[]>(), // ['510k', 'PMA'] — null = all
+    moduleTypes: json('module_types').$type<string[]>(), // ['cer', 'clinical', 'cmc'] — null = all
+    workTypes: json('work_types').$type<string[]>(), // ['drafting', 'review'] — null = all
+    regulatoryRegions: json('regulatory_regions').$type<string[]>(), // ['US-FDA'] — null = all
+
+    // ── Bundle Contents ─────────────────────────────────────────
+    promptFragments: json('prompt_fragments').$type<Array<{
+      role: string; // system_addon, instruction, constraint, style_guide
+      content: string;
+      priority: number; // 1-10, higher = more important
+    }>>().default([]),
+
+    outputStructure: json('output_structure').$type<{
+      format?: string; // markdown, docx, pdf
+      sections?: string[];
+      templateId?: string;
+      defaultHeadings?: string[];
+    }>(),
+
+    evidencePreferences: json('evidence_preferences').$type<{
+      preferredTypes?: string[]; // clinical_trial, literature, real_world, bench_testing
+      citationStyle?: string; // apa, vancouver, numbered, regulatory
+      minimumEvidenceLevel?: string;
+      requiredSources?: string[];
+    }>(),
+
+    authorityResponseStyle: json('authority_response_style').$type<{
+      tone?: string; // formal, collaborative, concise
+      structure?: string[];
+      requiredElements?: string[];
+      avoidPatterns?: string[];
+    }>(),
+
+    policyBindings: json('policy_bindings').$type<Array<{
+      policyType: string; // quality_gate, review_requirement, compliance_check
+      description: string;
+      enforcement: string; // mandatory, recommended, optional
+    }>>().default([]),
+
+    artifactDefaults: json('artifact_defaults').$type<{
+      defaultStatus?: string;
+      defaultCategory?: string;
+      requiredMetadata?: string[];
+      templateId?: string;
+    }>(),
+
+    reviewerRequirements: json('reviewer_requirements').$type<{
+      requiredReviewers?: number;
+      reviewerRoles?: string[];
+      approvalChain?: string[];
+      signatureRequired?: boolean;
+    }>(),
+
+    // ── Governance ──────────────────────────────────────────────
+    version: integer('version').default(1).notNull(),
+    status: text('status').default('active').notNull(), // draft, active, locked, archived
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+
+    // ── Metadata ────────────────────────────────────────────────
+    metadata: json('metadata').$type<Record<string, unknown>>(),
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_bundle_org_idx').on(table.organizationId),
+    bundleIdIdx: index('acct_bundle_id_idx').on(table.bundleId),
+    typeIdx: index('acct_bundle_type_idx').on(table.bundleType),
+    statusIdx: index('acct_bundle_status_idx').on(table.status),
+    profileIdx: index('acct_bundle_profile_idx').on(table.profileId),
+  })
+);
+
+export type AccountSkillBundle = InferSelectModel<typeof accountSkillBundles>;
+export const insertAccountSkillBundleSchema = createInsertSchemaOmit(accountSkillBundles, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Term Dictionary — Locked terminology for an account.
+ *
+ * Terms that must be used consistently across all documents and
+ * AI outputs for this account. Enforced during drafting and review.
+ */
+export const accountTermDictionary = pgTable(
+  'account_term_dictionary',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    bundleId: integer('bundle_id')
+      .references(() => accountSkillBundles.id), // Optional link to a skill bundle
+
+    // ── Term Definition ─────────────────────────────────────────
+    term: text('term').notNull(), // The approved term
+    definition: text('definition'), // What it means
+    context: text('context'), // When to use it
+    alternatives: json('alternatives').$type<string[]>(), // Synonyms/variants to map FROM
+    doNotUse: json('do_not_use').$type<string[]>(), // Terms explicitly prohibited
+
+    // ── Scope ───────────────────────────────────────────────────
+    category: text('category'), // device_name, indication, mechanism, regulatory, general
+    submissionTypes: json('submission_types').$type<string[]>(), // Scoped to specific submission types
+    regulatoryRegions: json('regulatory_regions').$type<string[]>(),
+
+    // ── Governance ──────────────────────────────────────────────
+    status: text('status').default('active').notNull(), // active, locked, deprecated
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_term_org_idx').on(table.organizationId),
+    termIdx: index('acct_term_term_idx').on(table.term),
+    categoryIdx: index('acct_term_category_idx').on(table.category),
+    bundleIdx: index('acct_term_bundle_idx').on(table.bundleId),
+    statusIdx: index('acct_term_status_idx').on(table.status),
+  })
+);
+
+export type AccountTermEntry = InferSelectModel<typeof accountTermDictionary>;
+export const insertAccountTermEntrySchema = createInsertSchemaOmit(accountTermDictionary, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Template Registry — Account-specific template overrides.
+ *
+ * Extends the platform template registry with account-specific customizations:
+ * section ordering, default content, required sections, naming conventions.
+ */
+export const accountTemplateRegistry = pgTable(
+  'account_template_registry',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    bundleId: integer('bundle_id')
+      .references(() => accountSkillBundles.id),
+
+    // ── Template Identity ───────────────────────────────────────
+    templateKey: text('template_key').notNull(), // Maps to platform template ID or custom key
+    name: text('name').notNull(),
+    description: text('description'),
+    submissionType: text('submission_type'), // '510k', 'IND', 'CER', etc.
+    regulatoryRegion: text('regulatory_region'), // 'US-FDA', 'EU-EMA', etc.
+
+    // ── Template Customizations ──────────────────────────────────
+    sectionOverrides: json('section_overrides').$type<Array<{
+      sectionCode: string;
+      title?: string; // Override section title
+      instruction?: string; // Override drafting instruction
+      required?: boolean;
+      defaultContent?: string;
+      order?: number;
+    }>>(),
+
+    defaultMetadata: json('default_metadata').$type<Record<string, unknown>>(),
+    headerFooter: json('header_footer').$type<{
+      headerText?: string;
+      footerText?: string;
+      logoUrl?: string;
+      confidentialityNotice?: string;
+    }>(),
+
+    namingConvention: text('naming_convention'), // Pattern for document naming: "{product}-{type}-{version}-{date}"
+
+    // ── Governance ──────────────────────────────────────────────
+    version: integer('version').default(1).notNull(),
+    status: text('status').default('active').notNull(), // active, locked, archived
+    lockedAt: timestamp('locked_at'),
+    lockedById: integer('locked_by_id').references(() => users.id),
+
+    createdById: integer('created_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_tmpl_org_idx').on(table.organizationId),
+    templateKeyIdx: index('acct_tmpl_key_idx').on(table.templateKey),
+    submissionTypeIdx: index('acct_tmpl_sub_type_idx').on(table.submissionType),
+    bundleIdx: index('acct_tmpl_bundle_idx').on(table.bundleId),
+    statusIdx: index('acct_tmpl_status_idx').on(table.status),
+  })
+);
+
+export type AccountTemplateEntry = InferSelectModel<typeof accountTemplateRegistry>;
+export const insertAccountTemplateEntrySchema = createInsertSchemaOmit(accountTemplateRegistry, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+/**
+ * Account Canon Resolution Log — Audit trail of which canon items
+ * and skill bundles were resolved into each AI run.
+ *
+ * Required for regulatory traceability: proves which account intelligence
+ * influenced each generated artifact.
+ */
+export const accountCanonResolutionLog = pgTable(
+  'account_canon_resolution_log',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // ── Run Context ─────────────────────────────────────────────
+    requestId: text('request_id').notNull(), // AI gateway request ID for correlation
+    projectId: integer('project_id').references(() => projects.id),
+    conversationId: integer('conversation_id'),
+    threadId: text('thread_id'),
+
+    // ── What Was Resolved ────────────────────────────────────────
+    resolvedCanonIds: json('resolved_canon_ids').$type<number[]>().default([]),
+    resolvedBundleIds: json('resolved_bundle_ids').$type<number[]>().default([]),
+    resolvedTermIds: json('resolved_term_ids').$type<number[]>().default([]),
+    resolvedTemplateIds: json('resolved_template_ids').$type<number[]>().default([]),
+
+    // ── Resolution Context ──────────────────────────────────────
+    submissionType: text('submission_type'),
+    moduleType: text('module_type'),
+    workType: text('work_type'),
+    regulatoryRegion: text('regulatory_region'),
+    totalTokensInjected: integer('total_tokens_injected'),
+
+    // ── Immutable ───────────────────────────────────────────────
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('acct_reslog_org_idx').on(table.organizationId),
+    requestIdx: index('acct_reslog_request_idx').on(table.requestId),
+    projectIdx: index('acct_reslog_project_idx').on(table.projectId),
+    createdAtIdx: index('acct_reslog_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type AccountCanonResolutionLogEntry = InferSelectModel<typeof accountCanonResolutionLog>;
+
+export const insertAccountCanonResolutionLogSchema = createInsertSchemaOmit(accountCanonResolutionLog, {
+  id: true,
+  createdAt: true,
+});
+
+// ============================================================
+// END ACCOUNT CANON + SKILL BUNDLES
+// ============================================================
+
+// ============================================================
 // END CLIENT & PROJECT INTELLIGENCE MEMORY SYSTEM
 // ============================================================
 
@@ -16662,3 +17276,321 @@ export const insertSubmissionTwinAssessmentSchema = createInsertSchemaOmit(submi
   createdAt: true,
 });
 export type SubmissionTwinAssessment = InferSelectModel<typeof submissionTwinAssessments>;
+
+// ============================================================
+// INTELLIGENT REPORT ENGINE — Immutable Records & Quasi-Indemnification
+// ============================================================
+
+/** Report domain categories across the entire platform */
+export const reportDomainEnum = pgEnum('report_domain', [
+  'regulatory_submission',   // eCTD, IND, NDA, BLA, 510k, PMA, CER
+  'clinical_study',          // CSR, IDMC, protocol, SAP
+  'cmc_manufacturing',       // CMC Module 3, stability, analytical
+  'pharmacovigilance',       // PSUR, DSUR, CIOMS, MedWatch
+  'quality_management',      // QMP, CAPA, deviation, audit
+  'compliance_attestation',  // 21 CFR Part 11, GDPR, SOC 2, GxP
+  'strategic_intelligence',  // competitive, pipeline, market access
+  'provenance_audit',        // document lineage, data provenance
+  'device_regulatory',       // MDR, IVDR, 510k, PMA, De Novo
+  'biostatistics',           // SAP, interim, futility, sample size
+  'environmental_safety',    // ESG, environmental impact
+  'cross_functional',        // multi-domain composite reports
+]);
+
+/** Immutability seal status for records */
+export const sealStatusEnum = pgEnum('seal_status', [
+  'draft',        // mutable, not yet sealed
+  'pending_seal', // awaiting signatures before seal
+  'sealed',       // immutable — cryptographically locked
+  'superseded',   // replaced by newer sealed version
+  'revoked',      // invalidated (with justification)
+]);
+
+/** Regulatory body that the report targets */
+export const regulatoryBodyEnum = pgEnum('regulatory_body', [
+  'FDA', 'EMA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada',
+  'MHRA', 'ANVISA', 'MFDS', 'Swissmedic', 'ICH', 'WHO_PQ',
+  'CDSCO', 'HSA', 'SAHPRA', 'COFEPRIS', 'multi_regional',
+]);
+
+/**
+ * Immutable Report Records — the master ledger
+ * Every report generated anywhere in the platform is registered here.
+ * Once sealed, the record becomes cryptographically immutable.
+ */
+export const immutableReportRecords = pgTable(
+  'immutable_report_records',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    clientWorkspaceId: integer('client_workspace_id')
+      .references(() => clientWorkspaces.id),
+    projectId: integer('project_id')
+      .references(() => projects.id),
+
+    // Report identity
+    reportUuid: uuid('report_uuid').defaultRandom().notNull().unique(),
+    reportCode: text('report_code').notNull(),          // e.g. "RPT-2026-0318-CSR-001"
+    reportTitle: text('report_title').notNull(),
+    reportDomain: reportDomainEnum('report_domain').notNull(),
+    reportSubtype: text('report_subtype'),               // e.g. "ICH E3 CSR", "510(k) Summary"
+    version: text('version').notNull().default('1.0.0'),
+    previousVersionId: integer('previous_version_id'),   // links to superseded version
+
+    // Regulatory targeting
+    targetRegulatory: regulatoryBodyEnum('target_regulatory'),
+    applicableGuidelines: json('applicable_guidelines'),  // [{code, title, version}]
+    complianceFrameworks: json('compliance_frameworks'),   // ["21 CFR Part 11", "ICH E6(R3)", ...]
+
+    // Content
+    content: json('content').notNull(),                   // full report payload
+    executiveSummary: text('executive_summary'),
+    sections: json('sections'),                           // [{sectionId, title, content, atomRefs[]}]
+    metadata: json('metadata'),                           // flexible metadata
+
+    // Atom-level provenance
+    atomReferences: json('atom_references'),              // [{atomId, atomType, sourceTable, sourceId, fieldPath, value, confidence}]
+    dataLineageSnapshot: json('data_lineage_snapshot'),   // frozen lineage at generation time
+    sourceDocumentIds: json('source_document_ids'),       // [documentId, ...] inputs used
+
+    // Immutability & cryptographic integrity
+    sealStatus: sealStatusEnum('seal_status').notNull().default('draft'),
+    contentHash: text('content_hash'),                    // SHA-256 of canonical content
+    previousHash: text('previous_hash'),                  // hash chain link
+    merkleRoot: text('merkle_root'),                      // merkle root of all section hashes
+    sealedAt: timestamp('sealed_at'),
+    sealedById: integer('sealed_by_id')
+      .references(() => users.id),
+    sealJustification: text('seal_justification'),
+
+    // Quasi-indemnification attestation
+    complianceScore: real('compliance_score'),             // 0-100
+    attestationStatement: text('attestation_statement'),   // legal disclaimer + compliance attestation
+    regulatoryBasis: json('regulatory_basis'),             // [{regulation, section, requirement, status}]
+    riskDisclosures: json('risk_disclosures'),             // [{riskId, category, description, mitigation}]
+    methodologyDeclaration: text('methodology_declaration'), // how report was generated
+    aiDisclosure: json('ai_disclosure'),                   // {model, version, promptHash, humanReviewStatus}
+    indemnificationTier: text('indemnification_tier'),      // 'full_audit_trail', 'partial', 'advisory_only'
+
+    // Signatures (references to electronic_signatures)
+    requiredSignatures: json('required_signatures'),       // [{role, userId, status}]
+    signatureCount: integer('signature_count').default(0),
+    allSignaturesCollected: boolean('all_signatures_collected').default(false),
+
+    // Generation metadata
+    generatedBy: text('generated_by'),                     // 'system', 'ai_assisted', 'manual'
+    generationContext: json('generation_context'),          // {triggeredFrom, persona, parameters}
+    generationDurationMs: integer('generation_duration_ms'),
+
+    // Lifecycle
+    status: text('status').notNull().default('draft'),     // draft, generated, review, sealed, distributed
+    createdById: integer('created_by_id')
+      .references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('irr_org_idx').on(table.organizationId),
+    projectIdx: index('irr_project_idx').on(table.projectId),
+    domainIdx: index('irr_domain_idx').on(table.reportDomain),
+    sealIdx: index('irr_seal_idx').on(table.sealStatus),
+    hashIdx: index('irr_hash_idx').on(table.contentHash),
+    regulatoryIdx: index('irr_regulatory_idx').on(table.targetRegulatory),
+    codeIdx: index('irr_code_idx').on(table.reportCode),
+    createdIdx: index('irr_created_idx').on(table.createdAt),
+  })
+);
+
+export const insertImmutableReportRecordSchema = createInsertSchemaOmit(immutableReportRecords, {
+  id: true,
+  reportUuid: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ImmutableReportRecord = InferSelectModel<typeof immutableReportRecords>;
+
+/**
+ * Report Atom Provenance — atom-level traceability for every data point in a report
+ * Links each field/claim in a report to its source atom(s) in lumen_data_atoms or raw tables.
+ */
+export const reportAtomProvenance = pgTable(
+  'report_atom_provenance',
+  {
+    id: serial('id').primaryKey(),
+    reportId: integer('report_id')
+      .notNull()
+      .references(() => immutableReportRecords.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // Where in the report
+    sectionPath: text('section_path').notNull(),          // e.g. "sections[2].efficacy.primaryEndpoint"
+    fieldLabel: text('field_label'),                       // human-readable label
+    reportedValue: text('reported_value'),                 // the value as it appears in the report
+
+    // Source atom reference
+    atomId: integer('atom_id'),                            // FK to lumen_data_atoms if applicable
+    sourceTable: text('source_table').notNull(),           // e.g. "csr_details", "cer_reports", "lumen_data_atoms"
+    sourceRecordId: text('source_record_id').notNull(),    // PK in source table
+    sourceField: text('source_field').notNull(),           // column/path in source
+    sourceValue: text('source_value'),                     // original value at source
+    valueHash: text('value_hash'),                         // SHA-256 of source value for drift detection
+
+    // Transformation
+    transformationType: text('transformation_type'),       // 'direct_copy', 'aggregation', 'calculation', 'ai_generated', 'manual_entry'
+    transformationRule: text('transformation_rule'),        // description of how value was derived
+    confidence: real('confidence'),                         // 0.0-1.0
+
+    // Integrity
+    verified: boolean('verified').default(false),
+    verifiedAt: timestamp('verified_at'),
+    verifiedById: integer('verified_by_id')
+      .references(() => users.id),
+    driftDetected: boolean('drift_detected').default(false), // source changed since report generated
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    reportIdx: index('rap_report_idx').on(table.reportId),
+    orgIdx: index('rap_org_idx').on(table.organizationId),
+    atomIdx: index('rap_atom_idx').on(table.atomId),
+    sourceIdx: index('rap_source_idx').on(table.sourceTable, table.sourceRecordId),
+    driftIdx: index('rap_drift_idx').on(table.driftDetected),
+  })
+);
+
+export const insertReportAtomProvenanceSchema = createInsertSchemaOmit(reportAtomProvenance, {
+  id: true,
+  createdAt: true,
+});
+export type ReportAtomProvenance = InferSelectModel<typeof reportAtomProvenance>;
+
+/**
+ * Report Seal Events — immutable log of every seal/unseal/revocation
+ * This is the chain-of-custody for report immutability.
+ */
+export const reportSealEvents = pgTable(
+  'report_seal_events',
+  {
+    id: serial('id').primaryKey(),
+    reportId: integer('report_id')
+      .notNull()
+      .references(() => immutableReportRecords.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    eventType: text('event_type').notNull(),               // 'sealed', 'superseded', 'revoked', 'signature_added', 'verification_passed', 'verification_failed'
+    previousSealStatus: text('previous_seal_status'),
+    newSealStatus: text('new_seal_status'),
+
+    // Cryptographic proof
+    contentHashAtEvent: text('content_hash_at_event'),     // hash snapshot at time of event
+    chainHash: text('chain_hash'),                         // hash of this event chained to previous
+    previousEventHash: text('previous_event_hash'),        // link to prior event hash
+
+    // Actor
+    performedById: integer('performed_by_id')
+      .references(() => users.id),
+    performedByName: text('performed_by_name'),
+    performedByRole: text('performed_by_role'),
+
+    // Context
+    justification: text('justification'),
+    regulatoryContext: text('regulatory_context'),          // which regulation triggered this action
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    reportIdx: index('rse_report_idx').on(table.reportId),
+    orgIdx: index('rse_org_idx').on(table.organizationId),
+    eventIdx: index('rse_event_idx').on(table.eventType),
+    chainIdx: index('rse_chain_idx').on(table.chainHash),
+    createdIdx: index('rse_created_idx').on(table.createdAt),
+  })
+);
+
+export const insertReportSealEventSchema = createInsertSchemaOmit(reportSealEvents, {
+  id: true,
+  createdAt: true,
+});
+export type ReportSealEvent = InferSelectModel<typeof reportSealEvents>;
+
+/**
+ * Indemnification Attestations — quasi-legal compliance records
+ * Each attestation binds a report to specific regulatory requirements
+ * and records that compliance was verified at generation time.
+ */
+export const indemnificationAttestations = pgTable(
+  'indemnification_attestations',
+  {
+    id: serial('id').primaryKey(),
+    reportId: integer('report_id')
+      .notNull()
+      .references(() => immutableReportRecords.id),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+
+    // Attestation identity
+    attestationUuid: uuid('attestation_uuid').defaultRandom().notNull().unique(),
+    attestationType: text('attestation_type').notNull(),   // 'regulatory_compliance', 'data_integrity', 'methodology', 'ai_transparency', 'provenance_complete', 'signature_authority'
+
+    // What is being attested
+    regulatoryBody: regulatoryBodyEnum('regulatory_body'),
+    regulationCode: text('regulation_code'),               // e.g. "21 CFR 312.23(a)(6)"
+    regulationTitle: text('regulation_title'),
+    requirementDescription: text('requirement_description'),
+    guidelineReference: text('guideline_reference'),        // e.g. "ICH E3 Section 11.4"
+
+    // Attestation result
+    complianceStatus: text('compliance_status').notNull(),  // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'
+    complianceScore: real('compliance_score'),               // 0-100
+    findings: json('findings'),                              // [{finding, severity, recommendation}]
+    evidenceReferences: json('evidence_references'),         // [{type, id, description}] pointers to supporting evidence
+    gapDescription: text('gap_description'),                 // if not fully compliant
+    mitigationPlan: text('mitigation_plan'),                 // remediation steps
+
+    // Legal language
+    disclaimerText: text('disclaimer_text'),                 // platform liability disclaimer
+    attestationStatement: text('attestation_statement'),     // formal attestation language
+    scopeLimitations: text('scope_limitations'),             // what this attestation does NOT cover
+    indemnificationScope: text('indemnification_scope'),     // 'full', 'limited', 'advisory'
+
+    // Verification
+    verifiedBySystem: boolean('verified_by_system').default(false),
+    verifiedByHuman: boolean('verified_by_human').default(false),
+    verifierId: integer('verifier_id')
+      .references(() => users.id),
+    verifiedAt: timestamp('verified_at'),
+
+    // Integrity
+    attestationHash: text('attestation_hash'),              // SHA-256 of canonical attestation content
+    sealed: boolean('sealed').default(false),
+    sealedAt: timestamp('sealed_at'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    reportIdx: index('ia_report_idx').on(table.reportId),
+    orgIdx: index('ia_org_idx').on(table.organizationId),
+    typeIdx: index('ia_type_idx').on(table.attestationType),
+    bodyIdx: index('ia_body_idx').on(table.regulatoryBody),
+    statusIdx: index('ia_status_idx').on(table.complianceStatus),
+    sealedIdx: index('ia_sealed_idx').on(table.sealed),
+  })
+);
+
+export const insertIndemnificationAttestationSchema = createInsertSchemaOmit(indemnificationAttestations, {
+  id: true,
+  attestationUuid: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type IndemnificationAttestation = InferSelectModel<typeof indemnificationAttestations>;

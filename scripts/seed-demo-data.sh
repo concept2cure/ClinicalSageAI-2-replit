@@ -295,6 +295,50 @@ api_post "/api/concept2cure/projects/$P6_ID/artifacts" '{
   "metadata": {"ctdSection": "De Novo", "stage": "review"}
 }' > /dev/null
 
+# ============================================================================
+# ADDITIONAL DEMO ARTIFACTS — Diverse document types at all stages
+# ============================================================================
+
+# --- Project 3 (NDA - Zeltraxin): Add presentation & additional docs ---
+echo ""
+echo "📄 Adding Board Presentation to NDA project..."
+api_post "/api/concept2cure/projects/$P3_ID/artifacts" '{
+  "type": "markdown",
+  "category": "document",
+  "title": "Advisory Board Briefing Deck — Zeltraxin NDA",
+  "content": "# Zeltraxin (ZTX-108) NDA Advisory Briefing\n> Concept2Cure Oncology — Regulatory Affairs\n\n---\n\n## Executive Summary\n- First-in-class STING agonist for advanced NSCLC\n- Pivotal ILLUMINATE trial: 7.7-month OS improvement (HR 0.68)\n- NDA submission target: April 15, 2026\n- Breakthrough Therapy + Fast Track designations secured\n\n---\n\n## Clinical Program Overview\n- 4 completed studies (Phase 1, 1b, 2, 3)\n- 958 patients treated across all studies\n- Consistent efficacy across pre-specified subgroups\n- Manageable safety profile with known class effects\n\n---\n\n## ILLUMINATE Phase 3 Results\n- **Primary endpoint (OS)**: 24.8 vs 17.1 months (HR 0.68, p<0.001)\n- **Key secondary (PFS)**: 11.2 vs 7.4 months (HR 0.62, p<0.001)\n- **ORR**: 52.3% vs 34.1%\n- **Duration of Response**: 14.7 vs 9.8 months\n\n---\n\n## Safety Summary\n- Grade ≥3 TRAEs: 38.2% vs 29.4% (manageable)\n- irAEs: 24.5% vs 18.2% (consistent with immunotherapy)\n- CRS: 2.8% Grade ≥3 (protocol-managed)\n- No treatment-related deaths in ZTX-108 arm\n\n---\n\n## Regulatory Strategy & Timeline\n- Pre-NDA Type A meeting: Complete (FDA aligned)\n- eCTD compilation: 95% complete\n- Priority Review expected (BT designation)\n- Estimated PDUFA: October 2026\n\n---\n\n## Commercial Readiness\n- Launch supply secured (12-month inventory)\n- KOL advisory board engaged (15 centers)\n- Payer strategy: ICER-aligned HEOR package\n- Medical affairs field team trained\n\n---\n\n## Next Steps & Decision Points\n1. eCTD technical validation (April 1)\n2. NDA gate review (April 8)\n3. Submit NDA (April 15)\n4. Prepare for potential AdComm (unlikely per FDA)\n5. Launch readiness review (Q3 2026)",
+  "metadata": {"ctdSection": "Briefing", "stage": "approved", "documentType": "presentation"}
+}' > /dev/null
+
+echo "📄 Adding Statistical Analysis Plan..."
+api_post "/api/concept2cure/projects/$P3_ID/artifacts" '{
+  "type": "markdown",
+  "category": "document",
+  "title": "Statistical Analysis Plan — ILLUMINATE Phase 3",
+  "content": "# Statistical Analysis Plan\n## Protocol ZTX-108-301 (ILLUMINATE)\n## Version 3.0 — FINAL\n\n### 1. Study Objectives\n**Primary**: Demonstrate superiority of ZTX-108 + pembrolizumab vs placebo + pembrolizumab in OS.\n**Key Secondary**: PFS, ORR, DOR, Patient-reported outcomes (EORTC QLQ-C30).\n\n### 2. Sample Size Justification\n- **Assumptions**: Median OS 17 months (control), HR 0.72, 80% power, one-sided α=0.025\n- **Required events**: 392 OS events\n- **Enrollment**: 640 patients (1:1 randomization)\n- **Interim analysis**: 60% information fraction (Lan-DeMets O Brien-Fleming)\n\n### 3. Analysis Populations\n| Population | Definition |\n|------------|------------|\n| ITT | All randomized patients |\n| mITT | Randomized + received ≥1 dose |\n| Safety | Received ≥1 dose of any study drug |\n| Per-Protocol | mITT without major protocol violations |\n| PRO-evaluable | mITT with baseline + ≥1 post-baseline PRO |\n\n### 4. Primary Analysis\n- **Method**: Stratified log-rank test (ITT)\n- **Stratification factors**: ECOG PS (0 vs 1), Brain metastases (Y/N), Region\n- **Estimand**: Treatment policy estimand (ICH E9 R1)\n- **Multiplicity**: Hierarchical testing (OS → PFS → ORR → DOR)\n\n### 5. Sensitivity Analyses\n1. Unstratified log-rank test\n2. Cox regression with covariates (age, sex, histology, PD-L1 TPS)\n3. Restricted mean survival time (RMST) at 24 months\n4. Tipping point analysis for missing data\n5. Per-protocol population analysis\n\n### 6. Subgroup Analyses (Forest Plot)\n- Age (<65 vs ≥65), Sex, ECOG, Histology, Brain mets, Prior therapy, Region, PD-L1 TPS quartile\n\n### 7. Safety Analyses\n- AE tables by MedDRA SOC/PT, Grade, Relatedness\n- Exposure-adjusted incidence rates\n- Time-to-onset and duration of irAEs\n- Kaplan-Meier for time to treatment discontinuation\n\n**Status: LOCKED — Signed before database lock**",
+  "metadata": {"ctdSection": "5.3.5", "stage": "locked"}
+}' > /dev/null
+
+# --- Project 2 (510k - CardioSync): Add labeling ---
+echo "📄 Adding Labeling to 510(k) project..."
+api_post "/api/concept2cure/projects/$P2_ID/artifacts" '{
+  "type": "markdown",
+  "category": "document",
+  "title": "Proposed Labeling — CardioSync Monitor Pro",
+  "content": "# CardioSync Monitor Pro (CSM-300)\n## Proposed Labeling — 21 CFR 801\n\n### Intended Use / Indications for Use\nThe CardioSync Monitor Pro is intended for use by healthcare professionals for continuous monitoring and recording of single-lead electrocardiographic (ECG) data in ambulatory adult patients. The device provides AI-assisted detection of cardiac arrhythmias, including atrial fibrillation, atrial flutter, premature ventricular contractions, and ventricular tachycardia, to aid in clinical decision-making. The device is not intended to replace professional medical judgment.\n\n### Contraindications\n- Patients with implanted cardiac devices (pacemakers, ICDs)\n- Patients with known allergy to medical-grade adhesives\n- Not for use during MRI procedures\n\n### Warnings\n⚠️ **Federal law restricts this device to sale by or on the order of a physician.**\n\n⚠️ The AI-assisted arrhythmia detection feature is intended to aid, not replace, the clinical judgment of a qualified healthcare professional.\n\n⚠️ Do not rely solely on device alerts for critical medical decisions.\n\n### Precautions\n- Clean and dry skin before applying adhesive patch\n- Replace adhesive patch every 72 hours\n- Keep device dry during charging (IP67 rated during recording only)\n- Ensure Bluetooth connectivity with paired mobile device\n\n### How Supplied\n- 1x CardioSync Monitor Pro device\n- 5x Adhesive ECG patches (medical-grade, hypoallergenic)\n- 1x USB-C charging cable\n- 1x Quick Start Guide\n- 1x IFU (Instructions for Use)\n\n**Status: UNDER REVIEW — Regulatory + Clinical**",
+  "metadata": {"ctdSection": "Labeling", "stage": "review"}
+}' > /dev/null
+
+# --- Project 1 (IND - Novacetrol): Add clinical protocol ---
+echo "📄 Adding Clinical Protocol to IND project..."
+api_post "/api/concept2cure/projects/$P1_ID/artifacts" '{
+  "type": "markdown",
+  "category": "document",
+  "title": "Phase 1 Clinical Protocol — NVC-205-001",
+  "content": "# Clinical Study Protocol\n## NVC-205-001: Phase 1 First-in-Human Dose Escalation\n## Version 1.0 — DRAFT\n\n### Synopsis\n| Element | Detail |\n|---------|--------|\n| Title | A Phase 1, Open-Label, Dose Escalation Study of NVC-205 in Patients with Advanced HR+/HER2- Breast Cancer |\n| Phase | Phase 1 |\n| Design | Open-label, 3+3 dose escalation |\n| Population | Adults ≥18y with advanced HR+/HER2- breast cancer, progressed on ≥1 prior endocrine therapy |\n| Sample Size | 24-48 patients (estimated) |\n| Duration | 24 months (enrollment) + 12 months (follow-up) |\n| Sites | 6-8 US academic medical centers |\n\n### Objectives\n**Primary**: Determine MTD and RP2D of NVC-205 as monotherapy\n**Secondary**: Characterize PK, evaluate preliminary efficacy (ORR, CBR), assess PD biomarkers\n\n### Dose Levels\n| Cohort | Dose | Schedule | N (min) |\n|--------|------|----------|--------|\n| 1 | 25 mg QD | 21/28-day cycle | 3-6 |\n| 2 | 75 mg QD | 21/28-day cycle | 3-6 |\n| 3 | 150 mg QD | 21/28-day cycle | 3-6 |\n| 4 | 200 mg QD | 21/28-day cycle | 3-6 |\n| 5 | 300 mg QD | 21/28-day cycle | 3-6 |\n| Expansion | RP2D | 21/28-day cycle | 12-18 |\n\n### Key Eligibility Criteria\n**Inclusion**: ECOG 0-1, adequate organ function, measurable disease per RECIST 1.1\n**Exclusion**: Prior CDK4/6 inhibitor (washout <28d), active CNS mets, QTcF >470ms\n\n### Statistical Considerations\n- No formal hypothesis testing (Phase 1)\n- DLT evaluation window: Cycle 1 (28 days)\n- PK modeling: Non-compartmental analysis + population PK\n\n**Status: DRAFT — Awaiting IND clearance**",
+  "metadata": {"ctdSection": "5.3.5", "stage": "draft"}
+}' > /dev/null
+
 echo ""
 echo "=========================================="
 echo "  ✅ Demo Data Seeding Complete!"

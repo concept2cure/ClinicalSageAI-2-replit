@@ -89,13 +89,13 @@ export interface TraceabilityLinkingProps {
 
 const DocumentTypeBadge: React.FC<{ type: SourceDocument['documentType'] }> = ({ type }) => {
   const config = {
-    clinical_study: { label: 'Clinical Study', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-    regulatory_guidance: { label: 'Guidance', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-    literature: { label: 'Literature', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-    internal_sop: { label: 'SOP', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-    device_spec: { label: 'Device Spec', color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' },
-    test_report: { label: 'Test Report', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
-    other: { label: 'Other', color: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400' },
+    clinical_study: { label: 'Clinical Study', color: 'bg-purple-100 text-purple-700' },
+    regulatory_guidance: { label: 'Guidance', color: 'bg-blue-100 text-blue-700' },
+    literature: { label: 'Literature', color: 'bg-green-100 text-green-700' },
+    internal_sop: { label: 'SOP', color: 'bg-orange-100 text-orange-700' },
+    device_spec: { label: 'Device Spec', color: 'bg-cyan-100 text-cyan-700' },
+    test_report: { label: 'Test Report', color: 'bg-yellow-100 text-yellow-700' },
+    other: { label: 'Other', color: 'bg-zinc-100 text-zinc-700' },
   };
 
   const { label, color } = config[type] || config.other;
@@ -116,7 +116,7 @@ const VerificationBadge: React.FC<{ status: TraceabilityLink['verificationStatus
     valid: { icon: CheckCircle, label: 'Valid', color: 'text-green-500' },
     outdated: { icon: RefreshCw, label: 'Outdated', color: 'text-yellow-500' },
     broken: { icon: AlertTriangle, label: 'Broken', color: 'text-red-500' },
-    pending: { icon: RefreshCw, label: 'Pending', color: 'text-slate-400 animate-spin' },
+    pending: { icon: RefreshCw, label: 'Pending', color: 'text-zinc-400 animate-spin' },
   };
 
   const { icon: Icon, label, color } = config[status];
@@ -152,8 +152,8 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
     <div
       className={`border rounded-lg transition-all ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+          ? 'border-blue-500 bg-blue-50'
+          : 'border-zinc-200 bg-white hover:border-zinc-300'
       }`}
     >
       <button
@@ -161,19 +161,19 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
         className="w-full p-3 text-left"
       >
         <div className="flex items-start gap-3">
-          <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isSelected ? 'text-blue-500' : 'text-slate-400'}`} />
+          <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isSelected ? 'text-blue-500' : 'text-zinc-400'}`} />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <h4 className="font-medium text-slate-800 dark:text-slate-200 line-clamp-1">
+              <h4 className="font-medium text-zinc-800 line-clamp-1">
                 {source.title}
               </h4>
               {isSelected && <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />}
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <DocumentTypeBadge type={source.documentType} />
-              <span className="text-xs text-slate-500">v{source.version}</span>
+              <span className="text-xs text-zinc-500">v{source.version}</span>
               {source.citationCount !== undefined && (
-                <span className="text-xs text-slate-400">{source.citationCount} citations</span>
+                <span className="text-xs text-zinc-400">{source.citationCount} citations</span>
               )}
             </div>
           </div>
@@ -184,7 +184,7 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
       <div className="px-3 pb-3">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700"
         >
           {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           {isExpanded ? 'Hide details' : 'Show details'}
@@ -192,31 +192,31 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
 
         {isExpanded && (
           <div className="mt-2 space-y-2 text-xs">
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-zinc-500">
               <Hash className="w-3 h-3" />
-              <code className="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded font-mono">
+              <code className="bg-zinc-100 px-1.5 py-0.5 rounded font-mono">
                 {source.hash.slice(0, 16)}...
               </code>
               <button
                 onClick={() => navigator.clipboard.writeText(source.hash)}
-                className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"
+                className="p-0.5 hover:bg-zinc-200 rounded"
                 title="Copy hash"
               >
                 <Copy className="w-3 h-3" />
               </button>
             </div>
             {source.author && (
-              <div className="flex items-center gap-2 text-slate-500">
+              <div className="flex items-center gap-2 text-zinc-500">
                 <User className="w-3 h-3" />
                 <span>{source.author}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 text-slate-500">
+            <div className="flex items-center gap-2 text-zinc-500">
               <Calendar className="w-3 h-3" />
               <span>Updated {new Date(source.updatedAt).toLocaleDateString()}</span>
             </div>
             {source.excerpt && (
-              <p className="text-slate-600 dark:text-slate-400 mt-2 line-clamp-3 italic">
+              <p className="text-zinc-600 mt-2 line-clamp-3 italic">
                 "{source.excerpt}"
               </p>
             )}
@@ -257,13 +257,13 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, source, onVerify, onRemove, o
   };
 
   return (
-    <div className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <div className="p-3 bg-white border border-zinc-200 rounded-lg">
       <div className="flex items-start justify-between gap-2">
         <button
           onClick={onClick}
           className="flex-1 text-left hover:text-blue-600 transition-colors"
         >
-          <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
+          <p className="text-sm text-zinc-700 line-clamp-2">
             "{link.linkedText}"
           </p>
         </button>
@@ -271,7 +271,7 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, source, onVerify, onRemove, o
       </div>
 
       {source && (
-        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+        <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
           <FileText className="w-3 h-3" />
           <span className="truncate">{source.title}</span>
         </div>
@@ -279,24 +279,24 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, source, onVerify, onRemove, o
 
       <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded">
+          <span className="text-xs px-2 py-0.5 bg-zinc-100 rounded">
             {citationTypeLabels[link.citationType]}
           </span>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-zinc-400">
             {link.confidence}% confidence
           </span>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={onVerify}
-            className="p-1 text-slate-400 hover:text-blue-500 rounded"
+            className="p-1 text-zinc-400 hover:text-blue-500 rounded"
             title="Verify link"
           >
             <RefreshCw className="w-3 h-3" />
           </button>
           <button
             onClick={onRemove}
-            className="p-1 text-slate-400 hover:text-red-500 rounded"
+            className="p-1 text-zinc-400 hover:text-red-500 rounded"
             title="Remove link"
           >
             <Trash2 className="w-3 h-3" />
@@ -332,12 +332,12 @@ const CitationTypeSelector: React.FC<CitationTypeSelectorProps> = ({ value, onCh
           onClick={() => onChange(option.value)}
           className={`p-2 text-left rounded-lg border transition-colors ${
             value === option.value
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-zinc-200 hover:border-zinc-300'
           }`}
         >
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{option.label}</p>
-          <p className="text-xs text-slate-500">{option.description}</p>
+          <p className="text-sm font-medium text-zinc-800">{option.label}</p>
+          <p className="text-xs text-zinc-500">{option.description}</p>
         </button>
       ))}
     </div>
@@ -422,30 +422,30 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
   }, [selectedSource, selectedRange, selectedText, targetDocumentId, citationType, onCreateLink]);
 
   return (
-    <div className={`flex flex-col h-full bg-slate-50 dark:bg-slate-900 ${className}`}>
+    <div className={`flex flex-col h-full bg-zinc-50 ${className}`}>
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <div className="p-4 border-b border-zinc-200 bg-white">
         <div className="flex items-center gap-2 mb-3">
           <Link className="w-5 h-5 text-blue-500" />
-          <h2 className="font-semibold text-slate-800 dark:text-slate-200">Traceability Linking</h2>
+          <h2 className="font-semibold text-zinc-800">Traceability Linking</h2>
         </div>
 
         {/* Selected Text Preview */}
         {selectedText && (
-          <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Selected text to link:</p>
-            <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">"{selectedText}"</p>
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-600 mb-1">Selected text to link:</p>
+            <p className="text-sm text-zinc-700 line-clamp-2">"{selectedText}"</p>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+        <div className="flex gap-1 bg-zinc-100 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('sources')}
             className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
               activeTab === 'sources'
-                ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                ? 'bg-white text-zinc-800 shadow'
+                : 'text-zinc-600 hover:text-zinc-800'
             }`}
           >
             Sources ({availableSources.length})
@@ -454,8 +454,8 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
             onClick={() => setActiveTab('links')}
             className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
               activeTab === 'links'
-                ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                ? 'bg-white text-zinc-800 shadow'
+                : 'text-zinc-600 hover:text-zinc-800'
             }`}
           >
             Links ({existingLinks.length})
@@ -467,21 +467,21 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
       {activeTab === 'sources' ? (
         <>
           {/* Search & Filter */}
-          <div className="p-3 border-b border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="p-3 border-b border-zinc-200 space-y-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search sources..."
-                className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-700 border-0 rounded-lg text-sm"
+                className="w-full pl-9 pr-3 py-2 bg-zinc-100 border-0 rounded-lg text-sm"
               />
             </div>
             <select
               value={documentTypeFilter}
               onChange={e => setDocumentTypeFilter(e.target.value as typeof documentTypeFilter)}
-              className="w-full p-2 bg-slate-100 dark:bg-slate-700 border-0 rounded-lg text-sm"
+              className="w-full p-2 bg-zinc-100 border-0 rounded-lg text-sm"
             >
               <option value="all">All document types</option>
               <option value="clinical_study">Clinical Studies</option>
@@ -497,7 +497,7 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
           {/* Sources List */}
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {filteredSources.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-8 text-zinc-500">
                 <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>No sources found</p>
               </div>
@@ -516,8 +516,8 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
 
           {/* Link Creation Panel */}
           {selectedSource && selectedText && (
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
-              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Citation Type</h3>
+            <div className="p-4 border-t border-zinc-200 bg-white space-y-3">
+              <h3 className="text-sm font-medium text-zinc-700">Citation Type</h3>
               <CitationTypeSelector value={citationType} onChange={setCitationType} />
               <button
                 onClick={handleCreateLink}
@@ -534,7 +534,7 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
         /* Links Tab */
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {existingLinks.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-zinc-500">
               <Link className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p>No traceability links yet</p>
               <p className="text-xs mt-1">Select text and link to a source</p>

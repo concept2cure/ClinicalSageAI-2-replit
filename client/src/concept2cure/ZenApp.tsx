@@ -57,6 +57,10 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // Lazy-load CERV2Page for embedded module rendering inside the shell
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+// DTC Landing Page (public, no auth)
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+// Full Document Builder wizard (CSR + CTD across global agencies)
+const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
 import {
   X,
   ChevronLeft,
@@ -103,7 +107,20 @@ import {
   Download,
   Brain,
   Snowflake,
+  Bot,
+  Compass,
+  Activity,
+  Rocket,
+  FileStack,
+  Users,
 } from 'lucide-react';
+
+// Minimal loading fallback — no spinner, just a white screen to avoid flash
+const ModuleLoadingFallback = () => (
+  <div className="flex-1 flex items-center justify-center bg-white">
+    <div className="w-6 h-6 rounded-full border-2 border-zinc-200 border-t-zinc-400 animate-spin" />
+  </div>
+);
 
 // Utility: instantly redirect dead layout modes to regulatory-workspace
 const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect }) => {
@@ -137,6 +154,11 @@ const FirstRunExperience = lazy(() =>
 // Snow Globe — Cross-platform prediction & intelligence
 const SnowGlobeHome = lazy(() => import('./pages/SnowGlobe/SnowGlobeHome'));
 const SnowGlobeChambers = lazy(() => import('./pages/SnowGlobe/SnowGlobeChambers'));
+
+// About & Training Center (with Dr. Sage FDA Reviewer AI)
+const AboutTrainingCenter = lazy(() =>
+  import('./pages/AboutTrainingCenter').then(m => ({ default: m.AboutTrainingCenter }))
+);
 
 // Lazy load Phase 7 Mission Control components
 const MissionControl = lazy(() =>
@@ -217,6 +239,10 @@ const TemplateLibraryInline = lazy(() =>
   import('./components/templates/TemplateLibraryInline').then(m => ({ default: m.TemplateLibraryInline }))
 );
 
+const IntelligentReportGenerator = lazy(() =>
+  import('./components/reports/IntelligentReportGenerator')
+);
+
 const ProjectKnowledgePanel = lazy(() =>
   import('./components/workspace/ProjectKnowledgePanel').then(m => ({ default: m.ProjectKnowledgePanel }))
 );
@@ -248,6 +274,50 @@ const BiostatPlatformDashboard = lazy(() =>
 const TrainingManagementPage = lazy(() =>
   import('@/portal-v2/components/admin/TrainingManagement')
 );
+
+// Agent Hub — Agent Swarm showcase, setup wizard, monitoring
+const AgentShowcasePage = lazy(() =>
+  import('./components/enablement/AgentShowcase').then(m => ({ default: m.AgentShowcase }))
+);
+
+// Document Sherpa — proactive AI-guided document authoring
+const DocumentSherpaPage = lazy(() =>
+  import('./components/intelligentDocs/DocumentSherpa').then(m => ({ default: m.DocumentSherpa }))
+);
+
+// Review Pulse — PM orchestration, signals, readiness tracking
+const ReviewPulseDashboardPage = lazy(() =>
+  import('./components/workspace/ReviewPulseDashboard').then(m => ({ default: m.ReviewPulseDashboard }))
+);
+
+// Client Onboarding — setup wizard, configuration
+const OnboardingWizardPage = lazy(() =>
+  import('@/portal-v2/components/onboarding/OnboardingWizard')
+);
+
+// Knowledge Base — account-level skills, .MD upload, materials ingestion
+// Already imported: CustomInstructions from './components/knowledge/CustomInstructions'
+
+// Project Knowledge — project-level context, uploads, sources
+// Already lazy-loaded: ProjectKnowledgePanel
+
+// Legal Center — IP, contracts, regulatory law
+const LegalCenterPage = lazy(() =>
+  import('./pages/LegalCenter').then(m => ({ default: m.default }))
+);
+
+// Platform Home — Claude.ai-style landing dashboard
+const PlatformHome = lazy(() =>
+  import('./components/home/PlatformHome')
+);
+
+// Artifacts Gallery — Claude.ai-style browsable artifact gallery
+const ArtifactsGalleryPage = lazy(() =>
+  import('./pages/ArtifactsGallery')
+);
+
+// Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
+import { ProjectSidebar } from './components/workspace/ProjectSidebar';
 
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
@@ -327,7 +397,19 @@ type LayoutMode =
   | 'client-intelligence'
   | 'templates'
   | 'biostatistics'
-  | 'training-center';
+  | 'training-center'
+  | 'agent-hub'
+  | 'document-sherpa'
+  | 'review-pulse'
+  | 'client-onboarding'
+  | 'knowledge-base'
+  | 'project-knowledge'
+  | 'legal-center'
+  | 'artifacts'
+  | 'document-builder'
+  | 'deep-research'
+  | 'report-engine'
+  | 'about-training';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -435,7 +517,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col h-full bg-white border-l border-zinc-200 transition-all duration-200',
+        'flex flex-col h-full bg-white border-l border-zinc-200',
         isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
       )}
     >
@@ -502,6 +584,154 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
     </div>
   );
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ANALYTICS DASHBOARD — Real data from project/artifact APIs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBack: () => void }) {
+  const { data: summaryRaw } = useQuery({
+    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+  });
+  const summary = (summaryRaw as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
+
+  const { data: auditRaw } = useQuery({
+    queryKey: ['/api/concept2cure/audit-logs', { limit: 30 }],
+    queryFn: () => fetch('/api/concept2cure/audit-logs?limit=30').then(r => r.json()),
+  });
+  const auditLogs = (auditRaw as any)?.data?.logs || [];
+
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter((p: any) => p.status === 'active').length;
+  const completedProjects = projects.filter((p: any) => p.status === 'completed').length;
+
+  // Derive activity by day from audit logs
+  const activityByDay = useMemo(() => {
+    const days = new Map<string, number>();
+    auditLogs.forEach((l: any) => {
+      if (l.timestamp) {
+        const day = new Date(l.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+        days.set(day, (days.get(day) || 0) + 1);
+      }
+    });
+    return Array.from(days.entries()).slice(0, 7).map(([day, count]) => ({ day, count }));
+  }, [auditLogs]);
+
+  const metrics = [
+    { label: 'Total Projects', value: totalProjects, color: 'text-zinc-900' },
+    { label: 'Active', value: activeProjects, color: 'text-blue-600' },
+    { label: 'Completed', value: completedProjects, color: 'text-emerald-600' },
+    { label: 'Total Artifacts', value: summary.total, color: 'text-zinc-900' },
+    { label: 'In Draft', value: summary.draft, color: 'text-amber-600' },
+    { label: 'In Review', value: summary.review, color: 'text-blue-600' },
+    { label: 'Approved', value: summary.approved, color: 'text-emerald-600' },
+  ];
+
+  return (
+    <div className="flex-1 overflow-y-auto p-8 bg-white">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-xl font-semibold text-zinc-900">Portfolio Analytics</h2>
+            <p className="text-sm text-zinc-500 mt-0.5">Real-time metrics from your projects and artifacts</p>
+          </div>
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          {metrics.slice(0, 4).map(m => (
+            <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
+              <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">{m.label}</p>
+              <p className={cn('text-2xl font-semibold mt-1', m.color)}>{m.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          {/* Artifact Status Breakdown */}
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">Artifact Pipeline</p>
+            {summary.total === 0 ? (
+              <p className="text-xs text-zinc-400 text-center py-6">No artifacts yet. Create projects and generate documents to see pipeline analytics.</p>
+            ) : (
+              <div className="space-y-3">
+                {[
+                  { label: 'Draft', value: summary.draft, pct: Math.round((summary.draft / Math.max(1, summary.total)) * 100), color: 'bg-amber-500' },
+                  { label: 'In Review', value: summary.review, pct: Math.round((summary.review / Math.max(1, summary.total)) * 100), color: 'bg-blue-500' },
+                  { label: 'Approved', value: summary.approved, pct: Math.round((summary.approved / Math.max(1, summary.total)) * 100), color: 'bg-emerald-500' },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-zinc-600">{item.label}</span>
+                      <span className="text-xs font-medium text-zinc-900">{item.value} ({item.pct}%)</span>
+                    </div>
+                    <div className="h-2 bg-zinc-200 rounded-full">
+                      <div className={cn('h-2 rounded-full transition-all', item.color)} style={{ width: `${item.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Activity Chart */}
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">Recent Activity</p>
+            {activityByDay.length === 0 ? (
+              <p className="text-xs text-zinc-400 text-center py-6">No recent activity recorded.</p>
+            ) : (
+              <div className="flex items-end gap-2 h-32">
+                {activityByDay.map(({ day, count }) => {
+                  const maxCount = Math.max(...activityByDay.map(d => d.count), 1);
+                  const height = Math.max(8, (count / maxCount) * 100);
+                  return (
+                    <div key={day} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] text-zinc-500">{count}</span>
+                      <div className="w-full bg-zinc-900 rounded-t" style={{ height: `${height}%` }} />
+                      <span className="text-[10px] text-zinc-400">{day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Project List */}
+        <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">Project Summary</p>
+          {projects.length === 0 ? (
+            <p className="text-xs text-zinc-400 text-center py-6">No projects yet. Create your first project to see analytics.</p>
+          ) : (
+            <div className="space-y-2">
+              {projects.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className={cn('w-2 h-2 rounded-full', p.status === 'active' ? 'bg-emerald-500' : p.status === 'completed' ? 'bg-blue-500' : 'bg-zinc-400')} />
+                    <span className="text-sm text-zinc-900">{p.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-zinc-400">{p.submissionType || 'IND'}</span>
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full', p.status === 'active' ? 'bg-emerald-50 text-emerald-700' : p.status === 'completed' ? 'bg-blue-50 text-blue-700' : 'bg-zinc-100 text-zinc-600')}>
+                      {p.status || 'draft'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ZEN APP
@@ -625,6 +855,9 @@ export const ZenApp: React.FC = () => {
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
 
+  // Account-level custom instructions for Knowledge Base
+  const [customInstructions, setCustomInstructions] = useState('');
+
   // Right panel tab in workspace mode
   const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs' | 'instructions'>(
     'files'
@@ -720,7 +953,42 @@ export const ZenApp: React.FC = () => {
     [activeProjectId]
   );
 
-  // Pending draft request from IND Workspace → passed to ZenChat when switching to assistant mode
+  // Workspace suggested actions — context-aware quick-start chips for AnA
+  const workspaceSuggestedActions = useMemo(() => {
+    const base = workspaceSummary?.nextActions ?? [];
+    if (base.length > 0) return base.slice(0, 4);
+
+    const t = (activeProject?.type || 'IND').toUpperCase();
+    const starters: Record<string, Array<{ id: string; label: string; intent: string; description: string }>> = {
+      '510K': [
+        { id: 'upload-device-docs', label: 'Upload device documents', intent: 'upload-source-documents', description: 'Add device specs, test results, and labeling.' },
+        { id: 'find-predicates', label: 'Find likely predicates', intent: 'find-likely-510k-predicates', description: 'Search FDA for substantially equivalent devices.' },
+        { id: 'draft-device-desc', label: 'Draft device description', intent: 'draft-510k-device-description', description: 'Generate Section 3 device description.' },
+        { id: 'check-estar', label: 'Check eSTAR readiness', intent: 'check-estar-readiness', description: 'Review eSTAR template requirements.' },
+      ],
+      IND: [
+        { id: 'upload-source', label: 'Upload source documents', intent: 'upload-source-documents', description: 'Add CSRs, CMC data, and preclinical files.' },
+        { id: 'draft-ind-outline', label: 'Draft IND outline', intent: 'draft-ind-outline', description: 'Generate IND outline per 21 CFR 312.23.' },
+        { id: 'missing-sections', label: 'Identify missing sections', intent: 'identify-missing-ind-sections', description: 'Audit your IND for incomplete sections.' },
+        { id: 'gen-cmc-workplan', label: 'Generate CMC workplan', intent: 'generate-cmc-workplan', description: 'Build Module 3 CMC workplan and timeline.' },
+      ],
+      CER: [
+        { id: 'upload-evidence', label: 'Upload evidence & literature', intent: 'upload-source-documents', description: 'Add clinical literature and PMS data.' },
+        { id: 'build-cer-outline', label: 'Build CER outline', intent: 'build-cer-outline', description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.' },
+        { id: 'draft-benefit-risk', label: 'Draft benefit-risk section', intent: 'draft-cer-benefit-risk', description: 'Generate the benefit-risk analysis.' },
+        { id: 'review-pms-pmcf', label: 'Review PMS / PMCF gaps', intent: 'review-pms-pmcf-gaps', description: 'Identify post-market surveillance gaps.' },
+      ],
+      NDA: [
+        { id: 'upload-source', label: 'Upload source documents', intent: 'upload-source-documents', description: 'Add CSRs, CMC data, and prior filings.' },
+        { id: 'draft-nda-outline', label: 'Draft NDA outline', intent: 'draft-nda-outline', description: 'Generate NDA outline per 21 CFR 314.' },
+        { id: 'nda-missing', label: 'Identify missing sections', intent: 'identify-missing-nda-sections', description: 'Audit NDA for gaps and missing modules.' },
+        { id: 'gen-summary', label: 'Generate ISS/ISE outline', intent: 'generate-iss-ise-outline', description: 'Outline Integrated Summary of Safety/Efficacy.' },
+      ],
+    };
+    return (starters[t] ?? starters['IND']).slice(0, 4);
+  }, [activeProject?.type, workspaceSummary?.nextActions]);
+
+  // Pending draft request from IND Workspace → passed to AnA when switching to workspace mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
     code: string;
     title: string;
@@ -764,6 +1032,7 @@ export const ZenApp: React.FC = () => {
   }, [threads, activeProjectId]);
 
   // Set active project when projects load (prefer summary's last-touched project)
+  // NOTE: activeProjectId intentionally excluded from deps to prevent re-trigger loops
   useEffect(() => {
     if (!activeProjectId) {
       const summaryProject = workspaceSummary?.active?.projectId;
@@ -773,7 +1042,8 @@ export const ZenApp: React.FC = () => {
         setActiveProjectId(projects[0].id);
       }
     }
-  }, [projects, activeProjectId, workspaceSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects, workspaceSummary]);
 
   // Open a tool panel from the ?panel= URL query param on first load
   useEffect(() => {
@@ -836,20 +1106,37 @@ export const ZenApp: React.FC = () => {
     }
   }, [layoutMode, activeProjectId, embeddedModule]);
 
+  // Clear stale pending state when switching layout modes
+  useEffect(() => {
+    if (layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace') {
+      setPendingDraftSection(null);
+    }
+  }, [layoutMode]);
+
   const handleNewChat = useCallback(() => {
-    // Clear active conversation/thread and enter workspace/assistant
+    // Clear active conversation/thread
     setActiveConversationId(undefined);
     setActiveThreadId(undefined);
-    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'assistant');
+    setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects');
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // KEYBOARD SHORTCUTS
+  // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
   // ─────────────────────────────────────────────────────────────────────────────
+
+  const kbStateRef = useRef({
+    activeToolPanel, commandPaletteOpen, settingsOpen, layoutMode, activeProjectId,
+  });
+  kbStateRef.current = { activeToolPanel, commandPaletteOpen, settingsOpen, layoutMode, activeProjectId };
+
+  const handleNewChatRef = useRef(handleNewChat);
+  handleNewChatRef.current = handleNewChat;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const st = kbStateRef.current;
+
       // Command palette: ⌘K or Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
@@ -859,7 +1146,7 @@ export const ZenApp: React.FC = () => {
       // New chat: ⌘N or Ctrl+N
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault();
-        handleNewChat();
+        handleNewChatRef.current();
       }
 
       // Settings: ⌘,
@@ -872,15 +1159,15 @@ export const ZenApp: React.FC = () => {
       if (
         (e.metaKey || e.ctrlKey) &&
         e.key === 'e' &&
-        layoutMode === 'workspace' &&
-        activeProjectId
+        st.layoutMode === 'workspace' &&
+        st.activeProjectId
       ) {
         e.preventDefault();
         setEditProjectOpen(true);
       }
 
       // Close tool panel: Escape
-      if (e.key === 'Escape' && activeToolPanel && !commandPaletteOpen && !settingsOpen) {
+      if (e.key === 'Escape' && st.activeToolPanel && !st.commandPaletteOpen && !st.settingsOpen) {
         setActiveToolPanel(null);
         setToolPanelFullscreen(false);
       }
@@ -902,14 +1189,8 @@ export const ZenApp: React.FC = () => {
       document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('mc-navigate', handleMcNavigate);
     };
-  }, [
-    activeToolPanel,
-    commandPaletteOpen,
-    settingsOpen,
-    handleNewChat,
-    layoutMode,
-    activeProjectId,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
@@ -950,6 +1231,36 @@ export const ZenApp: React.FC = () => {
         const panel = actionId.replace('tool-', '') as ToolPanel;
         setActiveToolPanel(panel);
         setLayoutMode(panel === 'ectd' ? 'ctd' : 'editor');
+        setCommandPaletteOpen(false);
+        return;
+      }
+
+      // Handle module navigation — every module accessible via command palette
+      const MODULE_ROUTES: Record<string, LayoutMode> = {
+        'go-copilot': 'regulatory-workspace',
+        'go-author': 'author',
+        'go-document-sherpa': 'document-sherpa',
+        'go-collaboration': 'collaboration-hub',
+        'go-agents': 'agent-hub',
+        'go-snowglobe': 'snowglobe',
+        'go-review-pulse': 'review-pulse',
+        'go-intelligence': 'intelligence-hub',
+        'go-biostatistics': 'biostatistics',
+        'go-review-readiness': 'review-readiness',
+        'go-legal': 'legal-center',
+        'go-client-intelligence': 'client-intelligence',
+        'go-command-center': 'command-center',
+        'go-knowledge-base': 'knowledge-base',
+        'go-project-knowledge': 'project-knowledge',
+        'go-academy': 'enablement-center',
+        'go-training': 'training-center',
+        'go-onboarding': 'client-onboarding',
+        'go-home': 'projects',
+        'go-report-engine': 'report-engine',
+      };
+
+      if (MODULE_ROUTES[actionId]) {
+        setLayoutMode(MODULE_ROUTES[actionId]);
         setCommandPaletteOpen(false);
         return;
       }
@@ -1080,6 +1391,29 @@ export const ZenApp: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   const activeProject = projects.find(p => p.id === activeProjectId);
+
+  const contextMetrics = useMemo(() => {
+    if (!activeProject || !taskSummary) {
+      return {
+        deadlineDays: '—',
+        complianceScore: 0,
+        riskCount: 0,
+        lastActivity: 'No project selected',
+        auditStatus: 'Audit trail active',
+      };
+    }
+    const targetDateStr = activeProject.metadata?.targetSubmissionDate || (activeProject as any).targetEndDate;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
+    const deadlineDays = targetDate
+      ? Math.max(0, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : '—';
+    const complianceScore = taskSummary.healthScore / 100;
+    const riskCount = taskSummary.overdue + (taskSummary.byStatus?.blocked || 0);
+    const lastActivity = taskSummary.total > 0
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
+    return { deadlineDays, complianceScore, riskCount, lastActivity, auditStatus: 'Audit trail active' };
+  }, [activeProject, taskSummary]);
 
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
@@ -1278,15 +1612,18 @@ export const ZenApp: React.FC = () => {
           (
             {
               'regulatory-workspace': 'ai-copilot',
+              workspace: 'ai-copilot',
               'ind-workspace': 'author',
               'ectd-coauthor': 'author',
-              cmc: 'author',
+              cmc: 'cmc',
               'clinical-trial': 'author',
               author: 'author',
+              editor: 'author',
+              templates: 'author',
               'intelligence-hub': 'intelligence-hub',
               'review-readiness': 'review-readiness',
-              snowglobe: 'review-readiness',
-              'snowglobe-chambers': 'review-readiness',
+              snowglobe: 'snowglobe',
+              'snowglobe-chambers': 'snowglobe',
               'command-center': 'command-center',
               'mission-control': 'command-center',
               'submission-workspace': 'command-center',
@@ -1296,6 +1633,19 @@ export const ZenApp: React.FC = () => {
               'collaboration-hub': 'collaboration-hub',
               'biostatistics': 'biostatistics',
               'training-center': 'training-center',
+              'agent-hub': 'agent-hub',
+              'document-sherpa': 'document-sherpa',
+              'review-pulse': 'review-pulse',
+              'client-onboarding': 'client-onboarding',
+              'knowledge-base': 'knowledge-base',
+              'project-knowledge': 'project-knowledge',
+              'legal-center': 'legal-center',
+              sherpa: 'ai-copilot',
+              audit: 'review-readiness',
+              timeline: 'command-center',
+              analytics: 'command-center',
+              artifacts: 'artifacts',
+              'about-training': 'about-training',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1323,7 +1673,7 @@ export const ZenApp: React.FC = () => {
               setActiveToolPanel('intelligence');
               break;
             case 'agents':
-              setLayoutMode('assistant');
+              setLayoutMode('regulatory-workspace');
               break;
             case 'tasks':
               setLayoutMode('timeline');
@@ -1376,6 +1726,12 @@ export const ZenApp: React.FC = () => {
             case 'mission-control':
               setLayoutMode('mission-control');
               break;
+            case 'snowglobe':
+              setLayoutMode('snowglobe');
+              break;
+            case 'about-training':
+              setLayoutMode('about-training');
+              break;
             case 'submission-workspace':
               setLayoutMode('submission-workspace');
               break;
@@ -1407,6 +1763,42 @@ export const ZenApp: React.FC = () => {
             case 'training-center':
               setLayoutMode('training-center');
               break;
+            case 'agent-hub':
+              setLayoutMode('agent-hub');
+              break;
+            case 'document-sherpa':
+              setLayoutMode('document-sherpa');
+              break;
+            case 'snowglobe':
+              setLayoutMode('snowglobe');
+              break;
+            case 'review-pulse':
+              setLayoutMode('review-pulse');
+              break;
+            case 'client-onboarding':
+              setLayoutMode('client-onboarding');
+              break;
+            case 'knowledge-base':
+              setLayoutMode('knowledge-base');
+              break;
+            case 'project-knowledge':
+              setLayoutMode('project-knowledge');
+              break;
+            case 'legal-center':
+              setLayoutMode('legal-center');
+              break;
+            case 'artifacts':
+              setLayoutMode('artifacts');
+              break;
+            case 'deep-research':
+              setLayoutMode('deep-research');
+              break;
+            case 'document-builder':
+              setLayoutMode('document-builder');
+              break;
+            case 'report-engine':
+              setLayoutMode('report-engine');
+              break;
             default:
               break;
           }
@@ -1425,20 +1817,13 @@ export const ZenApp: React.FC = () => {
               {/* Module content area */}
               <div
                 className={cn(
-                  'flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-200',
+                  'flex-1 flex flex-col min-h-0 overflow-hidden',
                   moduleAssistantOpen && 'mr-0'
                 )}
               >
                 <ErrorBoundary>
                   <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading 510(k) Module...</p>
-                        </div>
-                      </div>
-                    }
+                    fallback={<ModuleLoadingFallback />}
                   >
                     <EmbeddedCERV2Page
                       embedded={true}
@@ -1507,14 +1892,7 @@ export const ZenApp: React.FC = () => {
             >
               <ErrorBoundary>
                 <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Sherpa System...</p>
-                      </div>
-                    </div>
-                  }
+                  fallback={<ModuleLoadingFallback />}
                 >
                   <ConvergentCanvas
                     userId={activeProjectId || 'anonymous'}
@@ -1528,24 +1906,10 @@ export const ZenApp: React.FC = () => {
           )}
 
           {!embeddedModule && layoutMode === 'analytics' && (
-            <div className="flex-1 overflow-y-auto flex items-center justify-center p-8 bg-white">
-              <div className="max-w-md text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-amber-50 flex items-center justify-center">
-                  <BarChart2 className="w-6 h-6 text-amber-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-900">Analytics</h3>
-                <p className="text-sm text-zinc-500 mt-1 mb-6">
-                  Portfolio analytics and risk dashboards are being built. Check back soon.
-                </p>
-                <button
-                  onClick={() => setLayoutMode('assistant')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back to Chat
-                </button>
-              </div>
-            </div>
+            <AnalyticsDashboardInline
+              projects={projects || []}
+              onBack={() => setLayoutMode('regulatory-workspace')}
+            />
           )}
 
           {!embeddedModule && layoutMode === 'timeline' && (
@@ -1553,9 +1917,30 @@ export const ZenApp: React.FC = () => {
               <div className="max-w-3xl mx-auto">
                 <WorkflowTimeline
                   steps={timelineSteps}
-                  currentStepId="step-authoring"
-                  progressPercent={50}
-                  assetState="REVIEW"
+                  currentStepId={(() => {
+                    // Derive current step from project artifacts
+                    const arts = projectArtifacts || [];
+                    if (arts.length === 0) return 'step-upload';
+                    const hasApproved = arts.some((a: any) => a.status === 'approved' || a.status === 'locked');
+                    const hasReview = arts.some((a: any) => a.status === 'review');
+                    if (hasApproved) return 'step-export';
+                    if (hasReview) return 'step-review';
+                    return 'step-authoring';
+                  })()}
+                  progressPercent={(() => {
+                    const arts = projectArtifacts || [];
+                    if (arts.length === 0) return 10;
+                    const approved = arts.filter((a: any) => a.status === 'approved' || a.status === 'locked').length;
+                    return Math.min(95, Math.round((approved / Math.max(1, arts.length)) * 100) + 10);
+                  })()}
+                  assetState={(() => {
+                    const arts = projectArtifacts || [];
+                    const hasApproved = arts.some((a: any) => a.status === 'approved' || a.status === 'locked');
+                    const hasReview = arts.some((a: any) => a.status === 'review');
+                    if (hasApproved) return 'APPROVED';
+                    if (hasReview) return 'REVIEW';
+                    return 'DRAFT';
+                  })()}
                   workflowRunId={workflowRunId}
                   showPhases
                 />
@@ -1577,14 +1962,7 @@ export const ZenApp: React.FC = () => {
             >
               <ErrorBoundary>
                 <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Mission Control...</p>
-                      </div>
-                    </div>
-                  }
+                  fallback={<ModuleLoadingFallback />}
                 >
                   <MissionControl />
                 </Suspense>
@@ -1594,17 +1972,8 @@ export const ZenApp: React.FC = () => {
 
           {/* Snow Globe — Prediction & Intelligence Engine */}
           {!embeddedModule && layoutMode === 'snowglobe' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-snowglobe"
-            >
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
-                  </div>
-                }
-              >
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe">
+              <Suspense fallback={<ModuleLoadingFallback />}>
                 <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
               </Suspense>
             </div>
@@ -1612,18 +1981,18 @@ export const ZenApp: React.FC = () => {
 
           {/* Snow Globe — Chamber Detail View */}
           {!embeddedModule && layoutMode === 'snowglobe-chambers' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-snowglobe-chambers"
-            >
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
-                  </div>
-                }
-              >
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-snowglobe-chambers">
+              <Suspense fallback={<ModuleLoadingFallback />}>
                 <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* About & Training Center (Dr. Sage FDA Reviewer AI) */}
+          {!embeddedModule && layoutMode === 'about-training' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-about-training">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-white"><Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" /></div>}>
+                <AboutTrainingCenter />
               </Suspense>
             </div>
           )}
@@ -1633,7 +2002,7 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
               <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
-                  onClick={() => setLayoutMode('assistant')}
+                  onClick={() => setLayoutMode('regulatory-workspace')}
                   className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -1674,14 +2043,7 @@ export const ZenApp: React.FC = () => {
                   <div className="flex-1 overflow-auto">
                     <ErrorBoundary>
                       <Suspense
-                        fallback={
-                          <div className="flex-1 flex items-center justify-center bg-white h-full">
-                            <div className="text-center">
-                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                              <p className="text-zinc-500">Loading IND Workspace...</p>
-                            </div>
-                          </div>
-                        }
+                        fallback={<ModuleLoadingFallback />}
                       >
                         <INDWorkspace
                           projectId={activeProjectId}
@@ -1731,7 +2093,7 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="eCTD Co-Author"
                 subtitle="IND · NDA · BLA · 510(k) · CTD section-by-section drafting"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
                 <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
@@ -1756,14 +2118,7 @@ export const ZenApp: React.FC = () => {
                 <div className="flex-1 flex flex-col min-h-0">
                   <ErrorBoundary>
                     <Suspense
-                      fallback={
-                        <div className="flex-1 flex items-center justify-center bg-white">
-                          <div className="text-center">
-                            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                            <p className="text-zinc-500">Loading eCTD Co-Author...</p>
-                          </div>
-                        </div>
-                      }
+                      fallback={<ModuleLoadingFallback />}
                     >
                       <ECTDCoAuthorStandalone
                         onOpenInEditor={section => {
@@ -1802,7 +2157,7 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="CMC Platform"
                 subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
                 <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
@@ -1895,14 +2250,7 @@ export const ZenApp: React.FC = () => {
                   <div className="flex-1 overflow-auto">
                     <ErrorBoundary>
                       <Suspense
-                        fallback={
-                          <div className="flex-1 flex items-center justify-center bg-white h-full">
-                            <div className="text-center">
-                              <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                              <p className="text-zinc-500">Loading CMC Platform...</p>
-                            </div>
-                          </div>
-                        }
+                        fallback={<ModuleLoadingFallback />}
                       >
                         <CMCModuleStandalone
                           onDocumentCreated={({ artifactId }: { artifactId: string }) => {
@@ -1925,19 +2273,12 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="Document Vault"
                 subtitle="Field-ready document control · Compliance · Audit trails"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               <div className="flex-1 overflow-auto">
                 <ErrorBoundary>
                   <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading Document Vault...</p>
-                        </div>
-                      </div>
-                    }
+                    fallback={<ModuleLoadingFallback />}
                   >
                     <VaultPageStandalone />
                   </Suspense>
@@ -1952,19 +2293,12 @@ export const ZenApp: React.FC = () => {
               <WorkspaceHeader
                 title="Clinical Trial Hub"
                 subtitle="Study design · Protocol optimization · CSR intelligence · Trial management"
-                onBack={() => setLayoutMode('assistant')}
+                onBack={() => setLayoutMode('regulatory-workspace')}
               />
               <div className="flex-1 overflow-auto">
                 <ErrorBoundary>
                   <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <div className="text-center">
-                          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                          <p className="text-zinc-500">Loading Clinical Trial Hub...</p>
-                        </div>
-                      </div>
-                    }
+                    fallback={<ModuleLoadingFallback />}
                   >
                     <StudyArchitectModuleStandalone />
                   </Suspense>
@@ -2105,7 +2439,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <div className="w-px h-4 bg-zinc-200" />
                 <PenLine className="w-4 h-4 text-zinc-500" />
@@ -2251,7 +2585,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
@@ -2285,7 +2619,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
@@ -2319,7 +2653,7 @@ export const ZenApp: React.FC = () => {
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Projects</span>
+                  <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <BookOpen className="w-3.5 h-3.5 text-violet-500" />
@@ -2336,6 +2670,274 @@ export const ZenApp: React.FC = () => {
                   <TrainingManagementPage />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
+          {!embeddedModule && layoutMode === 'agent-hub' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Bot className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-800">AI Agents</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <AgentShowcasePage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Document Sherpa — AI-guided authoring ── */}
+          {!embeddedModule && layoutMode === 'document-sherpa' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-sherpa">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Compass className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Document Sherpa</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <DocumentSherpaPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Review Pulse — PM signals, readiness, risk ── */}
+          {!embeddedModule && layoutMode === 'review-pulse' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-pulse">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Activity className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Review Pulse</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <ReviewPulseDashboardPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Client Onboarding — setup wizard, configuration ── */}
+          {!embeddedModule && layoutMode === 'client-onboarding' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-onboarding">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Rocket className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Client Onboarding</span>
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <OnboardingWizardPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Knowledge Base — account-level skills, .MD upload, materials ── */}
+          {!embeddedModule && layoutMode === 'knowledge-base' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-knowledge-base">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Upload className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-xs font-medium text-zinc-800">Knowledge Base</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-3xl mx-auto">
+                  <div className="mb-6">
+                    <h2 className="text-lg font-semibold text-zinc-900 mb-1">Account Knowledge Base</h2>
+                    <p className="text-sm text-zinc-500 leading-relaxed">
+                      Upload materials, skills files, and .MD documents for AnA to learn from. This knowledge applies across all projects in your organization.
+                    </p>
+                  </div>
+                  <CustomInstructions
+                    value={customInstructions}
+                    onChange={async (val) => {
+                      setCustomInstructions(val);
+                      try {
+                        await fetch('/api/project-knowledge/instructions', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ instructions: val }),
+                        });
+                      } catch { /* silently fail */ }
+                    }}
+                    projectType={activeProject?.type}
+                    defaultOpen
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Project Knowledge — project-level context, uploads, sources ── */}
+          {!embeddedModule && layoutMode === 'project-knowledge' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-project-knowledge">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <FileStack className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Project Knowledge</span>
+                {activeProject && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <ProjectKnowledgePanel projectId={activeProjectId || null} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Legal Center — IP, contracts, regulatory law ── */}
+          {/* Artifacts Gallery — browsable outputs and templates */}
+          {!embeddedModule && layoutMode === 'artifacts' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-artifacts">
+              <Suspense fallback={<ModuleLoadingFallback />}>
+                <ArtifactsGalleryPage />
+              </Suspense>
+            </div>
+          )}
+
+          {!embeddedModule && layoutMode === 'legal-center' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Scale className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Legal Center</span>
+              </div>
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <LegalCenterPage onClose={() => setLayoutMode('projects')} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Document Builder — CSR + CTD wizard across global agencies ── */}
+          {!embeddedModule && layoutMode === 'document-builder' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-builder">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <BookOpen className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-800">Document Builder</span>
+              </div>
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <FullDocumentBuilder />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Intelligent Report Engine — immutable records, atom provenance, quasi-indemnification ── */}
+          {!embeddedModule && layoutMode === 'report-engine' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-report-engine">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <IntelligentReportGenerator />
+              </Suspense>
             </div>
           )}
 
@@ -2358,7 +2960,7 @@ export const ZenApp: React.FC = () => {
                     className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Projects</span>
+                    <span>Home</span>
                   </button>
                   <span className="text-zinc-200">·</span>
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
@@ -2440,14 +3042,7 @@ export const ZenApp: React.FC = () => {
             >
               <ErrorBoundary>
                 <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-zinc-500">Loading Rules Engine...</p>
-                      </div>
-                    </div>
-                  }
+                  fallback={<ModuleLoadingFallback />}
                 >
                   <RulesManager onBack={() => setLayoutMode('mission-control')} />
                 </Suspense>
@@ -2457,669 +3052,123 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Projects Index ─────────────────────────────────────────────── */}
           {!embeddedModule && layoutMode === 'projects' && (
-            <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
-              <div className="max-w-4xl mx-auto px-6 py-10">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h1 className="text-2xl font-semibold text-zinc-900">
-                      {workspaceSummary?.org?.name || 'Projects'}
-                    </h1>
-                    <p className="text-sm text-zinc-500 mt-1">
-                      {projects.filter(p => !p.archived).length} active project
-                      {projects.filter(p => !p.archived).length !== 1 ? 's' : ''}
-                      {workspaceSummary?.counts?.documents
-                        ? ` · ${workspaceSummary.counts.documents} documents`
-                        : ''}
-                      {workspaceSummary?.counts?.threads
-                        ? ` · ${workspaceSummary.counts.threads} conversations`
-                        : ''}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setNewProjectOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Project
-                  </button>
-                </div>
-
-                {/* Project list */}
-                {projects.filter(p => !p.archived).length > 0 ? (
-                  <div className="border border-zinc-200 rounded-lg overflow-hidden mb-10 bg-white">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-zinc-100 bg-zinc-50/60">
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
-                            Type
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
-                            Project
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">
-                            Chats
-                          </th>
-                          <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">
-                            Updated
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100">
-                        {projects
-                          .filter(p => !p.archived)
-                          .map(project => {
-                            const dotColor: Record<string, string> = {
-                              '510K': 'bg-blue-500',
-                              IND: 'bg-violet-500',
-                              NDA: 'bg-emerald-500',
-                              BLA: 'bg-teal-500',
-                              PMA: 'bg-orange-500',
-                              CER: 'bg-pink-500',
-                              MAA: 'bg-indigo-500',
-                            };
-                            return (
-                              <tr
-                                key={project.id}
-                                data-testid={`project-row-${project.id}`}
-                                onClick={() => {
-                                  navInProgressRef.current = true;
-                                  setActiveProjectId(project.id);
-                                  setRiViewMode('editor');
-                                  setLayoutMode('regulatory-workspace');
-                                  navigate(`/concept2cure/project/${project.id}`);
-                                }}
-                                className="cursor-pointer hover:bg-zinc-50 transition-colors"
-                              >
-                                <td className="px-4 py-2.5 whitespace-nowrap">
-                                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600">
-                                    <span
-                                      className={cn(
-                                        'w-1.5 h-1.5 rounded-full',
-                                        dotColor[project.type] ?? 'bg-zinc-400'
-                                      )}
-                                    />
-                                    {project.type}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-2.5">
-                                  <span className="font-medium text-zinc-900">{project.name}</span>
-                                  {project.starred && (
-                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
-                                  )}
-                                  {project.description && (
-                                    <span className="block text-xs text-zinc-400 truncate max-w-md">
-                                      {project.description}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-2.5 text-zinc-400 hidden sm:table-cell">
-                                  {project.conversationCount}
-                                </td>
-                                <td className="px-4 py-2.5 text-zinc-400 text-right hidden sm:table-cell">
-                                  {project.lastUpdated
-                                    ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric',
-                                      })
-                                    : '—'}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  /* Empty state */
-                  <div className="border border-dashed border-zinc-300 bg-white px-6 py-8 text-center mb-10 rounded-lg">
-                    <FolderOpen className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
-                    <p className="text-sm text-zinc-600 mb-3">No projects yet</p>
-                    <button
-                      onClick={() => setNewProjectOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Create first project
-                    </button>
-                  </div>
-                )}
-
-                {/* Recent activity row */}
-                {(workspaceSummary?.recent?.artifacts?.length ?? 0) > 0 && (
-                  <div>
-                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                      Recent Artifacts
-                    </h2>
-                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
-                      {workspaceSummary!.recent.artifacts!.slice(0, 4).map((a: any) => (
-                        <div
-                          key={a.id}
-                          className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-50 transition-colors"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-                          <span className="text-sm font-medium text-zinc-900 truncate flex-1">
-                            {a.title || a.type}
-                          </span>
-                          <span className="text-xs text-zinc-400 flex-shrink-0">
-                            {a.type} · {a.status} ·{' '}
-                            {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recent threads */}
-                {(workspaceSummary?.recent?.threads?.length ?? 0) > 0 && (
-                  <div className="mt-8">
-                    <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                      Recent Conversations
-                    </h2>
-                    <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden bg-white">
-                      {workspaceSummary!.recent.threads!.slice(0, 5).map((t: any) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setActiveThreadId(t.id);
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-zinc-50 transition-colors"
-                        >
-                          <MessageSquare className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                          <span className="text-sm text-zinc-700 truncate">{t.title}</span>
-                          <span className="ml-auto text-xs text-zinc-400 flex-shrink-0">
-                            {t.updatedAt
-                              ? new Date(t.updatedAt).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
-                              : ''}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+              <PlatformHome
+                userName={userName}
+                projects={projects}
+                onProjectClick={(projectId) => {
+                  navInProgressRef.current = true;
+                  setActiveProjectId(projectId);
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
+                  navigate(`/concept2cure/project/${projectId}`);
+                }}
+                onNewProject={() => setNewProjectOpen(true)}
+                onNavigate={(mode) => setLayoutMode(mode as LayoutMode)}
+                workspaceSummary={workspaceSummary}
+              />
+            </Suspense>
           )}
 
-          {/* ── Project Workspace — entered by clicking a project card ──────── */}
+          {/* ── Project Workspace — Claude.ai-style project view ──────── */}
           {!embeddedModule && layoutMode === 'workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
-              {/* ── Project Header Strip (two-line) ────────────────────── */}
-              <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-4 py-2">
-                {/* Row 1: nav + name + type + panel toggles */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-zinc-400 hover:text-zinc-700 transition-colors text-xs mr-1 flex-shrink-0"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Projects</span>
-                  </button>
-                  <div className="w-px h-4 bg-zinc-200 flex-shrink-0" />
+              {/* ── Project Header — Claude.ai style: breadcrumb + title + star ── */}
+              <div className="flex-shrink-0 bg-white px-6 pt-6 pb-4">
+                {/* Breadcrumb */}
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 transition-colors mb-3"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  All projects
+                </button>
 
-                  {/* Type badge */}
-                  {activeProject &&
-                    (() => {
-                      const typeColors: Record<string, { bg: string; text: string }> = {
-                        '510K': { bg: 'bg-blue-50', text: 'text-blue-700' },
-                        IND: { bg: 'bg-violet-50', text: 'text-violet-700' },
-                        NDA: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-                        BLA: { bg: 'bg-teal-50', text: 'text-teal-700' },
-                        PMA: { bg: 'bg-orange-50', text: 'text-orange-700' },
-                        CER: { bg: 'bg-pink-50', text: 'text-pink-700' },
-                        MAA: { bg: 'bg-indigo-50', text: 'text-indigo-700' },
-                      };
-                      const tc = typeColors[activeProject.type] ?? {
-                        bg: 'bg-zinc-50',
-                        text: 'text-zinc-600',
-                      };
-                      return (
-                        <span
-                          className={cn(
-                            'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide flex-shrink-0',
-                            tc.bg,
-                            tc.text
-                          )}
-                        >
-                          {activeProject.type}
-                        </span>
-                      );
-                    })()}
-
-                  {/* Project name */}
-                  <h2 className="font-semibold text-zinc-900 text-sm truncate min-w-0 flex-1">
-                    {activeProject?.name || 'Untitled Project'}
-                  </h2>
-
-                  {/* Edit project button */}
-                  {activeProject && (
+                {/* Project title + actions */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-xl font-semibold text-zinc-900 truncate">
+                      {activeProject?.name || 'Untitled Project'}
+                    </h1>
+                    {activeProject?.description && (
+                      <p className="text-sm text-zinc-500 mt-1 line-clamp-2">{activeProject.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-4">
                     <button
                       onClick={() => setEditProjectOpen(true)}
-                      title="Edit project metadata"
-                      className="flex-shrink-0 p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                      title="Project settings"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
                     >
-                      <PenLine className="w-3.5 h-3.5" />
+                      <PenLine className="w-4 h-4" />
                     </button>
-                  )}
-
-                  <div className="flex items-center gap-0.5 flex-shrink-0 ml-1">
-                    {(['files', 'outputs', 'instructions'] as const).map(tab => {
-                      const cfg = {
-                        files: { icon: Upload, label: 'Files', active: 'bg-blue-50 text-blue-700' },
-                        outputs: {
-                          icon: Layers,
-                          label: 'Outputs',
-                          active: 'bg-violet-50 text-violet-700',
-                        },
-                        instructions: {
-                          icon: PenLine,
-                          label: 'Instructions',
-                          active: 'bg-amber-50 text-amber-700',
-                        },
-                      }[tab];
-                      const Icon = cfg.icon;
-                      const isActive = workspacePanelOpen && workspacePanelTab === tab;
-                      return (
-                        <button
-                          key={tab}
-                          onClick={() => {
-                            if (isActive) {
-                              setWorkspacePanelOpen(false);
-                            } else {
-                              setWorkspacePanelTab(tab);
-                              setWorkspacePanelOpen(true);
-                            }
-                          }}
-                          className={cn(
-                            'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
-                            isActive
-                              ? cfg.active
-                              : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100'
-                          )}
-                        >
-                          <Icon className="w-3 h-3" />
-                          <span className="hidden sm:inline">{cfg.label}</span>
-                        </button>
-                      );
-                    })}
+                    <button
+                      className="p-1.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                      title="Star project"
+                    >
+                      <Star className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
-                {/* Row 2: sponsor · product · region (only when present) */}
-                {(activeProject?.sponsor || activeProject?.product || activeProject?.region) && (
-                  <div className="flex items-center gap-1.5 mt-0.5 pl-[calc(3.5rem)] text-xs text-zinc-400">
-                    {[activeProject?.sponsor, activeProject?.product]
-                      .filter(Boolean)
-                      .map((v, i) => (
-                        <React.Fragment key={i}>
-                          {i > 0 && <span className="text-zinc-200">·</span>}
-                          <span className="truncate max-w-[140px]">{v}</span>
-                        </React.Fragment>
-                      ))}
-                    {activeProject?.region && (
-                      <span className="ml-0.5 inline-flex items-center px-1.5 py-0 rounded border border-zinc-200 text-zinc-400 bg-zinc-50 text-[10px]">
-                        {activeProject.region}
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
+              {/* Removed old tab toggles — ProjectSidebar now handles Context/Instructions/Files */}
 
-              {/* ── Workspace body: chat center + right panel ───────────── */}
+              {/* ── Workspace body: AnA chat + right panel ───────────── */}
               <div className="flex-1 flex min-h-0">
-                {/* Center: ZenChat */}
-                <div className="flex-1 flex flex-col min-h-0 min-w-0">
-                  <ZenChat
-                    projectId={activeProjectId}
-                    projectName={activeProject?.name}
-                    submissionType={activeProject?.type}
-                    threadId={activeThreadId}
-                    greeting={platformGreeting}
-                    lastWork={lastWorkSummary}
-                    nextTask={
-                      nextTask
-                        ? {
-                            taskTitle: nextTask.taskTitle,
-                            taskDescription: nextTask.taskDescription,
-                          }
-                        : null
-                    }
-                    suggestedActions={(() => {
-                      const t = (activeProject?.type || 'IND').toUpperCase();
-                      const base = workspaceSummary?.nextActions ?? [];
-                      if (base.length > 0) return base.slice(0, 4);
+                {/* Center: AnA (the ONE chat — Claude.ai style) */}
+                <AnaPersistentPanel
+                  mode="full"
+                  contextProfile={{
+                    productType: activeProject?.type,
+                    userRole: userRole,
+                    screenName: 'regulatory-workspace',
+                    activeProject: activeProject?.name,
+                    projectId: activeProjectId,
+                  }}
+                  greeting={platformGreeting || `How can I help with ${activeProject?.name || 'your project'}?`}
+                  suggestedActions={workspaceSuggestedActions}
+                  onActionRun={handleActionRun}
+                  initialMessage={
+                    pendingDraftSection
+                      ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
+                      : null
+                  }
+                />
 
-                      // Determine project state for smart ordering
-                      const hasFiles = (workspaceKnowledge.knowledge?.documents?.length ?? 0) > 0;
-                      const hasOutputs =
-                        projectArtifacts.length > 0 ||
-                        (workspaceSummary?.recent?.artifacts?.length ?? 0) > 0;
-
-                      const starters: Record<
-                        string,
-                        Array<{ id: string; label: string; intent: string; description: string }>
-                      > = {
-                        '510K': [
-                          {
-                            id: 'upload-device-docs',
-                            label: 'Upload device documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add device specs, test results, and labeling.',
-                          },
-                          {
-                            id: 'find-predicates',
-                            label: 'Find likely predicates',
-                            intent: 'find-likely-510k-predicates',
-                            description: 'Search FDA for substantially equivalent devices.',
-                          },
-                          {
-                            id: 'draft-device-desc',
-                            label: 'Draft device description',
-                            intent: 'draft-510k-device-description',
-                            description: 'Generate Section 3 device description.',
-                          },
-                          {
-                            id: 'check-estar',
-                            label: 'Check eSTAR readiness',
-                            intent: 'check-estar-readiness',
-                            description: 'Review eSTAR template requirements.',
-                          },
-                        ],
-                        IND: [
-                          {
-                            id: 'upload-source',
-                            label: 'Upload source documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add CSRs, CMC data, and preclinical files.',
-                          },
-                          {
-                            id: 'draft-ind-outline',
-                            label: 'Draft IND outline',
-                            intent: 'draft-ind-outline',
-                            description: 'Generate IND outline per 21 CFR 312.23.',
-                          },
-                          {
-                            id: 'missing-sections',
-                            label: 'Identify missing sections',
-                            intent: 'identify-missing-ind-sections',
-                            description: 'Audit your IND for incomplete sections.',
-                          },
-                          {
-                            id: 'gen-cmc-workplan',
-                            label: 'Generate CMC workplan',
-                            intent: 'generate-cmc-workplan',
-                            description: 'Build Module 3 CMC workplan and timeline.',
-                          },
-                        ],
-                        CER: [
-                          {
-                            id: 'upload-evidence',
-                            label: 'Upload evidence & literature',
-                            intent: 'upload-source-documents',
-                            description: 'Add clinical literature and PMS data.',
-                          },
-                          {
-                            id: 'build-cer-outline',
-                            label: 'Build CER outline',
-                            intent: 'build-cer-outline',
-                            description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.',
-                          },
-                          {
-                            id: 'draft-benefit-risk',
-                            label: 'Draft benefit-risk section',
-                            intent: 'draft-cer-benefit-risk',
-                            description: 'Generate the benefit-risk analysis.',
-                          },
-                          {
-                            id: 'review-pms-pmcf',
-                            label: 'Review PMS / PMCF gaps',
-                            intent: 'review-pms-pmcf-gaps',
-                            description: 'Identify post-market surveillance gaps.',
-                          },
-                        ],
-                        NDA: [
-                          {
-                            id: 'upload-source',
-                            label: 'Upload source documents',
-                            intent: 'upload-source-documents',
-                            description: 'Add CSRs, CMC data, and prior filings.',
-                          },
-                          {
-                            id: 'draft-nda-outline',
-                            label: 'Draft NDA outline',
-                            intent: 'draft-nda-outline',
-                            description: 'Generate NDA outline per 21 CFR 314.',
-                          },
-                          {
-                            id: 'nda-missing',
-                            label: 'Identify missing sections',
-                            intent: 'identify-missing-nda-sections',
-                            description: 'Audit NDA for gaps and missing modules.',
-                          },
-                          {
-                            id: 'gen-summary',
-                            label: 'Generate ISS/ISE outline',
-                            intent: 'generate-iss-ise-outline',
-                            description: 'Outline Integrated Summary of Safety/Efficacy.',
-                          },
-                        ],
-                      };
-
-                      const all = starters[t] ?? starters['IND'];
-                      // State-aware ordering: no files → upload first; has files no outputs → generate first
-                      if (!hasFiles) return [all[0], ...all.slice(1, 4)]; // upload first
-                      if (!hasOutputs) return [all[1], all[2], all[3], all[0]].slice(0, 3); // generate first
-                      return all.slice(1, 4); // skip upload, show generate/audit
-                    })()}
-                    onActionRun={handleActionRun}
-                    onNavigate={(path: string) => {
-                      try {
-                        const params = new URLSearchParams(
-                          new URL(path, window.location.origin).search
-                        );
-                        const p = params.get('panel') as ToolPanel | null;
-                        if (p && p in TOOL_PANELS) {
-                          setActiveToolPanel(p);
-                          return;
-                        }
-                      } catch (_) {
-                        /* fallback */
-                      }
-                      setLayoutMode('workspace');
-                    }}
-                    onNewProject={() => setNewProjectOpen(true)}
-                    onThreadChange={tid => {
-                      handleThreadChange(tid);
-                      if (pendingDraftSection) setPendingDraftSection(null);
-                    }}
+                {/* Right sidebar: Claude.ai-style (Context, Instructions, Files) */}
+                {/* Desktop: static panel */}
+                <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
+                  <ProjectSidebar
+                    projectId={activeProjectId ?? null}
+                    projectType={activeProject?.type}
                   />
                 </div>
-
-                {/* Right panel: Files / Outputs / Instructions */}
+                {/* Mobile/Tablet: floating toggle + slide-over drawer */}
                 {workspacePanelOpen && (
-                  <div className="w-72 xl:w-80 border-l border-zinc-100 bg-zinc-50/30 flex flex-col flex-shrink-0">
-                    {/* Tab bar */}
-                    <div className="flex items-center border-b border-zinc-100 flex-shrink-0 bg-white">
-                      {(['files', 'outputs', 'instructions'] as const).map(tab => {
-                        const cfg = {
-                          files: {
-                            icon: Upload,
-                            label: 'Files',
-                            active: 'border-blue-500 text-blue-700',
-                          },
-                          outputs: {
-                            icon: Layers,
-                            label: 'Outputs',
-                            active: 'border-violet-500 text-violet-700',
-                          },
-                          instructions: {
-                            icon: PenLine,
-                            label: 'Instructions',
-                            active: 'border-amber-500 text-amber-700',
-                          },
-                        }[tab];
-                        const Icon = cfg.icon;
-                        return (
-                          <button
-                            key={tab}
-                            onClick={() => setWorkspacePanelTab(tab)}
-                            className={cn(
-                              'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors border-b-2',
-                              workspacePanelTab === tab
-                                ? cfg.active
-                                : 'border-transparent text-zinc-400 hover:text-zinc-600'
-                            )}
-                          >
-                            <Icon className="w-3 h-3" />
-                            {cfg.label}
-                          </button>
-                        );
-                      })}
+                  <>
+                    <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setWorkspacePanelOpen(false)} />
+                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-xl z-50 lg:hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+                        <span className="text-sm font-medium text-zinc-700">Project Context</span>
+                        <button onClick={() => setWorkspacePanelOpen(false)} className="p-1 hover:bg-zinc-100 rounded">
+                          <X className="w-4 h-4 text-zinc-400" />
+                        </button>
+                      </div>
+                      <ProjectSidebar
+                        projectId={activeProjectId ?? null}
+                        projectType={activeProject?.type}
+                      />
                     </div>
-
-                    {/* ── Files tab ── */}
-                    {workspacePanelTab === 'files' && (
-                      <div className="flex-1 flex flex-col min-h-0">
-                        <ProjectFilesCompact projectId={activeProjectId ?? null} />
-                      </div>
-                    )}
-
-                    {/* ── Outputs + Run Log tab ── */}
-                    {workspacePanelTab === 'outputs' && (
-                      <div className="flex-1 overflow-y-auto zen-scroll">
-                        {/* Run log — in-flight and recent actions */}
-                        {runLog.length > 0 && (
-                          <div className="p-3 border-b border-zinc-100">
-                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                              Activity
-                            </p>
-                            <div className="space-y-1.5">
-                              {runLog.slice(0, 8).map(entry => (
-                                <div
-                                  key={entry.id}
-                                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white border border-zinc-100"
-                                >
-                                  {entry.status === 'running' ? (
-                                    <Loader2 className="w-3 h-3 text-blue-500 animate-spin flex-shrink-0" />
-                                  ) : entry.status === 'done' ? (
-                                    <div className="w-3 h-3 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    </div>
-                                  ) : (
-                                    <div className="w-3 h-3 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-medium text-zinc-700 truncate">
-                                      {entry.label}
-                                    </p>
-                                    <p className="text-[10px] text-zinc-400 capitalize">
-                                      {entry.status}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Artifacts */}
-                        {projectArtifacts.length === 0 &&
-                        (workspaceSummary?.recent?.artifacts?.length ?? 0) === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                            <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center mb-3">
-                              <Layers className="w-4 h-4 text-zinc-400" />
-                            </div>
-                            <p className="text-xs font-medium text-zinc-600 mb-1">No outputs yet</p>
-                            <p className="text-[11px] text-zinc-400 max-w-[160px] leading-relaxed">
-                              Run a workflow or ask RI to draft a document.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="p-3 space-y-1.5">
-                            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider px-1 mb-2">
-                              Generated
-                            </p>
-                            {[...projectArtifacts, ...(workspaceSummary?.recent?.artifacts ?? [])]
-                              .filter(
-                                (a: any, i: number, arr: any[]) =>
-                                  arr.findIndex((x: any) => x.id === a.id) === i
-                              )
-                              .slice(0, 15)
-                              .map((a: any) => (
-                                <div
-                                  key={a.id}
-                                  className="flex items-start gap-2 p-2.5 rounded-xl border border-zinc-100 bg-white hover:border-zinc-200 transition-all cursor-default"
-                                >
-                                  <div className="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <FileText className="w-3 h-3 text-violet-600" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-medium text-zinc-900 truncate leading-tight">
-                                      {a.title || a.type}
-                                    </p>
-                                    <p className="text-[10px] text-zinc-400 truncate">
-                                      {a.type}
-                                      {a.status ? ` · ${a.status}` : ''}
-                                    </p>
-                                  </div>
-                                  <a
-                                    href={a.downloadUrl || a.url || '#'}
-                                    download={a.title || a.type}
-                                    onClick={e => {
-                                      if (!a.downloadUrl && !a.url) e.preventDefault();
-                                    }}
-                                    className="flex-shrink-0 p-1 rounded text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
-                                    title="Download"
-                                  >
-                                    <Download className="w-3.5 h-3.5" />
-                                  </a>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ── Instructions tab ── */}
-                    {workspacePanelTab === 'instructions' && (
-                      <div className="flex-1 overflow-y-auto zen-scroll">
-                        {workspaceKnowledge.isLoading ? (
-                          <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-5 h-5 text-zinc-300 animate-spin" />
-                          </div>
-                        ) : (
-                          <div className="p-3">
-                            <div className="mb-3">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                <p className="text-xs font-semibold text-zinc-700">
-                                  Project Instructions
-                                </p>
-                              </div>
-                              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                                These instructions guide Regulatory Intelligence for every
-                                conversation in this project.
-                              </p>
-                            </div>
-                            <CustomInstructions
-                              value={workspaceKnowledge.knowledge?.customInstructions || ''}
-                              onChange={workspaceKnowledge.updateCustomInstructions}
-                              projectType={activeProject?.type}
-                              defaultOpen={!!workspaceKnowledge.knowledge?.customInstructions}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  </>
                 )}
+                {/* Mobile toggle button */}
+                <button
+                  onClick={() => setWorkspacePanelOpen(true)}
+                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                  title="Project context"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
               </div>
             </div>
           )}
@@ -3145,96 +3194,34 @@ export const ZenApp: React.FC = () => {
               </ErrorBoundary>
             </div>
           )}
+          {/* assistant/ctd mode → redirect to workspace (ONE chat via AnA) */}
           {!embeddedModule && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
-            <>
-              {/* Chat - Connected to Cortex */}
-              <div
-                className={cn(
-                  'flex-1 flex flex-col min-w-0 min-h-0 transition-all duration-200',
-                  activeToolPanel && !toolPanelFullscreen && 'flex-shrink-0'
-                )}
-                style={{
-                  display: toolPanelFullscreen ? 'none' : 'flex',
-                }}
-              >
-                {/* Workspace Readiness Strip — real counts from backend */}
-                <div className="flex-shrink-0 px-4 sm:px-6 pt-2 pb-0 border-b border-zinc-100/60 bg-zinc-50/40">
-                  <WorkspaceReadinessStrip
-                    counts={workspaceSummary?.counts}
-                    isLoading={summaryLoading}
-                    orgName={workspaceSummary?.org?.name}
-                  />
-                </div>
-
-                <ZenChat
-                  projectId={activeProjectId}
-                  projectName={activeProject?.name}
-                  submissionType={activeProject?.type}
-                  threadId={activeThreadId}
-                  greeting={platformGreeting}
-                  lastWork={lastWorkSummary}
-                  nextTask={
-                    nextTask
-                      ? { taskTitle: nextTask.taskTitle, taskDescription: nextTask.taskDescription }
-                      : null
-                  }
-                  suggestedActions={workspaceSummary?.nextActions}
-                  onNavigate={(path: string) => {
-                    // If path opens a panel, do it inline
-                    try {
-                      const params = new URLSearchParams(
-                        new URL(path, window.location.origin).search
-                      );
-                      const p = params.get('panel') as ToolPanel | null;
-                      if (p && p in TOOL_PANELS) {
-                        setActiveToolPanel(p);
-                        return;
-                      }
-                    } catch (_) {
-                      /* fallback */
-                    }
-                    setLayoutMode('assistant');
-                  }}
-                  onNewProject={() => setNewProjectOpen(true)}
-                  initialMessage={
-                    pendingDraftSection
-                      ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
-                      : null
-                  }
-                  onThreadChange={tid => {
-                    handleThreadChange(tid);
-                    // Clear pending draft after it's been sent
-                    if (pendingDraftSection) setPendingDraftSection(null);
-                  }}
-                />
-              </div>
-
-              {/* Project Knowledge Panel — Claude.ai-style project sidebar */}
-              {!activeToolPanel && activeProjectId && (
-                <div className="w-64 flex-shrink-0 border-l border-zinc-100 hidden xl:flex">
-                  <ErrorBoundary>
-                    <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
-                      <ProjectKnowledgePanel projectId={activeProjectId} />
-                    </Suspense>
-                  </ErrorBoundary>
-                </div>
-              )}
-
-              {/* Tool panel */}
-              {activeToolPanel && (
-                <ToolPanelWrapper
-                  panel={activeToolPanel}
-                  onClose={() => {
-                    setActiveToolPanel(null);
-                    setToolPanelFullscreen(false);
-                  }}
-                  isFullscreen={toolPanelFullscreen}
-                  onToggleFullscreen={() => setToolPanelFullscreen(!toolPanelFullscreen)}
-                />
-              )}
-            </>
+            <RedirectToWorkspace onRedirect={() => setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects')} />
           )}
         </div>
+
+        {/* AnA — THE single chat surface
+            workspace/regulatory-workspace: rendered inline above (mode="full")
+            module pages: shown here as compact input bar at bottom
+            projects/home: shown here as full chat (no module content above) */}
+        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && (
+          <AnaPersistentPanel
+            mode={layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'}
+            defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
+            contextProfile={{
+              productType: activeProject?.type,
+              userRole: userRole,
+              screenName: layoutMode,
+              activeProject: activeProject?.name,
+              projectId: activeProjectId,
+            }}
+            greeting={layoutMode === 'deep-research'
+              ? 'What would you like to research? I\'ll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more.'
+              : platformGreeting}
+            suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
+            onActionRun={handleActionRun}
+          />
+        )}
       </div>
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
@@ -3248,16 +3235,7 @@ export const ZenApp: React.FC = () => {
         }}
       />
 
-      {/* AnA — Persistent AI conversation panel available on every page */}
-      <AnaPersistentPanel
-        contextProfile={{
-          productType: activeProject?.type,
-          userRole: userRole,
-          screenName: layoutMode,
-          activeProject: activeProject?.name,
-          projectId: activeProjectId,
-        }}
-      />
+      {/* AnA — moved to inline bottom bar (see below) */}
 
       {/* Command palette */}
       <ZenCommandPalette
@@ -3319,6 +3297,8 @@ export const ZenApp: React.FC = () => {
       {showFirstRun && (
         <Suspense fallback={null}>
           <FirstRunExperience
+            userName={userName}
+            existingProjects={projects}
             onComplete={(selectedRole) => {
               setShowFirstRun(false);
               try { localStorage.setItem('concept2cure_first_run_complete', 'true'); } catch {}

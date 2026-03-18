@@ -230,7 +230,7 @@ export default function SnowGlobeMissionControlCard({
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-1.5">
+          <div className="rounded-lg bg-blue-600 p-1.5">
             <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
           <span className="text-sm font-semibold text-zinc-800">Snow Globe</span>

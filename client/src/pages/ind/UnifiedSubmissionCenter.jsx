@@ -1452,6 +1452,42 @@ function KanbanTaskCard({ task, onUpdate }) {
 
 // Component: Timeline View
 function TimelineView({ projects, tasks }) {
+  const allItems = useMemo(() => {
+    const items = [];
+    (projects || []).forEach(p => {
+      if (p.targetDate) {
+        items.push({
+          id: `proj-${p.id}`,
+          title: p.name || p.title || `Project ${p.id}`,
+          date: p.targetDate,
+          type: 'milestone',
+          status: p.status || 'planned',
+        });
+      }
+    });
+    (tasks || []).forEach(t => {
+      if (t.dueDate) {
+        items.push({
+          id: `task-${t.id}`,
+          title: t.title || `Task ${t.id}`,
+          date: t.dueDate,
+          type: 'task',
+          status: t.status || 'pending',
+        });
+      }
+    });
+    return items.sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [projects, tasks]);
+
+  const statusColors = {
+    completed: 'bg-green-500',
+    in_progress: 'bg-blue-500',
+    active: 'bg-blue-500',
+    overdue: 'bg-red-500',
+    planned: 'bg-gray-400',
+    pending: 'bg-yellow-500',
+  };
+
   return (
     <div className="space-y-6">
       <Card className="border-gray-200 shadow-sm">
@@ -1460,13 +1496,41 @@ function TimelineView({ projects, tasks }) {
           <CardDescription>Visual timeline of all submission milestones</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="relative">
-            {/* Timeline implementation */}
+          {allItems.length === 0 ? (
             <div className="text-center text-gray-500 py-12">
               <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Interactive timeline view coming soon</p>
+              <p>No milestones or tasks with dates found.</p>
+              <p className="text-sm mt-1">Add target dates to projects and tasks to see them here.</p>
             </div>
-          </div>
+          ) : (
+            <div className="relative pl-8">
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200" />
+              <div className="space-y-6">
+                {allItems.map((item) => (
+                  <div key={item.id} className="relative flex items-start gap-4">
+                    <div className={`absolute left-[-1.25rem] top-1.5 h-3 w-3 rounded-full border-2 border-white ${statusColors[item.status] || 'bg-gray-400'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{item.title}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {item.type === 'milestone' ? 'Milestone' : 'Task'}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {new Date(item.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="text-xs whitespace-nowrap"
+                    >
+                      {(item.status || 'planned').replace('_', ' ')}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
