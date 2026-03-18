@@ -854,23 +854,40 @@ const RegulatoryLawPanel: React.FC<{ search: string }> = ({ search }) => {
 };
 
 const CompliancePanel: React.FC<{ search: string }> = ({ search }) => {
+  const { data: complianceItems = [], isLoading: complianceLoading } = useQuery<ComplianceItem[]>({
+    queryKey: ['concept2cure', 'compliance'],
+    queryFn: async () => {
+      const res = await fetch('/api/concept2cure/compliance');
+      if (!res.ok) throw new Error('Failed to fetch compliance data');
+      return res.json();
+    },
+  });
+
   const filtered = useMemo(
     () =>
-      MOCK_COMPLIANCE.filter(
+      complianceItems.filter(
         (c) =>
           c.framework.toLowerCase().includes(search.toLowerCase()) ||
           c.requirement.toLowerCase().includes(search.toLowerCase()) ||
           c.owner.toLowerCase().includes(search.toLowerCase()),
       ),
-    [search],
+    [search, complianceItems],
   );
 
   const stats = useMemo(() => {
-    const totalFindings = MOCK_COMPLIANCE.reduce((sum, c) => sum + c.findings, 0);
-    const totalCapa = MOCK_COMPLIANCE.reduce((sum, c) => sum + c.capaCount, 0);
-    const atRisk = MOCK_COMPLIANCE.filter((c) => c.riskLevel === 'High' || c.riskLevel === 'Critical').length;
-    return { totalFindings, totalCapa, atRisk, frameworks: MOCK_COMPLIANCE.length };
-  }, []);
+    const totalFindings = complianceItems.reduce((sum, c) => sum + c.findings, 0);
+    const totalCapa = complianceItems.reduce((sum, c) => sum + c.capaCount, 0);
+    const atRisk = complianceItems.filter((c) => c.riskLevel === 'High' || c.riskLevel === 'Critical').length;
+    return { totalFindings, totalCapa, atRisk, frameworks: complianceItems.length };
+  }, [complianceItems]);
+
+  if (complianceLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-sm text-zinc-400">Loading compliance data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
