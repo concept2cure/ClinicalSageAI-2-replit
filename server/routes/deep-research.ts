@@ -21,6 +21,7 @@ import {
   storeCredentials,
 } from '../services/connectors/connector-registry.js';
 import { getUsageSummary } from '../services/usage-metering.js';
+import { ai } from '../lib/unified-ai-client.js';
 
 const router = Router();
 
@@ -208,6 +209,166 @@ router.get('/usage', async (req: Request, res: Response) => {
     res.json({ usage: summary });
   } catch (err) {
     res.status(500).json({ error: String(err) });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENT GENERATION (FullDocumentBuilder)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/deep-research/document/generate — Generate a regulatory document
+ * Used by FullDocumentBuilder to create CSR, CTD, and other submissions.
+ */
+router.post('/document/generate', requireTier('standard'), async (req: Request, res: Response) => {
+  try {
+    const { documentType, targetAgencies, studyInfo } = req.body;
+
+    if (!documentType || !studyInfo?.title) {
+      return res.status(400).json({ error: 'documentType and studyInfo.title are required' });
+    }
+
+    const agencies = targetAgencies || ['FDA'];
+
+    // Define section templates per document type
+    const sectionTemplates: Record<string, Array<{ number: string; title: string }>> = {
+      csr: [
+        { number: '1', title: 'Title Page' },
+        { number: '2', title: 'Synopsis' },
+        { number: '5', title: 'Ethics' },
+        { number: '6', title: 'Investigators and Study Administrative Structure' },
+        { number: '7', title: 'Introduction' },
+        { number: '8', title: 'Study Objectives' },
+        { number: '9', title: 'Investigational Plan' },
+        { number: '10', title: 'Study Patients' },
+        { number: '11', title: 'Efficacy Evaluation' },
+        { number: '12', title: 'Safety Evaluation' },
+        { number: '13', title: 'Discussion and Overall Conclusions' },
+      ],
+      ctd_full: [
+        { number: '1.1', title: 'Cover Letter' },
+        { number: '1.2', title: 'Administrative Information' },
+        { number: '2.2', title: 'Introduction (Quality Overall Summary)' },
+        { number: '2.3', title: 'Quality Overall Summary' },
+        { number: '2.4', title: 'Nonclinical Overview' },
+        { number: '2.5', title: 'Clinical Overview' },
+        { number: '2.6', title: 'Nonclinical Written and Tabulated Summaries' },
+        { number: '2.7', title: 'Clinical Summary' },
+        { number: '3.2.S', title: 'Drug Substance' },
+        { number: '3.2.P', title: 'Drug Product' },
+        { number: '5.3.5', title: 'Reports of Controlled Clinical Studies' },
+      ],
+      ctd_module2: [
+        { number: '2.2', title: 'Introduction' },
+        { number: '2.3', title: 'Quality Overall Summary' },
+        { number: '2.4', title: 'Nonclinical Overview' },
+        { number: '2.5', title: 'Clinical Overview' },
+        { number: '2.6', title: 'Nonclinical Summaries' },
+        { number: '2.7.1', title: 'Summary of Biopharmaceutic Studies' },
+        { number: '2.7.2', title: 'Summary of Clinical Pharmacology Studies' },
+        { number: '2.7.3', title: 'Summary of Clinical Efficacy' },
+        { number: '2.7.4', title: 'Summary of Clinical Safety' },
+      ],
+      ctd_module5: [
+        { number: '5.1', title: 'Table of Contents' },
+        { number: '5.2', title: 'Tabular Listing of All Clinical Studies' },
+        { number: '5.3.1', title: 'Reports of Biopharmaceutic Studies' },
+        { number: '5.3.3', title: 'Reports of Human PK Studies' },
+        { number: '5.3.5', title: 'Reports of Efficacy and Safety Studies' },
+        { number: '5.3.6', title: 'Reports of Post-Marketing Experience' },
+      ],
+    };
+
+    const templates = sectionTemplates[documentType] || sectionTemplates.csr;
+
+    // Generate content for each section using Claude
+    const sections = await Promise.all(
+      templates.map(async (tmpl) => {
+        try {
+          const result = await ai.chat(
+            [
+              {
+                role: 'system',
+                content: `You are a regulatory medical writer generating Section ${tmpl.number} (${tmpl.title}) for a ${documentType.toUpperCase()} document targeting ${agencies.join(', ')}. Write regulatory-grade content following ICH E3/CTD conventions. Use passive voice, formal regulatory language. Output 200-400 words of flowing prose.`,
+              },
+              {
+                role: 'user',
+                content: `Generate Section ${tmpl.number}: ${tmpl.title}
+
+Study: ${studyInfo.title}
+Protocol: ${studyInfo.protocol || 'Not specified'}
+Phase: ${studyInfo.phase || 'Not specified'}
+Indication: ${studyInfo.indication || 'Not specified'}
+Sponsor: ${studyInfo.sponsor || 'Not specified'}
+Product: ${studyInfo.product || 'Not specified'}
+Design: ${studyInfo.design || 'Not specified'}
+Primary Endpoint: ${studyInfo.primaryEndpoint || 'Not specified'}
+Secondary Endpoints: ${Array.isArray(studyInfo.secondaryEndpoints) ? studyInfo.secondaryEndpoints.join(', ') : studyInfo.secondaryEndpoints || 'Not specified'}
+Sample Size: ${studyInfo.sampleSize || 'Not specified'}
+Duration: ${studyInfo.treatmentDuration || 'Not specified'}
+
+Write the section content.`,
+              },
+            ],
+            { taskType: 'regulatory_review', temperature: 0.3, maxTokens: 2000, callerModule: 'document-builder' }
+          );
+
+          const content = result.content || '';
+          return {
+            number: tmpl.number,
+            title: tmpl.title,
+            content,
+            status: content.length > 50 ? 'drafted' : 'template_only',
+            wordCount: content.split(/\s+/).length,
+            agency: agencies[0],
+          };
+        } catch {
+          return {
+            number: tmpl.number,
+            title: tmpl.title,
+            content: `[Section ${tmpl.number} — content generation pending]`,
+            status: 'template_only',
+            wordCount: 0,
+            agency: agencies[0],
+          };
+        }
+      })
+    );
+
+    // Run basic validation checks per agency
+    const validationResults: Array<{ sectionNumber: string; agency: string; status: string; message: string }> = [];
+    for (const agency of agencies) {
+      for (const section of sections) {
+        if (section.status === 'drafted' && section.wordCount < 50) {
+          validationResults.push({
+            sectionNumber: section.number,
+            agency,
+            status: 'warning',
+            message: `Section ${section.number} has fewer than 50 words — may need expansion for ${agency} submission.`,
+          });
+        } else if (section.status === 'drafted') {
+          validationResults.push({
+            sectionNumber: section.number,
+            agency,
+            status: 'pass',
+            message: `Section ${section.number} meets minimum content requirements.`,
+          });
+        } else {
+          validationResults.push({
+            sectionNumber: section.number,
+            agency,
+            status: 'fail',
+            message: `Section ${section.number} requires manual content — template only.`,
+          });
+        }
+      }
+    }
+
+    res.json({ sections, validationResults });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('Document generation error:', message);
+    res.status(500).json({ error: message });
   }
 });
 
