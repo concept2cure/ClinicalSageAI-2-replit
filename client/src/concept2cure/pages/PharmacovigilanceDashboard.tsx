@@ -69,7 +69,7 @@ export default function PharmacovigilanceDashboard() {
       if (res.ok) {
         const data = await res.json();
         // Transform backend signal format to UI format
-        const raw = data.signals ?? data ?? [];
+        const raw = data.signals ?? data.data ?? data ?? [];
         setSignals(Array.isArray(raw) ? raw.map((s: Record<string, unknown>) => ({
           id: String(s.id ?? ''),
           product_name: String(s.product_name ?? s.productName ?? 'Unknown Product'),
