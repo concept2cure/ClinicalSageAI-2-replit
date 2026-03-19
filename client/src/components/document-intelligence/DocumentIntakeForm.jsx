@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Sparkles, Shield, RotateCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { documentIntelligenceService } from '@/services/DocumentIntelligenceService';
+import { documentIntelligenceService } from '@/concept2cure/services/documentIntelligenceService';
 
 /**
  * Document Intake Form Component
