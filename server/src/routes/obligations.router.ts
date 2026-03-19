@@ -6,13 +6,12 @@
 
 import { Router } from 'express';
 import { getPool } from '../../db';
-import OpenAI from 'openai';
+import { ai } from '../../lib/unified-ai-client';
 
 // Database connection
 const pool = getPool();
 
 const router = Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Helper: Insert obligation audit event
 const logObligationEvent = async (
@@ -61,20 +60,15 @@ ${text}
 Respond with JSON: {"obligations": [{"title": "...", "severity": "...", "dueDate": null, "recurrence": {...}, "context": "..."}]}
 `;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      messages: [
+    const text = await ai.complete([
         {
           role: 'system',
           content: 'You are a regulatory affairs expert specializing in obligation extraction.',
         },
         { role: 'user', content: prompt },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-    });
+      ], { jsonMode: true, temperature: 0.3, callerModule: 'obligations/extractObligationsFromText' });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(text || '{}');
     return result.obligations || [];
   } catch (error) {
     console.error('AI extraction failed:', error);

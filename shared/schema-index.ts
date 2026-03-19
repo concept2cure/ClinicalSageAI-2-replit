@@ -11,6 +11,7 @@ export * from './schema';
 
 // Re-export from sub-schemas
 export * from './schema/unified_workflow';
+export * from './schema/regulatory-atoms';
 
 // Type helpers for common queries
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';

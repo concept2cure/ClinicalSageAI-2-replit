@@ -6108,6 +6108,30 @@ async function startServer() {
   }
 
   try {
+    const rtmExportRoutes = await import('./routes/rtm-export');
+    app.use('/api', rtmExportRoutes.default);
+    console.log('✅ RTM Export routes mounted at /api/programs/:programId/rtm');
+  } catch (error) {
+    console.error('Failed to mount RTM export routes:', error);
+  }
+
+  try {
+    const documentIntelligenceRoutes = await import('./routes/document-intelligence-routes');
+    app.use('/api/documents', documentIntelligenceRoutes.default);
+    console.log('✅ Document Intelligence routes mounted at /api/documents');
+  } catch (error) {
+    console.error('Failed to mount document intelligence routes:', error);
+  }
+
+  try {
+    const aiCompletionRoutes = await import('./routes/ai-completion');
+    app.use('/api', aiCompletionRoutes.default);
+    console.log('✅ AI Completion routes mounted at /api/ai/completion');
+  } catch (error) {
+    console.error('Failed to mount AI completion routes:', error);
+  }
+
+  try {
     const { protocolRoutes } = await import('./routes/protocol_routes');
     app.use('/api/protocol', protocolRoutes);
     console.log('✅ Protocol routes mounted at /api/protocol');
