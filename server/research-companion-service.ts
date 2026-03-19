@@ -95,7 +95,7 @@ const COMPANION_PERSONAS = {
 };
 
 /**
- * Research Companion Service for TrialSage
+ * Research Companion Service for Concept2Cure
  *
  * Provides a friendly AI research companion that helps users
  * explore clinical trial designs, methodologies, and academic knowledge
@@ -608,7 +608,7 @@ class ResearchCompanionService {
         {
           id: 'clinical-trials-general',
           title: 'Basic Principles of Clinical Trial Design',
-          author: 'TrialSage Knowledge Base',
+          author: 'Concept2Cure Knowledge Base',
           date: '2025',
           type: 'reference',
           excerpt:
@@ -618,7 +618,7 @@ class ResearchCompanionService {
         {
           id: 'oncology-endpoints',
           title: 'Primary Endpoints in Oncology Trials',
-          author: 'TrialSage Knowledge Base',
+          author: 'Concept2Cure Knowledge Base',
           date: '2025',
           type: 'reference',
           excerpt:
@@ -628,7 +628,7 @@ class ResearchCompanionService {
         {
           id: 'regulatory-guidance',
           title: 'Regulatory Guidance for Clinical Study Design',
-          author: 'TrialSage Knowledge Base',
+          author: 'Concept2Cure Knowledge Base',
           date: '2025',
           type: 'reference',
           excerpt:

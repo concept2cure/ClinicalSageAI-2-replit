@@ -786,7 +786,7 @@ This risk management linkage was performed in accordance with:
 - MEDDEV 2.7/1 Rev 4
 - EU MDR (2017/745) Article 61 requirements
 `,
-      author: 'TrialSage AI',
+      author: 'Concept2Cure AI',
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       sources: [

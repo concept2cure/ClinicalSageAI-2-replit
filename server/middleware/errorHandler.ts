@@ -1,5 +1,5 @@
 /**
- * Error Handling Middleware for TrialSage
+ * Error Handling Middleware for Concept2Cure
  *
  * Provides consistent error handling, logging, and response formatting
  * for all application errors.

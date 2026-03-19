@@ -192,7 +192,7 @@ const modulesStructure = [
     ],
   },
   {
-    name: 'TrialSage Vault™',
+    name: 'Concept2Cure Vault™',
     href: '/vault',
     icon: Layers,
     description: 'Document management system',

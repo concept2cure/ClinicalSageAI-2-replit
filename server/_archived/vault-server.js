@@ -639,5 +639,5 @@ app.post('/api/vault/auth/token', async (req, res) => {
 // Start server
 const httpServer = createServer(app);
 httpServer.listen(PORT, () => {
-  console.log(`TrialSage Vault server running on port ${PORT}`);
+  console.log(`Concept2Cure Vault server running on port ${PORT}`);
 });

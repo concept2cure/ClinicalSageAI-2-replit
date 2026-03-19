@@ -1,5 +1,5 @@
 /**
- * Authentication Routes - TrialSage V2
+ * Authentication Routes - Concept2Cure V2
  *
  * Basic authentication endpoints for development mode.
  * Provides session management, login, and user validation.
@@ -127,7 +127,7 @@ router.get('/session', async (req: Request, res: Response) => {
       sessionRole === 'admin' ? ['admin', 'user'] : [sessionRole === 'editor' ? 'editor' : 'user'];
 
     // Get organization
-    let orgName = 'TrialSage';
+    let orgName = 'Concept2Cure';
     if (decoded.organizationId) {
       const org = await db
         .select()
@@ -349,7 +349,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     const refreshToken = jwt.sign(
       { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
-      config.jwt.secret,
+      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
@@ -572,7 +572,15 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, config.jwt.secret) as {
+    // SECURITY: Check if refresh token has been blacklisted (via logout or previous rotation)
+    if (isTokenBlacklisted(refreshToken)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Refresh token has been revoked' },
+      });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || config.jwt.secret) as {
       userId: string;
       email: string;
       type: string;
@@ -640,9 +648,12 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
     const newRefreshToken = jwt.sign(
       { userId: decoded.userId, email: decoded.email, type: 'refresh' },
-      config.jwt.secret,
+      process.env.REFRESH_TOKEN_SECRET || process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
+
+    // SECURITY: Blacklist the old refresh token to prevent reuse (token rotation)
+    tokenBlacklist.add(refreshToken);
 
     res.json({
       success: true,
@@ -827,7 +838,7 @@ router.post('/mfa/verify', async (req: Request, res: Response) => {
 
     const refreshToken = jwt.sign(
       { userId: challenge.userId, email: challenge.email, type: 'refresh' },
-      config.jwt.secret,
+      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 

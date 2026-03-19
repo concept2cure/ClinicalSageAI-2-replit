@@ -63,7 +63,7 @@ if (typeof window !== 'undefined') {
   setTimeout(prefetchRoutes, 1500);
 }
 
-// Stability utilities removed to show authentic TrialSage content
+// Stability utilities removed to show authentic Concept2Cure content
 
 // Core navigation component (loaded immediately)
 import UnifiedTopNavV3 from './components/navigation/UnifiedTopNavV3';
@@ -267,7 +267,7 @@ function MainApp() {
   // Get current location to determine when to show the unified nav
   const [location] = useLocation();
 
-  // Removed stability measures to show authentic TrialSage content
+  // Removed stability measures to show authentic Concept2Cure content
 
   // Check if we're on the landing page, regulatory hub, coauthor pages, or dashboard (which have their own navigation)
   const isLandingPage = location === '/' || location === '/client-portal';

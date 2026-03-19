@@ -2,7 +2,7 @@
  * Batch Import Script for Clinical Trial Data
  *
  * This script handles importing multiple XML files from the attached_assets directory
- * and processes them into the TrialSage database.
+ * and processes them into the Concept2Cure database.
  */
 
 const { importNctXmlFiles } = require('./import_xml_files');

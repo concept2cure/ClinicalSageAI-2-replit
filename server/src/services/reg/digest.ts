@@ -93,7 +93,7 @@ export async function generateCalendarEvent(subId: string) {
 
   const ics = `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//TrialSage//Regulatory Calendar//EN
+PRODID:-//Concept2Cure//Regulatory Calendar//EN
 BEGIN:VEVENT
 UID:reg-review-${subId}-${Date.now()}@trialsage.com
 DTSTART:${startDate

@@ -1,7 +1,7 @@
 /**
- * TrialSage API Routes
+ * Concept2Cure API Routes
  *
- * This module defines the core API routes for the TrialSage platform
+ * This module defines the core API routes for the Concept2Cure platform
  */
 
 const { createServer } = require('http');

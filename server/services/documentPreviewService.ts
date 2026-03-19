@@ -493,7 +493,7 @@ export async function generateHtmlPreview(
     ${bodyHtml}
   </div>
   <div class="preview-footer">
-    Generated on ${new Date().toISOString().split('T')[0]} &mdash; TrialSage Document Preview
+    Generated on ${new Date().toISOString().split('T')[0]} &mdash; Concept2Cure Document Preview
   </div>
 </body>
 </html>`;

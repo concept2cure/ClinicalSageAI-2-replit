@@ -1,5 +1,5 @@
 /**
- * Enterprise Authentication Routes - TrialSage V2
+ * Enterprise Authentication Routes - Concept2Cure V2
  *
  * Multi-step authentication flow for enterprise users:
  * 1. check-email - Validate email and determine auth flow

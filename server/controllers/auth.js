@@ -197,8 +197,8 @@ export async function handleForgotPassword(req, res) {
     res.json({
       success: true,
       message: 'If the email exists, a password reset link will be sent',
-      // TODO: Remove this in production
-      resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined,
+      // Reset token only exposed in development for testing
+      ...(process.env.NODE_ENV === 'development' && { resetToken }),
     });
   } catch (error) {
     console.error('Password reset request error:', error);

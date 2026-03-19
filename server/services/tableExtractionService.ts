@@ -24,7 +24,7 @@
  * @module server/services/tableExtractionService
  * @version 1.0.0
  * @compliance 21 CFR Part 11, ICH E3, ICH E9
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  */
 
 import { Pool } from 'pg';

@@ -1,5 +1,5 @@
 /**
- * TrialSage Design System - Action Bar
+ * Concept2Cure Design System - Action Bar
  *
  * Elegant action bars for page headers and contextual actions.
  * Clean, minimal design with smart responsive behavior.

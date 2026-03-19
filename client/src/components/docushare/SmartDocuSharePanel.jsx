@@ -1,4 +1,4 @@
-// --- TrialSage Enterprise: Smart Search + Auto-Linking DocuShare Panel ---
+// --- Concept2Cure Enterprise: Smart Search + Auto-Linking DocuShare Panel ---
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {

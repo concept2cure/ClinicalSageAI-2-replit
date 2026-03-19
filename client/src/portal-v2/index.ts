@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Main Index
+ * Concept2Cure Client Portal V2 - Main Index
  *
  * Central export point for all portal-v2 components, hooks, and utilities.
  *

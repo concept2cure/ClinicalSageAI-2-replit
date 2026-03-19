@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Admin Dashboard
+ * Concept2Cure Client Portal V2 - Admin Dashboard
  *
  * Main administrative dashboard for organization management,
  * user oversight, security monitoring, and compliance tracking.

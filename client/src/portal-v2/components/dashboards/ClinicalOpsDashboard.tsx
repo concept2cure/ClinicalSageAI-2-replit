@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Clinical Operations Dashboard
+ * Concept2Cure Client Portal V2 - Clinical Operations Dashboard
  *
  * Trial management dashboard for clinical operations teams with
  * study tracking, site management, and enrollment monitoring.

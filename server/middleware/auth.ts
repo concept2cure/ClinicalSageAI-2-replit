@@ -3,7 +3,7 @@
  * Authentication Middleware
  *
  * Enterprise-grade authentication and authorization middleware
- * for TrialSage V2 platform.
+ * for Concept2Cure V2 platform.
  *
  * @module server/middleware/auth
  */

@@ -1,11 +1,11 @@
 /**
- * TrialSage Client Portal V2 - Enterprise Types
+ * Concept2Cure Client Portal V2 - Enterprise Types
  *
  * Comprehensive type definitions for the regulatory intelligence platform.
  * Designed for biotech/pharma professionals with role-based experiences.
  *
  * @version 2.0.0
- * @author TrialSage Engineering
+ * @author Concept2Cure Engineering
  */
 
 // ─────────────────────────────────────────────────────────────────────────────

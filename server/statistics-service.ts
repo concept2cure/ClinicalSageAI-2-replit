@@ -4,7 +4,7 @@ import { eq, sql, and, gte, lte, desc, count, avg, max, min } from 'drizzle-orm'
 import * as math from 'mathjs';
 
 /**
- * Enhanced Biostatistics Service for TrialSage
+ * Enhanced Biostatistics Service for Concept2Cure
  *
  * This service provides comprehensive statistical analyses for clinical trials including:
  * - Advanced trial design statistics (sample size calculation, power analysis)

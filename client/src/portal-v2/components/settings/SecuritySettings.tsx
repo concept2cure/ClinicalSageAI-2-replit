@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Security & Compliance Settings
+ * Concept2Cure Client Portal V2 - Security & Compliance Settings
  *
  * Organization-level security configuration, compliance monitoring,
  * and policy management interface.

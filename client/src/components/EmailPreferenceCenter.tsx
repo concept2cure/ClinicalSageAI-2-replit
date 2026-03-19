@@ -313,7 +313,7 @@ export default function EmailPreferenceCenter({
                   <div className="space-y-3">
                     <div className="bg-white p-3 border rounded-md">
                       <div className="text-sm font-medium">
-                        Subject: TrialSage Weekly Digest - {new Date().toLocaleDateString()}
+                        Subject: Concept2Cure Weekly Digest - {new Date().toLocaleDateString()}
                       </div>
                       <div className="border-t mt-2 pt-2 text-sm">
                         <p>Hello,</p>
@@ -363,7 +363,7 @@ export default function EmailPreferenceCenter({
                 ) : preferences.watchlistAlerts ? (
                   <div className="bg-white p-3 border rounded-md">
                     <div className="text-sm font-medium">
-                      Subject: ⚠️ TrialSage Alert - Significant increase in watched tags
+                      Subject: ⚠️ Concept2Cure Alert - Significant increase in watched tags
                     </div>
                     <div className="border-t mt-2 pt-2 text-sm">
                       <p>Hello,</p>

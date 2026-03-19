@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - User Management System
+ * Concept2Cure Client Portal V2 - User Management System
  *
  * Enterprise user management with role assignment, SoD validation,
  * training tracking, and compliance monitoring.

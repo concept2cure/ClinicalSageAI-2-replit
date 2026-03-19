@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Regulatory Lead Dashboard
+ * Concept2Cure Client Portal V2 - Regulatory Lead Dashboard
  *
  * Operational dashboard for regulatory affairs professionals with
  * submission tracking, document status, and compliance monitoring.

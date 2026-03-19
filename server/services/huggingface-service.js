@@ -1,5 +1,5 @@
 /**
- * Hugging Face Service for TrialSage
+ * Hugging Face Service for Concept2Cure
  * Handles interactions with Hugging Face API for embeddings and text generation
  */
 

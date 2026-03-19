@@ -706,7 +706,7 @@ const SuccessFailureFactors = () => {
         },
         {
           id: 'ks4',
-          title: 'TrialSage Internal Analysis: Obesity Trial Success Patterns',
+          title: 'Concept2Cure Internal Analysis: Obesity Trial Success Patterns',
           type: 'Internal' as const,
           relevance: 92,
           key_findings:

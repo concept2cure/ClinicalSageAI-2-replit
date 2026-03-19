@@ -8,7 +8,7 @@ import { fetchCTDSections, fetchRiskConnections, updateSectionPosition } from '.
 import './CanvasWorkbenchV2.css';
 
 /**
- * Enhanced Canvas Workbench for TrialSage
+ * Enhanced Canvas Workbench for Concept2Cure
  * Provides a visual workspace for viewing and arranging CTD sections,
  * with interactive nodes, connection lines, and detailed section information
  */

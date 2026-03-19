@@ -1,11 +1,11 @@
 /**
- * TrialSage Enterprise Dashboard V3
+ * Concept2Cure Enterprise Dashboard V3
  *
  * A beautiful, data-rich command center for regulatory intelligence.
  * Designed with clarity, calm, and confidence in mind.
  *
  * @version 3.0.0
- * @author TrialSage Engineering
+ * @author Concept2Cure Engineering
  */
 
 import React, { useState, useMemo, memo } from 'react';

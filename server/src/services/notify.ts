@@ -51,7 +51,7 @@ ${opts.link ? `Open: ${opts.link}` : ''}`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: `:no_entry: *PROCESS GUARD BLOCKED* — *${opts.guard}* for *${opts.processName}*\n*Details:* ${opts.details}\n${opts.link ? `<${opts.link}|Open process>` : ''}`,
-          username: 'TrialSage CMC',
+          username: 'Concept2Cure CMC',
           icon_emoji: ':warning:',
         }),
       });

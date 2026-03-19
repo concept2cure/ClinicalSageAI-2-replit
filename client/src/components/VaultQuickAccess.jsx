@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 /**
  * VaultQuickAccess Component
  *
- * Provides quick access to key documents stored in the TrialSage Vault.
+ * Provides quick access to key documents stored in the Concept2Cure Vault.
  */
 const VaultQuickAccess = ({ clientId }) => {
   // Sample recent documents - in a real app, these would come from an API call

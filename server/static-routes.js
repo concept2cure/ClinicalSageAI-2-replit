@@ -221,8 +221,8 @@ export function setupStaticRoutes(app) {
     },
     {
       path: '/compare/trialsage-vs-veeva',
-      title: 'TrialSage™ vs. Veeva',
-      description: 'See how TrialSage™ compares to Veeva RIM Suite',
+      title: 'Concept2Cure™ vs. Veeva',
+      description: 'See how Concept2Cure™ compares to Veeva RIM Suite',
       features: [
         '40% faster document generation with advanced AI',
         'Superior protocol optimization with CSR-driven intelligence',
@@ -232,8 +232,8 @@ export function setupStaticRoutes(app) {
     },
     {
       path: '/compare/trialsage-vs-arisglobal',
-      title: 'TrialSage™ vs. ArisGlobal',
-      description: 'See how TrialSage™ compares to ArisGlobal LifeSphere',
+      title: 'Concept2Cure™ vs. ArisGlobal',
+      description: 'See how Concept2Cure™ compares to ArisGlobal LifeSphere',
       features: [
         'Enhanced regulatory intelligence with real-time updates',
         'More powerful protocol optimization capabilities',
@@ -243,8 +243,8 @@ export function setupStaticRoutes(app) {
     },
     {
       path: '/compare/trialsage-vs-traditional',
-      title: 'TrialSage™ vs. Traditional Methods',
-      description: 'See how TrialSage™ transforms your regulatory workflows',
+      title: 'Concept2Cure™ vs. Traditional Methods',
+      description: 'See how Concept2Cure™ transforms your regulatory workflows',
       features: [
         'Reduce document preparation time by up to 65%',
         'Decrease protocol amendments by 40% with data-driven design',
@@ -281,7 +281,7 @@ export function setupStaticRoutes(app) {
     const route = {
       path: req.path,
       title: `${solutionName}`,
-      description: 'TrialSage™ enterprise regulatory solution',
+      description: 'Concept2Cure™ enterprise regulatory solution',
     };
 
     const html = generateStaticPage(route);
@@ -406,10 +406,10 @@ export function setupStaticRoutes(app) {
       title: 'Terms of Service',
       lastUpdated: 'March 17, 2026',
       content: `
-        <p class="legal-intro">[LEGAL REVIEW REQUIRED] These Terms of Service ("Terms") govern your access to and use of the TrialSage&trade; platform and related services (collectively, the "Service") provided by Concept2Cure.AI ("Company," "we," "us," or "our"). By accessing or using the Service, you agree to be bound by these Terms.</p>
+        <p class="legal-intro">[LEGAL REVIEW REQUIRED] These Terms of Service ("Terms") govern your access to and use of the Concept2Cure&trade; platform and related services (collectively, the "Service") provided by Concept2Cure.AI ("Company," "we," "us," or "our"). By accessing or using the Service, you agree to be bound by these Terms.</p>
 
         <h2>1. Definitions</h2>
-        <p>"Authorized User" means any individual who is granted access to the Service under your account. "Customer Data" means all electronic data, information, or materials submitted by you or your Authorized Users to the Service, including clinical trial data, regulatory documents, and related metadata. "Platform" means the TrialSage&trade; Concept2Cure enablement platform, including all AI-driven regulatory intelligence, clinical trial design, and document management tools.</p>
+        <p>"Authorized User" means any individual who is granted access to the Service under your account. "Customer Data" means all electronic data, information, or materials submitted by you or your Authorized Users to the Service, including clinical trial data, regulatory documents, and related metadata. "Platform" means the Concept2Cure&trade; Concept2Cure enablement platform, including all AI-driven regulatory intelligence, clinical trial design, and document management tools.</p>
 
         <h2>2. Account Registration and Access</h2>
         <p>To use the Service, you must register for an account and provide accurate, complete information. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You must immediately notify us of any unauthorized use of your account. [LEGAL REVIEW REQUIRED]</p>
@@ -463,7 +463,7 @@ export function setupStaticRoutes(app) {
       title: 'Privacy Policy',
       lastUpdated: 'March 17, 2026',
       content: `
-        <p class="legal-intro">[LEGAL REVIEW REQUIRED] This Privacy Policy describes how Concept2Cure.AI ("Company," "we," "us," or "our") collects, uses, discloses, and protects personal information when you use the TrialSage&trade; platform and our related services. This Policy applies to all users of the Service, including visitors to our website.</p>
+        <p class="legal-intro">[LEGAL REVIEW REQUIRED] This Privacy Policy describes how Concept2Cure.AI ("Company," "we," "us," or "our") collects, uses, discloses, and protects personal information when you use the Concept2Cure&trade; platform and our related services. This Policy applies to all users of the Service, including visitors to our website.</p>
 
         <h2>1. Information We Collect</h2>
         <h3>1.1 Information You Provide</h3>
@@ -484,7 +484,7 @@ export function setupStaticRoutes(app) {
         <h2>2. How We Use Your Information</h2>
         <p>We use the information we collect for the following purposes:</p>
         <ul>
-          <li><strong>Service Delivery:</strong> To provide, operate, and maintain the TrialSage&trade; platform and its features.</li>
+          <li><strong>Service Delivery:</strong> To provide, operate, and maintain the Concept2Cure&trade; platform and its features.</li>
           <li><strong>AI and Analytics:</strong> To power AI-driven regulatory intelligence, document analysis, and trial design recommendations. Customer Data used for AI model improvement is aggregated and de-identified.</li>
           <li><strong>Security and Compliance:</strong> To maintain audit trails, detect and prevent fraud, and comply with regulatory requirements including 21 CFR Part 11.</li>
           <li><strong>Communication:</strong> To send service notifications, technical updates, and, with your consent, marketing communications.</li>
@@ -558,7 +558,7 @@ export function setupStaticRoutes(app) {
       title: 'Cookie Policy',
       lastUpdated: 'March 17, 2026',
       content: `
-        <p class="legal-intro">[LEGAL REVIEW REQUIRED] This Cookie Policy explains how Concept2Cure.AI ("Company," "we," "us," or "our") uses cookies and similar tracking technologies on the TrialSage&trade; platform and our website.</p>
+        <p class="legal-intro">[LEGAL REVIEW REQUIRED] This Cookie Policy explains how Concept2Cure.AI ("Company," "we," "us," or "our") uses cookies and similar tracking technologies on the Concept2Cure&trade; platform and our website.</p>
 
         <h2>1. What Are Cookies</h2>
         <p>Cookies are small text files placed on your device when you visit a website. They are widely used to make websites work efficiently and provide information to site operators. Similar technologies include web beacons, pixels, and local storage.</p>
@@ -630,7 +630,7 @@ export function setupStaticRoutes(app) {
       title: 'Security',
       lastUpdated: 'March 17, 2026',
       content: `
-        <p class="legal-intro">At Concept2Cure.AI, security is foundational to the TrialSage&trade; platform. We understand that our customers entrust us with sensitive clinical trial data and regulatory documents. This page provides an overview of our security practices.</p>
+        <p class="legal-intro">At Concept2Cure.AI, security is foundational to the Concept2Cure&trade; platform. We understand that our customers entrust us with sensitive clinical trial data and regulatory documents. This page provides an overview of our security practices.</p>
 
         <h2>1. Infrastructure Security</h2>
         <ul>
@@ -710,10 +710,10 @@ export function setupStaticRoutes(app) {
       title: 'Compliance',
       lastUpdated: 'March 17, 2026',
       content: `
-        <p class="legal-intro">TrialSage&trade; by Concept2Cure.AI is designed for the regulated life sciences industry. Our platform is built to support your compliance obligations across multiple regulatory frameworks. This page outlines how the Service addresses key regulatory requirements.</p>
+        <p class="legal-intro">Concept2Cure&trade; by Concept2Cure.AI is designed for the regulated life sciences industry. Our platform is built to support your compliance obligations across multiple regulatory frameworks. This page outlines how the Service addresses key regulatory requirements.</p>
 
         <h2>1. FDA 21 CFR Part 11</h2>
-        <p>The TrialSage&trade; platform is designed to meet the requirements of 21 CFR Part 11 for electronic records and electronic signatures:</p>
+        <p>The Concept2Cure&trade; platform is designed to meet the requirements of 21 CFR Part 11 for electronic records and electronic signatures:</p>
         <ul>
           <li><strong>Electronic Signatures:</strong> Unique user identification with multi-factor authentication. Signatures are linked to their respective electronic records and include the printed name, date/time, and meaning of the signature.</li>
           <li><strong>Audit Trails:</strong> Computer-generated, time-stamped audit trails that independently record the date and time of operator entries and actions. Audit trail records cannot be modified and are retained for the life of the record.</li>
@@ -743,7 +743,7 @@ export function setupStaticRoutes(app) {
         </ul>
 
         <h2>4. GxP Compliance Support</h2>
-        <p>The TrialSage&trade; platform supports Good Practice (GxP) requirements relevant to our customers&rsquo; operations:</p>
+        <p>The Concept2Cure&trade; platform supports Good Practice (GxP) requirements relevant to our customers&rsquo; operations:</p>
         <ul>
           <li><strong>Good Clinical Practice (GCP):</strong> Features that support ICH E6(R2) compliance in clinical trial planning and documentation.</li>
           <li><strong>Good Documentation Practice (GDP):</strong> Version control, change tracking, electronic signatures, and audit trails for all regulatory documents.</li>
@@ -883,9 +883,9 @@ function generateStaticPage(route) {
       <section class="related-links">
         <h2>Other Comparisons</h2>
         <div class="related-grid">
-          <a href="/compare/trialsage-vs-veeva" class="related-link">TrialSage™ vs. Veeva</a>
-          <a href="/compare/trialsage-vs-arisglobal" class="related-link">TrialSage™ vs. ArisGlobal</a>
-          <a href="/compare/trialsage-vs-traditional" class="related-link">TrialSage™ vs. Traditional Methods</a>
+          <a href="/compare/trialsage-vs-veeva" class="related-link">Concept2Cure™ vs. Veeva</a>
+          <a href="/compare/trialsage-vs-arisglobal" class="related-link">Concept2Cure™ vs. ArisGlobal</a>
+          <a href="/compare/trialsage-vs-traditional" class="related-link">Concept2Cure™ vs. Traditional Methods</a>
         </div>
       </section>
     `;
@@ -918,7 +918,7 @@ function generateStaticPage(route) {
 
       <section class="cta-section">
         <h2>Ready to Transform Your Regulatory Process?</h2>
-        <p>Join leading pharmaceutical companies who have accelerated their submissions and improved approval rates with TrialSage&trade;.</p>
+        <p>Join leading pharmaceutical companies who have accelerated their submissions and improved approval rates with Concept2Cure&trade;.</p>
         <a href="/request-demo" class="btn btn-secondary">Request Demo</a>
       </section>
     </div>
@@ -1120,7 +1120,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} | TrialSage™</title>
+  <title>${title} | Concept2Cure™</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1606,8 +1606,8 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
   <header class="header">
     <div class="header-content">
       <div class="logo">
-        <img src="https://img.freepik.com/premium-vector/green-health-logo_7888-106.jpg" alt="TrialSage Logo">
-        TrialSage™
+        <img src="https://img.freepik.com/premium-vector/green-health-logo_7888-106.jpg" alt="Concept2Cure Logo">
+        Concept2Cure™
       </div>
       <nav class="nav">
         <a href="/" class="nav-item">Home</a>
@@ -1678,7 +1678,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
           <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
         </div>
         <div class="copyright">
-          &copy; 2026 TrialSage&trade; by Concept2Cure.AI. All rights reserved.
+          &copy; 2026 Concept2Cure&trade; by Concept2Cure.AI. All rights reserved.
         </div>
       </div>
     </div>

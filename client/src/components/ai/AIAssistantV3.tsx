@@ -1,12 +1,12 @@
 /**
- * TrialSage AI Assistant - Enterprise Intelligence Interface
+ * Concept2Cure AI Assistant - Enterprise Intelligence Interface
  *
  * A beautiful, Claude.AI-inspired conversational interface for
  * regulatory intelligence. Designed for thoughtful interaction
  * and seamless document analysis.
  *
  * @version 3.0.0
- * @author TrialSage Engineering
+ * @author Concept2Cure Engineering
  */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';

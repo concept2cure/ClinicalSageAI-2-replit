@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Sidebar Navigation
+ * Concept2Cure Client Portal V2 - Sidebar Navigation
  *
  * Enterprise navigation sidebar with:
  * - Module groups organized by category

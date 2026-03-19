@@ -45,7 +45,7 @@ const AUTH_TAG_LENGTH = 16;
 const BACKUP_CODE_COUNT = 10;
 
 /** Issuer name shown in authenticator apps */
-const TOTP_ISSUER = 'TrialSage';
+const TOTP_ISSUER = 'Concept2Cure';
 
 // ---------------------------------------------------------------------------
 // Base32 Encoding (RFC 4648)

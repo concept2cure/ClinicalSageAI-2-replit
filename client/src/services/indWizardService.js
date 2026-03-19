@@ -10,7 +10,7 @@ const mockProducts = [
   },
   {
     id: 'PROD-002',
-    name: 'TrialSage-IV',
+    name: 'Concept2Cure-IV',
     indication: 'Rheumatoid Arthritis',
     type: 'Biologic',
     phase: 'Phase 1',
@@ -368,7 +368,7 @@ const indWizardService = {
       draft: {
         title: `Phase 2 Study of ${product.name} in ${product.indication}`,
         phase: 'Phase 2',
-        sponsor: 'TrialSage Pharmaceuticals',
+        sponsor: 'Concept2Cure Pharmaceuticals',
         indication: product.indication,
         objective: `To evaluate the safety and efficacy of ${product.name} in patients with ${product.indication}`,
         design: 'Randomized, double-blind, placebo-controlled',

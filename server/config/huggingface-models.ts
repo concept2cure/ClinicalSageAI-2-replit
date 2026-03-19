@@ -1,7 +1,7 @@
 /**
  * HuggingFace Models Configuration
  *
- * This file defines the models used for various NLP and ML tasks throughout the TrialSage platform.
+ * This file defines the models used for various NLP and ML tasks throughout the Concept2Cure platform.
  * We use HuggingFace's Inference API for all AI tasks to maintain control and ownership
  * of our intelligence pipeline and to avoid dependencies on proprietary models.
  */
@@ -107,7 +107,7 @@ export function getModelForTask(task: keyof HuggingFaceModelConfig, region?: str
  * @param region - Optional regulatory region (FDA, EMA, PMDA, NMPA)
  */
 export function generateSystemPrompt(task: string, region?: string): string {
-  let basePrompt = 'You are TrialSage, an expert in clinical trial analysis and protocol design.';
+  let basePrompt = 'You are Concept2Cure, an expert in clinical trial analysis and protocol design.';
 
   // Add task-specific context
   switch (task) {

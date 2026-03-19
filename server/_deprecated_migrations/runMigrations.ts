@@ -1,5 +1,5 @@
 /**
- * Migration Runner for TrialSage Multi-Tenant System
+ * Migration Runner for Concept2Cure Multi-Tenant System
  *
  * This utility runs database migrations in order to set up
  * the multi-tenant architecture features.

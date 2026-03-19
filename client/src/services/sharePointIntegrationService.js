@@ -1,5 +1,5 @@
 /**
- * SharePoint Embedded Integration Service for TrialSage eCTD Co-Author Module
+ * SharePoint Embedded Integration Service for Concept2Cure eCTD Co-Author Module
  *
  * This service provides integration with Microsoft SharePoint Embedded,
  * allowing for document storage, retrieval, and collaborative editing using

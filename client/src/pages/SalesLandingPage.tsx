@@ -133,7 +133,7 @@ function Hero() {
         >
           Collapse your regulatory submission timeline from{" "}
           <span className="font-semibold text-slate-800">14 months to 6</span>.
-          TrialSage automates 510(k)&nbsp;eSTAR, eCTD authoring, CMC
+          Concept2Cure automates 510(k)&nbsp;eSTAR, eCTD authoring, CMC
           documentation, and clinical evaluation — so your team can focus on
           science, not paperwork.
         </motion.p>
@@ -299,7 +299,7 @@ const steps = [
     num: "02",
     title: "AI drafts your submission",
     description:
-      "TrialSage generates compliant regulatory documents, identifies predicate devices, maps requirements, and flags gaps — in minutes, not months.",
+      "Concept2Cure generates compliant regulatory documents, identifies predicate devices, maps requirements, and flags gaps — in minutes, not months.",
   },
   {
     num: "03",
@@ -521,14 +521,14 @@ function Pricing() {
 const testimonials = [
   {
     quote:
-      "TrialSage cut our 510(k) preparation time from 11 months to under 4. The AI-generated eSTAR package was 95% ready on first pass — our RA team just reviewed and signed.",
+      "Concept2Cure cut our 510(k) preparation time from 11 months to under 4. The AI-generated eSTAR package was 95% ready on first pass — our RA team just reviewed and signed.",
     name: "Dr. Sarah Chen",
     title: "VP Regulatory Affairs",
     company: "Apex MedTech",
   },
   {
     quote:
-      "We used to spend $400K on regulatory consultants for every submission. With TrialSage, our in-house team handles it end-to-end. The ROI was clear within the first quarter.",
+      "We used to spend $400K on regulatory consultants for every submission. With Concept2Cure, our in-house team handles it end-to-end. The ROI was clear within the first quarter.",
     name: "James Hartley",
     title: "Chief Operating Officer",
     company: "Vanta Therapeutics",
@@ -664,7 +664,7 @@ function Footer() {
           {/* brand */}
           <div className="lg:col-span-1">
             <span className="text-xl font-bold tracking-tight text-slate-900">
-              TrialSage
+              Concept2Cure
             </span>
             <p className="mt-3 text-sm leading-relaxed text-slate-500">
               AI-powered regulatory intelligence for life sciences. A
@@ -759,7 +759,7 @@ function Footer() {
             reserved.
           </p>
           <p className="text-xs text-slate-400">
-            TrialSage&trade; is a registered trademark of ClinicalSageAI, Inc.
+            Concept2Cure&trade; is a registered trademark of ClinicalSageAI, Inc.
           </p>
         </div>
       </div>

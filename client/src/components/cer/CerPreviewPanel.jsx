@@ -115,7 +115,7 @@ export default function CerPreviewPanel({
         templateId: 'meddev', // MEDDEV 2.7/1 Rev 4 format
         metadata: {
           device: title.split(' ')[0] || 'Medical Device',
-          manufacturer: 'TrialSage Medical',
+          manufacturer: 'Concept2Cure Medical',
           modelNumber: 'TS-' + Date.now().toString().slice(-6),
           version: '1.0',
           date: new Date().toLocaleDateString(),
@@ -222,7 +222,7 @@ export default function CerPreviewPanel({
               status: 'draft',
               description: `Clinical Evaluation Report for ${title.split(' Clinical Evaluation')[0]}`,
               tags: ['MEDDEV 2.7/1 Rev 4', 'Clinical Evaluation', 'EU MDR'],
-              manufacturer: 'TrialSage Medical',
+              manufacturer: 'Concept2Cure Medical',
               modelNumber: 'TS-' + Date.now().toString().slice(-6),
               date: new Date().toLocaleDateString(),
               standard: 'MEDDEV 2.7/1 Rev 4',

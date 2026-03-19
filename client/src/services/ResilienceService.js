@@ -201,7 +201,7 @@ class ResilienceService {
       username: username,
       role: 'admin',
       name: 'Admin User',
-      organization: 'TrialSage',
+      organization: 'Concept2Cure',
       email: 'admin@trialsage.com',
     };
   }

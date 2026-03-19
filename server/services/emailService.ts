@@ -132,7 +132,7 @@ export async function sendPasswordResetEmail(
   await transporter.sendMail({
     from: `"Concept2Cure" <${FROM_ADDRESS}>`,
     to: email,
-    subject: 'Password Reset — Concept2Cure TrialSage',
+    subject: 'Password Reset — Concept2Cure',
     text: `You requested a password reset.\n\nClick the link below (expires in 1 hour):\n${resetUrl}\n\nIf you did not request this, ignore this email.`,
     html: buildResetEmailHtml(resetUrl),
   });

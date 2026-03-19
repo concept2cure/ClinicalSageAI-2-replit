@@ -1,5 +1,5 @@
 /**
- * TrialSage Delta Comparison Service
+ * Concept2Cure Delta Comparison Service
  * Provides advanced comparison capabilities between CSRs
  */
 

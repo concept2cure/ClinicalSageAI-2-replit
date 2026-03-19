@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Audit Trail Viewer
+ * Concept2Cure Client Portal V2 - Audit Trail Viewer
  *
  * 21 CFR Part 11.10(e) compliant audit trail viewer with hash chain
  * verification, immutability indicators, and export capabilities.

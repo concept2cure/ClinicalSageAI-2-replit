@@ -17,7 +17,7 @@ dotenv.config();
 import { runRetentionJob } from '../jobs/retentionCron.js';
 
 console.log('╔═══════════════════════════════════════════════════════════════╗');
-console.log('║                 TrialSage Vault Retention Job                 ║');
+console.log('║                 Concept2Cure Vault Retention Job                 ║');
 console.log('╚═══════════════════════════════════════════════════════════════╝');
 console.log('');
 console.log('⚠️  WARNING: This will archive and permanently delete documents');

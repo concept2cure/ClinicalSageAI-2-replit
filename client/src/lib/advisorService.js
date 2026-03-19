@@ -1,7 +1,7 @@
 // client/src/lib/advisorService.js
 
 /**
- * TrialSage Advisor Service
+ * Concept2Cure Advisor Service
  * Provides resilient data fetching for regulatory advisor features
  * with intelligent fallback mechanisms
  */

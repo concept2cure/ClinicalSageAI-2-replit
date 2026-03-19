@@ -62,7 +62,7 @@ const Navigation = () => {
               color: '#5585b3',
             }}
           >
-            TrialSage Home
+            Concept2Cure Home
           </a>
         </Link>
         <Link href="/ind-wizard">
@@ -1063,7 +1063,7 @@ const Home = () => {
             color: '#4a7399',
           }}
         >
-          Welcome to TrialSage
+          Welcome to Concept2Cure
         </h1>
         <p style={{ fontSize: '1.125rem', marginBottom: '1.5rem' }}>
           The Clinical Intelligence System That Thinks Like a Biotech Founder

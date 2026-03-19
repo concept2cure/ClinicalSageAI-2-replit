@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Role & Permission Manager
+ * Concept2Cure Client Portal V2 - Role & Permission Manager
  *
  * Comprehensive role-based access control management with:
  * - Permission matrix visualization

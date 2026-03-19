@@ -7,7 +7,7 @@ const tourSteps = [
   {
     target: '[data-tour="solution-header"]',
     content:
-      'Welcome to TrialSage! This section shows our complete regulatory intelligence platform.',
+      'Welcome to Concept2Cure! This section shows our complete regulatory intelligence platform.',
     placement: 'bottom',
     disableBeacon: true,
   },

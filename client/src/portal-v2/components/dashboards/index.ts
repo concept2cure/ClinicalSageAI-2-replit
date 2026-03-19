@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Dashboard Components Index
+ * Concept2Cure Client Portal V2 - Dashboard Components Index
  *
  * Export all role-based dashboard components.
  *

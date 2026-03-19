@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Enterprise Login Page
+ * Concept2Cure Client Portal V2 - Enterprise Login Page
  *
  * FDA 21 CFR Part 11 compliant authentication with:
  * - Two-factor authentication (TOTP, hardware key, biometric)

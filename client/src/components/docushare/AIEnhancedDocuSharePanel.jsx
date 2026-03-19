@@ -1,4 +1,4 @@
-// --- TrialSage Enterprise: AI-Enhanced DocuShare with Auto-Tagging and Summarization ---
+// --- Concept2Cure Enterprise: AI-Enhanced DocuShare with Auto-Tagging and Summarization ---
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {

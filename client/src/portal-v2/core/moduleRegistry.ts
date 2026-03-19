@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Module Registry
+ * Concept2Cure Client Portal V2 - Module Registry
  *
  * Central registry for all platform modules with metadata, routing,
  * and role-based access configuration.

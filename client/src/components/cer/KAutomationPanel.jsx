@@ -438,7 +438,7 @@ export default function KAutomationPanel() {
         <div className="flex justify-between items-center p-3 border-b border-gray-200">
           <div className={`flex items-center ${sidebarCollapsed ? 'justify-center w-full' : ''}`}>
             {!sidebarCollapsed && (
-              <span className="font-semibold text-gray-800 ml-2">TrialSage</span>
+              <span className="font-semibold text-gray-800 ml-2">Concept2Cure</span>
             )}
             {sidebarCollapsed && <LayoutDashboard className="h-5 w-5 text-blue-700" />}
           </div>

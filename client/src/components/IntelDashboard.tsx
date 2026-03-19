@@ -301,7 +301,7 @@ export default function IntelDashboard() {
       html2pdf()
         .set({ 
           margin: 0.5, 
-          filename: `TrialSage_${indication || 'Intelligence'}_Report.pdf`, 
+          filename: `Concept2Cure_${indication || 'Intelligence'}_Report.pdf`, 
           html2canvas: { scale: 2 }, 
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
         })
@@ -500,7 +500,7 @@ export default function IntelDashboard() {
               <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
               <h3 className="text-lg font-medium mb-1">Processing Your Request</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md">
-                TrialSage is leveraging OpenAI and its knowledge database to generate intelligent insights tailored to your query.
+                Concept2Cure is leveraging OpenAI and its knowledge database to generate intelligent insights tailored to your query.
               </p>
             </div>
           </CardContent>

@@ -216,7 +216,7 @@ router.post('/validate', requireMaudApiKey, async (req: Request, res: Response) 
       organization: organizationId || 'default',
       metadata: {
         ...validationRequest.metadata,
-        source: validationRequest.metadata?.source || 'TrialSage CER2V',
+        source: validationRequest.metadata?.source || 'Concept2Cure CER2V',
         timestamp: validationRequest.metadata?.timestamp || new Date().toISOString(),
       },
     };

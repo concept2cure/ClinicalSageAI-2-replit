@@ -15,7 +15,7 @@ function AppPackagesBanner() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl font-extrabold text-white sm:text-5xl mb-6 tracking-tight">
-              <span className="text-blue-400">TrialSage</span>™ - AI-Powered Clinical Intelligence
+              <span className="text-blue-400">Concept2Cure</span>™ - AI-Powered Clinical Intelligence
             </h1>
             <p className="mt-5 text-lg text-blue-100 mb-12">
               The industry leader in AI-driven regulatory technology, transforming how
@@ -392,7 +392,7 @@ function AppPackagesBanner() {
         </div>
       </div>
 
-      {/* TrialSage Platform Section - Enterprise Grade */}
+      {/* Concept2Cure Platform Section - Enterprise Grade */}
       <div className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row gap-16">
@@ -402,7 +402,7 @@ function AppPackagesBanner() {
                   INTRODUCING
                 </div>
                 <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-6">
-                  The TrialSage<span className="text-blue-600">™</span> Platform
+                  The Concept2Cure<span className="text-blue-600">™</span> Platform
                 </h2>
                 <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                   Our flagship AI-driven platform transforms regulatory workflows with unprecedented
@@ -469,7 +469,7 @@ function AppPackagesBanner() {
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   </div>
                   <div className="flex-1 text-center text-gray-400 text-sm">
-                    TrialSage™ Intelligence Dashboard{' '}
+                    Concept2Cure™ Intelligence Dashboard{' '}
                     <span className="px-1.5 py-0.5 text-xs bg-slate-700 rounded ml-1">
                       Interface Preview
                     </span>

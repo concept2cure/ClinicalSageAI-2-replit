@@ -2,7 +2,7 @@
  * Mashable Analytics Service
  *
  * This service provides cross-module analytics, visualizations, and dashboards
- * for the TrialSage platform. It enables seamless data aggregation, integration,
+ * for the Concept2Cure platform. It enables seamless data aggregation, integration,
  * and analysis across all platform modules to provide comprehensive regulatory
  * and clinical insights.
  *

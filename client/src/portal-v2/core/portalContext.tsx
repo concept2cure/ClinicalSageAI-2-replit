@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Context Provider
+ * Concept2Cure Client Portal V2 - Context Provider
  *
  * Central context for portal state management including user experience,
  * notifications, and active workspace configuration.

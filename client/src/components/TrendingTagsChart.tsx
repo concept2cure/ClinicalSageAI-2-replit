@@ -141,7 +141,7 @@ export default function TrendingTagsChart({ trendingByMonth }: TrendingTagsChart
 
                 // Add footer
                 pdf.setFontSize(8);
-                pdf.text('TrialSage Study Design Agent Analysis Report', 14, height - 10);
+                pdf.text('Concept2Cure Study Design Agent Analysis Report', 14, height - 10);
 
                 // Save the PDF
                 pdf.save(`trending-tags-${new Date().toISOString().slice(0, 10)}.pdf`);
