@@ -603,10 +603,10 @@ export const ZenLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Demo Access */}
-      <div className="space-y-2">
+      {/* Quick Demo Access — only visible in development */}
+      {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_LOGIN === 'true') && (
         <button
-          onClick={() => setShowPersonas(!showPersonas)}
+          onClick={handleDemoLogin}
           disabled={isLoading}
           className={`
             w-full py-3 px-4
@@ -618,66 +618,23 @@ export const ZenLogin: React.FC = () => {
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            />
-          </svg>
-          Quick Demo Access
-          <svg
-            className={`w-4 h-4 transition-transform duration-200 ${showPersonas ? 'rotate-180' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          {isLoading ? (
+            <SpinnerIcon />
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Demo Access (Dev Only)
+            </>
+          )}
         </button>
-
-        {showPersonas && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-1.5 overflow-hidden"
-          >
-            {demoPersonas.map((persona) => (
-              <button
-                key={persona.email}
-                onClick={() => handleDemoLogin(persona.email)}
-                disabled={isLoading}
-                className={`
-                  w-full py-2.5 px-4
-                  flex items-center gap-3
-                  text-left text-sm
-                  bg-white border border-zinc-200 rounded-lg
-                  hover:bg-zinc-50 hover:border-zinc-300
-                  transition-all duration-150
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                `}
-              >
-                <span className="text-lg">{persona.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-zinc-900 truncate">{persona.name}</div>
-                  <div className="text-xs text-zinc-500 truncate">{persona.title}</div>
-                </div>
-                <span className={`
-                  text-xs font-medium px-2 py-0.5 rounded-full
-                  ${persona.role === 'Admin' ? 'bg-purple-100 text-purple-700' :
-                    persona.role === 'Editor' ? 'bg-blue-100 text-blue-700' :
-                    'bg-zinc-100 text-zinc-600'}
-                `}>
-                  {persona.role}
-                </span>
-              </button>
-            ))}
-            <p className="text-xs text-center text-zinc-400 pt-1">Password: demo123</p>
-          </motion.div>
-        )}
-      </div>
+      )}
 
       {/* SSO Buttons */}
       <div className="grid grid-cols-2 gap-3">

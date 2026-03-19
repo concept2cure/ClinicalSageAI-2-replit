@@ -1,23 +1,24 @@
 :root {
-  /* COLORS — Claude/Anthropic warm palette */
-  --color-bg: #FAF9F5;
+  /* ANTHROPIC AUTHENTIC COLOR PALETTE */
+  /* Warm, humanistic — NOT cold indigo/purple */
+  --color-bg: #faf9f5;               /* Warm cream background */
   --color-surface: #ffffff;
-  --color-surface-warm: #f4f3ee;
-  --color-primary: #D97757;
-  --color-primary-variant: #C4623F;
-  --color-on-primary: #FAF9F5;
-  --color-secondary: #6a9bcc;
-  --color-tertiary: #788c5d;
-  --color-success: #788C5D;
-  --color-warning: #D97706;
-  --color-danger: #DC2626;
-  --color-text-primary: #141413;
-  --color-text-secondary: #4D4B45;
+  --color-surface-warm: #f4f3ee;      /* Pampas - subtle warm surface */
+  --color-primary: #d97757;           /* Terracotta orange - Anthropic brand */
+  --color-primary-variant: #c15f3c;   /* Crail - deeper terracotta */
+  --color-on-primary: #ffffff;
+  --color-secondary: #6a9bcc;         /* Anthropic blue accent */
+  --color-tertiary: #788c5d;          /* Anthropic green accent */
+  --color-success: #788c5d;           /* Earthy green */
+  --color-warning: #d97706;           /* Warm amber */
+  --color-danger: #dc3545;
+  --color-text-primary: #141413;      /* Anthropic dark */
+  --color-text-secondary: #4a4a46;    /* Warm dark gray */
 
-  /* TYPOGRAPHY */
-  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  /* TYPOGRAPHY — Anthropic authentic */
+  --font-heading: 'Poppins', Arial, sans-serif;
+  --font-base: 'Lora', Georgia, serif;
+  --font-ui: 'Poppins', Arial, sans-serif;  /* For UI elements, buttons, labels */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
@@ -30,10 +31,10 @@
   --space-md: 1rem;
   --space-lg: 1.5rem;
 
-  /* ELEVATION — soft, warm shadows */
-  --elevation-low: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --elevation-medium: 0 4px 6px rgba(0, 0, 0, 0.06);
-  --elevation-high: 0 10px 20px rgba(0, 0, 0, 0.06);
+  /* ELEVATION — Warm, subtle shadows */
+  --elevation-low: 0 1px 3px rgba(20, 20, 19, 0.06);
+  --elevation-medium: 0 4px 12px rgba(20, 20, 19, 0.08);
+  --elevation-high: 0 10px 24px rgba(20, 20, 19, 0.12);
 }
 
 body {

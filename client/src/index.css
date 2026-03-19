@@ -796,141 +796,124 @@ input[type='checkbox'].sp-checkbox:checked {
 }
 
 :root {
-  /* Claude/Anthropic Color Palette — warm, professional, minimal */
-  --color-primary: #d97757; /* Warm terracotta — Claude's signature accent */
-  --color-primary-dark: #c4623f;
-  --color-primary-light: #e8967a;
-  --color-primary-glow: rgba(217, 119, 87, 0.15);
-  --color-secondary: #788c5d; /* Muted sage green */
-  --color-secondary-dark: #637547;
-  --color-secondary-light: #95a87d;
-  --color-secondary-glow: rgba(120, 140, 93, 0.15);
-  --color-accent: #6a9bcc; /* Soft steel blue */
-  --color-accent-dark: #5280ad;
-  --color-accent-light: #8db5db;
-  --color-accent-glow: rgba(106, 155, 204, 0.15);
-  --color-highlight: #788c5d;
-  --color-highlight-glow: rgba(120, 140, 93, 0.15);
+  /* ═══════════════════════════════════════════════════════════════
+     ANTHROPIC AUTHENTIC COLOR PALETTE
+     Warm, humanistic design — terracotta, cream, earthy tones
+     ═══════════════════════════════════════════════════════════════ */
 
-  /* Status Colors — Claude-aligned warm tones */
+  /* Primary Brand Colors */
+  --color-primary: #d97757;           /* Terracotta orange — Anthropic signature */
+  --color-primary-dark: #c15f3c;      /* Crail — deeper terracotta */
+  --color-primary-light: #e6957a;     /* Lighter terracotta */
+  --color-primary-glow: rgba(217, 119, 87, 0.2);
+  --color-secondary: #6a9bcc;         /* Anthropic blue — secondary accent */
+  --color-secondary-dark: #5585b3;
+  --color-secondary-light: #8bb4d9;
+  --color-secondary-glow: rgba(106, 155, 204, 0.2);
+  --color-accent: #788c5d;            /* Anthropic green — tertiary */
+  --color-accent-dark: #647746;
+  --color-accent-light: #92a87a;
+  --color-accent-glow: rgba(120, 140, 93, 0.2);
+  --color-highlight: #788c5d;         /* Earthy green */
+  --color-highlight-glow: rgba(120, 140, 93, 0.2);
+
+  /* Status Colors — Warm tones */
   --color-success: #788c5d;
-  --gradient-success: linear-gradient(135deg, #788c5d 0%, #637547 100%);
+  --gradient-success: linear-gradient(135deg, #788c5d 0%, #647746 100%);
   --color-warning: #d97706;
   --gradient-warning: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  --color-error: #dc2626;
-  --gradient-error: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --color-error: #dc3545;
+  --gradient-error: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
   --color-info: #6a9bcc;
-  --gradient-info: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
+  --gradient-info: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
 
-  /* Dark Mode */
-  --dark-bg-primary: #141413;
-  --dark-bg-secondary: #1c1c1a;
-  --dark-bg-tertiary: #252522;
+  /* Dark Mode — Warm evening tones (NOT cold indigo) */
+  --dark-bg-primary: #1c1917;         /* Stone-900 warm dark */
+  --dark-bg-secondary: #292524;       /* Stone-800 */
+  --dark-bg-tertiary: #44403c;        /* Stone-700 */
   --dark-surface: rgba(255, 255, 255, 0.03);
   --dark-surface-hover: rgba(255, 255, 255, 0.06);
-  --dark-glow: rgba(217, 119, 87, 0.1);
+  --dark-glow: rgba(217, 119, 87, 0.15);
 
-  /* Claude Neutral Palette — warm sand/stone tones */
-  --color-gray-50: #faf9f5;
-  --color-gray-100: #f5f4ef;
-  --color-gray-200: #e8e6dc;
-  --color-gray-300: #d8d5ca;
-  --color-gray-400: #b0aea5;
+  /* Warm Neutral Palette — Anthropic warm grays */
+  --color-gray-50: #faf9f5;           /* Warm cream */
+  --color-gray-100: #f4f3ee;          /* Pampas */
+  --color-gray-200: #e8e6dc;          /* Light warm gray */
+  --color-gray-300: #d6d3c8;          /* Mid-light warm gray */
+  --color-gray-400: #b0aea5;          /* Cloudy — Anthropic mid gray */
   --color-gray-500: #8a8880;
-  --color-gray-600: #6b6962;
-  --color-gray-700: #4d4b45;
-  --color-gray-800: #2d2c28;
-  --color-gray-900: #141413;
+  --color-gray-600: #6b6963;
+  --color-gray-700: #4a4a46;
+  --color-gray-800: #2d2d2a;
+  --color-gray-900: #141413;          /* Anthropic dark */
   --color-gray-950: #0a0a09;
-  --color-bg: #faf9f5;
+  --color-bg: #faf9f5;               /* Warm cream — NOT pure white */
   --color-surface: #ffffff;
-  /* Typography tokens — warm ink tones */
-  --color-text-primary: #141413;
-  --color-text-secondary: #4d4b45;
-  --color-text-tertiary: #6b6962;
-  --color-text-inverse: #faf9f5;
-  --color-text-code: #141413;
-  --color-link: #5280ad;
-  --color-link-hover: #141413;
-  --color-link-visited: #4d6a8a;
 
-  /* Semantic background tokens — Claude warm */
-  --background: 45 33% 97%;
-  --foreground: 50 5% 8%;
+  /* Typography tokens */
+  --color-text-primary: #141413;      /* Anthropic dark */
+  --color-text-secondary: #4a4a46;    /* Warm gray */
+  --color-text-tertiary: #6b6963;
+  --color-text-inverse: #faf9f5;      /* Warm light */
+  --color-text-code: #141413;
+  --color-link: #6a9bcc;             /* Anthropic blue */
+  --color-link-hover: #5585b3;
+  --color-link-visited: #8b7ec8;
+
+  /* Semantic background tokens (HSL for Tailwind) */
+  --background: 45 33% 97%;          /* Warm cream */
+  --foreground: 60 3% 8%;            /* Anthropic dark */
   --card: 0 0% 100%;
   --card-foreground: 50 5% 8%;
   --popover: 0 0% 100%;
-  --popover-foreground: 50 5% 8%;
-  --muted: 45 20% 95%;
-  --muted-foreground: 45 5% 35%;
-  --primary: 18 60% 60%;
-  --primary-foreground: 45 33% 97%;
-  --secondary: 100 20% 46%;
-  --secondary-foreground: 45 33% 97%;
-  --accent: 210 40% 61%;
-  --accent-foreground: 45 33% 97%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 45 33% 97%;
-  --border: 45 17% 88%;
-  --input: 45 17% 88%;
-  --ring: 18 60% 60%;
-  --radius: 0.5rem;
-  --sidebar-background: 45 20% 95%;
-  --sidebar-foreground: 50 5% 8%;
-  --sidebar-primary: 18 60% 60%;
-  --sidebar-primary-foreground: 45 33% 97%;
-  --sidebar-accent: 45 20% 93%;
-  --sidebar-accent-foreground: 50 5% 8%;
-  --sidebar-border: 45 17% 88%;
-  --sidebar-ring: 18 60% 60%;
+  --muted: 45 20% 96%;
+  --muted-foreground: 40 5% 35%;
+  --secondary: 45 20% 96%;
+  --accent: 45 20% 96%;
+  --sidebar-background: 45 33% 97%;
+  --sidebar-accent: 45 20% 96%;
+  --sidebar-border: 42 18% 90%;
 
-  /* Chart colors — Claude warm palette */
-  --chart-1: 18 60% 60%;
-  --chart-2: 100 20% 46%;
-  --chart-3: 210 40% 61%;
-  --chart-4: 45 70% 55%;
-  --chart-5: 340 45% 55%;
-
-  /* Gradients — subtle, warm, non-flashy */
-  --gradient-primary: linear-gradient(135deg, #d97757 0%, #c4623f 100%);
-  --gradient-secondary: linear-gradient(135deg, #788c5d 0%, #637547 100%);
-  --gradient-accent: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
-  --gradient-premium: linear-gradient(135deg, #d97757 0%, #c4623f 100%);
-  --gradient-warm: linear-gradient(135deg, #d97757 0%, #c4623f 100%);
-  --gradient-cool: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
-  --gradient-sunset: linear-gradient(135deg, #d97757 0%, #e8967a 100%);
-  --gradient-ocean: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
+  /* Anthropic Gradients — Warm, earthy */
+  --gradient-primary: linear-gradient(135deg, #d97757 0%, #c15f3c 100%);
+  --gradient-secondary: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
+  --gradient-accent: linear-gradient(135deg, #788c5d 0%, #647746 100%);
+  --gradient-premium: linear-gradient(135deg, #d97757 0%, #c15f3c 100%);
+  --gradient-warm: linear-gradient(135deg, #d97757 0%, #c15f3c 100%);
+  --gradient-cool: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
+  --gradient-sunset: linear-gradient(135deg, #d97757 0%, #d97706 100%);
+  --gradient-ocean: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
   --gradient-aurora: linear-gradient(135deg, #788c5d 0%, #6a9bcc 100%);
-  --gradient-dark: linear-gradient(135deg, #2d2c28 0%, #141413 100%);
+  --gradient-dark: linear-gradient(135deg, #2d2d2a 0%, #141413 100%);
   --gradient-mesh: none;
   --gradient-mesh-dark: none;
 
-  /* Glass Morphism — softened for Claude aesthetic */
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-bg-solid: rgba(255, 255, 255, 0.92);
-  --glass-bg-medium: rgba(255, 255, 255, 0.75);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.96);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-border-light: rgba(0, 0, 0, 0.04);
-  --glass-blur: blur(8px);
-  --glass-blur-heavy: blur(16px);
-  --glass-blur-ultra: blur(32px);
+  /* Glass Morphism — Warm tint */
+  --glass-bg: rgba(250, 249, 245, 0.05);
+  --glass-bg-solid: rgba(250, 249, 245, 0.92);
+  --glass-bg-medium: rgba(250, 249, 245, 0.7);
+  --glass-bg-heavy: rgba(250, 249, 245, 0.95);
+  --glass-border: rgba(176, 174, 165, 0.15);
+  --glass-border-light: rgba(176, 174, 165, 0.25);
+  --glass-blur: blur(10px);
+  --glass-blur-heavy: blur(20px);
+  --glass-blur-ultra: blur(40px);
 
-  /* Shadow Collection — soft, warm, Claude-style */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-  --shadow-3xl: 0 35px 60px -15px rgba(0, 0, 0, 0.1);
-  --shadow-inner: inset 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-glow-primary: 0 0 20px rgba(217, 119, 87, 0.1);
-  --shadow-glow-secondary: 0 0 20px rgba(120, 140, 93, 0.1);
-  --shadow-glow-accent: 0 0 20px rgba(106, 155, 204, 0.1);
-  --shadow-3d: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-sharepoint: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-sharepoint-hover: 0 4px 6px rgba(0, 0, 0, 0.06);
+  /* Shadow Collection — Warm, subtle */
+  --shadow-xs: 0 1px 2px rgba(20, 20, 19, 0.04);
+  --shadow-sm: 0 1px 3px rgba(20, 20, 19, 0.06), 0 1px 2px rgba(20, 20, 19, 0.04);
+  --shadow-md: 0 4px 6px rgba(20, 20, 19, 0.06), 0 2px 4px rgba(20, 20, 19, 0.04);
+  --shadow-lg: 0 10px 15px rgba(20, 20, 19, 0.06), 0 4px 6px rgba(20, 20, 19, 0.04);
+  --shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.08), 0 8px 10px rgba(20, 20, 19, 0.04);
+  --shadow-2xl: 0 25px 50px rgba(20, 20, 19, 0.12);
+  --shadow-3xl: 0 35px 60px rgba(20, 20, 19, 0.15);
+  --shadow-inner: inset 0 1px 2px 0 rgba(20, 20, 19, 0.04);
+  --shadow-glow-primary: 0 0 20px rgba(217, 119, 87, 0.15);
+  --shadow-glow-secondary: 0 0 20px rgba(106, 155, 204, 0.15);
+  --shadow-glow-accent: 0 0 20px rgba(120, 140, 93, 0.15);
+  --shadow-3d: 0 2px 4px rgba(20, 20, 19, 0.06);
+  --shadow-sharepoint: 0 2px 4px rgba(20, 20, 19, 0.06);
+  --shadow-sharepoint-hover: 0 4px 8px rgba(20, 20, 19, 0.08);
 
   /* Modern Spacing Scale */
   --space-xs: 0.25rem;
@@ -941,14 +924,8 @@ input[type='checkbox'].sp-checkbox:checked {
   --space-2xl: 3rem;
   --space-3xl: 4rem;
 
-  /* Typography — Claude/Anthropic font stack */
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  /* Typography — Anthropic Authentic */
+  font-family: 'Lora', Georgia, serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -988,13 +965,7 @@ body {
   color: var(--color-text-primary);
   background: var(--color-bg);
   position: relative;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  font-family: 'Lora', Georgia, serif;
 }
 
 #root {

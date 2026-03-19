@@ -32,20 +32,6 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 
-// Claude-aligned biotech dashboards
-const ECTDSubmissionDashboard = lazy(() => import('../pages/ECTDSubmissionDashboard'));
-const PharmacovigilanceDashboard = lazy(() => import('../pages/PharmacovigilanceDashboard'));
-const ClinicalOperationsDashboard = lazy(() => import('../pages/ClinicalOperationsDashboard'));
-const DocumentArtifactsHub = lazy(() => import('../pages/DocumentArtifactsHub'));
-const HAQManagerDashboard = lazy(() => import('../pages/HAQManagerDashboard'));
-const INDAutoDraftDashboard = lazy(() => import('../pages/INDAutoDraftDashboard'));
-
-// DTC Landing Page — public, renders at / for unauthenticated users
-const LandingPage = lazy(() => import('../pages/LandingPage'));
-
-// Interactive Demo — public, AnA-narrated platform walkthrough
-const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
-
 // Error pages
 const ErrorPages = lazy(() => import('../pages/ErrorPages'));
 
@@ -79,8 +65,8 @@ const Project510kBridge: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
-          <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
+        <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
+          <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
       }
     >
@@ -93,7 +79,7 @@ const Project510kBridge: React.FC = () => {
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+  <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -105,43 +91,26 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         className="relative"
       >
-        <svg
-          viewBox="0 0 40 40"
-          className="w-full h-full"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="20"
-            cy="20"
-            r="18"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-[#D97757]"
+        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
+          <img
+            src="/src/assets/concept2cure-logo.jpg"
+            alt="Concept2Cure"
+            className="w-full h-full object-cover object-center"
           />
-          <motion.path
-            d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-[#D97757]"
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
           />
-          <motion.path
-            d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-[#E8967A]"
-          />
-        </svg>
+        </div>
       </motion.div>
 
-      <p className="text-sm text-[#8A8880]">{message}</p>
+      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>{message}</p>
 
       {/* Progress bar */}
       <div className="w-48 h-1 bg-[#E8E6DC] rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-[#D97757] rounded-full"
+          className="h-full rounded-full"
+          style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)' }}
           initial={{ x: '-100%' }}
           animate={{ x: '100%' }}
           transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -309,15 +278,6 @@ export const ZenRouter: React.FC = () => {
 
           {/* Alias: /signup redirects to /concept2cure/signup */}
           <Route path="/signup">{() => <Redirect to="/concept2cure/signup" />}</Route>
-
-          {/* DTC Landing Page — public, shows for unauthenticated visitors */}
-          <Route path="/">
-            {() => (
-              <PageTransition>
-                <LandingPageRoute />
-              </PageTransition>
-            )}
-          </Route>
 
           {/* Alias: /billing redirects to /concept2cure/billing */}
           <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>

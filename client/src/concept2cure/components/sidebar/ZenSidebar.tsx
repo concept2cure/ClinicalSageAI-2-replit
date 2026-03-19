@@ -31,20 +31,6 @@ import {
   Users,
   FlaskConical,
   BookOpen,
-  Snowflake,
-  Bot,
-  Compass,
-  Activity,
-  Upload,
-  FileStack,
-  Scale,
-  Rocket,
-  Beaker,
-  Layers,
-  FileText,
-  ClipboardList,
-  Shield,
-  Globe,
   Link2,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
@@ -617,23 +603,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'training-center'}
               accentColor="violet"
               onClick={() => onNavigate?.('training-center')}
-            />
-            <NavItem
-              icon={<Rocket className="w-3.5 h-3.5" />}
-              label="Client Onboarding"
-              subtitle="Setup · Configuration"
-              active={activeNavId === 'client-onboarding'}
-              onClick={() => onNavigate?.('client-onboarding')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── About & Training ─────────────────────────────── */}
-          <WorkspaceGroup label="Learn" defaultOpen={false}>
-            <NavItem
-              icon={<BookOpen className="w-3.5 h-3.5" />}
-              label="About & Training"
-              active={activeNavId === 'about-training'}
-              onClick={() => onNavigate?.('about-training')}
             />
             <NavItem
               icon={<Link2 className="w-3.5 h-3.5" />}

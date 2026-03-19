@@ -519,86 +519,6 @@ export const ZenSignup: React.FC = () => {
     </motion.div>
   );
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Plan selection step (like Claude.ai plan picker)
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  const DTC_PLANS = [
-    { id: 'free', name: 'Researcher', price: 'Free', desc: '5 deep research queries/mo, 2 projects', badge: '' },
-    { id: 'standard', name: 'Startup Biotech', price: '$499/mo', desc: '50 research queries, CSR builder, eCTD authoring', badge: 'Popular' },
-    { id: 'professional', name: 'Growth', price: '$1,499/mo', desc: '200 queries, full CTD builder, all connectors', badge: '' },
-  ];
-
-  const renderPlanStep = () => (
-    <motion.div
-      key="plan"
-      variants={inputVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="space-y-5"
-    >
-      <button
-        onClick={handleBack}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800 mb-2"
-      >
-        <ArrowLeftIcon />
-        Back
-      </button>
-
-      <div className="space-y-3">
-        {DTC_PLANS.map(plan => (
-          <button
-            key={plan.id}
-            onClick={() => updateField('selectedPlan', plan.id)}
-            className={`
-              w-full p-4 rounded-xl border-2 text-left transition-all relative
-              ${formData.selectedPlan === plan.id
-                ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                : 'border-zinc-200 hover:border-zinc-300'}
-            `}
-          >
-            {plan.badge && (
-              <span className="absolute -top-2.5 right-3 text-xs font-medium bg-blue-600 text-white px-2 py-0.5 rounded-full">
-                {plan.badge}
-              </span>
-            )}
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-zinc-900">{plan.name}</div>
-                <div className="text-sm text-zinc-500 mt-0.5">{plan.desc}</div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-zinc-900">{plan.price}</div>
-                {plan.id !== 'free' && <div className="text-xs text-green-600">14-day free trial</div>}
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <p className="text-xs text-zinc-400 text-center">
-        All paid plans include a 14-day free trial. No credit card required for the free plan.
-      </p>
-
-      <button
-        onClick={handleNext}
-        className={`
-          w-full py-3 px-4 mt-2
-          flex items-center justify-center gap-2
-          text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
-          rounded-xl
-          transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        `}
-      >
-        Continue
-        <ArrowRightIcon />
-      </button>
-    </motion.div>
-  );
-
   // Track whether user has scrolled to bottom of each legal document
   const [scrolledTerms, setScrolledTerms] = React.useState(false);
   const [scrolledPrivacy, setScrolledPrivacy] = React.useState(false);
@@ -756,7 +676,7 @@ export const ZenSignup: React.FC = () => {
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
         `}
       >
-        {isLoading ? <SpinnerIcon /> : formData.selectedPlan === 'free' ? 'Create Account' : 'Create Account & Start Trial'}
+        {isLoading ? <SpinnerIcon /> : 'Create Account'}
       </button>
 
       <p className="text-[10px] text-zinc-400 text-center mt-2">
