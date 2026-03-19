@@ -10,9 +10,7 @@ import type {
   MultiplicityStrategy,
   MethodRegulatoryOutcome,
 } from 'shared/schema';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { ai } from '../lib/unified-ai-client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -354,17 +352,13 @@ Respond in JSON with this exact structure:
   "regulatoryConsiderations": "<FDA/EMA/PMDA perspective on this approach>"
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 2000,
-    });
+    const content = await ai.complete(
+      [{ role: 'user', content: prompt }],
+      { jsonMode: true, temperature: 0.3, maxTokens: 2000 }
+    );
 
-    const content = completion.choices[0]?.message?.content;
     if (!content) {
-      throw new Error('Empty response from OpenAI');
+      throw new Error('Empty response from AI');
     }
 
     return JSON.parse(content) as MethodRecommendation;

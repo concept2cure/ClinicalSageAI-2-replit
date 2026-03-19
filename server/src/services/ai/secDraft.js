@@ -1,35 +1,16 @@
-// SEC Draft AI Service
-import OpenAI from 'openai';
-
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-}) : null;
+// SEC Draft AI Service — routes through Claude via AI Gateway
+import { ai } from '../../../lib/unified-ai-client.js';
 
 export async function aiDraftSection(sectionData) {
   try {
-    if (!openai) {
-      return {
-        content: "Section draft generation unavailable - OpenAI API key not configured",
-        wordCount: 0
-      };
-    }
+    const text = await ai.complete([
+      { role: 'system', content: 'You are an eCTD regulatory writer. Generate compliant section content.' },
+      { role: 'user', content: `Draft content for CTD section: ${JSON.stringify(sectionData)}` }
+    ], { maxTokens: 2000, callerModule: 'secDraft/aiDraftSection' });
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are an eCTD regulatory writer. Generate compliant section content."
-      }, {
-        role: "user",
-        content: `Draft content for CTD section: ${JSON.stringify(sectionData)}`
-      }],
-      max_tokens: 2000
-    });
-
-    const content = response.choices[0].message.content;
     return {
-      content,
-      wordCount: content.split(' ').length
+      content: text,
+      wordCount: text.split(' ').length
     };
   } catch (error) {
     console.error('AI Draft Section error:', error);
@@ -42,28 +23,14 @@ export async function aiDraftSection(sectionData) {
 
 export async function aiClassifyChange(changeData) {
   try {
-    if (!openai) {
-      return {
-        classification: "Minor",
-        rationale: "Default classification - AI unavailable"
-      };
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory change management expert. Classify changes as Major, Minor, or Administrative."
-      }, {
-        role: "user",
-        content: `Classify this change: ${JSON.stringify(changeData)}`
-      }],
-      max_tokens: 200
-    });
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory change management expert. Classify changes as Major, Minor, or Administrative.' },
+      { role: 'user', content: `Classify this change: ${JSON.stringify(changeData)}` }
+    ], { maxTokens: 200, callerModule: 'secDraft/aiClassifyChange' });
 
     return {
       classification: "Minor",
-      rationale: response.choices[0].message.content
+      rationale: text
     };
   } catch (error) {
     console.error('AI Classify Change error:', error);
@@ -76,26 +43,12 @@ export async function aiClassifyChange(changeData) {
 
 export async function aiExtractQuestions(documentText) {
   try {
-    if (!openai) {
-      return {
-        questions: [],
-        count: 0
-      };
-    }
+    const text = await ai.complete([
+      { role: 'system', content: 'Extract regulatory questions from agency communications.' },
+      { role: 'user', content: `Extract questions from: ${documentText}` }
+    ], { maxTokens: 1000, callerModule: 'secDraft/aiExtractQuestions' });
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "Extract regulatory questions from agency communications."
-      }, {
-        role: "user",
-        content: `Extract questions from: ${documentText}`
-      }],
-      max_tokens: 1000
-    });
-
-    const questions = response.choices[0].message.content.split('\n').filter(q => q.trim());
+    const questions = text.split('\n').filter(q => q.trim());
     return {
       questions,
       count: questions.length
@@ -111,27 +64,13 @@ export async function aiExtractQuestions(documentText) {
 
 export async function aiDraftResponse(questionData) {
   try {
-    if (!openai) {
-      return {
-        response: "Response generation unavailable",
-        confidence: 0
-      };
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory affairs expert. Draft professional responses to agency questions."
-      }, {
-        role: "user",
-        content: `Draft response for: ${JSON.stringify(questionData)}`
-      }],
-      max_tokens: 1500
-    });
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory affairs expert. Draft professional responses to agency questions.' },
+      { role: 'user', content: `Draft response for: ${JSON.stringify(questionData)}` }
+    ], { maxTokens: 1500, callerModule: 'secDraft/aiDraftResponse' });
 
     return {
-      response: response.choices[0].message.content,
+      response: text,
       confidence: 0.8
     };
   } catch (error) {

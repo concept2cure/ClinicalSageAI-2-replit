@@ -774,6 +774,131 @@ class DocumentIntelligenceService {
       throw error;
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DOCUMENT INTAKE & PROCESSING
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Process uploaded files for document intelligence intake.
+   * Uploads files to the server for OCR, metadata extraction, and classification.
+   */
+  async processDocuments(
+    files: File[],
+    regulatoryContext: string,
+    progressCallback?: (info: { percentage: number; currentBatch?: string; currentFile?: string; completed?: boolean; processedFiles?: number; totalFiles?: number }) => void,
+    options: { enableOCR?: boolean; extractMetadata?: boolean; processingPriority?: string } = {}
+  ): Promise<any[]> {
+    try {
+      const formData = new FormData();
+      files.forEach(file => formData.append('files', file));
+      formData.append('regulatoryContext', regulatoryContext);
+      formData.append('options', JSON.stringify(options));
+
+      // Report initial progress
+      progressCallback?.({ percentage: 10, totalFiles: files.length, processedFiles: 0 });
+
+      const response = await fetch(`${this.baseUrl}/intake/process`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Document processing failed: ${response.statusText}`);
+      }
+
+      const payload = await response.json();
+      progressCallback?.({ percentage: 100, totalFiles: files.length, processedFiles: files.length, completed: true });
+      return payload.documents || payload.data || [];
+    } catch (error) {
+      console.error('[DocumentIntelligence] Process documents failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Identify document types from processed documents.
+   */
+  async identifyDocumentTypes(
+    processedDocuments: any[],
+    regulatoryContext: string,
+    options: { detailedAnalysis?: boolean; useTemplateMatching?: boolean } = {}
+  ): Promise<any[]> {
+    try {
+      return await this.request<any[]>('POST', `${this.baseUrl}/intake/identify-types`, {
+        documents: processedDocuments,
+        regulatoryContext,
+        ...options,
+      });
+    } catch (error) {
+      console.error('[DocumentIntelligence] Identify document types failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Analyze documents for structured data extraction.
+   */
+  async analyzeDocuments(
+    processedDocuments: any[],
+    options: {
+      regulatoryContext?: string;
+      extractionMode?: string;
+      validateData?: boolean;
+      enableDocumentComparison?: boolean;
+      targetedFields?: string[];
+    },
+    progressCallback?: (info: { percentage: number; stage?: string; message?: string }) => void
+  ): Promise<any> {
+    try {
+      progressCallback?.({ percentage: 10, stage: 'extracting', message: 'Extracting document data...' });
+
+      const result = await this.request<any>('POST', `${this.baseUrl}/intake/analyze`, {
+        documents: processedDocuments,
+        ...options,
+      });
+
+      progressCallback?.({ percentage: 100, stage: 'complete', message: 'Analysis complete' });
+      return result;
+    } catch (error) {
+      console.error('[DocumentIntelligence] Analyze documents failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Enhance extracted data with AI-powered insights.
+   */
+  async enhanceExtractedData(
+    extractedData: Record<string, any>,
+    regulatoryContext: string
+  ): Promise<Record<string, any>> {
+    try {
+      const result = await this.request<Record<string, any>>('POST', `${this.baseUrl}/intake/enhance`, {
+        data: extractedData,
+        regulatoryContext,
+      });
+      return result;
+    } catch (error) {
+      console.error('[DocumentIntelligence] Enhance extracted data failed:', error);
+      return extractedData;
+    }
+  }
+
+  /**
+   * Map extracted fields to form data structure.
+   */
+  mapExtractedFieldsToFormData(extractedFields: Record<string, any>): Record<string, any> {
+    const formData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(extractedFields)) {
+      if (value !== null && value !== undefined) {
+        // Convert camelCase keys to form field format
+        formData[key] = typeof value === 'object' && value.value !== undefined ? value.value : value;
+      }
+    }
+    return formData;
+  }
 }
 
 export const documentIntelligenceService = new DocumentIntelligenceService();
