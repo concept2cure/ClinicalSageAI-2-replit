@@ -4,13 +4,10 @@
  * For Facts Graph, CMC integration, and eCTD Co-Author
  */
 
-import { getOpenAIClient } from '../openai-client';
+import { ai } from '../../lib/unified-ai-client';
 import { v4 as uuid } from 'uuid';
 import { pool } from '../../db';
 import { getIntelligencePrefix } from '../lumen-context-builder.js';
-
-// Initialize OpenAI with production settings
-const openai = getOpenAIClient();
 
 // Database pool for Facts Graph
 const db = pool;
@@ -139,29 +136,24 @@ export async function responsesJson<T>(args: {
     const intelligencePrefix = await getIntelligencePrefix(args.organizationId, args.projectId).catch(() => '');
     const enrichedSystem = intelligencePrefix + system;
 
-    // Use chat.completions with response_format for structured outputs
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
+    // Use unified AI client with JSON mode for structured outputs
+    const result = await ai.complete(
+      [
         { role: 'system', content: enrichedSystem },
         { role: 'user', content: user },
       ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: jsonSchemaName,
-          schema: jsonSchema,
-          strict: true,
-        },
-      },
-      temperature: 0.3, // Lower temperature for more consistent outputs
-      max_tokens: 4000,
-    });
+      {
+        maxTokens: 4000,
+        temperature: 0.3, // Lower temperature for more consistent outputs
+        jsonMode: true,
+        jsonSchema: jsonSchema,
+        callerModule: 'openai-orchestrator/responsesJson',
+      }
+    );
 
-    const result = completion.choices[0].message.content;
     return JSON.parse(result || '{}') as T;
   } catch (error) {
-    console.error('[OpenAI Orchestrator] Error calling Responses API:', error);
+    console.error('[OpenAI Orchestrator] Error calling AI API:', error);
     throw error;
   }
 }

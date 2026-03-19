@@ -14,8 +14,8 @@
  */
 
 import { Pool } from 'pg';
+import { ai } from '../../lib/unified-ai-client';
 import { getOpenAIClient } from '../openai-client';
-import type OpenAI from 'openai';
 import crypto from 'crypto';
 
 // Types
@@ -91,7 +91,6 @@ interface ScanContext {
 
 export class RegulatoryDeltaRadarService {
   private pool: Pool;
-  private openai: OpenAI;
   private embeddingCache: Map<string, number[]>;
   private defaultConfig: DeltaRadarConfig;
   private static guidanceOrgIndex = new Map<string, string>();
@@ -101,7 +100,6 @@ export class RegulatoryDeltaRadarService {
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
     this.embeddingCache = new Map();
     this.defaultConfig = {
       semanticThreshold: 0.75,
@@ -1027,7 +1025,8 @@ export class RegulatoryDeltaRadarService {
     }
 
     try {
-      const response = await this.openai.embeddings.create({
+      const openai = getOpenAIClient();
+      const response = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: text.substring(0, 8000), // Limit to model max
       });

@@ -3,11 +3,11 @@ import pdfParse from 'pdf-parse';
 import fs from 'fs';
 import { getGateway } from './services/ai-gateway/index.js';
 
-// Initialize OpenAI client (still needed for embeddings which gateway doesn't handle)
-// NOTE: the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// OpenAI client — only used for embeddings (Claude doesn't offer embedding API).
+// All chat completions route through the AI Gateway which defaults to Claude.
+const client = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 /**
  * Check if an AI API key is available (Anthropic preferred, OpenAI fallback)
@@ -23,6 +23,12 @@ export function isApiKeyAvailable(): boolean {
  * @returns Vector embedding
  */
 export async function generateEmbeddings(text: string): Promise<number[]> {
+  if (!client) {
+    throw new Error(
+      'Embedding generation requires OPENAI_API_KEY. Claude does not provide an embedding API. ' +
+      'Set OPENAI_API_KEY for embedding functionality.'
+    );
+  }
   try {
     const response = await client.embeddings.create({
       model: 'text-embedding-3-small',
@@ -592,7 +598,7 @@ export async function processCerNlpQuery(query: string): Promise<any> {
   }
 }
 
-// Export OpenAI API client for direct usage
+// Export OpenAI API client for direct usage (embeddings only — chat completions use gateway)
 export const openai = client;
 
 export default {
