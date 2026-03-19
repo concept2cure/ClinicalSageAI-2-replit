@@ -107,9 +107,9 @@ def _normalize_core_properties(doc: Document) -> None:
     cp = doc.core_properties
     cp.created = _EPOCH
     cp.modified = _EPOCH
-    cp.last_modified_by = "ClinicalSageAI"
+    cp.last_modified_by = "Concept2Cure"
     cp.revision = 1
-    cp.author = "ClinicalSageAI"
+    cp.author = "Concept2Cure"
     # Clear other volatile fields
     cp.last_printed = _EPOCH
     cp.category = cp.category or ""

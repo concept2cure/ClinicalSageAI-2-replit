@@ -30,7 +30,7 @@ router.post('/pdf', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,
@@ -517,7 +517,7 @@ router.post('/word', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,
@@ -739,31 +739,31 @@ router.post('/csv', async (req, res) => {
     // Add main content
     if (typeof content === 'string') {
       // Simple string content
-      csv += `Main,Summary,"${stripHtml(content).replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+      csv += `Main,Summary,"${stripHtml(content).replace(/"/g, '""')}",Concept2Cure\n`;
     } else if (typeof content === 'object') {
       // Add recommendations
       if (content.recommendation) {
-        csv += `Main,Summary,"${stripHtml(content.recommendation).replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+        csv += `Main,Summary,"${stripHtml(content.recommendation).replace(/"/g, '""')}",Concept2Cure\n`;
       }
 
       // Add key suggestions
       if (content.keySuggestions && Array.isArray(content.keySuggestions)) {
         for (const suggestion of content.keySuggestions) {
-          csv += `Main,Key Suggestion,"${suggestion.replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+          csv += `Main,Key Suggestion,"${suggestion.replace(/"/g, '""')}",Concept2Cure\n`;
         }
       }
 
       // Add endpoints
       if (content.suggestedEndpoints && Array.isArray(content.suggestedEndpoints)) {
         for (const endpoint of content.suggestedEndpoints) {
-          csv += `Main,Endpoint,"${endpoint.replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+          csv += `Main,Endpoint,"${endpoint.replace(/"/g, '""')}",Concept2Cure\n`;
         }
       }
 
       // Add risks
       if (content.riskFactors && Array.isArray(content.riskFactors)) {
         for (const risk of content.riskFactors) {
-          csv += `Main,Risk Factor,"${risk.replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+          csv += `Main,Risk Factor,"${risk.replace(/"/g, '""')}",Concept2Cure\n`;
         }
       }
     }
@@ -978,7 +978,7 @@ router.post('/markdown', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,
@@ -1126,7 +1126,7 @@ router.post('/xml', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,

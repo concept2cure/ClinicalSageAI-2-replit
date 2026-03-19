@@ -243,7 +243,7 @@ export class ProtocolAnalyzerService {
           'Consider ethnic factors in PK/PD analysis',
         ],
 
-        intelligence_source: 'TrialSage Protocol Analyzer',
+        intelligence_source: 'Concept2Cure Protocol Analyzer',
         confidence_score: 0.85,
         last_updated: new Date(),
       };

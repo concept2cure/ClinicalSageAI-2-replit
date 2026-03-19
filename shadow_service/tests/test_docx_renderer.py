@@ -271,8 +271,8 @@ class TestMetadataNormalization:
         # python-docx stores datetimes as UTC-aware, so compare without tz
         assert doc.core_properties.created.replace(tzinfo=None) == _EPOCH
         assert doc.core_properties.modified.replace(tzinfo=None) == _EPOCH
-        assert doc.core_properties.author == "ClinicalSageAI"
-        assert doc.core_properties.last_modified_by == "ClinicalSageAI"
+        assert doc.core_properties.author == "Concept2Cure"
+        assert doc.core_properties.last_modified_by == "Concept2Cure"
         assert doc.core_properties.revision == 1
 
 

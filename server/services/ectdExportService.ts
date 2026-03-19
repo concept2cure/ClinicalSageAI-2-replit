@@ -204,7 +204,7 @@ function generateIndexXml(opts: {
   Application: ${escapeXml(opts.applicationNumber)}
   Sequence: ${opts.sequenceNumber}
   Generated: ${opts.generatedAt}
-  Generator: ClinicalSageAI eCTD Export Service
+  Generator: Concept2Cure eCTD Export Service
 -->
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"

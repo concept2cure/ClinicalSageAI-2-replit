@@ -6500,7 +6500,7 @@ async function startServer() {
             <!DOCTYPE html>
             <html>
             <head>
-              <title>TrialSage - ClinicalSageAI</title>
+              <title>TrialSage - Concept2Cure</title>
               <style>
                 body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #d97757 0%, #c15f3c 100%); }
                 .container { text-align: center; color: white; padding: 40px; }

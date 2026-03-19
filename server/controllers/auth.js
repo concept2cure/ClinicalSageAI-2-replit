@@ -1,7 +1,7 @@
 /**
  * Authentication Controller
  *
- * Handles authentication logic for the TrialSage platform using Neon database.
+ * Handles authentication logic for the Concept2Cure platform using Neon database.
  */
 
 import * as authService from '../services/authService.js';

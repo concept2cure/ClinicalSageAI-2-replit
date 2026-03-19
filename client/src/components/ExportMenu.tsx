@@ -376,7 +376,7 @@ const ExportMenu = ({
       const exportData = {
         title: title || `Protocol Recommendations for ${indication} Study (${phase})`,
         content: recommendations,
-        author: 'LumenTrialGuide.AI',
+        author: 'Concept2Cure',
         indication,
         phase,
         csrInsights,

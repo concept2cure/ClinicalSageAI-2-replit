@@ -32,7 +32,7 @@ export const cerSolutionsUseCase = {
         <p className="text-slate-700 dark:text-slate-300 mb-4">
           Clinical Evaluation Reports (CERs) are critical documents required by regulatory bodies to
           demonstrate safety and performance of medical devices and pharmaceutical products
-          throughout their lifecycle. LumenTrialGuide.AI's CER Solutions provide a comprehensive
+          throughout their lifecycle. Concept2Cure's CER Solutions provide a comprehensive
           suite of tools for generating, analyzing, and maintaining CERs with automated data
           pipelines from FDA FAERS, enhanced visualization capabilities, and AI-powered narrative
           generation.

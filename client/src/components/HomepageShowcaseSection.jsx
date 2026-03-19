@@ -232,7 +232,7 @@ const HomepageShowcaseSection = () => {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold">Clinical Intelligence Showcase</h2>
           <p className="mt-2 text-lg text-muted-foreground max-w-3xl mx-auto">
-            Real outputs from real trials, powered by LumenTrialGuide.AI
+            Real outputs from real trials, powered by Concept2Cure
           </p>
         </div>
 

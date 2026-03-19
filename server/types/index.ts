@@ -1,5 +1,5 @@
 /**
- * Central type exports for ClinicalSageAI server types
+ * Central type exports for Concept2Cure server types
  * Import from this file for all server-side type definitions
  */
 
