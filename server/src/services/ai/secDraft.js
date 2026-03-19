@@ -1,6 +1,4 @@
-// SEC Draft AI Service — routes through Claude via AI Gateway
-import { ai } from '../../../lib/unified-ai-client.js';
-
+// SEC Draft AI Service
 export async function aiDraftSection(sectionData) {
   try {
     const text = await ai.complete([
@@ -8,6 +6,19 @@ export async function aiDraftSection(sectionData) {
       { role: 'user', content: `Draft content for CTD section: ${JSON.stringify(sectionData)}` }
     ], { maxTokens: 2000, callerModule: 'secDraft/aiDraftSection' });
 
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "You are an eCTD regulatory writer. Generate compliant section content."
+      }, {
+        role: "user",
+        content: `Draft content for CTD section: ${JSON.stringify(sectionData)}`
+      }],
+      max_tokens: 2000
+    });
+
+    const content = aiResult.content;
     return {
       content: text,
       wordCount: text.split(' ').length
@@ -23,14 +34,28 @@ export async function aiDraftSection(sectionData) {
 
 export async function aiClassifyChange(changeData) {
   try {
-    const text = await ai.complete([
-      { role: 'system', content: 'You are a regulatory change management expert. Classify changes as Major, Minor, or Administrative.' },
-      { role: 'user', content: `Classify this change: ${JSON.stringify(changeData)}` }
-    ], { maxTokens: 200, callerModule: 'secDraft/aiClassifyChange' });
+    if (!openai) {
+      return {
+        classification: "Minor",
+        rationale: "Default classification - AI unavailable"
+      };
+    }
+
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "You are a regulatory change management expert. Classify changes as Major, Minor, or Administrative."
+      }, {
+        role: "user",
+        content: `Classify this change: ${JSON.stringify(changeData)}`
+      }],
+      max_tokens: 200
+    });
 
     return {
       classification: "Minor",
-      rationale: text
+      rationale: aiResult.content
     };
   } catch (error) {
     console.error('AI Classify Change error:', error);
@@ -48,7 +73,19 @@ export async function aiExtractQuestions(documentText) {
       { role: 'user', content: `Extract questions from: ${documentText}` }
     ], { maxTokens: 1000, callerModule: 'secDraft/aiExtractQuestions' });
 
-    const questions = text.split('\n').filter(q => q.trim());
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Extract regulatory questions from agency communications."
+      }, {
+        role: "user",
+        content: `Extract questions from: ${documentText}`
+      }],
+      max_tokens: 1000
+    });
+
+    const questions = aiResult.content.split('\n').filter(q => q.trim());
     return {
       questions,
       count: questions.length
@@ -64,13 +101,27 @@ export async function aiExtractQuestions(documentText) {
 
 export async function aiDraftResponse(questionData) {
   try {
-    const text = await ai.complete([
-      { role: 'system', content: 'You are a regulatory affairs expert. Draft professional responses to agency questions.' },
-      { role: 'user', content: `Draft response for: ${JSON.stringify(questionData)}` }
-    ], { maxTokens: 1500, callerModule: 'secDraft/aiDraftResponse' });
+    if (!openai) {
+      return {
+        response: "Response generation unavailable",
+        confidence: 0
+      };
+    }
+
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "You are a regulatory affairs expert. Draft professional responses to agency questions."
+      }, {
+        role: "user",
+        content: `Draft response for: ${JSON.stringify(questionData)}`
+      }],
+      max_tokens: 1500
+    });
 
     return {
-      response: text,
+      response: aiResult.content,
       confidence: 0.8
     };
   } catch (error) {
@@ -88,3 +139,4 @@ export default {
   aiExtractQuestions,
   aiDraftResponse
 };
+import { ai } from '../../../lib/unified-ai-client';

@@ -5,15 +5,14 @@
  * using OpenAI's GPT models and returns structured validation results.
  */
 
-import { getOpenAIClient } from '../services/openai-client';
-
 // Initialize OpenAI client
 let openai;
 try {
-  openai = getOpenAIClient();
+
 } catch {
   console.warn('OPENAI_API_KEY not found in environment variables');
 }
+import { ai } from '../lib/unified-ai-client';
 
 /**
  * Validates sponsor information against regulatory requirements
@@ -53,7 +52,7 @@ async function validateSponsorInfo(sponsorInfo) {
       }
     `;
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4-turbo',
       messages: [
         {
@@ -70,7 +69,7 @@ async function validateSponsorInfo(sponsorInfo) {
     });
 
     // Parse the response into JSON
-    const responseText = response.choices[0].message.content;
+    const responseText = aiResult.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error validating sponsor info:', error);
@@ -115,7 +114,7 @@ async function validateProtocolInfo(protocolInfo) {
       Respond in JSON format with severity levels for each finding.
     `;
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4-turbo',
       messages: [
         {
@@ -132,7 +131,7 @@ async function validateProtocolInfo(protocolInfo) {
     });
 
     // Parse the response into JSON
-    const responseText = response.choices[0].message.content;
+    const responseText = aiResult.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error validating protocol info:', error);
@@ -181,7 +180,7 @@ async function predictClinicalHoldRisk(indInfo) {
       Respond in JSON format.
     `;
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4-turbo',
       messages: [
         {
@@ -198,7 +197,7 @@ async function predictClinicalHoldRisk(indInfo) {
     });
 
     // Parse the response into JSON
-    const responseText = response.choices[0].message.content;
+    const responseText = aiResult.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error predicting clinical hold risk:', error);

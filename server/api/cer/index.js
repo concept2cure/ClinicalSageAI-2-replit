@@ -1,14 +1,12 @@
 const express = require('express');
 const { getPool } = require('../../db/pool');
-const { getOpenAIClient } = require('../../services/openai-client');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const { ai } = require('../../lib/unified-ai-client');
 const router = express.Router();
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // Middleware to check for valid API key if missing
 const checkApiKey = (req, res, next) => {
   if (!process.env.OPENAI_API_KEY) {
@@ -378,7 +376,7 @@ router.post('/reports/:reportId/sections/:sectionId/generate', checkApiKey, asyn
     Generated content should be ready for review by regulatory affairs professionals.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4',
       messages: [
         {
@@ -395,7 +393,7 @@ router.post('/reports/:reportId/sections/:sectionId/generate', checkApiKey, asyn
       max_tokens: 2500,
     });
 
-    const generatedContent = completion.choices[0].message.content;
+    const generatedContent = aiResult.content;
 
     // Update the section with the generated content
     const updateQuery = `
@@ -533,7 +531,7 @@ router.post('/analyze', checkApiKey, async (req, res) => {
     }
 
     // Generate analysis with OpenAI
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4',
       messages: [
         {
@@ -551,7 +549,7 @@ router.post('/analyze', checkApiKey, async (req, res) => {
       response_format: { type: 'json_object' },
     });
 
-    const analysisResult = JSON.parse(completion.choices[0].message.content);
+    const analysisResult = JSON.parse(aiResult.content);
 
     // Save analysis result to database
     const saveAnalysisQuery = `
@@ -699,14 +697,14 @@ router.post('/ai-copilot', checkApiKey, async (req, res) => {
     });
 
     // Generate response with OpenAI
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4',
       messages: messageHistory,
       temperature: 0.7,
       max_tokens: 1000,
     });
 
-    const response = completion.choices[0].message.content;
+    const response = aiResult.content;
 
     // Save the conversation to the database
     const saveConversationQuery = `

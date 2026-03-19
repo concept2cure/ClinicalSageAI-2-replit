@@ -1,7 +1,6 @@
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { getOpenAIClient } from './openai-client';
-import type OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 
 /**
  * Lumen Insights Service
@@ -54,12 +53,10 @@ export class LumenInsightsService {
     }
     return db;
   }
-  private openai: OpenAI;
   private config: LumenInsightsConfig;
 
   constructor(config: LumenInsightsConfig) {
     this.config = config;
-    this.openai = getOpenAIClient();
   }
 
   /**
@@ -207,7 +204,7 @@ export class LumenInsightsService {
         .join('\n\n');
 
       // 4. Generate answer using GPT-4
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -222,7 +219,7 @@ export class LumenInsightsService {
         temperature: 0.3,
       });
 
-      const answer = completion.choices[0].message.content || '';
+      const answer = aiResult.content || '';
       const tokensUsed = completion.usage?.total_tokens || 0;
 
       // 5. Calculate confidence based on relevance scores

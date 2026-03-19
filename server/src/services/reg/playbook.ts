@@ -1,5 +1,5 @@
 import { getPool } from '../../../db';
-import { ai as aiClient } from '../../../lib/unified-ai-client';
+import { ai } from '../../../lib/unified-ai-client';
 
 // Database connection - use canonical pool
 const pool = getPool();

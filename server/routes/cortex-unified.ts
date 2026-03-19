@@ -15,7 +15,6 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { ai } from '../lib/unified-ai-client';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
 import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
@@ -31,6 +30,7 @@ import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
+import { ai } from '../lib/unified-ai-client';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -307,9 +307,13 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       try {
         const openaiTools = toOpenAITools();
 
-        // ── Phase 1: Non-streaming call with tool schemas via unified AI client
-        const initialResponse = await ai.chat(aiMessages, {
-          maxTokens: 4000,
+        // ── Phase 1: Non-streaming call with tool schemas ──────────────────
+        const initialCompletion = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: aiMessages as any,
+          tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
+          tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
+          max_tokens: 4000,
           temperature: 0.7,
           callerModule: 'cortex-unified/chat-stream',
         });
@@ -435,9 +439,12 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             }
           }
 
-          // ── Phase 3: Get final LLM response with tool results ─────────
-          const finalContent = await ai.complete(aiMessages, {
-            maxTokens: 4000,
+          // ── Phase 3: Stream the final LLM response with tool results ───
+          const finalCompletion = await ai.chat({
+            model: 'gpt-4o-mini',
+            messages: aiMessages as any,
+            stream: true,
+            max_tokens: 4000,
             temperature: 0.4,
             callerModule: 'cortex-unified/chat-stream-final',
           });

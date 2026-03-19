@@ -11,7 +11,6 @@
  * Critical for Clinical Regulatory documents where 50%+ of data is in tables
  * (Adverse Events, PK Parameters, Survival Curves).
  */
-import { getOpenAIClient } from '../services/openai-client';
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from '../db';
 import {
@@ -41,6 +40,7 @@ interface TableStructure {
   rows: string[][];
   caption?: string;
 }
+import { ai } from '../lib/unified-ai-client';
 
 export interface ExtractionResult {
   documentId: string;
@@ -82,8 +82,6 @@ const CONFIG = {
 };
 
 // OpenAI client
-const openai = getOpenAIClient();
-
 /**
  * Layout-Aware Ingestion Worker
  */
@@ -635,7 +633,7 @@ export class LayoutAwareIngestionWorker {
   async extractTableWithVision(imageBase64: string): Promise<TableStructure> {
     console.log('[Ingestion] Using Vision API for table extraction');
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: CONFIG.openaiModel,
       messages: [
         {
@@ -667,7 +665,7 @@ Return ONLY valid JSON with this structure:
     });
 
     try {
-      const content = response.choices[0]?.message?.content || '{}';
+      const content = aiResult.content || '{}';
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);

@@ -1210,8 +1210,9 @@ class SubmissionTwinService {
   }
 
   private async aiExtractClaims(content: string): Promise<ClaimExtractionResult> {
-    const raw = await ai.complete(
-      [
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `You are a regulatory submission analyst. Extract all claims, assertions, rationales, and summary statements from the document content. For each claim, categorize it as one of: efficacy, safety, cmc_quality, regulatory_precedent, statistical, labeling. Assign a confidence score (0-1) based on how explicitly the claim is stated. Return JSON: {"claims": [{"claimText": "...", "claimType": "...", "sectionPath": "...", "confidence": 0.9}]}`,
@@ -1221,7 +1222,7 @@ class SubmissionTwinService {
       { jsonMode: true, temperature: 0.2 }
     );
 
-    const parsed = safeJsonParse(raw, { claims: [] });
+    const parsed = safeJsonParse(aiResult.content, { claims: [] });
     return parsed as ClaimExtractionResult;
   }
 
@@ -1241,8 +1242,9 @@ class SubmissionTwinService {
       excerpt: a.content.substring(0, 1500),
     }));
 
-    const raw = await ai.complete(
-      [
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `You are a regulatory evidence analyst. For each claim, assess whether the provided document context supports it. Rate support as: direct (strong explicit support), indirect (related but not explicit), weak (tangential), stale (may be outdated), contradictory (evidence contradicts), unsupported (no evidence found). Provide relevanceScore (0-1). Flag if evidence is statistical in nature. Return JSON: {"assessments": [{"claimId": N, "claimText": "...", "supportStrength": "...", "relevanceScore": 0.8, "evidenceText": "relevant excerpt", "isStatistical": false}]}`,
@@ -1255,15 +1257,16 @@ class SubmissionTwinService {
       { jsonMode: true, temperature: 0.2 }
     );
 
-    const parsed = safeJsonParse(raw, { assessments: [] });
+    const parsed = safeJsonParse(aiResult.content, { assessments: [] });
     return (parsed.assessments ?? []) as EvidenceAssessment[];
   }
 
   private async aiDetectDrift(
     artifacts: Array<{ artifactId: number; content: string; sectionKey?: string }>
   ): Promise<DriftDetection[]> {
-    const raw = await ai.complete(
-      [
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `You are a regulatory submission consistency analyst. Compare the provided documents and detect narrative drift: summary/detail mismatches, claim escalation without evidence, endpoint framing inconsistencies, CMC maturity overstatement, narrative-vs-statistical mismatches, document contradictions, stale summaries. Return JSON: {"drifts": [{"driftType": "summary_detail_mismatch|claim_escalation_without_evidence|endpoint_framing_drift|cmc_maturity_overstatement|narrative_statistical_mismatch|document_contradiction|stale_downstream_summary", "severity": "critical|high|medium|low|informational", "description": "...", "sourceExcerpt": "...", "targetExcerpt": "...", "suggestedFix": "..."}]}`,
@@ -1279,7 +1282,7 @@ class SubmissionTwinService {
       { jsonMode: true, temperature: 0.3 }
     );
 
-    const parsed = safeJsonParse(raw, { drifts: [] });
+    const parsed = safeJsonParse(aiResult.content, { drifts: [] });
     return (parsed.drifts ?? []) as DriftDetection[];
   }
 
@@ -1303,8 +1306,9 @@ class SubmissionTwinService {
     const claimSummary = claims.slice(0, 20).map(c => `[${c.claimType}] ${c.claimText}`).join('\n');
     const blockerSummary = blockers.slice(0, 10).map(b => `[${b.severity}] ${b.title}`).join('\n');
 
-    const raw = await ai.complete(
-      [
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `${lensDescriptions[lens] ?? 'You are a regulatory reviewer.'} Generate 3-7 specific, actionable reviewer challenges that this submission would likely face. For each, suggest a response strategy and recommend a governed artifact to create. Return JSON: {"challenges": [{"challengeText": "...", "targetSection": "...", "severity": "critical|high|medium|low|informational", "deficiencyLikelihood": 0.7, "suggestedResponse": "...", "suggestedArtifact": "Reviewer Concern Brief|Evidence Memo|Support Gap Memo|Statistical Justification Brief|CMC Fragility Memo|Protocol Rationale Brief|Comparator Summary"}]}`,
@@ -1325,7 +1329,7 @@ ${blockerSummary || 'None.'}`,
       { jsonMode: true, temperature: 0.4 }
     );
 
-    const parsed = safeJsonParse(raw, { challenges: [] });
+    const parsed = safeJsonParse(aiResult.content, { challenges: [] });
     return (parsed.challenges ?? []) as ChallengeResult[];
   }
 
@@ -1341,8 +1345,9 @@ ${blockerSummary || 'None.'}`,
     remediation?: string;
     impactedClaimId?: number;
   }>> {
-    const raw = await ai.complete(
-      [
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `You are a change impact analyst for regulatory submissions. Given a change to an artifact, identify all downstream impacts on other documents, claims, and evidence. Return JSON: {"impacts": [{"description": "...", "severity": "critical|high|medium|low|informational", "remediation": "...", "impactedClaimId": null}]}`,
@@ -1360,7 +1365,7 @@ ${blockerSummary || 'None.'}`,
       { jsonMode: true, temperature: 0.3 }
     );
 
-    const parsed = safeJsonParse(raw, { impacts: [] });
+    const parsed = safeJsonParse(aiResult.content, { impacts: [] });
     return (parsed.impacts ?? []) as Array<{
       description: string;
       severity: string;
@@ -1377,8 +1382,9 @@ ${blockerSummary || 'None.'}`,
     challenges: SubmissionTwinChallenge[],
     readiness: any
   ): Promise<NextBestArtifactPrediction> {
-    const raw = await ai.complete(
-      [
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `You are a regulatory strategist. Based on the submission state, predict the single highest-value governed artifact to create next. Options: Evidence Memo, Comparator Summary, Protocol Rationale Brief, Submission Risk Memo, Reviewer Concern Brief, Support Gap Memo, CMC Fragility Memo, Statistical Justification Brief, Endpoint Defense Note, Executive Readiness Snapshot, Harmonization Packet, Audit Readiness Packet. Return JSON: {"artifactType": "...", "rationale": "...", "priority": "critical|high|medium", "targetSection": "..."}`,
@@ -1400,7 +1406,7 @@ ${blockerSummary || 'None.'}`,
       { jsonMode: true, temperature: 0.3 }
     );
 
-    const parsed = safeJsonParse(raw, {} as Record<string, unknown>);
+    const parsed = safeJsonParse(aiResult.content, {} as Record<string, unknown>);
     return {
       artifactType: parsed.artifactType ?? 'Support Gap Memo',
       rationale: parsed.rationale ?? 'Based on current submission gaps.',
@@ -1420,8 +1426,9 @@ ${blockerSummary || 'None.'}`,
     nextBestArtifact: NextBestArtifactPrediction
   ): Promise<string> {
     try {
-      const summary = await ai.complete(
-        [
+      const aiResult = await ai.chat({
+        model: 'gpt-4o',
+        messages: [
           {
             role: 'system',
             content: 'You are a regulatory strategist writing a concise (3-5 sentence) executive summary of a submission twin assessment. Be direct and actionable.',
@@ -1442,7 +1449,7 @@ Write a concise executive summary.`,
         { temperature: 0.3, maxTokens: 300 }
       );
 
-      return summary ?? 'Assessment completed. Review detailed findings.';
+      return aiResult.content ?? 'Assessment completed. Review detailed findings.';
     } catch {
       return `Assessment complete: ${claimCount} claims, ${evidenceResult.supportedClaims} supported, ${driftCount} drift alerts, readiness ${readinessScore}%.`;
     }

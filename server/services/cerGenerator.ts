@@ -1,7 +1,6 @@
 // @ts-nocheck - Uses optional puppeteer-cluster and bull; OpenAI SDK v4
 // server/services/cerGenerator.ts
 
-import { getOpenAIClient } from './openai-client';
 import { Cluster } from 'puppeteer-cluster';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
@@ -10,8 +9,6 @@ import type { Pool } from 'pg';
 import { pool as sharedPool } from '../db';
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // Puppeteer-Cluster for performance
 let clusterInstance: Cluster | null = null;
 async function initCluster() {
@@ -34,14 +31,14 @@ export async function generateCerSections(userId: string, templateId: string) {
   return sections.map(sec => ({
     name: sec.name,
     async render() {
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4',
         messages: [
           { role: 'system', content: sec.prompt },
           { role: 'user', content: `Generate the "${sec.name}" section.` },
         ],
       });
-      return `<h2>${sec.name}</h2>${completion.choices[0].message?.content}`;
+      return `<h2>${sec.name}</h2>${aiResult.content}`;
     },
   }));
 }
@@ -112,3 +109,4 @@ export function setupWorkers(pool: Pool, redisOpts: { host: string; port: number
 
   return cerQueue;
 }
+import { ai } from '../lib/unified-ai-client';

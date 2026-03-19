@@ -4,8 +4,6 @@
  * Production-ready service for pharmaceutical companies
  */
 
-import { getOpenAIClient } from './openai-client';
-import type { OpenAI } from 'openai';
 import { db } from '../db';
 import { 
   clinicalFeedback,
@@ -19,6 +17,7 @@ import {
 } from '@shared/schema';
 import { and, eq, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 import { ForesightKnowledgeGraph } from './foresight-knowledge-graph';
+import { ai } from '../lib/unified-ai-client';
 
 interface FeedbackData {
   predictionId: string;
@@ -48,7 +47,6 @@ interface AdaptiveUpdate {
 }
 
 export class ForesightFeedbackOrchestrator {
-  private openai: OpenAI;
   private knowledgeGraph: ForesightKnowledgeGraph;
   private learningRate: number = 0.01;
   private adaptiveThreshold: number = 0.85;
@@ -56,8 +54,6 @@ export class ForesightFeedbackOrchestrator {
 
   constructor() {
     // Initialize OpenAI with GPT-5 capabilities
-    this.openai = getOpenAIClient();
-
     this.knowledgeGraph = new ForesightKnowledgeGraph();
   }
 
@@ -245,7 +241,7 @@ export class ForesightFeedbackOrchestrator {
         4. Patient stratification strategies
       `;
 
-      const metaLearningResponse = await this.openai.chat.completions.create({
+      const metaLearningResponse = await this.ai.chat({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
@@ -325,7 +321,7 @@ export class ForesightFeedbackOrchestrator {
         - Required evidence
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await this.ai.chat({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
@@ -341,7 +337,7 @@ export class ForesightFeedbackOrchestrator {
         response_format: { type: 'json_object' }
       });
 
-      const hypothesisData = JSON.parse(response.choices[0].message.content || '{}');
+      const hypothesisData = JSON.parse(aiResult.content || '{}');
 
       return {
         hypotheses: hypothesisData.hypotheses || [],

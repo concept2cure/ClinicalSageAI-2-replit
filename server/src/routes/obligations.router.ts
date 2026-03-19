@@ -12,7 +12,6 @@ import { ai } from '../../lib/unified-ai-client';
 const pool = getPool();
 
 const router = Router();
-
 // Helper: Insert obligation audit event
 const logObligationEvent = async (
   oblId: string,
@@ -60,7 +59,9 @@ ${text}
 Respond with JSON: {"obligations": [{"title": "...", "severity": "...", "dueDate": null, "recurrence": {...}, "context": "..."}]}
 `;
 
-    const text = await ai.complete([
+    const aiResult = await ai.chat({
+      model: 'gpt-4o', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      messages: [
         {
           role: 'system',
           content: 'You are a regulatory affairs expert specializing in obligation extraction.',
@@ -68,7 +69,7 @@ Respond with JSON: {"obligations": [{"title": "...", "severity": "...", "dueDate
         { role: 'user', content: prompt },
       ], { jsonMode: true, temperature: 0.3, callerModule: 'obligations/extractObligationsFromText' });
 
-    const result = JSON.parse(text || '{}');
+    const result = JSON.parse(aiResult.content || '{}');
     return result.obligations || [];
   } catch (error) {
     console.error('AI extraction failed:', error);

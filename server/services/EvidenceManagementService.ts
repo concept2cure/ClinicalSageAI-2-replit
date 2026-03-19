@@ -6,7 +6,6 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { ai } from '../lib/unified-ai-client';
 
 // FDA Requirement definitions
 const FDA_REQUIREMENTS_MAP = {
@@ -53,12 +52,21 @@ const FDA_REQUIREMENTS_MAP = {
 };
 
 export class EvidenceManagementService {
-  constructor() {}
+  private openai: OpenAI | null = null;
+
+  constructor() {
+    // Initialize OpenAI if API key exists
+    }
 
   /**
    * Extract data from uploaded evidence files using AI
    */
   async extractDataFromFile(fileContent: string, fileName: string, fileType: string) {
+    if (!this.openai) {
+      return this.basicDataExtraction(fileContent, fileName);
+    }
+import { ai } from '../lib/unified-ai-client';
+
     try {
       const prompt = `
         Analyze this test report/evidence document and extract key information:
@@ -80,13 +88,14 @@ export class EvidenceManagementService {
         Return as JSON with these fields.
       `;
 
-      const responseText = await ai.complete(
-        [{ role: 'user', content: prompt }],
-        { temperature: 0.3, jsonMode: true, callerModule: 'EvidenceManagementService/extractData' }
-      );
+      const response = await this.ai.chat({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3
+      });
 
-      const extracted = JSON.parse(responseText || '{}');
-
+      const extracted = JSON.parse(aiResult.content || '{}');
+      
       return {
         test_type: extracted.test_type || this.inferTestType(fileName),
         test_standard: extracted.test_standard || null,

@@ -10,7 +10,6 @@
  * defensibility scoring.
  */
 
-import { ai } from '../lib/unified-ai-client';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 
@@ -28,6 +27,7 @@ interface EndpointForAssessment {
   isSurrogate: boolean;
   regulatoryQualification?: string;
 }
+import { ai } from '../lib/unified-ai-client';
 
 interface DefensibilityRequest {
   studyPhase: string;
@@ -146,12 +146,24 @@ interface MultiplicityAssessment {
 // ============================================================
 
 class StatisticalDefensibilityService {
+  private openai: OpenAI | null = null;
+
+  private getOpenAI(): OpenAI {
+    if (!this.openai) {
+    }
+    return this.openai;
+  }
+
   /**
    * Comprehensive defensibility assessment.
    */
   async assessDefensibility(request: DefensibilityRequest): Promise<DefensibilityReport> {
-    const content = await ai.complete(
-      [
+    const openai = this.getOpenAI();
+
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      response_format: { type: 'json_object' },
+      messages: [
         {
           role: 'system',
           content: `You are a senior biostatistician reviewing a clinical study design for regulatory submission to FDA/EMA. Evaluate the study for statistical defensibility.
@@ -199,6 +211,7 @@ Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
       { jsonMode: true, temperature: 0.2, maxTokens: 4000 }
     );
 
+    const content = aiResult.content;
     if (!content) {
       return this.defaultReport();
     }
@@ -521,8 +534,12 @@ Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
     hasInterimAnalysis: boolean;
     subgroupAnalyses: string[];
   }): Promise<ReviewerRiskAnnotation[]> {
-    const content = await ai.complete(
-      [
+    const openai = this.getOpenAI();
+
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      response_format: { type: 'json_object' },
+      messages: [
         {
           role: 'system',
           content: `You are an FDA/EMA statistical reviewer. Based on the study design provided, predict specific questions or objections a regulatory reviewer would raise. For each concern, provide severity (high/medium/low), the affected submission section, the likely reviewer question, and a suggested response.
@@ -537,6 +554,7 @@ Return JSON: { "annotations": [{ "concern": "string", "severity": "high|medium|l
       { jsonMode: true, temperature: 0.3, maxTokens: 3000 }
     );
 
+    const content = aiResult.content;
     if (!content) return [];
 
     const parsed = JSON.parse(content);

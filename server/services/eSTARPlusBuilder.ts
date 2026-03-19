@@ -7,11 +7,9 @@ const xmlbuilder2 = require('xmlbuilder2');
 const Ajv = require('ajv');
 
 // Import OpenAI
-import { getOpenAIClient } from './openai-client';
 import { getIntelligencePrefix } from './lumen-context-builder.js';
 
 // Initialize OpenAI
-const openai = getOpenAIClient();
 import { db } from '../db';
 import { fda510kSections, fda510kProjects } from '../../shared/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -50,6 +48,7 @@ try {
   console.error('Error loading eSTAR manifest schema:', error);
   manifestSchema = {};
 }
+import { ai } from '../lib/unified-ai-client';
 
 /**
  * Digital signature utility for signing eSTAR manifests
@@ -1034,7 +1033,7 @@ export class eSTARPlusBuilder {
       
       // Inject client/project intelligence so eSTAR reads SKILL/.MD context
       const intelligencePrefix = await getIntelligencePrefix().catch(() => '');
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           { role: 'system', content: intelligencePrefix + 'You are an expert in FDA regulatory submissions.' },
@@ -1044,7 +1043,7 @@ export class eSTARPlusBuilder {
       });
       
       if (response.choices && response.choices.length > 0) {
-        return response.choices[0].message.content || 'Failed to generate cover letter.';
+        return aiResult.content || 'Failed to generate cover letter.';
       } else {
         throw new Error('No response from AI service');
       }
@@ -1265,7 +1264,7 @@ ${meta.manufacturer}
       
       // Inject client/project intelligence so compliance report reads SKILL/.MD context
       const intelligencePrefix2 = await getIntelligencePrefix().catch(() => '');
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           { role: 'system', content: intelligencePrefix2 + 'You are an expert FDA regulatory consultant specializing in 510(k) submissions.' },
@@ -1275,7 +1274,7 @@ ${meta.manufacturer}
       });
       
       if (response.choices && response.choices.length > 0) {
-        return response.choices[0].message.content || 'Failed to generate compliance report.';
+        return aiResult.content || 'Failed to generate compliance report.';
       } else {
         throw new Error('No response from AI service');
       }

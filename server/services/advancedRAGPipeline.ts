@@ -22,8 +22,6 @@
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import type OpenAI from 'openai';
-import { getOpenAIClient } from './openai-client';
 import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';
@@ -36,6 +34,7 @@ import { AIProviderRouter, getAIRouter } from './aiProviderRouter.js';
 
 export interface RetrievalOptions {
   strategy: 'basic' | 'hyde' | 'multi_query' | 'advanced';
+import { ai } from '../lib/unified-ai-client';
   limit?: number;
   threshold?: number;
   useReranking?: boolean;

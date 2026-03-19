@@ -10,15 +10,14 @@
  * regulatory risks before submission.
  */
 
-import { getOpenAIClient } from '../services/openai-client';
-
 // Initialize OpenAI client
 let openai;
 try {
-  openai = getOpenAIClient();
+
 } catch {
   console.warn('OPENAI_API_KEY not found in environment variables');
 }
+import { ai } from '../lib/unified-ai-client';
 
 /**
  * Predicts submission risks based on the current state of the IND application
@@ -56,7 +55,7 @@ async function predictSubmissionRisk(submissionDraft) {
       }
     `;
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // Updated to the latest version
       messages: [
         {
@@ -73,7 +72,7 @@ async function predictSubmissionRisk(submissionDraft) {
     });
 
     // Parse the response into JSON
-    const responseText = response.choices[0].message.content;
+    const responseText = aiResult.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error predicting submission risk:', error);
@@ -123,7 +122,7 @@ async function generateRegulatoryReport(submissionData, riskAssessment) {
       Format as a structured JSON report.
     `;
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // Updated to the latest version
       messages: [
         {
@@ -140,7 +139,7 @@ async function generateRegulatoryReport(submissionData, riskAssessment) {
     });
 
     // Parse the response into JSON
-    const responseText = response.choices[0].message.content;
+    const responseText = aiResult.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error generating regulatory report:', error);
@@ -185,7 +184,7 @@ async function analyzeProtocolRisks(protocolData) {
       Respond in JSON format.
     `;
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // Updated to the latest version
       messages: [
         {
@@ -202,7 +201,7 @@ async function analyzeProtocolRisks(protocolData) {
     });
 
     // Parse the response into JSON
-    const responseText = response.choices[0].message.content;
+    const responseText = aiResult.content;
     return JSON.parse(responseText);
   } catch (error) {
     console.error('Error analyzing protocol risks:', error);

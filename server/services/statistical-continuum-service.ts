@@ -221,8 +221,9 @@ export class StatisticalContinuumService {
     };
 
     try {
-      const aiContent = await ai.complete(
-        [
+      const aiResponse = await ai.chat({
+        model: 'gpt-4o',
+        messages: [
           {
             role: 'system',
             content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
@@ -328,8 +329,9 @@ ${sapContent.substring(0, 3000)}`,
     const analysisSpecSnapshot = thread.analysisSpecSnapshot as { specifications?: any[] } | null;
 
     // Use AI to generate TLF shells
-    const tlfContent = await ai.complete(
-      [
+    const aiResponse = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `You are a senior biostatistician generating TLF (Table, Listing, Figure) shells for a clinical trial CSR.
@@ -506,8 +508,9 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
     }
 
     // Use AI to generate CSR statistical sections
-    const csrContent = await ai.complete(
-      [
+    const aiResponse = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system',
           content: `You are a senior biostatistician writing the statistical sections of an ICH E3 compliant Clinical Study Report.

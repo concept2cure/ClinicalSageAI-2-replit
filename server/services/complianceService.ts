@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getOpenAIClient } from './openai-client';
-
-const openai = getOpenAIClient();
+import { ai } from '../lib/unified-ai-client';
 
 // Run compliance checks on uploaded documents
 export async function runComplianceChecks(submissionId: string) {
@@ -28,7 +26,7 @@ export async function runComplianceChecks(submissionId: string) {
     });
 
     // Use OpenAI to analyze compliance
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -51,7 +49,7 @@ export async function runComplianceChecks(submissionId: string) {
       status: 'success',
       submissionId,
       timestamp: new Date().toISOString(),
-      complianceAnalysis: response.choices[0].message.content,
+      complianceAnalysis: aiResult.content,
       sections: allSections.length,
       riskLevel: 'medium', // Placeholder for more sophisticated risk scoring
       recommendations: [

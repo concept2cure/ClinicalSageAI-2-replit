@@ -1,5 +1,5 @@
-// QC Coach AI Service — routes through Claude via AI Gateway
-import { ai } from '../../../lib/unified-ai-client.js';
+// QC Coach AI Service - Provides intelligent quality control guidance
+import { ai } from '../../../lib/unified-ai-client';
 
 /**
  * AI QC Coach - Provides intelligent guidance for quality control decisions
@@ -21,12 +21,26 @@ Provide actionable, specific coaching advice for the QC team. Focus on:
 Keep response concise (max 300 words), professional, and actionable.`;
 
   try {
-    const text = await ai.complete(prompt, {
-      maxTokens: 500,
+    if (!openai) {
+      // Fallback when OpenAI not configured
+      return `Based on current QC data:
+• Review all out-of-specification (OOS) results immediately
+• Verify system suitability test (SST) compliance
+• Check trending data for early warning signs
+• Ensure all deviations are properly documented
+• Consult with QA before release decisions`;
+    }
+
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 500,
       temperature: 0.3,
       callerModule: 'qualityCoach/aiQCCoach',
     });
-    return text || 'QC Coach AI analysis in progress. Review current data trends and specification compliance.';
+    
+    const aiResponse = aiResult.content;
+    return aiResponse || 'QC Coach AI analysis in progress. Review current data trends and specification compliance.';
   } catch (error) {
     console.error('AI QC Coach error:', error);
     return `Based on current QC data:
@@ -58,12 +72,36 @@ Provide a clear, professional explanation for the HOLD decision that:
 Keep response clear and concise (max 250 words), suitable for QA review.`;
 
   try {
-    const text = await ai.complete(prompt, {
-      maxTokens: 400,
+    if (!openai) {
+      // Fallback when OpenAI not configured
+      const issues = summary?.issues || [];
+      const failedTests = issues.filter(i => i.status === 'FAIL').map(i => i.test_name).join(', ');
+      
+      return `BATCH HOLD REASON:
+This batch cannot be released due to quality control failures.
+
+Failed Tests: ${failedTests || 'Multiple specification deviations detected'}
+
+Required Actions:
+1. Complete investigation per deviation procedure
+2. Document root cause analysis
+3. Implement corrective and preventive actions (CAPA)
+4. Obtain QA approval before retest or disposition
+
+Regulatory Basis: 21 CFR 211.165 - Testing and release for distribution
+ICH Q7 - Good Manufacturing Practice Guide for Active Pharmaceutical Ingredients`;
+    }
+
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 400,
       temperature: 0.2,
       callerModule: 'qualityCoach/aiExplainHold',
     });
-    return text || 'Batch on HOLD due to specification non-conformance. QA review required before release.';
+    
+    const aiResponse = aiResult.content;
+    return aiResponse || 'Batch on HOLD due to specification non-conformance. QA review required before release.';
   } catch (error) {
     console.error('AI Explain Hold error:', error);
     const issues = summary?.issues || [];

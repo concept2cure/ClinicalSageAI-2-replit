@@ -3,14 +3,12 @@ import regulatoryIR from './regulatoryIR.js';
 import portfolio from './portfolio.js';
 import playbookRoutes from './playbookRoutes.js';
 import { pool } from '../../db.js';
-import { getOpenAIClient } from '../../services/openai-client';
 import crypto from 'crypto';
+import { ai } from '../../lib/unified-ai-client';
 
 const router = Router();
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // ===== BLUEPRINT GENERATION =====
 
 // Generate comprehensive CMC blueprint
@@ -263,7 +261,7 @@ Provide a detailed blueprint that includes:
 
 Structure the response as a comprehensive regulatory strategy document.`;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4',
       messages: [
         {
@@ -280,7 +278,7 @@ Structure the response as a comprehensive regulatory strategy document.`;
       temperature: 0.7,
     });
 
-    const blueprintText = completion.choices[0].message.content || '';
+    const blueprintText = aiResult.content || '';
 
     // Parse the AI response into structured data
     return {

@@ -96,6 +96,7 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   }
   return res.json({ success: true, data });
 };
+import { ai } from '../lib/unified-ai-client';
 
 const sendError = (
   res: Response,
@@ -10319,8 +10320,7 @@ router.post('/conversations/:conversationId/summarize', authMiddleware, async (r
     let structured: any;
     try {
       const { getOpenAIClient } = await import('../services/openai-client');
-      const openai = getOpenAIClient();
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'You are a regulatory affairs analyst. Produce concise, structured summaries.' },
@@ -10330,7 +10330,7 @@ router.post('/conversations/:conversationId/summarize', authMiddleware, async (r
         temperature: 0.3,
       });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
+      const responseText = aiResult.content || '{}';
       // Extract JSON from response (handle markdown code blocks)
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       structured = jsonMatch ? JSON.parse(jsonMatch[0]) : {
@@ -10466,12 +10466,11 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
     let documentContent: string;
     try {
       const { getOpenAIClient } = await import('../services/openai-client');
-      const openai = getOpenAIClient();
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -10486,7 +10485,7 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
         max_tokens: 4000,
         temperature: 0.3,
       });
-      documentContent = completion.choices[0]?.message?.content || '';
+      documentContent = aiResult.content || '';
     } catch {
       // Fallback: raw conversation export
       documentContent = `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
@@ -10580,12 +10579,11 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
 
     try {
       const { getOpenAIClient } = await import('../services/openai-client');
-      const openai = getOpenAIClient();
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -10601,7 +10599,7 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
         temperature: 0.2,
       });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
+      const responseText = aiResult.content || '{}';
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       const extracted = jsonMatch ? JSON.parse(jsonMatch[0]) : {
         decisions: [], risks: [], openQuestions: [], actionItems: [],
