@@ -215,7 +215,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
         userId: user.id.toString(),
         email: user.email,
         organizationId: (user.defaultOrganizationId || 2).toString(),
-        role: 'admin',
+        role: (user.role || user.tier || 'user'),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -233,7 +233,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
         firstName: user.name?.split(' ')[0] || 'User',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
-        role: 'admin',
+        role: (user.role || user.tier || 'user'),
         organizationId: (user.defaultOrganizationId || 2).toString(),
         organizationName: 'Concept2Cure',
       },
@@ -300,7 +300,7 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
         userId: decoded.userId,
         email: decoded.email,
         organizationId: decoded.organizationId,
-        role: 'admin',
+        role: (user.role || user.tier || 'user'),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -325,7 +325,7 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
         firstName: user?.name?.split(' ')[0] || 'User',
         lastName: user?.name?.split(' ').slice(1).join(' ') || '',
         displayName: user?.name || decoded.email,
-        role: 'admin',
+        role: (user.role || user.tier || 'user'),
         organizationId: decoded.organizationId,
         organizationName: 'Concept2Cure',
       },
@@ -553,7 +553,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
 
     // Issue new JWT scoped to the selected organization
     const token = jwt.sign(
-      { userId, email, organizationId: String(organizationId), role: 'admin' },
+      { userId, email, organizationId: String(organizationId), role: decoded?.role || 'user' },
       config.jwt.secret,
       { expiresIn: '24h' }
     );

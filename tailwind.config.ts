@@ -188,8 +188,18 @@ export default {
       fuchsia: anthropicBlue,
     },
     extend: {
-      // shadcn/ui semantic tokens (preserved)
+      // shadcn/ui semantic tokens + data visualization colors
       colors: {
+        // Data visualization colors — true semantic colors for charts, heatmaps, severity indicators
+        // These are NOT overridden — use these for Recharts, D3, and any data viz
+        'chart-blue': { DEFAULT: '#3b82f6', light: '#93c5fd', dark: '#1d4ed8' },
+        'chart-green': { DEFAULT: '#22c55e', light: '#86efac', dark: '#15803d' },
+        'chart-red': { DEFAULT: '#ef4444', light: '#fca5a5', dark: '#b91c1c' },
+        'chart-yellow': { DEFAULT: '#eab308', light: '#fde047', dark: '#a16207' },
+        'chart-purple': { DEFAULT: '#a855f7', light: '#d8b4fe', dark: '#7e22ce' },
+        'chart-cyan': { DEFAULT: '#06b6d4', light: '#67e8f9', dark: '#0e7490' },
+        'chart-orange': { DEFAULT: '#f97316', light: '#fdba74', dark: '#c2410c' },
+        'chart-pink': { DEFAULT: '#ec4899', light: '#f9a8d4', dark: '#be185d' },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
