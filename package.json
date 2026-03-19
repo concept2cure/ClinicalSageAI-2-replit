@@ -204,7 +204,7 @@
     "reactflow": "11.11.4",
     "recharts": "^2.13.0",
     "remeda": "^2.21.2",
-    "socket.io": "4.8.1",
+    "socket.io": "4.8.3",
     "socket.io-client": "4.8.1",
     "speakeasy": "2.0.0",
     "stripe": "^18.0.0",
