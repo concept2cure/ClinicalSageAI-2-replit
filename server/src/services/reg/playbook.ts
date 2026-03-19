@@ -1,5 +1,5 @@
 import { getPool } from '../../../db';
-import OpenAI from 'openai';
+import { ai as aiClient } from '../../../lib/unified-ai-client';
 
 // Database connection - use canonical pool
 const pool = getPool();
@@ -16,8 +16,7 @@ const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[
   }
 };
 
-const ON = !!process.env.OPENAI_API_KEY;
-const ai = () => new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const ON = !!process.env.ANTHROPIC_API_KEY;
 
 type Card = {
   kind: string;
@@ -261,19 +260,15 @@ async function buildCandidates(subId: string): Promise<Card[]> {
         .slice(0, 8)
         .map((c, i) => `${i + 1}. ${c.title} | Why: ${c.rationale}`)
         .join('\n');
-      const out = await ai().chat.completions.create({
-        model: 'gpt-5', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-        temperature: 0.2,
-        messages: [
+      const text = await aiClient.complete([
           {
             role: 'system',
             content:
               "You are a senior CMC regulatory advisor. Rewrite each card's 'Why' to be crisp and executive-ready. Keep one sentence per item. Return the same list numbered 1..N with only the rewritten sentences.",
           },
           { role: 'user', content: msg },
-        ],
-      });
-      const lines = (out.choices[0].message?.content || '').split('\n').filter(Boolean);
+        ], { temperature: 0.2, callerModule: 'playbook/buildCandidates' });
+      const lines = (text || '').split('\n').filter(Boolean);
       lines.forEach((line, idx) => {
         const t = line.replace(/^\d+\.\s*/, '').trim();
         if (cards[idx] && t) cards[idx].rationale = t;

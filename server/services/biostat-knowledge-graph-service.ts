@@ -10,9 +10,7 @@ import {
   type MethodRegulatoryOutcome,
 } from '../../shared/schema';
 import { eq, and, like, desc, sql, count } from 'drizzle-orm';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { ai } from '../lib/unified-ai-client';
 
 // --- Types ---
 
@@ -276,11 +274,9 @@ export class BiostatKnowledgeGraphService {
    */
   async queryGraph(query: string, organizationId: number): Promise<GraphQueryResult> {
     // Step 1: Use AI to extract search terms and intent
-    const extractionResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
+    const extractionMessages = [
         {
-          role: 'system',
+          role: 'system' as const,
           content: `You are a biostatistics knowledge graph query parser. Extract search parameters from the user query.
 Return JSON with these fields:
 - nodeTypes: array of node types to search (indication, endpoint, statistical_method, study_design, regulatory_decision, drug_class, estimand_strategy, missing_data_method, multiplicity_method)
@@ -288,11 +284,8 @@ Return JSON with these fields:
 - edgeTypes: array of edge types relevant to the query
 - intent: one of "find_methods", "find_endpoints", "find_relationships", "find_trends", "general"`,
         },
-        { role: 'user', content: query },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.1,
-    });
+        { role: 'user' as const, content: query },
+      ];
 
     let parsed: {
       nodeTypes: NodeType[];
@@ -301,7 +294,8 @@ Return JSON with these fields:
       intent: string;
     };
     try {
-      parsed = JSON.parse(extractionResponse.choices[0]?.message?.content || '{}');
+      const extractionRaw = await ai.complete(extractionMessages, { jsonMode: true, temperature: 0.1 });
+      parsed = JSON.parse(extractionRaw || '{}');
     } catch {
       parsed = { nodeTypes: [], searchTerms: [], edgeTypes: [], intent: 'general' };
     }
@@ -383,16 +377,14 @@ Return JSON with these fields:
     const uniqueEdges = Array.from(uniqueEdgeMap.values());
 
     // Step 4: Use AI to synthesize an answer
-    const synthesisResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
+    const synthesisMessages = [
         {
-          role: 'system',
+          role: 'system' as const,
           content:
             'You are a biostatistics expert. Synthesize an answer based on the knowledge graph data provided. Be concise and precise.',
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `Question: ${query}\n\nKnowledge Graph Nodes:\n${JSON.stringify(
             uniqueNodes.map(n => ({ type: n.nodeType, name: n.name, props: n.properties })),
             null,
@@ -403,11 +395,9 @@ Return JSON with these fields:
             2
           )}`,
         },
-      ],
-      temperature: 0.3,
-    });
+      ];
 
-    const answer = synthesisResponse.choices[0]?.message?.content || 'No answer could be generated.';
+    const answer = await ai.complete(synthesisMessages, { temperature: 0.3 }) || 'No answer could be generated.';
     const confidence = uniqueNodes.length > 0 ? Math.min(0.95, 0.5 + uniqueNodes.length * 0.05) : 0.1;
 
     return {
