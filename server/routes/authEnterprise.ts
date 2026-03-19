@@ -382,6 +382,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         email: decoded.email,
         organizationId: decoded.organizationId,
         role: mfaActualRole,
+      },
       { expiresIn: '24h' }
     );
 

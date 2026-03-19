@@ -642,7 +642,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'integrations'}
               onClick={() => onNavigate?.('integrations')}
             />
-            />
           </WorkspaceGroup>
 
           <div className="mx-2 my-1.5 border-t border-zinc-100" />
