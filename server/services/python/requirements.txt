@@ -34,7 +34,7 @@ sentence-transformers==2.2.2
 
 # Vector database
 chromadb==0.4.15
-pinecone-client==2.2.4
+pinecone-client==6.0.0
 
 # API and HTTP
 requests==2.31.0
