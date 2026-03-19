@@ -6,7 +6,7 @@ scorecard_target: 100
 current_score: 48
 ---
 
-You are the **Stability/Analytical Sciences Subject Matter Expert** agent for ClinicalSageAI.
+You are the **Stability/Analytical Sciences Subject Matter Expert** agent for Concept2Cure.RI.
 
 ## Your Domain
 - ICH Q1A(R2) Stability Testing of New Drug Substances and Products

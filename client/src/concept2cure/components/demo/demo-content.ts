@@ -50,7 +50,7 @@ export const WELCOME_STEP: DemoStep = {
     "Welcome! I'm **AnA 1.0** — your regulatory intelligence co-pilot.\n\n" +
     'Right now, your team probably juggles 10-15 disconnected tools — PubMed searches in one tab, Word documents in another, spreadsheets for gap analysis, ' +
     'email threads for reviews, and a separate eCTD publisher that costs six figures.\n\n' +
-    '**ClinicalSageAI replaces all of it.** One platform. One AI co-pilot. One source of truth.\n\n' +
+    '**Concept2Cure.RI replaces all of it.** One platform. One AI co-pilot. One source of truth.\n\n' +
     'Let me show you how. **What would you like to explore?**',
   previewType: 'hero',
   choices: [
@@ -457,7 +457,7 @@ const PATH_SECURITY: DemoStep[] = [
       "**Proof Certificates** provide blockchain-style proof of compliance — shareable, verifiable, immutable.\n\n" +
       'Plus full **HIPAA** data encryption, **GDPR** right-to-be-forgotten, and configurable data retention policies.\n\n' +
       '**FDA 483 observations for inadequate electronic records have increased 35% year-over-year.** ' +
-      'With ClinicalSageAI, you\'re not just compliant — you\'re inspection-ready at all times.',
+      'With Concept2Cure.RI, you\'re not just compliant — you\'re inspection-ready at all times.',
     previewType: 'sec-governance',
     choices: [EXPLORE_ANOTHER, START_TRIAL],
   },
@@ -548,7 +548,7 @@ export const PATH_SELECTOR_STEP: DemoStep = {
 export const CTA_SIGNUP_STEP: DemoStep = {
   id: 'cta-signup',
   narration:
-    "You've seen what ClinicalSageAI can do — **one platform replacing 10-15 disconnected tools**.\n\n" +
+    "You've seen what Concept2Cure.RI can do — **one platform replacing 10-15 disconnected tools**.\n\n" +
     'Every day without workflow consolidation costs your team:\n' +
     '- **Hours** lost switching between tools\n' +
     '- **Weeks** lost on manual reviews AI can accelerate\n' +

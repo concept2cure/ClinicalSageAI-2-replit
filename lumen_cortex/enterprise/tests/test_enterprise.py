@@ -22,7 +22,7 @@ from unittest.mock import MagicMock, patch, AsyncMock
 
 # Import enterprise modules
 import sys
-sys.path.insert(0, '/workspaces/ClinicalSageAI-2-replit')
+sys.path.insert(0, '/workspaces/Concept2Cure.RI-2-replit')
 
 
 # ═══════════════════════════════════════════════════════════════════════════

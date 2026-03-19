@@ -1,4 +1,4 @@
-# ClinicalSageAI — Platform Scorecard & 100% Sign-Off Matrix
+# Concept2Cure.RI — Platform Scorecard & 100% Sign-Off Matrix
 
 **Document ID:** SCORE-BIOTECH-SME-001
 **Date:** 2026-03-19
@@ -284,7 +284,7 @@ When ALL modules reach 100/100 and ALL cross-cutting gaps are resolved:
 
 ```
 ═══════════════════════════════════════════════════════════
-  CLINICALSAGEAI PLATFORM SIGN-OFF CERTIFICATE
+  CONCEPT2CURE_RI PLATFORM SIGN-OFF CERTIFICATE
 
   Date: ___________
   Authorized by: Global Project Manager SME

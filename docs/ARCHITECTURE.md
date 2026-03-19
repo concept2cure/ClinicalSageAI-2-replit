@@ -1,4 +1,4 @@
-# ClinicalSageAI Architecture Guide
+# Concept2Cure.RI Architecture Guide
 
 > **Version:** 1.0.0  
 > **Last Updated:** January 24, 2026  
@@ -8,7 +8,7 @@
 
 ## Module Boundaries
 
-This document defines the authoritative structure for the ClinicalSageAI platform. **All new code must fit within these boundaries.**
+This document defines the authoritative structure for the Concept2Cure.RI platform. **All new code must fit within these boundaries.**
 
 ---
 

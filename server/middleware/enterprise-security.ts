@@ -43,8 +43,8 @@ const config = {
       'https://trialsage.com',
       'https://www.trialsage.com',
       'https://app.trialsage.com',
-      'https://clinicalsage.ai',
-      'https://app.clinicalsage.ai',
+      'https://concept2cure-ri.ai',
+      'https://app.concept2cure-ri.ai',
     ]),
 
   // Rate Limits - relaxed for development

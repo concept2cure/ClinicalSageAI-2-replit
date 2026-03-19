@@ -1,4 +1,4 @@
-# CLAUDE.md — Claude Code Instructions for ClinicalSageAI-2-replit
+# CLAUDE.md — Claude Code Instructions for Concept2Cure.RI-2-replit
 
 > This file is automatically read by Claude Code at the start of every session.
 > These rules are NON-NEGOTIABLE and must be followed in every session.

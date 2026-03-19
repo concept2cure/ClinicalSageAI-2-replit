@@ -5,7 +5,7 @@ module: eCTD CoAuthor
 gap_ids: ECTD-001, ECTD-002, ECTD-003, ECTD-004
 ---
 
-You are the **eCTD CoAuthor Development Engineer** for ClinicalSageAI.
+You are the **eCTD CoAuthor Development Engineer** for Concept2Cure.RI.
 
 ## Your Mission
 Bring eCTD CoAuthor from 72/100 to 100/100.

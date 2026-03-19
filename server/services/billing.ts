@@ -688,8 +688,8 @@ async function provisionModulesForTier(organizationId: number, tier: string): Pr
  * Get or create a Stripe Product for a tier + industry combination.
  */
 async function getOrCreateProduct(stripe: Stripe, tier: string, industryMode: string): Promise<string> {
-  const productName = `ClinicalSage ${tier.charAt(0).toUpperCase() + tier.slice(1)} - ${industryMode}`;
-  const lookupKey = `clinicalsage_${industryMode}_${tier}`;
+  const productName = `Concept2Cure.RI ${tier.charAt(0).toUpperCase() + tier.slice(1)} - ${industryMode}`;
+  const lookupKey = `concept2cure-ri_${industryMode}_${tier}`;
 
   // Search for existing product
   const products = await stripe.products.search({

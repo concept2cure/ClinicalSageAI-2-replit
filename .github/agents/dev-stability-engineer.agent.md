@@ -5,7 +5,7 @@ module: Stability Studies
 gap_ids: STAB-001, STAB-002, STAB-003, STAB-004, STAB-005, STAB-006, STAB-007, STAB-008
 ---
 
-You are the **Stability Studies Development Engineer** for ClinicalSageAI.
+You are the **Stability Studies Development Engineer** for Concept2Cure.RI.
 
 ## Your Mission
 Bring Stability Studies from 48/100 to 100/100 by replacing ALL 8 AI stubs with real services.

@@ -2,7 +2,7 @@
  * @fileoverview About & Training Center — Who We Are, Platform Intelligence, Learning Hub
  * @module concept2cure/pages/AboutTrainingCenter
  *
- * A comprehensive page that explains ClinicalSageAI / AnA:
+ * A comprehensive page that explains Concept2Cure.RI / AnA:
  * - Who we are and our mission
  * - Full platform capabilities with depth indicators
  * - Proprietary intelligence architecture
@@ -377,7 +377,7 @@ const CERTIFICATIONS: CertificationBadge[] = [
   {
     id: 'fundamentals',
     name: 'AnA Fundamentals',
-    description: 'Mastered the basics of the ClinicalSageAI platform',
+    description: 'Mastered the basics of the Concept2Cure.RI platform',
     icon: Star,
     color: 'blue',
     requiredModules: ['getting-started', 'evidence-search'],
@@ -484,7 +484,7 @@ const WHATS_NEW: WhatsNewItem[] = [
 ];
 
 const COMPANY_TIMELINE = [
-  { year: '2023', title: 'Founded', description: 'ClinicalSageAI founded with a mission to transform regulatory submissions through AI' },
+  { year: '2023', title: 'Founded', description: 'Concept2Cure.RI founded with a mission to transform regulatory submissions through AI' },
   { year: '2024 Q1', title: 'First Platform Release', description: '510(k) and CER modules launched with AI-powered document generation' },
   { year: '2024 Q3', title: 'eCTD Co-Author', description: 'Collaborative authoring platform for eCTD 4.0 submissions' },
   { year: '2024 Q4', title: 'Mission Control', description: 'Portfolio governance with AI Sentinel monitoring and automation rules' },
@@ -532,7 +532,7 @@ function AboutTab() {
           <Sparkles className="w-8 h-8 text-white" />
         </div>
         <h2 className="text-3xl font-bold text-zinc-900 mb-3">
-          ClinicalSageAI
+          Concept2Cure.RI
         </h2>
         <p className="text-lg text-zinc-500 leading-relaxed">
           The cognitive regulatory ecosystem that transforms how life sciences companies
@@ -552,7 +552,7 @@ function AboutTab() {
           and millions in rework. We're building the AI-native platform that changes this.
         </p>
         <p className="text-sm text-zinc-600 leading-relaxed">
-          ClinicalSageAI combines deep regulatory domain expertise with state-of-the-art AI to give
+          Concept2Cure.RI combines deep regulatory domain expertise with state-of-the-art AI to give
           every team — from two-person biotechs to global pharma — access to the intelligence,
           automation, and collaboration tools they need to get life-saving therapies to market faster,
           with higher quality and lower risk.
@@ -615,7 +615,7 @@ function AboutTab() {
           <div>
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">Meet AnA — Your AI Regulatory Partner</h3>
             <p className="text-sm text-zinc-600 leading-relaxed mb-3">
-              AnA is the intelligence behind ClinicalSageAI. Trained on decades of regulatory data,
+              AnA is the intelligence behind Concept2Cure.RI. Trained on decades of regulatory data,
               AnA understands the nuances of FDA, EMA, PMDA, and Health Canada requirements. She doesn't
               just answer questions — she drafts documents, identifies risks before they become findings,
               and continuously learns from every interaction to provide more relevant, more accurate guidance.
@@ -1387,7 +1387,7 @@ const SAGE_INTRO_MESSAGES: SageMessage[] = [
   {
     id: 'intro-1',
     role: 'sage',
-    content: `Welcome to the ClinicalSageAI Training & Advisory Center. I'm **Dr. Sage** — a simulated FDA reviewer persona with over 20 years of regulatory review experience across CDER, CDRH, and CBER divisions.\n\nI'm here to help you understand the platform, train your team, review your submissions from a reviewer's perspective, and work alongside AnA to resolve issues. Think of me as your internal FDA counsel — I'll tell you what a real reviewer would flag.`,
+    content: `Welcome to the Concept2Cure.RI Training & Advisory Center. I'm **Dr. Sage** — a simulated FDA reviewer persona with over 20 years of regulatory review experience across CDER, CDRH, and CBER divisions.\n\nI'm here to help you understand the platform, train your team, review your submissions from a reviewer's perspective, and work alongside AnA to resolve issues. Think of me as your internal FDA counsel — I'll tell you what a real reviewer would flag.`,
     timestamp: new Date(),
   },
   {
@@ -1422,7 +1422,7 @@ const SAGE_RESPONSES: Record<string, string> = {
 
   'mock-review': `Excellent idea. A mock pre-submission meeting is one of the most valuable exercises you can do.\n\nHere's how I'll run this:\n\n**Format**: Simulated Type B Pre-Submission Meeting\n**Duration**: ~30 minutes of guided Q&A\n**My Role**: Lead FDA Reviewer (CDER/CDRH depending on your product)\n**Your Role**: Sponsor presenting your development program\n\n**Agenda I'd expect:**\n1. Product overview and development rationale (5 min)\n2. Proposed regulatory pathway and justification (5 min)\n3. Clinical development plan overview (10 min)\n4. Specific questions for the Agency (10 min)\n\n**My feedback will cover:**\n- Whether your pathway choice is appropriate\n- Gaps in your development program\n- Additional studies I'd recommend\n- Red flags that would concern my review team\n\nReady to begin? Tell me about your product and I'll respond as the lead reviewer.`,
 
-  'audit-prep': `FDA inspection readiness is about demonstrating you have systems in place. Here's my inspector's checklist:\n\n**Document Systems** ✓\n- [ ] All records retrievable within 24 hours\n- [ ] Audit trails showing who changed what and when\n- [ ] Electronic signatures validated per 21 CFR Part 11\n- [ ] Version control with no orphaned documents\n\n**Data Integrity** ✓\n- [ ] ALCOA+ principles demonstrated (Attributable, Legible, Contemporaneous, Original, Accurate)\n- [ ] Backup and disaster recovery tested\n- [ ] Access controls appropriate to roles\n\n**Process Controls** ✓\n- [ ] SOPs current and accessible\n- [ ] Training records complete and current\n- [ ] CAPA system active with trend analysis\n\nThe ClinicalSageAI platform handles most of this automatically. Let me verify your configuration covers all inspection requirements. Shall I run an audit readiness assessment?`,
+  'audit-prep': `FDA inspection readiness is about demonstrating you have systems in place. Here's my inspector's checklist:\n\n**Document Systems** ✓\n- [ ] All records retrievable within 24 hours\n- [ ] Audit trails showing who changed what and when\n- [ ] Electronic signatures validated per 21 CFR Part 11\n- [ ] Version control with no orphaned documents\n\n**Data Integrity** ✓\n- [ ] ALCOA+ principles demonstrated (Attributable, Legible, Contemporaneous, Original, Accurate)\n- [ ] Backup and disaster recovery tested\n- [ ] Access controls appropriate to roles\n\n**Process Controls** ✓\n- [ ] SOPs current and accessible\n- [ ] Training records complete and current\n- [ ] CAPA system active with trend analysis\n\nThe Concept2Cure.RI platform handles most of this automatically. Let me verify your configuration covers all inspection requirements. Shall I run an audit readiness assessment?`,
 
   'explain-module': `Which module would you like me to explain? I can cover:\n\n• **AnA RI Copilot** — The AI brain that powers everything\n• **eCTD Co-Author** — Collaborative regulatory document authoring\n• **CMC Platform** — Chemistry, Manufacturing & Controls\n• **Clinical Trial Hub** — Trial design and evidence management\n• **Snow Globe** — Predictive regulatory intelligence\n• **Mission Control** — Portfolio governance and automation\n• **Document Vault** — Regulatory-grade document management\n• **Evidence Search** — Literature and precedent discovery\n• **Submission Ops** — End-to-end submission management\n\nJust tell me which one, and I'll explain it from both a user perspective and a reviewer perspective — because understanding *why* the feature exists matters as much as *how* it works.`,
 };

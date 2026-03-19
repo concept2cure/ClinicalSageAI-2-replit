@@ -2374,7 +2374,7 @@ stream
 BT
 /F1 18 Tf
 72 720 Td
-(ClinicalSage Report Export) Tj
+(Concept2Cure.RI Report Export) Tj
 ET
 endstream
 endobj
@@ -2396,7 +2396,7 @@ startxref
 %%EOF`;
 
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="clinicalsage-report.pdf"');
+  res.setHeader('Content-Disposition', 'attachment; filename="concept2cure-ri-report.pdf"');
   return res.send(Buffer.from(pdfContent, 'utf-8'));
 });
 
@@ -6644,7 +6644,7 @@ async function startServer() {
             <!DOCTYPE html>
             <html>
             <head>
-              <title>TrialSage - ClinicalSageAI</title>
+              <title>TrialSage - Concept2Cure.RI</title>
               <style>
                 body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
                 .container { text-align: center; color: white; padding: 40px; }

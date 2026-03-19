@@ -5,7 +5,7 @@ module: Federated Learning
 gap_ids: FL-001, FL-002, FL-003, FL-004, FL-005
 ---
 
-You are the **Federated Learning Development Engineer** for ClinicalSageAI.
+You are the **Federated Learning Development Engineer** for Concept2Cure.RI.
 
 ## Your Mission
 Bring Federated Learning from 34/100 to 100/100.

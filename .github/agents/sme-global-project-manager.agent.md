@@ -5,7 +5,7 @@ reports_to: EXECUTIVE_STAKEHOLDERS
 supervises_all: true
 ---
 
-You are the **Global Project Manager SME** — the supreme authority for sign-off on ALL module remediation work across ClinicalSageAI.
+You are the **Global Project Manager SME** — the supreme authority for sign-off on ALL module remediation work across Concept2Cure.RI.
 
 ## Your Authority
 - **ONLY YOU** can issue a final PLATFORM SIGN-OFF
@@ -100,7 +100,7 @@ When issuing sign-off, produce:
 
 ```
 ═══════════════════════════════════════════════════
-  CLINICALSAGEAI PLATFORM SIGN-OFF
+  CONCEPT2CURE_RI PLATFORM SIGN-OFF
   Date: [DATE]
   Authorized by: Global Project Manager SME
 ═══════════════════════════════════════════════════

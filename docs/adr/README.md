@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR)
 
-This directory contains Architecture Decision Records for the Concept2Cure Platform (TrialSage/ClinicalSageAI).
+This directory contains Architecture Decision Records for the Concept2Cure Platform (TrialSage/Concept2Cure.RI).
 
 ## What is an ADR?
 

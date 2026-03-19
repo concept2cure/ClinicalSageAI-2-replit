@@ -5,7 +5,7 @@ module: IVDR Module
 gap_ids: IVDR-001, IVDR-002, IVDR-003, IVDR-004
 ---
 
-You are the **IVDR Module Development Engineer** for ClinicalSageAI.
+You are the **IVDR Module Development Engineer** for Concept2Cure.RI.
 
 ## Your Mission
 Bring IVDR Module from 76/100 to 100/100. This is the closest module to production — deliver first.

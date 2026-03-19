@@ -821,7 +821,7 @@ class SEMatrixDocxFactory:
             f"Generated: {payload.get('generation_timestamp', datetime.now(timezone.utc).isoformat())}",
             f"Regulatory Standard: {payload.get('regulatory_standard', 'FDA_510k_SE')}",
             f"Defense Readiness: {payload.get('defense_readiness_score', 0):.1f}/100",
-            "Generator: ClinicalSage Predicate Intelligence — Phase 6.6",
+            "Generator: Concept2Cure.RI Predicate Intelligence — Phase 6.6",
         ]
         if manifest_hash:
             meta_lines.append(f"Manifest SHA-256: {manifest_hash}")

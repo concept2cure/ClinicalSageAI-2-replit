@@ -246,7 +246,7 @@ export function generateICSR_E2BR3(data: {
         .ele('messageformatversion').txt('2.1').up()
         .ele('messageformatrelease').txt('R3').up()
         .ele('messagenumb').txt(data.safetyReportId).up()
-        .ele('messagesenderidentifier').txt('ClinicalSageAI').up()
+        .ele('messagesenderidentifier').txt('Concept2Cure.RI').up()
         .ele('messagereceiveridentifier').txt('EudraVigilance').up()
         .ele('messagedateformat').txt('204').up()
         .ele('messagedate').txt(ts().replace(/-/g, '')).up()

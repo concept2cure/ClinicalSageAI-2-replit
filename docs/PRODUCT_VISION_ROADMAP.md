@@ -1,4 +1,4 @@
-# ClinicalSageAI Product Vision Roadmap
+# Concept2Cure.RI Product Vision Roadmap
 
 ## From Consolidation to Cognitive Regulatory Ecosystem
 
@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-ClinicalSageAI has evolved from a regulatory documentation platform into a comprehensive **Cognitive Regulatory Ecosystem**. This roadmap aligns our recent codebase consolidation with the strategic vision for 2026-2030.
+Concept2Cure.RI has evolved from a regulatory documentation platform into a comprehensive **Cognitive Regulatory Ecosystem**. This roadmap aligns our recent codebase consolidation with the strategic vision for 2026-2030.
 
 ### Current State Assessment
 
@@ -284,7 +284,7 @@ ClinicalSageAI has evolved from a regulatory documentation platform into a compr
 ### Project Structure (Target State)
 
 ```
-ClinicalSageAI/
+Concept2Cure.RI/
 ├── client/                    # Frontend (React)
 │   └── src/
 │       ├── components/        # UI components
@@ -325,7 +325,7 @@ ClinicalSageAI/
 
 ## Conclusion
 
-The ClinicalSageAI platform is 70% complete toward the Cognitive Regulatory Ecosystem vision. The consolidation effort has:
+The Concept2Cure.RI platform is 70% complete toward the Cognitive Regulatory Ecosystem vision. The consolidation effort has:
 
 1. **Reduced root clutter** from 303+ files to ~30
 2. **Organized 233+ scripts** into logical directories

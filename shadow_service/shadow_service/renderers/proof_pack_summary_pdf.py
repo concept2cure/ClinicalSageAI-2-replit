@@ -80,7 +80,7 @@ class ProofPackPDF(FPDF):
         self.set_y(-15)
         self.set_font("Helvetica", "I", 7)
         self.set_text_color(*_GRAY)
-        self.cell(0, 5, "ClinicalSageAI - Confidential", align="L")
+        self.cell(0, 5, "Concept2Cure.RI - Confidential", align="L")
         self.cell(0, 5, f"Page {self.page_no()}/{{nb}}", align="R")
 
 
@@ -111,7 +111,7 @@ def _build_cover(pdf: ProofPackPDF, pp_row: dict[str, Any]):
     meta_lines = [
         f"Proof Pack ID: {pack_id}",
         f"Program ID: {program_id}",
-        f"Generator: ClinicalSageAI v{version}",
+        f"Generator: Concept2Cure.RI v{version}",
         f"Created: {created}",
     ]
     for line in meta_lines:
