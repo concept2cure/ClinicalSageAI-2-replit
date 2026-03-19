@@ -9,9 +9,7 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { SapGeneratorService, type SapRequestData } from './sap-generator-service';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { ai } from '../lib/unified-ai-client';
 
 // --- Types ---
 
@@ -223,9 +221,8 @@ export class StatisticalContinuumService {
     };
 
     try {
-      const aiResponse = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
+      const aiContent = await ai.complete(
+        [
           {
             role: 'system',
             content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
@@ -254,13 +251,12 @@ SAP Summary:
 ${sapContent.substring(0, 3000)}`,
           },
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.2,
-      });
+        { jsonMode: true, temperature: 0.2 }
+      );
 
-      datasetsPayload = JSON.parse(aiResponse.choices[0]?.message?.content || '{"datasets":[]}');
+      datasetsPayload = JSON.parse(aiContent || '{"datasets":[]}');
     } catch (aiError) {
-      console.error('[StatisticalContinuum] OpenAI analysis spec generation failed, using fallback:', aiError);
+      console.error('[StatisticalContinuum] AI analysis spec generation failed, using fallback:', aiError);
       datasetsPayload = { datasets: [] };
     }
 
@@ -332,9 +328,8 @@ ${sapContent.substring(0, 3000)}`,
     const analysisSpecSnapshot = thread.analysisSpecSnapshot as { specifications?: any[] } | null;
 
     // Use AI to generate TLF shells
-    const aiResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
+    const tlfContent = await ai.complete(
+      [
         {
           role: 'system',
           content: `You are a senior biostatistician generating TLF (Table, Listing, Figure) shells for a clinical trial CSR.
@@ -374,9 +369,8 @@ Analysis Specifications: ${JSON.stringify(analysisSpecSnapshot?.specifications |
 SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
         },
       ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-    });
+      { jsonMode: true, temperature: 0.2 }
+    );
 
     let tlfPayload: {
       tlfs: Array<{
@@ -392,7 +386,7 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
     };
 
     try {
-      tlfPayload = JSON.parse(aiResponse.choices[0]?.message?.content || '{"tlfs":[]}');
+      tlfPayload = JSON.parse(tlfContent || '{"tlfs":[]}');
     } catch {
       tlfPayload = { tlfs: [] };
     }
@@ -512,9 +506,8 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
     }
 
     // Use AI to generate CSR statistical sections
-    const aiResponse = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
+    const csrContent = await ai.complete(
+      [
         {
           role: 'system',
           content: `You are a senior biostatistician writing the statistical sections of an ICH E3 compliant Clinical Study Report.
@@ -538,15 +531,12 @@ SAP: ${(sapSnapshot?.content || '').substring(0, 2000)}
 Results: ${JSON.stringify(resultsSnapshot, null, 2).substring(0, 2000)}`,
         },
       ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-    });
+      { jsonMode: true, temperature: 0.2 }
+    );
 
     let sectionsPayload: { sections: Record<string, string> };
     try {
-      sectionsPayload = JSON.parse(
-        aiResponse.choices[0]?.message?.content || '{"sections":{}}'
-      );
+      sectionsPayload = JSON.parse(csrContent || '{"sections":{}}');
     } catch {
       sectionsPayload = { sections: {} };
     }
