@@ -408,7 +408,7 @@ export const CATEGORY_REGISTRY: Record<ModuleCategory, CategoryConfig> = {
     label: 'Analytics',
     description: 'Data analysis and reporting',
     icon: 'BarChart',
-    color: '#8b5cf6',
+    color: '#6a9bcc',
   },
   administration: {
     id: 'administration',

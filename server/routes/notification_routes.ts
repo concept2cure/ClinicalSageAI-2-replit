@@ -471,8 +471,8 @@ function generateHtmlDigest(text: string): string {
       padding: 20px;
     }
     h1 {
-      color: #2563eb;
-      border-bottom: 1px solid #e5e7eb;
+      color: #5585b3;
+      border-bottom: 1px solid #e8e6dc;
       padding-bottom: 10px;
     }
     .section {
@@ -480,7 +480,7 @@ function generateHtmlDigest(text: string): string {
     }
     .section-title {
       font-weight: bold;
-      color: #2563eb;
+      color: #5585b3;
       margin-bottom: 10px;
     }
     ul {
@@ -489,7 +489,7 @@ function generateHtmlDigest(text: string): string {
     .footer {
       margin-top: 30px;
       padding-top: 10px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid #e8e6dc;
       font-size: 12px;
       color: #666;
     }

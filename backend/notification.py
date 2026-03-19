@@ -141,9 +141,9 @@ class EmailNotifier:
             <style>
                 body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ width: 100%; max-width: 600px; margin: 0 auto; }}
-                .header {{ background-color: #4f46e5; color: white; padding: 20px; text-align: center; }}
+                .header {{ background-color: #c15f3c; color: white; padding: 20px; text-align: center; }}
                 .content {{ padding: 20px; }}
-                .button {{ display: inline-block; background-color: #4f46e5; color: white; 
+                .button {{ display: inline-block; background-color: #c15f3c; color: white; 
                           padding: 10px 20px; text-decoration: none; border-radius: 4px; }}
                 .footer {{ font-size: 12px; color: #666; padding: 20px; text-align: center; }}
             </style>

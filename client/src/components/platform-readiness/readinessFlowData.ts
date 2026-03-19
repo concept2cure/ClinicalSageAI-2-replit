@@ -596,13 +596,13 @@ export const SEVERITY_COLORS: Record<
   critical: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b', badge: '#dc2626' },
   high: { bg: '#fff7ed', border: '#ea580c', text: '#9a3412', badge: '#ea580c' },
   medium: { bg: '#fefce8', border: '#ca8a04', text: '#854d0e', badge: '#ca8a04' },
-  low: { bg: '#f0fdf4', border: '#16a34a', text: '#166534', badge: '#16a34a' },
+  low: { bg: '#f0fdf4', border: '#647746', text: '#166534', badge: '#647746' },
 };
 
 export const MODULE_COLORS: Record<string, { bg: string; border: string; header: string }> = {
   ectd: { bg: '#e6f7ff', border: '#007acc', header: '#005a9e' },
   cmc: { bg: '#fffbe6', border: '#d4a017', header: '#8b6914' },
-  cerv2: { bg: '#f0fdf4', border: '#16a34a', header: '#15803d' },
+  cerv2: { bg: '#f0fdf4', border: '#647746', header: '#15803d' },
 };
 
 export const STATUS_ICONS: Record<string, string> = {
@@ -711,7 +711,7 @@ export function buildOverviewEdges(): Edge[] {
       target: `module-${key}`,
       type: 'smoothstep',
       animated: false,
-      style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+      style: { stroke: '#b0aea5', strokeWidth: 1.5 },
     });
   });
 
@@ -723,7 +723,7 @@ export function buildOverviewEdges(): Edge[] {
     type: 'smoothstep',
     animated: true,
     label: 'Module 3 → eCTD',
-    style: { stroke: '#16a34a', strokeWidth: 2 },
+    style: { stroke: '#647746', strokeWidth: 2 },
     labelStyle: { fontSize: 11, fontWeight: 600 },
   });
 
@@ -734,7 +734,7 @@ export function buildOverviewEdges(): Edge[] {
     type: 'smoothstep',
     animated: true,
     label: 'Device docs → eCTD',
-    style: { stroke: '#16a34a', strokeWidth: 2 },
+    style: { stroke: '#647746', strokeWidth: 2 },
     labelStyle: { fontSize: 11, fontWeight: 600 },
   });
 
@@ -773,14 +773,14 @@ const PHASES: PhaseConfig[] = [
     id: '0B',
     label: 'Phase 0B — Templates',
     dates: 'Feb 21–Mar 3',
-    color: '#6366f1',
+    color: '#d97757',
     module: 'all',
   },
   {
     id: '1A',
     label: 'Phase 1A — AI Integration',
     dates: 'Mar 4–11',
-    color: '#8b5cf6',
+    color: '#6a9bcc',
     module: 'all',
   },
   {
@@ -866,7 +866,7 @@ export function buildRoadmapEdges(): Edge[] {
       source: `phase-${PHASES[i].id}`,
       target: `phase-${PHASES[i + 1].id}`,
       type: 'smoothstep',
-      style: { stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '8 4' },
+      style: { stroke: '#b0aea5', strokeWidth: 1, strokeDasharray: '8 4' },
     });
   }
 
@@ -1139,9 +1139,9 @@ export function buildArchitectureEdges(): Edge[] {
     ConnectionStatus,
     { stroke: string; animated: boolean; dasharray?: string }
   > = {
-    connected: { stroke: '#16a34a', animated: false },
+    connected: { stroke: '#647746', animated: false },
     broken: { stroke: '#dc2626', animated: true, dasharray: '5 5' },
-    unmounted: { stroke: '#94a3b8', animated: false, dasharray: '8 4' },
+    unmounted: { stroke: '#b0aea5', animated: false, dasharray: '8 4' },
   };
 
   connections.forEach((conn, i) => {

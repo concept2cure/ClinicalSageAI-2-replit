@@ -182,7 +182,7 @@ function StepCard({
           )}
           animate={
             step.status === 'running'
-              ? { boxShadow: ['0 0 0 0 rgba(59,130,246,0.4)', '0 0 0 8px rgba(59,130,246,0)', '0 0 0 0 rgba(59,130,246,0.4)'] }
+              ? { boxShadow: ['0 0 0 0 rgba(106,155,204,0.4)', '0 0 0 8px rgba(106,155,204,0)', '0 0 0 0 rgba(106,155,204,0.4)'] }
               : {}
           }
           transition={

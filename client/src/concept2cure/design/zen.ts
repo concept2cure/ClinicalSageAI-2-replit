@@ -128,7 +128,7 @@ export const zenSpacing = {
 export const zenTypography = {
   // Font families - system fonts for performance and native feel
   fontFamily: {
-    sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    sans: '-apple-system, BlinkMacSystemFont, "Poppins", Roboto, "Helvetica Neue", Arial, sans-serif',
     mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
   },
 

@@ -74,7 +74,7 @@ function Hero() {
           className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0) 70%)",
+              "radial-gradient(circle, rgba(217,119,87,0.12) 0%, rgba(217,119,87,0) 70%)",
           }}
           animate={{ scale: [1, 1.15, 1], x: [0, 30, 0], y: [0, -20, 0] }}
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}

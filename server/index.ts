@@ -6201,6 +6201,17 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // ENTERPRISE INTEGRATIONS (Medidata, Veeva, Adobe, Google Drive, etc.)
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const enterpriseIntegrationsModule = await import('./routes/enterprise-integrations.ts');
+    app.use('/api/integrations', enterpriseIntegrationsModule.default);
+    console.log('✅ Enterprise Integration routes mounted (connectors, OAuth, sync)');
+  } catch (error) {
+    console.error('❌ Failed to mount Enterprise Integration routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // ADVANCED PLATFORM CAPABILITIES (GraphRAG, Digital Twin, RWE, etc.)
   // ──────────────────────────────────────────────────────────────────────────
   try {
@@ -6491,7 +6502,7 @@ async function startServer() {
             <head>
               <title>TrialSage - ClinicalSageAI</title>
               <style>
-                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #d97757 0%, #c15f3c 100%); }
                 .container { text-align: center; color: white; padding: 40px; }
                 h1 { font-size: 2.5rem; margin-bottom: 1rem; }
                 p { font-size: 1.2rem; opacity: 0.9; }

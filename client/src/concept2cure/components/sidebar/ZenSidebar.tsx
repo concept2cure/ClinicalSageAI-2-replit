@@ -31,6 +31,7 @@ import {
   Users,
   FlaskConical,
   BookOpen,
+  Link2,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -478,6 +479,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'training-center'}
               accentColor="violet"
               onClick={() => onNavigate?.('training-center')}
+            />
+            <NavItem
+              icon={<Link2 className="w-3.5 h-3.5" />}
+              label="Integrations"
+              subtitle="Connectors · APIs · Storage"
+              active={activeNavId === 'integrations'}
+              onClick={() => onNavigate?.('integrations')}
             />
           </WorkspaceGroup>
 

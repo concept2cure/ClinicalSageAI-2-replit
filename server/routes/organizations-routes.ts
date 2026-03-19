@@ -267,7 +267,7 @@ router.get('/:id/settings', async (req, res) => {
       },
       appearance: {
         theme: 'light',
-        primaryColor: '#1e40af',
+        primaryColor: '#c15f3c',
         logoUrl: '',
         customCss: '',
       },

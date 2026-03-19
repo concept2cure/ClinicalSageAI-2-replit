@@ -65,13 +65,13 @@ function wrapEmailHtml(body: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Poppins',Roboto,Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
         <!-- Header -->
         <tr>
-          <td style="background-color:#1a1a2e;padding:32px 40px;text-align:center;">
+          <td style="background-color:#292524;padding:32px 40px;text-align:center;">
             <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;">Concept2Cure</h1>
             <p style="margin:4px 0 0;color:#a0a0c0;font-size:13px;">TrialSage Platform</p>
           </td>
@@ -84,7 +84,7 @@ function wrapEmailHtml(body: string): string {
         </tr>
         <!-- Footer -->
         <tr>
-          <td style="background-color:#f9f9fb;padding:24px 40px;text-align:center;">
+          <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0 0 8px;color:#9999aa;font-size:11px;">
               &copy; ${new Date().getFullYear()} Concept2Cure Inc. &middot; FDA 21 CFR Part 11 Compliant
             </p>
@@ -100,7 +100,7 @@ function wrapEmailHtml(body: string): string {
 </html>`;
 }
 
-function ctaButton(label: string, href: string, color: string = '#4f46e5'): string {
+function ctaButton(label: string, href: string, color: string = '#c15f3c'): string {
   return `<table width="100%" cellpadding="0" cellspacing="0">
   <tr><td align="center" style="padding:8px 0 32px;">
     <a href="${href}" style="display:inline-block;background-color:${color};color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
@@ -173,29 +173,29 @@ export async function sendBudgetAlertEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner(`&#9888; Budget Alert: ${threshold}% Used`, bannerBg, bannerText)}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Spending Alert for ${escapeHtml(orgName)}</h2>
+    <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Spending Alert for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       Your organization has used <strong>${threshold}%</strong> of its monthly API budget.
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e6dc;border-radius:6px;overflow:hidden;">
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Current Spend</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${formatCents(currentSpendCents)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;border-bottom:1px solid #e8e6dc;width:50%;">Current Spend</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:13px;font-weight:600;border-bottom:1px solid #e8e6dc;">${formatCents(currentSpendCents)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;color:#6b6b80;font-size:13px;width:50%;">Monthly Budget</td>
-        <td style="padding:12px 16px;color:#1a1a2e;font-size:13px;font-weight:600;">${formatCents(budgetCents)}</td>
+        <td style="padding:12px 16px;color:#6b6963;font-size:13px;width:50%;">Monthly Budget</td>
+        <td style="padding:12px 16px;color:#292524;font-size:13px;font-weight:600;">${formatCents(budgetCents)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;width:50%;">Remaining</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;">${formatCents(budgetCents - currentSpendCents)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;width:50%;">Remaining</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:13px;font-weight:600;">${formatCents(budgetCents - currentSpendCents)}</td>
       </tr>
     </table>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:14px;line-height:1.6;">
       You can adjust your budget limits or notification thresholds in the billing dashboard.
     </p>
     ${dashboardButton()}
-    <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
+    <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
     <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
       This alert was triggered because spending reached the ${threshold}% threshold configured for ${escapeHtml(orgName)}. To change alert preferences, visit your billing settings.
     </p>
@@ -225,27 +225,27 @@ export async function sendBudgetExceededEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner('&#9888; Budget Exceeded: 100% Used', '#ffebee', '#c62828')}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Budget Exceeded for ${escapeHtml(orgName)}</h2>
+    <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Budget Exceeded for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       Your organization has reached <strong>100%</strong> of its monthly API budget.
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e6dc;border-radius:6px;overflow:hidden;">
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Current Spend</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#c62828;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${formatCents(currentSpendCents)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;border-bottom:1px solid #e8e6dc;width:50%;">Current Spend</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#c62828;font-size:13px;font-weight:600;border-bottom:1px solid #e8e6dc;">${formatCents(currentSpendCents)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;color:#6b6b80;font-size:13px;width:50%;">Monthly Budget</td>
-        <td style="padding:12px 16px;color:#1a1a2e;font-size:13px;font-weight:600;">${formatCents(budgetCents)}</td>
+        <td style="padding:12px 16px;color:#6b6963;font-size:13px;width:50%;">Monthly Budget</td>
+        <td style="padding:12px 16px;color:#292524;font-size:13px;font-weight:600;">${formatCents(budgetCents)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;width:50%;">Overage</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#c62828;font-size:13px;font-weight:600;">${formatCents(currentSpendCents - budgetCents)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;width:50%;">Overage</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#c62828;font-size:13px;font-weight:600;">${formatCents(currentSpendCents - budgetCents)}</td>
       </tr>
     </table>
     ${hardLimitNotice}
     ${dashboardButton()}
-    <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
+    <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
     <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
       To adjust your budget or hard limit settings, visit your billing dashboard. All billing events are logged per FDA 21 CFR Part 11.10(e).
     </p>
@@ -275,27 +275,27 @@ export async function sendInvoiceReadyEmail(
   const subject = `Invoice ${invoiceNumber} Ready - ${orgName}`;
 
   const body = wrapEmailHtml(`
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Invoice Ready</h2>
+    <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Invoice Ready</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       A new invoice has been generated for <strong>${escapeHtml(orgName)}</strong>.
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e6dc;border-radius:6px;overflow:hidden;">
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Invoice Number</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${escapeHtml(invoiceNumber)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;border-bottom:1px solid #e8e6dc;width:50%;">Invoice Number</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:13px;font-weight:600;border-bottom:1px solid #e8e6dc;">${escapeHtml(invoiceNumber)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;color:#6b6b80;font-size:13px;width:50%;">Amount Due</td>
-        <td style="padding:12px 16px;color:#1a1a2e;font-size:13px;font-weight:600;">${formatCents(amountCents)}</td>
+        <td style="padding:12px 16px;color:#6b6963;font-size:13px;width:50%;">Amount Due</td>
+        <td style="padding:12px 16px;color:#292524;font-size:13px;font-weight:600;">${formatCents(amountCents)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;width:50%;">Due Date</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;">${dueDate}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;width:50%;">Due Date</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:13px;font-weight:600;">${dueDate}</td>
       </tr>
     </table>
     ${ctaButton('Pay Invoice', paymentUrl, '#16a34a')}
     ${dashboardButton()}
-    <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
+    <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
     <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
       If you have automatic payments enabled, this invoice will be charged to your payment method on file. All billing events are logged per FDA 21 CFR Part 11.10(e).
     </p>
@@ -321,23 +321,23 @@ export async function sendPaymentFailedEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner('&#9888; Payment Failed', '#ffebee', '#c62828')}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Payment Failed for ${escapeHtml(orgName)}</h2>
+    <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Payment Failed for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       We were unable to process your payment of <strong>${formatCents(amountCents)}</strong>. Please update your payment method to avoid service interruption.
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e6dc;border-radius:6px;overflow:hidden;">
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Amount</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#c62828;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${formatCents(amountCents)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;border-bottom:1px solid #e8e6dc;width:50%;">Amount</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#c62828;font-size:13px;font-weight:600;border-bottom:1px solid #e8e6dc;">${formatCents(amountCents)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;color:#6b6b80;font-size:13px;width:50%;">Next Retry</td>
-        <td style="padding:12px 16px;color:#1a1a2e;font-size:13px;font-weight:600;">${retryDate}</td>
+        <td style="padding:12px 16px;color:#6b6963;font-size:13px;width:50%;">Next Retry</td>
+        <td style="padding:12px 16px;color:#292524;font-size:13px;font-weight:600;">${retryDate}</td>
       </tr>
     </table>
     ${ctaButton('Update Payment Method', updatePaymentUrl, '#c62828')}
     ${dashboardButton()}
-    <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
+    <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
     <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
       If the payment continues to fail, your account may be restricted. Please update your payment method before ${retryDate}. All billing events are logged per FDA 21 CFR Part 11.10(e).
     </p>
@@ -368,22 +368,22 @@ export async function sendPlanChangeEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner(`Plan ${direction} Confirmed`, bannerBg, bannerColor)}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Plan ${direction} for ${escapeHtml(orgName)}</h2>
+    <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Plan ${direction} for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       Your subscription plan has been ${isUpgrade ? 'upgraded' : 'changed'} successfully.
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e6dc;border-radius:6px;overflow:hidden;">
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Previous Plan</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${escapeHtml(oldTier)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;border-bottom:1px solid #e8e6dc;width:50%;">Previous Plan</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:13px;font-weight:600;border-bottom:1px solid #e8e6dc;">${escapeHtml(oldTier)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;color:#6b6b80;font-size:13px;width:50%;">New Plan</td>
-        <td style="padding:12px 16px;color:#1a1a2e;font-size:13px;font-weight:600;">${escapeHtml(newTier)}</td>
+        <td style="padding:12px 16px;color:#6b6963;font-size:13px;width:50%;">New Plan</td>
+        <td style="padding:12px 16px;color:#292524;font-size:13px;font-weight:600;">${escapeHtml(newTier)}</td>
       </tr>
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;width:50%;">Effective Date</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;">${effectiveDate}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;width:50%;">Effective Date</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:13px;font-weight:600;">${effectiveDate}</td>
       </tr>
     </table>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:14px;line-height:1.6;">
@@ -392,7 +392,7 @@ export async function sendPlanChangeEmail(
         : 'Your plan change will take effect on the date shown above. Current features will remain available until then.'}
     </p>
     ${dashboardButton()}
-    <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
+    <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
     <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
       If you did not request this change, please contact support immediately. All billing events are logged per FDA 21 CFR Part 11.10(e).
     </p>
@@ -420,9 +420,9 @@ export async function sendUsageSummaryEmail(
   const moduleRows = topModules
     .map(
       (m) => `<tr>
-        <td style="padding:10px 16px;color:#1a1a2e;font-size:13px;border-bottom:1px solid #e8e8ee;">${escapeHtml(m.module)}</td>
-        <td style="padding:10px 16px;color:#1a1a2e;font-size:13px;border-bottom:1px solid #e8e8ee;text-align:right;">${m.requests.toLocaleString()}</td>
-        <td style="padding:10px 16px;color:#1a1a2e;font-size:13px;border-bottom:1px solid #e8e8ee;text-align:right;">${formatCents(m.costCents)}</td>
+        <td style="padding:10px 16px;color:#292524;font-size:13px;border-bottom:1px solid #e8e6dc;">${escapeHtml(m.module)}</td>
+        <td style="padding:10px 16px;color:#292524;font-size:13px;border-bottom:1px solid #e8e6dc;text-align:right;">${m.requests.toLocaleString()}</td>
+        <td style="padding:10px 16px;color:#292524;font-size:13px;border-bottom:1px solid #e8e6dc;text-align:right;">${formatCents(m.costCents)}</td>
       </tr>`,
     )
     .join('');
@@ -430,32 +430,32 @@ export async function sendUsageSummaryEmail(
   const budgetRow =
     budgetUsedPct !== null
       ? `<tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;width:50%;">Budget Used</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;">${budgetUsedPct}%</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;width:50%;">Budget Used</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:13px;font-weight:600;">${budgetUsedPct}%</td>
       </tr>`
       : '';
 
   const body = wrapEmailHtml(`
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Usage Summary</h2>
-    <p style="margin:0 0 8px;color:#6b6b80;font-size:13px;">${escapeHtml(orgName)} &middot; ${escapeHtml(period)}</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
+    <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Usage Summary</h2>
+    <p style="margin:0 0 8px;color:#6b6963;font-size:13px;">${escapeHtml(orgName)} &middot; ${escapeHtml(period)}</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e6dc;border-radius:6px;overflow:hidden;">
       <tr>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Total Cost</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:15px;font-weight:700;border-bottom:1px solid #e8e8ee;">${formatCents(totalCostCents)}</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#6b6963;font-size:13px;border-bottom:1px solid #e8e6dc;width:50%;">Total Cost</td>
+        <td style="padding:12px 16px;background:#faf9f5;color:#292524;font-size:15px;font-weight:700;border-bottom:1px solid #e8e6dc;">${formatCents(totalCostCents)}</td>
       </tr>
       ${budgetRow}
     </table>
-    <h3 style="margin:0 0 12px;color:#1a1a2e;font-size:16px;font-weight:600;">Top Modules</h3>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
+    <h3 style="margin:0 0 12px;color:#292524;font-size:16px;font-weight:600;">Top Modules</h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e6dc;border-radius:6px;overflow:hidden;">
       <tr>
-        <td style="padding:10px 16px;background:#f0f0f5;color:#6b6b80;font-size:12px;font-weight:600;border-bottom:1px solid #e8e8ee;">Module</td>
-        <td style="padding:10px 16px;background:#f0f0f5;color:#6b6b80;font-size:12px;font-weight:600;border-bottom:1px solid #e8e8ee;text-align:right;">Requests</td>
-        <td style="padding:10px 16px;background:#f0f0f5;color:#6b6b80;font-size:12px;font-weight:600;border-bottom:1px solid #e8e8ee;text-align:right;">Cost</td>
+        <td style="padding:10px 16px;background:#f4f3ee;color:#6b6963;font-size:12px;font-weight:600;border-bottom:1px solid #e8e6dc;">Module</td>
+        <td style="padding:10px 16px;background:#f4f3ee;color:#6b6963;font-size:12px;font-weight:600;border-bottom:1px solid #e8e6dc;text-align:right;">Requests</td>
+        <td style="padding:10px 16px;background:#f4f3ee;color:#6b6963;font-size:12px;font-weight:600;border-bottom:1px solid #e8e6dc;text-align:right;">Cost</td>
       </tr>
       ${moduleRows}
     </table>
     ${dashboardButton()}
-    <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
+    <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
     <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
       This is your ${period.toLowerCase().includes('week') ? 'weekly' : 'monthly'} usage digest. All billing events are logged per FDA 21 CFR Part 11.10(e).
     </p>

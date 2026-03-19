@@ -158,7 +158,7 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
         maxStorage: 50,
         status: 'active',
         settings: {
-          brandColor: '#4f46e5',
+          brandColor: '#c15f3c',
           enableNotifications: true,
           allowGuests: false,
         },

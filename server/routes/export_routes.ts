@@ -66,12 +66,12 @@ router.post('/pdf', async (req, res) => {
     doc.pipe(res);
 
     // Define colors for consistent branding
-    const primary = '#1e40af'; // deep blue
-    const secondary = '#3b82f6'; // medium blue
-    const accent = '#93c5fd'; // light blue
-    const textColor = '#1e293b'; // slate
-    const lightGray = '#e2e8f0'; // light gray for borders
-    const lightBlue = '#dbeafe'; // very light blue for backgrounds
+    const primary = '#c15f3c'; // deep blue
+    const secondary = '#6a9bcc'; // medium blue
+    const accent = '#8bb4d9'; // light blue
+    const textColor = '#2d2d2a'; // slate
+    const lightGray = '#e8e6dc'; // light gray for borders
+    const lightBlue = '#faf0ec'; // very light blue for backgrounds
 
     // Add a cover page with a blue header
     doc.rect(0, 0, doc.page.width, 150).fill(primary);
@@ -540,8 +540,8 @@ router.post('/word', async (req, res) => {
     .reference { margin-left: 0.5in; text-indent: -0.5in; margin-bottom: 0.5em; }
     .container { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; background-color: #f9f9f9; }
     .risk { color: #b91c1c; }
-    .heading { color: #1e40af; }
-    .subheading { color: #3b82f6; }
+    .heading { color: #c15f3c; }
+    .subheading { color: #6a9bcc; }
   </style>
 </head>
 <body>

@@ -96,6 +96,7 @@ import {
   MessageSquare,
   FolderOpen,
   Upload,
+  Link2,
   Sparkles,
   PenLine,
   Layers,
@@ -251,6 +252,9 @@ const BiostatPlatformDashboard = lazy(() =>
 const TrainingManagementPage = lazy(() =>
   import('@/portal-v2/components/admin/TrainingManagement')
 );
+const IntegrationsPage = lazy(() =>
+  import('./pages/IntegrationsPage')
+);
 
 // Map panel keys to lazy components
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
@@ -330,7 +334,8 @@ type LayoutMode =
   | 'client-intelligence'
   | 'templates'
   | 'biostatistics'
-  | 'training-center';
+  | 'training-center'
+  | 'integrations';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1410,6 +1415,9 @@ export const ZenApp: React.FC = () => {
             case 'training-center':
               setLayoutMode('training-center');
               break;
+            case 'integrations':
+              setLayoutMode('integrations');
+              break;
             default:
               break;
           }
@@ -2319,6 +2327,35 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <TrainingManagementPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Enterprise Integrations — connectors & API management */}
+          {!embeddedModule && layoutMode === 'integrations' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Link2 className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Integrations</span>
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <IntegrationsPage />
                 </Suspense>
               </ErrorBoundary>
             </div>

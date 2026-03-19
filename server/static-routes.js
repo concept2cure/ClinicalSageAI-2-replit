@@ -1139,7 +1139,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       --text-lighter: #a0aec0;
       --background: #fff;
       --background-alt: #f7fafc;
-      --border: #e2e8f0;
+      --border: #e8e6dc;
       --border-dark: #cbd5e0;
       --success: #48bb78;
       --warning: #ed8936;
@@ -1158,7 +1158,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
     }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Poppins', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       line-height: 1.6;
       color: var(--text);
       background-color: var(--background);
