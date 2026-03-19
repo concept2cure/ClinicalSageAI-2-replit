@@ -925,11 +925,12 @@ const HelpSection: React.FC = () => {
       </div>
 
       <div className="text-center py-6 border-t border-zinc-100">
-        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
+        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure, Inc.</p>
         <div className="flex justify-center gap-4 text-xs">
-          <span className="text-zinc-400">Terms</span>
-          <span className="text-zinc-400">Privacy</span>
-          <span className="text-zinc-400">Licenses</span>
+          <a href="/concept2cure/legal/terms" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Terms</a>
+          <a href="/concept2cure/legal/privacy" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Privacy</a>
+          <a href="/concept2cure/legal/sla" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">SLA</a>
+          <a href="/concept2cure/legal/baa" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">BAA</a>
         </div>
       </div>
     </div>

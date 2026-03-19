@@ -32,6 +32,15 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 
+// Legal pages
+const TermsOfService = lazy(() => import('../pages/legal/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('../pages/legal/PrivacyPolicy'));
+const DataProcessingAgreement = lazy(() => import('../pages/legal/DataProcessingAgreement'));
+const BusinessAssociateAgreement = lazy(() => import('../pages/legal/BusinessAssociateAgreement'));
+const ServiceLevelAgreement = lazy(() => import('../pages/legal/ServiceLevelAgreement'));
+const CookiePolicy = lazy(() => import('../pages/legal/CookiePolicy'));
+const AcceptableUsePolicy = lazy(() => import('../pages/legal/AcceptableUsePolicy'));
+
 // Lazy-load Billing Dashboard and Sales Landing Page
 const BillingDashboard = lazy(() => import('@/pages/billing/BillingDashboard'));
 const SalesLandingPage = lazy(() => import('@/pages/SalesLandingPage'));
@@ -287,6 +296,29 @@ export const ZenRouter: React.FC = () => {
                 </ProtectedRoute>
               </PageTransition>
             )}
+          </Route>
+
+          {/* Legal Pages — public, no auth required */}
+          <Route path="/concept2cure/legal/terms">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><TermsOfService /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/privacy">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><PrivacyPolicy /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/dpa">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><DataProcessingAgreement /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/baa">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><BusinessAssociateAgreement /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/sla">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><ServiceLevelAgreement /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/cookies">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><CookiePolicy /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/aup">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><AcceptableUsePolicy /></Suspense></PageTransition>)}
           </Route>
 
           {/* Project-scoped hub — ZenApp reads :projectId from route */}

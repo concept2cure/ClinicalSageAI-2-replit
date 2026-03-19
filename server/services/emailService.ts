@@ -46,11 +46,12 @@ function buildResetEmailHtml(resetUrl: string): string {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-        <!-- Header -->
+        <!-- Header with logo -->
         <tr>
           <td style="background-color:#292524;padding:32px 40px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;">Concept2Cure</h1>
-            <p style="margin:4px 0 0;color:#a0a0c0;font-size:13px;">TrialSage Platform</p>
+            ${process.env.LOGO_URL ? `<img src="${process.env.LOGO_URL}" alt="Concept2Cure" style="height:48px;width:auto;margin-bottom:12px;border-radius:8px;" />` : ''}
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;font-family:'Poppins',Arial,sans-serif;">Concept2Cure</h1>
+            <p style="margin:4px 0 0;color:#b0aea5;font-size:13px;font-family:'Poppins',Arial,sans-serif;">AI-Powered Regulatory Intelligence</p>
           </td>
         </tr>
         <!-- Body -->
@@ -82,8 +83,15 @@ function buildResetEmailHtml(resetUrl: string): string {
         <!-- Footer -->
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
-            <p style="margin:0;color:#9999aa;font-size:11px;">
-              &copy; ${new Date().getFullYear()} Concept2Cure Inc. &middot; FDA 21 CFR Part 11 Compliant
+            <p style="margin:0 0 8px;color:#8a8880;font-size:11px;font-family:'Poppins',Arial,sans-serif;">
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+            </p>
+            <p style="margin:0;font-size:10px;">
+              <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/privacy" style="color:#b0aea5;text-decoration:none;">Privacy</a>
+              &nbsp;&middot;&nbsp;
+              <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/terms" style="color:#b0aea5;text-decoration:none;">Terms</a>
+              &nbsp;&middot;&nbsp;
+              <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/aup" style="color:#b0aea5;text-decoration:none;">Acceptable Use</a>
             </p>
           </td>
         </tr>
