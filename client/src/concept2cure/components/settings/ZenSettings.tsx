@@ -93,13 +93,17 @@ const SettingRow: React.FC<SettingRowProps> = ({ label, description, children })
 interface ToggleSwitchProps {
   enabled: boolean;
   onChange: (enabled: boolean) => void;
+  label?: string;
 }
 
-const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange }) => (
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, label }) => (
   <button
+    role="switch"
+    aria-checked={enabled}
+    aria-label={label}
     onClick={() => onChange(!enabled)}
     className={cn(
-      'relative w-11 h-6 rounded-full transition-colors duration-200',
+      'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-2',
       enabled ? 'bg-blue-600' : 'bg-zinc-300'
     )}
   >
@@ -895,10 +899,12 @@ const IntegrationsSection: React.FC = () => {
 
 const HelpSection: React.FC = () => {
   const resources = [
-    { id: 'docs', label: 'Documentation', icon: FileText, link: '#' },
-    { id: 'support', label: 'Contact Support', icon: Mail, link: '#' },
-    { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Key, link: '#' },
+    { id: 'docs', label: 'Documentation', icon: FileText, href: '/concept2cure/legal/terms', desc: 'Platform guides and regulatory resources' },
+    { id: 'support', label: 'Contact Support', icon: Mail, href: 'mailto:support@concept2cure.com', desc: 'Email our team at support@concept2cure.com' },
+    { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Key, href: null, desc: null },
   ];
+
+  const [showShortcuts, setShowShortcuts] = React.useState(false);
 
   return (
     <div>
@@ -908,21 +914,48 @@ const HelpSection: React.FC = () => {
       />
 
       <div className="space-y-3 mb-6">
-        {resources.map(({ id, label, icon: Icon }) => (
-          <div
+        {resources.map(({ id, label, icon: Icon, href, desc }) => (
+          <a
             key={id}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200"
+            href={id === 'shortcuts' ? undefined : (href || '#')}
+            onClick={id === 'shortcuts' ? () => setShowShortcuts(!showShortcuts) : undefined}
+            target={href?.startsWith('http') || href?.startsWith('mailto') ? '_blank' : undefined}
+            rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer block"
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-zinc-500" />
-              <span className="text-sm font-medium text-zinc-900">{label}</span>
+              <div>
+                <span className="text-sm font-medium text-zinc-900 block">{label}</span>
+                {desc && <span className="text-xs text-zinc-500">{desc}</span>}
+              </div>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
-              Coming soon
-            </span>
-          </div>
+            <ChevronRight className="w-4 h-4 text-zinc-400" />
+          </a>
         ))}
       </div>
+
+      {/* Keyboard Shortcuts */}
+      {showShortcuts && (
+        <div className="mb-6 p-4 bg-zinc-50 rounded-xl border border-zinc-200">
+          <h4 className="text-sm font-medium text-zinc-900 mb-3">Keyboard Shortcuts</h4>
+          <div className="space-y-2">
+            {[
+              { keys: '⌘ K', desc: 'Open command palette' },
+              { keys: '⌘ ,', desc: 'Open settings' },
+              { keys: '⌘ N', desc: 'New conversation' },
+              { keys: '⌘ B', desc: 'Toggle sidebar' },
+              { keys: '⌘ /', desc: 'Toggle AI copilot' },
+              { keys: 'Esc', desc: 'Close modal / panel' },
+            ].map(s => (
+              <div key={s.keys} className="flex items-center justify-between">
+                <span className="text-xs text-zinc-600">{s.desc}</span>
+                <kbd className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-500 font-mono">{s.keys}</kbd>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="text-center py-6 border-t border-zinc-100">
         <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure, Inc.</p>

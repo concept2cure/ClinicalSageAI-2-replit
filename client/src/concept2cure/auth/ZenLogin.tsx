@@ -594,36 +594,38 @@ export const ZenLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Demo Access */}
-      <button
-        onClick={handleDemoLogin}
-        disabled={isLoading}
-        className={`
-          w-full py-3 px-4
-          flex items-center justify-center gap-2
-          text-sm font-semibold
-          text-emerald-700 bg-emerald-50 border-2 border-emerald-200
-          hover:bg-emerald-100 hover:border-emerald-300
-          rounded-xl transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
-      >
-        {isLoading ? (
-          <SpinnerIcon />
-        ) : (
-          <>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            Quick Demo Access — jm.smith@concept2cure.pro
-          </>
-        )}
-      </button>
+      {/* Quick Demo Access — only visible in development */}
+      {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_LOGIN === 'true') && (
+        <button
+          onClick={handleDemoLogin}
+          disabled={isLoading}
+          className={`
+            w-full py-3 px-4
+            flex items-center justify-center gap-2
+            text-sm font-semibold
+            text-emerald-700 bg-emerald-50 border-2 border-emerald-200
+            hover:bg-emerald-100 hover:border-emerald-300
+            rounded-xl transition-all duration-200
+            disabled:opacity-50 disabled:cursor-not-allowed
+          `}
+        >
+          {isLoading ? (
+            <SpinnerIcon />
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Demo Access (Dev Only)
+            </>
+          )}
+        </button>
+      )}
 
       {/* SSO Buttons */}
       <div className="grid grid-cols-2 gap-3">
