@@ -151,6 +151,41 @@ export default function PharmacovigilanceDashboard() {
           ))}
         </div>
 
+        {/* Quick Document Generation */}
+        <div
+          className="rounded-lg border p-4 mb-8 flex items-center gap-4 flex-wrap"
+          style={{ background: '#FFFFFF', borderColor: '#E8E6DC', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+        >
+          <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#8A8880' }}>
+            Generate Documents
+          </span>
+          {[
+            { label: 'ICSR (E2B R3)', endpoint: '/api/biotech-artifacts/pv/icsr', ext: 'xml' },
+            { label: 'PSUR/PBRER', endpoint: '/api/biotech-artifacts/pv/psur', ext: 'docx' },
+            { label: 'CIOMS I Form', endpoint: '/api/biotech-artifacts/pv/cioms', ext: 'docx' },
+            { label: 'Expedited Report', endpoint: '/api/biotech-artifacts/pv/expedited-report', ext: 'docx' },
+          ].map(doc => (
+            <button
+              key={doc.label}
+              onClick={async () => {
+                const res = await fetch(doc.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                if (res.ok) { const b = await res.blob(); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${doc.label.replace(/[\s/()]+/g, '_')}.${doc.ext}`; a.click(); }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
+              style={{ borderColor: '#E8E6DC', color: '#4D4B45', background: '#FAF9F5' }}
+            >
+              <FileWarning size={12} /> {doc.label}
+            </button>
+          ))}
+          <a
+            href="/concept2cure/documents"
+            className="inline-flex items-center gap-1 text-xs font-medium ml-auto"
+            style={{ color: '#D97757' }}
+          >
+            All Documents →
+          </a>
+        </div>
+
         {/* Search & Filter Bar */}
         <div className="flex items-center gap-3 mb-6">
           <div

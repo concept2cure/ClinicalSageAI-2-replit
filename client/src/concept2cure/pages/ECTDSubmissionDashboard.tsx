@@ -142,6 +142,39 @@ export default function ECTDSubmissionDashboard() {
           ))}
         </div>
 
+        {/* Quick Document Generation */}
+        <div
+          className="rounded-lg border p-4 mb-8 flex items-center gap-4 flex-wrap"
+          style={{ background: '#FFFFFF', borderColor: '#E8E6DC', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+        >
+          <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#8A8880' }}>
+            Generate Documents
+          </span>
+          {[
+            { label: 'Cover Letter', endpoint: '/api/biotech-artifacts/ectd/cover-letter', ext: 'docx' },
+            { label: 'Validation Report', endpoint: '/api/biotech-artifacts/ectd/validation-report', ext: 'docx' },
+          ].map(doc => (
+            <button
+              key={doc.label}
+              onClick={async () => {
+                const res = await fetch(doc.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                if (res.ok) { const b = await res.blob(); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `${doc.label.replace(/\s+/g, '_')}.${doc.ext}`; a.click(); }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
+              style={{ borderColor: '#E8E6DC', color: '#4D4B45', background: '#FAF9F5' }}
+            >
+              <FileText size={12} /> {doc.label}
+            </button>
+          ))}
+          <a
+            href="/concept2cure/documents"
+            className="inline-flex items-center gap-1 text-xs font-medium ml-auto"
+            style={{ color: '#D97757' }}
+          >
+            All Documents <ArrowRight size={12} />
+          </a>
+        </div>
+
         {/* Actions bar */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-base font-medium" style={{ color: '#141413' }}>

@@ -36,6 +36,7 @@ const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 const ECTDSubmissionDashboard = lazy(() => import('../pages/ECTDSubmissionDashboard'));
 const PharmacovigilanceDashboard = lazy(() => import('../pages/PharmacovigilanceDashboard'));
 const ClinicalOperationsDashboard = lazy(() => import('../pages/ClinicalOperationsDashboard'));
+const DocumentArtifactsHub = lazy(() => import('../pages/DocumentArtifactsHub'));
 
 // DTC Landing Page — public, renders at / for unauthenticated users
 const LandingPage = lazy(() => import('../pages/LandingPage'));
@@ -408,6 +409,19 @@ export const ZenRouter: React.FC = () => {
                 <ProtectedRoute>
                   <Suspense fallback={<ZenLoadingScreen message="Loading Pharmacovigilance..." />}>
                     <PharmacovigilanceDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Document Artifacts Hub */}
+          <Route path="/concept2cure/documents">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading Document Artifacts..." />}>
+                    <DocumentArtifactsHub />
                   </Suspense>
                 </ProtectedRoute>
               </PageTransition>

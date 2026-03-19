@@ -1425,6 +1425,16 @@ try {
   console.error('❌ Failed to mount eCTD Submission Agent routes:', error);
 }
 
+// Mount Biotech Document Artifact routes (eCTD, PV, Clinical Ops document generation)
+try {
+  const biotechArtifactsModule = await import('./routes/biotech-artifacts');
+  const biotechArtifactsRoutes = biotechArtifactsModule.default;
+  app.use('/api/biotech-artifacts', biotechArtifactsRoutes);
+  console.log('✅ Biotech Artifact Generator routes mounted (10 document types)');
+} catch (error) {
+  console.error('❌ Failed to mount Biotech Artifact routes:', error);
+}
+
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
 try {
   const indPdfModule = await import('./routes/ind-pdf');
