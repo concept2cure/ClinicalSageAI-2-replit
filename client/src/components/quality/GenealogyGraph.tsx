@@ -16,7 +16,7 @@ export default function GenealogyGraph({ batchId }: { batchId: string }) {
       id: `B:${batchId}`,
       position: { x: 300, y: 200 },
       data: { label: `Batch ${batchId.slice(0, 8)}…` },
-      style: { border: '1px solid #94a3b8', padding: 6, borderRadius: 6, background: '#fff' },
+      style: { border: '1px solid #b0aea5', padding: 6, borderRadius: 6, background: '#fff' },
     };
     const parents = rows.map((g: any, i: number) => ({
       id: `P:${g.edge_id}`,
@@ -24,7 +24,7 @@ export default function GenealogyGraph({ batchId }: { batchId: string }) {
       data: {
         label: `${g.parent_type}: ${g.parent_code}${g.parent_lot ? ` (${g.parent_lot})` : ''}`,
       },
-      style: { border: '1px solid #94a3b8', padding: 6, borderRadius: 6, background: '#f8fafc' },
+      style: { border: '1px solid #b0aea5', padding: 6, borderRadius: 6, background: '#faf9f5' },
     }));
     const es = rows.map((g: any) => ({
       id: `E:${g.edge_id}`,

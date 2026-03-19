@@ -92,15 +92,15 @@ const LumenAIAssistantContainer = () => {
           width: '50%',
           display: 'flex',
           flexDirection: 'column',
-          borderRight: '1px solid #e5e7eb',
+          borderRight: '1px solid #e8e6dc',
         }}
       >
         {/* Header */}
         <div
           style={{
             padding: '1rem',
-            borderBottom: '1px solid #e5e7eb',
-            backgroundColor: '#f9fafb',
+            borderBottom: '1px solid #e8e6dc',
+            backgroundColor: '#faf9f5',
           }}
         >
           <h2
@@ -117,7 +117,7 @@ const LumenAIAssistantContainer = () => {
             style={{
               margin: '0.25rem 0 0 0',
               fontSize: '0.875rem',
-              color: '#6b7280',
+              color: '#8a8880',
             }}
           >
             Coding & Regulatory Assistant
@@ -137,7 +137,7 @@ const LumenAIAssistantContainer = () => {
             <div
               style={{
                 textAlign: 'center',
-                color: '#9ca3af',
+                color: '#b0aea5',
                 marginTop: '2rem',
                 fontSize: '0.875rem',
               }}
@@ -155,15 +155,15 @@ const LumenAIAssistantContainer = () => {
                   marginBottom: '1.5rem',
                   padding: '1rem',
                   borderRadius: '0.5rem',
-                  backgroundColor: msg.role === 'user' ? '#f3f4f6' : '#f0f9ff',
-                  border: msg.role === 'user' ? '1px solid #e5e7eb' : '1px solid #bae6fd',
+                  backgroundColor: msg.role === 'user' ? '#f4f3ee' : '#f0f9ff',
+                  border: msg.role === 'user' ? '1px solid #e8e6dc' : '1px solid #bae6fd',
                 }}
               >
                 <div
                   style={{
                     fontWeight: '600',
                     fontSize: '0.875rem',
-                    color: msg.role === 'user' ? '#374151' : '#0369a1',
+                    color: msg.role === 'user' ? '#4a4a46' : '#4a7399',
                     marginBottom: '0.5rem',
                   }}
                 >
@@ -173,7 +173,7 @@ const LumenAIAssistantContainer = () => {
                   style={{
                     fontSize: '0.875rem',
                     lineHeight: '1.5',
-                    color: '#374151',
+                    color: '#4a4a46',
                     whiteSpace: 'pre-wrap',
                   }}
                 >
@@ -187,7 +187,7 @@ const LumenAIAssistantContainer = () => {
               style={{
                 padding: '1rem',
                 textAlign: 'center',
-                color: '#6b7280',
+                color: '#8a8880',
                 fontSize: '0.875rem',
               }}
             >
@@ -200,8 +200,8 @@ const LumenAIAssistantContainer = () => {
         <div
           style={{
             padding: '1rem',
-            borderTop: '1px solid #e5e7eb',
-            backgroundColor: '#f9fafb',
+            borderTop: '1px solid #e8e6dc',
+            backgroundColor: '#faf9f5',
           }}
         >
           {/* File Upload Section */}
@@ -211,7 +211,7 @@ const LumenAIAssistantContainer = () => {
               padding: '0.75rem',
               backgroundColor: '#ffffff',
               borderRadius: '0.5rem',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #e8e6dc',
             }}
           >
             <div
@@ -219,7 +219,7 @@ const LumenAIAssistantContainer = () => {
                 fontSize: '0.875rem',
                 fontWeight: '600',
                 marginBottom: '0.5rem',
-                color: '#374151',
+                color: '#4a4a46',
               }}
             >
               📎 Upload Document
@@ -239,7 +239,7 @@ const LumenAIAssistantContainer = () => {
                 disabled={!selectedFile}
                 style={{
                   padding: '0.375rem 0.75rem',
-                  backgroundColor: selectedFile ? '#0B6E4F' : '#9ca3af',
+                  backgroundColor: selectedFile ? '#0B6E4F' : '#b0aea5',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.375rem',
@@ -256,7 +256,7 @@ const LumenAIAssistantContainer = () => {
               <div
                 style={{
                   fontSize: '0.75rem',
-                  color: '#6b7280',
+                  color: '#8a8880',
                   marginTop: '0.5rem',
                 }}
               >
@@ -274,7 +274,7 @@ const LumenAIAssistantContainer = () => {
               style={{
                 flex: 1,
                 padding: '0.75rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid #d6d3c8',
                 borderRadius: '0.5rem',
                 fontSize: '0.875rem',
                 outline: 'none',
@@ -282,14 +282,14 @@ const LumenAIAssistantContainer = () => {
               }}
               placeholder="Ask something or upload a document..."
               onFocus={e => (e.target.style.borderColor = '#0B6E4F')}
-              onBlur={e => (e.target.style.borderColor = '#d1d5db')}
+              onBlur={e => (e.target.style.borderColor = '#d6d3c8')}
             />
             <button
               onClick={sendMessage}
               disabled={isLoading || !input.trim()}
               style={{
                 padding: '0.75rem 1.5rem',
-                backgroundColor: isLoading || !input.trim() ? '#9ca3af' : '#0B6E4F',
+                backgroundColor: isLoading || !input.trim() ? '#b0aea5' : '#0B6E4F',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.5rem',
@@ -311,14 +311,14 @@ const LumenAIAssistantContainer = () => {
           width: '50%',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: '#f8fafc',
+          backgroundColor: '#faf9f5',
         }}
       >
         {/* Header */}
         <div
           style={{
             padding: '1rem',
-            borderBottom: '1px solid #e5e7eb',
+            borderBottom: '1px solid #e8e6dc',
             backgroundColor: '#ffffff',
           }}
         >
@@ -327,7 +327,7 @@ const LumenAIAssistantContainer = () => {
               margin: 0,
               fontSize: '1rem',
               fontWeight: '600',
-              color: '#374151',
+              color: '#4a4a46',
             }}
           >
             📊 Real-time Output
@@ -336,7 +336,7 @@ const LumenAIAssistantContainer = () => {
             style={{
               margin: '0.25rem 0 0 0',
               fontSize: '0.75rem',
-              color: '#6b7280',
+              color: '#8a8880',
             }}
           >
             Code previews, analysis results, and AI outputs
@@ -372,7 +372,7 @@ const LumenAIAssistantContainer = () => {
               style={{
                 fontSize: '1.125rem',
                 fontWeight: '600',
-                color: '#374151',
+                color: '#4a4a46',
                 marginBottom: '0.5rem',
               }}
             >
@@ -381,7 +381,7 @@ const LumenAIAssistantContainer = () => {
             <p
               style={{
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: '#8a8880',
                 lineHeight: '1.5',
                 marginBottom: '1rem',
               }}
@@ -391,7 +391,7 @@ const LumenAIAssistantContainer = () => {
             <ul
               style={{
                 fontSize: '0.8rem',
-                color: '#6b7280',
+                color: '#8a8880',
                 textAlign: 'left',
                 lineHeight: '1.6',
                 margin: 0,
@@ -411,10 +411,10 @@ const LumenAIAssistantContainer = () => {
         <div
           style={{
             padding: '0.75rem 1rem',
-            borderTop: '1px solid #e5e7eb',
+            borderTop: '1px solid #e8e6dc',
             backgroundColor: '#ffffff',
             fontSize: '0.75rem',
-            color: '#6b7280',
+            color: '#8a8880',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',

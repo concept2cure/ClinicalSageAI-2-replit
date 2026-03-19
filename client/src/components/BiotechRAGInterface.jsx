@@ -133,7 +133,7 @@ const SEARCH_MODES = [
   { value: 'keyword', label: 'Keyword Search', description: 'Traditional text matching' }
 ];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 function BiotechRAGInterface({ organizationId = 7 }) {
   const { toast } = useToast();

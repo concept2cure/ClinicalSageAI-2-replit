@@ -337,7 +337,7 @@ const ImplementationScorecard = ({
             <div style={{ width: 120, height: 120 }} className="relative">
               <svg width="120" height="120" viewBox="0 0 120 120">
                 {/* Background circle */}
-                <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                <circle cx="60" cy="60" r="50" fill="none" stroke="#e8e6dc" strokeWidth="10" />
                 {/* Progress circle - using strokeDasharray and strokeDashoffset */}
                 <circle
                   cx="60"
@@ -364,7 +364,7 @@ const ImplementationScorecard = ({
             <div style={{ width: 120, height: 120 }} className="relative">
               <svg width="120" height="120" viewBox="0 0 120 120">
                 {/* Background circle */}
-                <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                <circle cx="60" cy="60" r="50" fill="none" stroke="#e8e6dc" strokeWidth="10" />
                 {/* Progress circle - using strokeDasharray and strokeDashoffset */}
                 <circle
                   cx="60"

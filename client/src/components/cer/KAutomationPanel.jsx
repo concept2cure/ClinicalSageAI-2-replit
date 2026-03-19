@@ -432,7 +432,7 @@ export default function KAutomationPanel() {
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden border rounded-lg bg-white shadow-md w-full max-w-none mx-0">
       <div
-        className={`bg-[#f3f2f1] border-r flex flex-col ${sidebarCollapsed ? 'w-16' : 'w-16 md:w-60'} transition-all duration-300`}
+        className={`bg-[#f4f3ee] border-r flex flex-col ${sidebarCollapsed ? 'w-16' : 'w-16 md:w-60'} transition-all duration-300`}
       >
         {/* Top app navigation */}
         <div className="flex justify-between items-center p-3 border-b border-gray-200">

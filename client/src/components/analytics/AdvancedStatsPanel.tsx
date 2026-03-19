@@ -12,7 +12,7 @@ import { BarChart, LineChart, XAxis, YAxis, Tooltip, Legend, Bar, Line, Responsi
 import { Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 interface AdvancedStatsPanelProps {
   trials?: any[];
@@ -542,7 +542,7 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                         <td 
                           key={j} 
                           className="py-2 px-4 border-b text-center" 
-                          style={{backgroundColor: i === j ? '#f3f4f6' : (value > 0.7 ? '#dcfce7' : value < -0.7 ? '#fee2e2' : 'transparent')}}
+                          style={{backgroundColor: i === j ? '#f4f3ee' : (value > 0.7 ? '#dcfce7' : value < -0.7 ? '#fee2e2' : 'transparent')}}
                         >
                           {value.toFixed(2)}
                         </td>

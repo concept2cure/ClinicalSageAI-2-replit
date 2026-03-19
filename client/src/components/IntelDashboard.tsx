@@ -27,7 +27,7 @@ import StudyDesignAssistant from './StudyDesignAssistant';
 import ConversationalAssistant from './ConversationalAssistant';
 import KnowledgeBasePanel from './KnowledgeBasePanel';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 export default function IntelDashboard() {
   const [indication, setIndication] = useState('');
@@ -814,10 +814,10 @@ export default function IntelDashboard() {
                       <XAxis dataKey="name" tick={{fontSize: 12}} />
                       <YAxis tick={{fontSize: 12}} />
                       <Tooltip 
-                        contentStyle={{border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px'}}
+                        contentStyle={{border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px'}}
                         labelStyle={{fontWeight: 'bold', marginBottom: '5px'}}
                       />
-                      <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="count" fill="#c15f3c" radius={[4, 4, 0, 0]}>
                         {formatBarData(metrics.reportsByPhase)?.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
@@ -850,10 +850,10 @@ export default function IntelDashboard() {
                         width={100} 
                       />
                       <Tooltip 
-                        contentStyle={{border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px'}}
+                        contentStyle={{border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px'}}
                         labelStyle={{fontWeight: 'bold', marginBottom: '5px'}}
                       />
-                      <Bar dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]}>
+                      <Bar dataKey="count" fill="#788c5d" radius={[0, 4, 4, 0]}>
                         {metrics.topIndications?.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
@@ -916,10 +916,10 @@ export default function IntelDashboard() {
                       outerRadius="90%" 
                       barSize={12} 
                       data={[
-                        { name: 'Endpoint Selection', value: 87, fill: '#4f46e5' },
-                        { name: 'Sample Size', value: 76, fill: '#10b981' },
+                        { name: 'Endpoint Selection', value: 87, fill: '#c15f3c' },
+                        { name: 'Sample Size', value: 76, fill: '#788c5d' },
                         { name: 'Patient Selection', value: 82, fill: '#eab308' },
-                        { name: 'Protocol Design', value: 92, fill: '#ec4899' },
+                        { name: 'Protocol Design', value: 92, fill: '#d97757' },
                       ]}
                       startAngle={180} 
                       endAngle={0}
@@ -933,7 +933,7 @@ export default function IntelDashboard() {
                         label={{ fill: '#666', position: 'insideStart', fontSize: 10 }}
                       />
                       <Tooltip
-                        contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px' }}
+                        contentStyle={{ border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px' }}
                         formatter={(value) => [`${value}%`, 'Score']}
                       />
                       <Legend 
@@ -973,7 +973,7 @@ export default function IntelDashboard() {
                       <XAxis dataKey="year" tick={{fontSize: 12}} />
                       <YAxis tick={{fontSize: 12}} />
                       <Tooltip 
-                        contentStyle={{border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px'}}
+                        contentStyle={{border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px'}}
                         formatter={(value) => [`${value}%`, 'Success Rate']}
                       />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
@@ -981,16 +981,16 @@ export default function IntelDashboard() {
                         type="monotone" 
                         dataKey="oncology" 
                         stackId="1"
-                        stroke="#4f46e5" 
-                        fill="#4f46e5" 
+                        stroke="#c15f3c" 
+                        fill="#c15f3c" 
                         fillOpacity={0.8} 
                       />
                       <Area 
                         type="monotone" 
                         dataKey="immunology" 
                         stackId="1"
-                        stroke="#10b981" 
-                        fill="#10b981" 
+                        stroke="#788c5d" 
+                        fill="#788c5d" 
                         fillOpacity={0.6} 
                       />
                       <Area 
@@ -1005,8 +1005,8 @@ export default function IntelDashboard() {
                         type="monotone" 
                         dataKey="cardiology" 
                         stackId="1"
-                        stroke="#ec4899" 
-                        fill="#ec4899" 
+                        stroke="#d97757" 
+                        fill="#d97757" 
                         fillOpacity={0.4} 
                       />
                     </AreaChart>

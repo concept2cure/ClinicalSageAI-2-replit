@@ -62,13 +62,13 @@ const sharePointColors = {
   primary: '#0078D4',
   primaryDark: '#c15f3c',
   primaryLight: '#2B88D8',
-  success: '#107C10',
+  success: '#788c5d',
   warning: '#FFB900',
   error: '#D13438',
-  neutral: '#605E5C',
-  neutralLight: '#EDEBE9',
-  neutralLighter: '#F3F2F1',
-  neutralLightest: '#FAF9F8',
+  neutral: '#6b6963',
+  neutralLight: '#e8e6dc',
+  neutralLighter: '#f4f3ee',
+  neutralLightest: '#faf9f5',
   white: '#FFFFFF',
   black: '#000000'
 };
@@ -84,8 +84,8 @@ const swimlaneColumns = [
     id: 'preview',
     title: 'Preview',
     status: 'pending',
-    color: '#605E5C',
-    bgColor: '#FAF9F8',
+    color: '#6b6963',
+    bgColor: '#faf9f5',
     description: 'Changes being reviewed'
   },
   {
@@ -93,7 +93,7 @@ const swimlaneColumns = [
     title: 'Validation',
     status: 'validating',
     color: '#FFB900',
-    bgColor: '#FAF9F8',
+    bgColor: '#faf9f5',
     description: 'FDA compliance checking'
   },
   {
@@ -101,23 +101,23 @@ const swimlaneColumns = [
     title: 'In Review',
     status: 'pending',
     color: '#0078D4',
-    bgColor: '#FAF9F8',
+    bgColor: '#faf9f5',
     description: 'Awaiting approval'
   },
   {
     id: 'approved',
     title: 'Approved',
     status: 'approved',
-    color: '#107C10',
-    bgColor: '#FAF9F8',
+    color: '#788c5d',
+    bgColor: '#faf9f5',
     description: 'Ready to apply'
   },
   {
     id: 'applied',
     title: 'Applied',
     status: 'completed',
-    color: '#107C10',
-    bgColor: '#FAF9F8',
+    color: '#788c5d',
+    bgColor: '#faf9f5',
     description: 'Completed changes'
   }
 ];

@@ -203,7 +203,7 @@ interface SystemMetric {
 
 const SEVERITY_CONFIG: Record<ActivitySeverity, { label: string; color: string; bgColor: string }> =
   {
-    info: { label: 'Info', color: '#2563eb', bgColor: '#dbeafe' },
+    info: { label: 'Info', color: '#5585b3', bgColor: '#dce8f3' },
     warning: { label: 'Warning', color: '#d97706', bgColor: '#fef3c7' },
     error: { label: 'Error', color: '#dc2626', bgColor: '#fee2e2' },
     critical: { label: 'Critical', color: '#7c2d12', bgColor: '#fecaca' },
@@ -213,10 +213,10 @@ const TYPE_CONFIG: Record<
   ActivityType,
   { label: string; icon: React.ComponentType<any>; color: string }
 > = {
-  auth: { label: 'Authentication', icon: Key, color: '#7c3aed' },
-  document: { label: 'Document', icon: FileText, color: '#2563eb' },
-  user: { label: 'User', icon: User, color: '#059669' },
-  system: { label: 'System', icon: Server, color: '#6b7280' },
+  auth: { label: 'Authentication', icon: Key, color: '#5585b3' },
+  document: { label: 'Document', icon: FileText, color: '#5585b3' },
+  user: { label: 'User', icon: User, color: '#647746' },
+  system: { label: 'System', icon: Server, color: '#8a8880' },
   security: { label: 'Security', icon: Shield, color: '#dc2626' },
   api: { label: 'API', icon: Zap, color: '#d97706' },
   workflow: { label: 'Workflow', icon: Activity, color: '#0891b2' },
@@ -610,7 +610,7 @@ const SystemMetricsPanel: React.FC<SystemMetricsProps> = ({ metrics }) => {
   const getStatusColor = (status: SystemMetric['status']) => {
     switch (status) {
       case 'healthy':
-        return '#059669';
+        return '#647746';
       case 'warning':
         return '#d97706';
       case 'critical':

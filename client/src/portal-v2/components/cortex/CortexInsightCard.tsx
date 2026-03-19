@@ -52,7 +52,7 @@ interface CortexInsightCardProps {
 const TYPE_CONFIG = {
   prediction: {
     icon: TrendingUp,
-    color: '#6366f1',
+    color: '#d97757',
     bgColor: '#eef2ff',
     borderColor: '#c7d2fe',
     label: 'AI Prediction',
@@ -73,8 +73,8 @@ const TYPE_CONFIG = {
   },
   success: {
     icon: CheckCircle,
-    color: '#059669',
-    bgColor: '#ecfdf5',
+    color: '#647746',
+    bgColor: '#f0f4ec',
     borderColor: '#a7f3d0',
     label: 'Success',
   },
@@ -83,7 +83,7 @@ const TYPE_CONFIG = {
 const PRIORITY_BADGES = {
   high: { label: 'High Priority', color: '#dc2626', bgColor: '#fef2f2' },
   medium: { label: 'Medium', color: '#d97706', bgColor: '#fffbeb' },
-  low: { label: 'Low', color: '#6b7280', bgColor: '#f3f4f6' },
+  low: { label: 'Low', color: '#8a8880', bgColor: '#f4f3ee' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

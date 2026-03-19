@@ -675,7 +675,7 @@ const LumenBioPerformanceMetrics = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="enrollment" fill="#6366f1" name="Patients Enrolled" />
+                    <Bar dataKey="enrollment" fill="#d97757" name="Patients Enrolled" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -895,8 +895,8 @@ const LumenBioPerformanceMetrics = () => {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="avgValue" fill="#6366f1" name="Your Trial" />
-                      <Bar dataKey="benchmark" fill="#94a3b8" name="Benchmark" />
+                      <Bar dataKey="avgValue" fill="#d97757" name="Your Trial" />
+                      <Bar dataKey="benchmark" fill="#b0aea5" name="Benchmark" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -1083,7 +1083,7 @@ const LumenBioPerformanceMetrics = () => {
                           cy="50"
                           r="45"
                           fill="none"
-                          stroke="#e2e8f0"
+                          stroke="#e8e6dc"
                           strokeWidth="10"
                         />
                         <circle
@@ -1091,7 +1091,7 @@ const LumenBioPerformanceMetrics = () => {
                           cy="50"
                           r="45"
                           fill="none"
-                          stroke="#6366f1"
+                          stroke="#d97757"
                           strokeWidth="10"
                           strokeDasharray="283"
                           strokeDashoffset={

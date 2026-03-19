@@ -433,11 +433,11 @@ const RegulatoryTraceabilityMatrix = ({
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-[#323130] flex items-center">
-            <ShieldCheck className="mr-2 h-5 w-5 text-[#E3008C]" />
+          <h2 className="text-xl font-semibold text-[#141413] flex items-center">
+            <ShieldCheck className="mr-2 h-5 w-5 text-[#d97757]" />
             Regulatory Traceability Matrix
           </h2>
-          <p className="text-[#605E5C] text-sm mt-1">
+          <p className="text-[#6b6963] text-sm mt-1">
             Monitor and control Critical-to-Quality (CtQ) factors for ICH E6(R3) and EU MDR
             compliance.
           </p>
@@ -447,7 +447,7 @@ const RegulatoryTraceabilityMatrix = ({
             variant="outline"
             size="sm"
             onClick={() => setShowHelp(!showHelp)}
-            className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+            className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
           >
             <Info className="mr-1 h-4 w-4" />
             Help
@@ -456,7 +456,7 @@ const RegulatoryTraceabilityMatrix = ({
             variant="outline"
             size="sm"
             onClick={handleSaveAndClose}
-            className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+            className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
           >
             <CheckCircle className="mr-1 h-4 w-4" />
             Save Changes
@@ -465,9 +465,9 @@ const RegulatoryTraceabilityMatrix = ({
       </div>
 
       {showHelp && (
-        <Alert className="mb-4 border-l-4 border-l-[#E3008C]">
+        <Alert className="mb-4 border-l-4 border-l-[#d97757]">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle className="text-[#E3008C]">
+          <AlertTitle className="text-[#d97757]">
             ICH E6(R3) Quality Management Integration
           </AlertTitle>
           <AlertDescription>
@@ -478,7 +478,7 @@ const RegulatoryTraceabilityMatrix = ({
             </p>
             <Button
               variant="link"
-              className="p-0 h-auto text-[#0F6CBD]"
+              className="p-0 h-auto text-[#d97757]"
               onClick={() => {
                 // Show full help modal with focus on regulatory traceability section
                 setShowHelp(true);
@@ -491,7 +491,7 @@ const RegulatoryTraceabilityMatrix = ({
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full flex bg-[#F3F2F1] p-1 rounded-md">
+        <TabsList className="w-full flex bg-[#f4f3ee] p-1 rounded-md">
           <TabsTrigger value="ctq-factors" className="flex-1 rounded data-[state=active]:bg-white">
             <ListChecks className="mr-2 h-4 w-4" />
             CtQ Factors
@@ -507,9 +507,9 @@ const RegulatoryTraceabilityMatrix = ({
         </TabsList>
 
         <TabsContent value="ctq-factors" className="mt-4">
-          <Card className="border-[#E3008C] border-t-4">
+          <Card className="border-[#d97757] border-t-4">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-[#323130]">
+              <CardTitle className="text-lg font-semibold text-[#141413]">
                 Critical-to-Quality Factors
               </CardTitle>
               <CardDescription>
@@ -523,7 +523,7 @@ const RegulatoryTraceabilityMatrix = ({
                   <p className="text-gray-500 mb-4">No Critical-to-Quality factors defined yet.</p>
                   <Button
                     onClick={handleAddCtqFactor}
-                    className="bg-[#0F6CBD] hover:bg-[#0F6CBD]/90"
+                    className="bg-[#d97757] hover:bg-[#d97757]/90"
                   >
                     Add First CtQ Factor
                   </Button>
@@ -637,7 +637,7 @@ const RegulatoryTraceabilityMatrix = ({
                             <Button
                               variant="link"
                               size="sm"
-                              className="h-auto p-0 text-[#0F6CBD]"
+                              className="h-auto p-0 text-[#d97757]"
                               onClick={() => {
                                 // Auto update compliance status
                                 handleUpdateCtqFactor(index, 'complianceStatus', {
@@ -690,7 +690,7 @@ const RegulatoryTraceabilityMatrix = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleAddControl(index)}
-                          className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                          className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
                         >
                           <ShieldCheck className="mr-1 h-4 w-4" />
                           Add Control
@@ -699,7 +699,7 @@ const RegulatoryTraceabilityMatrix = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleAddVerification(index)}
-                          className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                          className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
                         >
                           <CheckCircle className="mr-1 h-4 w-4" />
                           Add Verification
@@ -714,13 +714,13 @@ const RegulatoryTraceabilityMatrix = ({
               <Button
                 variant="outline"
                 onClick={handleAddCtqFactor}
-                className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
               >
                 Add CtQ Factor
               </Button>
               <Button
                 onClick={() => setActiveTab('controls')}
-                className="bg-[#0F6CBD] hover:bg-[#0F6CBD]/90"
+                className="bg-[#d97757] hover:bg-[#d97757]/90"
               >
                 Next: Control Measures
               </Button>
@@ -729,9 +729,9 @@ const RegulatoryTraceabilityMatrix = ({
         </TabsContent>
 
         <TabsContent value="controls" className="mt-4">
-          <Card className="border-[#E3008C] border-t-4">
+          <Card className="border-[#d97757] border-t-4">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-[#323130]">
+              <CardTitle className="text-lg font-semibold text-[#141413]">
                 Control Measures & Verification
               </CardTitle>
               <CardDescription>
@@ -748,7 +748,7 @@ const RegulatoryTraceabilityMatrix = ({
                     Please define Critical-to-Quality factors first in the CtQ Factors tab.
                     <Button
                       variant="link"
-                      className="p-0 h-auto text-[#0F6CBD] block mt-2"
+                      className="p-0 h-auto text-[#d97757] block mt-2"
                       onClick={() => setActiveTab('ctq-factors')}
                     >
                       Go to CtQ Factors
@@ -760,7 +760,7 @@ const RegulatoryTraceabilityMatrix = ({
                   {qmpData.ctqFactors.map((factor, factorIndex) => (
                     <div key={factor.id || factorIndex} className="border rounded-md p-4">
                       <h3 className="text-md font-semibold flex items-center mb-2">
-                        <span className="inline-block w-3 h-3 rounded-full bg-[#E3008C] mr-2"></span>
+                        <span className="inline-block w-3 h-3 rounded-full bg-[#d97757] mr-2"></span>
                         {factor.name}
                         <span className="ml-2 text-sm font-normal text-gray-500">
                           ({factor.associatedSection || 'No section'})
@@ -769,7 +769,7 @@ const RegulatoryTraceabilityMatrix = ({
 
                       <div className="mt-4">
                         <h4 className="text-sm font-medium mb-2 flex items-center">
-                          <ShieldCheck className="mr-1 h-4 w-4 text-[#0F6CBD]" />
+                          <ShieldCheck className="mr-1 h-4 w-4 text-[#d97757]" />
                           Control Measures
                         </h4>
 
@@ -782,7 +782,7 @@ const RegulatoryTraceabilityMatrix = ({
                               size="sm"
                               variant="outline"
                               onClick={() => handleAddControl(factorIndex)}
-                              className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                              className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
                             >
                               Add Control Measure
                             </Button>
@@ -910,7 +910,7 @@ const RegulatoryTraceabilityMatrix = ({
                         )}
 
                         <h4 className="text-sm font-medium mb-2 flex items-center mt-4">
-                          <CheckCircle className="mr-1 h-4 w-4 text-[#0F6CBD]" />
+                          <CheckCircle className="mr-1 h-4 w-4 text-[#d97757]" />
                           Verification Activities
                         </h4>
 
@@ -924,7 +924,7 @@ const RegulatoryTraceabilityMatrix = ({
                               size="sm"
                               variant="outline"
                               onClick={() => handleAddVerification(factorIndex)}
-                              className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                              className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
                             >
                               Add Verification Activity
                             </Button>
@@ -1051,7 +1051,7 @@ const RegulatoryTraceabilityMatrix = ({
               <Button
                 variant="outline"
                 onClick={() => setActiveTab('ctq-factors')}
-                className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
               >
                 Back to CtQ Factors
               </Button>
@@ -1060,7 +1060,7 @@ const RegulatoryTraceabilityMatrix = ({
                 disabled={
                   isGeneratingReport || !qmpData?.ctqFactors || qmpData.ctqFactors.length === 0
                 }
-                className="bg-[#0F6CBD] hover:bg-[#0F6CBD]/90"
+                className="bg-[#d97757] hover:bg-[#d97757]/90"
               >
                 {isGeneratingReport ? (
                   <>
@@ -1079,9 +1079,9 @@ const RegulatoryTraceabilityMatrix = ({
         </TabsContent>
 
         <TabsContent value="preview" className="mt-4">
-          <Card className="border-[#E3008C] border-t-4">
+          <Card className="border-[#d97757] border-t-4">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-[#323130]">
+              <CardTitle className="text-lg font-semibold text-[#141413]">
                 Regulatory Traceability Report Preview
               </CardTitle>
               <CardDescription>
@@ -1099,7 +1099,7 @@ const RegulatoryTraceabilityMatrix = ({
                     disabled={
                       isGeneratingReport || !qmpData?.ctqFactors || qmpData.ctqFactors.length === 0
                     }
-                    className="bg-[#0F6CBD] hover:bg-[#0F6CBD]/90"
+                    className="bg-[#d97757] hover:bg-[#d97757]/90"
                   >
                     {isGeneratingReport ? (
                       <>
@@ -1117,7 +1117,7 @@ const RegulatoryTraceabilityMatrix = ({
               ) : (
                 <div className="border rounded-md p-4 bg-white">
                   <div className="prose max-w-none">
-                    <h2 className="text-xl text-[#323130] font-bold mb-4">
+                    <h2 className="text-xl text-[#141413] font-bold mb-4">
                       {traceabilityData.generatedReport.title}
                     </h2>
                     <div
@@ -1141,7 +1141,7 @@ const RegulatoryTraceabilityMatrix = ({
               <Button
                 variant="outline"
                 onClick={() => setActiveTab('controls')}
-                className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
               >
                 Back to Controls
               </Button>
@@ -1158,7 +1158,7 @@ const RegulatoryTraceabilityMatrix = ({
                       });
                     }
                   }}
-                  className="bg-[#0F6CBD] hover:bg-[#0F6CBD]/90"
+                  className="bg-[#d97757] hover:bg-[#d97757]/90"
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   Add to CER Document

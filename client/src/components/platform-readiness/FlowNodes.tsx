@@ -33,7 +33,7 @@ const baseNodeStyle: React.CSSProperties = {
 const handleStyle: React.CSSProperties = {
   width: 8,
   height: 8,
-  background: '#94a3b8',
+  background: '#b0aea5',
   border: '2px solid white',
 };
 
@@ -49,11 +49,11 @@ const ReadinessRing: React.FC<{ value: number; size?: number; color?: string }> 
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
-  const ringColor = color || (value >= 75 ? '#16a34a' : value >= 50 ? '#ca8a04' : '#dc2626');
+  const ringColor = color || (value >= 75 ? '#647746' : value >= 50 ? '#ca8a04' : '#dc2626');
 
   return (
     <svg width={size} height={size} style={{ display: 'block' }}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2e8f0" strokeWidth={4} />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e8e6dc" strokeWidth={4} />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -100,7 +100,7 @@ export const PlatformHeaderNode: React.FC<NodeProps<PlatformHeaderData>> = memo(
     <div
       style={{
         ...baseNodeStyle,
-        background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+        background: 'linear-gradient(135deg, #141413, #2d2d2a)',
         color: 'white',
         padding: '16px 24px',
         minWidth: 360,
@@ -122,7 +122,7 @@ export const PlatformHeaderNode: React.FC<NodeProps<PlatformHeaderData>> = memo(
             <span style={{ color: '#fde047' }}>●</span> {data.medium} Medium
           </div>
           <div>
-            <span style={{ color: '#86efac' }}>●</span> {data.low} Low
+            <span style={{ color: '#c4d6b3' }}>●</span> {data.low} Low
           </div>
         </div>
       </div>
@@ -244,7 +244,7 @@ export const ModuleCardNode: React.FC<NodeProps<ModuleCardData>> = memo(({ data 
             marginTop: 8,
             textAlign: 'center',
             fontSize: 10,
-            color: '#64748b',
+            color: '#8a8880',
             cursor: 'pointer',
           }}
           onClick={toggleExpand}
@@ -273,13 +273,13 @@ export const ModuleCardNode: React.FC<NodeProps<ModuleCardData>> = memo(({ data 
                 display: 'flex',
                 justifyContent: 'space-between',
                 padding: '3px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid #f4f3ee',
               }}
             >
               <span>
                 {STATUS_ICONS[tmpl.status]} {tmpl.name}
               </span>
-              <span style={{ color: '#64748b' }}>
+              <span style={{ color: '#8a8880' }}>
                 {tmpl.docxSeed ? '📑' : '—'} {tmpl.canvasEnabled ? '🎨' : '—'}
               </span>
             </div>
@@ -294,7 +294,7 @@ export const ModuleCardNode: React.FC<NodeProps<ModuleCardData>> = memo(({ data 
                 display: 'flex',
                 justifyContent: 'space-between',
                 padding: '3px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid #f4f3ee',
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: 10,
               }}
@@ -314,7 +314,7 @@ export const ModuleCardNode: React.FC<NodeProps<ModuleCardData>> = memo(({ data 
                 alignItems: 'center',
                 gap: 6,
                 padding: '4px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid #f4f3ee',
               }}
             >
               <span
@@ -327,7 +327,7 @@ export const ModuleCardNode: React.FC<NodeProps<ModuleCardData>> = memo(({ data 
                 }}
               />
               <span style={{ flex: 1 }}>{task.title}</span>
-              <span style={{ color: '#64748b', fontSize: 10, whiteSpace: 'nowrap' }}>
+              <span style={{ color: '#8a8880', fontSize: 10, whiteSpace: 'nowrap' }}>
                 {task.effort}
               </span>
             </div>
@@ -361,7 +361,7 @@ export const TemplateItemNode: React.FC<NodeProps<TemplateItemData>> = memo(({ d
         alignItems: 'center',
         gap: 6,
         background: 'white',
-        border: '1px solid #e2e8f0',
+        border: '1px solid #e8e6dc',
         minWidth: 180,
       }}
     >
@@ -372,7 +372,7 @@ export const TemplateItemNode: React.FC<NodeProps<TemplateItemData>> = memo(({ d
       />
       <span>{STATUS_ICONS[tmpl.status]}</span>
       <span style={{ flex: 1 }}>{tmpl.name}</span>
-      <span style={{ color: '#94a3b8' }}>
+      <span style={{ color: '#b0aea5' }}>
         {tmpl.docxSeed ? '📑' : ''} {tmpl.canvasEnabled ? '🎨' : ''}
       </span>
     </div>
@@ -403,7 +403,7 @@ export const EndpointItemNode: React.FC<NodeProps<EndpointItemData>> = memo(({ d
         alignItems: 'center',
         gap: 6,
         background: 'white',
-        border: '1px solid #e2e8f0',
+        border: '1px solid #e8e6dc',
         minWidth: 220,
       }}
     >
@@ -476,7 +476,7 @@ export const GapBadgeNode: React.FC<NodeProps<GapBadgeData>> = memo(({ data }) =
             left: '50%',
             transform: 'translateX(-50%)',
             marginTop: 8,
-            background: '#1e293b',
+            background: '#2d2d2a',
             color: 'white',
             padding: '10px 14px',
             borderRadius: 8,
@@ -489,7 +489,7 @@ export const GapBadgeNode: React.FC<NodeProps<GapBadgeData>> = memo(({ data }) =
           }}
         >
           <div style={{ fontWeight: 700, marginBottom: 4 }}>{gap.title}</div>
-          <div style={{ color: '#cbd5e1' }}>{gap.description}</div>
+          <div style={{ color: '#d6d3c8' }}>{gap.description}</div>
         </div>
       )}
     </div>
@@ -564,7 +564,7 @@ export const TaskCardNode: React.FC<NodeProps<TaskCardData>> = memo(({ data }) =
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 11, color: colors.text }}>{task.id}</div>
           <div style={{ fontSize: 11, marginTop: 2, lineHeight: 1.4 }}>{task.title}</div>
-          <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>
+          <div style={{ fontSize: 10, color: '#8a8880', marginTop: 4 }}>
             ⏱ {task.effort}
             {task.dependency && (
               <span style={{ marginLeft: 8, color: '#f59e0b' }}>⤵ {task.dependency}</span>
@@ -594,16 +594,16 @@ interface ArchComponentData {
 }
 
 const statusBorderColors: Record<ConnectionStatus, string> = {
-  connected: '#16a34a',
+  connected: '#647746',
   broken: '#dc2626',
-  unmounted: '#94a3b8',
+  unmounted: '#b0aea5',
 };
 
 export const ArchComponentNode: React.FC<NodeProps<ArchComponentData>> = memo(({ data }) => {
   const [showDetail, setShowDetail] = useState(false);
   const comp = data.component;
   const borderColor = statusBorderColors[comp.status];
-  const moduleColor = MODULE_COLORS[comp.module]?.bg || '#f8fafc';
+  const moduleColor = MODULE_COLORS[comp.module]?.bg || '#faf9f5';
 
   return (
     <div
@@ -630,7 +630,7 @@ export const ArchComponentNode: React.FC<NodeProps<ArchComponentData>> = memo(({
         </span>
         <span style={{ fontWeight: 700, fontSize: 11 }}>{comp.label}</span>
       </div>
-      <div style={{ fontSize: 10, color: '#64748b' }}>
+      <div style={{ fontSize: 10, color: '#8a8880' }}>
         {comp.layer === 'client'
           ? '📱'
           : comp.layer === 'server'
@@ -649,7 +649,7 @@ export const ArchComponentNode: React.FC<NodeProps<ArchComponentData>> = memo(({
             left: '50%',
             transform: 'translateX(-50%)',
             marginBottom: 8,
-            background: '#1e293b',
+            background: '#2d2d2a',
             color: 'white',
             padding: '8px 12px',
             borderRadius: 6,
@@ -661,17 +661,17 @@ export const ArchComponentNode: React.FC<NodeProps<ArchComponentData>> = memo(({
           }}
         >
           <div style={{ fontWeight: 700 }}>{comp.label}</div>
-          <div style={{ color: '#cbd5e1', marginTop: 4 }}>{comp.detail}</div>
+          <div style={{ color: '#d6d3c8', marginTop: 4 }}>{comp.detail}</div>
           <div style={{ marginTop: 4 }}>
             Status:{' '}
             <span
               style={{
                 color:
                   comp.status === 'connected'
-                    ? '#86efac'
+                    ? '#c4d6b3'
                     : comp.status === 'broken'
                       ? '#fca5a5'
-                      : '#e2e8f0',
+                      : '#e8e6dc',
                 fontWeight: 600,
               }}
             >
@@ -702,7 +702,7 @@ export const LayerLabelNode: React.FC<NodeProps<LayerLabelData>> = memo(({ data 
         padding: '4px 12px',
         fontSize: 12,
         fontWeight: 700,
-        color: '#475569',
+        color: '#6b6963',
         letterSpacing: '0.05em',
         textTransform: 'uppercase',
         writingMode: 'vertical-rl',

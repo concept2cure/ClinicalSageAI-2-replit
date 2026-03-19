@@ -139,7 +139,7 @@ interface SimplePieChartProps {
 const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, labelKey, valueKey }) => {
   const total = useMemo(() => data.reduce((sum, item) => sum + item[valueKey], 0), [data, valueKey]);
   
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#8884d8'];
+  const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#8884d8'];
   
   return (
     <div className="space-y-3">

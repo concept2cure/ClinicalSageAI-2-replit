@@ -187,14 +187,14 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 // ------------------------------------------------------------------
 
 const MODULE_COLORS: Record<string, string> = {
-  '510(k)': '#6366f1',
-  CER: '#8b5cf6',
-  eCTD: '#a78bfa',
-  CMC: '#c4b5fd',
-  'AI Assistance': '#818cf8',
+  '510(k)': '#d97757',
+  CER: '#6a9bcc',
+  eCTD: '#8bb4d9',
+  CMC: '#b8cfe4',
+  'AI Assistance': '#e6957a',
 };
 
-const PIE_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#818cf8'];
+const PIE_COLORS = ['#d97757', '#6a9bcc', '#8bb4d9', '#b8cfe4', '#e6957a'];
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -439,7 +439,7 @@ function UsageTab() {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.daily}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e8e6dc" />
                     <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                     <YAxis tickFormatter={(v: number) => `$${v}`} tick={{ fontSize: 12 }} />
                     <Tooltip
@@ -449,7 +449,7 @@ function UsageTab() {
                     <Line
                       type="monotone"
                       dataKey="cost"
-                      stroke="#6366f1"
+                      stroke="#d97757"
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 4 }}
@@ -500,11 +500,11 @@ function UsageTab() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.byModule} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e8e6dc" />
                       <XAxis type="number" tick={{ fontSize: 12 }} />
                       <YAxis dataKey="module" type="category" width={100} tick={{ fontSize: 12 }} />
                       <Tooltip formatter={(value: number) => formatNumber(value)} />
-                      <Bar dataKey="requests" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="requests" fill="#d97757" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

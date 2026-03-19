@@ -226,13 +226,13 @@ export default function CerBuilderPanel({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Left column - Section Generator */}
         <div className="md:col-span-2 space-y-4">
-          <div className="bg-white p-4 border border-[#E1DFDD] rounded">
+          <div className="bg-white p-4 border border-[#e8e6dc] rounded">
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-[#E1DFDD] pb-3 mb-3">
-                <h3 className="text-base font-semibold text-[#323130]">Section Generator</h3>
+              <div className="flex items-center justify-between border-b border-[#e8e6dc] pb-3 mb-3">
+                <h3 className="text-base font-semibold text-[#141413]">Section Generator</h3>
                 <Badge
                   variant="outline"
-                  className="bg-[#E5F2FF] text-[#0F6CBD] text-xs border-[#0F6CBD] px-2 py-0.5"
+                  className="bg-[#faf0ec] text-[#d97757] text-xs border-[#d97757] px-2 py-0.5"
                 >
                   AI-Powered
                 </Badge>
@@ -240,14 +240,14 @@ export default function CerBuilderPanel({
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sectionType" className="text-sm font-medium text-[#323130]">
+                  <Label htmlFor="sectionType" className="text-sm font-medium text-[#141413]">
                     Section Type
                   </Label>
                   <Select value={selectedSectionType} onValueChange={setSelectedSectionType}>
-                    <SelectTrigger id="sectionType" className="h-9 border-[#E1DFDD] bg-white">
+                    <SelectTrigger id="sectionType" className="h-9 border-[#e8e6dc] bg-white">
                       <SelectValue placeholder="Select section type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-[#E1DFDD] shadow-lg max-h-80 overflow-y-auto z-50 mt-6">
+                    <SelectContent className="bg-white border border-[#e8e6dc] shadow-lg max-h-80 overflow-y-auto z-50 mt-6">
                       <SelectGroup>
                         <SelectLabel className="text-xs font-semibold text-[#616161]">
                           CER Sections
@@ -256,7 +256,7 @@ export default function CerBuilderPanel({
                           <SelectItem
                             key={section.id}
                             value={section.id}
-                            className="text-sm hover:bg-[#F3F2F1] hover:text-[#323130] cursor-pointer"
+                            className="text-sm hover:bg-[#f4f3ee] hover:text-[#141413] cursor-pointer"
                           >
                             {section.label}
                           </SelectItem>
@@ -267,7 +267,7 @@ export default function CerBuilderPanel({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="context" className="text-sm font-medium text-[#323130]">
+                  <Label htmlFor="context" className="text-sm font-medium text-[#141413]">
                     Context Information
                   </Label>
                   <Textarea
@@ -276,7 +276,7 @@ export default function CerBuilderPanel({
                     value={sectionContext}
                     onChange={e => setSectionContext(e.target.value)}
                     rows={5}
-                    className="border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD] resize-none"
+                    className="border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757] resize-none"
                   />
                   <p className="text-xs text-[#616161]">
                     Include specifics about your device or product for best results.
@@ -287,7 +287,7 @@ export default function CerBuilderPanel({
                   <Button
                     onClick={generateSection}
                     disabled={isGenerating || !sectionContext}
-                    className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                    className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
                   >
                     {isGenerating ? (
                       <>
@@ -306,11 +306,11 @@ export default function CerBuilderPanel({
 
             {/* Generated Section Display */}
             {generatedSection && (
-              <div className="bg-white border border-[#E1DFDD] rounded mt-4">
-                <div className="p-4 border-b border-[#E1DFDD] bg-[#FAF9F8]">
+              <div className="bg-white border border-[#e8e6dc] rounded mt-4">
+                <div className="p-4 border-b border-[#e8e6dc] bg-[#faf9f5]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-base font-semibold text-[#323130]">
+                      <h3 className="text-base font-semibold text-[#141413]">
                         {getSelectedSectionLabel()}
                       </h3>
                       <p className="text-xs text-[#616161] mt-1">
@@ -320,7 +320,7 @@ export default function CerBuilderPanel({
                     {generatedSection.model && (
                       <Badge
                         variant="outline"
-                        className="bg-[#E5F2FF] text-[#0F6CBD] text-xs border-[#0F6CBD] px-2 py-0.5"
+                        className="bg-[#faf0ec] text-[#d97757] text-xs border-[#d97757] px-2 py-0.5"
                       >
                         Model: {generatedSection.model}
                       </Badge>
@@ -328,7 +328,7 @@ export default function CerBuilderPanel({
                   </div>
                 </div>
                 <div className="p-4">
-                  <div className="text-sm text-[#323130] leading-relaxed markdown-content">
+                  <div className="text-sm text-[#141413] leading-relaxed markdown-content">
                     {generatedSection.content.split('\n').map((paragraph, index) => {
                       // Handle Markdown heading formats
                       if (paragraph.startsWith('# ')) {
@@ -370,10 +370,10 @@ export default function CerBuilderPanel({
                     })}
                   </div>
                 </div>
-                <div className="p-3 flex justify-end border-t border-[#E1DFDD] bg-[#FAF9F8]">
+                <div className="p-3 flex justify-end border-t border-[#e8e6dc] bg-[#faf9f5]">
                   <Button
                     onClick={addToReport}
-                    className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                    className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
                   >
                     <Plus className="h-3.5 w-3.5 mr-1.5" />
                     <span>Add to Report</span>
@@ -386,12 +386,12 @@ export default function CerBuilderPanel({
 
         {/* Right column - Report Sections */}
         <div className="space-y-4">
-          <div className="bg-white p-4 border border-[#E1DFDD] rounded">
-            <div className="flex items-center justify-between border-b border-[#E1DFDD] pb-3 mb-3">
-              <h3 className="text-base font-semibold text-[#323130]">Report Sections</h3>
+          <div className="bg-white p-4 border border-[#e8e6dc] rounded">
+            <div className="flex items-center justify-between border-b border-[#e8e6dc] pb-3 mb-3">
+              <h3 className="text-base font-semibold text-[#141413]">Report Sections</h3>
               <Badge
                 variant="outline"
-                className="text-xs bg-[#F5F5F5] text-[#616161] border-[#E1DFDD] px-2 py-0.5"
+                className="text-xs bg-[#F5F5F5] text-[#616161] border-[#e8e6dc] px-2 py-0.5"
               >
                 {cerSections.length} section{cerSections.length !== 1 ? 's' : ''}
               </Badge>
@@ -399,21 +399,21 @@ export default function CerBuilderPanel({
 
             <div className="space-y-2">
               <div className="space-y-2">
-                <Label htmlFor="report-title" className="text-sm font-medium text-[#323130]">
+                <Label htmlFor="report-title" className="text-sm font-medium text-[#141413]">
                   Report Title
                 </Label>
                 <Input
                   id="report-title"
                   value={cerTitle}
                   onChange={handleTitleChange}
-                  className="h-9 border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD]"
+                  className="h-9 border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]"
                 />
               </div>
 
               {cerSections.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-6 bg-[#FAF9F8] rounded border border-[#E1DFDD] text-center">
-                  <FileText className="h-8 w-8 text-[#A19F9D] mb-2" />
-                  <p className="text-sm text-[#323130] font-medium">No sections yet</p>
+                <div className="flex flex-col items-center justify-center p-6 bg-[#faf9f5] rounded border border-[#e8e6dc] text-center">
+                  <FileText className="h-8 w-8 text-[#8a8880] mb-2" />
+                  <p className="text-sm text-[#141413] font-medium">No sections yet</p>
                   <p className="text-xs text-[#616161] mt-1">
                     Generate and add sections to build your report
                   </p>
@@ -423,7 +423,7 @@ export default function CerBuilderPanel({
                   {cerSections.map(section => (
                     <div
                       key={section.id}
-                      className="p-3 border border-[#E1DFDD] rounded mb-2 bg-white hover:bg-[#F3F2F1]"
+                      className="p-3 border border-[#e8e6dc] rounded mb-2 bg-white hover:bg-[#f4f3ee]"
                     >
                       {/* Add Evidence Gap Detector before the section content */}
                       <EvidenceGapDetector
@@ -440,7 +440,7 @@ export default function CerBuilderPanel({
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-medium text-[#323130]">
+                            <h4 className="text-sm font-medium text-[#141413]">
                               <CerTooltipWrapper
                                 content={
                                   <div>
@@ -462,7 +462,7 @@ export default function CerBuilderPanel({
                             {section.metadata?.generatedBy && (
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-[#E5F2FF] text-[#0F6CBD] border-[#0F6CBD] px-2 py-0.5"
+                                className="text-xs bg-[#faf0ec] text-[#d97757] border-[#d97757] px-2 py-0.5"
                               >
                                 AI
                               </Badge>
@@ -494,7 +494,7 @@ export default function CerBuilderPanel({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeSection(section.id)}
-                          className="h-8 w-8 p-0 text-[#616161] hover:text-[#D83B01] hover:bg-[#FFF4CE]"
+                          className="h-8 w-8 p-0 text-[#616161] hover:text-[#c15f3c] hover:bg-[#FFF4CE]"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -510,12 +510,12 @@ export default function CerBuilderPanel({
 
       {/* FAERS Data Panel */}
       {faers && faers.length > 0 && (
-        <div className="bg-white p-4 border border-[#E1DFDD] rounded mt-4">
-          <div className="flex items-center justify-between border-b border-[#E1DFDD] pb-3 mb-3">
-            <h3 className="text-base font-semibold text-[#323130]">FDA FAERS Data Integration</h3>
+        <div className="bg-white p-4 border border-[#e8e6dc] rounded mt-4">
+          <div className="flex items-center justify-between border-b border-[#e8e6dc] pb-3 mb-3">
+            <h3 className="text-base font-semibold text-[#141413]">FDA FAERS Data Integration</h3>
             <Badge
               variant="outline"
-              className="bg-[#E5F2FF] text-[#0F6CBD] text-xs border-[#0F6CBD] px-2 py-0.5"
+              className="bg-[#faf0ec] text-[#d97757] text-xs border-[#d97757] px-2 py-0.5"
             >
               Auto-included
             </Badge>

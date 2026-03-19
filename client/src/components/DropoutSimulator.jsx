@@ -83,7 +83,7 @@ export default function DropoutSimulator({ sessionId, onEstimationComplete }) {
       {
         label: "Predicted Dropout %",
         data: forecast.map((f) => (f.predicted_dropout * 100).toFixed(2)),
-        borderColor: "#3b82f6",
+        borderColor: "#6a9bcc",
         backgroundColor: "rgba(59, 130, 246, 0.1)",
         fill: true,
         tension: 0.3

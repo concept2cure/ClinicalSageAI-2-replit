@@ -75,7 +75,7 @@ interface FullAuditDashboardProps {
 const ITEMS_PER_PAGE = 10;
 
 // Colors for charts
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 const SEVERITY_COLORS = {
   info: '#3498db',
   warning: '#f39c12',

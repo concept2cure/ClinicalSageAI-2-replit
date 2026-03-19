@@ -566,7 +566,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                     <div className="mt-2">
                       <SparklineChart
                         data={sparklineData[activeChamber]}
-                        color={scoreBand === 'green' ? '#10b981' : scoreBand === 'amber' ? '#f59e0b' : '#ef4444'}
+                        color={scoreBand === 'green' ? '#788c5d' : scoreBand === 'amber' ? '#f59e0b' : '#ef4444'}
                       />
                     </div>
                   </div>

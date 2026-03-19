@@ -289,30 +289,30 @@ export default function ComplianceScorePanel({
 
   // MS365 color helpers
   const getScoreColorClass = score => {
-    if (score >= 0.8) return 'text-[#107C10]';
+    if (score >= 0.8) return 'text-[#788c5d]';
     if (score >= 0.6) return 'text-[#986F0B]';
-    return 'text-[#D83B01]';
+    return 'text-[#c15f3c]';
   };
 
   const getScoreBgClass = score => {
-    if (score >= 0.8) return 'bg-[#DFF6DD]';
+    if (score >= 0.8) return 'bg-[#e4ebd8]';
     if (score >= 0.6) return 'bg-[#FFFCE5]';
     return 'bg-[#FDE7E9]';
   };
 
   const getScoreBorderClass = score => {
-    if (score >= 0.8) return 'border-[#107C10]';
+    if (score >= 0.8) return 'border-[#788c5d]';
     if (score >= 0.6) return 'border-[#F2C811]';
-    return 'border-[#D83B01]';
+    return 'border-[#c15f3c]';
   };
 
   return (
     <div className="space-y-4">
       {/* Compliance Analysis Panel */}
-      <div className="bg-white p-4 border border-[#E1DFDD] rounded">
-        <div className="flex items-center justify-between border-b border-[#E1DFDD] pb-3 mb-3">
+      <div className="bg-white p-4 border border-[#e8e6dc] rounded">
+        <div className="flex items-center justify-between border-b border-[#e8e6dc] pb-3 mb-3">
           <div>
-            <h3 className="text-base font-semibold text-[#323130]">
+            <h3 className="text-base font-semibold text-[#141413]">
               Regulatory Compliance Analysis
             </h3>
             <p className="text-xs text-[#616161] mt-1">
@@ -326,9 +326,9 @@ export default function ComplianceScorePanel({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 border-[#E1DFDD] text-[#323130] hover:bg-[#F5F5F5] text-xs"
+                  className="h-8 border-[#e8e6dc] text-[#141413] hover:bg-[#F5F5F5] text-xs"
                 >
-                  <Shield className="h-3.5 w-3.5 mr-1.5 text-[#0F6CBD]" />
+                  <Shield className="h-3.5 w-3.5 mr-1.5 text-[#d97757]" />
                   <span>Standards</span>
                 </Button>
               </DialogTrigger>
@@ -359,7 +359,7 @@ export default function ComplianceScorePanel({
                             }
                           }
                         }}
-                        className="h-4 w-4 rounded border-gray-300 text-[#0F6CBD] focus:ring-[#0F6CBD]"
+                        className="h-4 w-4 rounded border-gray-300 text-[#d97757] focus:ring-[#d97757]"
                       />
                       <Label
                         htmlFor={standard.id}
@@ -374,7 +374,7 @@ export default function ComplianceScorePanel({
                 <DialogFooter>
                   <Button
                     type="button"
-                    className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                    className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
                     onClick={() =>
                       document
                         .querySelector('[role="dialog"]')
@@ -391,7 +391,7 @@ export default function ComplianceScorePanel({
             <Button
               onClick={runComplianceAnalysis}
               disabled={analyzing || sections.length === 0}
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
               size="sm"
             >
               {analyzing ? (
@@ -410,11 +410,11 @@ export default function ComplianceScorePanel({
         </div>
 
         {error && (
-          <div className="p-3 my-3 bg-[#FDE7E9] border border-[#D83B01] rounded">
+          <div className="p-3 my-3 bg-[#FDE7E9] border border-[#c15f3c] rounded">
             <div className="flex">
-              <AlertCircle className="h-5 w-5 text-[#D83B01] mr-2 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 text-[#c15f3c] mr-2 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-[#323130]">Analysis Failed</p>
+                <p className="text-sm font-medium text-[#141413]">Analysis Failed</p>
                 <p className="text-xs text-[#616161] mt-1">{error}</p>
               </div>
             </div>
@@ -422,11 +422,11 @@ export default function ComplianceScorePanel({
         )}
 
         {!complianceData && !analyzing && !error && (
-          <div className="p-3 my-3 bg-[#E5F2FF] border border-[#0F6CBD] rounded">
+          <div className="p-3 my-3 bg-[#faf0ec] border border-[#d97757] rounded">
             <div className="flex">
-              <Info className="h-5 w-5 text-[#0F6CBD] mr-2 flex-shrink-0" />
+              <Info className="h-5 w-5 text-[#d97757] mr-2 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-[#323130]">Regulatory Compliance Check</p>
+                <p className="text-sm font-medium text-[#141413]">Regulatory Compliance Check</p>
                 <p className="text-xs text-[#616161] mt-1">
                   Click "Check Compliance" to analyze your report against EU MDR, FDA, and ISO 14155
                   standards. This will evaluate content quality, completeness, and alignment with
@@ -458,10 +458,10 @@ export default function ComplianceScorePanel({
         {complianceData && (
           <div className="space-y-5">
             {/* Overall Score */}
-            <div className="p-4 border border-[#E1DFDD] rounded bg-white">
+            <div className="p-4 border border-[#e8e6dc] rounded bg-white">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h4 className="text-sm font-semibold text-[#323130]">Overall Compliance</h4>
+                  <h4 className="text-sm font-semibold text-[#141413]">Overall Compliance</h4>
                   <p className="text-xs text-[#616161] mt-0.5">Regulatory readiness assessment</p>
                 </div>
                 <Badge
@@ -502,7 +502,7 @@ export default function ComplianceScorePanel({
                     disabled={exporting}
                     variant="outline"
                     size="sm"
-                    className="h-8 border-[#0F6CBD] text-[#0F6CBD] text-xs hover:bg-[#EFF6FC]"
+                    className="h-8 border-[#d97757] text-[#d97757] text-xs hover:bg-[#faf0ec]"
                   >
                     {exporting ? (
                       <RefreshCw className="h-3 w-3 mr-1.5 animate-spin" />
@@ -518,9 +518,9 @@ export default function ComplianceScorePanel({
             {/* Standards Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {Object.entries(complianceData.standards || {}).map(([standard, data]) => (
-                <div key={standard} className="p-4 border border-[#E1DFDD] rounded bg-white">
-                  <h4 className="text-sm font-semibold text-[#323130] mb-2">{standard}</h4>
-                  <div className="text-xl font-bold text-[#323130] flex items-center gap-2">
+                <div key={standard} className="p-4 border border-[#e8e6dc] rounded bg-white">
+                  <h4 className="text-sm font-semibold text-[#141413] mb-2">{standard}</h4>
+                  <div className="text-xl font-bold text-[#141413] flex items-center gap-2">
                     {formatPercent(data.overallScore)}
                     <Badge
                       variant="outline"
@@ -542,8 +542,8 @@ export default function ComplianceScorePanel({
 
             {/* Section Breakdown by Framework */}
             {Object.entries(complianceData.standards || {}).map(([framework, frameworkData]) => (
-              <div key={framework} className="p-4 border border-[#E1DFDD] rounded bg-white">
-                <h4 className="text-sm font-semibold text-[#323130] mb-1">
+              <div key={framework} className="p-4 border border-[#e8e6dc] rounded bg-white">
+                <h4 className="text-sm font-semibold text-[#141413] mb-1">
                   {framework} Section Analysis
                 </h4>
                 <p className="text-xs text-[#616161] mb-3">
@@ -553,7 +553,7 @@ export default function ComplianceScorePanel({
                 <Accordion
                   type="single"
                   collapsible
-                  className="border border-[#E1DFDD] rounded-sm divide-y divide-[#E1DFDD]"
+                  className="border border-[#e8e6dc] rounded-sm divide-y divide-[#e8e6dc]"
                 >
                   {Object.entries(frameworkData.sectionScores || {}).map(([sectionType, score]) => {
                     // Find matching section in generated sections
@@ -567,7 +567,7 @@ export default function ComplianceScorePanel({
                       <AccordionItem value={sectionType} key={sectionType} className="border-0">
                         <AccordionTrigger className="hover:no-underline py-2.5 px-3">
                           <div className="flex items-center justify-between w-full pr-2">
-                            <span className="text-sm text-[#323130]">{matchingSection.title}</span>
+                            <span className="text-sm text-[#141413]">{matchingSection.title}</span>
                             <span className={`${getScoreColorClass(score)} font-medium text-sm`}>
                               {formatPercent(score)}
                             </span>
@@ -578,7 +578,7 @@ export default function ComplianceScorePanel({
                             <div
                               className={`p-3 rounded ${getScoreBgClass(score)} border ${getScoreBorderClass(score)}`}
                             >
-                              <h5 className="font-medium mb-1.5 text-sm text-[#323130]">
+                              <h5 className="font-medium mb-1.5 text-sm text-[#141413]">
                                 Compliance Analysis
                               </h5>
                               <p className="text-xs text-[#616161]">
@@ -591,7 +591,7 @@ export default function ComplianceScorePanel({
 
                               {score < 0.8 && (
                                 <div className="mt-2">
-                                  <h6 className="text-xs font-medium mb-1 text-[#323130]">
+                                  <h6 className="text-xs font-medium mb-1 text-[#141413]">
                                     Improvement Suggestions:
                                   </h6>
                                   <ul className="list-disc list-outside text-xs space-y-1 text-[#616161] ml-3">
@@ -614,7 +614,7 @@ export default function ComplianceScorePanel({
                                       setImprovingSection(matchingSection);
                                       setSelectedStandard(framework);
                                     }}
-                                    className="mt-2 h-8 bg-[#0F6CBD] hover:bg-[#115EA3] text-white text-xs"
+                                    className="mt-2 h-8 bg-[#d97757] hover:bg-[#c15f3c] text-white text-xs"
                                   >
                                     <Sparkles className="h-3 w-3 mr-1.5" />
                                     <span>AI-Improve Section</span>
@@ -648,8 +648,8 @@ export default function ComplianceScorePanel({
         >
           <DialogContent className="sm:max-w-[700px]">
             <DialogHeader>
-              <DialogTitle className="text-[#323130] flex items-center">
-                <Sparkles className="h-4 w-4 mr-2 text-[#0F6CBD]" />
+              <DialogTitle className="text-[#141413] flex items-center">
+                <Sparkles className="h-4 w-4 mr-2 text-[#d97757]" />
                 AI-Powered Compliance Improvement
               </DialogTitle>
               <DialogDescription className="text-[#616161]">
@@ -660,8 +660,8 @@ export default function ComplianceScorePanel({
 
             <div className="grid gap-4 py-4">
               {!improvedContent ? (
-                <div className="p-4 bg-[#E5F2FF] border border-[#0F6CBD] rounded">
-                  <h4 className="text-sm font-medium text-[#323130] mb-2">
+                <div className="p-4 bg-[#faf0ec] border border-[#d97757] rounded">
+                  <h4 className="text-sm font-medium text-[#141413] mb-2">
                     How AI Improvement Works
                   </h4>
                   <p className="text-xs text-[#616161] mb-3">
@@ -704,7 +704,7 @@ export default function ComplianceScorePanel({
                         setIsImproving(false);
                       }
                     }}
-                    className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white text-sm w-full"
+                    className="bg-[#d97757] hover:bg-[#c15f3c] text-white text-sm w-full"
                     disabled={isImproving}
                   >
                     {isImproving ? (
@@ -723,23 +723,23 @@ export default function ComplianceScorePanel({
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="improved-content" className="text-[#323130] flex items-center">
-                      <CheckCircle className="h-3.5 w-3.5 text-[#107C10] mr-1.5" />
+                    <Label htmlFor="improved-content" className="text-[#141413] flex items-center">
+                      <CheckCircle className="h-3.5 w-3.5 text-[#788c5d] mr-1.5" />
                       AI-Enhanced Content
                     </Label>
                     <Textarea
                       id="improved-content"
                       value={improvedContent}
                       onChange={e => setImprovedContent(e.target.value)}
-                      className="h-48 text-sm border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-[#0F6CBD]"
+                      className="h-48 text-sm border-[#e8e6dc] focus:border-[#d97757] focus:ring-[#d97757]"
                     />
                     <p className="text-xs text-[#616161]">
                       You can further edit the content before applying it to your report.
                     </p>
                   </div>
 
-                  <div className="space-y-2 p-3 border border-[#E1DFDD] rounded bg-[#FAF9F8]">
-                    <h5 className="text-xs font-medium text-[#323130] mb-1">
+                  <div className="space-y-2 p-3 border border-[#e8e6dc] rounded bg-[#faf9f5]">
+                    <h5 className="text-xs font-medium text-[#141413] mb-1">
                       Compliance Improvements
                     </h5>
                     <ul className="list-disc list-inside text-xs text-[#616161] space-y-1">
@@ -761,7 +761,7 @@ export default function ComplianceScorePanel({
                   setSelectedStandard(null);
                   setImprovedContent('');
                 }}
-                className="border-[#E1DFDD] text-[#616161]"
+                className="border-[#e8e6dc] text-[#616161]"
               >
                 <XCircle className="h-3.5 w-3.5 mr-1.5" />
                 Cancel
@@ -798,7 +798,7 @@ export default function ComplianceScorePanel({
                     setSelectedStandard(null);
                     setImprovedContent('');
                   }}
-                  className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                  className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1.5" />
                   Apply Improvements

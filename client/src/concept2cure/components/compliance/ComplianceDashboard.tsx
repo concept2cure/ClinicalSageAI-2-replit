@@ -123,7 +123,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
   const offset = circumference - (score / 100) * circumference;
 
   const getScoreColor = (s: number) => {
-    if (s >= 90) return '#22c55e'; // green-500
+    if (s >= 90) return '#92a87a'; // green-500
     if (s >= 70) return '#eab308'; // yellow-500
     return '#ef4444'; // red-500
   };

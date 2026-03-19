@@ -559,7 +559,7 @@ const RiskManagementPanel = ({ jobId, deviceName, manufacturer, onAddToCER, sect
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">
             <div className="flex items-center">
-              <Brain className="h-5 w-5 mr-2 text-[#E3008C]" />
+              <Brain className="h-5 w-5 mr-2 text-[#d97757]" />
               AI-Powered ISO 14971 Risk Identification
             </div>
           </CardTitle>
@@ -641,7 +641,7 @@ const RiskManagementPanel = ({ jobId, deviceName, manufacturer, onAddToCER, sect
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div
-                  className="bg-[#E3008C] h-2.5 rounded-full"
+                  className="bg-[#d97757] h-2.5 rounded-full"
                   style={{ width: `${aiProgress}%` }}
                 ></div>
               </div>
@@ -654,7 +654,7 @@ const RiskManagementPanel = ({ jobId, deviceName, manufacturer, onAddToCER, sect
             <div className="flex flex-col w-full space-y-2">
               <Button
                 onClick={runAiRiskIdentification}
-                className="w-full bg-[#E3008C] hover:bg-[#C4007A] text-white"
+                className="w-full bg-[#d97757] hover:bg-[#C4007A] text-white"
                 disabled={!deviceName}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -677,7 +677,7 @@ const RiskManagementPanel = ({ jobId, deviceName, manufacturer, onAddToCER, sect
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">
               <div className="flex items-center">
-                <BarChart className="h-5 w-5 mr-2 text-[#E3008C]" />
+                <BarChart className="h-5 w-5 mr-2 text-[#d97757]" />
                 AI Evidence Mapping Recommendations
               </div>
             </CardTitle>
@@ -1100,7 +1100,7 @@ This risk management linkage was performed in accordance with:
                     <TableRow key={risk.id} className={risk.aiGenerated ? 'bg-blue-50' : ''}>
                       <TableCell className="font-medium">
                         {risk.aiGenerated && (
-                          <Sparkles className="h-3 w-3 mr-1 text-[#E3008C] inline" />
+                          <Sparkles className="h-3 w-3 mr-1 text-[#d97757] inline" />
                         )}
                         {risk.hazard}
                       </TableCell>
@@ -1394,7 +1394,7 @@ This risk management linkage was performed in accordance with:
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1">
-          <h2 className="text-xl font-semibold text-[#323130] mb-4">Risk Management Linkage</h2>
+          <h2 className="text-xl font-semibold text-[#141413] mb-4">Risk Management Linkage</h2>
 
           <Tabs defaultValue="file">
             <TabsList className="mb-4">
@@ -1423,7 +1423,7 @@ This risk management linkage was performed in accordance with:
         </div>
 
         <div className="md:w-1/2 lg:w-2/5">
-          <h2 className="text-xl font-semibold text-[#323130] mb-4">ISO 14971 Analysis</h2>
+          <h2 className="text-xl font-semibold text-[#141413] mb-4">ISO 14971 Analysis</h2>
 
           {renderEvidenceLinkage()}
 

@@ -78,12 +78,12 @@
 }
 
 .tour-button-secondary {
-  background-color: #f3f4f6;
+  background-color: #f4f3ee;
   color: #4b5563;
 }
 
 .tour-button-secondary:hover {
-  background-color: #e5e7eb;
+  background-color: #e8e6dc;
 }
 
 /* Tour help button pulse animation */

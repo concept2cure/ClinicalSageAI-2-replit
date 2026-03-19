@@ -73,25 +73,25 @@ export default function NotificationBanner({
         };
       case 'success':
         return {
-          bg: 'bg-[#DFF6DD]',
-          border: 'border-[#107C10]',
-          icon: <CheckCircle className="w-4 h-4 text-[#107C10]" />,
-          text: 'text-[#107C10]',
+          bg: 'bg-[#e4ebd8]',
+          border: 'border-[#788c5d]',
+          icon: <CheckCircle className="w-4 h-4 text-[#788c5d]" />,
+          text: 'text-[#788c5d]',
         };
       case 'loading':
         return {
-          bg: 'bg-[#E5F2FF]',
-          border: 'border-[#0F6CBD]',
-          icon: <Clock className="w-4 h-4 text-[#0F6CBD] animate-pulse" />,
-          text: 'text-[#0F6CBD]',
+          bg: 'bg-[#faf0ec]',
+          border: 'border-[#d97757]',
+          icon: <Clock className="w-4 h-4 text-[#d97757] animate-pulse" />,
+          text: 'text-[#d97757]',
         };
       case 'info':
       default:
         return {
-          bg: 'bg-[#E5F2FF]',
-          border: 'border-[#0F6CBD]',
-          icon: <Info className="w-4 h-4 text-[#0F6CBD]" />,
-          text: 'text-[#0F6CBD]',
+          bg: 'bg-[#faf0ec]',
+          border: 'border-[#d97757]',
+          icon: <Info className="w-4 h-4 text-[#d97757]" />,
+          text: 'text-[#d97757]',
         };
     }
   };
@@ -113,7 +113,7 @@ export default function NotificationBanner({
                   onMouseEnter={() => setShowTooltip(true)}
                   onMouseLeave={() => setShowTooltip(false)}
                 >
-                  <Info className="w-3.5 h-3.5 text-[#0F6CBD]" />
+                  <Info className="w-3.5 h-3.5 text-[#d97757]" />
 
                   {showTooltip && (
                     <div className="absolute z-50 w-64 p-2 bg-white rounded shadow-lg border border-gray-200 text-xs text-gray-700 right-0 top-full mt-1">

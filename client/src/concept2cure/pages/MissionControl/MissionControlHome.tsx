@@ -112,7 +112,7 @@ function ReadinessRadar({ readiness, className }: { readiness: Record<string, nu
                 <path
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   fill="none"
-                  stroke={color === 'emerald' ? '#10b981' : color === 'amber' ? '#f59e0b' : '#ef4444'}
+                  stroke={color === 'emerald' ? '#788c5d' : color === 'amber' ? '#f59e0b' : '#ef4444'}
                   strokeWidth="3"
                   strokeDasharray={`${value}, 100`}
                 />

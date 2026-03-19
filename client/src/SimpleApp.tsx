@@ -29,7 +29,7 @@ const WebSocketStatus = () => {
         fontSize: '0.75rem',
         padding: '0.25rem 0.5rem',
         borderRadius: '9999px',
-        backgroundColor: wsStatus === 'Connected' ? '#22c55e' : '#ef4444',
+        backgroundColor: wsStatus === 'Connected' ? '#92a87a' : '#ef4444',
         color: 'white',
       }}
     >
@@ -46,7 +46,7 @@ const Navigation = () => {
     <nav
       style={{
         padding: '1rem',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid #e8e6dc',
         marginBottom: '1rem',
         display: 'flex',
         alignItems: 'center',
@@ -59,7 +59,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#2563eb',
+              color: '#5585b3',
             }}
           >
             TrialSage Home
@@ -70,7 +70,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/ind-wizard' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#2563eb',
+              color: '#5585b3',
             }}
           >
             IND Wizard
@@ -81,7 +81,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/cro' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#2563eb',
+              color: '#5585b3',
             }}
           >
             CRO Dashboard
@@ -92,7 +92,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/reports' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#2563eb',
+              color: '#5585b3',
             }}
           >
             CSR Reports
@@ -103,7 +103,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/diagnostic' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#2563eb',
+              color: '#5585b3',
             }}
           >
             System Diagnostic
@@ -161,7 +161,7 @@ const WebSocketDiagnostic = () => {
       <div
         style={{
           padding: '1rem',
-          border: '1px solid #e5e7eb',
+          border: '1px solid #e8e6dc',
           borderRadius: '0.5rem',
           marginBottom: '1rem',
         }}
@@ -171,12 +171,12 @@ const WebSocketDiagnostic = () => {
           <thead>
             <tr>
               <th
-                style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '1px solid #e5e7eb' }}
+                style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '1px solid #e8e6dc' }}
               >
                 Endpoint
               </th>
               <th
-                style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '1px solid #e5e7eb' }}
+                style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '1px solid #e8e6dc' }}
               >
                 Status
               </th>
@@ -185,11 +185,11 @@ const WebSocketDiagnostic = () => {
           <tbody>
             {Object.entries(testResults).map(([test, result]) => (
               <tr key={test}>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #e5e7eb' }}>{test}</td>
+                <td style={{ padding: '0.5rem', borderBottom: '1px solid #e8e6dc' }}>{test}</td>
                 <td
                   style={{
                     padding: '0.5rem',
-                    borderBottom: '1px solid #e5e7eb',
+                    borderBottom: '1px solid #e8e6dc',
                     color:
                       result.includes('Working') || result.includes('Available') ? 'green' : 'red',
                     fontWeight: 'bold',
@@ -206,7 +206,7 @@ const WebSocketDiagnostic = () => {
       <div
         style={{
           padding: '1rem',
-          border: '1px solid #e5e7eb',
+          border: '1px solid #e8e6dc',
           borderRadius: '0.5rem',
           backgroundColor: '#fef9c3',
         }}
@@ -267,7 +267,7 @@ const INDWizard = () => {
           style={{
             marginTop: '1rem',
             padding: '0.5rem 1rem',
-            backgroundColor: '#2563eb',
+            backgroundColor: '#5585b3',
             color: 'white',
             border: 'none',
             borderRadius: '0.25rem',
@@ -296,7 +296,7 @@ const INDWizard = () => {
             style={{
               display: 'inline-block',
               padding: '0.25rem 0.5rem',
-              backgroundColor: '#f3f4f6',
+              backgroundColor: '#f4f3ee',
               borderRadius: '0.25rem',
               fontSize: '0.875rem',
             }}
@@ -311,16 +311,16 @@ const INDWizard = () => {
           display: 'grid',
           gridTemplateColumns: '250px 1fr',
           gap: '1rem',
-          border: '1px solid #e5e7eb',
+          border: '1px solid #e8e6dc',
           borderRadius: '0.5rem',
           overflow: 'hidden',
         }}
       >
         <div
           style={{
-            backgroundColor: '#f9fafb',
+            backgroundColor: '#faf9f5',
             padding: '1rem',
-            borderRight: '1px solid #e5e7eb',
+            borderRight: '1px solid #e8e6dc',
           }}
         >
           <h3 style={{ marginTop: 0 }}>Sections</h3>
@@ -335,7 +335,7 @@ const INDWizard = () => {
               style={{
                 padding: '0.5rem',
                 borderRadius: '0.25rem',
-                backgroundColor: '#2563eb',
+                backgroundColor: '#5585b3',
                 color: 'white',
                 marginBottom: '0.5rem',
               }}
@@ -404,7 +404,7 @@ const INDWizard = () => {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid #d6d3c8',
                 borderRadius: '0.25rem',
               }}
             />
@@ -427,7 +427,7 @@ const INDWizard = () => {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid #d6d3c8',
                 borderRadius: '0.25rem',
               }}
             />
@@ -450,7 +450,7 @@ const INDWizard = () => {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid #d6d3c8',
                 borderRadius: '0.25rem',
               }}
             />
@@ -473,7 +473,7 @@ const INDWizard = () => {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid #d6d3c8',
                 borderRadius: '0.25rem',
               }}
             />
@@ -496,7 +496,7 @@ const INDWizard = () => {
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid #d6d3c8',
                 borderRadius: '0.25rem',
               }}
             />
@@ -506,7 +506,7 @@ const INDWizard = () => {
             <button
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#2563eb',
+                backgroundColor: '#5585b3',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.25rem',
@@ -540,54 +540,54 @@ const CRODashboard = () => {
         <div
           style={{
             padding: '1rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
-            backgroundColor: '#f9fafb',
+            backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#2563eb' }}>Total Clients</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Total Clients</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>24</p>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0' }}>Active partnerships</p>
+          <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>Active partnerships</p>
         </div>
         <div
           style={{
             padding: '1rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
-            backgroundColor: '#f9fafb',
+            backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#2563eb' }}>Active Studies</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Active Studies</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>47</p>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0' }}>
+          <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>
             Ongoing clinical trials
           </p>
         </div>
         <div
           style={{
             padding: '1rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
-            backgroundColor: '#f9fafb',
+            backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#2563eb' }}>Pending Submissions</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Pending Submissions</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>12</p>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0' }}>
+          <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>
             Awaiting regulatory review
           </p>
         </div>
         <div
           style={{
             padding: '1rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
-            backgroundColor: '#f9fafb',
+            backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#2563eb' }}>Compliance Score</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Compliance Score</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>94%</p>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0' }}>
+          <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>
             Overall compliance rating
           </p>
         </div>
@@ -603,7 +603,7 @@ const CRODashboard = () => {
         <div
           style={{
             padding: '1rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
           }}
         >
@@ -621,7 +621,7 @@ const CRODashboard = () => {
                 style={{
                   width: '0.5rem',
                   height: '0.5rem',
-                  backgroundColor: '#22c55e',
+                  backgroundColor: '#92a87a',
                   borderRadius: '50%',
                 }}
               ></div>
@@ -629,7 +629,7 @@ const CRODashboard = () => {
                 <p style={{ fontSize: '0.875rem', fontWeight: '500', margin: '0' }}>
                   BPI-001 First Patient Enrolled
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0' }}>2 hours ago</p>
+                <p style={{ fontSize: '0.75rem', color: '#8a8880', margin: '0' }}>2 hours ago</p>
               </div>
             </div>
             <div
@@ -644,7 +644,7 @@ const CRODashboard = () => {
                 style={{
                   width: '0.5rem',
                   height: '0.5rem',
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: '#6a9bcc',
                   borderRadius: '50%',
                 }}
               ></div>
@@ -652,7 +652,7 @@ const CRODashboard = () => {
                 <p style={{ fontSize: '0.875rem', fontWeight: '500', margin: '0' }}>
                   510(k) Submission K243567 Submitted
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0' }}>1 day ago</p>
+                <p style={{ fontSize: '0.75rem', color: '#8a8880', margin: '0' }}>1 day ago</p>
               </div>
             </div>
             <div
@@ -674,7 +674,7 @@ const CRODashboard = () => {
                 <p style={{ fontSize: '0.875rem', fontWeight: '500', margin: '0' }}>
                   IND-123456 Approved by FDA
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0' }}>3 days ago</p>
+                <p style={{ fontSize: '0.75rem', color: '#8a8880', margin: '0' }}>3 days ago</p>
               </div>
             </div>
           </div>
@@ -683,7 +683,7 @@ const CRODashboard = () => {
         <div
           style={{
             padding: '1rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
           }}
         >
@@ -701,7 +701,7 @@ const CRODashboard = () => {
                 <p style={{ fontSize: '0.875rem', fontWeight: '500', margin: '0' }}>
                   Interim Safety Analysis
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0' }}>BPI-001 Study</p>
+                <p style={{ fontSize: '0.75rem', color: '#8a8880', margin: '0' }}>BPI-001 Study</p>
               </div>
               <span
                 style={{
@@ -727,7 +727,7 @@ const CRODashboard = () => {
                 <p style={{ fontSize: '0.875rem', fontWeight: '500', margin: '0' }}>
                   Study Report Submission
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0' }}>MDS-501K</p>
+                <p style={{ fontSize: '0.75rem', color: '#8a8880', margin: '0' }}>MDS-501K</p>
               </div>
               <span
                 style={{
@@ -752,7 +752,7 @@ const CRODashboard = () => {
                 <p style={{ fontSize: '0.875rem', fontWeight: '500', margin: '0' }}>
                   Annual Report Filing
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0' }}>
+                <p style={{ fontSize: '0.75rem', color: '#8a8880', margin: '0' }}>
                   Multiple studies
                 </p>
               </div>
@@ -760,9 +760,9 @@ const CRODashboard = () => {
                 style={{
                   fontSize: '0.75rem',
                   padding: '0.25rem 0.5rem',
-                  border: '1px solid #3b82f6',
+                  border: '1px solid #6a9bcc',
                   borderRadius: '0.25rem',
-                  color: '#3b82f6',
+                  color: '#6a9bcc',
                 }}
               >
                 Due Oct 1
@@ -776,7 +776,7 @@ const CRODashboard = () => {
         <p
           style={{
             fontSize: '0.875rem',
-            color: '#6b7280',
+            color: '#8a8880',
             textAlign: 'center',
             fontStyle: 'italic',
           }}
@@ -840,13 +840,13 @@ const DocumentEditor = () => {
           style={{
             width: '2rem',
             height: '2rem',
-            border: '3px solid #e5e7eb',
-            borderTop: '3px solid #3b82f6',
+            border: '3px solid #e8e6dc',
+            borderTop: '3px solid #6a9bcc',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
           }}
         ></div>
-        <p style={{ marginTop: '1rem', color: '#6b7280' }}>Loading document...</p>
+        <p style={{ marginTop: '1rem', color: '#8a8880' }}>Loading document...</p>
       </div>
     );
   }
@@ -867,7 +867,7 @@ const DocumentEditor = () => {
           onClick={() => (window.location.href = '/')}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#3b82f6',
+            backgroundColor: '#6a9bcc',
             color: 'white',
             border: 'none',
             borderRadius: '0.375rem',
@@ -905,7 +905,7 @@ const DocumentEditor = () => {
             >
               {taskStatus.status}
             </span>
-            <span style={{ color: '#6b7280' }}>Task ID: {taskStatus.id}</span>
+            <span style={{ color: '#8a8880' }}>Task ID: {taskStatus.id}</span>
           </div>
         )}
       </div>
@@ -913,10 +913,10 @@ const DocumentEditor = () => {
       {taskStatus && taskStatus.draft_content && (
         <div
           style={{
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
             padding: '1.5rem',
-            backgroundColor: '#f9fafb',
+            backgroundColor: '#faf9f5',
           }}
         >
           <div
@@ -936,7 +936,7 @@ const DocumentEditor = () => {
                 }}
                 style={{
                   padding: '0.375rem 0.75rem',
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: '#6a9bcc',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.375rem',
@@ -958,7 +958,7 @@ const DocumentEditor = () => {
                 }}
                 style={{
                   padding: '0.375rem 0.75rem',
-                  backgroundColor: '#059669',
+                  backgroundColor: '#647746',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.375rem',
@@ -975,7 +975,7 @@ const DocumentEditor = () => {
               backgroundColor: 'white',
               padding: '1rem',
               borderRadius: '0.375rem',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #e8e6dc',
               fontSize: '0.875rem',
               fontFamily: 'monospace',
               whiteSpace: 'pre-wrap',
@@ -993,7 +993,7 @@ const DocumentEditor = () => {
           onClick={() => window.history.back()}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#6b7280',
+            backgroundColor: '#8a8880',
             color: 'white',
             border: 'none',
             borderRadius: '0.375rem',
@@ -1007,7 +1007,7 @@ const DocumentEditor = () => {
           onClick={() => (window.location.href = '/')}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#3b82f6',
+            backgroundColor: '#6a9bcc',
             color: 'white',
             border: 'none',
             borderRadius: '0.375rem',
@@ -1030,9 +1030,9 @@ const CSRReports = () => {
         style={{
           padding: '2rem',
           textAlign: 'center',
-          border: '1px solid #e5e7eb',
+          border: '1px solid #e8e6dc',
           borderRadius: '0.5rem',
-          backgroundColor: '#f9fafb',
+          backgroundColor: '#faf9f5',
         }}
       >
         <h2>CSR Library</h2>
@@ -1060,7 +1060,7 @@ const Home = () => {
             fontSize: '2rem',
             marginTop: 0,
             marginBottom: '1rem',
-            color: '#0369a1',
+            color: '#4a7399',
           }}
         >
           Welcome to TrialSage
@@ -1079,7 +1079,7 @@ const Home = () => {
               style={{
                 display: 'inline-block',
                 padding: '0.75rem 1.5rem',
-                backgroundColor: '#2563eb',
+                backgroundColor: '#5585b3',
                 color: 'white',
                 borderRadius: '0.25rem',
                 textDecoration: 'none',
@@ -1095,8 +1095,8 @@ const Home = () => {
                 display: 'inline-block',
                 padding: '0.75rem 1.5rem',
                 backgroundColor: 'white',
-                color: '#2563eb',
-                border: '1px solid #2563eb',
+                color: '#5585b3',
+                border: '1px solid #5585b3',
                 borderRadius: '0.25rem',
                 textDecoration: 'none',
                 fontWeight: 'bold',
@@ -1118,7 +1118,7 @@ const Home = () => {
         <div
           style={{
             padding: '1.5rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
           }}
         >
@@ -1133,7 +1133,7 @@ const Home = () => {
         <div
           style={{
             padding: '1.5rem',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: '0.5rem',
           }}
         >
@@ -1176,7 +1176,7 @@ export default function SimpleApp() {
                   display: 'inline-block',
                   marginTop: '1rem',
                   padding: '0.5rem 1rem',
-                  backgroundColor: '#2563eb',
+                  backgroundColor: '#5585b3',
                   color: 'white',
                   borderRadius: '0.25rem',
                   textDecoration: 'none',

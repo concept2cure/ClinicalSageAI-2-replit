@@ -576,8 +576,8 @@ interface AuditLogRowProps {
 function AuditLogRow({ log, expanded, onToggle, verifying, onVerify }: AuditLogRowProps) {
   const eventConfig = AUDIT_EVENT_CONFIG[log.eventType] || {
     label: log.eventType,
-    color: '#6b7280',
-    bgColor: '#f3f4f6',
+    color: '#8a8880',
+    bgColor: '#f4f3ee',
   };
 
   const timestamp = new Date(log.timestamp);

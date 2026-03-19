@@ -321,7 +321,7 @@ const ProgramRow: React.FC<ProgramRowProps> = memo(({ program, index }) => {
       {/* Progress ring */}
       <div className="relative w-12 h-12 flex-shrink-0">
         <svg className="w-12 h-12 transform -rotate-90">
-          <circle cx="24" cy="24" r="20" fill="none" stroke="#f3f4f6" strokeWidth="4" />
+          <circle cx="24" cy="24" r="20" fill="none" stroke="#f4f3ee" strokeWidth="4" />
           <circle
             cx="24"
             cy="24"
@@ -329,7 +329,7 @@ const ProgramRow: React.FC<ProgramRowProps> = memo(({ program, index }) => {
             fill="none"
             stroke={
               program.status === 'on_track'
-                ? '#059669'
+                ? '#647746'
                 : program.status === 'at_risk'
                   ? '#d97706'
                   : '#dc2626'

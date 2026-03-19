@@ -91,12 +91,12 @@ export default function WidgetCard({ widget }) {
 
   // Get theme-appropriate colors
   const chartColors = {
-    bar: isDarkMode ? '#4ade80' : '#2563eb',
+    bar: isDarkMode ? '#a8bf8f' : '#5585b3',
     line: isDarkMode ? '#2dd4bf' : '#0891b2',
-    pie: isDarkMode ? '#38bdf8' : '#4f46e5',
-    background: isDarkMode ? '#1e293b' : '#ffffff',
-    text: isDarkMode ? '#e5e7eb' : '#374151',
-    grid: isDarkMode ? '#1f2937' : '#e5e7eb',
+    pie: isDarkMode ? '#8bb4d9' : '#c15f3c',
+    background: isDarkMode ? '#2d2d2a' : '#ffffff',
+    text: isDarkMode ? '#e8e6dc' : '#4a4a46',
+    grid: isDarkMode ? '#2d2d2a' : '#e8e6dc',
   };
 
   // R4: Export functions

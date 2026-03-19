@@ -64,7 +64,7 @@ export default function InteractiveTour({ tourCompleted, setTourCompleted }) {
       arrowColor: '#fff',
       backgroundColor: '#fff',
       primaryColor: '#3B82F6',
-      textColor: '#334155',
+      textColor: '#4a4a46',
       overlayColor: 'rgba(0, 0, 0, 0.5)',
     },
     tooltipContainer: {
@@ -79,7 +79,7 @@ export default function InteractiveTour({ tourCompleted, setTourCompleted }) {
     },
     buttonBack: {
       marginRight: 10,
-      backgroundColor: '#f1f5f9',
+      backgroundColor: '#f4f3ee',
     },
     buttonNext: {
       backgroundColor: '#3B82F6',

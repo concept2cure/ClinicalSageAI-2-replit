@@ -88,7 +88,7 @@
 .rdp {
   background-color: white !important;
   background: white !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid #e8e6dc !important;
   border-radius: 0.375rem !important;
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
@@ -718,8 +718,8 @@ input[type='checkbox'].sp-checkbox:checked {
 
 .rdp-day:hover,
 .rdp-day_button:hover {
-  background-color: #f3f4f6 !important;
-  background: #f3f4f6 !important;
+  background-color: #f4f3ee !important;
+  background: #f4f3ee !important;
 }
 
 /* Fix calendar header */
@@ -1074,7 +1074,7 @@ kbd {
 }
 
 a:hover {
-  color: #0f172a;
+  color: #141413;
 }
 
 /* Font Sizing System - Based on Professional Design System */
@@ -1393,13 +1393,13 @@ a:hover {
 
 /* Enhanced tab styling */
 [role='tablist'] {
-  background-color: #f8fafc;
+  background-color: #faf9f5;
   border-radius: 0.5rem;
   padding: 0.25rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e6dc;
 }
 
 [role='tab'] {
@@ -1408,7 +1408,7 @@ a:hover {
   font-weight: 500;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  color: #64748b;
+  color: #8a8880;
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -1420,14 +1420,14 @@ a:hover {
 
 [role='tab'][data-state='active'] {
   background-color: white;
-  color: #1e40af;
+  color: #c15f3c;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   font-weight: 600;
 }
 
 [role='tab']:hover:not([data-state='active']) {
   background-color: rgba(241, 245, 249, 0.7);
-  color: #334155;
+  color: #4a4a46;
 }
 
 [role='tabpanel'] {
@@ -1442,8 +1442,8 @@ div.command-dialog,
 div.dialog-content,
 div.dropdown-menu-content {
   --bg-color: white;
-  --text-color: #1a202c;
-  --border-color: #e2e8f0;
+  --text-color: #141413;
+  --border-color: #e8e6dc;
   --shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.15);
 
   background-color: var(--bg-color) !important;
@@ -1461,7 +1461,7 @@ div.dropdown-menu-content {
   border: 1px solid rgba(226, 232, 240, 1) !important;
   background-color: white !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  color: #334155 !important;
+  color: #4a4a46 !important;
   font-weight: 500 !important;
 }
 
@@ -1469,7 +1469,7 @@ div.dropdown-menu-content {
 .select-item,
 .dropdown-menu-item,
 .command-item {
-  color: #111827 !important;
+  color: #141413 !important;
   background-color: transparent !important;
   cursor: pointer !important;
   padding: 0.5rem 0.75rem !important;
@@ -1485,15 +1485,15 @@ div.dropdown-menu-content {
 .select-item:hover,
 .dropdown-menu-item:hover,
 .command-item:hover {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  background-color: #f4f3ee !important;
+  color: #141413 !important;
 }
 
 /* Selected/Checked state */
 .select-item[data-state='checked'],
 .dropdown-menu-item[data-state='checked'] {
-  background-color: #e0f2fe !important;
-  color: #1e40af !important;
+  background-color: #faf0ec !important;
+  color: #c15f3c !important;
   font-weight: 500 !important;
 }
 
@@ -1535,7 +1535,7 @@ div.dropdown-menu-content {
   padding: 0.5rem 0.75rem !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
-  color: #6b7280 !important;
+  color: #8a8880 !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
 }
@@ -1602,7 +1602,7 @@ div.dropdown-menu-content {
 
 .editor-pane {
   flex: 7;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e6dc;
   border-radius: 8px;
   min-height: 600px;
   padding: 24px;
@@ -1612,11 +1612,11 @@ div.dropdown-menu-content {
 
 .copilot-pane {
   flex: 3;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e6dc;
   border-radius: 8px;
   min-height: 600px;
   padding: 24px;
-  background: #fafafa;
+  background: #faf9f5;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 */
@@ -1625,15 +1625,15 @@ div.dropdown-menu-content {
   margin-top: 16px;
   text-align: right;
   font-size: 12px;
-  color: #666;
+  color: #8a8880;
   padding: 16px 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #e8e6dc;
 }
 
 /* AI Copilot Panel */
 .ai-copilot-panel {
-  font-family: sans-serif;
-  color: #333;
+  font-family: 'Poppins', Arial, sans-serif;
+  color: #141413;
 }
 
 .ai-copilot-panel h2 {
@@ -1796,13 +1796,13 @@ div.dropdown-menu-content {
 
 .markdown-content h1 {
   font-size: 1.5em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e6dc;
   padding-bottom: 0.3em;
 }
 
 .markdown-content h2 {
   font-size: 1.3em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e6dc;
   padding-bottom: 0.2em;
 }
 
@@ -1849,7 +1849,7 @@ div.dropdown-menu-content {
 
 /* Code blocks */
 .markdown-content pre {
-  background-color: #f1f5f9;
+  background-color: #f4f3ee;
   border-radius: 0.375rem;
   padding: 1em;
   overflow-x: auto;
@@ -1862,7 +1862,7 @@ div.dropdown-menu-content {
 }
 
 .markdown-content code {
-  background-color: #f1f5f9;
+  background-color: #f4f3ee;
   border-radius: 0.25rem;
   padding: 0.2em 0.4em;
   font-family:
@@ -1879,10 +1879,10 @@ div.dropdown-menu-content {
 
 /* Blockquotes */
 .markdown-content blockquote {
-  border-left: 4px solid #e2e8f0;
+  border-left: 4px solid #e8e6dc;
   padding-left: 1em;
   margin: 1em 0;
-  color: #64748b;
+  color: #8a8880;
 }
 
 /* Tables */
@@ -1895,24 +1895,24 @@ div.dropdown-menu-content {
 
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e6dc;
   padding: 0.5em 0.75em;
   text-align: left;
 }
 
 .markdown-content th {
-  background-color: #f8fafc;
+  background-color: #faf9f5;
   font-weight: 600;
 }
 
 .markdown-content tr:nth-of-type(even) {
-  background-color: #f8fafc;
+  background-color: #faf9f5;
 }
 
 /* Horizontal rule */
 .markdown-content hr {
   border: none;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e8e6dc;
   margin: 1.5em 0;
 }
 
@@ -2153,7 +2153,7 @@ div.dropdown-menu-content {
 
 /* Skeleton Loaders */
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #f4f3ee 25%, #e8e6dc 50%, #f4f3ee 75%);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
   border-radius: 8px;
@@ -2465,7 +2465,7 @@ div.dropdown-menu-content {
     --color-gray-600: #d4d4d8;
     --color-gray-700: #e4e4e7;
     --color-gray-800: #f4f4f5;
-    --color-gray-900: #fafafa;
+    --color-gray-900: #faf9f5;
   }
 
   body {
@@ -2658,7 +2658,7 @@ button:focus-visible,
 
   /* Loading skeleton shimmer */
   .skeleton-shimmer {
-    background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+    background: linear-gradient(90deg, #f4f3ee 0%, #e8e6dc 50%, #f4f3ee 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }

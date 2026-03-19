@@ -108,7 +108,7 @@ export default function EndpointRecommender() {
   };
 
   // Chart colors
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
   // Handler for search action
   const handleSearch = async () => {
@@ -468,7 +468,7 @@ export default function EndpointRecommender() {
                             <YAxis label={{ value: 'Frequency (%)', angle: -90, position: 'insideLeft' }} />
                             <Tooltip />
                             <Legend />
-                            <Bar dataKey="frequency" name="Usage Frequency (%)" fill="#0088FE" />
+                            <Bar dataKey="frequency" name="Usage Frequency (%)" fill="#6a9bcc" />
                             <Bar dataKey="successRate" name="Success Rate (%)" fill="#00C49F" />
                           </BarChart>
                         </ResponsiveContainer>

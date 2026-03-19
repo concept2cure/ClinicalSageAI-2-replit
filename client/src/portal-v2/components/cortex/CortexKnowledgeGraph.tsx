@@ -58,21 +58,21 @@ interface GraphEdge {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const NODE_COLORS: Record<string, string> = {
-  fact: '#059669',
+  fact: '#647746',
   concept: '#d97706',
   rule: '#dc2626',
   procedure: '#0891b2',
-  reference: '#7c3aed',
-  default: '#6b7280',
+  reference: '#5585b3',
+  default: '#8a8880',
 };
 
 const EDGE_COLORS: Record<string, string> = {
-  relates_to: '#94a3b8',
+  relates_to: '#b0aea5',
   depends_on: '#f97316',
   contradicts: '#ef4444',
-  supports: '#22c55e',
-  references: '#8b5cf6',
-  default: '#cbd5e1',
+  supports: '#92a87a',
+  references: '#6a9bcc',
+  default: '#d6d3c8',
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
