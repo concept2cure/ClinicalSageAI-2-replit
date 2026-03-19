@@ -3148,6 +3148,15 @@ try {
   console.error('❌ Failed to mount AnA Features routes:', error);
 }
 
+// Mount Ana Platform Control routes (agentic settings, modules, onboarding)
+try {
+  const anaPlatformModule = await import('./routes/ana-platform-control');
+  app.use('/api/ana/platform', anaPlatformModule.default);
+  console.log('✅ Ana Platform Control routes mounted (/api/ana/platform)');
+} catch (error) {
+  console.error('❌ Failed to mount Ana Platform Control routes:', error);
+}
+
 // Mount Lumen Cortex Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
