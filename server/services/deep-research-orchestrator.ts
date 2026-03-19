@@ -10,6 +10,7 @@
 import { pool } from '../db.js';
 import { searchConnectors } from './connectors/connector-registry.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
+import { getAnthropicClient, CLAUDE_MODELS } from './anthropic-client.js';
 import type { ConnectorQuery, ConnectorResult } from './connectors/connector-interface.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -209,13 +210,120 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
 }
 
 /**
- * Generate LLM synthesis of research results.
+ * Generate Claude-powered synthesis of multi-source research results.
+ * Produces a structured regulatory intelligence briefing with competitive
+ * landscape analysis, precedent identification, and pathway recommendations.
+ * Falls back to a structured template if the LLM call fails.
  */
 async function generateSynthesis(
   query: DeepResearchRequest['query'],
   results: AggregatedResults
 ): Promise<string> {
-  // Build a structured summary without calling external LLM (can be enhanced with OpenAI)
+  // Build evidence digest for the LLM (cap to avoid token overflow)
+  const evidenceDigest = buildEvidenceDigest(results);
+
+  const systemPrompt = [
+    'You are a senior regulatory affairs scientist writing an intelligence briefing.',
+    'Synthesize the provided evidence into a structured report.',
+    'Be precise — cite specific trial IDs (NCT numbers), sponsor names, approval dates, and journal references when available.',
+    'Flag gaps in evidence coverage and recommend next steps.',
+    'Write in professional regulatory affairs prose. Use markdown formatting.',
+  ].join(' ');
+
+  const userPrompt = [
+    `## Research Query`,
+    `- **Indication:** ${query.indication}`,
+    query.phase ? `- **Phase:** ${query.phase}` : '',
+    query.therapeuticArea ? `- **Therapeutic Area:** ${query.therapeuticArea}` : '',
+    query.intervention ? `- **Intervention:** ${query.intervention}` : '',
+    query.sponsor ? `- **Sponsor:** ${query.sponsor}` : '',
+    query.comparators?.length ? `- **Comparators:** ${query.comparators.join(', ')}` : '',
+    query.targetAgencies?.length ? `- **Target Agencies:** ${query.targetAgencies.join(', ')}` : '',
+    '',
+    `## Evidence Corpus (${results.totalResults} sources)`,
+    evidenceDigest,
+    '',
+    `## Required Output Sections`,
+    `Write a regulatory intelligence briefing with these sections:`,
+    `1. **Executive Summary** — 3-4 sentence overview of the competitive and regulatory landscape`,
+    `2. **Clinical Trial Landscape** — Active/completed trials, enrollment trends, design patterns, notable sponsors`,
+    `3. **Regulatory Precedents** — Prior approvals, agency positions, labeling patterns, advisory committee outcomes`,
+    `4. **Published Evidence Base** — Key publications, systematic reviews, evidence quality assessment`,
+    `5. **Competitive Intelligence** — Sponsors with active programs, differentiation opportunities, white-space analysis`,
+    `6. **Regulatory Pathway Considerations** — Recommended filing strategy, potential agency concerns, risk mitigations`,
+    `7. **Evidence Gaps & Recommended Next Steps** — What data is missing, what research should follow`,
+  ].filter(Boolean).join('\n');
+
+  try {
+    const anthropic = getAnthropicClient();
+    const response = await anthropic.messages.create({
+      model: CLAUDE_MODELS.sonnet,
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: userPrompt }],
+      system: systemPrompt,
+    });
+
+    const text = response.content
+      .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
+      .map(block => block.text)
+      .join('\n');
+
+    if (text.length > 0) return text;
+  } catch (err) {
+    console.error('[DeepResearch] Claude synthesis failed, using template fallback:', err);
+  }
+
+  // Fallback: structured template without LLM
+  return buildFallbackSynthesis(query, results);
+}
+
+/**
+ * Build a condensed evidence digest string for the LLM prompt.
+ * Caps each category to avoid exceeding context limits.
+ */
+function buildEvidenceDigest(results: AggregatedResults): string {
+  const sections: string[] = [];
+
+  if (results.csrMatches.length > 0) {
+    sections.push(`### Clinical Trials (${results.csrMatches.length} total)`);
+    results.csrMatches.slice(0, 15).forEach(r => {
+      sections.push(`- [${r.id}] ${r.title} — ${r.summary}`);
+    });
+    if (results.csrMatches.length > 15) {
+      sections.push(`- ... and ${results.csrMatches.length - 15} more`);
+    }
+  }
+
+  if (results.regulatoryIntelligence.length > 0) {
+    sections.push(`### Regulatory Records (${results.regulatoryIntelligence.length} total)`);
+    results.regulatoryIntelligence.slice(0, 10).forEach(r => {
+      sections.push(`- [${r.sourceConnector}] ${r.title} — ${r.summary}`);
+    });
+    if (results.regulatoryIntelligence.length > 10) {
+      sections.push(`- ... and ${results.regulatoryIntelligence.length - 10} more`);
+    }
+  }
+
+  if (results.literatureResults.length > 0) {
+    sections.push(`### Literature (${results.literatureResults.length} total)`);
+    results.literatureResults.slice(0, 10).forEach(r => {
+      sections.push(`- [${r.id}] ${r.title} — ${r.summary}`);
+    });
+    if (results.literatureResults.length > 10) {
+      sections.push(`- ... and ${results.literatureResults.length - 10} more`);
+    }
+  }
+
+  return sections.join('\n');
+}
+
+/**
+ * Template-based fallback when Claude is unavailable.
+ */
+function buildFallbackSynthesis(
+  query: DeepResearchRequest['query'],
+  results: AggregatedResults
+): string {
   const lines: string[] = [];
   lines.push(`## Deep Research Report: ${query.indication}`);
   lines.push('');
@@ -255,6 +363,9 @@ async function generateSynthesis(
   if (query.targetAgencies?.length) {
     lines.push(`- Target regulatory agencies: ${query.targetAgencies.join(', ')}`);
   }
+
+  lines.push('');
+  lines.push('> *Note: AI-powered synthesis was unavailable. This report contains raw findings only. Re-run the job for a full regulatory intelligence briefing.*');
 
   return lines.join('\n');
 }
