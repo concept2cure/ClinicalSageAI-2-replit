@@ -33,6 +33,7 @@ import {
   BookOpen,
   Link2,
 } from 'lucide-react';
+import logoSrc from '@/assets/concept2cure-logo.jpg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -268,8 +269,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         role="navigation"
         aria-label="Main sidebar"
       >
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
-          <Sparkles className="w-4 h-4 text-white" />
+        <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+          <img src={logoSrc} alt="C2C" className="w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
         </div>
         <button
           onClick={onNewChat}
@@ -350,8 +352,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Brand header */}
         <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
-              <Sparkles className="w-3 h-3 text-white" />
+            <div className="relative w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
+              <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
             </div>
             <span className="font-semibold text-zinc-800 text-[13px]">Concept2Cure</span>
           </div>

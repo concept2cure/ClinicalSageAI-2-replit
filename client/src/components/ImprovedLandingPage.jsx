@@ -15,7 +15,7 @@ export default function ImprovedLandingPage() {
             <Link to="/">
               <div className="flex items-center space-x-2">
                 <img
-                  src="/src/assets/concept2cure-logo.svg"
+                  src="/src/assets/concept2cure-logo.jpg"
                   alt="Concept2Cure"
                   className="h-10 w-auto"
                 />

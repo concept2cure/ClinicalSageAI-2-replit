@@ -68,64 +68,37 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center gap-4"
+      className="flex flex-col items-center gap-6"
     >
-      {/* Animated logo */}
+      {/* Brand logo with gentle pulse */}
       <motion.div
-        animate={{
-          rotate: [0, 360],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-        className="w-12 h-12"
+        animate={{ scale: [1, 1.03, 1], opacity: [0.8, 1, 0.8] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+        className="relative"
       >
-        <svg
-          viewBox="0 0 40 40"
-          className="w-full h-full"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="20"
-            cy="20"
-            r="18"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-blue-600"
+        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
+          <img
+            src="/src/assets/concept2cure-logo.jpg"
+            alt="Concept2Cure"
+            className="w-full h-full object-cover object-center"
           />
-          <motion.path
-            d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-blue-600"
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
           />
-          <motion.path
-            d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-violet-500"
-          />
-        </svg>
+        </div>
       </motion.div>
 
-      <p className="text-sm text-zinc-500">{message}</p>
+      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>{message}</p>
 
       {/* Progress bar */}
       <div className="w-48 h-1 bg-zinc-200 rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-blue-600 rounded-full"
+          className="h-full rounded-full"
+          style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)' }}
           initial={{ x: '-100%' }}
           animate={{ x: '100%' }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
     </motion.div>
