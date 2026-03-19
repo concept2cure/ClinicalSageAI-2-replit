@@ -272,3 +272,138 @@ export const insertBiomarkerOntologySchema = createInsertSchema(biomarkerOntolog
 export const selectBiomarkerOntologySchema = createSelectSchema(biomarkerOntology);
 export type InsertBiomarkerOntology = z.infer<typeof insertBiomarkerOntologySchema>;
 export type SelectBiomarkerOntology = z.infer<typeof selectBiomarkerOntologySchema>;
+
+// ============================================================
+// 8. PROTOCOL_EXTRACTIONS — protocol_extractions
+// ============================================================
+
+export const protocolExtractions = pgTable('protocol_extractions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id').notNull().references(() => organizations.id),
+  projectId: uuid('project_id'),
+  documentId: uuid('document_id'),
+  filePath: text('file_path'),
+  extractedFields: jsonb('extracted_fields').notNull(),
+  rawText: text('raw_text'),
+  contentHash: text('content_hash').notNull(),
+  processingTimeMs: integer('processing_time_ms'),
+  fieldsExtracted: integer('fields_extracted'),
+  totalFields: integer('total_fields'),
+  extractionVersion: text('extraction_version').default('2.0'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertProtocolExtractionSchema = createInsertSchema(protocolExtractions);
+export const selectProtocolExtractionSchema = createSelectSchema(protocolExtractions);
+export type InsertProtocolExtraction = z.infer<typeof insertProtocolExtractionSchema>;
+export type SelectProtocolExtraction = z.infer<typeof selectProtocolExtractionSchema>;
+
+// ============================================================
+// 9. EXTRACTED_GRAPH_ENTITIES — extracted_graph_entities
+// ============================================================
+
+export const extractedGraphEntities = pgTable('extracted_graph_entities', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id').notNull().references(() => organizations.id),
+  documentId: uuid('document_id').notNull(),
+  extractionId: uuid('extraction_id').notNull(),
+  entityName: text('entity_name').notNull(),
+  entityCategory: text('entity_category').notNull(),
+  confidence: decimal('confidence'),
+  sourceText: text('source_text'),
+  positionOffset: integer('position_offset'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertExtractedGraphEntitySchema = createInsertSchema(extractedGraphEntities);
+export const selectExtractedGraphEntitySchema = createSelectSchema(extractedGraphEntities);
+export type InsertExtractedGraphEntity = z.infer<typeof insertExtractedGraphEntitySchema>;
+export type SelectExtractedGraphEntity = z.infer<typeof selectExtractedGraphEntitySchema>;
+
+// ============================================================
+// 10. EXTRACTED_GRAPH_EDGES — extracted_graph_edges
+// ============================================================
+
+export const extractedGraphEdges = pgTable('extracted_graph_edges', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id').notNull().references(() => organizations.id),
+  documentId: uuid('document_id').notNull(),
+  extractionId: uuid('extraction_id').notNull(),
+  subjectName: text('subject_name').notNull(),
+  predicate: text('predicate').notNull(),
+  objectName: text('object_name').notNull(),
+  contextText: text('context_text'),
+  confidence: decimal('confidence'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertExtractedGraphEdgeSchema = createInsertSchema(extractedGraphEdges);
+export const selectExtractedGraphEdgeSchema = createSelectSchema(extractedGraphEdges);
+export type InsertExtractedGraphEdge = z.infer<typeof insertExtractedGraphEdgeSchema>;
+export type SelectExtractedGraphEdge = z.infer<typeof selectExtractedGraphEdgeSchema>;
+
+// ============================================================
+// 11. EXTRACTED_GRAPH_TRIPLETS — extracted_graph_triplets
+// ============================================================
+
+export const extractedGraphTriplets = pgTable('extracted_graph_triplets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id').notNull().references(() => organizations.id),
+  documentId: uuid('document_id').notNull(),
+  extractionId: uuid('extraction_id').notNull(),
+  subject: text('subject').notNull(),
+  predicate: text('predicate').notNull(),
+  object: text('object').notNull(),
+  evidenceText: text('evidence_text'),
+  confidence: decimal('confidence'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertExtractedGraphTripletSchema = createInsertSchema(extractedGraphTriplets);
+export const selectExtractedGraphTripletSchema = createSelectSchema(extractedGraphTriplets);
+export type InsertExtractedGraphTriplet = z.infer<typeof insertExtractedGraphTripletSchema>;
+export type SelectExtractedGraphTriplet = z.infer<typeof selectExtractedGraphTripletSchema>;
+
+// ============================================================
+// 12. EXTRACTED_CROSS_DOC_LINKS — extracted_cross_doc_links
+// ============================================================
+
+export const extractedCrossDocLinks = pgTable('extracted_cross_doc_links', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id').notNull().references(() => organizations.id),
+  extractionId: uuid('extraction_id').notNull(),
+  sourceDocumentId: uuid('source_document_id').notNull(),
+  targetDocumentId: uuid('target_document_id').notNull(),
+  linkType: text('link_type').notNull(),
+  sharedEntities: jsonb('shared_entities'),
+  confidence: decimal('confidence'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertExtractedCrossDocLinkSchema = createInsertSchema(extractedCrossDocLinks);
+export const selectExtractedCrossDocLinkSchema = createSelectSchema(extractedCrossDocLinks);
+export type InsertExtractedCrossDocLink = z.infer<typeof insertExtractedCrossDocLinkSchema>;
+export type SelectExtractedCrossDocLink = z.infer<typeof selectExtractedCrossDocLinkSchema>;
+
+// ============================================================
+// 13. RELATION_EXTRACTION_LOG — relation_extraction_log
+// ============================================================
+
+export const relationExtractionLog = pgTable('relation_extraction_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: integer('organization_id').notNull().references(() => organizations.id),
+  documentId: uuid('document_id').notNull(),
+  documentType: text('document_type'),
+  entitiesCount: integer('entities_count'),
+  relationshipsCount: integer('relationships_count'),
+  tripletsCount: integer('triplets_count'),
+  crossDocLinksCount: integer('cross_doc_links_count'),
+  processingTimeMs: integer('processing_time_ms'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertRelationExtractionLogSchema = createInsertSchema(relationExtractionLog);
+export const selectRelationExtractionLogSchema = createSelectSchema(relationExtractionLog);
+export type InsertRelationExtractionLog = z.infer<typeof insertRelationExtractionLogSchema>;
+export type SelectRelationExtractionLog = z.infer<typeof selectRelationExtractionLogSchema>;

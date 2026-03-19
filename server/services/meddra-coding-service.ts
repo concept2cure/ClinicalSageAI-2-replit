@@ -500,31 +500,31 @@ class MedDRACodingService {
         return null;
       }
 
-      // Build a WHERE clause that requires all words to appear in either PT or LLT name
-      // e.g., "headache severe" → pt_name ILIKE '%headache%' AND pt_name ILIKE '%severe%'
-      const wordConditions = words
-        .map((w) => {
-          const escaped = w.replace(/[%_]/g, '\\$&');
-          return `(pt_name ILIKE '%${escaped}%' OR llt_name ILIKE '%${escaped}%')`;
-        })
-        .join(' AND ');
+      // Build parameterized ILIKE conditions for each word
+      // Uses Drizzle sql template literals for injection safety
+      const patterns = words.map((w) => {
+        const escaped = w.replace(/[%_]/g, '\\$&');
+        return `%${escaped}%`;
+      });
 
-      const query = `
+      // Build the query using parameterized sql template
+      let query = sql`
         SELECT
           pt_code, pt_name,
           llt_code, llt_name,
           hlt_code, hlt_name,
           hlgt_code, hlgt_name,
           soc_code, soc_name,
-          is_primary_soc
+          is_primary_path as is_primary_soc
         FROM meddra_term_reference
-        WHERE ${wordConditions}
-        ORDER BY is_primary_soc DESC,
-                 LENGTH(pt_name) ASC
-        LIMIT 5
+        WHERE 1=1
       `;
+      for (const pattern of patterns) {
+        query = sql`${query} AND (pt_name ILIKE ${pattern} OR llt_name ILIKE ${pattern})`;
+      }
+      query = sql`${query} ORDER BY is_primary_path DESC, LENGTH(pt_name) ASC LIMIT 5`;
 
-      const results = await db.execute(sql.raw(query));
+      const results = await db.execute(query);
       const rows = results as unknown as MedDRARow[];
 
       if (!rows || rows.length === 0) {

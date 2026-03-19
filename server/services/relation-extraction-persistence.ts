@@ -8,8 +8,7 @@
  */
 
 import { db } from '../db';
-import { sql, eq, and } from 'drizzle-orm';
-import { createHash } from 'crypto';
+import { sql } from 'drizzle-orm';
 
 // ============================================================
 // Types
