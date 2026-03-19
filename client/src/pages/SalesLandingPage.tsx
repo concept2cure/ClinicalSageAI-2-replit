@@ -236,7 +236,7 @@ const features = [
     icon: Users,
     title: "Real-time Collaboration",
     description:
-      "Multi-stakeholder review workflows with audit trails, role-based access, and 21&nbsp;CFR Part&nbsp;11 compliant e-signatures.",
+      "Multi-stakeholder review workflows with audit trails, role-based access, and 21\u00A0CFR Part\u00A011 compliant e-signatures.",
   },
 ];
 
@@ -275,10 +275,9 @@ function Features() {
                 <f.icon className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900">{f.title}</h3>
-              <p
-                className="mt-2 text-sm leading-relaxed text-slate-500"
-                dangerouslySetInnerHTML={{ __html: f.description }}
-              />
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                {f.description}
+              </p>
             </motion.div>
           ))}
         </div>

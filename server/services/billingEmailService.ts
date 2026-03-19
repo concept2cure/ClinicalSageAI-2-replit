@@ -17,27 +17,41 @@ import nodemailer from 'nodemailer';
 // SMTP Configuration (same pattern as emailService.ts)
 // ---------------------------------------------------------------------------
 
+let _transporter: nodemailer.Transporter | null | undefined; // undefined = not yet initialized
+
 function getTransporter(): nodemailer.Transporter | null {
+  if (_transporter !== undefined) return _transporter;
+
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
   if (!host || !user || !pass) {
+    _transporter = null;
     return null;
   }
 
-  return nodemailer.createTransport({
+  _transporter = nodemailer.createTransport({
     host,
     port,
     secure: port === 465,
     auth: { user, pass },
   });
+  return _transporter;
 }
 
 const FROM_ADDRESS = process.env.SMTP_FROM || 'noreply@concept2cure.pro';
 const DASHBOARD_URL = process.env.APP_URL || 'https://concept2cure.pro';
 const BILLING_PATH = '/concept2cure/billing';
+
+// ---------------------------------------------------------------------------
+// HTML escape for user-supplied values interpolated into templates
+// ---------------------------------------------------------------------------
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 // ---------------------------------------------------------------------------
 // Shared HTML helpers
@@ -159,7 +173,7 @@ export async function sendBudgetAlertEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner(`&#9888; Budget Alert: ${threshold}% Used`, bannerBg, bannerText)}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Spending Alert for ${orgName}</h2>
+    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Spending Alert for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       Your organization has used <strong>${threshold}%</strong> of its monthly API budget.
     </p>
@@ -183,7 +197,7 @@ export async function sendBudgetAlertEmail(
     ${dashboardButton()}
     <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
     <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
-      This alert was triggered because spending reached the ${threshold}% threshold configured for ${orgName}. To change alert preferences, visit your billing settings.
+      This alert was triggered because spending reached the ${threshold}% threshold configured for ${escapeHtml(orgName)}. To change alert preferences, visit your billing settings.
     </p>
   `);
 
@@ -211,7 +225,7 @@ export async function sendBudgetExceededEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner('&#9888; Budget Exceeded: 100% Used', '#ffebee', '#c62828')}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Budget Exceeded for ${orgName}</h2>
+    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Budget Exceeded for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       Your organization has reached <strong>100%</strong> of its monthly API budget.
     </p>
@@ -263,12 +277,12 @@ export async function sendInvoiceReadyEmail(
   const body = wrapEmailHtml(`
     <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Invoice Ready</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
-      A new invoice has been generated for <strong>${orgName}</strong>.
+      A new invoice has been generated for <strong>${escapeHtml(orgName)}</strong>.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
       <tr>
         <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Invoice Number</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${invoiceNumber}</td>
+        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${escapeHtml(invoiceNumber)}</td>
       </tr>
       <tr>
         <td style="padding:12px 16px;color:#6b6b80;font-size:13px;width:50%;">Amount Due</td>
@@ -307,7 +321,7 @@ export async function sendPaymentFailedEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner('&#9888; Payment Failed', '#ffebee', '#c62828')}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Payment Failed for ${orgName}</h2>
+    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Payment Failed for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       We were unable to process your payment of <strong>${formatCents(amountCents)}</strong>. Please update your payment method to avoid service interruption.
     </p>
@@ -354,18 +368,18 @@ export async function sendPlanChangeEmail(
 
   const body = wrapEmailHtml(`
     ${alertBanner(`Plan ${direction} Confirmed`, bannerBg, bannerColor)}
-    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Plan ${direction} for ${orgName}</h2>
+    <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Plan ${direction} for ${escapeHtml(orgName)}</h2>
     <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
       Your subscription plan has been ${isUpgrade ? 'upgraded' : 'changed'} successfully.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
       <tr>
         <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Previous Plan</td>
-        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${oldTier}</td>
+        <td style="padding:12px 16px;background:#f9f9fb;color:#1a1a2e;font-size:13px;font-weight:600;border-bottom:1px solid #e8e8ee;">${escapeHtml(oldTier)}</td>
       </tr>
       <tr>
         <td style="padding:12px 16px;color:#6b6b80;font-size:13px;width:50%;">New Plan</td>
-        <td style="padding:12px 16px;color:#1a1a2e;font-size:13px;font-weight:600;">${newTier}</td>
+        <td style="padding:12px 16px;color:#1a1a2e;font-size:13px;font-weight:600;">${escapeHtml(newTier)}</td>
       </tr>
       <tr>
         <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;width:50%;">Effective Date</td>
@@ -406,7 +420,7 @@ export async function sendUsageSummaryEmail(
   const moduleRows = topModules
     .map(
       (m) => `<tr>
-        <td style="padding:10px 16px;color:#1a1a2e;font-size:13px;border-bottom:1px solid #e8e8ee;">${m.module}</td>
+        <td style="padding:10px 16px;color:#1a1a2e;font-size:13px;border-bottom:1px solid #e8e8ee;">${escapeHtml(m.module)}</td>
         <td style="padding:10px 16px;color:#1a1a2e;font-size:13px;border-bottom:1px solid #e8e8ee;text-align:right;">${m.requests.toLocaleString()}</td>
         <td style="padding:10px 16px;color:#1a1a2e;font-size:13px;border-bottom:1px solid #e8e8ee;text-align:right;">${formatCents(m.costCents)}</td>
       </tr>`,
@@ -423,7 +437,7 @@ export async function sendUsageSummaryEmail(
 
   const body = wrapEmailHtml(`
     <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Usage Summary</h2>
-    <p style="margin:0 0 8px;color:#6b6b80;font-size:13px;">${orgName} &middot; ${period}</p>
+    <p style="margin:0 0 8px;color:#6b6b80;font-size:13px;">${escapeHtml(orgName)} &middot; ${escapeHtml(period)}</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e8e8ee;border-radius:6px;overflow:hidden;">
       <tr>
         <td style="padding:12px 16px;background:#f9f9fb;color:#6b6b80;font-size:13px;border-bottom:1px solid #e8e8ee;width:50%;">Total Cost</td>

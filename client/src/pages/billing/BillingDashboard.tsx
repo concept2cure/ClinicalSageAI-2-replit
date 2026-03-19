@@ -19,18 +19,14 @@ import {
   CreditCard,
   Download,
   FileText,
-  TrendingUp,
   AlertTriangle,
   Bell,
-  Shield,
   Zap,
   Calendar,
   DollarSign,
   Users,
-  ArrowUpRight,
   CheckCircle,
   XCircle,
-  Clock,
   ChevronLeft,
   ChevronRight,
   Settings,
@@ -731,11 +727,8 @@ function BudgetAlertsTab() {
 
   const budgetNum = budget ? parseFloat(budget) : 0;
   // We read currentMonth spend from the billing status query if available
-  const statusQuery = useQuery<BillingStatus>({
-    queryKey: ['billing-status'],
-    enabled: false, // don't refetch; just read from cache
-  });
-  const currentSpend = statusQuery.data?.currentMonth?.spend ?? 0;
+  const cachedStatus = queryClient.getQueryData<BillingStatus>(['billing-status']);
+  const currentSpend = cachedStatus?.currentMonth?.spend ?? 0;
   const spendPercent = budgetNum > 0 ? Math.min((currentSpend / budgetNum) * 100, 100) : 0;
 
   return (

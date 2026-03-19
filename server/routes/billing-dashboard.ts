@@ -25,6 +25,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { pool } from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { getSecureOrgId } from '../utils/tenantContext.js';
 import Stripe from 'stripe';
 
 const router = Router();
@@ -34,15 +35,20 @@ const router = Router();
 // ─────────────────────────────────────────────────────────────────────────────
 
 function getOrgId(req: Request): number | null {
-  return (req as any).tenantContext?.organizationId
-    || (req as any).user?.organizationId
-    || null;
+  const raw = getSecureOrgId(req as any);
+  if (raw == null) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
+let _stripe: Stripe | null = null;
 function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
-  if (!key) throw new Error('Stripe secret key not configured');
-  return new Stripe(key, { apiVersion: '2023-10-16' as any });
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
+    if (!key) throw new Error('Stripe secret key not configured');
+    _stripe = new Stripe(key, { apiVersion: '2023-10-16' as any });
+  }
+  return _stripe;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,7 +90,7 @@ router.get('/usage', authenticateToken, async (req: Request, res: Response) => {
          module,
          COUNT(*)::int AS requests,
          COALESCE(SUM(tokens_used), 0)::bigint AS tokens_used,
-         COALESCE(SUM(cost), 0)::numeric(12,4) AS cost
+         COALESCE(SUM(cost_cents), 0) AS cost_cents
        FROM api_usage_logs
        WHERE organization_id = $2
          AND created_at >= $3::date
@@ -99,7 +105,7 @@ router.get('/usage', authenticateToken, async (req: Request, res: Response) => {
       (acc: { totalRequests: number; totalTokens: number; totalCost: number }, row: any) => {
         acc.totalRequests += Number(row.requests);
         acc.totalTokens += Number(row.tokens_used);
-        acc.totalCost += Number(row.cost);
+        acc.totalCost += Number(row.cost_cents) / 100;
         return acc;
       },
       { totalRequests: 0, totalTokens: 0, totalCost: 0 },
@@ -111,7 +117,7 @@ router.get('/usage', authenticateToken, async (req: Request, res: Response) => {
         module: r.module,
         requests: Number(r.requests),
         tokensUsed: Number(r.tokens_used),
-        cost: Number(r.cost),
+        cost: Number(r.cost_cents) / 100,
       })),
       totals,
       granularity,
@@ -139,43 +145,41 @@ router.get('/usage/summary', authenticateToken, async (req: Request, res: Respon
     const now = new Date();
     const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 
-    // Total usage for period
-    const totalResult = await pool.query(
-      `SELECT
-         COUNT(*)::int AS total_requests,
-         COALESCE(SUM(tokens_used), 0)::bigint AS total_tokens,
-         COALESCE(SUM(cost), 0)::numeric(12,4) AS total_cost
-       FROM api_usage_logs
-       WHERE organization_id = $1
-         AND created_at >= $2::date`,
-      [orgId, periodStart],
-    );
+    // Total usage, per-module usage, and budget info are independent — run in parallel
+    const [totalResult, moduleResult, budgetResult] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*)::int AS total_requests,
+           COALESCE(SUM(tokens_used), 0)::bigint AS total_tokens,
+           COALESCE(SUM(cost_cents), 0) AS total_cost_cents
+         FROM api_usage_logs
+         WHERE organization_id = $1
+           AND created_at >= $2::date`,
+        [orgId, periodStart],
+      ),
+      pool.query(
+        `SELECT
+           module,
+           COUNT(*)::int AS requests,
+           COALESCE(SUM(tokens_used), 0)::bigint AS tokens_used,
+           COALESCE(SUM(cost_cents), 0) AS cost_cents
+         FROM api_usage_logs
+         WHERE organization_id = $1
+           AND created_at >= $2::date
+         GROUP BY module
+         ORDER BY cost_cents DESC`,
+        [orgId, periodStart],
+      ),
+      pool.query(
+        `SELECT monthly_budget_cents FROM billing_budgets WHERE organization_id = $1 LIMIT 1`,
+        [orgId],
+      ),
+    ]);
 
-    // Usage by module
-    const moduleResult = await pool.query(
-      `SELECT
-         module,
-         COUNT(*)::int AS requests,
-         COALESCE(SUM(tokens_used), 0)::bigint AS tokens_used,
-         COALESCE(SUM(cost), 0)::numeric(12,4) AS cost
-       FROM api_usage_logs
-       WHERE organization_id = $1
-         AND created_at >= $2::date
-       GROUP BY module
-       ORDER BY cost DESC`,
-      [orgId, periodStart],
-    );
-
-    // Fetch budget info for remaining credits / budget pct
-    const budgetResult = await pool.query(
-      `SELECT monthly_budget FROM billing_budgets WHERE organization_id = $1 LIMIT 1`,
-      [orgId],
-    );
-
-    const totalRow = totalResult.rows[0] || { total_requests: 0, total_tokens: 0, total_cost: 0 };
-    const totalCost = Number(totalRow.total_cost);
-    const monthlyBudget = budgetResult.rows[0]?.monthly_budget
-      ? Number(budgetResult.rows[0].monthly_budget)
+    const totalRow = totalResult.rows[0] || { total_requests: 0, total_tokens: 0, total_cost_cents: 0 };
+    const totalCost = Number(totalRow.total_cost_cents) / 100;
+    const monthlyBudget = budgetResult.rows[0]?.monthly_budget_cents != null
+      ? Number(budgetResult.rows[0].monthly_budget_cents) / 100
       : null;
 
     const byModule: Record<string, { requests: number; tokensUsed: number; cost: number }> = {};
@@ -183,7 +187,7 @@ router.get('/usage/summary', authenticateToken, async (req: Request, res: Respon
       byModule[row.module] = {
         requests: Number(row.requests),
         tokensUsed: Number(row.tokens_used),
-        cost: Number(row.cost),
+        cost: Number(row.cost_cents) / 100,
       };
     }
 
@@ -281,27 +285,29 @@ router.get('/budgets', authenticateToken, async (req: Request, res: Response) =>
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const budgetResult = await pool.query(
-      `SELECT monthly_budget, hard_limit_enabled, alerts
-       FROM billing_budgets
-       WHERE organization_id = $1
-       LIMIT 1`,
-      [orgId],
-    );
-
     // Get current month spend
     const now = new Date();
     const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 
-    const spendResult = await pool.query(
-      `SELECT COALESCE(SUM(cost), 0)::numeric(12,4) AS current_spend
-       FROM api_usage_logs
-       WHERE organization_id = $1
-         AND created_at >= $2::date`,
-      [orgId, periodStart],
-    );
+    // Budget settings and current spend are independent — run in parallel
+    const [budgetResult, spendResult] = await Promise.all([
+      pool.query(
+        `SELECT monthly_budget_cents, hard_limit_enabled, alert_thresholds
+         FROM billing_budgets
+         WHERE organization_id = $1
+         LIMIT 1`,
+        [orgId],
+      ),
+      pool.query(
+        `SELECT COALESCE(SUM(cost_cents), 0) AS current_spend_cents
+         FROM api_usage_logs
+         WHERE organization_id = $1
+           AND created_at >= $2::date`,
+        [orgId, periodStart],
+      ),
+    ]);
 
-    const currentSpend = Number(spendResult.rows[0]?.current_spend || 0);
+    const currentSpend = Number(spendResult.rows[0]?.current_spend_cents || 0) / 100;
 
     if (budgetResult.rows.length === 0) {
       return res.json({
@@ -314,12 +320,12 @@ router.get('/budgets', authenticateToken, async (req: Request, res: Response) =>
     }
 
     const row = budgetResult.rows[0];
-    const monthlyBudget = row.monthly_budget ? Number(row.monthly_budget) : null;
+    const monthlyBudget = row.monthly_budget_cents != null ? Number(row.monthly_budget_cents) / 100 : null;
 
     res.json({
       monthlyBudget,
       hardLimitEnabled: row.hard_limit_enabled || false,
-      alerts: row.alerts || [],
+      alerts: row.alert_thresholds || [],
       currentSpend,
       budgetUsedPct: monthlyBudget != null && monthlyBudget > 0
         ? Math.round((currentSpend / monthlyBudget) * 10000) / 100
@@ -363,19 +369,24 @@ router.post('/budgets', authenticateToken, async (req: Request, res: Response) =
       }
     }
 
+    // Convert dollar amount from client to cents for storage
+    const budgetCents = (monthlyBudget !== undefined && monthlyBudget !== null)
+      ? Math.round(monthlyBudget * 100)
+      : null;
+
     const result = await pool.query(
-      `INSERT INTO billing_budgets (organization_id, monthly_budget, hard_limit_enabled, alerts, updated_at)
+      `INSERT INTO billing_budgets (organization_id, monthly_budget_cents, hard_limit_enabled, alert_thresholds, updated_at)
        VALUES ($1, $2, $3, $4, NOW())
        ON CONFLICT (organization_id)
        DO UPDATE SET
-         monthly_budget = COALESCE($2, billing_budgets.monthly_budget),
+         monthly_budget_cents = COALESCE($2, billing_budgets.monthly_budget_cents),
          hard_limit_enabled = COALESCE($3, billing_budgets.hard_limit_enabled),
-         alerts = COALESCE($4, billing_budgets.alerts),
+         alert_thresholds = COALESCE($4, billing_budgets.alert_thresholds),
          updated_at = NOW()
-       RETURNING monthly_budget, hard_limit_enabled, alerts`,
+       RETURNING monthly_budget_cents, hard_limit_enabled, alert_thresholds`,
       [
         orgId,
-        monthlyBudget ?? null,
+        budgetCents,
         hardLimitEnabled ?? false,
         alerts ? JSON.stringify(alerts) : null,
       ],
@@ -384,9 +395,9 @@ router.post('/budgets', authenticateToken, async (req: Request, res: Response) =
     const row = result.rows[0];
 
     res.json({
-      monthlyBudget: row.monthly_budget ? Number(row.monthly_budget) : null,
+      monthlyBudget: row.monthly_budget_cents != null ? Number(row.monthly_budget_cents) / 100 : null,
       hardLimitEnabled: row.hard_limit_enabled || false,
-      alerts: row.alerts || [],
+      alerts: row.alert_thresholds || [],
     });
   } catch (error) {
     console.error('[Billing Dashboard] Update budget error:', error);
