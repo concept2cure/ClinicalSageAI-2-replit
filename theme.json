@@ -2,7 +2,7 @@
   "variant": "professional",
   "primary": "hsl(18, 60%, 60%)",
   "secondary": "hsl(100, 20%, 46%)",
-  "accent": "hsl(210, 40%, 61%)",
+  "accent": "hsl(18, 50%, 55%)",
   "appearance": "light",
   "radius": 0.5,
   "fontFamily": {
