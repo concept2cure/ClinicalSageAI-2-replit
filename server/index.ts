@@ -1302,6 +1302,26 @@ try {
   console.error('❌ Failed to mount Safety Narrative routes:', error);
 }
 
+// Mount Statistical Defensibility Service routes (study design assessment)
+try {
+  const statDefModule = await import('./routes/statistical-defensibility.js');
+  const statDefRouter = statDefModule.default;
+  app.use('/api/statistical-defensibility', statDefRouter);
+  console.log('✅ Statistical Defensibility routes mounted (assess, consistency, endpoint-quality, sample-size, multiplicity, reviewer-risks)');
+} catch (error) {
+  console.error('❌ Failed to mount Statistical Defensibility routes:', error);
+}
+
+// Mount Conversation Health Monitoring route
+try {
+  const convHealthModule = await import('./routes/conversation-health.js');
+  const convHealthRouter = convHealthModule.default;
+  app.use('/api/conversation-health', convHealthRouter);
+  console.log('✅ Conversation Health Monitoring route mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Conversation Health routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');
