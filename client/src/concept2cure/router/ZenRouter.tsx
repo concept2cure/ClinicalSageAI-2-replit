@@ -37,6 +37,8 @@ const ECTDSubmissionDashboard = lazy(() => import('../pages/ECTDSubmissionDashbo
 const PharmacovigilanceDashboard = lazy(() => import('../pages/PharmacovigilanceDashboard'));
 const ClinicalOperationsDashboard = lazy(() => import('../pages/ClinicalOperationsDashboard'));
 const DocumentArtifactsHub = lazy(() => import('../pages/DocumentArtifactsHub'));
+const HAQManagerDashboard = lazy(() => import('../pages/HAQManagerDashboard'));
+const INDAutoDraftDashboard = lazy(() => import('../pages/INDAutoDraftDashboard'));
 
 // DTC Landing Page — public, renders at / for unauthenticated users
 const LandingPage = lazy(() => import('../pages/LandingPage'));
@@ -422,6 +424,32 @@ export const ZenRouter: React.FC = () => {
                 <ProtectedRoute>
                   <Suspense fallback={<ZenLoadingScreen message="Loading Document Artifacts..." />}>
                     <DocumentArtifactsHub />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* HAQ Response Manager */}
+          <Route path="/concept2cure/haq-manager">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading HAQ Manager..." />}>
+                    <HAQManagerDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* IND AutoDraft Engine */}
+          <Route path="/concept2cure/ind-autodraft">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading IND AutoDraft..." />}>
+                    <INDAutoDraftDashboard />
                   </Suspense>
                 </ProtectedRoute>
               </PageTransition>

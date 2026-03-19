@@ -1435,6 +1435,26 @@ try {
   console.error('❌ Failed to mount Biotech Artifact routes:', error);
 }
 
+// Mount HAQ Response Manager routes (FDA IR, EMA D120, PMDA, HC question tracking)
+try {
+  const haqModule = await import('./routes/haq-manager');
+  const haqRoutes = haqModule.default;
+  app.use('/api/haq-manager', haqRoutes);
+  console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
+} catch (error) {
+  console.error('❌ Failed to mount HAQ Manager routes:', error);
+}
+
+// Mount IND AutoDraft routes (AI-powered IND section generation with source traceability)
+try {
+  const indAutodraftModule = await import('./routes/ind-autodraft');
+  const indAutodraftRoutes = indAutodraftModule.default;
+  app.use('/api/ind-autodraft', indAutodraftRoutes);
+  console.log('✅ IND AutoDraft Engine routes mounted (16 IND sections, sentence-level traceability)');
+} catch (error) {
+  console.error('❌ Failed to mount IND AutoDraft routes:', error);
+}
+
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
 try {
   const indPdfModule = await import('./routes/ind-pdf');
