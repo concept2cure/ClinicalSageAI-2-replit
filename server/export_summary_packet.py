@@ -163,7 +163,7 @@ def export_summary_packet(data: Dict = Body(...)):
     
     pdf.ln(3)
     pdf.set_font("Arial", "I", size=9)
-    pdf.multi_cell(0, 5, "All insights generated using CSR-backed evidence, semantic alignment, and protocol validation tools built into LumenTrialGuide.AI.")
+    pdf.multi_cell(0, 5, "All insights generated using CSR-backed evidence, semantic alignment, and protocol validation tools built into Concept2Cure.")
     
     # Add a separator line
     pdf.ln(5)
@@ -601,7 +601,7 @@ def send_export_notification_email(recipient_email: str, session_id: str, filena
                     
                     <p>If you have any questions about this export or need assistance with regulatory submissions, please contact our support team.</p>
                     
-                    <p>Thank you for using LumenTrialGuide.AI</p>
+                    <p>Thank you for using Concept2Cure</p>
                 </div>
                 <div class="footer">
                     <p>This is an automated message. Please do not reply to this email.</p>

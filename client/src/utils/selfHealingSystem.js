@@ -1,5 +1,5 @@
 /**
- * Self-Healing System for TrialSage
+ * Self-Healing System for Concept2Cure
  * Provides real-time diagnostics and auto-recovery capabilities
  */
 

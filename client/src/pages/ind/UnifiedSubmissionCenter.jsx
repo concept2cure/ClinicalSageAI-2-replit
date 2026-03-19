@@ -145,9 +145,9 @@ const COLORS = {
   success: '#10B981', // Green
   warning: '#F59E0B', // Amber
   danger: '#EF4444', // Red
-  purple: '#8B5CF6',
+  purple: '#6a9bcc',
   indigo: '#6366F1',
-  pink: '#EC4899',
+  pink: '#d97757',
   teal: '#14B8A6',
 };
 

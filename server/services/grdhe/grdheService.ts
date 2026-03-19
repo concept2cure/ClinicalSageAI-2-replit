@@ -862,7 +862,7 @@ export class GRDHEService {
       SELECT regulatory_harmonization.create_export_job(
         ${request.tenantId}::uuid,
         ${request.sourceEntityType},
-        ${sql.raw(`ARRAY[${request.sourceEntityIds.map(id => `'${id}'::uuid`).join(',')}]`)},
+        ${sql`${request.sourceEntityIds}::uuid[]`},
         ${request.targetFormat}::regulatory_harmonization.regulatory_format,
         ${request.targetJurisdiction},
         ${userId}

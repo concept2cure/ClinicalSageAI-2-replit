@@ -643,7 +643,7 @@ All procedures must follow validated protocols.
               
               // Show notification
               const notification = document.createElement('div');
-              notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #059669; color: white; padding: 12px 20px; border-radius: 6px; z-index: 9999; animation: slideIn 0.3s ease-out;';
+              notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #647746; color: white; padding: 12px 20px; border-radius: 6px; z-index: 9999; animation: slideIn 0.3s ease-out;';
               notification.textContent = `Real-time update: ${data.patch.type}`;
               document.body.appendChild(notification);
               
@@ -1600,7 +1600,7 @@ This version has been successfully restored to the editor.`;
   return (
     // START: IND BUILDER ENHANCEMENT - PHASE 1 - OPTIMIZED EDITOR LAYOUT (DO NOT REMOVE OR MODIFY THIS LINE)
     <div
-      style={{ width: '100vw', height: '100vh', margin: 0, padding: 0, backgroundColor: '#f8fafc' }}
+      style={{ width: '100vw', height: '100vh', margin: 0, padding: 0, backgroundColor: '#faf9f5' }}
     >
       <PackageErrorDisplay />
       {/* Enhanced Header with Compliance Metrics */}

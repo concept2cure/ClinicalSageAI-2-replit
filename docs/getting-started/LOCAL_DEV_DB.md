@@ -7,13 +7,13 @@ This guide provides a working database bootstrap so `DATABASE_URL` exists in a c
 1. Start Postgres:
 
    ```bash
-   docker run --name clinicalsage-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=clinicalsage -p 5432:5432 -d postgres:16
+   docker run --name concept2cure-ri-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=concept2cure-ri -p 5432:5432 -d postgres:16
    ```
 
 2. Copy `.env.example` to `.env` and set:
 
    ```bash
-   DATABASE_URL=postgres://postgres:postgres@localhost:5432/clinicalsage
+   DATABASE_URL=postgres://postgres:postgres@localhost:5432/concept2cure-ri
    ```
 
 3. Apply migrations / schema:

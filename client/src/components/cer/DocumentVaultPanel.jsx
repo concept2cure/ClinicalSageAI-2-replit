@@ -63,7 +63,7 @@ export default function DocumentVaultPanel({
     category: 'Clinical Evaluation',
     status: 'draft',
     description: '',
-    author: 'TrialSage AI',
+    author: 'Concept2Cure AI',
     tags: ['CER'],
   });
 
@@ -124,7 +124,7 @@ export default function DocumentVaultPanel({
         category: 'Clinical Evaluation',
         status: 'draft',
         description: '',
-        author: 'TrialSage AI',
+        author: 'Concept2Cure AI',
         tags: ['CER'],
       });
 

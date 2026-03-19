@@ -2,7 +2,7 @@
  * Vault Retriever Service
  *
  * This module provides functions to retrieve relevant context from indexed documents
- * in the TrialSage Vault using embedding-based similarity search.
+ * in the Concept2Cure Vault using embedding-based similarity search.
  */
 
 import fs from 'fs/promises';

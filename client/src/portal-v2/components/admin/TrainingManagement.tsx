@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Training Management System
+ * Concept2Cure Client Portal V2 - Training Management System
  *
  * Compliance training management with:
  * - Training curriculum management
@@ -306,9 +306,9 @@ const MOCK_MODULES: TrainingModule[] = [
   },
   {
     id: 'mod_003',
-    title: 'TrialSage Platform Onboarding',
+    title: 'Concept2Cure Platform Onboarding',
     description:
-      'Complete onboarding course covering all core features of the TrialSage regulatory submission platform.',
+      'Complete onboarding course covering all core features of the Concept2Cure regulatory submission platform.',
     type: 'onboarding',
     durationMinutes: 120,
     passingScore: 75,
@@ -506,7 +506,7 @@ const MOCK_PROGRESS: UserTrainingProgress[] = [
     userRole: 'Regulatory Associate',
     department: 'Regulatory Affairs',
     moduleId: 'mod_003',
-    moduleTitle: 'TrialSage Platform Onboarding',
+    moduleTitle: 'Concept2Cure Platform Onboarding',
     status: 'not_started',
     progress: 0,
     attempts: 0,

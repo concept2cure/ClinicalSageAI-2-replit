@@ -76,7 +76,7 @@ function check(label, status, acceptable = [200, 201, 304]) {
 
 async function main() {
   console.log('╔══════════════════════════════════════════════════════════╗');
-  console.log('║   COMPREHENSIVE SMOKE TEST — ClinicalSageAI Platform   ║');
+  console.log('║   COMPREHENSIVE SMOKE TEST — Concept2Cure.RI Platform   ║');
   console.log('╚══════════════════════════════════════════════════════════╝\n');
 
   // ── PHASE 1: Public endpoints ───────────────────────────────────────

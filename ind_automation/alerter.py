@@ -1,5 +1,5 @@
 """
-Alerter Module for LumenTrialGuide.AI
+Alerter Module for Concept2Cure
 
 This module provides the alerting capabilities for system events
 including Traefik health status and certificate expiration warnings.

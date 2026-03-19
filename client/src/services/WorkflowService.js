@@ -1,7 +1,7 @@
 /**
  * Workflow Service
  *
- * This service provides workflow management capabilities for the TrialSage platform,
+ * This service provides workflow management capabilities for the Concept2Cure platform,
  * including task tracking, approvals, and process automation.
  */
 

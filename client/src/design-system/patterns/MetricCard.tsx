@@ -1,5 +1,5 @@
 /**
- * TrialSage Design System - Metric Card
+ * Concept2Cure Design System - Metric Card
  *
  * Beautiful, data-rich metric cards for dashboards.
  * Designed for at-a-glance insights with elegant typography.

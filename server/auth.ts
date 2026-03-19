@@ -109,7 +109,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     const devApiKey = process.env.DEV_API_KEY;
     if (devApiKey && apiKey === devApiKey) {
       if (process.env.NODE_ENV === 'production') {
-        logger.warn('DEV_API_KEY authentication attempted in production — rejected');
+        logger.warn('[SECURITY] DEV_API_KEY authentication attempted in production — rejected. Remove DEV_API_KEY from production environment.');
         return res.status(401).json({ error: 'Invalid token or API key' });
       }
       req.userId = 1;

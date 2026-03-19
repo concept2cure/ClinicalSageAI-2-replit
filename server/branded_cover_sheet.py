@@ -2,7 +2,7 @@
 """
 Branded Cover Sheet Generator
 This module provides functions to create professional branded cover sheets for
-all LumenTrialGuide.AI exports including Summary Packets and Regulatory Bundles.
+all Concept2Cure exports including Summary Packets and Regulatory Bundles.
 """
 
 import os
@@ -46,7 +46,7 @@ def generate_cover_sheet(pdf: FPDF,
     pdf.set_font("Arial", "B", 24)
     pdf.set_text_color(255, 255, 255)
     pdf.set_xy(15, 15)
-    pdf.cell(0, 10, "LumenTrialGuide.AI", 0, 1, 'L')
+    pdf.cell(0, 10, "Concept2Cure", 0, 1, 'L')
     
     # Add document type
     pdf.set_font("Arial", "I", 12)
@@ -148,7 +148,7 @@ def generate_cover_sheet(pdf: FPDF,
     pdf.set_font("Arial", "I", 9)
     pdf.set_text_color(100, 116, 139)  # Slate-500
     pdf.set_xy(0, 280)
-    pdf.cell(0, 8, "Powered by LumenTrialGuide.AI - Intelligent Clinical Study Analysis", 0, 1, 'C')
+    pdf.cell(0, 8, "Powered by Concept2Cure - Intelligent Clinical Study Analysis", 0, 1, 'C')
     pdf.cell(0, 8, "Generated on " + datetime.now().strftime("%Y-%m-%d at %H:%M:%S"), 0, 1, 'C')
 
 def load_session_metadata(session_id: str) -> Dict:

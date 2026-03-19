@@ -371,7 +371,7 @@ function generateHtmlReport(data) {
   <title>FDA 510k eSTAR Investor-Ready Report</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
       line-height: 1.6;
       color: #333;
       max-width: 1200px;

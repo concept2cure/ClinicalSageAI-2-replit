@@ -14,6 +14,7 @@ import { db } from '../db';
 import { eq, and, ilike, sql } from 'drizzle-orm';
 import { ai } from '../lib/unified-ai-client';
 
+import OpenAI from 'openai';
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -159,6 +160,24 @@ Return valid JSON array:
 // ---------------------------------------------------------------------------
 
 class MedDRACodingService {
+  private openai: OpenAI | null = null;
+
+  /**
+   * Lazily initialise the OpenAI client so the module can be imported even when
+   * OPENAI_API_KEY is not yet set (e.g. during startup or testing).
+   */
+  private getOpenAI(): OpenAI {
+    if (!this.openai) {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error(
+          'OPENAI_API_KEY environment variable is required for AI-assisted MedDRA coding'
+        );
+      }
+      this.openai = new OpenAI({ apiKey });
+    }
+    return this.openai;
+  }
 
   // -------------------------------------------------------------------------
   // 1. codeAdverseEvent
@@ -250,6 +269,13 @@ class MedDRACodingService {
 
     const content = await ai.complete(
       [
+    const client = this.getOpenAI();
+
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o',
+      temperature: 0.1,
+      max_tokens: 1500,
+      messages: [
         { role: 'system', content: MEDDRA_SUGGESTION_PROMPT },
         {
           role: 'user',
@@ -259,6 +285,10 @@ class MedDRACodingService {
       { jsonMode: true, temperature: 0.1, maxTokens: 1500 }
     );
 
+      response_format: { type: 'json_object' },
+    });
+
+    const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from AI model during PT suggestion');
     }
@@ -486,6 +516,16 @@ class MedDRACodingService {
 
       // Build the query using parameterized sql template
       let query = sql`
+      // Build a WHERE clause that requires all words to appear in either PT or LLT name
+      // e.g., "headache severe" → pt_name ILIKE '%headache%' AND pt_name ILIKE '%severe%'
+      const wordConditions = words
+        .map((w) => {
+          const escaped = w.replace(/[%_]/g, '\\$&');
+          return `(pt_name ILIKE '%${escaped}%' OR llt_name ILIKE '%${escaped}%')`;
+        })
+        .join(' AND ');
+
+      const query = `
         SELECT
           pt_code, pt_name,
           llt_code, llt_name,
@@ -502,6 +542,15 @@ class MedDRACodingService {
       query = sql`${query} ORDER BY is_primary_path DESC, LENGTH(pt_name) ASC LIMIT 5`;
 
       const results = await db.execute(query);
+          is_primary_soc
+        FROM meddra_term_reference
+        WHERE ${wordConditions}
+        ORDER BY is_primary_soc DESC,
+                 LENGTH(pt_name) ASC
+        LIMIT 5
+      `;
+
+      const results = await db.execute(sql.raw(query));
       const rows = results as unknown as MedDRARow[];
 
       if (!rows || rows.length === 0) {
@@ -549,12 +598,20 @@ class MedDRACodingService {
 
   /**
    * AI-assisted coding via unified AI client when no database match is found.
+   * AI-assisted coding via OpenAI when no database match is found.
    * Confidence is capped at 0.7 for AI-only results because there is no
    * authoritative MedDRA reference to validate against.
    */
   private async aiAssistedCoding(term: string): Promise<MedDRACodingResult> {
     const content = await ai.complete(
       [
+    const client = this.getOpenAI();
+
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o',
+      temperature: 0.0,
+      max_tokens: 1200,
+      messages: [
         { role: 'system', content: MEDDRA_CODING_SYSTEM_PROMPT },
         {
           role: 'user',
@@ -564,6 +621,10 @@ class MedDRACodingService {
       { jsonMode: true, temperature: 0.0, maxTokens: 1200 }
     );
 
+      response_format: { type: 'json_object' },
+    });
+
+    const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error(`AI model returned empty response when coding term: "${term}"`);
     }

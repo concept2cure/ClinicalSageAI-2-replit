@@ -1,5 +1,5 @@
 /**
- * Enterprise Authentication Routes - TrialSage V2
+ * Enterprise Authentication Routes - Concept2Cure V2
  *
  * Multi-step authentication flow for enterprise users:
  * 1. check-email - Validate email and determine auth flow
@@ -123,23 +123,20 @@ router.post('/check-email', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!userResult.length) {
-      // User doesn't exist - still return password flow for signup
+      // SECURITY: Return same shape whether user exists or not to prevent enumeration
       return res.json({
-        exists: false,
         authFlow: 'password',
         mfaRequired: false,
-        passwordSet: false,
         email: normalizedEmail,
       });
     }
 
     const user = userResult[0];
 
+    // SECURITY: Do not expose 'exists' flag — prevents email enumeration
     res.json({
-      exists: true,
       authFlow: 'password',
       mfaRequired: user.mfaEnabled === true,
-      passwordSet: !!user.passwordHash,
       email: normalizedEmail,
     });
   } catch (error: any) {

@@ -73,7 +73,7 @@ const CustomerValidation = ({ t }) => {
   const testimonials = [
     {
       quote: t(
-        'TrialSage has transformed how we approach regulatory submissions. The AI-driven IND module saved us 6 weeks on our last submission, and the CSR intelligence gives us insights we never had before.'
+        'Concept2Cure has transformed how we approach regulatory submissions. The AI-driven IND module saved us 6 weeks on our last submission, and the CSR intelligence gives us insights we never had before.'
       ),
       name: 'Sarah Johnson',
       title: t('VP Regulatory Affairs, BioAdvance'),
@@ -83,7 +83,7 @@ const CustomerValidation = ({ t }) => {
     },
     {
       quote: t(
-        'As a CRO managing hundreds of trials, the TrialSage platform helps us deliver superior value to sponsors. Their AI-powered CSR analytics has become our secret weapon for designing better protocols.'
+        'As a CRO managing hundreds of trials, the Concept2Cure platform helps us deliver superior value to sponsors. Their AI-powered CSR analytics has become our secret weapon for designing better protocols.'
       ),
       name: 'Michael Chen',
       title: t('Clinical Operations Director, GlobalTrials'),
@@ -143,7 +143,7 @@ const CustomerValidation = ({ t }) => {
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             {t(
-              'TrialSage is the trusted clinical intelligence platform for pharmaceutical companies, biotechs, and CROs worldwide.'
+              'Concept2Cure is the trusted clinical intelligence platform for pharmaceutical companies, biotechs, and CROs worldwide.'
             )}
           </p>
         </div>

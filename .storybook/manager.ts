@@ -1,7 +1,7 @@
 import { addons } from '@storybook/manager-api';
 import { create } from '@storybook/theming/create';
 
-const clinicalSageTheme = create({
+const concept2CureRITheme = create({
   base: 'light',
 
   // Brand
@@ -16,7 +16,7 @@ const clinicalSageTheme = create({
   appBorderRadius: 8,
 
   // Typography
-  fontBase: '"Inter", "Segoe UI", Roboto, sans-serif',
+  fontBase: '"Inter", "Poppins", Roboto, sans-serif',
   fontCode: '"Fira Code", "Monaco", monospace',
 
   // Text colors
@@ -41,7 +41,7 @@ const clinicalSageTheme = create({
 });
 
 addons.setConfig({
-  theme: clinicalSageTheme,
+  theme: concept2CureRITheme,
   sidebar: {
     showRoots: true,
     collapsedRoots: ['deprecated'],

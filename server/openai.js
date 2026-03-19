@@ -1,5 +1,5 @@
 /**
- * OpenAI Integration API for TrialSage
+ * OpenAI Integration API for Concept2Cure
  *
  * This module provides secure endpoints to interact with OpenAI services.
  * It implements proper validation, error handling, rate limiting, and audit logging.

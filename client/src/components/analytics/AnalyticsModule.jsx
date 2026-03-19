@@ -1,7 +1,7 @@
 /**
  * Analytics Module Component
  *
- * This component provides analytics and reporting tools for the TrialSage platform,
+ * This component provides analytics and reporting tools for the Concept2Cure platform,
  * allowing users to visualize and analyze regulatory data.
  */
 

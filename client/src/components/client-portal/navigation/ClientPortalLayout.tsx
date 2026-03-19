@@ -113,7 +113,7 @@ export function ClientPortalLayout({ children }: ClientPortalLayoutProps) {
               <div className="h-8 w-8 rounded-xl bg-zinc-900 flex items-center justify-center">
                 <span className="text-white font-semibold text-xs">TS</span>
               </div>
-              {sidebarOpen && <span className="font-semibold text-zinc-900">TrialSage</span>}
+              {sidebarOpen && <span className="font-semibold text-zinc-900">Concept2Cure</span>}
             </div>
           </Link>
           <Button

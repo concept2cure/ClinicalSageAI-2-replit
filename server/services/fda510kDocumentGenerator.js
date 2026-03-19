@@ -102,7 +102,7 @@ class FDA510kDocumentGenerator {
         size: 'LETTER',
         info: {
           Title: `510(k) Submission - ${submission.device?.deviceName || 'Unknown Device'}`,
-          Author: 'TrialSage Regulatory Platform',
+          Author: 'Concept2Cure Regulatory Platform',
           Subject: 'FDA 510(k) Premarket Notification',
           Keywords: '510k, FDA, Medical Device, Regulatory'
         }

@@ -169,7 +169,7 @@ class ComprehensiveSubmissionGenerator {
         size: 'LETTER',
         info: {
           Title: '510(k) Submission - CardioFlow Vascular Stent System',
-          Author: 'TrialSage Regulatory Platform',
+          Author: 'Concept2Cure Regulatory Platform',
           Subject: 'FDA 510(k) Premarket Notification',
           Keywords: '510k, FDA, Medical Device, Stent'
         }
@@ -516,7 +516,7 @@ class ComprehensiveSubmissionGenerator {
         size: 'LETTER',
         info: {
           Title: 'PMA Submission - NeuroStim Deep Brain Stimulation System',
-          Author: 'TrialSage Regulatory Platform',
+          Author: 'Concept2Cure Regulatory Platform',
           Subject: 'FDA PMA Premarket Approval',
           Keywords: 'PMA, FDA, Medical Device, Class III, DBS'
         }
@@ -645,7 +645,7 @@ class ComprehensiveSubmissionGenerator {
         size: 'LETTER',
         info: {
           Title: 'Clinical Evaluation Report - CardioFlow Vascular Stent System',
-          Author: 'TrialSage Regulatory Platform',
+          Author: 'Concept2Cure Regulatory Platform',
           Subject: 'EU MDR Clinical Evaluation Report',
           Keywords: 'CER, MDR, Clinical Evaluation, Medical Device'
         }
@@ -840,7 +840,7 @@ class ComprehensiveSubmissionGenerator {
         size: 'LETTER',
         info: {
           Title: 'AI Defense Report - Regulatory Submission Generation',
-          Author: 'TrialSage Regulatory Platform',
+          Author: 'Concept2Cure Regulatory Platform',
           Subject: 'AI Usage and Validation Report',
           Keywords: 'AI, Validation, Compliance, Regulatory'
         }
@@ -862,7 +862,7 @@ class ComprehensiveSubmissionGenerator {
       doc.fontSize(18).text('Artificial Intelligence Usage in Regulatory Submissions', { align: 'center' });
       doc.moveDown(2);
       doc.fontSize(14)
-        .text('TrialSage Regulatory Platform', { align: 'center' })
+        .text('Concept2Cure Regulatory Platform', { align: 'center' })
         .moveDown(2)
         .text(`Report Date: ${new Date().toLocaleDateString()}`, { align: 'center' })
         .text('Version: 1.0', { align: 'center' });
@@ -1001,7 +1001,7 @@ class ComprehensiveSubmissionGenerator {
         .text('We attest that the AI-assisted generation process described in this report was conducted with appropriate oversight, validation, and quality controls to ensure accuracy and compliance with all applicable regulations.')
         .moveDown()
         .text(`Date: ${new Date().toLocaleDateString()}`)
-        .text('TrialSage Regulatory Platform')
+        .text('Concept2Cure Regulatory Platform')
         .text('Authorized Signature: _________________________');
 
       doc.end();

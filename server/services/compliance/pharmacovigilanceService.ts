@@ -929,7 +929,7 @@ function generateWorldwideUniqueId(): string {
   const now = new Date();
   const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
   const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
-  return `XX-CLINICALSAGE-${datePart}-${randomPart}`;
+  return `XX-C2CRI-${datePart}-${randomPart}`;
 }
 
 /** Map a database row to an AdverseEvent object */

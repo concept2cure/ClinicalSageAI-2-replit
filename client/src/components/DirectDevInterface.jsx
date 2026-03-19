@@ -72,7 +72,7 @@ const DirectDevInterface = () => {
     },
     {
       label: 'Create new module',
-      request: 'Create a new module for the TrialSage platform',
+      request: 'Create a new module for the Concept2Cure platform',
     },
     {
       label: 'Fix performance issue',

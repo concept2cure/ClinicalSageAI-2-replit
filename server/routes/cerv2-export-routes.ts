@@ -361,7 +361,7 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
             title: mockDoc.title,
             version: mockDoc.version,
             exportedAt: new Date().toISOString(),
-            generator: 'ClinicalSageAI CERV2 Mock Export',
+            generator: 'Concept2Cure.RI CERV2 Mock Export',
           },
           null,
           2

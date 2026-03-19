@@ -1,5 +1,5 @@
 """
-Data Pipeline Module for LumenTrialGuide.AI
+Data Pipeline Module for Concept2Cure
 
 This module handles data fetching, transformation, and integration
 with the Redis caching layer for optimized performance.

@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Access Control Matrix
+ * Concept2Cure Client Portal V2 - Access Control Matrix
  *
  * Visual representation of user-role-permission relationships:
  * - Role-permission matrix view

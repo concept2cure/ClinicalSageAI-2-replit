@@ -101,8 +101,8 @@ const FAILURE_REASONS = [
   { id: 'safety', label: 'Safety', color: '#f97316' },
   { id: 'pk', label: 'PK/Bioavailability', color: '#f59e0b' },
   { id: 'operational', label: 'Operational', color: '#84cc16' },
-  { id: 'enrollment', label: 'Enrollment', color: '#14b8a6' },
-  { id: 'other', label: 'Other', color: '#6366f1' },
+  { id: 'enrollment', label: 'Enrollment', color: '#788c5d' },
+  { id: 'other', label: 'Other', color: '#d97757' },
 ];
 
 // Therapeutic areas for the filter
@@ -249,10 +249,10 @@ export default function FailureMapVisualizer() {
                           key={cell.id}
                           className="flex-1 text-center mx-1 py-3 rounded font-medium text-sm flex items-center justify-center text-white"
                           style={{
-                            backgroundColor: cell.count === 0 ? '#f3f4f6' : cell.color,
+                            backgroundColor: cell.count === 0 ? '#f4f3ee' : cell.color,
                             opacity:
                               cell.count === 0 ? 0.5 : 0.35 + Math.min(cell.count / 3, 1) * 0.65,
-                            color: cell.count === 0 ? '#9ca3af' : 'white',
+                            color: cell.count === 0 ? '#b0aea5' : 'white',
                           }}
                         >
                           {cell.count}
@@ -353,5 +353,5 @@ export default function FailureMapVisualizer() {
 function getFailureColor(reason: string): string {
   const reasonLower = reason.toLowerCase();
   const match = FAILURE_REASONS.find(r => r.id === reasonLower);
-  return match ? match.color : '#6366f1'; // Default to blue if no match
+  return match ? match.color : '#d97757'; // Default to blue if no match
 }

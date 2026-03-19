@@ -8,14 +8,12 @@
  * The job includes robust error handling, detailed logging, and notification capabilities.
  */
 
-import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import { logSystemEvent, logAction } from '../utils/audit-logger.js';
+import { pool } from '../db.js';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Use the same Neon PostgreSQL pool as the rest of the application
+// (Previously used Supabase client which caused a database mismatch)
 
 // Configure email transport for notifications
 const emailTransport = nodemailer.createTransport({
@@ -43,7 +41,7 @@ async function sendNotification(subject, message, recipients) {
     }
 
     await emailTransport.sendMail({
-      from: process.env.EMAIL_FROM || 'TrialSage Vault <no-reply@trialsage.ai>',
+      from: process.env.EMAIL_FROM || 'Concept2Cure Vault <no-reply@trialsage.ai>',
       to: recipients.join(', '),
       subject,
       html: message,
@@ -131,23 +129,18 @@ async function deleteDocument(document, wasArchived) {
   try {
     console.log(`[RETENTION] Deleting document: ${document.id} - ${document.name}`);
 
-    // First delete the file from storage
+    // First delete the file from storage (filesystem-based since we use Neon, not Supabase storage)
     if (document.storage_path) {
-      const { error: storageError } = await supabase.storage
-        .from('documents')
-        .remove([document.storage_path]);
-
-      if (storageError) {
-        throw new Error(`Storage error: ${storageError.message}`);
+      const fs = await import('fs/promises');
+      try {
+        await fs.unlink(document.storage_path);
+      } catch (fsErr) {
+        console.warn(`[RETENTION] File not found on disk: ${document.storage_path}`, fsErr.message);
       }
     }
 
-    // Then delete the database record
-    const { error: dbError } = await supabase.from('documents').delete().eq('id', document.id);
-
-    if (dbError) {
-      throw new Error(`Database error: ${dbError.message}`);
-    }
+    // Then delete the database record using the shared Neon pool
+    await pool.query('DELETE FROM documents WHERE id = $1', [document.id]);
 
     logAction({
       action: 'document.delete',
@@ -452,7 +445,7 @@ async function sendExpirationNotifications(approachingDocs) {
   for (const policyId in docsByPolicy) {
     const { policy, documents } = docsByPolicy[policyId];
 
-    const subject = `TrialSage Vault: ${documents.length} document(s) approaching retention expiration`;
+    const subject = `Concept2Cure Vault: ${documents.length} document(s) approaching retention expiration`;
 
     let message = `
       <h2>Document Retention Notification</h2>
@@ -480,7 +473,7 @@ async function sendExpirationNotifications(approachingDocs) {
     message += `
       </table>
       <p>Please review these documents and take appropriate action if they need to be preserved.</p>
-      <p>This is an automated message from TrialSage Vault Retention Service.</p>
+      <p>This is an automated message from Concept2Cure Vault Retention Service.</p>
     `;
 
     await sendNotification(subject, message, adminEmails);

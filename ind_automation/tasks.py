@@ -1,5 +1,5 @@
 """
-Celery Tasks Module for LumenTrialGuide.AI
+Celery Tasks Module for Concept2Cure
 
 This module defines background tasks for automated monitoring and alerting,
 including Traefik health checks and certificate expiration warnings.

@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Organization Management
+ * Concept2Cure Client Portal V2 - Organization Management
  *
  * Multi-tenant organization administration with:
  * - Organization profile and branding
@@ -870,7 +870,7 @@ const BrandingCustomization: React.FC<{
       <CardHeader>
         <CardTitle>Branding & Customization</CardTitle>
         <CardDescription>
-          Customize the appearance of TrialSage for your organization
+          Customize the appearance of Concept2Cure for your organization
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

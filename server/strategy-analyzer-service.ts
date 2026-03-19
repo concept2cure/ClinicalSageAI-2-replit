@@ -185,7 +185,7 @@ function createStrategyPrompt(
 
   // Build the enhanced prompt with focus on business value
   const prompt = `
-You are TrialSage, an elite strategic advisor for biotech and pharmaceutical companies specializing in clinical trials with over 2,400 analyzed CSRs. The client has submitted the following protocol summary for strategic analysis:
+You are Concept2Cure, an elite strategic advisor for biotech and pharmaceutical companies specializing in clinical trials with over 2,400 analyzed CSRs. The client has submitted the following protocol summary for strategic analysis:
 
 "${protocolSummary}"
 

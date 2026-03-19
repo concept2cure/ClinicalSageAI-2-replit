@@ -199,7 +199,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
 
   if (!programId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF9]">
+      <div className="flex-1 flex items-center justify-center bg-[#faf9f5]">
         <div className="text-center">
           <Fingerprint className="w-12 h-12 text-zinc-200 mx-auto mb-3" />
           <p className="text-sm text-zinc-500">Select a program to view its provenance trail</p>
@@ -214,7 +214,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF9]">
+      <div className="flex-1 flex items-center justify-center bg-[#faf9f5]">
         <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
       </div>
     );
@@ -225,7 +225,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAFAF9] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#faf9f5] overflow-hidden">
       {/* Header */}
       <div className="border-b bg-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">

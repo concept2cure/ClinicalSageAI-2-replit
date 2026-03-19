@@ -62,7 +62,7 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
     });
 
     // Draw edges first
-    ctx.strokeStyle = '#6b7280';
+    ctx.strokeStyle = '#8a8880';
     ctx.lineWidth = 2;
     edges.forEach(edge => {
       const source = nodePositions.get(edge.source);
@@ -99,12 +99,12 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
       // Node colors by type
       const colors = {
         BATCH: '#ef4444',
-        RAW_MATERIAL: '#22c55e',
+        RAW_MATERIAL: '#92a87a',
         INTERMEDIATE: '#f59e0b',
-        COMPONENT: '#3b82f6',
+        COMPONENT: '#6a9bcc',
       };
 
-      ctx.fillStyle = colors[node.type as keyof typeof colors] || '#6b7280';
+      ctx.fillStyle = colors[node.type as keyof typeof colors] || '#8a8880';
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, 20, 0, 2 * Math.PI);
       ctx.fill();

@@ -212,7 +212,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="min-h-screen bg-[#faf9f5]">
       <div className="mx-auto max-w-6xl px-6 py-10">
         {/* Header */}
         <div className="mb-8">

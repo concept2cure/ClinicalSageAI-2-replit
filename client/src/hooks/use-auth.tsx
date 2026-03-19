@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: 'Registration successful',
-        description: `Welcome to TrialSage, ${data.username}!`,
+        description: `Welcome to Concept2Cure, ${data.username}!`,
       });
     },
     onError: (error: Error) => {

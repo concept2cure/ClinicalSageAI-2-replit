@@ -49,7 +49,7 @@ export class DocuShareAPIClient {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        'User-Agent': 'TrialSage-VaultDMS/1.0',
+        'User-Agent': 'Concept2Cure-VaultDMS/1.0',
       },
     });
 

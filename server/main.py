@@ -19,7 +19,7 @@ from controllers import validation
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="TrialSage API",
+    title="Concept2Cure API",
     description="Clinical Trial Intelligence Platform with Protocol and IND Generation",
     version="1.0",
 )
@@ -94,7 +94,7 @@ async def read_root(request: Request):
     except Exception as e:
         # Fallback to API info if frontend isn't available
         return {
-            "name": "TrialSage Intelligence API",
+            "name": "Concept2Cure Intelligence API",
             "version": "1.0",
             "endpoints": {
                 "/api/intel/protocol-suggestions": "Generate protocol scaffolds with IND 2.5 and risk analysis",
@@ -143,7 +143,7 @@ def health_check():
             },
         )
     
-    return {"status": "healthy", "service": "TrialSage API"}
+    return {"status": "healthy", "service": "Concept2Cure API"}
 
 # Run the app with uvicorn if executed directly
 if __name__ == "__main__":

@@ -17,7 +17,7 @@
  * 4. MMR - Balance relevance with diversity
  * 5. Contextual Compression - Extract only relevant passages
  *
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  * @version 2.0.0
  * @license Proprietary - Concept2Cure Inc.
  */

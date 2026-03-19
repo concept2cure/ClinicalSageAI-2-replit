@@ -38,15 +38,15 @@ if command -v pg_lsclusters &>/dev/null; then
 
     # Create database if missing
     if pg_isready -h localhost -p 5432 -t 5 &>/dev/null; then
-      if ! psql -h localhost -U postgres -lqt 2>/dev/null | cut -d\| -f1 | grep -qw clinicalsage; then
-        psql -h localhost -U postgres -c "CREATE DATABASE clinicalsage" 2>/dev/null || true
+      if ! psql -h localhost -U postgres -lqt 2>/dev/null | cut -d\| -f1 | grep -qw concept2cure-ri; then
+        psql -h localhost -U postgres -c "CREATE DATABASE concept2cure-ri" 2>/dev/null || true
       fi
       # Enable vector extension if available
-      psql -h localhost -U postgres -d clinicalsage -c "CREATE EXTENSION IF NOT EXISTS vector" 2>/dev/null || true
+      psql -h localhost -U postgres -d concept2cure-ri -c "CREATE EXTENSION IF NOT EXISTS vector" 2>/dev/null || true
 
       # Set local DATABASE_URL fallback
-      export DATABASE_URL="${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/clinicalsage?sslmode=disable}"
-      echo "✅ Local PostgreSQL ready (clinicalsage database)"
+      export DATABASE_URL="${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable}"
+      echo "✅ Local PostgreSQL ready (concept2cure-ri database)"
     else
       echo "⚠️  PostgreSQL failed to start"
     fi
@@ -62,7 +62,7 @@ if [ -n "$DATABASE_URL" ] && echo "$DATABASE_URL" | grep -qv localhost; then
     echo "✅ Remote DB connection healthy"
   else
     echo "⚠️  Remote DB unreachable — falling back to local PostgreSQL"
-    export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/clinicalsage?sslmode=disable"
+    export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable"
   fi
 fi
 

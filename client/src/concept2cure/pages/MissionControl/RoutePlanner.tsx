@@ -108,7 +108,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAFAF9] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#faf9f5] overflow-hidden">
       {/* Header */}
       <div className="border-b bg-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -260,10 +260,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                       <div key={key} className="text-center">
                         <div className="relative w-12 h-12 mx-auto mb-1">
                           <svg viewBox="0 0 36 36" className="w-full h-full">
-                            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e8e6dc" strokeWidth="3" />
                             <circle
                               cx="18" cy="18" r="15.9" fill="none"
-                              stroke={(val as number) >= 0.7 ? '#10b981' : (val as number) >= 0.4 ? '#f59e0b' : '#ef4444'}
+                              stroke={(val as number) >= 0.7 ? '#788c5d' : (val as number) >= 0.4 ? '#f59e0b' : '#ef4444'}
                               strokeWidth="3"
                               strokeDasharray={`${(val as number) * 100} ${100 - (val as number) * 100}`}
                               strokeDashoffset="25"

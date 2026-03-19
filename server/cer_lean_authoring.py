@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-CER Lean Authoring Module for LumenTrialGuide.AI
+CER Lean Authoring Module for Concept2Cure
 
 This module implements principles of Lean Authoring for Clinical Evaluation Report generation,
 based on best practices from Celegence and RAPS 2024 research.

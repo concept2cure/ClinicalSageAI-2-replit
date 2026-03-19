@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Security Alerts Dashboard
+ * Concept2Cure Client Portal V2 - Security Alerts Dashboard
  *
  * Real-time security monitoring and alert management:
  * - Threat detection and response

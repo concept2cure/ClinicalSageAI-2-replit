@@ -634,7 +634,7 @@ const HelpSupportView: React.FC = () => {
     },
     {
       question: 'What regulatory frameworks are supported?',
-      answer: 'ClinicalSage supports FDA (IND/NDA/BLA), EMA (MAA), ICH guidelines, and many other global regulatory frameworks. The Evidence Library includes templates and guidance for each framework.',
+      answer: 'Concept2Cure.RI supports FDA (IND/NDA/BLA), EMA (MAA), ICH guidelines, and many other global regulatory frameworks. The Evidence Library includes templates and guidance for each framework.',
     },
   ];
 
@@ -670,7 +670,7 @@ const HelpSupportView: React.FC = () => {
               <Mail className="h-6 w-6 text-emerald-600" />
             </div>
             <p className="font-medium text-neutral-900 text-sm">Email Support</p>
-            <p className="text-xs text-neutral-500 mt-1">support@clinicalsage.ai</p>
+            <p className="text-xs text-neutral-500 mt-1">support@concept2cure-ri.ai</p>
           </CardContent>
         </Card>
       </div>

@@ -1,7 +1,7 @@
 /**
  * Regulatory Project Map Model
  *
- * This model serves as the "brain" of the TrialSage Project Manager.
+ * This model serves as the "brain" of the Concept2Cure Project Manager.
  * It defines the structure of different project types, their phases,
  * required documents, milestones, and regulatory guidelines sources.
  *

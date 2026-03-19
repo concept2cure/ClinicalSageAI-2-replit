@@ -34,14 +34,14 @@ interface TrendingTagsChartProps {
 }
 
 const CHART_COLORS = [
-  '#8884d8',
-  '#82ca9d',
+  '#6a9bcc',
+  '#92a87a',
   '#ffc658',
   '#ff8042',
   '#0088fe',
-  '#00C49F',
-  '#FFBB28',
-  '#FF8042',
+  '#788c5d',
+  '#d97706',
+  '#d97757',
   '#9c27b0',
   '#f44336',
 ];
@@ -141,7 +141,7 @@ export default function TrendingTagsChart({ trendingByMonth }: TrendingTagsChart
 
                 // Add footer
                 pdf.setFontSize(8);
-                pdf.text('TrialSage Study Design Agent Analysis Report', 14, height - 10);
+                pdf.text('Concept2Cure Study Design Agent Analysis Report', 14, height - 10);
 
                 // Save the PDF
                 pdf.save(`trending-tags-${new Date().toISOString().slice(0, 10)}.pdf`);

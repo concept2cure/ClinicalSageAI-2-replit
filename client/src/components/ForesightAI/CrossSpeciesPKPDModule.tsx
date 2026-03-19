@@ -482,7 +482,7 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                   <Scatter 
                     name="Clearance" 
                     data={allometricData} 
-                    fill="#3b82f6"
+                    fill="#6a9bcc"
                   />
                 </ScatterChart>
               </ResponsiveContainer>
@@ -503,8 +503,8 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="cmax" fill="#8b5cf6" name="Cmax (μg/mL)" />
-                  <Bar dataKey="auc" fill="#3b82f6" name="AUC (μg·h/mL)" />
+                  <Bar dataKey="cmax" fill="#6a9bcc" name="Cmax (μg/mL)" />
+                  <Bar dataKey="auc" fill="#6a9bcc" name="AUC (μg·h/mL)" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

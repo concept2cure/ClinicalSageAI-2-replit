@@ -3,7 +3,7 @@
 /**
  * Advisor API Routes
  *
- * This module provides regulatory intelligence endpoints for the TrialSage platform.
+ * This module provides regulatory intelligence endpoints for the Concept2Cure platform.
  */
 
 /**

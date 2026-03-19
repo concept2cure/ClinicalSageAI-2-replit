@@ -3,7 +3,7 @@
  *
  * This service provides access to comprehensive regulatory data across global authorities,
  * including regulations, guidance documents, standards, and submission requirements.
- * It serves as the central knowledge base for the TrialSage platform's regulatory intelligence.
+ * It serves as the central knowledge base for the Concept2Cure platform's regulatory intelligence.
  */
 
 import { db } from '../db.js';

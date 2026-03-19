@@ -9,6 +9,8 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { sql, eq, and } from 'drizzle-orm';
+import { createHash } from 'crypto';
 
 // ============================================================
 // Types

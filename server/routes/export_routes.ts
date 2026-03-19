@@ -30,7 +30,7 @@ router.post('/pdf', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,
@@ -65,15 +65,15 @@ router.post('/pdf', async (req, res) => {
     // Pipe the PDF document to the response
     doc.pipe(res);
 
-    // Define colors for consistent branding
-    const primary = '#1e40af'; // deep blue
-    const secondary = '#3b82f6'; // medium blue
-    const accent = '#93c5fd'; // light blue
-    const textColor = '#1e293b'; // slate
-    const lightGray = '#e2e8f0'; // light gray for borders
-    const lightBlue = '#dbeafe'; // very light blue for backgrounds
+    // Define colors for consistent Concept2Cure branding
+    const primary = '#c15f3c'; // Terracotta (Anthropic crail)
+    const secondary = '#6a9bcc'; // Anthropic blue
+    const accent = '#8bb4d9'; // Light Anthropic blue
+    const textColor = '#2d2d2a'; // Warm dark
+    const lightGray = '#e8e6dc'; // Warm light gray
+    const lightBlue = '#faf0ec'; // Warm light terracotta
 
-    // Add a cover page with a blue header
+    // Add a branded cover page header
     doc.rect(0, 0, doc.page.width, 150).fill(primary);
 
     // Add title
@@ -480,19 +480,24 @@ router.post('/pdf', async (req, res) => {
     for (let i = 1; i < range.count; i++) {
       doc.switchToPage(i);
 
-      // Add footer line
+      // Add branded footer line
       doc
-        .moveTo(50, doc.page.height - 50)
-        .lineTo(doc.page.width - 50, doc.page.height - 50)
+        .moveTo(50, doc.page.height - 55)
+        .lineTo(doc.page.width - 50, doc.page.height - 55)
+        .strokeColor(lightGray)
         .stroke();
 
-      // Add page number
+      // Add Concept2Cure branding + page number
       doc
-        .fontSize(10)
-        .fillColor(textColor)
-        .text(`Page ${i} of ${range.count - 1}`, 50, doc.page.height - 40, {
-          align: 'center',
-          width: doc.page.width - 100,
+        .fontSize(8)
+        .fillColor('#8a8880')
+        .text('Concept2Cure — AI-Powered Regulatory Intelligence', 50, doc.page.height - 45, {
+          align: 'left',
+          width: (doc.page.width - 100) / 2,
+        })
+        .text(`Page ${i} of ${range.count - 1}`, doc.page.width / 2, doc.page.height - 45, {
+          align: 'right',
+          width: (doc.page.width - 100) / 2,
         });
     }
 
@@ -512,7 +517,7 @@ router.post('/word', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,
@@ -540,8 +545,8 @@ router.post('/word', async (req, res) => {
     .reference { margin-left: 0.5in; text-indent: -0.5in; margin-bottom: 0.5em; }
     .container { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; background-color: #f9f9f9; }
     .risk { color: #b91c1c; }
-    .heading { color: #1e40af; }
-    .subheading { color: #3b82f6; }
+    .heading { color: #c15f3c; }
+    .subheading { color: #6a9bcc; }
   </style>
 </head>
 <body>
@@ -734,31 +739,31 @@ router.post('/csv', async (req, res) => {
     // Add main content
     if (typeof content === 'string') {
       // Simple string content
-      csv += `Main,Summary,"${stripHtml(content).replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+      csv += `Main,Summary,"${stripHtml(content).replace(/"/g, '""')}",Concept2Cure\n`;
     } else if (typeof content === 'object') {
       // Add recommendations
       if (content.recommendation) {
-        csv += `Main,Summary,"${stripHtml(content.recommendation).replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+        csv += `Main,Summary,"${stripHtml(content.recommendation).replace(/"/g, '""')}",Concept2Cure\n`;
       }
 
       // Add key suggestions
       if (content.keySuggestions && Array.isArray(content.keySuggestions)) {
         for (const suggestion of content.keySuggestions) {
-          csv += `Main,Key Suggestion,"${suggestion.replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+          csv += `Main,Key Suggestion,"${suggestion.replace(/"/g, '""')}",Concept2Cure\n`;
         }
       }
 
       // Add endpoints
       if (content.suggestedEndpoints && Array.isArray(content.suggestedEndpoints)) {
         for (const endpoint of content.suggestedEndpoints) {
-          csv += `Main,Endpoint,"${endpoint.replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+          csv += `Main,Endpoint,"${endpoint.replace(/"/g, '""')}",Concept2Cure\n`;
         }
       }
 
       // Add risks
       if (content.riskFactors && Array.isArray(content.riskFactors)) {
         for (const risk of content.riskFactors) {
-          csv += `Main,Risk Factor,"${risk.replace(/"/g, '""')}",LumenTrialGuide.AI\n`;
+          csv += `Main,Risk Factor,"${risk.replace(/"/g, '""')}",Concept2Cure\n`;
         }
       }
     }
@@ -973,7 +978,7 @@ router.post('/markdown', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,
@@ -1121,7 +1126,7 @@ router.post('/xml', async (req, res) => {
   try {
     const {
       title,
-      author = 'LumenTrialGuide.AI',
+      author = 'Concept2Cure',
       content,
       indication,
       phase,

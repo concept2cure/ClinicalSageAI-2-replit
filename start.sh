@@ -1,11 +1,11 @@
 #!/bin/bash
-# ClinicalSage AI — One-command startup
+# Concept2Cure.RI AI — One-command startup
 # Usage: ./start.sh
 
 set -e
 cd "$(dirname "$0")"
 
-echo "=== ClinicalSage AI Startup ==="
+echo "=== Concept2Cure.RI AI Startup ==="
 
 # 1. Start PostgreSQL if not running
 echo "[1/3] Starting PostgreSQL..."

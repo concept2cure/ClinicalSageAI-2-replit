@@ -115,7 +115,7 @@ export default function CerPreviewPanel({
         templateId: 'meddev', // MEDDEV 2.7/1 Rev 4 format
         metadata: {
           device: title.split(' ')[0] || 'Medical Device',
-          manufacturer: 'TrialSage Medical',
+          manufacturer: 'Concept2Cure Medical',
           modelNumber: 'TS-' + Date.now().toString().slice(-6),
           version: '1.0',
           date: new Date().toLocaleDateString(),
@@ -161,10 +161,10 @@ export default function CerPreviewPanel({
   };
 
   return (
-    <div className="p-6 bg-white border border-[#E1DFDD] rounded-md shadow-sm">
+    <div className="p-6 bg-white border border-[#e8e6dc] rounded-md shadow-sm">
       {/* Top panel with actions */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b border-[#E1DFDD]">
-        <h1 className="text-xl font-semibold text-[#323130] mb-3 sm:mb-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b border-[#e8e6dc]">
+        <h1 className="text-xl font-semibold text-[#141413] mb-3 sm:mb-0">
           {title || 'Clinical Evaluation Report'}
         </h1>
 
@@ -172,7 +172,7 @@ export default function CerPreviewPanel({
           <Button
             onClick={generatePDFPreview}
             disabled={isGeneratingPreview || sections.length === 0}
-            className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white h-9"
+            className="bg-[#d97757] hover:bg-[#c15f3c] text-white h-9"
             size="sm"
           >
             {isGeneratingPreview ? (
@@ -202,7 +202,7 @@ export default function CerPreviewPanel({
                 .then(blob => cerApiService.downloadBlob(blob, `${title.replace(/\s+/g, '_')}.pdf`))
             }
             disabled={sections.length === 0}
-            className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white h-9"
+            className="bg-[#d97757] hover:bg-[#c15f3c] text-white h-9"
             size="sm"
           >
             <FileText className="h-4 w-4 mr-2" />
@@ -222,22 +222,22 @@ export default function CerPreviewPanel({
               status: 'draft',
               description: `Clinical Evaluation Report for ${title.split(' Clinical Evaluation')[0]}`,
               tags: ['MEDDEV 2.7/1 Rev 4', 'Clinical Evaluation', 'EU MDR'],
-              manufacturer: 'TrialSage Medical',
+              manufacturer: 'Concept2Cure Medical',
               modelNumber: 'TS-' + Date.now().toString().slice(-6),
               date: new Date().toLocaleDateString(),
               standard: 'MEDDEV 2.7/1 Rev 4',
             }}
             disabled={sections.length === 0}
             variant="default"
-            className="bg-[#107C10] hover:bg-[#0B5A0B] text-white h-9"
+            className="bg-[#788c5d] hover:bg-[#0B5A0B] text-white h-9"
             size="sm"
           />
         </div>
       </div>
 
       {/* Report info with MEDDEV 2.7/1 Rev 4 format */}
-      <div className="bg-[#F3F2F1] p-4 rounded mb-6">
-        <h2 className="text-base font-semibold text-[#323130] mb-2">
+      <div className="bg-[#f4f3ee] p-4 rounded mb-6">
+        <h2 className="text-base font-semibold text-[#141413] mb-2">
           MEDDEV 2.7/1 Rev 4 Compliant Report
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -276,25 +276,25 @@ export default function CerPreviewPanel({
 
       {sections.length > 0 ? (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-[#323130]">Report Contents</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[#141413]">Report Contents</h2>
 
           {/* Table of contents */}
-          <div className="mb-6 p-4 bg-white border border-[#E1DFDD] rounded">
-            <h3 className="text-sm font-semibold mb-2 text-[#323130]">Table of Contents</h3>
+          <div className="mb-6 p-4 bg-white border border-[#e8e6dc] rounded">
+            <h3 className="text-sm font-semibold mb-2 text-[#141413]">Table of Contents</h3>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {sections.map((section, index) => (
-                <li key={index} className="text-[#0F6CBD]">
-                  <span className="text-[#323130]">{section.title || section.section}</span>
+                <li key={index} className="text-[#d97757]">
+                  <span className="text-[#141413]">{section.title || section.section}</span>
                 </li>
               ))}
               {faers.length > 0 && (
-                <li className="text-[#0F6CBD]">
-                  <span className="text-[#323130]">FAERS Safety Data</span>
+                <li className="text-[#d97757]">
+                  <span className="text-[#141413]">FAERS Safety Data</span>
                 </li>
               )}
               {comparators.length > 0 && (
-                <li className="text-[#0F6CBD]">
-                  <span className="text-[#323130]">Comparator Products Analysis</span>
+                <li className="text-[#d97757]">
+                  <span className="text-[#141413]">Comparator Products Analysis</span>
                 </li>
               )}
             </ol>
@@ -311,7 +311,7 @@ export default function CerPreviewPanel({
                 className={`mb-4 border p-4 bg-white rounded shadow ${hasComplianceData ? `border-l-4 ${complianceStatus.status === 'compliant' ? 'border-l-green-500' : complianceStatus.status === 'needs-improvement' ? 'border-l-yellow-500' : 'border-l-red-500'}` : ''}`}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold text-[#323130]">{s.title || s.section}</h3>
+                  <h3 className="text-lg font-semibold text-[#141413]">{s.title || s.section}</h3>
                   {hasComplianceData && (
                     <div
                       className={`px-2 py-1 rounded-full flex items-center gap-1 text-xs border ${getComplianceColor(complianceStatus.status)}`}
@@ -345,7 +345,7 @@ export default function CerPreviewPanel({
                   </div>
                 )}
 
-                <div className="whitespace-pre-wrap text-sm text-[#323130] leading-relaxed">
+                <div className="whitespace-pre-wrap text-sm text-[#141413] leading-relaxed">
                   {s.content}
                 </div>
               </div>
@@ -353,10 +353,10 @@ export default function CerPreviewPanel({
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 bg-[#F3F2F1] rounded-md border border-dashed border-[#E1DFDD]">
-          <FileText className="h-12 w-12 text-[#A19F9D] mb-4" />
-          <h3 className="text-lg font-semibold text-[#323130] mb-2">No Content Available</h3>
-          <p className="text-[#605E5C] text-sm max-w-md text-center mb-6">
+        <div className="flex flex-col items-center justify-center py-12 bg-[#f4f3ee] rounded-md border border-dashed border-[#e8e6dc]">
+          <FileText className="h-12 w-12 text-[#8a8880] mb-4" />
+          <h3 className="text-lg font-semibold text-[#141413] mb-2">No Content Available</h3>
+          <p className="text-[#6b6963] text-sm max-w-md text-center mb-6">
             Your report doesn't have any sections yet. Add content using the Builder, Literature, or
             Zero-Click Report generator.
           </p>
@@ -365,24 +365,24 @@ export default function CerPreviewPanel({
 
       {faers.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-[#323130]">FAERS Safety Data</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[#141413]">FAERS Safety Data</h2>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border border-[#E1DFDD]">
+            <table className="w-full text-sm border border-[#e8e6dc]">
               <thead>
-                <tr className="bg-[#F3F2F1]">
-                  <th className="border border-[#E1DFDD] px-3 py-2 text-left text-[#323130]">
+                <tr className="bg-[#f4f3ee]">
+                  <th className="border border-[#e8e6dc] px-3 py-2 text-left text-[#141413]">
                     Adverse Event
                   </th>
-                  <th className="border border-[#E1DFDD] px-3 py-2 text-left text-[#323130]">
+                  <th className="border border-[#e8e6dc] px-3 py-2 text-left text-[#141413]">
                     Outcome
                   </th>
-                  <th className="border border-[#E1DFDD] px-3 py-2 text-left text-[#323130]">
+                  <th className="border border-[#e8e6dc] px-3 py-2 text-left text-[#141413]">
                     Serious
                   </th>
-                  <th className="border border-[#E1DFDD] px-3 py-2 text-left text-[#323130]">
+                  <th className="border border-[#e8e6dc] px-3 py-2 text-left text-[#141413]">
                     Demographics
                   </th>
-                  <th className="border border-[#E1DFDD] px-3 py-2 text-left text-[#323130]">
+                  <th className="border border-[#e8e6dc] px-3 py-2 text-left text-[#141413]">
                     Date
                   </th>
                 </tr>
@@ -390,20 +390,20 @@ export default function CerPreviewPanel({
               <tbody>
                 {faers.map((f, i) => (
                   <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9F9F9]'}>
-                    <td className="border border-[#E1DFDD] px-3 py-2">{f.reaction}</td>
-                    <td className="border border-[#E1DFDD] px-3 py-2">{f.outcome}</td>
-                    <td className="border border-[#E1DFDD] px-3 py-2">
+                    <td className="border border-[#e8e6dc] px-3 py-2">{f.reaction}</td>
+                    <td className="border border-[#e8e6dc] px-3 py-2">{f.outcome}</td>
+                    <td className="border border-[#e8e6dc] px-3 py-2">
                       {f.is_serious ? (
                         <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Yes</Badge>
                       ) : (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">No</Badge>
                       )}
                     </td>
-                    <td className="border border-[#E1DFDD] px-3 py-2">
+                    <td className="border border-[#e8e6dc] px-3 py-2">
                       {f.age ? `${f.age} years, ` : ''}
                       {f.sex === '1' ? 'Male' : f.sex === '2' ? 'Female' : 'Unknown'}
                     </td>
-                    <td className="border border-[#E1DFDD] px-3 py-2">{f.report_date}</td>
+                    <td className="border border-[#e8e6dc] px-3 py-2">{f.report_date}</td>
                   </tr>
                 ))}
               </tbody>
@@ -414,13 +414,13 @@ export default function CerPreviewPanel({
 
       {comparators.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-[#323130]">
+          <h2 className="text-lg font-semibold mb-4 text-[#141413]">
             Comparator Products Analysis
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {comparators.map((c, i) => (
-              <div key={i} className="border border-[#E1DFDD] rounded p-4 bg-white">
-                <h3 className="font-semibold text-[#323130] mb-2">{c.comparator}</h3>
+              <div key={i} className="border border-[#e8e6dc] rounded p-4 bg-white">
+                <h3 className="font-semibold text-[#141413] mb-2">{c.comparator}</h3>
                 <div className="text-sm space-y-2">
                   <p>
                     <span className="font-medium">Risk Score:</span> {c.riskScore}
@@ -428,7 +428,7 @@ export default function CerPreviewPanel({
                   <p>
                     <span className="font-medium">Reports:</span> {c.reportCount}
                   </p>
-                  <div className="h-2 bg-[#F3F2F1] rounded-full mt-2">
+                  <div className="h-2 bg-[#f4f3ee] rounded-full mt-2">
                     <div
                       className={`h-2 rounded-full ${
                         c.riskScore < 0.3

@@ -16,7 +16,7 @@
  * - OpenAI text-embedding-3-large (3072d) - High quality
  * - OpenAI text-embedding-ada-002 (1536d) - Legacy
  *
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  * @version 2.0.0
  * @license Proprietary - Concept2Cure Inc.
  */

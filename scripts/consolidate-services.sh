@@ -16,7 +16,7 @@ if [[ "$1" == "--dry-run" ]]; then
     echo "=== DRY RUN MODE - No changes will be made ==="
 fi
 
-SERVICES_DIR="/workspaces/ClinicalSageAI-2-replit/server/services"
+SERVICES_DIR="/workspaces/Concept2Cure.RI-2-replit/server/services"
 DEPRECATED_DIR="${SERVICES_DIR}/_deprecated"
 
 # Files to deprecate
@@ -44,7 +44,7 @@ DEPRECATED_FILES=(
     "complianceAnalyzer.js"
 )
 
-echo "=== ClinicalSageAI Service Consolidation ==="
+echo "=== Concept2Cure.RI Service Consolidation ==="
 echo "Date: $(date)"
 echo ""
 

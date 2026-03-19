@@ -1,5 +1,5 @@
 """
-Semantic Aligner Module for LumenTrialGuide.AI
+Semantic Aligner Module for Concept2Cure
 
 This module compares protocol fields against historical CSR data,
 calculating semantic similarity and providing alignment scores.

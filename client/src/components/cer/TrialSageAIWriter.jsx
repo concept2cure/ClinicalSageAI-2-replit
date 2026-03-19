@@ -66,7 +66,7 @@ import {
 } from 'lucide-react';
 
 /**
- * TrialSage AI Writer Panel Component
+ * Concept2Cure AI Writer Panel Component
  *
  * This component handles:
  * 1. Input window for prompts + data preview
@@ -74,7 +74,7 @@ import {
  * 3. Accept/Reject buttons + version history
  * 4. Reuse or regenerate by section
  */
-const TrialSageAIWriter = ({
+const Concept2CureAIWriter = ({
   sectionId,
   sectionTitle,
   sectionContent = '',
@@ -713,4 +713,4 @@ const TrialSageAIWriter = ({
   );
 };
 
-export default TrialSageAIWriter;
+export default Concept2CureAIWriter;

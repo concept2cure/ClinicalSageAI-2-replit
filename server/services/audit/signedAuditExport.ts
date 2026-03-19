@@ -264,7 +264,7 @@ export async function generateSignedAuditExport(
     exportedAt: new Date().toISOString(),
     exportedBy: request.exportedBy,
     exportedByRole: request.exportedByRole || 'unknown',
-    exportSource: 'ClinicalSageAI / Concept2Cure Platform',
+    exportSource: 'Concept2Cure.RI / Concept2Cure Platform',
     queryFilters: {
       organizationId: request.organizationId,
       startDate: request.startDate,

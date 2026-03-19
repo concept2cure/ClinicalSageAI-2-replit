@@ -47,6 +47,7 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
+import { useProjectTasks } from './hooks/useProjectTasks';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -101,6 +102,7 @@ import {
   MessageSquare,
   FolderOpen,
   Upload,
+  Link2,
   Sparkles,
   PenLine,
   Layers,
@@ -274,6 +276,9 @@ const BiostatPlatformDashboard = lazy(
 const TrainingManagementPage = lazy(
   () => import('@/portal-v2/components/admin/TrainingManagement')
 );
+const IntegrationsPage = lazy(() =>
+  import('./pages/IntegrationsPage')
+);
 
 // Agent Hub — Agent Swarm showcase, setup wizard, monitoring
 const AgentShowcasePage = lazy(() =>
@@ -407,7 +412,8 @@ type LayoutMode =
   | 'document-builder'
   | 'deep-research'
   | 'report-engine'
-  | 'about-training';
+  | 'about-training'
+  | 'integrations';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1732,7 +1738,7 @@ export const ZenApp: React.FC = () => {
           --zen-ink: #18181B;
           --zen-ink-muted: #71717A;
           --zen-border: #E4E4E7;
-          --zen-accent: #2563EB;
+          --zen-accent: #d97757;
         }
 
         .zen-scroll::-webkit-scrollbar {
@@ -1960,6 +1966,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'report-engine':
               setLayoutMode('report-engine');
+              break;
+            case 'integrations':
+              setLayoutMode('integrations');
               break;
             default:
               break;
@@ -2877,6 +2886,35 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <AgentShowcasePage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Enterprise Integrations — connectors & API management */}
+          {!embeddedModule && layoutMode === 'integrations' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Link2 className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Integrations</span>
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <IntegrationsPage />
                 </Suspense>
               </ErrorBoundary>
             </div>

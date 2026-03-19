@@ -116,18 +116,18 @@ export default function CerAssistantPanel({
   return (
     <div className="space-y-4">
       {/* Main Chat Panel */}
-      <div className="flex flex-col h-[calc(100vh-220px)] md:h-[calc(100vh-210px)] bg-white rounded border border-[#E1DFDD]">
+      <div className="flex flex-col h-[calc(100vh-220px)] md:h-[calc(100vh-210px)] bg-white rounded border border-[#e8e6dc]">
         {/* Header */}
-        <div className="flex justify-between items-center p-3 border-b border-[#E1DFDD]">
+        <div className="flex justify-between items-center p-3 border-b border-[#e8e6dc]">
           <div className="flex items-center">
-            <MessageSquare className="h-5 w-5 mr-2 text-[#0F6CBD]" />
-            <h3 className="text-base font-semibold text-[#323130]">CER Regulatory Assistant</h3>
+            <MessageSquare className="h-5 w-5 mr-2 text-[#d97757]" />
+            <h3 className="text-base font-semibold text-[#141413]">CER Regulatory Assistant</h3>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={clearChat}
-            className="text-[#616161] hover:text-[#323130] hover:bg-[#F5F5F5]"
+            className="text-[#616161] hover:text-[#141413] hover:bg-[#F5F5F5]"
           >
             <X className="h-4 w-4 mr-1" />
             <span className="text-xs">Clear Chat</span>
@@ -144,23 +144,23 @@ export default function CerAssistantPanel({
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${
                   message.role === 'user'
-                    ? 'bg-[#EFF6FC] text-[#323130]'
+                    ? 'bg-[#faf0ec] text-[#141413]'
                     : message.error
-                      ? 'bg-[#FDE7E9] text-[#323130] border border-[#D83B01]'
-                      : 'bg-[#F5F5F5] text-[#323130]'
+                      ? 'bg-[#FDE7E9] text-[#141413] border border-[#c15f3c]'
+                      : 'bg-[#F5F5F5] text-[#141413]'
                 }`}
               >
                 {message.role === 'assistant' && !message.error && (
                   <div className="flex items-center mb-1">
-                    <Sparkles className="h-3.5 w-3.5 text-[#0F6CBD] mr-1.5" />
-                    <span className="text-xs font-medium text-[#0F6CBD]">CER Assistant</span>
+                    <Sparkles className="h-3.5 w-3.5 text-[#d97757] mr-1.5" />
+                    <span className="text-xs font-medium text-[#d97757]">CER Assistant</span>
                   </div>
                 )}
 
                 {message.role === 'assistant' && message.error && (
                   <div className="flex items-center mb-1">
-                    <AlertCircle className="h-3.5 w-3.5 text-[#D83B01] mr-1.5" />
-                    <span className="text-xs font-medium text-[#D83B01]">Error</span>
+                    <AlertCircle className="h-3.5 w-3.5 text-[#c15f3c] mr-1.5" />
+                    <span className="text-xs font-medium text-[#c15f3c]">Error</span>
                   </div>
                 )}
 
@@ -191,20 +191,20 @@ export default function CerAssistantPanel({
         </div>
 
         {/* Input */}
-        <div className="border-t border-[#E1DFDD] p-3">
+        <div className="border-t border-[#e8e6dc] p-3">
           <div className="flex space-x-2">
             <Input
               value={userInput}
               onChange={e => setUserInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="Ask about regulatory requirements, CER content, or get guidance..."
-              className="flex-1 border-[#E1DFDD] bg-white"
+              className="flex-1 border-[#e8e6dc] bg-white"
               disabled={isLoading}
             />
             <Button
               onClick={handleSendMessage}
               disabled={!userInput.trim() || isLoading}
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               {isLoading ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
@@ -218,10 +218,10 @@ export default function CerAssistantPanel({
 
       {/* Context Panel */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-white border-[#E1DFDD]">
+        <Card className="bg-white border-[#e8e6dc]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[#323130] flex items-center">
-              <FileText className="h-4 w-4 mr-1.5 text-[#0F6CBD]" />
+            <CardTitle className="text-sm font-medium text-[#141413] flex items-center">
+              <FileText className="h-4 w-4 mr-1.5 text-[#d97757]" />
               Document Context
             </CardTitle>
             <CardDescription className="text-xs text-[#616161]">
@@ -252,9 +252,9 @@ export default function CerAssistantPanel({
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-[#E1DFDD]">
+        <Card className="bg-white border-[#e8e6dc]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[#323130]">
+            <CardTitle className="text-sm font-medium text-[#141413]">
               Regulatory Knowledge
             </CardTitle>
             <CardDescription className="text-xs text-[#616161]">
@@ -273,9 +273,9 @@ export default function CerAssistantPanel({
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-[#E1DFDD]">
+        <Card className="bg-white border-[#e8e6dc]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[#323130]">Suggested Topics</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#141413]">Suggested Topics</CardTitle>
             <CardDescription className="text-xs text-[#616161]">
               Try asking about these topics
             </CardDescription>
@@ -283,7 +283,7 @@ export default function CerAssistantPanel({
           <CardContent>
             <div className="text-xs text-[#616161] space-y-2">
               <div
-                className="p-1.5 bg-[#EFF6FC] text-[#0F6CBD] rounded cursor-pointer hover:bg-[#E5F2FF]"
+                className="p-1.5 bg-[#faf0ec] text-[#d97757] rounded cursor-pointer hover:bg-[#faf0ec]"
                 onClick={() => {
                   setUserInput('What information should a state-of-the-art section contain?');
                 }}
@@ -291,7 +291,7 @@ export default function CerAssistantPanel({
                 State-of-the-art requirements
               </div>
               <div
-                className="p-1.5 bg-[#EFF6FC] text-[#0F6CBD] rounded cursor-pointer hover:bg-[#E5F2FF]"
+                className="p-1.5 bg-[#faf0ec] text-[#d97757] rounded cursor-pointer hover:bg-[#faf0ec]"
                 onClick={() => {
                   setUserInput('How should I interpret FAERS data in my CER?');
                 }}
@@ -299,7 +299,7 @@ export default function CerAssistantPanel({
                 Interpreting FAERS data
               </div>
               <div
-                className="p-1.5 bg-[#EFF6FC] text-[#0F6CBD] rounded cursor-pointer hover:bg-[#E5F2FF]"
+                className="p-1.5 bg-[#faf0ec] text-[#d97757] rounded cursor-pointer hover:bg-[#faf0ec]"
                 onClick={() => {
                   setUserInput('What benefit-risk section requirements are in EU MDR?');
                 }}

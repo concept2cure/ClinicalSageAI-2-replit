@@ -1,5 +1,5 @@
 /**
- * Authentication Routes - TrialSage V2
+ * Authentication Routes - Concept2Cure V2
  *
  * Basic authentication endpoints for development mode.
  * Provides session management, login, and user validation.
@@ -178,7 +178,7 @@ router.get('/session', async (req: Request, res: Response) => {
       sessionRole === 'admin' ? ['admin', 'user'] : [sessionRole === 'editor' ? 'editor' : 'user'];
 
     // Get organization
-    let orgName = 'TrialSage';
+    let orgName = 'Concept2Cure';
     if (decoded.organizationId) {
       const org = await db
         .select()
@@ -383,7 +383,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     const refreshToken = jwt.sign(
       { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
-      config.jwt.secret,
+      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
@@ -520,6 +520,17 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    // Send welcome email (non-blocking — don't fail signup if email fails)
+    try {
+      const { sendWelcomeEmail } = await import('../services/emailService.js');
+      const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+      sendWelcomeEmail(email, userName).catch(err =>
+        console.error('[auth] Welcome email failed (non-blocking):', err)
+      );
+    } catch {
+      // Email service not available — continue
+    }
+
     return res.status(201).json({
       success: true,
       token,
@@ -545,14 +556,41 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
   }
 });
 
+// In-memory token blacklist (replace with Redis in production for persistence across restarts)
+const tokenBlacklist = new Set<string>();
+
+// Clean up expired tokens every hour
+setInterval(() => {
+  // Simple TTL: clear the set every 24 hours to prevent memory growth
+  if (tokenBlacklist.size > 10000) {
+    tokenBlacklist.clear();
+  }
+}, 60 * 60 * 1000);
+
+/** Check if a token has been blacklisted (logout) */
+export function isTokenBlacklisted(token: string): boolean {
+  return tokenBlacklist.has(token);
+}
+
 /**
  * POST /api/auth/logout
  * Logout and invalidate tokens
  */
 router.post('/logout', async (req: Request, res: Response) => {
   try {
-    // In production, invalidate refresh token in database
-    res.json({ success: true, message: 'Logged out successfully' });
+    // Extract token from Authorization header and blacklist it
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      tokenBlacklist.add(token);
+    }
+
+    // Also blacklist any refresh token sent in body
+    if (req.body?.refreshToken) {
+      tokenBlacklist.add(req.body.refreshToken);
+    }
+
+    res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
   } catch (error: any) {
     console.error('[auth] Logout error:', error);
     res.status(500).json({
@@ -577,7 +615,15 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, config.jwt.secret) as {
+    // SECURITY: Check if refresh token has been blacklisted (via logout or previous rotation)
+    if (isTokenBlacklisted(refreshToken)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Refresh token has been revoked' },
+      });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || config.jwt.secret) as {
       userId: string;
       email: string;
       type: string;
@@ -645,9 +691,12 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
     const newRefreshToken = jwt.sign(
       { userId: decoded.userId, email: decoded.email, type: 'refresh' },
-      config.jwt.secret,
+      process.env.REFRESH_TOKEN_SECRET || process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
+
+    // SECURITY: Blacklist the old refresh token to prevent reuse (token rotation)
+    tokenBlacklist.add(refreshToken);
 
     res.json({
       success: true,
@@ -832,7 +881,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
     const refreshToken = jwt.sign(
       { userId: challenge.userId, email: challenge.email, type: 'refresh' },
-      config.jwt.secret,
+      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 

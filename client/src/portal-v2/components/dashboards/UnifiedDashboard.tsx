@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Unified Dashboard
+ * Concept2Cure Client Portal V2 - Unified Dashboard
  *
  * Smart dashboard that renders the appropriate role-based view
  * based on the current user's role and permissions.

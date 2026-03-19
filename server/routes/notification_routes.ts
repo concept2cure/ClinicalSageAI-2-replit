@@ -49,7 +49,7 @@ export default function registerNotificationRoutes(app: Express): void {
       // Send the email
       const emailSuccess = await sendEmail(
         user_email,
-        'Your TrialSage Weekly Digest',
+        'Your Concept2Cure Weekly Digest',
         digestContent, // Plain text version
         generateHtmlDigest(digestContent) // HTML version
       );
@@ -209,7 +209,7 @@ Indication: ${protocol.indication || 'N/A'}
 Phase: ${protocol.phase || 'N/A'}
 Version: ${version || 'N/A'}
 
-You can view the comparison in your TrialSage dashboard or download the attached PDF.
+You can view the comparison in your Concept2Cure dashboard or download the attached PDF.
       `.trim();
 
       // Send the email
@@ -354,15 +354,15 @@ async function generateWeeklyDigest(userId: string, preferences: any): Promise<s
 
     if (!logs || logs.length === 0) {
       return `
-Hello TrialSage User,
+Hello Concept2Cure User,
 
 You have no activity to report in your weekly digest.
 
-As you use TrialSage to analyze protocols and generate reports,
+As you use Concept2Cure to analyze protocols and generate reports,
 your activity will appear here in your weekly digest.
 
 Best Regards,
-The TrialSage Team
+The Concept2Cure Team
       `.trim();
     }
 
@@ -379,9 +379,9 @@ The TrialSage Team
 
     // Generate digest content
     let content = `
-Hello TrialSage User,
+Hello Concept2Cure User,
 
-Here's your weekly summary of activity in TrialSage:
+Here's your weekly summary of activity in Concept2Cure:
 
 `;
 
@@ -429,23 +429,23 @@ Here's your weekly summary of activity in TrialSage:
 
     content += `
 Best Regards,
-The TrialSage Team
+The Concept2Cure Team
 
 ---
-You can customize your digest preferences in your TrialSage dashboard.
+You can customize your digest preferences in your Concept2Cure dashboard.
     `.trim();
 
     return content;
   } catch (error) {
     console.error('Error generating weekly digest:', error);
     return `
-Hello TrialSage User,
+Hello Concept2Cure User,
 
 We were unable to generate your weekly digest due to a technical issue.
 Please try again later or contact support if the problem persists.
 
 Best Regards,
-The TrialSage Team
+The Concept2Cure Team
     `.trim();
   }
 }
@@ -460,7 +460,7 @@ function generateHtmlDigest(text: string): string {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>TrialSage Weekly Digest</title>
+  <title>Concept2Cure Weekly Digest</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -471,8 +471,8 @@ function generateHtmlDigest(text: string): string {
       padding: 20px;
     }
     h1 {
-      color: #2563eb;
-      border-bottom: 1px solid #e5e7eb;
+      color: #5585b3;
+      border-bottom: 1px solid #e8e6dc;
       padding-bottom: 10px;
     }
     .section {
@@ -480,7 +480,7 @@ function generateHtmlDigest(text: string): string {
     }
     .section-title {
       font-weight: bold;
-      color: #2563eb;
+      color: #5585b3;
       margin-bottom: 10px;
     }
     ul {
@@ -489,18 +489,18 @@ function generateHtmlDigest(text: string): string {
     .footer {
       margin-top: 30px;
       padding-top: 10px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid #e8e6dc;
       font-size: 12px;
       color: #666;
     }
   </style>
 </head>
 <body>
-  <h1>TrialSage Weekly Digest</h1>
+  <h1>Concept2Cure Weekly Digest</h1>
   <div class="content">
     ${text
-      .replace(/^Hello TrialSage User,\n\n/, '')
-      .replace(/\nBest Regards,\nThe TrialSage Team\n\n---\nYou can customize.*$/, '')
+      .replace(/^Hello Concept2Cure User,\n\n/, '')
+      .replace(/\nBest Regards,\nThe Concept2Cure Team\n\n---\nYou can customize.*$/, '')
       .replace(
         /Reports Exported: (\d+)/g,
         '<div class="section-title">Reports Exported: $1</div><ul>'
@@ -518,8 +518,8 @@ function generateHtmlDigest(text: string): string {
       .replace(/<\/ul>\s*$/, '</ul>')}
   </div>
   <div class="footer">
-    <p>Best Regards,<br>The TrialSage Team</p>
-    <p>You can customize your digest preferences in your TrialSage dashboard.</p>
+    <p>Best Regards,<br>The Concept2Cure Team</p>
+    <p>You can customize your digest preferences in your Concept2Cure dashboard.</p>
   </div>
 </body>
 </html>

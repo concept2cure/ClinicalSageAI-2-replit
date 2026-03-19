@@ -1,7 +1,7 @@
 # Phase 4: Orchestration Kernel — Technical Specification
 > **Version:** 1.0 | **Created:** 2026-02-06 | **Status:** IN PROGRESS  
 > **Parent:** [CONCEPT2CURE_MASTER_ROADMAP.md](./CONCEPT2CURE_MASTER_ROADMAP.md)  
-> **PR:** [#110](https://github.com/concept2cure/ClinicalSageAI-2-replit/pull/110)
+> **PR:** [#110](https://github.com/concept2cure/Concept2Cure.RI-2-replit/pull/110)
 
 ---
 

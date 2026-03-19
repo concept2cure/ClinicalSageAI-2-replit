@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-EUDAMED Client for LumenTrialGuide.AI
+EUDAMED Client for Concept2Cure
 
 This module provides functions to query the European Database on Medical Devices (EUDAMED)
 for medical device information, vigilance data, and clinical evaluations.

@@ -815,7 +815,7 @@ router.get('/:id/settings', async (req, res) => {
       },
       appearance: {
         theme: 'system',
-        primaryColor: '#0f172a',
+        primaryColor: '#141413',
         brandLogo: clientWorkspace?.logo || '',
         customFonts: false,
         darkModeEnabled: true,

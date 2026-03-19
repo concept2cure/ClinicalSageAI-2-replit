@@ -109,7 +109,7 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
             width: rect.width,
             height: rect.height,
             borderRadius: 8,
-            boxShadow: '0 0 0 9999px rgba(0,0,0,0.35), 0 0 0 3px #38bdf8',
+            boxShadow: '0 0 0 9999px rgba(0,0,0,0.35), 0 0 0 3px #8bb4d9',
             pointerEvents: 'none',
             transition: 'top .15s, left .15s, width .15s, height .15s',
             zIndex: 10001,
@@ -122,7 +122,7 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
         <div
           style={{
             background: '#fff',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #e8e6dc',
             borderRadius: 8,
             padding: 12,
             boxShadow: '0 10px 20px rgba(0,0,0,.15)',
@@ -144,13 +144,13 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
-                color: '#6b7280',
+                color: '#8a8880',
               }}
             >
               ✕
             </button>
           </div>
-          <div style={{ fontSize: 13, color: '#374151' }}>{step.body}</div>
+          <div style={{ fontSize: 13, color: '#4a4a46' }}>{step.body}</div>
           <div
             style={{
               display: 'flex',
@@ -159,7 +159,7 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
               marginTop: 10,
             }}
           >
-            <div style={{ fontSize: 12, color: '#6b7280' }}>
+            <div style={{ fontSize: 12, color: '#8a8880' }}>
               Step {i + 1} of {steps.length}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -167,7 +167,7 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
                 onClick={() => setI(Math.max(0, i - 1))}
                 disabled={i === 0}
                 style={{
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #d6d3c8',
                   background: '#fff',
                   padding: '4px 8px',
                   borderRadius: 6,
@@ -180,8 +180,8 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
                 onClick={() => setI(Math.min(steps.length - 1, i + 1))}
                 disabled={i === steps.length - 1}
                 style={{
-                  border: '1px solid #0ea5e9',
-                  color: '#0ea5e9',
+                  border: '1px solid #6a9bcc',
+                  color: '#6a9bcc',
                   background: '#fff',
                   padding: '4px 8px',
                   borderRadius: 6,
@@ -193,7 +193,7 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
               <button
                 onClick={onClose}
                 style={{
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid #d6d3c8',
                   background: '#fff',
                   padding: '4px 8px',
                   borderRadius: 6,

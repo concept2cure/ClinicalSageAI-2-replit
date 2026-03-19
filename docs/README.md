@@ -1,6 +1,6 @@
-# ClinicalSageAI Documentation
+# Concept2Cure.RI Documentation
 
-Welcome to the ClinicalSageAI documentation. This guide will help you navigate our documentation structure.
+Welcome to the Concept2Cure.RI documentation. This guide will help you navigate our documentation structure.
 
 ## Quick Links
 
@@ -66,6 +66,6 @@ docs/
 
 ## Need Help?
 
-- **Questions:** Open a [GitHub Discussion](https://github.com/concept2cure/ClinicalSageAI-2-replit/discussions)
-- **Bugs:** File a [Bug Report](https://github.com/concept2cure/ClinicalSageAI-2-replit/issues/new?template=bug_report.md)
-- **Features:** Submit a [Feature Request](https://github.com/concept2cure/ClinicalSageAI-2-replit/issues/new?template=feature_request.md)
+- **Questions:** Open a [GitHub Discussion](https://github.com/concept2cure/Concept2Cure.RI-2-replit/discussions)
+- **Bugs:** File a [Bug Report](https://github.com/concept2cure/Concept2Cure.RI-2-replit/issues/new?template=bug_report.md)
+- **Features:** Submit a [Feature Request](https://github.com/concept2cure/Concept2Cure.RI-2-replit/issues/new?template=feature_request.md)

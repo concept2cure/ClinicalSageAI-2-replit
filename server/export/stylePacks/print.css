@@ -7,21 +7,38 @@
 }
 
 body {
-  font-family: 'Helvetica', 'Arial', sans-serif;
+  font-family: 'Lora', Georgia, serif;
   font-size: 12pt;
   line-height: 1.5;
-  color: #111827;
+  color: #141413;
   margin: 0;
   padding: 0;
 }
 
+/* Branded print header */
+@page {
+  @top-right {
+    content: "Concept2Cure";
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 8pt;
+    color: #8a8880;
+  }
+  @bottom-center {
+    content: "© 2026 Concept2Cure, Inc. — AI-Powered Regulatory Intelligence | Page " counter(page) " of " counter(pages);
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 7pt;
+    color: #b0aea5;
+  }
+}
+
 header {
-  border-bottom: 2px solid #1f2937;
+  border-bottom: 2px solid #d97757;
   padding: 0 0 12px 0;
   margin: 0 0 24px 0;
 }
 
 header h1 {
+  font-family: 'Poppins', Arial, sans-serif;
   font-size: 18pt;
   margin: 0 0 6px 0;
 }
