@@ -3139,6 +3139,15 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
 console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
+// Mount AnA Features routes (change-impact, gap-analysis, memory)
+try {
+  const anaFeaturesModule = await import('./routes/ana-features');
+  app.use('/api/ana', anaFeaturesModule.default);
+  console.log('✅ AnA Features API routes mounted (/api/ana)');
+} catch (error) {
+  console.error('❌ Failed to mount AnA Features routes:', error);
+}
+
 // Mount Lumen Cortex Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);

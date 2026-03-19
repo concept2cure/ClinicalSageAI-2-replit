@@ -848,4 +848,19 @@ router.get('/health', async (req: Request, res: Response) => {
   });
 });
 
+/**
+ * POST /api/chat  (root)
+ * Alias for /send-message — the Concept2Cure useChat hook sends to this path.
+ * Rewrites the request fields to match the /send-message handler and forwards.
+ */
+router.post('/', (req: Request, res: Response, next) => {
+  // Map useChat's { message, thread_id, system_prompt, context } to /send-message shape
+  if (req.body.context?.projectId && !req.body.project_id) {
+    req.body.project_id = req.body.context.projectId;
+  }
+  // Forward to /send-message handler
+  req.url = '/send-message';
+  router.handle(req, res, next);
+});
+
 export default router;
