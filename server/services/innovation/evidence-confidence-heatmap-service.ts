@@ -15,8 +15,7 @@
  */
 
 import { Pool } from 'pg';
-import { getOpenAIClient } from '../openai-client';
-import type OpenAI from 'openai';
+import { ai } from '../../lib/unified-ai-client';
 import crypto from 'crypto';
 
 // Types
@@ -115,13 +114,11 @@ interface CitationAnalysis {
 
 export class EvidenceConfidenceHeatmapService {
   private pool: Pool;
-  private openai: OpenAI;
   private static scoringConfigs: EvidenceScoringConfig[] = [];
   private static assessments: Array<EvidenceConfidenceAssessment & { documentId?: string }> = [];
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
   }
 
   /**

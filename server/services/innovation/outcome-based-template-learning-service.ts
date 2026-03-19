@@ -14,8 +14,7 @@
  */
 
 import { Pool } from 'pg';
-import { getOpenAIClient } from '../openai-client';
-import type OpenAI from 'openai';
+import { ai } from '../../lib/unified-ai-client';
 import crypto from 'crypto';
 
 // Types
@@ -115,14 +114,12 @@ export interface EffectivenessReport {
 
 export class OutcomeBasedTemplateLearningService {
   private pool: Pool;
-  private openai: OpenAI;
   private static templateCache: LearningTemplate[] = [];
   private static usageCache: TemplateUsage[] = [];
   private static outcomeCache: SubmissionOutcome[] = [];
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
   }
 
   // ==================== TEMPLATE MANAGEMENT ====================

@@ -61,7 +61,7 @@ import {
 import { useTenant } from '@/contexts/TenantContext.tsx';
 import { useToast } from '@/components/ui/toaster';
 import DocumentUploader from '@/components/document-intelligence/DocumentUploader';
-import { documentIntelligenceService } from '@/services/DocumentIntelligenceService';
+import { documentIntelligenceService } from '@/concept2cure/services/documentIntelligenceService';
 
 // Highly structured schema following FDA 510(k) requirements for device intake
 const fdaDeviceIntakeSchema = z.object({
