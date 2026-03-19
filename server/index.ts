@@ -70,6 +70,9 @@ import cmcDashboardRoutes from './routes/cmc-dashboard';
 import cmcAggregatorRoutes from './api/cmc/index.js';
 import cmcDashboardPrisma from './routes/cmc-dashboard-prisma';
 import cmcCoreRoutes from './api/cmc/routes';
+import cmcSpecificationRoutes from './api/cmc/specificationRoutes';
+import cmcStabilityRoutes from './api/cmc/stabilityRoutes';
+import cmcBatchRecordRoutes from './api/cmc/batchRecordRoutes';
 
 // Import AI assistance routes
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
@@ -821,9 +824,12 @@ try {
   app.use('/api/cmc', cmcAggregatorRoutes);
   app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
+  app.use('/api/cmc/specifications', cmcSpecificationRoutes);
+  app.use('/api/cmc/stability', cmcStabilityRoutes);
+  app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma);
-  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + dashboard)');
+  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + dashboard)');
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
 }
@@ -1173,6 +1179,16 @@ try {
   }
 } catch (error) {
   console.error('❌ Failed to mount IVDR routes:', error);
+}
+
+// Mount Manufacturing Module routes (ISA-95/FHIR, EBR, Quality, AI review)
+try {
+  const mfgModule = await import('./routes/manufacturing-routes');
+  const createManufacturingRoutes = mfgModule.default;
+  app.use('/api/manufacturing', createManufacturingRoutes(pool));
+  console.log('✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)');
+} catch (error) {
+  console.error('❌ Failed to mount Manufacturing routes:', error);
 }
 
 // Mount FDA Integration routes

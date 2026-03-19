@@ -37,9 +37,9 @@ import {
   type SubmissionTwinEvidenceLink,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull } from 'drizzle-orm';
-import OpenAI from 'openai';
+import { getOpenAIClient } from './openai-client';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getOpenAIClient();
 
 // ── Enum validators ──
 
