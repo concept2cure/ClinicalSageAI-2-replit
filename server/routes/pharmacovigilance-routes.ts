@@ -124,11 +124,10 @@ export default function createPharmacovigilanceRoutes(): Router {
   function getOrgId(req: Request): string {
     const orgId =
       (req as any).tenantId ||
-      (req as any).tenantContext?.organizationId;
+      (req as any).tenantContext?.organizationId ||
+      (req as any).user?.organizationId;
     if (!orgId) {
-      // Log but do not silently share data across tenants
-      console.warn('[Pharmacovigilance] No tenant context — using session-scoped fallback');
-      return (req as any).user?.organizationId || (req as any).user?.id || 'anonymous';
+      throw new Error('PV_NO_TENANT: Organization context required');
     }
     return String(orgId);
   }
@@ -258,8 +257,9 @@ export default function createPharmacovigilanceRoutes(): Router {
       }
 
       const data = parsed.data;
+      const orgId = getOrgId(req);
       const event = await reportAdverseEvent({
-        organizationId: data.organizationId,
+        organizationId: orgId,
         projectId: data.projectId,
         eventType: data.eventType as EventType,
         patientId: data.patientId,
@@ -274,7 +274,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         reportedToAuthorities: data.reportedToAuthorities,
       });
 
-      res.status(201).json({ success: true, data: event });
+      return res.status(201).json({ success: true, data: event });
     } catch (error) {
       console.error('[Pharmacovigilance] report adverse event error:', error);
       res.status(500).json({ success: false, error: 'Failed to report adverse event' });
@@ -361,7 +361,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       const data = parsed.data;
       const report = await createPeriodicReport({
-        organizationId: data.organizationId,
+        organizationId: getOrgId(req),
         projectId: data.projectId,
         reportType: data.reportType as any,
         periodStart: new Date(data.periodStart),
@@ -415,7 +415,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       const data = parsed.data;
       const signal = await reportSignal({
-        organizationId: data.organizationId,
+        organizationId: getOrgId(req),
         projectId: data.projectId,
         signalSource: data.signalSource as any,
         description: data.description,
@@ -472,7 +472,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       const data = parsed.data;
       const rmp = await createRMP({
-        organizationId: data.organizationId,
+        organizationId: getOrgId(req),
         projectId: data.projectId,
         version: data.version,
         identifiedRisks: data.identifiedRisks,

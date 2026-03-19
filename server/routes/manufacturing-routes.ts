@@ -81,9 +81,10 @@ const testResultSchema = z.object({
 });
 
 const responseSchema = z.object({
+  id: z.string().optional(),
   findingId: z.string().min(1, 'findingId is required'),
-  section: z.string().optional(),
-  responseText: z.string().min(1, 'responseText is required'),
+  section: z.string().nullish(),
+  text: z.string().min(1, 'text is required'),
   evidenceIds: z.array(z.string()).default([]),
 });
 
@@ -153,7 +154,9 @@ export default function createManufacturingRoutes(pool: Pool): Router {
    * Ensure the manufacturing.responses table exists (lightweight).
    * This covers the gap where migration-066 does not include a responses table.
    */
+  let responsesTableReady = false;
   async function ensureResponsesTable(): Promise<void> {
+    if (responsesTableReady) return;
     await pool.query(`
       CREATE TABLE IF NOT EXISTS manufacturing.responses (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,6 +169,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
+    responsesTableReady = true;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -843,13 +847,11 @@ export default function createManufacturingRoutes(pool: Pool): Router {
     try {
       await ensureResponsesTable();
       const orgId = getOrgId(req);
-      const { id, findingId, section, text, evidenceIds } = req.body;
-
-      if (!findingId || !text) {
-        return res.status(400).json({
-          error: 'findingId and text are required',
-        });
+      const parsed = responseSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
       }
+      const { id, findingId, section, text, evidenceIds } = parsed.data;
 
       // Upsert: if id is provided, update; otherwise insert
       if (id) {

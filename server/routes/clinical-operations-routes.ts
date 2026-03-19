@@ -433,9 +433,14 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
     try {
       await ensureTables();
       const { studyId } = req.params;
+      const orgId = getOrgId(req);
+      // Verify studyId belongs to the user's org before returning sites
       const result = await pool.query(
-        `SELECT * FROM clinical_ops.sites WHERE study_id = $1 ORDER BY name`,
-        [studyId],
+        `SELECT s.* FROM clinical_ops.sites s
+         INNER JOIN clinical_ops.studies st ON s.study_id = st.id
+         WHERE s.study_id = $1 AND ($2::TEXT IS NULL OR st.org_id = $2)
+         ORDER BY s.name`,
+        [studyId, orgId],
       );
       res.json({ success: true, data: result.rows, total: result.rows.length });
     } catch (error) {
