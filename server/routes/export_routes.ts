@@ -65,15 +65,15 @@ router.post('/pdf', async (req, res) => {
     // Pipe the PDF document to the response
     doc.pipe(res);
 
-    // Define colors for consistent branding
-    const primary = '#c15f3c'; // deep blue
-    const secondary = '#6a9bcc'; // medium blue
-    const accent = '#8bb4d9'; // light blue
-    const textColor = '#2d2d2a'; // slate
-    const lightGray = '#e8e6dc'; // light gray for borders
-    const lightBlue = '#faf0ec'; // very light blue for backgrounds
+    // Define colors for consistent Concept2Cure branding
+    const primary = '#c15f3c'; // Terracotta (Anthropic crail)
+    const secondary = '#6a9bcc'; // Anthropic blue
+    const accent = '#8bb4d9'; // Light Anthropic blue
+    const textColor = '#2d2d2a'; // Warm dark
+    const lightGray = '#e8e6dc'; // Warm light gray
+    const lightBlue = '#faf0ec'; // Warm light terracotta
 
-    // Add a cover page with a blue header
+    // Add a branded cover page header
     doc.rect(0, 0, doc.page.width, 150).fill(primary);
 
     // Add title
@@ -480,19 +480,24 @@ router.post('/pdf', async (req, res) => {
     for (let i = 1; i < range.count; i++) {
       doc.switchToPage(i);
 
-      // Add footer line
+      // Add branded footer line
       doc
-        .moveTo(50, doc.page.height - 50)
-        .lineTo(doc.page.width - 50, doc.page.height - 50)
+        .moveTo(50, doc.page.height - 55)
+        .lineTo(doc.page.width - 50, doc.page.height - 55)
+        .strokeColor(lightGray)
         .stroke();
 
-      // Add page number
+      // Add Concept2Cure branding + page number
       doc
-        .fontSize(10)
-        .fillColor(textColor)
-        .text(`Page ${i} of ${range.count - 1}`, 50, doc.page.height - 40, {
-          align: 'center',
-          width: doc.page.width - 100,
+        .fontSize(8)
+        .fillColor('#8a8880')
+        .text('Concept2Cure — AI-Powered Regulatory Intelligence', 50, doc.page.height - 45, {
+          align: 'left',
+          width: (doc.page.width - 100) / 2,
+        })
+        .text(`Page ${i} of ${range.count - 1}`, doc.page.width / 2, doc.page.height - 45, {
+          align: 'right',
+          width: (doc.page.width - 100) / 2,
         });
     }
 

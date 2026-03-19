@@ -32,6 +32,9 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 
+// Error pages
+const ErrorPages = lazy(() => import('../pages/ErrorPages'));
+
 // Legal pages
 const TermsOfService = lazy(() => import('../pages/legal/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('../pages/legal/PrivacyPolicy'));
