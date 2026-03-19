@@ -14,8 +14,8 @@
  */
 
 import { Pool } from 'pg';
+import { ai } from '../../lib/unified-ai-client';
 import { getOpenAIClient } from '../openai-client';
-import type OpenAI from 'openai';
 import crypto from 'crypto';
 
 // Types
@@ -128,14 +128,12 @@ export interface SearchResult {
 
 export class RegulatoryNegotiationLogbookService {
   private pool: Pool;
-  private openai: OpenAI;
   private static threadCache: NegotiationThread[] = [];
   private static entryCache: NegotiationEntry[] = [];
   private static positionCache: NegotiationPosition[] = [];
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
   }
 
   // ==================== THREAD MANAGEMENT ====================
@@ -367,7 +365,8 @@ export class RegulatoryNegotiationLogbookService {
     let embedding = null;
     if (entry.content) {
       try {
-        const embeddingResponse = await this.openai.embeddings.create({
+        const openai = getOpenAIClient();
+        const embeddingResponse = await openai.embeddings.create({
           model: 'text-embedding-3-small',
           input: entry.content.substring(0, 8000)
         });
@@ -483,7 +482,8 @@ export class RegulatoryNegotiationLogbookService {
 
       // Update embedding
       try {
-        const embeddingResponse = await this.openai.embeddings.create({
+        const openai = getOpenAIClient();
+        const embeddingResponse = await openai.embeddings.create({
           model: 'text-embedding-3-small',
           input: updates.content.substring(0, 8000)
         });
@@ -536,7 +536,8 @@ export class RegulatoryNegotiationLogbookService {
     let embedding = null;
     const positionText = `${position.topic}\n${position.sponsorPosition}\n${position.fdaPosition || ''}`;
     try {
-      const embeddingResponse = await this.openai.embeddings.create({
+      const openai = getOpenAIClient();
+      const embeddingResponse = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: positionText.substring(0, 8000)
       });
@@ -708,7 +709,8 @@ export class RegulatoryNegotiationLogbookService {
     // Generate query embedding
     let queryEmbedding: number[];
     try {
-      const embeddingResponse = await this.openai.embeddings.create({
+      const openai = getOpenAIClient();
+      const embeddingResponse = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: options.query
       });
