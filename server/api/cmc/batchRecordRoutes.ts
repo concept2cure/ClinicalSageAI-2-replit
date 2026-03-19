@@ -13,6 +13,7 @@ async function ensureBatchTables() {
     CREATE TABLE IF NOT EXISTS cmc_batch_records (
       id SERIAL PRIMARY KEY,
       project_id UUID,
+      tenant_id TEXT,
       batch_number TEXT NOT NULL,
       product_name TEXT NOT NULL,
       batch_size TEXT,
@@ -84,9 +85,9 @@ router.get('/:projectId', async (req, res) => {
 
     const result = await pool.query(
       `SELECT * FROM cmc_batch_records
-       WHERE project_id = $1
+       WHERE project_id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
        ORDER BY created_at DESC`,
-      [projectId]
+      [projectId, tenantId]
     );
 
     res.json({
@@ -120,19 +121,21 @@ router.post('/', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
 
     await ensureBatchTables();
 
     const result = await pool.query(
       `INSERT INTO cmc_batch_records (
-        project_id, batch_number, product_name, batch_size,
+        project_id, tenant_id, batch_number, product_name, batch_size,
         manufacturing_date, expiry_date, manufacturing_site,
         status, process_parameters, in_process_controls,
         yield_data, deviations
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *`,
       [
         data.projectId || null,
+        tenantId,
         data.batchNumber,
         data.productName,
         data.batchSize || null,

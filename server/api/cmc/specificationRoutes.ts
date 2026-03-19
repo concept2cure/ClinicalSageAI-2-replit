@@ -13,6 +13,7 @@ async function ensureSpecTables() {
     CREATE TABLE IF NOT EXISTS quality_specifications (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       project_id UUID,
+      tenant_id TEXT,
       material_type TEXT NOT NULL,
       material_name TEXT NOT NULL,
       test_parameters JSONB,
@@ -75,9 +76,9 @@ router.get('/:projectId', async (req, res) => {
 
     const result = await pool.query(
       `SELECT * FROM quality_specifications
-       WHERE project_id = $1
+       WHERE project_id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
        ORDER BY created_at DESC`,
-      [projectId]
+      [projectId, tenantId]
     );
 
     res.json({
@@ -111,18 +112,20 @@ router.post('/', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
 
     await ensureSpecTables();
 
     const result = await pool.query(
       `INSERT INTO quality_specifications (
-        project_id, material_type, material_name,
+        project_id, tenant_id, material_type, material_name,
         test_parameters, acceptance_criteria, test_methods,
         justification, regulatory_basis, approval_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
       [
         data.projectId || null,
+        tenantId,
         data.materialType,
         data.materialName,
         JSON.stringify(data.testParameters || null),
@@ -177,13 +180,14 @@ router.put('/:id', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
 
     await ensureSpecTables();
 
-    // Get current spec for audit trail
+    // Get current spec for audit trail (with tenant filter)
     const currentResult = await pool.query(
-      `SELECT * FROM quality_specifications WHERE id = $1`,
-      [id]
+      `SELECT * FROM quality_specifications WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`,
+      [id, tenantId]
     );
 
     if (currentResult.rows.length === 0) {
