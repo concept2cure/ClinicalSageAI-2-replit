@@ -166,12 +166,20 @@ function verifyClaim(
 // No demo response function — returns 503 when AI providers are unavailable.
 
 /**
- * POST /api/chat/send-message
+ * POST /api/chat/send-message  (and POST /api/chat via root alias)
  * Main chat endpoint — 9-step provenance-tracked RAG pipeline.
  *
  * Steps: RESOLVE_ORG → THREAD → USER_MSG → RETRIEVE → PROMPT → GENERATE → PERSIST → CLAIMS → CITATIONS
  */
-router.post('/send-message', async (req: Request, res: Response) => {
+/** Normalize useChat payload: map context.projectId → project_id */
+function normalizeBody(req: Request) {
+  if (req.body.context?.projectId && !req.body.project_id) {
+    req.body.project_id = req.body.context.projectId;
+  }
+}
+
+const sendMessageHandler = async (req: Request, res: Response) => {
+  normalizeBody(req);
   try {
     const { message, thread_id, file_id, system_prompt, project_id } = req.body;
 
@@ -639,7 +647,11 @@ router.post('/send-message', async (req: Request, res: Response) => {
       code: 'CHAT_ERROR',
     });
   }
-});
+};
+
+// Register on both /send-message and root / (useChat hook sends to POST /api/chat)
+router.post('/send-message', sendMessageHandler);
+router.post('/', sendMessageHandler);
 
 /**
  * POST /api/chat/upload
@@ -846,21 +858,6 @@ router.get('/health', async (req: Request, res: Response) => {
     persistence: 'postgresql',
     timestamp: new Date().toISOString(),
   });
-});
-
-/**
- * POST /api/chat  (root)
- * Alias for /send-message — the Concept2Cure useChat hook sends to this path.
- * Rewrites the request fields to match the /send-message handler and forwards.
- */
-router.post('/', (req: Request, res: Response, next) => {
-  // Map useChat's { message, thread_id, system_prompt, context } to /send-message shape
-  if (req.body.context?.projectId && !req.body.project_id) {
-    req.body.project_id = req.body.context.projectId;
-  }
-  // Forward to /send-message handler
-  req.url = '/send-message';
-  router.handle(req, res, next);
 });
 
 export default router;
