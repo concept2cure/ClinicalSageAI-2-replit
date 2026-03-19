@@ -1282,6 +1282,26 @@ try {
   console.error('❌ Failed to mount Deep Research routes:', error);
 }
 
+// Mount Intelligent Report Engine routes (immutable reports, provenance, sealing)
+try {
+  const intelligentReportsModule = await import('./routes/intelligent-reports.js');
+  const intelligentReportsRouter = intelligentReportsModule.default;
+  app.use('/api/intelligent-reports', intelligentReportsRouter);
+  console.log('✅ Intelligent Report Engine routes mounted (generate, seal, verify, export)');
+} catch (error) {
+  console.error('❌ Failed to mount Intelligent Report Engine routes:', error);
+}
+
+// Mount Safety Narrative Service routes (aggregate narratives, SAE, benefit-risk)
+try {
+  const safetyNarrativeModule = await import('./routes/safety-narrative.js');
+  const safetyNarrativeRouter = safetyNarrativeModule.default;
+  app.use('/api/safety-narratives', safetyNarrativeRouter);
+  console.log('✅ Safety Narrative Service routes mounted (aggregate, SAE, benefit-risk, signals)');
+} catch (error) {
+  console.error('❌ Failed to mount Safety Narrative routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');
