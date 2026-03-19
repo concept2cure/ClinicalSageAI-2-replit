@@ -5,7 +5,9 @@ import { z } from 'zod';
 const router = express.Router();
 
 // Ensure quality_specifications and audit table exist
+let specTablesInitialized = false;
 async function ensureSpecTables() {
+  if (specTablesInitialized) return;
   const pool = getPool();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS quality_specifications (
@@ -34,6 +36,7 @@ async function ensureSpecTables() {
       created_at TIMESTAMP DEFAULT NOW() NOT NULL
     )
   `);
+  specTablesInitialized = true;
 }
 
 // Validation schemas
@@ -65,6 +68,7 @@ const updateSpecSchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureSpecTables();
@@ -87,7 +91,7 @@ router.get('/:projectId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch specifications',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -152,7 +156,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to create specification',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -251,7 +255,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update specification',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -282,7 +286,7 @@ router.get('/:id/history', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch specification history',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });

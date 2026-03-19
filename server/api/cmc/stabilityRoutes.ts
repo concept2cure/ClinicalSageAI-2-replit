@@ -5,7 +5,9 @@ import { z } from 'zod';
 const router = express.Router();
 
 // Ensure stability_studies table exists (matches cmc-schema.ts)
+let stabilityTablesInitialized = false;
 async function ensureStabilityTables() {
+  if (stabilityTablesInitialized) return;
   const pool = getPool();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS stability_studies (
@@ -26,6 +28,7 @@ async function ensureStabilityTables() {
       updated_at TIMESTAMP DEFAULT NOW() NOT NULL
     )
   `);
+  stabilityTablesInitialized = true;
 }
 
 // Validation schemas
@@ -62,6 +65,7 @@ const updateStudySchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureStabilityTables();
@@ -84,7 +88,7 @@ router.get('/:projectId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch stability studies',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -144,7 +148,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to create stability study',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -235,7 +239,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update stability study',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -367,7 +371,7 @@ router.get('/:id/projections', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to generate shelf-life projections',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });

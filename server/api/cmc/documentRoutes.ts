@@ -5,7 +5,9 @@ import { z } from 'zod';
 const router = express.Router();
 
 // Ensure cmc_documents table exists
+let cmcDocumentsTableInitialized = false;
 async function ensureCmcDocumentsTable() {
+  if (cmcDocumentsTableInitialized) return;
   const pool = getPool();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cmc_documents (
@@ -65,6 +67,7 @@ async function ensureCmcDocumentsTable() {
       created_at TIMESTAMP DEFAULT NOW() NOT NULL
     )
   `);
+  cmcDocumentsTableInitialized = true;
 }
 
 // Validation schemas
@@ -97,7 +100,7 @@ const linkDocumentSchema = z.object({
 router.get('/', async (req, res) => {
   try {
     const { drug_candidate_id, study_id } = req.query;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureCmcDocumentsTable();
@@ -147,7 +150,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -156,7 +159,7 @@ router.get('/', async (req, res) => {
 router.get('/module/:moduleSection', async (req, res) => {
   try {
     const { moduleSection } = req.params;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureCmcDocumentsTable();
@@ -201,7 +204,7 @@ router.get('/module/:moduleSection', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch module documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -210,7 +213,7 @@ router.get('/module/:moduleSection', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureCmcDocumentsTable();
@@ -281,7 +284,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -300,7 +303,7 @@ router.post('/', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureCmcDocumentsTable();
@@ -359,7 +362,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to create document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -379,7 +382,7 @@ router.put('/:id', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureCmcDocumentsTable();
@@ -491,7 +494,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -511,7 +514,7 @@ router.post('/:id/link', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureCmcDocumentsTable();
@@ -563,7 +566,7 @@ router.post('/:id/link', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to link documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -572,7 +575,7 @@ router.post('/:id/link', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureCmcDocumentsTable();
@@ -605,7 +608,7 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });

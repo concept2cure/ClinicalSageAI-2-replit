@@ -5,7 +5,9 @@ import { z } from 'zod';
 const router = express.Router();
 
 // Ensure batch_records table exists
+let batchTablesInitialized = false;
 async function ensureBatchTables() {
+  if (batchTablesInitialized) return;
   const pool = getPool();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cmc_batch_records (
@@ -30,6 +32,7 @@ async function ensureBatchTables() {
       updated_at TIMESTAMP DEFAULT NOW() NOT NULL
     )
   `);
+  batchTablesInitialized = true;
 }
 
 // Validation schemas
@@ -74,6 +77,7 @@ const releaseSchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
     const pool = getPool();
 
     await ensureBatchTables();
@@ -96,7 +100,7 @@ router.get('/:projectId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch batch records',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -157,7 +161,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to create batch record',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -249,7 +253,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update batch record',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -360,7 +364,7 @@ router.post('/:id/release', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to process batch release',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
