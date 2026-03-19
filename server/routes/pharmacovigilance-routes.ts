@@ -162,7 +162,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const expeditedCount = events.filter(e => e.expeditedReportRequired).length;
       const reportedCount = events.filter(e => e.reportedToAuthorities).length;
 
-      res.json({
+      return res.json({
         success: true,
         data: {
           kpis: {
@@ -200,17 +200,38 @@ export default function createPharmacovigilanceRoutes(): Router {
       const orgId = getOrgId(req);
       const { eventType, seriousnessCriteria, reportedToAuthorities, expeditedReportRequired, fromDate, toDate } = req.query;
 
+      const validEventTypes = ['AE', 'SAE', 'SUSAR', 'AESI'];
+      const validSeriousness = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'];
+
       const filters: AdverseEventFilters = {};
-      if (eventType) filters.eventType = eventType as EventType;
-      if (seriousnessCriteria) filters.seriousnessCriteria = seriousnessCriteria as SeriousnessCriteria;
+      if (eventType) {
+        if (!validEventTypes.includes(eventType as string)) {
+          return res.status(400).json({ success: false, error: `eventType must be one of: ${validEventTypes.join(', ')}` });
+        }
+        filters.eventType = eventType as EventType;
+      }
+      if (seriousnessCriteria) {
+        if (!validSeriousness.includes(seriousnessCriteria as string)) {
+          return res.status(400).json({ success: false, error: `seriousnessCriteria must be one of: ${validSeriousness.join(', ')}` });
+        }
+        filters.seriousnessCriteria = seriousnessCriteria as SeriousnessCriteria;
+      }
       if (reportedToAuthorities !== undefined) filters.reportedToAuthorities = reportedToAuthorities === 'true';
       if (expeditedReportRequired !== undefined) filters.expeditedReportRequired = expeditedReportRequired === 'true';
-      if (fromDate) filters.fromDate = new Date(fromDate as string);
-      if (toDate) filters.toDate = new Date(toDate as string);
+      if (fromDate) {
+        const d = new Date(fromDate as string);
+        if (isNaN(d.getTime())) return res.status(400).json({ success: false, error: 'Invalid fromDate format' });
+        filters.fromDate = d;
+      }
+      if (toDate) {
+        const d = new Date(toDate as string);
+        if (isNaN(d.getTime())) return res.status(400).json({ success: false, error: 'Invalid toDate format' });
+        filters.toDate = d;
+      }
 
       const events = await getAdverseEvents(orgId, filters);
 
-      res.json({
+      return res.json({
         success: true,
         data: events,
         total: events.length,
@@ -268,7 +289,7 @@ export default function createPharmacovigilanceRoutes(): Router {
     try {
       const orgId = getOrgId(req);
       const overdue = await getOverdueReports(orgId);
-      res.json({ success: true, data: overdue, total: overdue.length });
+      return res.json({ success: true, data: overdue, total: overdue.length });
     } catch (error) {
       console.error('[Pharmacovigilance] overdue reports error:', error);
       res.status(500).json({ success: false, error: 'Failed to retrieve overdue reports' });
@@ -316,7 +337,7 @@ export default function createPharmacovigilanceRoutes(): Router {
     try {
       const orgId = getOrgId(req);
       const reports = await getUpcomingReports(orgId);
-      res.json({ success: true, data: reports, total: reports.length });
+      return res.json({ success: true, data: reports, total: reports.length });
     } catch (error) {
       console.error('[Pharmacovigilance] periodic reports error:', error);
       res.status(500).json({ success: false, error: 'Failed to retrieve periodic reports' });
@@ -370,7 +391,7 @@ export default function createPharmacovigilanceRoutes(): Router {
     try {
       const orgId = getOrgId(req);
       const signals = await getPendingSignals(orgId);
-      res.json({ success: true, data: signals, total: signals.length });
+      return res.json({ success: true, data: signals, total: signals.length });
     } catch (error) {
       console.error('[Pharmacovigilance] get signals error:', error);
       res.status(500).json({ success: false, error: 'Failed to retrieve safety signals' });
@@ -427,7 +448,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       }
 
       const plans = await getRMPsForProject(projectId);
-      res.json({ success: true, data: plans, total: plans.length });
+      return res.json({ success: true, data: plans, total: plans.length });
     } catch (error) {
       console.error('[Pharmacovigilance] get RMPs error:', error);
       res.status(500).json({ success: false, error: 'Failed to retrieve RMPs' });
@@ -500,7 +521,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       const isExpedited = eventType !== 'AE';
 
-      res.json({
+      return res.json({
         success: true,
         data: {
           deadline: deadline.toISOString(),
@@ -551,7 +572,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         };
       });
 
-      res.json({ success: true, data: matrix });
+      return res.json({ success: true, data: matrix });
     } catch (error) {
       console.error('[Pharmacovigilance] compliance matrix error:', error);
       res.status(500).json({ success: false, error: 'Failed to generate compliance matrix' });

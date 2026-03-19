@@ -117,6 +117,26 @@ export default function createIVDRRoutes(pool: Pool): Router {
     });
   }
 
+  // ── GSPR table init guard (avoids DDL on every request) ──────────────────
+  let gsprTableInitialized = false;
+  async function ensureGsprTable(): Promise<void> {
+    if (gsprTableInitialized) return;
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ivdr_gspr_assessments (
+        id SERIAL PRIMARY KEY,
+        organization_id INTEGER NOT NULL,
+        project_id TEXT NOT NULL,
+        device_name TEXT NOT NULL,
+        classification TEXT,
+        requirements JSONB NOT NULL DEFAULT '[]',
+        created_by TEXT NOT NULL DEFAULT 'system',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    gsprTableInitialized = true;
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ANNEX VIII CLASSIFICATION
   // ═══════════════════════════════════════════════════════════════════════════
@@ -162,6 +182,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
       // ── Annex VIII Rule Engine ───────────────────────────────────────────
       const ruleTrace: Array<{ rule: string; description: string; matched: boolean }> = [];
       let classResult: 'A' | 'B' | 'C' | 'D' = 'A'; // Default lowest risk
+      const classPriority: Record<string, number> = { A: 1, B: 2, C: 3, D: 4 };
+      const upgradeClass = (target: 'B' | 'C' | 'D') => {
+        if (classPriority[target] > classPriority[classResult]) classResult = target;
+      };
 
       // Rule 1 — Class D: Blood/tissue screening for transmissible agents
       const rule1Match = bloodScreening === true && detectsTransmissibleAgent === true;
@@ -193,7 +217,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended as companion diagnostics — devices essential for the safe and effective use of a corresponding medicinal product, to identify patients most likely to benefit or at increased risk of serious adverse reactions',
         matched: rule3aMatch,
       });
-      if (rule3aMatch && classResult < 'C') classResult = 'C';
+      if (rule3aMatch) upgradeClass('C');
 
       // Rule 3b — Class C: Cancer screening/diagnosis as first-line
       const rule3bMatch = detectsCancer === true;
@@ -203,7 +227,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for screening, diagnosis, or staging of cancer. First-line standalone diagnostic use for detecting cancer markers (CEA, PSA, CA-125, HER2, etc.)',
         matched: rule3bMatch,
       });
-      if (rule3bMatch && classResult < 'C') classResult = 'C';
+      if (rule3bMatch) upgradeClass('C');
 
       // Rule 3c — Class C: Genetic testing with direct patient management impact
       const rule3cMatch = isGeneticTest === true;
@@ -213,7 +237,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended to provide information about genetic predisposition. Human genetic testing whose results directly lead to patient management decisions (pharmacogenomic, hereditary condition screening)',
         matched: rule3cMatch,
       });
-      if (rule3cMatch && classResult < 'C') classResult = 'C';
+      if (rule3cMatch) upgradeClass('C');
 
       // Rule 3d — Class C: Prenatal screening / congenital abnormalities
       const rule3dMatch = prenatalScreening === true;
@@ -223,7 +247,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for prenatal screening of women to determine their immune status, for detecting congenital abnormalities of the foetus, or for determining foetal status where there is an imminent risk to the foetus',
         matched: rule3dMatch,
       });
-      if (rule3dMatch && classResult < 'C') classResult = 'C';
+      if (rule3dMatch) upgradeClass('C');
 
       // Rule 4 — Class B: Self-testing devices
       const rule4Match = isSelfTest === true;
@@ -233,7 +257,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for self-testing — devices intended to be used by lay persons including tests for self-monitoring of chronic conditions (glucose, coagulation, cholesterol self-tests)',
         matched: rule4Match,
       });
-      if (rule4Match && classResult < 'B') classResult = 'B';
+      if (rule4Match) upgradeClass('B');
 
       // Rule 5 — Class B: Near-patient testing
       const rule5Match = isNearPatient === true && !isSelfTest;
@@ -243,7 +267,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for near-patient testing (point-of-care) — devices intended to be used outside a laboratory environment, including in the immediate patient environment (bedside, ambulance, pharmacy, workplace)',
         matched: rule5Match,
       });
-      if (rule5Match && classResult < 'B') classResult = 'B';
+      if (rule5Match) upgradeClass('B');
 
       // Rule 6 — Class B: Devices whose failure poses risk
       const rule6Match = riskToPatient === 'high' || riskToPatient === 'medium';
@@ -253,7 +277,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs not covered by higher classes but whose results could pose a medium/high risk to the individual patient or to public health. Includes IVDs measuring analytes used in critical patient management decisions',
         matched: rule6Match,
       });
-      if (rule6Match && classResult < 'B') classResult = 'B';
+      if (rule6Match) upgradeClass('B');
 
       // Rule 7 — Class A: General IVDs / instruments / accessories
       ruleTrace.push({
@@ -355,7 +379,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
         },
       };
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${id}.json"`);
+      const safeId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
+      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
       return res.json(report);
     } catch (error: any) {
       return safeError(res, error, 'IVDR_CLASS_REPORT_ERROR', 'Classification report');
@@ -1038,20 +1063,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         return res.status(400).json({ error: 'projectId and deviceName are required' });
       }
 
-      // Create table if not exists
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS ivdr_gspr_assessments (
-          id SERIAL PRIMARY KEY,
-          organization_id INTEGER NOT NULL,
-          project_id TEXT NOT NULL,
-          device_name TEXT NOT NULL,
-          classification TEXT,
-          requirements JSONB NOT NULL DEFAULT '[]',
-          created_by TEXT NOT NULL DEFAULT 'system',
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `);
+      await ensureGsprTable();
 
       // Check for existing assessment
       const existing = await pool.query(
@@ -1098,20 +1110,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
       const orgId = getServerOrgId(req);
       const { projectId } = req.params;
 
-      // Ensure table exists
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS ivdr_gspr_assessments (
-          id SERIAL PRIMARY KEY,
-          organization_id INTEGER NOT NULL,
-          project_id TEXT NOT NULL,
-          device_name TEXT NOT NULL,
-          classification TEXT,
-          requirements JSONB NOT NULL DEFAULT '[]',
-          created_by TEXT NOT NULL DEFAULT 'system',
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `);
+      await ensureGsprTable();
 
       const result = await pool.query(
         `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
@@ -1280,8 +1279,22 @@ export default function createIVDRRoutes(pool: Pool): Router {
   // SUBMISSION PACKAGE EXPORT
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // In-memory store for submission package generation status
+  // In-memory store for submission package generation status (with TTL cleanup)
   const submissionJobs: Record<string, { status: string; startedAt: string; completedAt?: string; manifest?: any; error?: string }> = {};
+
+  // Periodically clean up completed/failed jobs older than 1 hour
+  const JOB_TTL_MS = 60 * 60 * 1000;
+  setInterval(() => {
+    const cutoff = Date.now() - JOB_TTL_MS;
+    for (const key of Object.keys(submissionJobs)) {
+      const job = submissionJobs[key];
+      if (job.completedAt && new Date(job.completedAt).getTime() < cutoff) {
+        delete submissionJobs[key];
+      } else if (!job.completedAt && new Date(job.startedAt).getTime() < cutoff) {
+        delete submissionJobs[key]; // Stale in-progress job
+      }
+    }
+  }, 10 * 60 * 1000).unref(); // Every 10 minutes, unref so it doesn't keep process alive
 
   /**
    * POST /api/ivdr/submission-package/:projectId

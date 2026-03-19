@@ -51,7 +51,11 @@ router.get('/morning-briefing', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id || 'anonymous';
     const userName = (req as any).user?.name || 'User';
-    const query = morningBriefingQuerySchema.parse(req.query);
+    const parsed = morningBriefingQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Invalid query parameters', details: parsed.error.issues });
+    }
+    const query = parsed.data;
 
     logger.info('Generating morning briefing', { userId, query });
 
@@ -270,10 +274,16 @@ router.get('/recalls', async (req: Request, res: Response) => {
 
     logger.info('Fetching FDA recalls', { classification, status, dateRange });
 
-    // Build openFDA query — sanitize inputs to prevent API query injection
+    // Build openFDA query — whitelist classification values and sanitize inputs
     const sanitize = (val: string) => val.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
+    const validClassifications = ['Class I', 'Class II', 'Class III'];
     const searchParts: string[] = [];
-    if (classification) searchParts.push(`classification:"${sanitize(classification as string)}"`);
+    if (classification) {
+      const classStr = classification as string;
+      if (validClassifications.includes(classStr)) {
+        searchParts.push(`classification:"${classStr}"`);
+      }
+    }
     if (status) searchParts.push(`status:"${sanitize(status as string)}"`);
     if (dateRange) {
       // dateRange format: "2024-01-01:2025-01-01"
@@ -292,10 +302,10 @@ router.get('/recalls', async (req: Request, res: Response) => {
       const timeout = setTimeout(() => controller.abort(), 8000);
 
       const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
 
       if (response.ok) {
         const data = await response.json();
+        clearTimeout(timeout);
         const recalls = (data.results || []).map((r: any, idx: number) => ({
           id: r.recall_number || `recall-${idx}`,
           recallNumber: r.recall_number,
@@ -318,6 +328,7 @@ router.get('/recalls', async (req: Request, res: Response) => {
           source: 'openFDA',
         });
       }
+      clearTimeout(timeout);
     } catch (fetchErr) {
       logger.warn('openFDA enforcement fetch failed, returning empty', { error: fetchErr });
     }
@@ -397,10 +408,10 @@ router.get('/pdufa-dates', async (req: Request, res: Response) => {
       const timeout = setTimeout(() => controller.abort(), 8000);
 
       const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
 
       if (response.ok) {
         const data = await response.json();
+        clearTimeout(timeout);
         const entries = (data.results || []).map((r: any, idx: number) => {
           const submissions = r.submissions || [];
           const latestSubmission = submissions[0] || {};
@@ -426,6 +437,7 @@ router.get('/pdufa-dates', async (req: Request, res: Response) => {
           source: 'openFDA',
         });
       }
+      clearTimeout(timeout);
     } catch (fetchErr) {
       logger.warn('openFDA drugsfda fetch failed', { error: fetchErr });
     }
@@ -586,9 +598,16 @@ router.get('/alerts/stream', async (req: Request, res: Response) => {
     // Send heartbeat
     res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`);
   }, 30000);
-  
+
+  // Max connection lifetime: 1 hour to prevent stale connections
+  const maxLifetimeId = setTimeout(() => {
+    res.write(`data: ${JSON.stringify({ type: 'timeout', message: 'Connection expired after 1 hour. Please reconnect.' })}\n\n`);
+    res.end();
+  }, 60 * 60 * 1000);
+
   req.on('close', () => {
     clearInterval(intervalId);
+    clearTimeout(maxLifetimeId);
     logger.info('SSE connection closed', { userId });
   });
 });

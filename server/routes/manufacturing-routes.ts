@@ -57,18 +57,27 @@ const batchStatusSchema = z.object({
 });
 
 const deviationSchema = z.object({
-  description: z.string().min(1, 'description is required'),
+  title: z.string().min(1, 'title is required'),
+  description: z.string().optional().default(''),
   severity: z.enum(['MINOR', 'MAJOR', 'CRITICAL']).default('MINOR'),
   category: z.string().optional(),
+  relatedCpp: z.string().nullish(),
+  reportedBy: z.string().optional().default('system'),
 });
 
 const testResultSchema = z.object({
+  testCode: z.string().min(1, 'testCode is required'),
   testName: z.string().min(1, 'testName is required'),
-  parameter: z.string().min(1, 'parameter is required'),
-  result: z.number(),
-  unit: z.string().min(1),
-  specLow: z.number().optional(),
-  specHigh: z.number().optional(),
+  testMethod: z.string().nullish(),
+  sampleId: z.string().optional(),
+  sampleType: z.string().optional().default('RELEASE'),
+  resultValue: z.number().nullish(),
+  resultString: z.string().nullish(),
+  resultUnit: z.string().nullish(),
+  specLowerLimit: z.number().nullish(),
+  specUpperLimit: z.number().nullish(),
+  specTargetValue: z.number().nullish(),
+  performedBy: z.string().optional().default('system'),
 });
 
 const responseSchema = z.object({
@@ -111,11 +120,13 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   function getOrgId(req: Request): string | null {
-    return (
-      (req as any).tenantId ||
+    const orgId = (req as any).tenantId ||
       (req as any).tenantContext?.organizationId ||
-      null
-    );
+      null;
+    if (!orgId) {
+      console.warn('[Manufacturing] No tenant context on request — queries will not be org-scoped');
+    }
+    return orgId;
   }
 
   function safeError(
@@ -552,13 +563,11 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   router.post('/batches/:id/deviation', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { severity, title, description, relatedCpp, reportedBy } = req.body;
-
-      if (!title || !severity) {
-        return res.status(400).json({
-          error: 'title and severity are required',
-        });
+      const parsed = deviationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
       }
+      const { severity, title, description, relatedCpp, reportedBy } = parsed.data;
 
       const deviation = {
         id: `DEV-${Date.now().toString(36).toUpperCase()}`,
@@ -607,6 +616,10 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   router.post('/batches/:id/test-result', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const parsed = testResultSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
       const {
         sampleId,
         sampleType,
@@ -620,13 +633,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         specUpperLimit,
         specTargetValue,
         performedBy,
-      } = req.body;
-
-      if (!testCode || !testName) {
-        return res.status(400).json({
-          error: 'testCode and testName are required',
-        });
-      }
+      } = parsed.data;
 
       // Auto-compute disposition based on spec limits
       let disposition = 'PENDING';
