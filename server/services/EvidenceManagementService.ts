@@ -6,8 +6,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { getOpenAIClient } from './openai-client';
-import type OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 
 // FDA Requirement definitions
 const FDA_REQUIREMENTS_MAP = {
@@ -54,28 +53,17 @@ const FDA_REQUIREMENTS_MAP = {
 };
 
 export class EvidenceManagementService {
-  private openai: OpenAI | null = null;
-
-  constructor() {
-    // Initialize OpenAI if API key exists
-    try {
-      this.openai = getOpenAIClient();
-    } catch {}
-  }
+  constructor() {}
 
   /**
    * Extract data from uploaded evidence files using AI
    */
   async extractDataFromFile(fileContent: string, fileName: string, fileType: string) {
-    if (!this.openai) {
-      return this.basicDataExtraction(fileContent, fileName);
-    }
-
     try {
       const prompt = `
         Analyze this test report/evidence document and extract key information:
         File Name: ${fileName}
-        
+
         Extract the following if present:
         1. Test Type/Category (bench test, biocompatibility, etc.)
         2. Test Standard/Method (ISO, ASTM, etc.)
@@ -85,21 +73,20 @@ export class EvidenceManagementService {
         6. Test Results (Pass/Fail/Numerical)
         7. Key Findings or Conclusions
         8. Any deviations or issues noted
-        
+
         Content:
         ${fileContent.substring(0, 4000)} // Limit content for API
-        
+
         Return as JSON with these fields.
       `;
 
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3
-      });
+      const responseText = await ai.complete(
+        [{ role: 'user', content: prompt }],
+        { temperature: 0.3, jsonMode: true, callerModule: 'EvidenceManagementService/extractData' }
+      );
 
-      const extracted = JSON.parse(response.choices[0].message.content || '{}');
-      
+      const extracted = JSON.parse(responseText || '{}');
+
       return {
         test_type: extracted.test_type || this.inferTestType(fileName),
         test_standard: extracted.test_standard || null,

@@ -1,34 +1,15 @@
-// Regulatory AI Service
-import OpenAI from 'openai';
-
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-}) : null;
+// Regulatory AI Service — routes through Claude via AI Gateway
+import { ai } from '../../../lib/unified-ai-client.js';
 
 export async function aiRiskSummary(programData) {
   try {
-    if (!openai) {
-      return {
-        summary: "Regulatory risk assessment unavailable - OpenAI API key not configured",
-        riskLevel: "medium",
-        factors: []
-      };
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory affairs expert. Provide a concise risk assessment summary."
-      }, {
-        role: "user",
-        content: `Assess regulatory risks for: ${JSON.stringify(programData)}`
-      }],
-      max_tokens: 500
-    });
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory affairs expert. Provide a concise risk assessment summary.' },
+      { role: 'user', content: `Assess regulatory risks for: ${JSON.stringify(programData)}` }
+    ], { maxTokens: 500, callerModule: 'regulatory/aiRiskSummary' });
 
     return {
-      summary: response.choices[0].message.content,
+      summary: text,
       riskLevel: "low",
       factors: []
     };
@@ -44,27 +25,13 @@ export async function aiRiskSummary(programData) {
 
 export async function aiNextActions(programData) {
   try {
-    if (!openai) {
-      return {
-        actions: ["Review regulatory requirements", "Prepare submission documents"],
-        timeline: "Standard timeline applies"
-      };
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory strategist. Provide actionable next steps."
-      }, {
-        role: "user",
-        content: `Recommend next regulatory actions for: ${JSON.stringify(programData)}`
-      }],
-      max_tokens: 300
-    });
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory strategist. Provide actionable next steps.' },
+      { role: 'user', content: `Recommend next regulatory actions for: ${JSON.stringify(programData)}` }
+    ], { maxTokens: 300, callerModule: 'regulatory/aiNextActions' });
 
     return {
-      actions: response.choices[0].message.content.split('\n').filter(a => a.trim()),
+      actions: text.split('\n').filter(a => a.trim()),
       timeline: "Based on regulatory requirements"
     };
   } catch (error) {
@@ -78,32 +45,12 @@ export async function aiNextActions(programData) {
 
 export async function aiGateCheckFindings(data) {
   try {
-    if (!openai) {
-      return {
-        findings: [{
-          severity: 'info',
-          category: 'API',
-          message: 'OpenAI API key not configured',
-          recommendation: 'Configure OpenAI API key for AI-powered gate checks'
-        }]
-      };
-    }
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory compliance expert. Identify gate check findings.' },
+      { role: 'user', content: `Review for gate check findings: ${JSON.stringify(data)}` }
+    ], { maxTokens: 800, callerModule: 'regulatory/aiGateCheckFindings' });
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory compliance expert. Identify gate check findings."
-      }, {
-        role: "user",
-        content: `Review for gate check findings: ${JSON.stringify(data)}`
-      }],
-      max_tokens: 800
-    });
-
-    return {
-      findings: response.choices[0].message.content
-    };
+    return { findings: text };
   } catch (error) {
     console.error('AI Gate Check error:', error);
     return { findings: [] };
@@ -112,30 +59,15 @@ export async function aiGateCheckFindings(data) {
 
 export async function aiClassifyChange(changeData) {
   try {
-    if (!openai) {
-      return {
-        regions: ['FDA'],
-        risk: 'medium',
-        impact: 'moderate'
-      };
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory Q12 expert. Classify changes by impacted regions and risk."
-      }, {
-        role: "user",
-        content: `Classify this regulatory change: ${JSON.stringify(changeData)}`
-      }],
-      max_tokens: 300
-    });
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory Q12 expert. Classify changes by impacted regions and risk.' },
+      { role: 'user', content: `Classify this regulatory change: ${JSON.stringify(changeData)}` }
+    ], { maxTokens: 300, callerModule: 'regulatory/aiClassifyChange' });
 
     return {
       regions: ['FDA', 'EMA'],
       risk: 'low',
-      impact: response.choices[0].message.content
+      impact: text
     };
   } catch (error) {
     console.error('AI Classify Change error:', error);
@@ -149,30 +81,12 @@ export async function aiClassifyChange(changeData) {
 
 export async function aiExtractQuestions(normalizedText, options = {}) {
   try {
-    if (!openai) {
-      return [{
-        text: normalizedText,
-        section_suggest: null,
-        due_date: options.due || null,
-        severity: 'MAJOR',
-        region: options.region || null
-      }];
-    }
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory affairs expert. Extract individual questions from agency communications. Return a JSON array of questions with fields: text, section_suggest, severity (MAJOR/MINOR), due_date.' },
+      { role: 'user', content: `Extract questions from this agency communication:\n\n${normalizedText}\n\nRegion: ${options.region || 'N/A'}\nDue date: ${options.due || 'N/A'}` }
+    ], { maxTokens: 1000, jsonMode: true, callerModule: 'regulatory/aiExtractQuestions' });
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory affairs expert. Extract individual questions from agency communications. Return a JSON array of questions with fields: text, section_suggest, severity (MAJOR/MINOR), due_date."
-      }, {
-        role: "user",
-        content: `Extract questions from this agency communication:\n\n${normalizedText}\n\nRegion: ${options.region || 'N/A'}\nDue date: ${options.due || 'N/A'}`
-      }],
-      max_tokens: 1000,
-      response_format: { type: "json_object" }
-    });
-
-    const result = JSON.parse(response.choices[0].message.content);
+    const result = JSON.parse(text);
     return result.questions || [{
       text: normalizedText,
       section_suggest: null,
@@ -194,31 +108,17 @@ export async function aiExtractQuestions(normalizedText, options = {}) {
 
 export async function aiDraftResponse(questionText, evidence, tone = 'Neutral') {
   try {
-    if (!openai) {
-      return {
-        md: `**Response to Question:**\n\n${questionText}\n\n*OpenAI API key not configured - please configure to enable AI-powered response drafting.*\n\n**Evidence:**\n${evidence ? '- Evidence available but not processed' : '- No evidence provided'}`,
-        used: []
-      };
-    }
-
-    const evidenceText = Array.isArray(evidence) 
+    const evidenceText = Array.isArray(evidence)
       ? evidence.map((e, i) => `${i + 1}. ${JSON.stringify(e)}`).join('\n')
       : JSON.stringify(evidence);
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: `You are a regulatory affairs expert drafting responses to agency questions. Use a ${tone} tone suitable for ${tone === 'FDA' ? 'FDA submissions' : tone === 'EMA' ? 'EMA submissions' : 'regulatory submissions'}. Provide responses in markdown format.`
-      }, {
-        role: "user",
-        content: `Draft a response to this question:\n\n${questionText}\n\nAvailable Evidence:\n${evidenceText}`
-      }],
-      max_tokens: 1500
-    });
+    const text = await ai.complete([
+      { role: 'system', content: `You are a regulatory affairs expert drafting responses to agency questions. Use a ${tone} tone suitable for ${tone === 'FDA' ? 'FDA submissions' : tone === 'EMA' ? 'EMA submissions' : 'regulatory submissions'}. Provide responses in markdown format.` },
+      { role: 'user', content: `Draft a response to this question:\n\n${questionText}\n\nAvailable Evidence:\n${evidenceText}` }
+    ], { maxTokens: 1500, callerModule: 'regulatory/aiDraftResponse' });
 
     return {
-      md: response.choices[0].message.content,
+      md: text,
       used: Array.isArray(evidence) ? evidence.slice(0, 3) : []
     };
   } catch (error) {
@@ -232,28 +132,13 @@ export async function aiDraftResponse(questionText, evidence, tone = 'Neutral') 
 
 export async function aiIRDraft(questionText, context = {}) {
   try {
-    if (!openai) {
-      return {
-        draft: `**Information Request Response**\n\n**Question:** ${questionText}\n\n**Response:**\n\n*OpenAI API key not configured - please configure to enable AI-powered IR drafting.*`,
-        sections: [],
-        confidence: 'low'
-      };
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{
-        role: "system",
-        content: "You are a regulatory affairs expert drafting responses to information requests. Provide detailed, compliant responses in markdown format."
-      }, {
-        role: "user",
-        content: `Draft a response to this information request:\n\nQuestion: ${questionText}\n\nContext: ${JSON.stringify(context)}`
-      }],
-      max_tokens: 1200
-    });
+    const text = await ai.complete([
+      { role: 'system', content: 'You are a regulatory affairs expert drafting responses to information requests. Provide detailed, compliant responses in markdown format.' },
+      { role: 'user', content: `Draft a response to this information request:\n\nQuestion: ${questionText}\n\nContext: ${JSON.stringify(context)}` }
+    ], { maxTokens: 1200, callerModule: 'regulatory/aiIRDraft' });
 
     return {
-      draft: response.choices[0].message.content,
+      draft: text,
       sections: [],
       confidence: 'medium'
     };
