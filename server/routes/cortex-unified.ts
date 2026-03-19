@@ -15,7 +15,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { getOpenAIClient } from '../services/openai-client';
+import { ai } from '../lib/unified-ai-client';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
 import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
@@ -305,31 +305,36 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       });
 
       try {
-        const openai = getOpenAIClient();
         const openaiTools = toOpenAITools();
 
-        // ── Phase 1: Non-streaming call with tool schemas ──────────────────
-        const initialCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: aiMessages as any,
-          tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
-          tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
-          max_tokens: 4000,
+        // ── Phase 1: Non-streaming call with tool schemas via unified AI client
+        const initialResponse = await ai.chat(aiMessages, {
+          maxTokens: 4000,
           temperature: 0.7,
+          callerModule: 'cortex-unified/chat-stream',
         });
-        streamModel = 'openai/gpt-4o-mini';
+        streamModel = `${initialResponse.provider}/${initialResponse.model}`;
+        const initialContent = initialResponse.content || '';
 
-        const firstChoice = initialCompletion.choices[0].message;
+        // ── Phase 2: Check for tool invocations from the AI response ────
+        // Parse tool calls from the response if the AI suggests tool usage
+        const toolCallPattern = /\[TOOL_CALL:(\w+)\((.*?)\)\]/g;
+        const detectedToolCalls: Array<{ name: string; args: Record<string, string> }> = [];
+        let match;
+        while ((match = toolCallPattern.exec(initialContent)) !== null) {
+          try {
+            detectedToolCalls.push({ name: match[1], args: JSON.parse(match[2] || '{}') });
+          } catch { /* skip malformed */ }
+        }
 
-        // ── Phase 2: Execute tool calls if any ─────────────────────────────
-        if (firstChoice.tool_calls && firstChoice.tool_calls.length > 0) {
+        if (detectedToolCalls.length > 0 && openaiTools.length > 0) {
           const MAX_TOOL_CALLS = 3;
-          const toolCalls = firstChoice.tool_calls.slice(0, MAX_TOOL_CALLS);
+          const toolCalls = detectedToolCalls.slice(0, MAX_TOOL_CALLS);
 
           // Loop detection: reject if LLM requests the same tool twice
           const seenTools = new Set<string>();
           const dedupedCalls = toolCalls.filter(tc => {
-            const name = fromOpenAIName(tc.function.name);
+            const name = fromOpenAIName(tc.name);
             if (seenTools.has(name)) {
               logger.warn(
                 `[Chat] Loop detected: LLM requested "${name}" twice — skipping duplicate`
@@ -345,26 +350,20 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             `data: ${JSON.stringify({ type: 'status', text: `Running ${dedupedCalls.length} tool(s)...` })}\n\n`
           );
 
-          // Push the assistant message with tool_calls
-          aiMessages.push(firstChoice as any);
+          // Push the assistant message
+          aiMessages.push({ role: 'assistant', content: initialContent });
 
           for (const toolCall of dedupedCalls) {
-            const toolName = fromOpenAIName(toolCall.function.name);
-            let toolArgs: Record<string, string>;
-            try {
-              toolArgs = JSON.parse(toolCall.function.arguments || '{}');
-            } catch {
-              toolArgs = {};
-            }
+            const toolName = fromOpenAIName(toolCall.name);
+            const toolArgs = toolCall.args;
 
             const t0 = Date.now();
             const tool = getTool(toolName);
             if (!tool) {
               logger.warn(`[Chat] LLM requested unknown tool: ${toolName}`);
               aiMessages.push({
-                role: 'tool' as const,
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({ error: `Tool "${toolName}" not found` }),
+                role: 'user' as const,
+                content: `Tool "${toolName}" was not found. Please respond without it.`,
               });
               logToolRun({
                 threadId,
@@ -396,9 +395,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
               const resultPayload = result.artifact || { message: result.message.content };
               aiMessages.push({
-                role: 'tool' as const,
-                tool_call_id: toolCall.id,
-                content: JSON.stringify(resultPayload),
+                role: 'user' as const,
+                content: `Tool "${toolName}" result: ${JSON.stringify(resultPayload)}`,
               });
 
               logger.info(`[Chat] Tool "${toolName}" executed in ${latencyMs}ms`);
@@ -419,9 +417,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
                 `[Chat] Tool "${toolName}" failed in ${latencyMs}ms: ${toolErr.message}`
               );
               aiMessages.push({
-                role: 'tool' as const,
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({ error: toolErr.message }),
+                role: 'user' as const,
+                content: `Tool "${toolName}" failed: ${toolErr.message}. Please respond without it.`,
               });
               logToolRun({
                 threadId,
@@ -438,33 +435,26 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             }
           }
 
-          // ── Phase 3: Stream the final LLM response with tool results ───
-          const finalCompletion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: aiMessages as any,
-            stream: true,
-            max_tokens: 4000,
+          // ── Phase 3: Get final LLM response with tool results ─────────
+          const finalContent = await ai.complete(aiMessages, {
+            maxTokens: 4000,
             temperature: 0.4,
+            callerModule: 'cortex-unified/chat-stream-final',
           });
 
-          for await (const chunk of finalCompletion) {
-            const text = chunk.choices[0]?.delta?.content || '';
-            if (text) {
-              fullContent += text;
-              res.write(`data: ${JSON.stringify({ type: 'chunk', text })}\n\n`);
-            }
+          fullContent = finalContent;
+          if (fullContent) {
+            res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
           }
         } else {
           // ── No tool calls — stream the content directly ──────────────────
-          // The initial response is the final response
-          fullContent = firstChoice.content || '';
-          // Send the full text as a single chunk (was non-streaming phase 1)
+          fullContent = initialContent;
           if (fullContent) {
             res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
           }
         }
       } catch (streamErr: any) {
-        logger.warn(`[Chat] OpenAI stream failed, using demo response: ${streamErr.message}`);
+        logger.warn(`[Chat] AI stream failed, using demo response: ${streamErr.message}`);
         fullContent = generateContextAwareDemoResponse(message, context);
         res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
       }

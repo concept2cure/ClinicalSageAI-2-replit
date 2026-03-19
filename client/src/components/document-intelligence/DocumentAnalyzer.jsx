@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { documentIntelligenceService } from '@/services/DocumentIntelligenceService';
+import { documentIntelligenceService } from '@/concept2cure/services/documentIntelligenceService';
 
 /**
  * Document Analyzer Component
