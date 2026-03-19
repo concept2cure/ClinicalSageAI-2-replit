@@ -708,7 +708,7 @@ export const ZenSignup: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#faf9f5] flex flex-col">
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-lg">
           {/* Logo and title */}
           <div className="text-center mb-6">

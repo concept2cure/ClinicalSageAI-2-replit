@@ -46,6 +46,7 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
+import { useProjectTasks } from './hooks/useProjectTasks';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
