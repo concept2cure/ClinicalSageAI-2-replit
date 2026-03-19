@@ -968,7 +968,7 @@ function generateLegalPage(page) {
     }
 
     .legal-header h1 {
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
       font-size: 2.25rem;
       font-weight: 700;
       color: var(--primary-dark);
@@ -986,7 +986,7 @@ function generateLegalPage(page) {
     }
 
     .legal-body h2 {
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
       font-size: 1.35rem;
       font-weight: 600;
       color: var(--primary-dark);
@@ -1070,7 +1070,7 @@ function generateLegalPage(page) {
     }
 
     .legal-footer-nav h3 {
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
       font-size: 1rem;
       font-weight: 600;
       margin-bottom: 0.75rem;
@@ -1123,27 +1123,27 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
   <title>${title} | TrialSage™</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
-      --primary: #2c8c6c;
-      --primary-light: #4CAF50;
-      --primary-lighter: #e6f7f1;
-      --primary-dark: #1B5E20;
-      --accent: #ff7f50;
-      --accent-light: #ffb74d;
-      --accent-dark: #ef6c00;
-      --text: #2d3748;
-      --text-light: #718096;
-      --text-lighter: #a0aec0;
-      --background: #fff;
-      --background-alt: #f7fafc;
+      --primary: #d97757;
+      --primary-light: #e6957a;
+      --primary-lighter: #faf0ec;
+      --primary-dark: #c15f3c;
+      --accent: #6a9bcc;
+      --accent-light: #8bb4d9;
+      --accent-dark: #5585b3;
+      --text: #141413;
+      --text-light: #6b6963;
+      --text-lighter: #8a8880;
+      --background: #faf9f5;
+      --background-alt: #f4f3ee;
       --border: #e8e6dc;
-      --border-dark: #cbd5e0;
-      --success: #48bb78;
-      --warning: #ed8936;
-      --danger: #e53e3e;
+      --border-dark: #d6d3c8;
+      --success: #788c5d;
+      --warning: #d97706;
+      --danger: #dc3545;
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -1158,7 +1158,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
     }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Poppins', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-family: 'Lora', Georgia, serif;
       line-height: 1.6;
       color: var(--text);
       background-color: var(--background);
@@ -1197,7 +1197,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
     .logo {
       font-size: 1.5rem;
       font-weight: 800;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
       color: var(--primary);
       display: flex;
       align-items: center;
@@ -1347,7 +1347,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       color: var(--primary-dark);
       margin-bottom: 1.5rem;
       line-height: 1.2;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
     }
     
     .hero p {
@@ -1370,7 +1370,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       color: var(--text);
       margin-bottom: 1.5rem;
       text-align: center;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
     }
     
     .section-subtitle {
@@ -1418,7 +1418,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       font-weight: 700;
       color: var(--text);
       margin-bottom: 1rem;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
     }
     
     .feature-card p {
@@ -1437,7 +1437,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       color: var(--text);
       margin-bottom: 1.5rem;
       text-align: center;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
     }
     
     .related-grid {
@@ -1476,7 +1476,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: 1.5rem;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
     }
     
     .cta-section p {
@@ -1510,7 +1510,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       font-weight: 600;
       color: var(--text);
       margin-bottom: 1rem;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
     }
     
     .footer-links {

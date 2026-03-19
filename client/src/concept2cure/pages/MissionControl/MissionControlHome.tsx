@@ -281,7 +281,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
 
   if (loadingPrograms) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF9]">
+      <div className="flex-1 flex items-center justify-center bg-[#faf9f5]">
         <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
       </div>
     );
@@ -290,7 +290,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
   // No programs — show creation flow
   if (programs.length === 0 || showCreate) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF9] p-8">
+      <div className="flex-1 flex items-center justify-center bg-[#faf9f5] p-8">
         <CreateProgramPanel onCreated={(id) => {
           setSelectedProgramId(id);
           setShowCreate(false);
@@ -300,7 +300,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAFAF9] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#faf9f5] overflow-hidden">
       {/* ── Top Bar: Program Selector + Confidence ─────────────────── */}
       <div className="border-b bg-white px-6 py-3 flex items-center gap-4">
         <div className="flex items-center gap-2">

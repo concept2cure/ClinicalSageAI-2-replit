@@ -345,7 +345,7 @@ export const ZenSignup: React.FC = () => {
           ${
             errors[field]
               ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+              : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
           }
         `}
       />
@@ -377,7 +377,7 @@ export const ZenSignup: React.FC = () => {
           ${
             errors[field]
               ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-zinc-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+              : 'border-zinc-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
           }
         `}
         style={{
@@ -662,7 +662,7 @@ export const ZenSignup: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="min-h-screen bg-[#faf9f5] flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           {/* Logo and title */}

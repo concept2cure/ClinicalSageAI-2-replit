@@ -1244,7 +1244,7 @@ export const ZenApp: React.FC = () => {
           --zen-ink: #18181B;
           --zen-ink-muted: #71717A;
           --zen-border: #E4E4E7;
-          --zen-accent: #2563EB;
+          --zen-accent: #d97757;
         }
 
         .zen-scroll::-webkit-scrollbar {

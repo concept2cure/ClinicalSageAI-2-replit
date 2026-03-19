@@ -50,7 +50,7 @@ const Project510kBridge: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
+        <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
           <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
       }
@@ -64,7 +64,7 @@ const Project510kBridge: React.FC = () => {
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+  <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}

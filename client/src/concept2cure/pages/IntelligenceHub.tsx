@@ -817,7 +817,7 @@ export function IntelligenceHub({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#FAFAF9]">
+    <div className="h-full flex flex-col bg-[#faf9f5]">
       {/* Header */}
       <div className="px-8 pt-6 pb-0">
         <div className="flex items-center gap-3 mb-1">

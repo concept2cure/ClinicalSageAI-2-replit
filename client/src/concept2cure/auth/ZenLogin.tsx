@@ -222,7 +222,7 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
               ${
                 error
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
-                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
               }
             `}
             autoComplete="one-time-code"
@@ -552,7 +552,7 @@ export const ZenLogin: React.FC = () => {
             ${
               error?.field === 'email'
                 ? 'border-red-300 bg-red-50 focus:border-red-500'
-                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
             }
           `}
         />
@@ -708,7 +708,7 @@ export const ZenLogin: React.FC = () => {
               ${
                 error?.field === 'password'
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
-                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
               }
             `}
           />

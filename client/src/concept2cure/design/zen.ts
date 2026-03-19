@@ -53,8 +53,8 @@ export const zenColors = {
   // ACCENT - Single brand color family (like Claude's orange-brown)
   // ─────────────────────────────────────────────────────────────────────────────
   accent: {
-    DEFAULT: '#2563EB',     // Primary action blue - clean, professional
-    hover: '#1D4ED8',       // Hover state
+    DEFAULT: '#d97757',     // Primary action blue - clean, professional
+    hover: '#c15f3c',       // Hover state
     muted: '#DBEAFE',       // Light background tint
     subtle: '#EFF6FF',      // Very light tint
   },
@@ -63,8 +63,8 @@ export const zenColors = {
   // AI - Special color for Lumen AI persona (like Claude's warm tones)
   // ─────────────────────────────────────────────────────────────────────────────
   ai: {
-    DEFAULT: '#8B5CF6',     // Violet - AI/assistant identity
-    hover: '#7C3AED',
+    DEFAULT: '#6a9bcc',     // Violet - AI/assistant identity
+    hover: '#5585b3',
     muted: '#EDE9FE',
     glow: 'rgba(139, 92, 246, 0.1)',
   },
@@ -89,7 +89,7 @@ export const zenColors = {
   border: {
     DEFAULT: '#E4E4E7',     // Standard border - zinc-200
     subtle: '#F4F4F5',      // Very light border - zinc-100
-    focus: '#2563EB',       // Focus ring
+    focus: '#d97757',       // Focus ring
   },
 } as const;
 

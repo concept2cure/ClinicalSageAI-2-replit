@@ -130,8 +130,8 @@ export const colors = {
     200: '#DDD6FE',
     300: '#C4B5FD',
     400: '#A78BFA',
-    500: '#8B5CF6',
-    600: '#7C3AED', // AI accent
+    500: '#6a9bcc',
+    600: '#5585b3', // AI accent
     700: '#6D28D9',
     800: '#5B21B6',
     900: '#4C1D95',

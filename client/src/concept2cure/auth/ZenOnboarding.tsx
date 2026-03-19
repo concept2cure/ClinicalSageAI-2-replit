@@ -657,7 +657,7 @@ export const ZenOnboarding: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl">
         {renderProgress()}
 

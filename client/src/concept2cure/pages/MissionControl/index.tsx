@@ -525,7 +525,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-[#FAFAF9]">
+    <div className="flex-1 h-full overflow-y-auto bg-[#faf9f5]">
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

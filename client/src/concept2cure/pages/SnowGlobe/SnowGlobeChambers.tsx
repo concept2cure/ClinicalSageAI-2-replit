@@ -457,7 +457,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
 
   if (!programId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF9]">
+      <div className="flex-1 flex items-center justify-center bg-[#faf9f5]">
         <div className="text-center space-y-3">
           <Shield className="h-12 w-12 text-zinc-300 mx-auto" />
           <p className="text-zinc-500 text-sm">Select a program to view chamber details</p>
@@ -481,7 +481,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
   }, [chamberFindings]);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAFAF9] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#faf9f5] overflow-hidden">
       {/* Tab Navigation */}
       <div className="bg-white border-b border-zinc-200 px-6 pt-4">
         <div className="flex items-center gap-1 overflow-x-auto pb-0">

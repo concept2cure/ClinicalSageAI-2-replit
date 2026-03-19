@@ -776,7 +776,7 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
   }, [activeTab]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#FAFAF9] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[#faf9f5] flex flex-col">
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-white">
         <div className="flex items-center gap-3">
