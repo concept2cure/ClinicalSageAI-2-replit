@@ -383,6 +383,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         organizationId: decoded.organizationId,
         role: mfaActualRole,
       },
+      config.jwt.secret,
       { expiresIn: '24h' }
     );
 
