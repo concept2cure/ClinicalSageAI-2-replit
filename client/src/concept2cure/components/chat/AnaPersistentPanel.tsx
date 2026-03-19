@@ -366,14 +366,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
-    // Standard chat mode
+    // Standard chat mode — route to Cortex unified chat
     try {
-      const response = await fetch('/api/lumen-cortex/chat', {
+      const response = await fetch('/api/cortex/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
           chatMode,
+          project_id: contextProfile?.projectId || undefined,
+          submission_type: contextProfile?.productType || undefined,
           context: {
             screen: contextProfile?.screenName,
             project: contextProfile?.activeProject,
@@ -381,10 +383,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             productType: contextProfile?.productType,
             userRole: contextProfile?.userRole,
           },
-          conversationHistory: messages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
         }),
       });
 

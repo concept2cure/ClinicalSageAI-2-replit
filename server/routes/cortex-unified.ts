@@ -187,7 +187,7 @@ function ensureChatGateway() {
  */
 router.post('/chat', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code } =
+    const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code, chatMode, context: clientContext } =
       req.body || {};
 
     if (!message || typeof message !== 'string') {
@@ -208,14 +208,28 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Build context-aware system prompt (with optional section-specific guidance)
-    const { systemPrompt, context } = await buildContextAwarePrompt({
+    // Augment with chatMode and client context when sent from AnaPersistentPanel
+    let modePrefix = '';
+    if (chatMode === 'standard' || !chatMode) {
+      // Standard AnA co-pilot mode — inject screen context if available
+      if (clientContext?.screen) {
+        modePrefix = `The user is currently on the "${clientContext.screen}" screen.`;
+        if (clientContext.project) modePrefix += ` Active project: ${clientContext.project}.`;
+        if (clientContext.userRole) modePrefix += ` User role: ${clientContext.userRole}.`;
+        modePrefix += '\nAdapt your responses to be relevant to their current workflow context.\n\n';
+      }
+    }
+
+    const { systemPrompt: baseSystemPrompt, context } = await buildContextAwarePrompt({
       projectId: numericProjectId,
       organizationId,
       userId,
-      submissionType: submission_type,
+      submissionType: submission_type || clientContext?.productType,
       customSystemPrompt: system_prompt,
       sectionCode: section_code || undefined,
     });
+
+    const systemPrompt = modePrefix ? `${modePrefix}${baseSystemPrompt}` : baseSystemPrompt;
 
     // Get or create thread (prefix 'cortex' to distinguish from legacy chat)
     const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
