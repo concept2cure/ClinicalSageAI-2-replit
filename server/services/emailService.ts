@@ -139,3 +139,165 @@ export async function sendPasswordResetEmail(
 
   console.log(`[Email Service] Password reset email sent to ${email}`);
 }
+
+// ---------------------------------------------------------------------------
+// Welcome Email (sent on signup)
+// ---------------------------------------------------------------------------
+
+function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Poppins',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <!-- Header with logo -->
+        <tr>
+          <td style="background-color:#292524;padding:32px 40px;text-align:center;">
+            ${process.env.LOGO_URL ? `<img src="${process.env.LOGO_URL}" alt="Concept2Cure" style="height:48px;width:auto;margin-bottom:12px;border-radius:8px;" />` : ''}
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;font-family:'Poppins',Arial,sans-serif;">Welcome to Concept2Cure</h1>
+            <p style="margin:4px 0 0;color:#b0aea5;font-size:13px;font-family:'Poppins',Arial,sans-serif;">AI-Powered Regulatory Intelligence</p>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px;">
+            <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Hi ${name},</h2>
+            <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
+              Your Concept2Cure account has been created. You're now ready to transform your regulatory workflow with AI-powered intelligence.
+            </p>
+            <p style="margin:0 0 16px;color:#4a4a68;font-size:15px;line-height:1.6;font-weight:600;">Here's what you can do:</p>
+            <ul style="margin:0 0 24px;padding-left:20px;color:#4a4a68;font-size:14px;line-height:2;">
+              <li>Generate regulatory documents with AI copilot</li>
+              <li>Build 510(k), CER, and eCTD submissions</li>
+              <li>Run compliance analysis and audit readiness checks</li>
+              <li>Connect with Veeva, Medidata, SharePoint, and more</li>
+            </ul>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding:8px 0 32px;">
+                <a href="${loginUrl}" style="display:inline-block;background-color:#d97757;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
+                  Sign In to Your Account
+                </a>
+              </td></tr>
+            </table>
+            <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
+            <p style="margin:0;color:#8a8880;font-size:12px;line-height:1.5;">
+              Your subscription includes a 3-month minimum commitment. View your plan details and usage in the billing dashboard. For questions, contact support@concept2cure.com.
+            </p>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
+            <p style="margin:0 0 8px;color:#8a8880;font-size:11px;font-family:'Poppins',Arial,sans-serif;">
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+            </p>
+            <p style="margin:0;font-size:10px;">
+              <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/privacy" style="color:#b0aea5;text-decoration:none;">Privacy</a>
+              &nbsp;&middot;&nbsp;
+              <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/terms" style="color:#b0aea5;text-decoration:none;">Terms</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+/**
+ * Send a welcome email on new account creation.
+ */
+export async function sendWelcomeEmail(
+  email: string,
+  firstName: string,
+): Promise<void> {
+  const transporter = getTransporter();
+  const loginUrl = `${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/login`;
+  const name = firstName || email.split('@')[0];
+
+  if (!transporter) {
+    console.log(`[Email Service] SMTP not configured — welcome email for ${email} not sent`);
+    return;
+  }
+
+  await transporter.sendMail({
+    from: `"Concept2Cure" <${FROM_ADDRESS}>`,
+    to: email,
+    subject: 'Welcome to Concept2Cure — Your Account is Ready',
+    text: `Hi ${name},\n\nWelcome to Concept2Cure! Your account has been created.\n\nSign in: ${loginUrl}\n\n— The Concept2Cure Team`,
+    html: buildWelcomeEmailHtml(name, loginUrl),
+  });
+
+  console.log(`[Email Service] Welcome email sent to ${email}`);
+}
+
+// ---------------------------------------------------------------------------
+// Team Invitation Email
+// ---------------------------------------------------------------------------
+
+/**
+ * Send an invitation email when an admin adds a team member.
+ */
+export async function sendInvitationEmail(
+  email: string,
+  inviterName: string,
+  orgName: string,
+): Promise<void> {
+  const transporter = getTransporter();
+  const signupUrl = `${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/signup?invite=${encodeURIComponent(email)}`;
+
+  if (!transporter) {
+    console.log(`[Email Service] SMTP not configured — invitation email for ${email} not sent`);
+    return;
+  }
+
+  await transporter.sendMail({
+    from: `"Concept2Cure" <${FROM_ADDRESS}>`,
+    to: email,
+    subject: `${inviterName} invited you to ${orgName} on Concept2Cure`,
+    text: `${inviterName} has invited you to join ${orgName} on Concept2Cure.\n\nAccept invitation: ${signupUrl}\n\nThis invitation expires in 21 days.`,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Poppins',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background-color:#292524;padding:32px 40px;text-align:center;">
+            ${process.env.LOGO_URL ? `<img src="${process.env.LOGO_URL}" alt="Concept2Cure" style="height:48px;width:auto;margin-bottom:12px;border-radius:8px;" />` : ''}
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;font-family:'Poppins',Arial,sans-serif;">You're Invited</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px;">
+            <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
+              <strong>${inviterName}</strong> has invited you to join <strong>${orgName}</strong> on Concept2Cure — an AI-powered regulatory intelligence platform for life sciences professionals.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding:8px 0 24px;">
+                <a href="${signupUrl}" style="display:inline-block;background-color:#d97757;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
+                  Accept Invitation
+                </a>
+              </td></tr>
+            </table>
+            <p style="margin:0;color:#8a8880;font-size:12px;">This invitation expires in 21 days.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
+            <p style="margin:0;color:#8a8880;font-size:11px;">&copy; ${new Date().getFullYear()} Concept2Cure, Inc.</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  });
+
+  console.log(`[Email Service] Invitation email sent to ${email}`);
+}

@@ -477,6 +477,17 @@ router.post('/signup', async (req: Request, res: Response) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    // Send welcome email (non-blocking — don't fail signup if email fails)
+    try {
+      const { sendWelcomeEmail } = await import('../services/emailService.js');
+      const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+      sendWelcomeEmail(email, userName).catch(err =>
+        console.error('[auth] Welcome email failed (non-blocking):', err)
+      );
+    } catch {
+      // Email service not available — continue
+    }
+
     return res.status(201).json({
       success: true,
       token,
