@@ -15,6 +15,51 @@
 
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
+import { z } from 'zod';
+
+// ─── Zod Schemas for IVDR Input Validation ───────────────────────────────────
+
+const classifySchema = z.object({
+  deviceName: z.string().min(1, 'deviceName is required'),
+  intendedPurpose: z.string().min(1, 'intendedPurpose is required'),
+  isSelfTest: z.boolean().optional(),
+  isNearPatient: z.boolean().optional(),
+  isCompanionDiagnostic: z.boolean().optional(),
+  detectsTransmissibleAgent: z.boolean().optional(),
+  bloodScreening: z.boolean().optional(),
+  detectsCancer: z.boolean().optional(),
+  prenatalScreening: z.boolean().optional(),
+  riskToPatient: z.enum(['low', 'medium', 'high']).optional(),
+  isGeneticTest: z.boolean().optional(),
+  analytes: z.array(z.string()).default([]),
+});
+
+const validationSchema = z.object({
+  deviceName: z.string().min(1),
+  validationType: z.enum(['analytical', 'clinical', 'performance']),
+  analyteName: z.string().min(1),
+  matrixType: z.string().optional(),
+  parameters: z.record(z.unknown()).optional(),
+});
+
+const clinicalEvidenceSchema = z.object({
+  deviceName: z.string().min(1),
+  evidenceType: z.enum(['performance_study', 'clinical_investigation', 'literature_review', 'post_market']),
+  studyTitle: z.string().min(1),
+  sampleSize: z.number().int().positive().optional(),
+  sensitivity: z.number().min(0).max(100).optional(),
+  specificity: z.number().min(0).max(100).optional(),
+  ppv: z.number().min(0).max(100).optional(),
+  npv: z.number().min(0).max(100).optional(),
+});
+
+const cdxWorkflowSchema = z.object({
+  deviceName: z.string().min(1),
+  companionTherapy: z.string().min(1),
+  biomarker: z.string().min(1),
+  therapeuticArea: z.string().optional(),
+  regulatoryStrategy: z.string().optional(),
+});
 
 export default function createIVDRRoutes(pool: Pool): Router {
   const router = Router();
@@ -91,6 +136,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
         });
       }
 
+      const parsed = classifySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+
       const {
         deviceName,
         intendedPurpose,
@@ -103,15 +153,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
         prenatalScreening,
         riskToPatient,
         isGeneticTest,
-        analytes = [],
-      } = req.body;
+        analytes,
+      } = parsed.data;
 
       // Org from authenticated session — NEVER from req.body
       const orgId = getServerOrgId(req);
-
-      if (!deviceName || !intendedPurpose) {
-        return res.status(400).json({ error: 'deviceName and intendedPurpose are required' });
-      }
 
       // ── Annex VIII Rule Engine ───────────────────────────────────────────
       const ruleTrace: Array<{ rule: string; description: string; matched: boolean }> = [];

@@ -18,6 +18,65 @@
 
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
+import { z } from 'zod';
+
+// ─── Zod Schemas for Manufacturing Input Validation ──────────────────────────
+
+const equipmentSchema = z.object({
+  equipmentCode: z.string().min(1, 'equipmentCode is required'),
+  equipmentName: z.string().min(1, 'equipmentName is required'),
+  equipmentClass: z.string().min(1, 'equipmentClass is required'),
+  manufacturer: z.string().min(1, 'manufacturer is required'),
+  modelNumber: z.string().optional(),
+  serialNumber: z.string().optional(),
+  status: z.enum(['AVAILABLE', 'IN_USE', 'MAINTENANCE', 'RETIRED']).default('AVAILABLE'),
+  capabilities: z.record(z.unknown()).default({}),
+  building: z.string().optional(),
+  room: z.string().optional(),
+  cleanRoomClass: z.string().optional(),
+  nextCalibrationDue: z.string().optional(),
+  nextMaintenanceDue: z.string().optional(),
+});
+
+const batchSchema = z.object({
+  batchNumber: z.string().min(1, 'batchNumber is required'),
+  productName: z.string().min(1, 'productName is required'),
+  recipeId: z.string().optional(),
+  recipeVersion: z.string().optional(),
+  scheduledStart: z.string().optional(),
+  plannedQuantity: z.number().positive().optional(),
+  quantityUnit: z.string().optional(),
+  masterBatchRecordRef: z.string().optional(),
+});
+
+const batchStatusSchema = z.object({
+  status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'QUARANTINE']),
+  actualStart: z.string().optional(),
+  actualEnd: z.string().optional(),
+  actualQuantity: z.number().positive().optional(),
+});
+
+const deviationSchema = z.object({
+  description: z.string().min(1, 'description is required'),
+  severity: z.enum(['MINOR', 'MAJOR', 'CRITICAL']).default('MINOR'),
+  category: z.string().optional(),
+});
+
+const testResultSchema = z.object({
+  testName: z.string().min(1, 'testName is required'),
+  parameter: z.string().min(1, 'parameter is required'),
+  result: z.number(),
+  unit: z.string().min(1),
+  specLow: z.number().optional(),
+  specHigh: z.number().optional(),
+});
+
+const responseSchema = z.object({
+  findingId: z.string().min(1, 'findingId is required'),
+  section: z.string().optional(),
+  responseText: z.string().min(1, 'responseText is required'),
+  evidenceIds: z.array(z.string()).default([]),
+});
 
 // ---------- AI reviewer (ESM) -- loaded lazily to avoid hard crash ----------
 let reviewManufacturing: ((snapshot: any, opts?: any) => Promise<any[]>) | null = null;
@@ -249,6 +308,11 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   router.post('/equipment', async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req);
+      const parsed = equipmentSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+
       const {
         equipmentCode,
         equipmentName,
@@ -263,13 +327,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         cleanRoomClass,
         nextCalibrationDue,
         nextMaintenanceDue,
-      } = req.body;
-
-      if (!equipmentCode || !equipmentName || !equipmentClass || !manufacturer) {
-        return res.status(400).json({
-          error: 'equipmentCode, equipmentName, equipmentClass, and manufacturer are required',
-        });
-      }
+      } = parsed.data;
 
       const result = await pool.query(
         `INSERT INTO manufacturing.equipment_registry (
@@ -373,6 +431,11 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   router.post('/batches', async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req);
+      const parsed = batchSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+
       const {
         batchNumber,
         productName,
@@ -382,13 +445,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         plannedQuantity,
         quantityUnit,
         masterBatchRecordRef,
-      } = req.body;
-
-      if (!batchNumber || !productName) {
-        return res.status(400).json({
-          error: 'batchNumber and productName are required',
-        });
-      }
+      } = parsed.data;
 
       const result = await pool.query(
         `INSERT INTO manufacturing.batch_execution_records (

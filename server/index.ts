@@ -1191,6 +1191,26 @@ try {
   console.error('❌ Failed to mount Manufacturing routes:', error);
 }
 
+// Mount Pharmacovigilance Module routes (ICH E2A/E2B/E2C/E2D/E2E/E2F)
+try {
+  const pvModule = await import('./routes/pharmacovigilance-routes');
+  const createPharmacovigilanceRoutes = pvModule.default;
+  app.use('/api/pharmacovigilance', createPharmacovigilanceRoutes());
+  console.log('✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)');
+} catch (error) {
+  console.error('❌ Failed to mount Pharmacovigilance routes:', error);
+}
+
+// Mount Clinical Operations Module routes (study/site/enrollment/monitoring)
+try {
+  const clinOpsModule = await import('./routes/clinical-operations-routes');
+  const createClinicalOperationsRoutes = clinOpsModule.default;
+  app.use('/api/clinical-operations', createClinicalOperationsRoutes(pool));
+  console.log('✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)');
+} catch (error) {
+  console.error('❌ Failed to mount Clinical Operations routes:', error);
+}
+
 // Mount FDA Integration routes
 try {
   const fdaIntegrationModule = await import('./routes/fda-integration-simple');
