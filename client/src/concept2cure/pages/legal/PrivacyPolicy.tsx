@@ -43,8 +43,43 @@ const PrivacyPolicy: React.FC = () => (
     <h2>4. Data Processing and AI</h2>
     <p>
       Our Platform uses artificial intelligence to process regulatory documents and generate compliance insights.
-      Your Content is processed solely to provide Platform services and is never used to train general-purpose AI
-      models without your explicit consent. All AI processing occurs within our secure infrastructure.
+      Your Content is processed solely to provide Platform services. All AI processing occurs within our secure
+      infrastructure.
+    </p>
+
+    <h3>4.1 AI Model Improvement (Opt-In)</h3>
+    <p>
+      You may choose to allow Concept2Cure to use your de-identified, aggregated content to improve our AI models'
+      understanding of regulatory patterns, compliance requirements, and document structures. This is an
+      <strong> opt-in feature</strong> that you can enable or disable at any time from your organization's Settings
+      panel under "Data & Privacy."
+    </p>
+    <p>When AI Learning is <strong>enabled</strong>:</p>
+    <ul>
+      <li>Your content may be used in aggregated, de-identified form to improve AI model quality</li>
+      <li>No data is ever attributed to, associated with, or traceable back to your organization</li>
+      <li>No specific documents, submissions, or proprietary content is cited or reproduced</li>
+      <li>Learning is limited to general regulatory patterns and compliance structures</li>
+      <li>Improvements benefit all Concept2Cure users through better AI responses</li>
+    </ul>
+    <p>When AI Learning is <strong>disabled</strong> (default):</p>
+    <ul>
+      <li>Your content is used exclusively to provide your Platform services</li>
+      <li>No content is retained beyond the active session for model improvement</li>
+      <li>Your data is processed, returned, and not used for any other purpose</li>
+    </ul>
+    <p>
+      <strong>Important:</strong> Regardless of your AI Learning setting, Concept2Cure never sells your data, never
+      shares identifiable content with third parties, and never uses your data to benefit specific competitors.
+      The AI Learning toggle only controls whether anonymized patterns contribute to general model improvement.
+    </p>
+
+    <h3>4.2 Third-Party AI Providers</h3>
+    <p>
+      Concept2Cure uses Anthropic's Claude AI for certain processing tasks. Your content sent to Anthropic is subject
+      to Anthropic's data processing terms. Per our agreement with Anthropic, content processed through their API is
+      not used by Anthropic to train their models. You can review Anthropic's usage policy at
+      anthropic.com/policies.
     </p>
 
     <h2>5. Data Sharing</h2>

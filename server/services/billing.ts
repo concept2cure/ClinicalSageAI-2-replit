@@ -37,36 +37,178 @@ function getStripe(): Stripe {
 export interface PricingTier {
   name: string;
   tier: string;
-  baseMonthly: number; // cents
-  perSeatMonthly: number; // cents
+  perUserMonthly: number;  // cents — simple per-user pricing
   annualDiscountPct: number;
-  maxUsers: number;
+  includedTokensMonthly: number;  // AI tokens included per user/month
+  overagePerKTokens: number;  // cents per 1K tokens over included
   maxProjects: number;
   maxStorageGB: number;
+  minCommitmentMonths: number;
+  features: string[];
 }
 
+// Bundle discount tiers (applied on top of per-user price)
+export const BUNDLE_DISCOUNTS: { minUsers: number; discountPct: number; label: string }[] = [
+  { minUsers: 5, discountPct: 10, label: 'Team (5+)' },
+  { minUsers: 10, discountPct: 15, label: 'Department (10+)' },
+  { minUsers: 25, discountPct: 20, label: 'Division (25+)' },
+  { minUsers: 50, discountPct: 25, label: 'Enterprise (50+)' },
+];
+
+/**
+ * Pricing by industry archetype — per-user/month model
+ *
+ * Cost structure per user/month (estimated):
+ *   Claude API tokens:  $15-40 (heavy usage, Sonnet 4 @ $3/$15 per 1M I/O)
+ *   Neon PostgreSQL:     $1-3  (serverless, scales with storage/compute)
+ *   AWS hosting/CDN:     $5-12 (ECS, S3, CloudFront, data transfer)
+ *   Stripe fees:         ~3%   (2.9% + $0.30 per charge)
+ *   Support/ops:         $5-10
+ *   Total COGS:          ~$30-70/user/month
+ *
+ * Margins at target prices:
+ *   $459/user (pharma):     ~85% gross margin
+ *   $349/user (medtech):    ~80% gross margin
+ *   $149/user (academic):   ~55% gross margin — growth pricing
+ */
 export const PRICING: Record<string, PricingTier[]> = {
-  big_pharma: [
-    { name: 'Starter', tier: 'standard', baseMonthly: 500000, perSeatMonthly: 7500, annualDiscountPct: 15, maxUsers: 25, maxProjects: 50, maxStorageGB: 100 },
-    { name: 'Professional', tier: 'professional', baseMonthly: 500000, perSeatMonthly: 7500, annualDiscountPct: 15, maxUsers: 200, maxProjects: 500, maxStorageGB: 1000 },
-    { name: 'Enterprise', tier: 'enterprise', baseMonthly: 500000, perSeatMonthly: 7500, annualDiscountPct: 15, maxUsers: 500, maxProjects: -1, maxStorageGB: 5000 },
+  // ── Pharma / Biotech / CRO — $459/user/month ──
+  pharma: [
+    {
+      name: 'Standard',
+      tier: 'standard',
+      perUserMonthly: 45900,
+      annualDiscountPct: 15,
+      includedTokensMonthly: 500_000,
+      overagePerKTokens: 15,  // $0.015 per 1K tokens
+      maxProjects: 20,
+      maxStorageGB: 25,
+      minCommitmentMonths: 3,
+      features: ['AI Copilot', 'eCTD Authoring', 'CER Generation', '510(k) Module', 'Compliance Analysis', 'Basic Integrations'],
+    },
+    {
+      name: 'Professional',
+      tier: 'professional',
+      perUserMonthly: 39900,  // $399 with 5+ users (bundle)
+      annualDiscountPct: 15,
+      includedTokensMonthly: 1_000_000,
+      overagePerKTokens: 12,
+      maxProjects: 100,
+      maxStorageGB: 100,
+      minCommitmentMonths: 3,
+      features: ['Everything in Standard', 'Advanced Analytics', 'Priority Support', 'Custom Workflows', 'All Integrations', 'SAML SSO'],
+    },
+    {
+      name: 'Enterprise',
+      tier: 'enterprise',
+      perUserMonthly: 0,  // Custom pricing
+      annualDiscountPct: 20,
+      includedTokensMonthly: 5_000_000,
+      overagePerKTokens: 8,
+      maxProjects: -1,
+      maxStorageGB: 1000,
+      minCommitmentMonths: 12,
+      features: ['Everything in Professional', 'Dedicated Support', 'Custom AI Models', 'On-Prem Option', 'SLA Guarantee', 'Compliance Audit Pack'],
+    },
   ],
-  virtual_biotech: [
-    { name: 'Starter', tier: 'standard', baseMonthly: 150000, perSeatMonthly: 4500, annualDiscountPct: 10, maxUsers: 10, maxProjects: 20, maxStorageGB: 50 },
-    { name: 'Professional', tier: 'professional', baseMonthly: 150000, perSeatMonthly: 4500, annualDiscountPct: 10, maxUsers: 50, maxProjects: 100, maxStorageGB: 250 },
-    { name: 'Enterprise', tier: 'enterprise', baseMonthly: 150000, perSeatMonthly: 4500, annualDiscountPct: 10, maxUsers: 50, maxProjects: -1, maxStorageGB: 1000 },
+  // Aliases
+  big_pharma: [],  // Populated below
+  virtual_biotech: [],
+  biotech: [],
+  cro: [],
+
+  // ── Medical Device Companies — $349/user/month ──
+  medtech: [
+    {
+      name: 'Standard',
+      tier: 'standard',
+      perUserMonthly: 34900,
+      annualDiscountPct: 15,
+      includedTokensMonthly: 500_000,
+      overagePerKTokens: 15,
+      maxProjects: 20,
+      maxStorageGB: 25,
+      minCommitmentMonths: 3,
+      features: ['AI Copilot', '510(k) Workflow', 'CER Generation', 'Predicate Intelligence', 'eSTAR Builder', 'GSPR Mapping'],
+    },
+    {
+      name: 'Professional',
+      tier: 'professional',
+      perUserMonthly: 29900,  // $299 with 5+ users
+      annualDiscountPct: 15,
+      includedTokensMonthly: 1_000_000,
+      overagePerKTokens: 12,
+      maxProjects: 100,
+      maxStorageGB: 100,
+      minCommitmentMonths: 3,
+      features: ['Everything in Standard', 'EU MDR/IVDR Support', 'Advanced Analytics', 'Priority Support', 'All Integrations', 'SAML SSO'],
+    },
+    {
+      name: 'Enterprise',
+      tier: 'enterprise',
+      perUserMonthly: 0,
+      annualDiscountPct: 20,
+      includedTokensMonthly: 5_000_000,
+      overagePerKTokens: 8,
+      maxProjects: -1,
+      maxStorageGB: 1000,
+      minCommitmentMonths: 12,
+      features: ['Everything in Professional', 'Dedicated CSM', 'Custom Validations', 'On-Prem Option', 'SLA Guarantee', 'Audit Pack'],
+    },
   ],
-  cro: [
-    { name: 'Starter', tier: 'standard', baseMonthly: 300000, perSeatMonthly: 5500, annualDiscountPct: 12, maxUsers: 25, maxProjects: 50, maxStorageGB: 100 },
-    { name: 'Professional', tier: 'professional', baseMonthly: 300000, perSeatMonthly: 5500, annualDiscountPct: 12, maxUsers: 100, maxProjects: 250, maxStorageGB: 500 },
-    { name: 'Enterprise', tier: 'enterprise', baseMonthly: 300000, perSeatMonthly: 5500, annualDiscountPct: 12, maxUsers: 200, maxProjects: -1, maxStorageGB: 2000 },
-  ],
+
+  // ── Academic & Research — $149/user/month ──
   academic: [
-    { name: 'Starter', tier: 'standard', baseMonthly: 50000, perSeatMonthly: 2000, annualDiscountPct: 20, maxUsers: 10, maxProjects: 20, maxStorageGB: 25 },
-    { name: 'Professional', tier: 'professional', baseMonthly: 50000, perSeatMonthly: 2000, annualDiscountPct: 20, maxUsers: 50, maxProjects: 100, maxStorageGB: 100 },
-    { name: 'Enterprise', tier: 'enterprise', baseMonthly: 50000, perSeatMonthly: 2000, annualDiscountPct: 20, maxUsers: 100, maxProjects: -1, maxStorageGB: 500 },
+    {
+      name: 'Research',
+      tier: 'standard',
+      perUserMonthly: 14900,
+      annualDiscountPct: 25,
+      includedTokensMonthly: 250_000,
+      overagePerKTokens: 15,
+      maxProjects: 10,
+      maxStorageGB: 10,
+      minCommitmentMonths: 3,
+      features: ['AI Copilot', 'Literature Review', 'Protocol Design', 'Basic CER', 'Evidence Synthesis', 'Export to PDF/DOCX'],
+    },
+    {
+      name: 'Department',
+      tier: 'professional',
+      perUserMonthly: 11900,  // $119 with 5+ users
+      annualDiscountPct: 25,
+      includedTokensMonthly: 500_000,
+      overagePerKTokens: 12,
+      maxProjects: 50,
+      maxStorageGB: 50,
+      minCommitmentMonths: 3,
+      features: ['Everything in Research', 'Biostatistics Module', 'Advanced Analytics', 'Team Collaboration', 'All Integrations'],
+    },
+    {
+      name: 'Institution',
+      tier: 'enterprise',
+      perUserMonthly: 0,
+      annualDiscountPct: 30,
+      includedTokensMonthly: 2_000_000,
+      overagePerKTokens: 8,
+      maxProjects: -1,
+      maxStorageGB: 500,
+      minCommitmentMonths: 12,
+      features: ['Everything in Department', 'Unlimited Projects', 'Custom Training', 'Dedicated Support', 'SAML SSO'],
+    },
   ],
+
+  // ── Regulatory Consulting — $459/user/month (same as pharma) ──
+  regulatory: [],  // Populated below
+  medical_writing: [],  // Populated below
 };
+
+// Populate aliases
+PRICING.big_pharma = PRICING.pharma;
+PRICING.virtual_biotech = PRICING.pharma;
+PRICING.biotech = PRICING.pharma;
+PRICING.cro = PRICING.pharma;
+PRICING.regulatory = PRICING.pharma;
+PRICING.medical_writing = PRICING.pharma;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT SESSION CREATION
@@ -105,17 +247,27 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
   const industryMode = org.industry_mode || 'virtual_biotech';
 
   // Find pricing for this archetype + tier
-  const archetypePricing = PRICING[industryMode] || PRICING.virtual_biotech;
-  const tierPricing = archetypePricing.find(p => p.tier === tier);
+  const archetypePricing = PRICING[industryMode] || PRICING.pharma;
+  const tierPricing = archetypePricing.find((p: PricingTier) => p.tier === tier);
   if (!tierPricing) {
     throw new Error(`Invalid tier '${tier}' for industry '${industryMode}'`);
   }
 
-  // Calculate price
-  const seatCount = seats || tierPricing.maxUsers;
-  let unitAmount = tierPricing.baseMonthly + (tierPricing.perSeatMonthly * seatCount);
+  // Calculate per-user price with bundle discounts
+  const seatCount = seats || 1;
+  let perUserAmount = tierPricing.perUserMonthly;
 
-  // Apply annual discount
+  // Apply bundle discount based on seat count
+  for (const bundle of BUNDLE_DISCOUNTS) {
+    if (seatCount >= bundle.minUsers) {
+      perUserAmount = Math.round(tierPricing.perUserMonthly * (1 - bundle.discountPct / 100));
+    }
+  }
+
+  // Total = per-user × seats
+  let unitAmount = perUserAmount * seatCount;
+
+  // Apply annual discount (on top of bundle discount)
   if (billingCycle === 'annual') {
     unitAmount = Math.round(unitAmount * (1 - tierPricing.annualDiscountPct / 100));
   }
@@ -175,6 +327,10 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
         billingCycle,
         maxProjects: String(tierPricing.maxProjects),
         maxStorageGB: String(tierPricing.maxStorageGB),
+        includedTokensMonthly: String(tierPricing.includedTokensMonthly * seatCount),
+        overagePerKTokens: String(tierPricing.overagePerKTokens),
+        minCommitmentMonths: String(tierPricing.minCommitmentMonths),
+        perUserMonthly: String(perUserAmount),
       },
     },
     metadata: {
