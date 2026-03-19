@@ -75,7 +75,7 @@ interface FullAuditDashboardProps {
 const ITEMS_PER_PAGE = 10;
 
 // Colors for charts
-const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc', '#92a87a'];
 const SEVERITY_COLORS = {
   info: '#3498db',
   warning: '#f39c12',
@@ -549,7 +549,7 @@ export const FullAuditDashboard: React.FC<FullAuditDashboardProps> = ({
                       cy="50%"
                       labelLine={false}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill="#6a9bcc"
                       dataKey="value"
                     >
                       {eventTypeData.map((entry, index) => (
@@ -577,7 +577,7 @@ export const FullAuditDashboard: React.FC<FullAuditDashboardProps> = ({
                       cy="50%"
                       labelLine={false}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill="#6a9bcc"
                       dataKey="value"
                     >
                       {severityData.map(entry => (
@@ -617,7 +617,7 @@ export const FullAuditDashboard: React.FC<FullAuditDashboardProps> = ({
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="count" fill="#8884d8" name="Event Count" />
+                    <Bar dataKey="count" fill="#6a9bcc" name="Event Count" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

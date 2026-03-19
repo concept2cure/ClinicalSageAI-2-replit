@@ -9,13 +9,13 @@
 /* Glowing effect for tour highlights */
 @keyframes tour-glow {
   0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 0 0 rgba(106, 155, 204, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 10px rgba(106, 155, 204, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 0 rgba(106, 155, 204, 0);
   }
 }
 
@@ -28,12 +28,12 @@
 /* Tour components styling */
 .tour-spotlight {
   border-radius: 4px;
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(106, 155, 204, 0.1);
   transition: background-color 0.3s ease;
 }
 
 .tour-spotlight:hover {
-  background-color: rgba(59, 130, 246, 0.15);
+  background-color: rgba(106, 155, 204, 0.15);
 }
 
 /* Override react-joyride styles */
@@ -90,17 +90,17 @@
 @keyframes pulse {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    box-shadow: 0 0 0 0 rgba(106, 155, 204, 0.7);
   }
 
   70% {
     transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 10px rgba(106, 155, 204, 0);
   }
 
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 0 rgba(106, 155, 204, 0);
   }
 }
 

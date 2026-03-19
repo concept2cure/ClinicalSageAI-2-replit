@@ -34,14 +34,14 @@ interface TrendingTagsChartProps {
 }
 
 const CHART_COLORS = [
-  '#8884d8',
-  '#82ca9d',
+  '#6a9bcc',
+  '#92a87a',
   '#ffc658',
   '#ff8042',
   '#0088fe',
-  '#00C49F',
-  '#FFBB28',
-  '#FF8042',
+  '#788c5d',
+  '#d97706',
+  '#d97757',
   '#9c27b0',
   '#f44336',
 ];

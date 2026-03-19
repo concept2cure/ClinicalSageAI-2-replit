@@ -133,7 +133,7 @@ const SEARCH_MODES = [
   { value: 'keyword', label: 'Keyword Search', description: 'Traditional text matching' }
 ];
 
-const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc', '#92a87a'];
 
 function BiotechRAGInterface({ organizationId = 7 }) {
   const { toast } = useToast();
@@ -521,7 +521,7 @@ function BiotechRAGInterface({ organizationId = 7 }) {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <RechartsTooltip />
-                <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" />
+                <Area type="monotone" dataKey="count" stroke="#6a9bcc" fill="#6a9bcc" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>

@@ -21536,7 +21536,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
                   /* Regulatory suggestion highlights */
                   .regulatory-highlight {
-                    background-color: rgba(59, 130, 246, 0.1);
+                    background-color: rgba(106, 155, 204, 0.1);
                     border-bottom: 2px solid #6a9bcc;
                     cursor: pointer;
                     position: relative;
@@ -21553,7 +21553,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                   }
 
                   .regulatory-highlight:hover {
-                    background-color: rgba(59, 130, 246, 0.2);
+                    background-color: rgba(106, 155, 204, 0.2);
                   }
                 `}</style>
 

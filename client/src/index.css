@@ -1209,10 +1209,10 @@ a:hover {
 @keyframes glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(217, 119, 87, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 40px rgba(217, 119, 87, 0.5);
   }
 }
 

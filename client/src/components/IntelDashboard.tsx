@@ -27,7 +27,7 @@ import StudyDesignAssistant from './StudyDesignAssistant';
 import ConversationalAssistant from './ConversationalAssistant';
 import KnowledgeBasePanel from './KnowledgeBasePanel';
 
-const COLORS = ['#6a9bcc', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc', '#92a87a'];
 
 export default function IntelDashboard() {
   const [indication, setIndication] = useState('');
