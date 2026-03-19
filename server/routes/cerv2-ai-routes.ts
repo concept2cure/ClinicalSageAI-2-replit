@@ -13,19 +13,10 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { authMiddleware } from '../auth';
-import OpenAI from 'openai';
-import { getOpenAIClient } from '../services/openai-client';
+import { ai } from '../lib/unified-ai-client';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { getGateway } from '../services/ai-gateway/gateway.js';
 import ragService from '../services/biotechRagService.js';
-
-// Initialize OpenAI for real AI generation
-let openai: OpenAI | null = null;
-try {
-  openai = getOpenAIClient();
-} catch {
-  console.log('[CERV2 AI] OpenAI not available, using template fallback');
-}
 
 const router = Router();
 

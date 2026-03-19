@@ -45,7 +45,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { documentIntelligenceService } from '@/services/DocumentIntelligenceService';
+import { documentIntelligenceService } from '@/concept2cure/services/documentIntelligenceService';
 
 /**
  * Document Uploader Component
