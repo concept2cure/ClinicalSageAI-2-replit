@@ -372,12 +372,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/validations', async (req: Request, res: Response) => {
     try {
-      const { classificationId, deviceName, analyteName, validationType } = req.body;
-      const orgId = getServerOrgId(req);
-
-      if (!deviceName || !analyteName) {
-        return res.status(400).json({ error: 'deviceName and analyteName are required' });
+      const parsed = validationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
       }
+      const { deviceName, analyteName, validationType, matrixType, parameters } = parsed.data;
+      const classificationId = req.body.classificationId || null;
+      const orgId = getServerOrgId(req);
 
       const result = await pool.query(
         `INSERT INTO ivdr_analytical_validations
@@ -576,24 +577,24 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/clinical-evidence', async (req: Request, res: Response) => {
     try {
+      const parsed = clinicalEvidenceSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+      // Extract additional fields not in schema but used by the insert
       const {
         classificationId,
         validationId,
-        studyTitle,
-        studyType, // 'prospective' | 'retrospective' | 'method_comparison' | 'lot_to_lot'
-        registryId, // ISRCTN / ClinicalTrials.gov
-        sampleSize,
+        registryId,
         performanceClaims,
         populationDefinition,
         inclusionCriteria,
         exclusionCriteria,
         sourceDocuments,
       } = req.body;
+      const { studyTitle, sampleSize } = parsed.data;
+      const studyType = parsed.data.evidenceType;
       const orgId = getServerOrgId(req);
-
-      if (!studyTitle || !studyType) {
-        return res.status(400).json({ error: 'studyTitle and studyType are required' });
-      }
 
       const result = await pool.query(
         `INSERT INTO ivdr_clinical_evidence
@@ -781,12 +782,17 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/cdx-workflows', async (req: Request, res: Response) => {
     try {
+      const parsed = cdxWorkflowSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+      // Map schema fields + extract additional body fields for DB insert
+      const medicinalProductName = parsed.data.companionTherapy;
+      const biomarker = parsed.data.biomarker;
       const {
         classificationId,
-        medicinalProductName,
         activeSubstance,
         therapeuticIndication,
-        biomarker,
         treatmentDecision,
         regulatoryReference,
         notifiedBodyId,
@@ -795,10 +801,6 @@ export default function createIVDRRoutes(pool: Pool): Router {
         clinicalEvidenceIds,
       } = req.body;
       const orgId = getServerOrgId(req);
-
-      if (!medicinalProductName || !biomarker) {
-        return res.status(400).json({ error: 'medicinalProductName and biomarker are required' });
-      }
 
       const result = await pool.query(
         `INSERT INTO ivdr_cdx_workflows

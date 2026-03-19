@@ -519,10 +519,18 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         params.push(yieldPercentage);
       }
 
+      // Add org_id guard to prevent cross-tenant access
+      const orgId = getOrgId(req);
+      let whereClause = 'WHERE id = $2';
+      if (orgId) {
+        whereClause += ` AND org_id = $${idx}`;
+        params.push(orgId);
+      }
+
       const result = await pool.query(
         `UPDATE manufacturing.batch_execution_records
          SET ${setClauses}
-         WHERE id = $2
+         ${whereClause}
          RETURNING *`,
         params
       );
@@ -563,15 +571,23 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         state: 'Investigating',
       };
 
+      const orgId = getOrgId(req);
+      const devParams: unknown[] = [JSON.stringify([deviation]), id];
+      let devWhere = 'WHERE id = $2';
+      if (orgId) {
+        devParams.push(orgId);
+        devWhere += ` AND org_id = $${devParams.length}`;
+      }
+
       const result = await pool.query(
         `UPDATE manufacturing.batch_execution_records
          SET deviations = COALESCE(deviations, '[]'::jsonb) || $1::jsonb,
              deviation_count = COALESCE(deviation_count, 0) + 1,
              quality_status = 'DEVIATION',
              updated_at = NOW()
-         WHERE id = $2
+         ${devWhere}
          RETURNING *`,
-        [JSON.stringify([deviation]), id]
+        devParams
       );
 
       if (result.rows.length === 0) {
@@ -621,10 +637,17 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         disposition = val >= lower && val <= upper ? 'PASS' : 'OOS';
       }
 
-      // Fetch batch_number for reference
+      // Fetch batch_number for reference (with org_id guard)
+      const orgId = getOrgId(req);
+      const batchParams: unknown[] = [id];
+      let batchWhere = 'WHERE id = $1';
+      if (orgId) {
+        batchParams.push(orgId);
+        batchWhere += ` AND org_id = $${batchParams.length}`;
+      }
       const batchRow = await pool.query(
-        `SELECT batch_number FROM manufacturing.batch_execution_records WHERE id = $1`,
-        [id]
+        `SELECT batch_number FROM manufacturing.batch_execution_records ${batchWhere}`,
+        batchParams
       );
       if (batchRow.rows.length === 0) {
         return res.status(404).json({ error: 'Batch not found' });
@@ -823,13 +846,20 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
       // Upsert: if id is provided, update; otherwise insert
       if (id) {
+        // Org_id guard on update to prevent cross-tenant modification
+        const updateParams: unknown[] = [findingId, section || null, text, JSON.stringify(evidenceIds || []), id];
+        let updateWhere = 'WHERE id = $5';
+        if (orgId) {
+          updateParams.push(orgId);
+          updateWhere += ` AND org_id = $${updateParams.length}`;
+        }
         const result = await pool.query(
           `UPDATE manufacturing.responses
            SET finding_id = $1, section = $2, response_text = $3,
                evidence_ids = $4, updated_at = NOW()
-           WHERE id = $5
+           ${updateWhere}
            RETURNING *`,
-          [findingId, section || null, text, JSON.stringify(evidenceIds || []), id]
+          updateParams
         );
         if (result.rows.length === 0) {
           return res.status(404).json({ error: 'Response not found' });
@@ -858,10 +888,17 @@ export default function createManufacturingRoutes(pool: Pool): Router {
     try {
       const { batchId } = req.params;
 
-      // Fetch batch
+      // Fetch batch (with org_id guard)
+      const orgId = getOrgId(req);
+      const releaseParams: unknown[] = [batchId];
+      let releaseWhere = 'WHERE id = $1';
+      if (orgId) {
+        releaseParams.push(orgId);
+        releaseWhere += ` AND org_id = $${releaseParams.length}`;
+      }
       const batchRes = await pool.query(
-        `SELECT * FROM manufacturing.batch_execution_records WHERE id = $1`,
-        [batchId]
+        `SELECT * FROM manufacturing.batch_execution_records ${releaseWhere}`,
+        releaseParams
       );
       if (batchRes.rows.length === 0) {
         return res.status(404).json({ error: 'Batch not found' });

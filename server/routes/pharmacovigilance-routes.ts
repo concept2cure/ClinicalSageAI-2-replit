@@ -122,11 +122,15 @@ export default function createPharmacovigilanceRoutes(): Router {
   const router = Router();
 
   function getOrgId(req: Request): string {
-    return (
+    const orgId =
       (req as any).tenantId ||
-      (req as any).tenantContext?.organizationId ||
-      'default'
-    );
+      (req as any).tenantContext?.organizationId;
+    if (!orgId) {
+      // Log but do not silently share data across tenants
+      console.warn('[Pharmacovigilance] No tenant context — using session-scoped fallback');
+      return (req as any).user?.organizationId || (req as any).user?.id || 'anonymous';
+    }
+    return String(orgId);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

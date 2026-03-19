@@ -87,6 +87,9 @@ const milestoneSchema = z.object({
 export default function createClinicalOperationsRoutes(pool: Pool): Router {
   const router = Router();
 
+  // Module-level initialization guard to avoid DDL on every request
+  let tablesInitialized = false;
+
   function getOrgId(req: Request): string | null {
     return (
       (req as any).tenantId ||
@@ -107,8 +110,9 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
     return res.status(500).json({ error: `${label} failed`, code });
   }
 
-  // Auto-create schema + tables when first accessed
+  // Auto-create schema + tables when first accessed (guarded to run once)
   async function ensureTables(): Promise<void> {
+    if (tablesInitialized) return;
     await pool.query(`CREATE SCHEMA IF NOT EXISTS clinical_ops`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clinical_ops.studies (
@@ -202,6 +206,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    tablesInitialized = true;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -354,7 +359,11 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
     try {
       await ensureTables();
       const { id } = req.params;
-      const result = await pool.query(`SELECT * FROM clinical_ops.studies WHERE id = $1`, [id]);
+      const orgId = getOrgId(req);
+      const result = await pool.query(
+        `SELECT * FROM clinical_ops.studies WHERE id = $1 AND ($2::TEXT IS NULL OR org_id = $2)`,
+        [id, orgId],
+      );
       if (result.rows.length === 0) {
         return res.status(404).json({ success: false, error: 'Study not found' });
       }
@@ -392,8 +401,15 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       }
 
       setClauses.push(`updated_at = NOW()`);
+      // Add org_id guard
+      const orgId = getOrgId(req);
+      let whereClause = 'WHERE id = $1';
+      if (orgId) {
+        params.push(orgId);
+        whereClause += ` AND org_id = $${params.length}`;
+      }
       const result = await pool.query(
-        `UPDATE clinical_ops.studies SET ${setClauses.join(', ')} WHERE id = $1 RETURNING *`,
+        `UPDATE clinical_ops.studies SET ${setClauses.join(', ')} ${whereClause} RETURNING *`,
         params,
       );
 
@@ -475,9 +491,16 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
         return res.status(400).json({ success: false, error: `status must be one of: ${validStatuses.join(', ')}` });
       }
 
+      const orgId = getOrgId(req);
+      const siteParams: any[] = [id, status];
+      let siteWhere = 'WHERE id = $1';
+      if (orgId) {
+        siteParams.push(orgId);
+        siteWhere += ` AND org_id = $${siteParams.length}`;
+      }
       const result = await pool.query(
-        `UPDATE clinical_ops.sites SET status = $2, last_activity = NOW() WHERE id = $1 RETURNING *`,
-        [id, status],
+        `UPDATE clinical_ops.sites SET status = $2, last_activity = NOW() ${siteWhere} RETURNING *`,
+        siteParams,
       );
 
       if (result.rows.length === 0) {
@@ -619,13 +642,16 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const { id } = req.params;
       const { findingsCount, notes } = req.body;
 
+      // Verify ownership via study → org chain
       const result = await pool.query(
-        `UPDATE clinical_ops.monitoring_visits
+        `UPDATE clinical_ops.monitoring_visits mv
          SET status = 'completed', completed_date = CURRENT_DATE,
-             findings_count = COALESCE($2, findings_count),
-             notes = COALESCE($3, notes)
-         WHERE id = $1 RETURNING *`,
-        [id, findingsCount ?? null, notes ?? null],
+             findings_count = COALESCE($2, mv.findings_count),
+             notes = COALESCE($3, mv.notes)
+         WHERE mv.id = $1
+           AND mv.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($4::TEXT IS NULL OR s.org_id = $4))
+         RETURNING *`,
+        [id, findingsCount ?? null, notes ?? null, getOrgId(req)],
       );
 
       if (result.rows.length === 0) {
@@ -704,11 +730,13 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const { correctiveAction } = req.body;
 
       const result = await pool.query(
-        `UPDATE clinical_ops.deviations
+        `UPDATE clinical_ops.deviations d
          SET status = 'resolved', resolution_date = CURRENT_DATE,
-             corrective_action = COALESCE($2, corrective_action)
-         WHERE id = $1 RETURNING *`,
-        [id, correctiveAction ?? null],
+             corrective_action = COALESCE($2, d.corrective_action)
+         WHERE d.id = $1
+           AND d.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($3::TEXT IS NULL OR s.org_id = $3))
+         RETURNING *`,
+        [id, correctiveAction ?? null, getOrgId(req)],
       );
 
       if (result.rows.length === 0) {
@@ -774,8 +802,12 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const { id } = req.params;
 
       const result = await pool.query(
-        `UPDATE clinical_ops.milestones SET status = 'completed', actual_date = CURRENT_DATE WHERE id = $1 RETURNING *`,
-        [id],
+        `UPDATE clinical_ops.milestones m
+         SET status = 'completed', actual_date = CURRENT_DATE
+         WHERE m.id = $1
+           AND m.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+         RETURNING *`,
+        [id, getOrgId(req)],
       );
 
       if (result.rows.length === 0) {
