@@ -13,7 +13,7 @@
  * - Cross-reference validation
  */
 
-import OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 import { EventEmitter } from 'events';
 import { generateUUID } from '../utils/id-generator';
 import { db } from '../db';
@@ -44,7 +44,6 @@ interface Suggestion {
 }
 
 class RealTimeValidationService extends EventEmitter {
-  private openai: OpenAI;
   private validationCache: Map<string, ValidationResult>;
   private debounceTimers: Map<string, NodeJS.Timeout>;
   private regulatoryTerms: Set<string>;
@@ -52,12 +51,6 @@ class RealTimeValidationService extends EventEmitter {
 
   constructor() {
     super();
-
-    // Initialize OpenAI client
-    this.openai = new OpenAI({
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'https://api.openai.com/v1',
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-    });
 
     this.validationCache = new Map();
     this.debounceTimers = new Map();
@@ -367,9 +360,7 @@ class RealTimeValidationService extends EventEmitter {
     documentType: string
   ): Promise<{ issues: ValidationIssue[]; suggestions: Suggestion[] }> {
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
+      const text = await ai.complete([
           {
             role: 'system',
             content: `You are a regulatory document validation expert. Analyze the following ${documentType} content for:
@@ -384,15 +375,11 @@ class RealTimeValidationService extends EventEmitter {
           },
           {
             role: 'user',
-            content: content.substring(0, 3000), // Limit to first 3000 chars for efficiency
+            content: content.substring(0, 3000),
           },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 1000,
-      });
+        ], { jsonMode: true, temperature: 0.3, maxTokens: 1000, callerModule: 'realTimeValidation/analyzeContentWithAI' });
 
-      const result = JSON.parse(completion.choices[0].message.content || '{}');
+      const result = JSON.parse(text || '{}');
 
       // Map AI results to our format
       const issues: ValidationIssue[] = (result.issues || []).map((issue: any) => ({
