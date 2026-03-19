@@ -14,8 +14,7 @@
  */
 
 import { Pool } from 'pg';
-import { getOpenAIClient } from '../openai-client';
-import type OpenAI from 'openai';
+import { ai } from '../../lib/unified-ai-client';
 import crypto from 'crypto';
 
 // Types
@@ -152,7 +151,6 @@ interface ValidationCheckResult {
 
 export class ComplianceGuardrailsSDKService {
   private pool: Pool;
-  private openai: OpenAI;
   private validationFunctions: Map<string, ValidationFunction>;
   private apiKeys: Array<{
     id: string;
@@ -170,7 +168,6 @@ export class ComplianceGuardrailsSDKService {
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
     this.validationFunctions = new Map();
     this.registerBuiltInValidators();
   }
