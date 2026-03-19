@@ -470,13 +470,27 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response) => {
     const params = entityType ? [entityId, entityType] : [entityId];
     const result = await pool.query(query, params);
 
+    // Verify hash chain integrity (21 CFR Part 11 requirement)
+    let chainIntegrity: 'verified' | 'broken' | 'unverifiable' = 'unverifiable';
+    if (result.rows.length > 0 && result.rows[0].hash_signature) {
+      chainIntegrity = 'verified';
+      for (let i = 1; i < result.rows.length; i++) {
+        const row = result.rows[i];
+        const prevRow = result.rows[i - 1];
+        if (row.previous_hash && row.previous_hash !== prevRow.hash_signature) {
+          chainIntegrity = 'broken';
+          break;
+        }
+      }
+    }
+
     res.json({
       success: true,
       data: {
         entries: result.rows,
         total: result.rows.length,
         entityId,
-        chainIntegrity: 'verified', // In production, verify each hash links to previous
+        chainIntegrity,
       },
     });
   } catch {
@@ -489,20 +503,24 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response) => {
  * Record an audit trail entry (system events, configuration changes)
  */
 router.post('/audit-trail', (req: Request, res: Response) => {
+  // SECURITY: Use authenticated user from JWT, not from request body
+  // This prevents audit trail spoofing (21 CFR Part 11 compliance)
+  const authUser = (req as any).user || (req as any).tenantContext;
+  const userId = authUser?.id || authUser?.userId || (req as any).userId;
+  const userRole = authUser?.role || (req as any).userRole || 'unknown';
+
   const {
     entityType,
     entityId,
     action,
-    userId,
     userName,
-    userRole,
     previousValue,
     newValue,
     changeReason,
   } = req.body;
 
   if (!entityType || !entityId || !action || !userId) {
-    return res.status(400).json({ error: 'entityType, entityId, action, userId required' });
+    return res.status(400).json({ error: 'entityType, entityId, action required (userId derived from auth)' });
   }
 
   // §11.10(e): change reason required for modifications to GxP records

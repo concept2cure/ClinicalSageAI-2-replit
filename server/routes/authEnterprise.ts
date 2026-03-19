@@ -78,23 +78,20 @@ router.post('/check-email', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!userResult.length) {
-      // User doesn't exist - still return password flow for signup
+      // SECURITY: Return same shape whether user exists or not to prevent enumeration
       return res.json({
-        exists: false,
         authFlow: 'password',
         mfaRequired: false,
-        passwordSet: false,
         email: normalizedEmail,
       });
     }
 
     const user = userResult[0];
 
+    // SECURITY: Do not expose 'exists' flag — prevents email enumeration
     res.json({
-      exists: true,
       authFlow: 'password',
       mfaRequired: user.mfaEnabled === true,
-      passwordSet: !!user.passwordHash,
       email: normalizedEmail,
     });
   } catch (error: any) {
@@ -342,13 +339,20 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
 /**
  * POST /mfa/setup
  * Generate MFA secret and QR code for initial setup
+ * SECURITY: Requires valid JWT — userId derived from token, not body
  */
 router.post('/mfa/setup', async (req: Request, res: Response) => {
   try {
-    const { userId, email } = req.body;
+    // SECURITY: Derive userId and email from authenticated JWT, not from request body
+    const authUser = (req as any).user;
+    if (!authUser?.id && !authUser?.userId) {
+      return res.status(401).json({ error: 'Authentication required for MFA setup' });
+    }
+    const userId = authUser.id || authUser.userId;
+    const email = authUser.email || req.body.email;
 
     if (!userId || !email) {
-      return res.status(400).json({ error: 'userId and email are required' });
+      return res.status(400).json({ error: 'Authentication context incomplete' });
     }
 
     const result = await generateMFASecret(parseInt(userId), email);
@@ -371,10 +375,16 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
  */
 router.post('/mfa/enable', async (req: Request, res: Response) => {
   try {
-    const { userId, code } = req.body;
+    // SECURITY: Derive userId from authenticated JWT
+    const authUser = (req as any).user;
+    if (!authUser?.id && !authUser?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const userId = authUser.id || authUser.userId;
+    const { code } = req.body;
 
-    if (!userId || !code) {
-      return res.status(400).json({ error: 'userId and code are required' });
+    if (!code) {
+      return res.status(400).json({ error: 'Verification code is required' });
     }
 
     const success = await enableMFA(parseInt(userId), code);
@@ -399,9 +409,15 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
  */
 router.post('/mfa/disable', async (req: Request, res: Response) => {
   try {
-    const { userId, password } = req.body;
+    // SECURITY: Derive userId from authenticated JWT
+    const authUser = (req as any).user;
+    if (!authUser?.id && !authUser?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const userId = authUser.id || authUser.userId;
+    const { password } = req.body;
 
-    if (!userId || !password) {
+    if (!password) {
       return res.status(400).json({ error: 'userId and password are required' });
     }
 
