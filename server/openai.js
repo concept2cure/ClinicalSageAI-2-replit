@@ -9,8 +9,13 @@ import { getOpenAIClient } from './services/openai-client';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 
-// Initialize OpenAI client
-const openai = getOpenAIClient();
+// Lazy-initialize OpenAI client (only used for legacy endpoints)
+// All new AI functionality routes through Claude via the AI Gateway
+let openai: any = null;
+function getClient() {
+  if (!openai) openai = getOpenAIClient();
+  return openai;
+}
 
 // Create rate limiter
 const apiRateLimiter = rateLimit({
@@ -105,8 +110,8 @@ export function registerOpenAIRoutes(app) {
       }
 
       // Call OpenAI
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+      const response = await getClient().chat.completions.create({
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -163,7 +168,7 @@ export function registerOpenAIRoutes(app) {
       const { image, processDetails } = validation.data;
 
       // Call OpenAI Vision API
-      const response = await openai.chat.completions.create({
+      const response = await getClient().chat.completions.create({
         model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
         messages: [
           {
@@ -240,7 +245,7 @@ export function registerOpenAIRoutes(app) {
       `;
 
       // Call DALL-E 3 API
-      const response = await openai.images.generate({
+      const response = await getClient().images.generate({
         model: 'dall-e-3',
         prompt,
         n: 1,
@@ -300,36 +305,36 @@ export function registerOpenAIRoutes(app) {
       let thread;
       if (threadId) {
         try {
-          thread = await openai.beta.threads.retrieve(threadId);
+          thread = await getClient().beta.threads.retrieve(threadId);
         } catch (error) {
           // If thread not found, create a new one
-          thread = await openai.beta.threads.create();
+          thread = await getClient().beta.threads.create();
         }
       } else {
-        thread = await openai.beta.threads.create();
+        thread = await getClient().beta.threads.create();
       }
 
       // Add message to thread
-      await openai.beta.threads.messages.create(thread.id, {
+      await getClient().beta.threads.messages.create(thread.id, {
         role: 'user',
         content: query,
         file_ids: files || [],
       });
 
       // Run the assistant
-      const run = await openai.beta.threads.runs.create(thread.id, {
+      const run = await getClient().beta.threads.runs.create(thread.id, {
         assistant_id: assistantId,
       });
 
       // Poll for completion (in production, this would be handled with webhooks)
-      let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      let runStatus = await getClient().beta.threads.runs.retrieve(thread.id, run.id);
 
       // Simple polling with a timeout (in production, use async patterns)
       let retries = 0;
       const maxRetries = 20;
       while (runStatus.status !== 'completed' && retries < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+        runStatus = await getClient().beta.threads.runs.retrieve(thread.id, run.id);
         retries++;
       }
 
@@ -338,7 +343,7 @@ export function registerOpenAIRoutes(app) {
       }
 
       // Get messages
-      const messages = await openai.beta.threads.messages.list(thread.id);
+      const messages = await getClient().beta.threads.messages.list(thread.id);
 
       // Get the latest assistant message
       const latestMessage = messages.data

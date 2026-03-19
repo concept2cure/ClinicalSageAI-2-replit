@@ -15,8 +15,7 @@
  */
 
 import { Pool } from 'pg';
-import { getOpenAIClient } from '../openai-client';
-import type OpenAI from 'openai';
+import { ai } from '../../lib/unified-ai-client';
 import crypto from 'crypto';
 
 // Types
@@ -127,13 +126,11 @@ export interface ReadinessDashboard {
 
 export class SubmissionReadinessTwinService {
   private pool: Pool;
-  private openai: OpenAI;
   private static criteriaCache: ReadinessCriterion[] = [];
   private static assessmentsCache: ReadinessTwinAssessment[] = [];
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
   }
 
   /**
