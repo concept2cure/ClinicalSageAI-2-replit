@@ -9,7 +9,7 @@ starlette>=0.26.1
 websockets>=11.0.0
 
 # Database dependencies
-psycopg2-binary==2.9.7
+psycopg2-binary==2.9.11
 sqlalchemy==2.0.23
 alembic==1.12.1
 
