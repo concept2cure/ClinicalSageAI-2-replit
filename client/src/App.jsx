@@ -229,10 +229,15 @@ const ProtectedRoute = ({ children }) => {
 function AppContent() {
   const [location] = useLocation();
 
-  const isConcept2CurePublicRoute =
-    location === '/concept2cure' || location.startsWith('/concept2cure/');
+  // These routes are handled by ZenRouter which has its own auth logic
+  const isPublicRoute =
+    location === '/' ||
+    location === '/login' ||
+    location === '/signup' ||
+    location === '/concept2cure' ||
+    location.startsWith('/concept2cure/');
 
-  if (isConcept2CurePublicRoute) {
+  if (isPublicRoute) {
     return <MainApp />;
   }
 
