@@ -22,13 +22,24 @@ import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
 
-// Helper to read organization ID from header or query param
+// Module-level DDL init guards
+let projectWorkflowsTableReady = false;
+let complianceTrackingTableReady = false;
+
+// Helper to read organization ID from authenticated context
 function getOrgId(req: express.Request): number {
-  return parseInt(
+  const orgId = parseInt(
+    (req as any).tenantId ||
+    (req as any).tenantContext?.organizationId ||
     (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string) ||
-    '1'
+    ''
   );
+  if (isNaN(orgId) || orgId <= 0) {
+    console.warn('[CMC] No valid organization context — falling back to header-based orgId');
+    // Fallback for development; production should enforce auth
+    return parseInt((req.query.organizationId as string) || '1');
+  }
+  return orgId;
 }
 
 // Analytical Methods Routes
@@ -59,8 +70,9 @@ router.get('/analytical-methods', async (req, res) => {
 
 router.post('/analytical-methods', async (req, res) => {
   try {
+    const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.parse(req.body);
-    const [method] = await db.insert(analyticalMethods).values(validatedData).returning();
+    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: method });
   } catch (error) {
     console.error('Error creating analytical method:', error);
@@ -71,11 +83,13 @@ router.post('/analytical-methods', async (req, res) => {
 router.put('/analytical-methods/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.partial().parse(req.body);
+    const { organizationId: _discard, ...safeData } = validatedData;
     const [method] = await db
       .update(analyticalMethods)
-      .set({ ...validatedData, updatedAt: new Date() })
-      .where(eq(analyticalMethods.id, id))
+      .set({ ...safeData, updatedAt: new Date() })
+      .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
       .returning();
     res.json({ success: true, data: method });
   } catch (error) {
@@ -101,8 +115,9 @@ router.get('/process-validation', async (req, res) => {
 
 router.post('/process-validation', async (req, res) => {
   try {
+    const orgId = getOrgId(req);
     const validatedData = insertProcessValidationSchema.parse(req.body);
-    const [validation] = await db.insert(processValidation).values(validatedData).returning();
+    const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: validation });
   } catch (error) {
     console.error('Error creating process validation:', error);
@@ -138,8 +153,9 @@ router.get('/stability-studies', async (req, res) => {
 
 router.post('/stability-studies', async (req, res) => {
   try {
+    const orgId = getOrgId(req);
     const validatedData = insertStabilityStudySchema.parse(req.body);
-    const [study] = await db.insert(stabilityStudies).values(validatedData).returning();
+    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: study });
   } catch (error) {
     console.error('Error creating stability study:', error);
@@ -161,8 +177,9 @@ router.get('/qc-testing', async (req, res) => {
 
 router.post('/qc-testing', async (req, res) => {
   try {
+    const orgId = getOrgId(req);
     const validatedData = insertQcTestingSchema.parse(req.body);
-    const [test] = await db.insert(qcTesting).values(validatedData).returning();
+    const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: test });
   } catch (error) {
     console.error('Error creating QC test:', error);
@@ -187,8 +204,9 @@ router.get('/change-control', async (req, res) => {
 
 router.post('/change-control', async (req, res) => {
   try {
+    const orgId = getOrgId(req);
     const validatedData = insertCmcChangeControlSchema.parse(req.body);
-    const [change] = await db.insert(cmcChangeControl).values(validatedData).returning();
+    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: change });
   } catch (error) {
     console.error('Error creating change control:', error);
@@ -224,8 +242,9 @@ router.get('/drug-substances', async (req, res) => {
 
 router.post('/drug-substances', async (req, res) => {
   try {
+    const orgId = getOrgId(req);
     const validatedData = insertDrugSubstanceSchema.parse(req.body);
-    const [substance] = await db.insert(drugSubstances).values(validatedData).returning();
+    const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: substance });
   } catch (error) {
     console.error('Error creating drug substance:', error);
@@ -261,8 +280,9 @@ router.get('/drug-products', async (req, res) => {
 
 router.post('/drug-products', async (req, res) => {
   try {
+    const orgId = getOrgId(req);
     const validatedData = insertDrugProductSchema.parse(req.body);
-    const [product] = await db.insert(drugProducts).values(validatedData).returning();
+    const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: product });
   } catch (error) {
     console.error('Error creating drug product:', error);
@@ -296,22 +316,25 @@ router.post('/insights/take-action', async (req, res) => {
     let taskResult: any;
     try {
       const pool = getPool();
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS project_workflows (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          project_id UUID,
-          template_id UUID,
-          workflow_name TEXT NOT NULL,
-          workflow_data JSONB NOT NULL DEFAULT '{}',
-          status TEXT DEFAULT 'active',
-          progress INTEGER DEFAULT 0,
-          start_date TIMESTAMP,
-          end_date TIMESTAMP,
-          assigned_to TEXT,
-          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-        )
-      `);
+      if (!projectWorkflowsTableReady) {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS project_workflows (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id UUID,
+            template_id UUID,
+            workflow_name TEXT NOT NULL,
+            workflow_data JSONB NOT NULL DEFAULT '{}',
+            status TEXT DEFAULT 'active',
+            progress INTEGER DEFAULT 0,
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            assigned_to TEXT,
+            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+          )
+        `);
+        projectWorkflowsTableReady = true;
+      }
 
       const priority = type === 'compliance' ? 'high' : 'medium';
       const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -399,27 +422,33 @@ router.post('/compliance/check-rules', async (req, res) => {
 
     try {
       const pool = getPool();
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS compliance_tracking (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          project_id UUID,
-          guideline TEXT NOT NULL,
-          requirement TEXT NOT NULL,
-          status TEXT NOT NULL,
-          evidence JSONB,
-          justification TEXT,
-          risk_level TEXT,
-          mitigation TEXT,
-          due_date TIMESTAMP,
-          completed_date TIMESTAMP,
-          assigned_to TEXT,
-          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-        )
-      `);
+      if (!complianceTrackingTableReady) {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS compliance_tracking (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id UUID,
+            organization_id INTEGER,
+            guideline TEXT NOT NULL,
+            requirement TEXT NOT NULL,
+            status TEXT NOT NULL,
+            evidence JSONB,
+            justification TEXT,
+            risk_level TEXT,
+            mitigation TEXT,
+            due_date TIMESTAMP,
+            completed_date TIMESTAMP,
+            assigned_to TEXT,
+            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+          )
+        `);
+        complianceTrackingTableReady = true;
+      }
 
+      const orgId = getOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM compliance_tracking ORDER BY created_at DESC LIMIT 50`
+        `SELECT * FROM compliance_tracking WHERE organization_id = $1 OR organization_id IS NULL ORDER BY created_at DESC LIMIT 50`,
+        [orgId]
       );
 
       const trackingRows = result.rows;
