@@ -127,8 +127,8 @@ const NavItem: React.FC<{
   onClick: () => void;
 }> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
   const accentMap = {
-    blue: { bg: 'bg-blue-50', text: 'text-blue-700', iconColor: 'text-blue-500' },
-    violet: { bg: 'bg-violet-50', text: 'text-violet-700', iconColor: 'text-violet-500' },
+    blue: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
+    violet: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
     emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
   };
   const accent = accentColor && accentMap[accentColor];
@@ -146,8 +146,8 @@ const NavItem: React.FC<{
           : accent
             ? cn(
                 'text-zinc-600',
-                accent.bg === 'bg-blue-50' && 'hover:bg-blue-50 hover:text-blue-700',
-                accent.bg === 'bg-violet-50' && 'hover:bg-violet-50 hover:text-violet-700',
+                accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
+                accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
                 accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
               )
             : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -306,7 +306,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="AI Agents"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'agent-hub' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'agent-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Bot className="w-4 h-4" />
@@ -316,7 +316,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="SnowGlobe"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'snowglobe' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'snowglobe' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Snowflake className="w-4 h-4" />
@@ -326,7 +326,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="Collaboration"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'collaboration-hub' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'collaboration-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Users className="w-4 h-4" />
@@ -336,7 +336,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="Artifacts"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'artifacts' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'artifacts' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Layers className="w-4 h-4" />
@@ -698,7 +698,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-bold text-violet-700 leading-none">
+              <span className="text-[10px] font-bold text-[#C4623F] leading-none">
                 {avatarInitial}
               </span>
             </div>
