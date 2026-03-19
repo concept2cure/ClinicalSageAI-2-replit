@@ -35,6 +35,9 @@ const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Error pages
 const ErrorPages = lazy(() => import('../pages/ErrorPages'));
 
+// Pricing page
+const PricingPage = lazy(() => import('../pages/PricingPage'));
+
 // Legal pages
 const TermsOfService = lazy(() => import('../pages/legal/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('../pages/legal/PrivacyPolicy'));
@@ -299,6 +302,11 @@ export const ZenRouter: React.FC = () => {
                 </ProtectedRoute>
               </PageTransition>
             )}
+          </Route>
+
+          {/* Pricing Page — public */}
+          <Route path="/concept2cure/pricing">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading pricing..." />}><PricingPage /></Suspense></PageTransition>)}
           </Route>
 
           {/* Legal Pages — public, no auth required */}

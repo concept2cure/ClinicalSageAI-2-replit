@@ -59,12 +59,18 @@ export const BUNDLE_DISCOUNTS: { minUsers: number; discountPct: number; label: s
  * Pricing by industry archetype — per-user/month model
  *
  * Cost structure per user/month (estimated):
- *   Claude API tokens:  $15-40 (heavy usage, Sonnet 4 @ $3/$15 per 1M I/O)
- *   Neon PostgreSQL:     $1-3  (serverless, scales with storage/compute)
- *   AWS hosting/CDN:     $5-12 (ECS, S3, CloudFront, data transfer)
- *   Stripe fees:         ~3%   (2.9% + $0.30 per charge)
+ *   Claude API tokens:  $15-60 (Sonnet 4.5 @ $3/$15 per 1M I/O; Batch API halves this)
+ *   Neon PostgreSQL:     $0.25-0.43 (serverless, scale-to-zero, $0.106/CU-hr + $0.35/GB)
+ *   AWS hosting/CDN:     $0.70-2.60 (ECS, S3, CloudFront; drops with scale)
+ *   Stripe fees:         ~3.7% (2.9% + $0.30 + 0.7% Billing platform)
  *   Support/ops:         $5-10
- *   Total COGS:          ~$30-70/user/month
+ *   Total COGS:          ~$34-69/user/month
+ *
+ * Market positioning:
+ *   $459/user = below Veeva enterprise ($120-300+ per module per user)
+ *   $459/user = above MasterControl basic ($109-199) but AI-native
+ *   $349/user = competitive medtech entry vs $200-400 CTMS range
+ *   $149/user = academic growth pricing at ~55% margin
  *
  * Margins at target prices:
  *   $459/user (pharma):     ~85% gross margin
@@ -78,9 +84,9 @@ export const PRICING: Record<string, PricingTier[]> = {
       name: 'Standard',
       tier: 'standard',
       perUserMonthly: 45900,
-      annualDiscountPct: 15,
-      includedTokensMonthly: 500_000,
-      overagePerKTokens: 15,  // $0.015 per 1K tokens
+      annualDiscountPct: 13,
+      includedTokensMonthly: 4_000_000,  // ~$60 value in Sonnet tokens
+      overagePerKTokens: 25,  // $0.025 per 1K tokens (~67% markup)
       maxProjects: 20,
       maxStorageGB: 25,
       minCommitmentMonths: 3,
@@ -89,10 +95,10 @@ export const PRICING: Record<string, PricingTier[]> = {
     {
       name: 'Professional',
       tier: 'professional',
-      perUserMonthly: 39900,  // $399 with 5+ users (bundle)
-      annualDiscountPct: 15,
-      includedTokensMonthly: 1_000_000,
-      overagePerKTokens: 12,
+      perUserMonthly: 39900,  // $399 effective with 5+ users (bundle discount)
+      annualDiscountPct: 13,
+      includedTokensMonthly: 8_000_000,  // ~$120 value
+      overagePerKTokens: 20,
       maxProjects: 100,
       maxStorageGB: 100,
       minCommitmentMonths: 3,
@@ -103,8 +109,8 @@ export const PRICING: Record<string, PricingTier[]> = {
       tier: 'enterprise',
       perUserMonthly: 0,  // Custom pricing
       annualDiscountPct: 20,
-      includedTokensMonthly: 5_000_000,
-      overagePerKTokens: 8,
+      includedTokensMonthly: 20_000_000,  // ~$300 value
+      overagePerKTokens: 15,
       maxProjects: -1,
       maxStorageGB: 1000,
       minCommitmentMonths: 12,
@@ -123,9 +129,9 @@ export const PRICING: Record<string, PricingTier[]> = {
       name: 'Standard',
       tier: 'standard',
       perUserMonthly: 34900,
-      annualDiscountPct: 15,
-      includedTokensMonthly: 500_000,
-      overagePerKTokens: 15,
+      annualDiscountPct: 13,
+      includedTokensMonthly: 2_000_000,  // ~$30 value
+      overagePerKTokens: 25,
       maxProjects: 20,
       maxStorageGB: 25,
       minCommitmentMonths: 3,
@@ -134,10 +140,10 @@ export const PRICING: Record<string, PricingTier[]> = {
     {
       name: 'Professional',
       tier: 'professional',
-      perUserMonthly: 29900,  // $299 with 5+ users
-      annualDiscountPct: 15,
-      includedTokensMonthly: 1_000_000,
-      overagePerKTokens: 12,
+      perUserMonthly: 29900,  // $299 effective with 5+ users
+      annualDiscountPct: 13,
+      includedTokensMonthly: 4_000_000,  // ~$60 value
+      overagePerKTokens: 20,
       maxProjects: 100,
       maxStorageGB: 100,
       minCommitmentMonths: 3,
@@ -148,8 +154,8 @@ export const PRICING: Record<string, PricingTier[]> = {
       tier: 'enterprise',
       perUserMonthly: 0,
       annualDiscountPct: 20,
-      includedTokensMonthly: 5_000_000,
-      overagePerKTokens: 8,
+      includedTokensMonthly: 20_000_000,
+      overagePerKTokens: 15,
       maxProjects: -1,
       maxStorageGB: 1000,
       minCommitmentMonths: 12,
@@ -157,15 +163,15 @@ export const PRICING: Record<string, PricingTier[]> = {
     },
   ],
 
-  // ── Academic & Research — $149/user/month ──
+  // ── Academic & Research — $149/user/month (growth pricing, ~55% margin) ──
   academic: [
     {
       name: 'Research',
       tier: 'standard',
       perUserMonthly: 14900,
-      annualDiscountPct: 25,
-      includedTokensMonthly: 250_000,
-      overagePerKTokens: 15,
+      annualDiscountPct: 20,
+      includedTokensMonthly: 500_000,  // ~$7.50 value
+      overagePerKTokens: 25,
       maxProjects: 10,
       maxStorageGB: 10,
       minCommitmentMonths: 3,
@@ -174,10 +180,10 @@ export const PRICING: Record<string, PricingTier[]> = {
     {
       name: 'Department',
       tier: 'professional',
-      perUserMonthly: 11900,  // $119 with 5+ users
-      annualDiscountPct: 25,
-      includedTokensMonthly: 500_000,
-      overagePerKTokens: 12,
+      perUserMonthly: 11900,  // $119 effective with 5+ users
+      annualDiscountPct: 20,
+      includedTokensMonthly: 1_000_000,  // ~$15 value
+      overagePerKTokens: 20,
       maxProjects: 50,
       maxStorageGB: 50,
       minCommitmentMonths: 3,
@@ -187,9 +193,9 @@ export const PRICING: Record<string, PricingTier[]> = {
       name: 'Institution',
       tier: 'enterprise',
       perUserMonthly: 0,
-      annualDiscountPct: 30,
-      includedTokensMonthly: 2_000_000,
-      overagePerKTokens: 8,
+      annualDiscountPct: 25,
+      includedTokensMonthly: 5_000_000,
+      overagePerKTokens: 15,
       maxProjects: -1,
       maxStorageGB: 500,
       minCommitmentMonths: 12,
