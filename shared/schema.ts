@@ -29,6 +29,8 @@ import {
   decimal,
   date,
   customType,
+  jsonb,
+  numeric,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -17594,3 +17596,214 @@ export const insertIndemnificationAttestationSchema = createInsertSchemaOmit(ind
   updatedAt: true,
 });
 export type IndemnificationAttestation = InferSelectModel<typeof indemnificationAttestations>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EVIDENCE FABRIC - Phase 5: Traceability-first document intelligence
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const evidenceSources = pgTable(
+  'evidence_sources',
+  {
+    id: serial('id').primaryKey(),
+    programId: integer('program_id').notNull(),
+    organizationId: integer('organization_id').notNull(),
+    title: varchar('title', { length: 500 }).notNull(),
+    sourceType: varchar('source_type', { length: 50 }).notNull(),
+    fileName: varchar('file_name', { length: 500 }),
+    fileUrl: text('file_url'),
+    contentHash: varchar('content_hash', { length: 64 }).notNull(),
+    contentText: text('content_text'),
+    pageCount: integer('page_count').default(0),
+    version: integer('version').notNull().default(1),
+    previousVersionId: integer('previous_version_id'),
+    isCurrent: boolean('is_current').notNull().default(true),
+    metadata: jsonb('metadata').default({}),
+    ingestedBy: integer('ingested_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    programIdx: index('evidence_sources_program_idx').on(table.programId),
+    orgIdx: index('evidence_sources_org_idx').on(table.organizationId),
+    hashIdx: index('evidence_sources_hash_idx').on(table.contentHash),
+    typeIdx: index('evidence_sources_type_idx').on(table.sourceType),
+  })
+);
+
+export const evidenceClaims = pgTable(
+  'evidence_claims',
+  {
+    id: serial('id').primaryKey(),
+    sourceId: integer('source_id').notNull(),
+    programId: integer('program_id').notNull(),
+    organizationId: integer('organization_id').notNull(),
+    claimText: text('claim_text').notNull(),
+    claimType: varchar('claim_type', { length: 50 }).notNull(),
+    pageNumber: integer('page_number'),
+    sectionReference: varchar('section_reference', { length: 200 }),
+    sentenceIndex: integer('sentence_index'),
+    confidence: numeric('confidence', { precision: 3, scale: 2 }).notNull().default('0.50'),
+    extractionMethod: varchar('extraction_method', { length: 50 }).notNull().default('pattern'),
+    version: integer('version').notNull().default(1),
+    previousVersionId: integer('previous_version_id'),
+    isCurrent: boolean('is_current').notNull().default(true),
+    metadata: jsonb('metadata').default({}),
+    extractedBy: integer('extracted_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    sourceIdx: index('evidence_claims_source_idx').on(table.sourceId),
+    programIdx: index('evidence_claims_program_idx').on(table.programId),
+    orgIdx: index('evidence_claims_org_idx').on(table.organizationId),
+    typeIdx: index('evidence_claims_type_idx').on(table.claimType),
+  })
+);
+
+export const evidenceClaimLinks = pgTable(
+  'evidence_claim_links',
+  {
+    id: serial('id').primaryKey(),
+    claimId: integer('claim_id').notNull(),
+    documentId: integer('document_id').notNull(),
+    sectionId: varchar('section_id', { length: 200 }),
+    programId: integer('program_id').notNull(),
+    organizationId: integer('organization_id').notNull(),
+    linkType: varchar('link_type', { length: 50 }).notNull(),
+    strength: numeric('strength', { precision: 3, scale: 2 }).notNull().default('1.00'),
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    deletedBy: integer('deleted_by'),
+  },
+  (table) => ({
+    claimIdx: index('evidence_claim_links_claim_idx').on(table.claimId),
+    docIdx: index('evidence_claim_links_doc_idx').on(table.documentId),
+    sectionIdx: index('evidence_claim_links_section_idx').on(table.documentId, table.sectionId),
+    programIdx: index('evidence_claim_links_program_idx').on(table.programId),
+  })
+);
+
+export const evidenceTraceabilitySnapshots = pgTable(
+  'evidence_traceability_snapshots',
+  {
+    id: serial('id').primaryKey(),
+    programId: integer('program_id').notNull(),
+    organizationId: integer('organization_id').notNull(),
+    snapshotName: varchar('snapshot_name', { length: 200 }).notNull(),
+    snapshotType: varchar('snapshot_type', { length: 50 }).notNull().default('manual'),
+    description: text('description'),
+    rtmData: jsonb('rtm_data').notNull(),
+    totalClaims: integer('total_claims').notNull().default(0),
+    totalLinks: integer('total_links').notNull().default(0),
+    overallScore: numeric('overall_score', { precision: 5, scale: 2 }).default('0'),
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    programIdx: index('evidence_snapshots_program_idx').on(table.programId),
+    orgIdx: index('evidence_snapshots_org_idx').on(table.organizationId),
+    typeIdx: index('evidence_snapshots_type_idx').on(table.snapshotType),
+  })
+);
+
+export const evidenceComplianceScores = pgTable(
+  'evidence_compliance_scores',
+  {
+    id: serial('id').primaryKey(),
+    programId: integer('program_id').notNull(),
+    organizationId: integer('organization_id').notNull(),
+    documentId: integer('document_id'),
+    sectionId: varchar('section_id', { length: 200 }),
+    traceabilityScore: numeric('traceability_score', { precision: 5, scale: 2 }).notNull().default('0'),
+    completenessScore: numeric('completeness_score', { precision: 5, scale: 2 }).notNull().default('0'),
+    consistencyScore: numeric('consistency_score', { precision: 5, scale: 2 }).notNull().default('0'),
+    overallScore: numeric('overall_score', { precision: 5, scale: 2 }).notNull().default('0'),
+    totalClaims: integer('total_claims').notNull().default(0),
+    tracedClaims: integer('traced_claims').notNull().default(0),
+    untracedClaims: integer('untraced_claims').notNull().default(0),
+    contradictedClaims: integer('contradicted_claims').notNull().default(0),
+    scoreDetails: jsonb('score_details').default({}),
+    computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
+    staleAfter: timestamp('stale_after', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    programIdx: index('evidence_scores_program_idx').on(table.programId),
+    orgIdx: index('evidence_scores_org_idx').on(table.organizationId),
+    docIdx: index('evidence_scores_doc_idx').on(table.documentId),
+    sectionIdx: index('evidence_scores_section_idx').on(table.documentId, table.sectionId),
+  })
+);
+
+export const evidenceChangeEvents = pgTable(
+  'evidence_change_events',
+  {
+    id: serial('id').primaryKey(),
+    programId: integer('program_id').notNull(),
+    organizationId: integer('organization_id').notNull(),
+    eventType: varchar('event_type', { length: 50 }).notNull(),
+    sourceId: integer('source_id'),
+    claimId: integer('claim_id'),
+    linkId: integer('link_id'),
+    documentId: integer('document_id'),
+    impactLevel: varchar('impact_level', { length: 20 }).notNull().default('low'),
+    affectedClaims: integer('affected_claims').default(0),
+    affectedSections: integer('affected_sections').default(0),
+    description: text('description'),
+    details: jsonb('details').default({}),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy: integer('resolved_by'),
+    resolutionNotes: text('resolution_notes'),
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    programIdx: index('evidence_events_program_idx').on(table.programId),
+    orgIdx: index('evidence_events_org_idx').on(table.organizationId),
+    typeIdx: index('evidence_events_type_idx').on(table.eventType),
+    sourceIdx: index('evidence_events_source_idx').on(table.sourceId),
+  })
+);
+
+// Relations
+export const evidenceSourcesRelations = relations(evidenceSources, ({ many }) => ({
+  claims: many(evidenceClaims),
+  changeEvents: many(evidenceChangeEvents),
+}));
+
+export const evidenceClaimsRelations = relations(evidenceClaims, ({ one, many }) => ({
+  source: one(evidenceSources, { fields: [evidenceClaims.sourceId], references: [evidenceSources.id] }),
+  links: many(evidenceClaimLinks),
+  changeEvents: many(evidenceChangeEvents),
+}));
+
+export const evidenceClaimLinksRelations = relations(evidenceClaimLinks, ({ one }) => ({
+  claim: one(evidenceClaims, { fields: [evidenceClaimLinks.claimId], references: [evidenceClaims.id] }),
+}));
+
+export const evidenceChangeEventsRelations = relations(evidenceChangeEvents, ({ one }) => ({
+  source: one(evidenceSources, { fields: [evidenceChangeEvents.sourceId], references: [evidenceSources.id] }),
+  claim: one(evidenceClaims, { fields: [evidenceChangeEvents.claimId], references: [evidenceClaims.id] }),
+}));
+
+// Insert schemas and types
+export const insertEvidenceSourceSchema = createInsertSchemaOmit(evidenceSources, { id: true, createdAt: true, updatedAt: true });
+export const insertEvidenceClaimSchema = createInsertSchemaOmit(evidenceClaims, { id: true, createdAt: true });
+export const insertEvidenceClaimLinkSchema = createInsertSchemaOmit(evidenceClaimLinks, { id: true, createdAt: true });
+export const insertEvidenceSnapshotSchema = createInsertSchemaOmit(evidenceTraceabilitySnapshots, { id: true, createdAt: true });
+export const insertEvidenceScoreSchema = createInsertSchemaOmit(evidenceComplianceScores, { id: true, createdAt: true, updatedAt: true });
+export const insertEvidenceChangeEventSchema = createInsertSchemaOmit(evidenceChangeEvents, { id: true, createdAt: true });
+
+export type EvidenceSource = InferSelectModel<typeof evidenceSources>;
+export type InsertEvidenceSource = z.infer<typeof insertEvidenceSourceSchema>;
+export type EvidenceClaim = InferSelectModel<typeof evidenceClaims>;
+export type InsertEvidenceClaim = z.infer<typeof insertEvidenceClaimSchema>;
+export type EvidenceClaimLink = InferSelectModel<typeof evidenceClaimLinks>;
+export type InsertEvidenceClaimLink = z.infer<typeof insertEvidenceClaimLinkSchema>;
+export type EvidenceTraceabilitySnapshot = InferSelectModel<typeof evidenceTraceabilitySnapshots>;
+export type InsertEvidenceTraceabilitySnapshot = z.infer<typeof insertEvidenceSnapshotSchema>;
+export type EvidenceComplianceScore = InferSelectModel<typeof evidenceComplianceScores>;
+export type InsertEvidenceComplianceScore = z.infer<typeof insertEvidenceScoreSchema>;
+export type EvidenceChangeEvent = InferSelectModel<typeof evidenceChangeEvents>;
+export type InsertEvidenceChangeEvent = z.infer<typeof insertEvidenceChangeEventSchema>;
