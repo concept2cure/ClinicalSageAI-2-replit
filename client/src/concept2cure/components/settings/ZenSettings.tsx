@@ -266,6 +266,22 @@ const ProfileSection: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const OrganizationSection: React.FC = () => {
+  // Load org data from localStorage/API (populated during auth)
+  const [orgData] = React.useState(() => {
+    try {
+      const profile = localStorage.getItem('concept2cure_user_profile');
+      const parsed = profile ? JSON.parse(profile) : {};
+      return {
+        name: parsed.organizationName || parsed.companyName || 'Your Organization',
+        plan: parsed.tier || parsed.plan || 'Standard',
+        members: parsed.memberCount || '—',
+        nextBilling: parsed.nextBillingDate || 'See billing dashboard',
+      };
+    } catch {
+      return { name: 'Your Organization', plan: 'Standard', members: '—', nextBilling: 'See billing dashboard' };
+    }
+  });
+
   return (
     <div>
       <SectionHeader
@@ -280,30 +296,31 @@ const OrganizationSection: React.FC = () => {
               <Building2 className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-zinc-900">Acme Biotech</h3>
-              <p className="text-sm text-zinc-500">Enterprise Plan</p>
+              <h3 className="text-base font-semibold text-zinc-900">{orgData.name}</h3>
+              <p className="text-sm text-zinc-500">{orgData.plan} Plan</p>
             </div>
           </div>
         </div>
 
-        <SettingRow label="Team Members" description="12 active members">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+        <SettingRow label="Team Members" description={`${orgData.members} active members`}>
+          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
             Manage
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </a>
         </SettingRow>
 
-        <SettingRow label="Billing" description="Next billing date: Feb 1, 2026">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+        <SettingRow label="Billing" description={`Next billing: ${orgData.nextBilling}`}>
+          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
             View
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </a>
         </SettingRow>
 
-        <SettingRow label="Usage" description="847 / 1,000 RI queries this month">
-          <div className="w-24 h-2 bg-zinc-200 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-600 rounded-full" style={{ width: '84.7%' }} />
-          </div>
+        <SettingRow label="Usage" description="View token usage in billing dashboard">
+          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+            Dashboard
+            <ChevronRight className="w-4 h-4" />
+          </a>
         </SettingRow>
       </div>
     </div>

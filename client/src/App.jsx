@@ -72,11 +72,17 @@ import { ModuleErrorBoundary } from './components/ui/error-boundary.jsx';
 import EnhancedDocumentEditor from './components/EnhancedDocumentEditor';
 import UnifiedTaskDashboard from './components/UnifiedTaskDashboard';
 
-// Loading component for lazy-loaded routes
+// Branded loading component for lazy-loaded routes
 const LoadingPage = () => (
-  <div className="flex flex-col items-center justify-center p-8 h-screen">
-    <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
-    <p className="text-gray-600">Loading...</p>
+  <div className="flex flex-col items-center justify-center p-8 h-screen" style={{ background: '#faf9f5' }}>
+    <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md mb-4">
+      <img src="/src/assets/concept2cure-logo.jpg" alt="Concept2Cure" className="w-full h-full object-cover" />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }} />
+    </div>
+    <p className="text-sm" style={{ color: '#8a8880', fontFamily: "'Poppins', Arial, sans-serif" }}>Loading...</p>
+    <div className="w-32 h-1 mt-3 rounded-full overflow-hidden" style={{ background: '#e8e6dc' }}>
+      <div className="h-full rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)', width: '60%' }} />
+    </div>
   </div>
 );
 

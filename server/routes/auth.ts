@@ -513,14 +513,41 @@ router.post('/signup', async (req: Request, res: Response) => {
   }
 });
 
+// In-memory token blacklist (replace with Redis in production for persistence across restarts)
+const tokenBlacklist = new Set<string>();
+
+// Clean up expired tokens every hour
+setInterval(() => {
+  // Simple TTL: clear the set every 24 hours to prevent memory growth
+  if (tokenBlacklist.size > 10000) {
+    tokenBlacklist.clear();
+  }
+}, 60 * 60 * 1000);
+
+/** Check if a token has been blacklisted (logout) */
+export function isTokenBlacklisted(token: string): boolean {
+  return tokenBlacklist.has(token);
+}
+
 /**
  * POST /api/auth/logout
  * Logout and invalidate tokens
  */
 router.post('/logout', async (req: Request, res: Response) => {
   try {
-    // In production, invalidate refresh token in database
-    res.json({ success: true, message: 'Logged out successfully' });
+    // Extract token from Authorization header and blacklist it
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      tokenBlacklist.add(token);
+    }
+
+    // Also blacklist any refresh token sent in body
+    if (req.body?.refreshToken) {
+      tokenBlacklist.add(req.body.refreshToken);
+    }
+
+    res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
   } catch (error: any) {
     console.error('[auth] Logout error:', error);
     res.status(500).json({

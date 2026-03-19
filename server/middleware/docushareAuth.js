@@ -101,13 +101,13 @@ export const validateTenantAccess = async (req, res, next) => {
   }
 };
 
-// Encryption for sensitive data
+// Encryption for sensitive data (SECURITY: uses createCipheriv, not deprecated createCipher)
 export const encryptDocuShareData = data => {
   const algorithm = 'aes-256-gcm';
-  const key = Buffer.from(process.env.DOCUSHARE_ENCRYPTION_KEY, 'hex');
+  const key = Buffer.from(process.env.DOCUSHARE_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex'), 'hex');
   const iv = crypto.randomBytes(16);
 
-  const cipher = crypto.createCipher(algorithm, key);
+  const cipher = crypto.createCipheriv(algorithm, key, iv);
   cipher.setAAD(Buffer.from('docushare-data'));
 
   let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
