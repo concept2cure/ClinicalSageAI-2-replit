@@ -21,7 +21,7 @@ export default function SimplifiedLandingPage() {
             Collapse 14 Months into 6 Months
           </h1>
           <p className="text-lg sm:text-xl max-w-3xl mx-auto mb-10">
-            TrialSage powers AI-driven IND automation, live CSR analytics, automated CER creation,
+            Concept2Cure powers AI-driven IND automation, live CSR analytics, automated CER creation,
             and predictive risk modeling in one ultra-modern platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -232,7 +232,7 @@ export default function SimplifiedLandingPage() {
               Ready to Redefine Clinical Development?
             </h2>
             <p className="text-lg">
-              Step into the future today with TrialSage. Transform data into decisions, speed up
+              Step into the future today with Concept2Cure. Transform data into decisions, speed up
               approvals, and lead the next generation of biotech innovation.
             </p>
           </div>

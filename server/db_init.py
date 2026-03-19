@@ -1,4 +1,4 @@
-"""Database initialization script for TrialSage
+"""Database initialization script for Concept2Cure
 
 This script:
 1. Creates the pgvector extension if it doesn't exist

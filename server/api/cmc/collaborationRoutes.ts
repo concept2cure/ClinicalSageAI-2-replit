@@ -58,7 +58,7 @@ router.get('/comments/:workflowId', async (req, res) => {
     console.error('Error fetching comments:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -132,7 +132,7 @@ router.post('/comments', async (req, res) => {
     console.error('Error adding comment:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -169,7 +169,7 @@ router.get('/notifications/:userId', async (req, res) => {
     console.error('Error fetching notifications:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -203,7 +203,7 @@ router.put('/notifications/:notificationId/read', async (req, res) => {
     console.error('Error updating notification:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -264,7 +264,7 @@ router.get('/activity/:workflowId', async (req, res) => {
     console.error('Error fetching activity:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -343,7 +343,7 @@ router.get('/team/:workflowId', async (req, res) => {
     console.error('Error fetching team:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -379,7 +379,7 @@ router.post('/presence', async (req, res) => {
     console.error('Error updating presence:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -420,7 +420,7 @@ router.post('/share', async (req, res) => {
     console.error('Error sharing workflow:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });

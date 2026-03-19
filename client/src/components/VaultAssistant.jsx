@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 /**
  * Enterprise Vault™ AI Assistant Component
  *
- * A sophisticated AI concierge for TrialSage Vault™ that provides
+ * A sophisticated AI concierge for Concept2Cure Vault™ that provides
  * intelligent conversations about clinical document management,
  * regulatory compliance, and AI-powered features.
  */
@@ -33,13 +33,13 @@ export default function VaultAssistant() {
     const initialMessage = {
       role: 'assistant',
       content:
-        '👋 Welcome to TrialSage Vault™ — your intelligent Clinical Document System. How can I help you today?',
+        '👋 Welcome to Concept2Cure Vault™ — your intelligent Clinical Document System. How can I help you today?',
     };
     setMessages([initialMessage]);
 
     // Initial suggestions
     setSuggestions([
-      'Tell me about TrialSage Vault™',
+      'Tell me about Concept2Cure Vault™',
       'How does AI tagging work?',
       'What makes Vault better than Veeva?',
       'Tell me about compliance features',

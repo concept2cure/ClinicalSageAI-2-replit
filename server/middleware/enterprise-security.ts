@@ -43,8 +43,8 @@ const config = {
       'https://trialsage.com',
       'https://www.trialsage.com',
       'https://app.trialsage.com',
-      'https://clinicalsage.ai',
-      'https://app.clinicalsage.ai',
+      'https://concept2cure-ri.ai',
+      'https://app.concept2cure-ri.ai',
     ]),
 
   // Rate Limits - relaxed for development
@@ -52,7 +52,7 @@ const config = {
     global: { windowMs: 60_000, max: 10000 }, // 10000/min global (dev)
     api: { windowMs: 60_000, max: 1000 }, // 1000/min per IP (dev)
     ai: { windowMs: 60_000, max: 100 }, // 100/min for AI endpoints (dev)
-    auth: { windowMs: 60_000, max: 100 }, // 100 auth attempts per minute (dev - was 5/15min)
+    auth: { windowMs: 15 * 60_000, max: process.env.NODE_ENV === 'production' ? 10 : 100 }, // 10 per 15 min (prod), 100/min (dev)
     write: { windowMs: 60_000, max: 500 }, // 500 writes/min (dev)
     upload: { windowMs: 60_000, max: 100 }, // 100 uploads/min (dev)
     export: { windowMs: 60_000, max: 50 }, // 50 exports/min (dev)

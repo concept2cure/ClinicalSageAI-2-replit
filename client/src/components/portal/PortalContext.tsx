@@ -200,8 +200,8 @@ export const DEMO_ORGANIZATION: OrganizationConfig = {
     'ask_lumen',
   ],
   customBranding: {
-    primaryColor: '#2563eb',
-    accentColor: '#3b82f6',
+    primaryColor: '#5585b3',
+    accentColor: '#6a9bcc',
     companyName: 'Concept2Cure',
   },
 };

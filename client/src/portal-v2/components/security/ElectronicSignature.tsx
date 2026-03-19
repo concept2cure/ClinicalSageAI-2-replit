@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Electronic Signature Component
+ * Concept2Cure Client Portal V2 - Electronic Signature Component
  *
  * 21 CFR Part 11 compliant electronic signature with two-factor
  * authentication, meaning declaration, and audit trail integration.

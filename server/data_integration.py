@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Data Integration Module for LumenTrialGuide.AI
+Data Integration Module for Concept2Cure
 
 This module provides the ETL (Extract, Transform, Load) pipeline for integrating data 
 from multiple regulatory sources into a unified database format for CER generation.

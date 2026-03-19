@@ -2336,9 +2336,9 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                 </select>
               </div>
 
-              <div className="bg-white border border-[#EDEBE9]">
+              <div className="bg-white border border-[#e8e6dc]">
                 {/* OneDrive-style Command Bar */}
-                <div className="sp-command-bar border-b border-[#EDEBE9]">
+                <div className="sp-command-bar border-b border-[#e8e6dc]">
                   <button 
                     className="sp-command-button"
                     onClick={() => setShowNewComponentDialog(true)}
@@ -2392,7 +2392,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                   
                   {/* Saving indicator */}
                   {isSaving && (
-                    <div className="ml-4 flex items-center gap-2 text-sm text-[#605E5C]">
+                    <div className="ml-4 flex items-center gap-2 text-sm text-[#6b6963]">
                       <RefreshCw className="h-3 w-3 animate-spin" />
                       Saving...
                     </div>
@@ -2427,31 +2427,31 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                   <div>
                     {componentsLoading ? (
                       <div className="text-center py-12">
-                        <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-[#605E5C]" />
-                        <p className="text-[#605E5C] font-['Segoe_UI'] text-sm">Loading components...</p>
+                        <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-[#6b6963]" />
+                        <p className="text-[#6b6963] font-['Segoe_UI'] text-sm">Loading components...</p>
                       </div>
                     ) : filteredComponents.length === 0 ? (
                       <div className="text-center py-12">
-                        <Folder className="h-12 w-12 mx-auto mb-3 text-[#C8C6C4]" />
-                        <p className="text-[#605E5C] font-['Segoe_UI'] text-base">No components found</p>
-                        <p className="text-[#979593] font-['Segoe_UI'] text-sm mt-1">Upload a document to extract components</p>
+                        <Folder className="h-12 w-12 mx-auto mb-3 text-[#b0aea5]" />
+                        <p className="text-[#6b6963] font-['Segoe_UI'] text-base">No components found</p>
+                        <p className="text-[#8a8880] font-['Segoe_UI'] text-sm mt-1">Upload a document to extract components</p>
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="w-full table-auto" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-                          <thead className="bg-[#FAF9F8] sticky top-0 z-10">
+                          <thead className="bg-[#faf9f5] sticky top-0 z-10">
                             <tr>
-                              <th className="w-8 px-4 py-2 border-b border-[#EDEBE9]">
+                              <th className="w-8 px-4 py-2 border-b border-[#e8e6dc]">
                                 <input 
                                   type="checkbox" 
-                                  className="w-4 h-4 border border-[#C8C6C4] rounded-sm"
+                                  className="w-4 h-4 border border-[#b0aea5] rounded-sm"
                                   checked={selectAllChecked}
                                   onChange={(e) => handleSelectAll(e.target.checked)}
                                   data-testid="checkbox-select-all"
                                 />
                               </th>
                               <th 
-                                className="px-4 py-2 text-left text-[12px] font-normal text-[#605E5C] font-['Segoe_UI'] border-b border-[#EDEBE9] cursor-pointer hover:bg-[#F3F2F1]"
+                                className="px-4 py-2 text-left text-[12px] font-normal text-[#6b6963] font-['Segoe_UI'] border-b border-[#e8e6dc] cursor-pointer hover:bg-[#f4f3ee]"
                                 onClick={() => handleSort('name')}
                               >
                                 <div className="flex items-center gap-1">
@@ -2462,7 +2462,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                 </div>
                               </th>
                               <th 
-                                className="px-4 py-2 text-left text-[12px] font-normal text-[#605E5C] font-['Segoe_UI'] border-b border-[#EDEBE9] cursor-pointer hover:bg-[#F3F2F1]"
+                                className="px-4 py-2 text-left text-[12px] font-normal text-[#6b6963] font-['Segoe_UI'] border-b border-[#e8e6dc] cursor-pointer hover:bg-[#f4f3ee]"
                                 onClick={() => handleSort('modified')}
                               >
                                 <div className="flex items-center gap-1">
@@ -2472,9 +2472,9 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                   )}
                                 </div>
                               </th>
-                              <th className="px-4 py-2 text-left text-[12px] font-normal text-[#605E5C] font-['Segoe_UI'] border-b border-[#EDEBE9]">Modified by</th>
+                              <th className="px-4 py-2 text-left text-[12px] font-normal text-[#6b6963] font-['Segoe_UI'] border-b border-[#e8e6dc]">Modified by</th>
                               <th 
-                                className="px-4 py-2 text-left text-[12px] font-normal text-[#605E5C] font-['Segoe_UI'] border-b border-[#EDEBE9] cursor-pointer hover:bg-[#F3F2F1]"
+                                className="px-4 py-2 text-left text-[12px] font-normal text-[#6b6963] font-['Segoe_UI'] border-b border-[#e8e6dc] cursor-pointer hover:bg-[#f4f3ee]"
                                 onClick={() => handleSort('type')}
                               >
                                 <div className="flex items-center gap-1">
@@ -2485,7 +2485,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                 </div>
                               </th>
                               <th 
-                                className="px-4 py-2 text-left text-[12px] font-normal text-[#605E5C] font-['Segoe_UI'] border-b border-[#EDEBE9] cursor-pointer hover:bg-[#F3F2F1]"
+                                className="px-4 py-2 text-left text-[12px] font-normal text-[#6b6963] font-['Segoe_UI'] border-b border-[#e8e6dc] cursor-pointer hover:bg-[#f4f3ee]"
                                 onClick={() => handleSort('size')}
                               >
                                 <div className="flex items-center gap-1">
@@ -2495,14 +2495,14 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                   )}
                                 </div>
                               </th>
-                              <th className="w-12 px-4 py-2 border-b border-[#EDEBE9]"></th>
+                              <th className="w-12 px-4 py-2 border-b border-[#e8e6dc]"></th>
                             </tr>
                           </thead>
                           <tbody className="bg-white">
                             {filteredComponents.map((component, index) => (
                               <tr 
                                 key={component.id}
-                                className={`group cursor-pointer transition-all duration-100 hover:bg-[#F3F2F1] ${
+                                className={`group cursor-pointer transition-all duration-100 hover:bg-[#f4f3ee] ${
                                   selectedItems.has(component.id) ? 'bg-[#E1F5FE] hover:bg-[#E1F5FE]' : ''
                                 } ${dragOverItem?.id === component.id ? 'border-t-2 border-[#0078D4]' : ''}`}
                                 onClick={() => setSelectedComponent(component)}
@@ -2515,10 +2515,10 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                 data-testid={`row-component-${component.id}`}
                               >
                                 {/* Checkbox Column */}
-                                <td className="px-4 py-3 border-b border-[#F3F2F1]">
+                                <td className="px-4 py-3 border-b border-[#f4f3ee]">
                                   <input 
                                     type="checkbox" 
-                                    className="w-4 h-4 border border-[#C8C6C4] rounded-sm"
+                                    className="w-4 h-4 border border-[#b0aea5] rounded-sm"
                                     checked={selectedItems.has(component.id)}
                                     onChange={(e) => handleItemSelect(component.id, e.target.checked)}
                                     onClick={(e) => e.stopPropagation()}
@@ -2527,13 +2527,13 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                 </td>
                                 
                                 {/* Name Column with File Icon */}
-                                <td className="px-4 py-3 border-b border-[#F3F2F1]">
+                                <td className="px-4 py-3 border-b border-[#f4f3ee]">
                                   <div className="flex items-center gap-3">
                                     <div className="flex items-center">
                                       {getDocumentTypeIcon(component)}
                                     </div>
                                     <div>
-                                      <div className="text-[#323130] font-['Segoe_UI'] text-sm font-normal">
+                                      <div className="text-[#141413] font-['Segoe_UI'] text-sm font-normal">
                                         {component.udi}
                                       </div>
                                     </div>
@@ -2541,36 +2541,36 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                 </td>
                                 
                                 {/* Modified Column */}
-                                <td className="px-4 py-3 border-b border-[#F3F2F1] text-[#605E5C] font-['Segoe_UI'] text-sm">
+                                <td className="px-4 py-3 border-b border-[#f4f3ee] text-[#6b6963] font-['Segoe_UI'] text-sm">
                                   {component.lastModified ? new Date(component.lastModified).toLocaleDateString() : 'Today'}
                                 </td>
                                 
                                 {/* Modified By Column */}
-                                <td className="px-4 py-3 border-b border-[#F3F2F1]">
+                                <td className="px-4 py-3 border-b border-[#f4f3ee]">
                                   <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 rounded-full bg-[#0078D4] text-white flex items-center justify-center text-xs font-['Segoe_UI']">
                                       {component.modifiedBy?.charAt(0) || 'U'}
                                     </div>
-                                    <span className="text-[#605E5C] font-['Segoe_UI'] text-sm">
+                                    <span className="text-[#6b6963] font-['Segoe_UI'] text-sm">
                                       {component.modifiedBy || 'You'}
                                     </span>
                                   </div>
                                 </td>
                                 
                                 {/* Type Column */}
-                                <td className="px-4 py-3 border-b border-[#F3F2F1] text-[#605E5C] font-['Segoe_UI'] text-sm">
+                                <td className="px-4 py-3 border-b border-[#f4f3ee] text-[#6b6963] font-['Segoe_UI'] text-sm">
                                   {component.type}
                                 </td>
                                 
                                 {/* Size Column */}
-                                <td className="px-4 py-3 border-b border-[#F3F2F1] text-[#605E5C] font-['Segoe_UI'] text-sm">
+                                <td className="px-4 py-3 border-b border-[#f4f3ee] text-[#6b6963] font-['Segoe_UI'] text-sm">
                                   {Math.floor(Math.random() * 500) + 10} KB
                                 </td>
                                 
                                 {/* Actions Column with Context Menu */}
-                                <td className="px-4 py-3 border-b border-[#F3F2F1] relative">
+                                <td className="px-4 py-3 border-b border-[#f4f3ee] relative">
                                   <button 
-                                    className="p-1 hover:bg-[#F3F2F1] rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="p-1 hover:bg-[#f4f3ee] rounded opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setContextMenuOpen(contextMenuOpen === component.id ? null : component.id);
@@ -2578,14 +2578,14 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                     }}
                                     data-testid={`button-more-${component.id}`}
                                   >
-                                    <MoreVertical className="h-4 w-4 text-[#605E5C]" />
+                                    <MoreVertical className="h-4 w-4 text-[#6b6963]" />
                                   </button>
                                   
                                   {/* Context Menu */}
                                   {contextMenuOpen === component.id && (
-                                    <div className="absolute right-0 top-8 w-48 bg-white border border-[#E1DFDD] shadow-lg rounded z-50">
+                                    <div className="absolute right-0 top-8 w-48 bg-white border border-[#e8e6dc] shadow-lg rounded z-50">
                                       <button 
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#F3F2F1] flex items-center gap-2"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#f4f3ee] flex items-center gap-2"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setPreviewComponent(component);
@@ -2597,7 +2597,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                         Preview
                                       </button>
                                       <button 
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#F3F2F1] flex items-center gap-2"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#f4f3ee] flex items-center gap-2"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setRenameValue(component.udi);
@@ -2609,7 +2609,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                         Rename
                                       </button>
                                       <button 
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#F3F2F1] flex items-center gap-2"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#f4f3ee] flex items-center gap-2"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setShowVersionHistory(true);
@@ -2620,7 +2620,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                         Version history
                                       </button>
                                       <button 
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#F3F2F1] flex items-center gap-2"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#f4f3ee] flex items-center gap-2"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setShowPropertiesDialog(true);
@@ -2630,9 +2630,9 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                         <Info className="h-4 w-4" />
                                         Properties
                                       </button>
-                                      <div className="border-t border-[#E1DFDD]"></div>
+                                      <div className="border-t border-[#e8e6dc]"></div>
                                       <button 
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#F3F2F1] flex items-center gap-2 text-red-600"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[#f4f3ee] flex items-center gap-2 text-red-600"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setSelectedItems(new Set([component.id]));

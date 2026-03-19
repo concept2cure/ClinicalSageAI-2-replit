@@ -1,4 +1,4 @@
-// --- TrialSage Enterprise: Intelligent DocuShare Panel with Recommendation System ---
+// --- Concept2Cure Enterprise: Intelligent DocuShare Panel with Recommendation System ---
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';

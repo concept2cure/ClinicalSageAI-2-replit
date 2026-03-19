@@ -78,7 +78,7 @@ module "rds" {
   instance_class     = var.rds_instance_class
   allocated_storage  = 50
   max_allocated_storage = 500
-  database_name      = "clinicalsage"
+  database_name      = "concept2cure-ri"
   subnet_ids         = module.vpc.private_subnet_ids
   security_group_ids = [module.vpc.rds_sg_id]
   multi_az           = true

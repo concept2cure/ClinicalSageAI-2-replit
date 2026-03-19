@@ -678,7 +678,7 @@ const TutorialGuide = () => {
                 <span>AI Technology Stack</span>
               </CardTitle>
               <CardDescription>
-                Industry-compliant artificial intelligence powering TrialSage
+                Industry-compliant artificial intelligence powering Concept2Cure
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -745,7 +745,7 @@ const TutorialGuide = () => {
           <Card>
             <CardHeader>
               <CardTitle>Quick Start Guide</CardTitle>
-              <CardDescription>Get started with TrialSage in 5 easy steps</CardDescription>
+              <CardDescription>Get started with Concept2Cure in 5 easy steps</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">

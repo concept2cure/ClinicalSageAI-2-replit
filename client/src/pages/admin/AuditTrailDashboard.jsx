@@ -1,4 +1,4 @@
-// --- TrialSage Admin Audit Trail Dashboard (Enterprise Level: Drill Down, Anomaly Detection, Admin Actions) ---
+// --- Concept2Cure Admin Audit Trail Dashboard (Enterprise Level: Drill Down, Anomaly Detection, Admin Actions) ---
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';

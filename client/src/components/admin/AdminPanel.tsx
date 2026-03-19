@@ -120,7 +120,7 @@ export default function AdminPanel() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Admin Panel</CardTitle>
           <CardDescription>
-            Administrative tools for managing TrialSage platform data
+            Administrative tools for managing Concept2Cure platform data
           </CardDescription>
         </CardHeader>
         
@@ -241,7 +241,7 @@ export default function AdminPanel() {
                     Import Additional CSRs
                   </CardTitle>
                   <CardDescription>
-                    Import additional clinical study reports to grow the TrialSage database
+                    Import additional clinical study reports to grow the Concept2Cure database
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

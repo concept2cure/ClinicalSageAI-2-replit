@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Security Context Hook Tests
+ * Concept2Cure Client Portal V2 - Security Context Hook Tests
  *
  * Test coverage for useSecurityContext hook including:
  * - Permission checking

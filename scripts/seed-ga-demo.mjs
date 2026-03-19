@@ -52,7 +52,7 @@ async function upsertReturning(query, params) {
 async function seed() {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════╗');
-  console.log('║  ClinicalSageAI — GA Demo Data Seeder               ║');
+  console.log('║  Concept2Cure.RI — GA Demo Data Seeder               ║');
   console.log('╚══════════════════════════════════════════════════════╝');
   console.log('');
 
@@ -375,7 +375,7 @@ async function seed() {
       for (const entry of auditEntries) {
         await client.query(`
           INSERT INTO auth_audit_log (event_type, email, success, ip_address, user_agent, organization_id, created_at)
-          VALUES ($1, $2, $3, '10.0.0.1', 'ClinicalSageAI/GA-Seed', $4, NOW() - interval '1 day' * (random() * 30)::int)
+          VALUES ($1, $2, $3, '10.0.0.1', 'Concept2Cure.RI/GA-Seed', $4, NOW() - interval '1 day' * (random() * 30)::int)
         `, [entry.event, entry.email, entry.success, org.id]);
       }
       console.log('   ✓ Audit trail seeded');

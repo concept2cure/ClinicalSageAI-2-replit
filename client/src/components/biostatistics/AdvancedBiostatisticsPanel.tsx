@@ -1044,7 +1044,7 @@ const AdvancedBiostatisticsPanel: React.FC = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `TrialSage_Regulatory_${type}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        a.download = `Concept2Cure_Regulatory_${type}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

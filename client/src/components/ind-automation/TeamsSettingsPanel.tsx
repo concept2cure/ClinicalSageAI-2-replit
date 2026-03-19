@@ -272,7 +272,7 @@ export function TeamsSettingsPanel({ projectId }: { projectId: string }) {
                     </TooltipTrigger>
                     <TooltipContent className="max-w-sm">
                       <p>
-                        Microsoft Teams webhooks allow TrialSage to send real-time alerts directly
+                        Microsoft Teams webhooks allow Concept2Cure to send real-time alerts directly
                         to your Teams channels.
                       </p>
                     </TooltipContent>
@@ -301,7 +301,7 @@ export function TeamsSettingsPanel({ projectId }: { projectId: string }) {
                   </li>
                   <li>Click the "..." menu next to the channel name, then select "Connectors"</li>
                   <li>Search for "Incoming Webhook" and click "Configure"</li>
-                  <li>Enter a name like "TrialSage Alerts" and upload an icon if desired</li>
+                  <li>Enter a name like "Concept2Cure Alerts" and upload an icon if desired</li>
                   <li>Click "Create" to generate your webhook URL</li>
                   <li>Copy the webhook URL and paste it here</li>
                 </ol>

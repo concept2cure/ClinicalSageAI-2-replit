@@ -22,10 +22,10 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # ============================================================================
 # CONFIGURATION - SINGLE SOURCE OF TRUTH
 # ============================================================================
-export DEFAULT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/clinicalsage?sslmode=disable"
+export DEFAULT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable"
 export DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}"
-export DOCKER_DB_CONTAINER="clinicalsageai-2-replit-db-1"
-export DB_NAME="clinicalsage"
+export DOCKER_DB_CONTAINER="concept2cure-riai-2-replit-db-1"
+export DB_NAME="concept2cure-ri"
 export DB_USER="postgres"
 export DB_PASSWORD="postgres"
 export DB_HOST="localhost"
@@ -464,7 +464,7 @@ show_summary() {
 main() {
     echo ""
     echo "============================================================================"
-    echo "ClinicalSageAI Database Startup Script"
+    echo "Concept2Cure.RI Database Startup Script"
     echo "============================================================================"
     echo ""
 

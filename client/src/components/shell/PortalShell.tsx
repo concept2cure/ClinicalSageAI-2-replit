@@ -422,7 +422,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, user }) => {
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">CS</span>
                 </div>
-                <span className="font-semibold text-gray-900">ClinicalSage</span>
+                <span className="font-semibold text-gray-900">Concept2Cure.RI</span>
               </a>
             </Link>
             <button
@@ -752,7 +752,7 @@ export const PortalShell: React.FC<PortalShellProps> = ({
           {/* Footer */}
           <footer className="border-t border-gray-200 bg-white px-4 py-3">
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <p>© 2026 ClinicalSage AI. All rights reserved.</p>
+              <p>© 2026 Concept2Cure.RI AI. All rights reserved.</p>
               <p>
                 <a href="/privacy" className="hover:text-gray-700">
                   Privacy

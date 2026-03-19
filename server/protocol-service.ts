@@ -1,5 +1,5 @@
 /**
- * Protocol Service for TrialSage
+ * Protocol Service for Concept2Cure
  *
  * This service analyzes clinical trial data and generates protocol templates,
  * design validations, and competitive benchmarks.

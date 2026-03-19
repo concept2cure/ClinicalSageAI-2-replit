@@ -1,6 +1,6 @@
 /**
  * Autonomous Builder System
- * Continuously monitors, builds, and deploys the TrialSage platform without human intervention
+ * Continuously monitors, builds, and deploys the Concept2Cure platform without human intervention
  */
 
 class AutonomousBuilder {

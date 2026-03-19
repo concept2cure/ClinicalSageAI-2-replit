@@ -66,7 +66,7 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FAFAF9]"
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#faf9f5]"
       >
         <Spinner />
         {message && (
@@ -370,7 +370,7 @@ interface ZenPulseProps {
 export const ZenPulse: React.FC<ZenPulseProps> = ({
   children,
   active = true,
-  color = 'rgba(37, 99, 235, 0.4)',
+  color = 'rgba(217, 119, 87, 0.4)',
   className = '',
 }) => (
   <div className={`relative ${className}`}>

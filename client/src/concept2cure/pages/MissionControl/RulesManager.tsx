@@ -542,7 +542,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <div className="flex-1 h-full overflow-hidden bg-[#FAFAF9] flex flex-col">
+    <div className="flex-1 h-full overflow-hidden bg-[#faf9f5] flex flex-col">
       {/* Header */}
       <div className="px-6 py-4 border-b border-zinc-200 bg-white flex items-center gap-3">
         {onBack && (

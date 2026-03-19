@@ -235,7 +235,7 @@ router.post('/initialize-folders', async (req, res) => {
 router.get('/version', (req, res) => {
   try {
     return res.json({
-      name: 'TrialSage Vault Enhanced Reference Model',
+      name: 'Concept2Cure Vault Enhanced Reference Model',
       version: '1.0.0',
       features: [
         'Document types hierarchy',

@@ -77,29 +77,29 @@ export function sanitizeHtml(raw: string): string {
 
 const PREVIEW_CSS = `
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Poppins', Roboto, 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.6;
-    color: #1a1a2e;
+    color: #292524;
     margin: 0;
     padding: 24px 32px;
     background: #ffffff;
   }
   .preview-header {
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #e8e6dc;
     padding-bottom: 16px;
     margin-bottom: 24px;
   }
   .preview-header h1 {
     margin: 0 0 8px 0;
     font-size: 1.5rem;
-    color: #0f172a;
+    color: #141413;
   }
   .preview-meta {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
     font-size: 0.8rem;
-    color: #64748b;
+    color: #8a8880;
   }
   .preview-meta span {
     display: inline-flex;
@@ -116,7 +116,7 @@ const PREVIEW_CSS = `
     letter-spacing: 0.05em;
   }
   .status-draft { background: #fef3c7; color: #92400e; }
-  .status-in_review { background: #dbeafe; color: #1e40af; }
+  .status-in_review { background: #faf0ec; color: #c15f3c; }
   .status-approved { background: #d1fae5; color: #065f46; }
   .status-effective { background: #d1fae5; color: #065f46; }
   .status-obsolete { background: #fee2e2; color: #991b1b; }
@@ -124,7 +124,7 @@ const PREVIEW_CSS = `
     min-height: 200px;
   }
   .preview-body h1, .preview-body h2, .preview-body h3 {
-    color: #0f172a;
+    color: #141413;
     margin-top: 1.5em;
     margin-bottom: 0.5em;
   }
@@ -135,23 +135,23 @@ const PREVIEW_CSS = `
     margin: 1em 0;
   }
   .preview-body th, .preview-body td {
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e8e6dc;
     padding: 8px 12px;
     text-align: left;
   }
   .preview-body th {
-    background: #f8fafc;
+    background: #faf9f5;
     font-weight: 600;
   }
   .preview-body blockquote {
-    border-left: 4px solid #e2e8f0;
+    border-left: 4px solid #e8e6dc;
     margin: 1em 0;
     padding: 0.5em 1em;
-    color: #475569;
+    color: #6b6963;
   }
   .preview-body pre {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #faf9f5;
+    border: 1px solid #e8e6dc;
     border-radius: 6px;
     padding: 12px;
     overflow-x: auto;
@@ -163,14 +163,14 @@ const PREVIEW_CSS = `
   .preview-footer {
     margin-top: 32px;
     padding-top: 12px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #e8e6dc;
     font-size: 0.7rem;
-    color: #94a3b8;
+    color: #b0aea5;
     text-align: right;
   }
   .empty-state {
     text-align: center;
-    color: #94a3b8;
+    color: #b0aea5;
     padding: 48px 0;
   }
   .section-block {
@@ -178,8 +178,8 @@ const PREVIEW_CSS = `
   }
   .section-block h2 {
     font-size: 1.15rem;
-    color: #334155;
-    border-bottom: 1px solid #f1f5f9;
+    color: #4a4a46;
+    border-bottom: 1px solid #f4f3ee;
     padding-bottom: 4px;
   }
 `;
@@ -493,7 +493,7 @@ export async function generateHtmlPreview(
     ${bodyHtml}
   </div>
   <div class="preview-footer">
-    Generated on ${new Date().toISOString().split('T')[0]} &mdash; TrialSage Document Preview
+    Generated on ${new Date().toISOString().split('T')[0]} &mdash; Concept2Cure Document Preview
   </div>
 </body>
 </html>`;

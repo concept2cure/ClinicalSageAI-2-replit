@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import NanoBananaImageGenerator from './NanoBananaImageGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -333,6 +334,16 @@ const CSRAnalyticsDashboard = ({ metrics }) => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Nano Banana — Generate Visual Summary */}
+      <div className="mt-6">
+        <NanoBananaImageGenerator
+          context="Clinical Study Report analytics: search accuracy 94.8%, processing speed metrics, therapeutic area distribution (Oncology, Cardiology, Neurology), phase distribution with success rates"
+          mode="infographic"
+          compact
+          promptSuffix="CSR analytics dashboard infographic. Clean, professional, data-rich."
+        />
+      </div>
     </div>
   );
 };

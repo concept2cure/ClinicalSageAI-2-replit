@@ -1,6 +1,6 @@
 # AI Capabilities Inventory
 
-Evidence-backed inventory for Concept2Cure / ClinicalSage.
+Evidence-backed inventory for Concept2Cure / Concept2Cure.RI.
 
 - Branch: `concept2cure-v2`
 - Generated: 2026-03-08
@@ -136,10 +136,10 @@ curl -b cookies.txt -X POST http://localhost:5000/api/vault/search/hybrid \
 ### How To Test
 
 ```bash
-DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable" \
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/concept2cure-ri?sslmode=disable" \
 psql "$DATABASE_URL" -c "\dt ai.*"
 
-DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable" \
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/concept2cure-ri?sslmode=disable" \
 psql "$DATABASE_URL" -c "\d+ ai.document_embeddings"
 ```
 
@@ -220,7 +220,7 @@ grep -n "GatewayAuditLogger" server/services/ai-gateway/index.ts server/services
 ### How To Test
 
 ```bash
-DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable" \
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/concept2cure-ri?sslmode=disable" \
 psql "$DATABASE_URL" -c "SELECT relname, relrowsecurity FROM pg_class WHERE relrowsecurity = true ORDER BY relname LIMIT 20;"
 
 grep -n "memoryStorage\|fileSize\|getRequestDbClient" server/api/vault/routes.ts

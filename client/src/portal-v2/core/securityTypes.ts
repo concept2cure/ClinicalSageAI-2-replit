@@ -1,11 +1,11 @@
 /**
- * TrialSage Client Portal V2 - Enterprise Security Types
+ * Concept2Cure Client Portal V2 - Enterprise Security Types
  *
  * Comprehensive security, authentication, and compliance types for
  * a regulatory-grade multi-tenant platform (FDA 21 CFR Part 11 compliant).
  *
  * @version 2.0.0
- * @author TrialSage Engineering
+ * @author Concept2Cure Engineering
  */
 
 import type { UserRole, RegulatoryAgency } from './portalTypes';

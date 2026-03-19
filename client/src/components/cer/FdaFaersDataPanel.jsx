@@ -861,7 +861,7 @@ const FdaFaersDataPanel = ({
         deviceInfo,
         faers: faersData ? [faersData] : [],
         metadata: {
-          author: 'TrialSage CER Module',
+          author: 'Concept2Cure CER Module',
           confidential: true,
           generatedAt: new Date().toISOString(),
           standard: 'EU MDR',

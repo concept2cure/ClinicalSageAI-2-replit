@@ -260,36 +260,36 @@ export class HealthCheckService {
     };
 
     // Uptime
-    addMetric('clinicalsage_uptime_seconds', this.getUptimeSeconds(), 'Process uptime in seconds');
+    addMetric('concept2cure-ri_uptime_seconds', this.getUptimeSeconds(), 'Process uptime in seconds');
 
     // Overall health (1 = healthy, 0.5 = degraded, 0 = unhealthy)
     const healthValue = full.status === 'healthy' ? 1 : full.status === 'degraded' ? 0.5 : 0;
-    addMetric('clinicalsage_health_status', healthValue, 'Overall health status');
+    addMetric('concept2cure-ri_health_status', healthValue, 'Overall health status');
 
     // Degradation level
     const levelValue = { 'FULL': 0, 'DEGRADED': 1, 'MINIMAL': 2, 'MAINTENANCE': 3 }[state.level] || 0;
-    addMetric('clinicalsage_degradation_level', levelValue, 'Current degradation level');
+    addMetric('concept2cure-ri_degradation_level', levelValue, 'Current degradation level');
 
     // Circuit breaker
-    addMetric('clinicalsage_circuit_breaker_state', 
+    addMetric('concept2cure-ri_circuit_breaker_state', 
       metrics.state === 'CLOSED' ? 0 : metrics.state === 'HALF_OPEN' ? 1 : 2,
       'OpenAI circuit breaker state (0=closed, 1=half-open, 2=open)',
       { service: 'openai' }
     );
-    addMetric('clinicalsage_circuit_breaker_failures', metrics.totalFailures, 'Total circuit breaker failures', { service: 'openai' });
-    addMetric('clinicalsage_circuit_breaker_successes', metrics.totalSuccesses, 'Total circuit breaker successes', { service: 'openai' });
-    addMetric('clinicalsage_circuit_breaker_latency_ms', metrics.avgResponseTimeMs, 'Average response time in ms', { service: 'openai' });
+    addMetric('concept2cure-ri_circuit_breaker_failures', metrics.totalFailures, 'Total circuit breaker failures', { service: 'openai' });
+    addMetric('concept2cure-ri_circuit_breaker_successes', metrics.totalSuccesses, 'Total circuit breaker successes', { service: 'openai' });
+    addMetric('concept2cure-ri_circuit_breaker_latency_ms', metrics.avgResponseTimeMs, 'Average response time in ms', { service: 'openai' });
 
     // Memory
     const mem = process.memoryUsage();
-    addMetric('clinicalsage_memory_heap_used_bytes', mem.heapUsed, 'Heap memory used in bytes');
-    addMetric('clinicalsage_memory_heap_total_bytes', mem.heapTotal, 'Heap memory total in bytes');
-    addMetric('clinicalsage_memory_rss_bytes', mem.rss, 'Resident set size in bytes');
+    addMetric('concept2cure-ri_memory_heap_used_bytes', mem.heapUsed, 'Heap memory used in bytes');
+    addMetric('concept2cure-ri_memory_heap_total_bytes', mem.heapTotal, 'Heap memory total in bytes');
+    addMetric('concept2cure-ri_memory_rss_bytes', mem.rss, 'Resident set size in bytes');
 
     // Database pool
-    addMetric('clinicalsage_db_pool_total', this.pool.totalCount, 'Total database connections in pool');
-    addMetric('clinicalsage_db_pool_idle', this.pool.idleCount, 'Idle database connections');
-    addMetric('clinicalsage_db_pool_waiting', this.pool.waitingCount, 'Requests waiting for connection');
+    addMetric('concept2cure-ri_db_pool_total', this.pool.totalCount, 'Total database connections in pool');
+    addMetric('concept2cure-ri_db_pool_idle', this.pool.idleCount, 'Idle database connections');
+    addMetric('concept2cure-ri_db_pool_waiting', this.pool.waitingCount, 'Requests waiting for connection');
 
     return lines.join('\n');
   }

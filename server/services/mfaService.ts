@@ -45,7 +45,7 @@ const AUTH_TAG_LENGTH = 16;
 const BACKUP_CODE_COUNT = 10;
 
 /** Issuer name shown in authenticator apps */
-const TOTP_ISSUER = 'TrialSage';
+const TOTP_ISSUER = 'Concept2Cure';
 
 // ---------------------------------------------------------------------------
 // Base32 Encoding (RFC 4648)
@@ -108,7 +108,7 @@ function getEncryptionKey(): Buffer {
     return crypto.createHash('sha256').update(envKey).digest();
   }
   // Fallback: derive from JWT secret (not ideal, but functional)
-  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'trialsage-mfa-default-key';
+  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || (() => { const c = require('crypto'); return c.randomBytes(32).toString('hex'); })();
   console.warn('[mfa] MFA_ENCRYPTION_KEY not set — deriving from JWT_SECRET. Set MFA_ENCRYPTION_KEY for production.');
   return crypto.createHash('sha256').update(jwtSecret).digest();
 }

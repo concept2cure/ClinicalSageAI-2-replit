@@ -316,7 +316,7 @@ export default function PreSubmissionDashboard({ submissionId, moduleType = 'ful
           style={{
             borderColor:
               validationStatus.overall.status === 'success'
-                ? '#10b981'
+                ? '#788c5d'
                 : validationStatus.overall.status === 'warning'
                   ? '#f59e0b'
                   : '#ef4444',
@@ -506,7 +506,7 @@ export default function PreSubmissionDashboard({ submissionId, moduleType = 'ful
                           style={{
                             color:
                               (rtfAssessment.overallRisk || rtfAssessment.riskLevel) === 'low'
-                                ? '#10b981'
+                                ? '#788c5d'
                                 : (rtfAssessment.overallRisk || rtfAssessment.riskLevel) ===
                                     'medium'
                                   ? '#f59e0b'

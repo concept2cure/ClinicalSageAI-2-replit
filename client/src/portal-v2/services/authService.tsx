@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Authentication Service Layer
+ * Concept2Cure Client Portal V2 - Authentication Service Layer
  *
  * Centralized authentication service with:
  * - Token management (JWT)

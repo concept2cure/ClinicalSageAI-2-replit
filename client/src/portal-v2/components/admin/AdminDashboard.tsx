@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Admin Dashboard
+ * Concept2Cure Client Portal V2 - Admin Dashboard
  *
  * Main administrative dashboard for organization management,
  * user oversight, security monitoring, and compliance tracking.
@@ -463,8 +463,8 @@ interface QuickActionsProps {
 const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
   const actions = [
     { id: 'invite_user', label: 'Invite User', icon: UserPlus, color: '#0d6efd' },
-    { id: 'view_audit', label: 'View Audit Log', icon: Eye, color: '#7c3aed' },
-    { id: 'security_settings', label: 'Security Settings', icon: Shield, color: '#059669' },
+    { id: 'view_audit', label: 'View Audit Log', icon: Eye, color: '#5585b3' },
+    { id: 'security_settings', label: 'Security Settings', icon: Shield, color: '#647746' },
     { id: 'manage_roles', label: 'Manage Roles', icon: Key, color: '#dc2626' },
   ];
 
@@ -523,7 +523,7 @@ export const AdminDashboard: React.FC = () => {
       changeLabel: 'from yesterday',
       trend: 'down',
       icon: Activity,
-      color: '#059669',
+      color: '#647746',
     },
     {
       label: 'Security Alerts',
@@ -539,7 +539,7 @@ export const AdminDashboard: React.FC = () => {
       changeLabel: 'improvement',
       trend: 'up',
       icon: Shield,
-      color: '#7c3aed',
+      color: '#5585b3',
     },
   ];
 

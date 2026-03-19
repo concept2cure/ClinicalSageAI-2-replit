@@ -58,7 +58,7 @@ def create_title_slide(prs: Presentation, title: str, subtitle: str = "") -> Non
     # Add logo placeholder
     logo_box = slide.shapes.add_textbox(Inches(8), Inches(0.5), Inches(1.5), Inches(0.5))
     logo_text = logo_box.text_frame
-    logo_text.text = "LumenTrialGuide.AI"
+    logo_text.text = "Concept2Cure"
     logo_text.paragraphs[0].font.size = Pt(12)
     logo_text.paragraphs[0].font.bold = True
     logo_text.paragraphs[0].font.color.rgb = LUMEN_BLUE

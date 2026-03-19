@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Portal Frame Layout
+ * Concept2Cure Client Portal V2 - Portal Frame Layout
  *
  * Main layout wrapper providing:
  * - Responsive navigation (sidebar + topbar)

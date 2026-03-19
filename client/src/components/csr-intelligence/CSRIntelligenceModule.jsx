@@ -486,7 +486,7 @@ const CSRIntelligenceModule = () => {
                 </div>
                 <h3 className="font-medium mb-1">2. Import Trial Data</h3>
                 <p className="text-sm text-gray-600">
-                  Connect your clinical trial data or import from TrialSage Vault
+                  Connect your clinical trial data or import from Concept2Cure Vault
                 </p>
               </div>
               <div className="p-4 border border-gray-200 rounded-lg">
@@ -765,7 +765,7 @@ const CSRIntelligenceModule = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Data Source</label>
               <select className="w-full border border-gray-300 rounded-md px-3 py-2">
                 <option value="">Select data source</option>
-                <option value="import">Import from TrialSage Vault</option>
+                <option value="import">Import from Concept2Cure Vault</option>
                 <option value="upload">Upload clinical trial data</option>
                 <option value="manual">Enter data manually</option>
               </select>

@@ -1,11 +1,11 @@
 /**
- * TrialSage Client Portal V2 - Enterprise Types
+ * Concept2Cure Client Portal V2 - Enterprise Types
  *
  * Comprehensive type definitions for the regulatory intelligence platform.
  * Designed for biotech/pharma professionals with role-based experiences.
  *
  * @version 2.0.0
- * @author TrialSage Engineering
+ * @author Concept2Cure Engineering
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ export const ROLE_DISPLAY_MAP: Record<UserRole, RoleDisplayInfo> = {
     id: 'project_manager',
     label: 'Project Manager',
     description: 'Program coordination',
-    color: '#6366f1',
+    color: '#d97757',
     icon: 'Layout',
   },
   viewer: {
@@ -323,7 +323,7 @@ export const TASK_PRIORITY_CONFIG: Record<
   critical: { label: 'Critical', color: '#dc2626', bgColor: '#fef2f2' },
   high: { label: 'High', color: '#ea580c', bgColor: '#fff7ed' },
   medium: { label: 'Medium', color: '#ca8a04', bgColor: '#fefce8' },
-  low: { label: 'Low', color: '#16a34a', bgColor: '#f0fdf4' },
+  low: { label: 'Low', color: '#647746', bgColor: '#f0fdf4' },
 };
 
 /** Task status display configuration */
@@ -332,8 +332,8 @@ export const TASK_STATUS_CONFIG: Record<
   { label: string; color: string; bgColor: string }
 > = {
   pending: { label: 'Pending', color: '#6b7280', bgColor: '#f9fafb' },
-  in_progress: { label: 'In Progress', color: '#2563eb', bgColor: '#eff6ff' },
-  completed: { label: 'Completed', color: '#16a34a', bgColor: '#f0fdf4' },
+  in_progress: { label: 'In Progress', color: '#5585b3', bgColor: '#eff6ff' },
+  completed: { label: 'Completed', color: '#647746', bgColor: '#f0fdf4' },
   blocked: { label: 'Blocked', color: '#dc2626', bgColor: '#fef2f2' },
   cancelled: { label: 'Cancelled', color: '#9ca3af', bgColor: '#f3f4f6' },
 };

@@ -1,10 +1,10 @@
 import { apiRequest } from './queryClient';
 
 /**
- * TrialSage Blockchain Security Client
+ * Concept2Cure Blockchain Security Client
  *
  * This module provides client-side functions for interacting with the
- * TrialSage blockchain security services, which exceed FDA 21 CFR Part 11
+ * Concept2Cure blockchain security services, which exceed FDA 21 CFR Part 11
  * requirements for tamper-evidence and data integrity.
  */
 

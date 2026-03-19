@@ -139,7 +139,7 @@ export const submitForMAUDValidation = async (documentId, documentData, organiza
       documentId,
       algorithms: documentData.selectedAlgorithms || [],
       metadata: {
-        source: 'TrialSage CER2V',
+        source: 'Concept2Cure CER2V',
         clientId: localStorage.getItem('clientId') || 'default',
         organizationId: organizationId,
         timestamp: new Date().toISOString(),
@@ -429,7 +429,7 @@ export const exportValidationCertificate = async (
       includeSignature: exportOptions.includeSignature !== false,
       includeTimestamp: exportOptions.includeTimestamp !== false,
       includeQRCode: exportOptions.includeQRCode !== false,
-      issuer: exportOptions.issuer || 'TrialSage CER2V',
+      issuer: exportOptions.issuer || 'Concept2Cure CER2V',
     };
 
     // Make API call to export certificate

@@ -276,7 +276,7 @@ documentApiService.saveCerToVault = async (cerData, metadata = {}) => {
       status: metadata.status || 'draft',
       description: metadata.description || `Clinical Evaluation Report for ${cerData.title}`,
       tags: metadata.tags || ['CER', 'Clinical Evaluation'],
-      author: metadata.author || 'TrialSage AI',
+      author: metadata.author || 'Concept2Cure AI',
       content: {
         title: cerData.title,
         sections: cerData.sections,

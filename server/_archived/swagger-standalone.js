@@ -13,7 +13,7 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'TrialSage Vault API',
+      title: 'Concept2Cure Vault API',
       version: '1.0.0',
       description: 'Interactive documentation for VAULT file management endpoints',
     },

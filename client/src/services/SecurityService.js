@@ -2,7 +2,7 @@
  * Security Service
  *
  * This service handles authentication, authorization, and multi-tenant
- * organization management for the TrialSage platform.
+ * organization management for the Concept2Cure platform.
  */
 
 class SecurityService {

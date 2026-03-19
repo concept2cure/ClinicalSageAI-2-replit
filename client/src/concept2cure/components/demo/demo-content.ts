@@ -50,7 +50,7 @@ export const WELCOME_STEP: DemoStep = {
     "Welcome! I'm **AnA 1.0** — your regulatory intelligence co-pilot.\n\n" +
     'Right now, your team probably juggles 10-15 disconnected tools — PubMed searches in one tab, Word documents in another, spreadsheets for gap analysis, ' +
     'email threads for reviews, and a separate eCTD publisher that costs six figures.\n\n' +
-    '**ClinicalSageAI replaces all of it.** One platform. One AI co-pilot. One source of truth.\n\n' +
+    '**Concept2Cure.RI replaces all of it.** One platform. One AI co-pilot. One source of truth.\n\n' +
     'Let me show you how. **What would you like to explore?**',
   previewType: 'hero',
   choices: [
@@ -70,6 +70,58 @@ export const WELCOME_STEP_2: DemoStep = {
     { label: 'Project Management', description: 'Mission Control, timelines, task boards', nextStepId: 'pm-mission' },
     { label: 'Security & Compliance', description: '21 CFR Part 11, audit trails, RBAC', nextStepId: 'sec-cfr' },
     { label: 'Collaboration & Reporting', description: 'Team, reviews, reports, post-market', nextStepId: 'collab-hub' },
+    { label: 'Nano Banana Visual AI', description: 'AI image generation, infographics, slide decks', nextStepId: 'nb-visual-ai' },
+  ],
+};
+
+// ─── Nano Banana Visual AI Demo Path ────────────────────────────────────────
+
+export const NANO_BANANA_DEMO_PATH: DemoPath = {
+  id: 'nano-banana',
+  title: 'Nano Banana Visual AI',
+  icon: '🍌',
+  description: 'Generate 4K infographics, regulatory diagrams, and slide decks on demand',
+  salesHook: 'Your team spends 40+ hours per month creating presentation visuals. Nano Banana does it in seconds.',
+  steps: [
+    {
+      id: 'nb-visual-ai',
+      narration:
+        "**Nano Banana** is our visual AI engine — powered by Google Gemini's image generation.\n\n" +
+        'Instead of spending hours in PowerPoint or hiring a designer, your team can generate:\n' +
+        '- **Publication-ready infographics** for advisory committees\n' +
+        '- **Study design diagrams** (CONSORT, PK curves, patient flow)\n' +
+        '- **Slide decks** with AI-generated cover images\n' +
+        '- **Regulatory timeline visuals** for board presentations\n\n' +
+        "It's built into every module — reports, documents, dashboards, and the chat. Let me show you how it works.",
+      previewType: 'nano-banana-overview',
+      nextStep: 'nb-generate-demo',
+    },
+    {
+      id: 'nb-generate-demo',
+      narration:
+        'Here\'s the magic: type a description like *"infographic showing IND submission timeline with milestones"* and Nano Banana generates a 4K image in under 12 seconds.\n\n' +
+        '**Key capabilities:**\n' +
+        '- Text renders accurately in images (logos, labels, chart text)\n' +
+        '- Multiple styles: infographic, illustration, photorealistic, slide visual\n' +
+        '- Edit existing images with natural language prompts\n' +
+        '- Auto-generates PPTX decks with cover images\n\n' +
+        '**Cost control built in:** per-user rate limits, response caching, and tier-based access — so your API bill stays predictable.',
+      previewType: 'nano-banana-generate',
+      nextStep: 'nb-integration-demo',
+    },
+    {
+      id: 'nb-integration-demo',
+      narration:
+        "Nano Banana isn't a standalone tool — it's woven into the platform:\n\n" +
+        '- **Reports**: Generate compliance visuals alongside readiness briefs\n' +
+        '- **Document Builder**: Insert AI figures while authoring CSRs and CTDs\n' +
+        '- **Dashboards**: Export analytics as infographics or slide decks\n' +
+        '- **AnA Chat**: Switch to Nano Banana mode and describe what you need\n' +
+        '- **Training**: Auto-generate training materials with regulatory visuals\n\n' +
+        'Every image includes a SynthID watermark for traceability. What would you like to explore next?',
+      previewType: 'nano-banana-integrations',
+      choices: [EXPLORE_ANOTHER, START_TRIAL],
+    },
   ],
 };
 
@@ -457,7 +509,7 @@ const PATH_SECURITY: DemoStep[] = [
       "**Proof Certificates** provide blockchain-style proof of compliance — shareable, verifiable, immutable.\n\n" +
       'Plus full **HIPAA** data encryption, **GDPR** right-to-be-forgotten, and configurable data retention policies.\n\n' +
       '**FDA 483 observations for inadequate electronic records have increased 35% year-over-year.** ' +
-      'With ClinicalSageAI, you\'re not just compliant — you\'re inspection-ready at all times.',
+      'With Concept2Cure.RI, you\'re not just compliant — you\'re inspection-ready at all times.',
     previewType: 'sec-governance',
     choices: [EXPLORE_ANOTHER, START_TRIAL],
   },
@@ -548,7 +600,7 @@ export const PATH_SELECTOR_STEP: DemoStep = {
 export const CTA_SIGNUP_STEP: DemoStep = {
   id: 'cta-signup',
   narration:
-    "You've seen what ClinicalSageAI can do — **one platform replacing 10-15 disconnected tools**.\n\n" +
+    "You've seen what Concept2Cure.RI can do — **one platform replacing 10-15 disconnected tools**.\n\n" +
     'Every day without workflow consolidation costs your team:\n' +
     '- **Hours** lost switching between tools\n' +
     '- **Weeks** lost on manual reviews AI can accelerate\n' +

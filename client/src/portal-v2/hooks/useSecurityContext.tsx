@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Security Context Hook
+ * Concept2Cure Client Portal V2 - Security Context Hook
  *
  * Provides organization-level security context with compliance validation,
  * session management, and authorization utilities.

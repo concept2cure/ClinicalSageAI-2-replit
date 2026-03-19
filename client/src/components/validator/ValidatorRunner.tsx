@@ -688,10 +688,10 @@ const ValidatorRunner: React.FC = () => {
                 styles={{
                   control: base => ({
                     ...base,
-                    borderColor: '#e5e7eb',
+                    borderColor: '#e8e6dc',
                     boxShadow: 'none',
                     '&:hover': {
-                      borderColor: '#d1d5db',
+                      borderColor: '#d6d3c8',
                     },
                   }),
                   option: (base, state) => ({
@@ -701,7 +701,7 @@ const ValidatorRunner: React.FC = () => {
                       : state.isFocused
                         ? '#f0f9ff'
                         : 'white',
-                    color: '#1e40af',
+                    color: '#c15f3c',
                     '&:active': {
                       backgroundColor: '#e0f2fe',
                     },

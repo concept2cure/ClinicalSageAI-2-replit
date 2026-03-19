@@ -34,7 +34,7 @@ function makeRequest(endpoint, params = {}) {
       path: urlObj.pathname + urlObj.search,
       method: 'GET',
       headers: {
-        'User-Agent': 'LumenTrialGuide.AI CER Generator/1.0',
+        'User-Agent': 'Concept2Cure CER Generator/1.0',
       },
     };
 

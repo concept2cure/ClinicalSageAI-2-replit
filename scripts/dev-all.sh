@@ -2,7 +2,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # dev-all.sh — "Run Everything" local development launcher
 #
-# Starts all ClinicalSageAI services in the correct order:
+# Starts all Concept2Cure.RI services in the correct order:
 #   1. PostgreSQL (via Docker or Neon connection)
 #   2. Shadow Service (FastAPI on port 8001)
 #   3. BFF + Vite (Express on port 5000)
@@ -172,7 +172,7 @@ fi
 
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  ClinicalSageAI — All Services Running${NC}"
+echo -e "${GREEN}  Concept2Cure.RI — All Services Running${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "  ${BLUE}Shadow Service:${NC}  http://localhost:8001"

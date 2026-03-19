@@ -44,7 +44,7 @@ export default function Module32Tour() {
       scrollToFirstStep
       showProgress
       callback={handleCallback}
-      styles={{ options: { zIndex: 9999, primaryColor: '#2563EB' } }}
+      styles={{ options: { zIndex: 9999, primaryColor: '#d97757' } }}
     />
   );
 }

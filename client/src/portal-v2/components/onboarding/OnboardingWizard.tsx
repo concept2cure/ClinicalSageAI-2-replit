@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Client Onboarding Wizard
+ * Concept2Cure Client Portal V2 - Client Onboarding Wizard
  *
  * Multi-step wizard for new client organization setup with
  * archetype detection, compliance configuration, and user provisioning.

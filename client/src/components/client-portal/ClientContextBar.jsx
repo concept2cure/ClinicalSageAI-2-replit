@@ -2,7 +2,7 @@
  * Client Context Bar Component
  *
  * This component provides the organization context for the current user session
- * in the multi-tenant TrialSage platform.
+ * in the multi-tenant Concept2Cure platform.
  */
 
 import React, { useState } from 'react';

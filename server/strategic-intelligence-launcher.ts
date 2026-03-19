@@ -5,9 +5,9 @@
  * clinical trial ecosystem. Each use case includes:
  *
  * 1. Strategic Challenge - Real-world problem statement tied to specific roles
- * 2. TrialSage Intelligence Solution - Set of features and modules activated
+ * 2. Concept2Cure Intelligence Solution - Set of features and modules activated
  * 3. Downloadable Output Bundle - Pregenerated insights and reports
- * 4. Interactive Workflow - Prepopulated TrialSage workflow
+ * 4. Interactive Workflow - Prepopulated Concept2Cure workflow
  * 5. ROI Scoreboard - Value metrics for the solution
  */
 

@@ -55,9 +55,9 @@ export default function WizardStepper({
   return (
     <div className="w-full">
       {/* Stepper Navigation */}
-      <div className="mb-4 border border-[#E1DFDD] rounded-md bg-white p-4">
+      <div className="mb-4 border border-[#e8e6dc] rounded-md bg-white p-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-[#323130]">CER Builder Wizard</h3>
+          <h3 className="text-sm font-medium text-[#141413]">CER Builder Wizard</h3>
           <div className="text-xs text-[#616161]">
             Step {currentStepIndex + 1} of {steps.length}
           </div>
@@ -71,9 +71,9 @@ export default function WizardStepper({
               <div
                 className={`flex items-center cursor-pointer transition-colors ${
                   index === currentStepIndex
-                    ? 'text-[#0F6CBD] font-medium'
+                    ? 'text-[#d97757] font-medium'
                     : step.isCompleted
-                      ? 'text-[#107C10]'
+                      ? 'text-[#788c5d]'
                       : 'text-[#616161]'
                 }`}
                 onClick={() => handleStepClick(index)}
@@ -101,10 +101,10 @@ export default function WizardStepper({
                     <div
                       className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
                         step.isCompleted
-                          ? 'bg-[#DFF6DD] text-[#107C10]'
+                          ? 'bg-[#e4ebd8] text-[#788c5d]'
                           : index === currentStepIndex
-                            ? 'bg-[#E5F2FF] text-[#0F6CBD]'
-                            : 'bg-[#F3F2F1] text-[#616161]'
+                            ? 'bg-[#faf0ec] text-[#d97757]'
+                            : 'bg-[#f4f3ee] text-[#616161]'
                       }`}
                     >
                       {step.isCompleted ? (
@@ -121,14 +121,14 @@ export default function WizardStepper({
               </div>
 
               {/* Divider, except after the last step */}
-              {index < steps.length - 1 && <ChevronRight className="mx-2 text-[#C8C6C4] w-4 h-4" />}
+              {index < steps.length - 1 && <ChevronRight className="mx-2 text-[#b0aea5] w-4 h-4" />}
             </React.Fragment>
           ))}
         </div>
       </div>
 
       {/* Step Content */}
-      <div className="rounded-md border border-[#E1DFDD] bg-white">{children}</div>
+      <div className="rounded-md border border-[#e8e6dc] bg-white">{children}</div>
 
       {/* Navigation Buttons */}
       <div className="flex justify-between mt-4">
@@ -136,7 +136,7 @@ export default function WizardStepper({
           variant="outline"
           onClick={() => handleStepClick(Math.max(0, currentStepIndex - 1))}
           disabled={currentStepIndex === 0}
-          className="text-[#323130] border-[#8A8886] hover:bg-[#F3F2F1]"
+          className="text-[#141413] border-[#8A8886] hover:bg-[#f4f3ee]"
         >
           Previous
         </Button>
@@ -144,7 +144,7 @@ export default function WizardStepper({
         <Button
           onClick={() => handleStepClick(Math.min(steps.length - 1, currentStepIndex + 1))}
           disabled={currentStepIndex === steps.length - 1}
-          className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+          className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
         >
           {currentStepIndex === steps.length - 2 ? 'Complete' : 'Next'}
         </Button>

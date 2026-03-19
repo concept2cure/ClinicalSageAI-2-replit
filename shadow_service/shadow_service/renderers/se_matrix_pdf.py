@@ -104,7 +104,7 @@ class SEMatrixPDF(FPDF):
         self.set_y(-15)
         self.set_font("Helvetica", "I", 7)
         self.set_text_color(*_GRAY)
-        self.cell(0, 5, "ClinicalSageAI - Confidential", align="L")
+        self.cell(0, 5, "Concept2Cure.RI - Confidential", align="L")
         self.cell(0, 5, f"Page {self.page_no()}/{{nb}}", align="R")
 
 
@@ -132,7 +132,7 @@ def _build_cover(pdf: SEMatrixPDF, pp_row: dict[str, Any]):
         f"Manifest Hash: {_safe_str(pp_row.get('manifest_hash'))}",
         f"Risk Vocab Hash: {_safe_str(pp_row.get('risk_vocab_hash'))}",
         f"Schema Hash: {_safe_str(pp_row.get('schema_hash'))}",
-        f"Generator: ClinicalSageAI v{_safe_str(pp_row.get('generator_version', 'unknown'))}",
+        f"Generator: Concept2Cure.RI v{_safe_str(pp_row.get('generator_version', 'unknown'))}",
         f"Program ID: {_safe_str(pp_row.get('program_id'))}",
     ]
     for line in meta:

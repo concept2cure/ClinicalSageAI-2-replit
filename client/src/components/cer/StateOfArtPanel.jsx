@@ -214,10 +214,10 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sota-panel">
       {/* Input panel - Using MS365-inspired design */}
       <div className="lg:col-span-2">
-        <Card className="shadow-sm border-[#E1DFDD]">
+        <Card className="shadow-sm border-[#e8e6dc]">
           <CardHeader className="bg-[#F5F5F5] pb-3 pt-3">
-            <CardTitle className="text-[#323130] text-lg flex items-center">
-              <BookMarked className="h-5 w-5 mr-2 text-[#0F6CBD]" />
+            <CardTitle className="text-[#141413] text-lg flex items-center">
+              <BookMarked className="h-5 w-5 mr-2 text-[#d97757]" />
               State of the Art Analysis
             </CardTitle>
             <CardDescription className="text-[#616161]">
@@ -230,14 +230,14 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <TabsList className="bg-[#F5F5F5] mb-4 w-full grid grid-cols-2 cer-tabs-list">
                 <TabsTrigger
                   value="standard"
-                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD]"
+                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757]"
                 >
                   <BookMarked className="h-3.5 w-3.5 mr-1.5" />
                   <span>Standard</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="comparative"
-                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD]"
+                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757]"
                 >
                   <GitCompare className="h-3.5 w-3.5 mr-1.5" />
                   <span>Comparative</span>
@@ -247,18 +247,18 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <TabsContent value="standard" className="space-y-4 mt-0 cer-tabs-content">
                 {/* Standard SOTA fields */}
                 <div className="space-y-2">
-                  <Label htmlFor="device-name" className="text-[#323130]">
-                    Device Name <span className="text-[#D83B01]">*</span>
+                  <Label htmlFor="device-name" className="text-[#141413]">
+                    Device Name <span className="text-[#c15f3c]">*</span>
                   </Label>
                   <Input
                     id="device-name"
                     value={deviceName}
                     onChange={e => setDeviceName(e.target.value)}
                     placeholder="e.g., Arthrosurface Shoulder Arthroplasty System"
-                    className="border-[#E1DFDD]"
+                    className="border-[#e8e6dc]"
                   />
                   {validationErrors.deviceName && (
-                    <p className="text-xs text-[#D83B01] mt-1 flex items-center">
+                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceName}
                     </p>
@@ -266,11 +266,11 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="device-type" className="text-[#323130]">
-                    Device Type <span className="text-[#D83B01]">*</span>
+                  <Label htmlFor="device-type" className="text-[#141413]">
+                    Device Type <span className="text-[#c15f3c]">*</span>
                   </Label>
                   <Select value={deviceType} onValueChange={setDeviceType}>
-                    <SelectTrigger id="device-type" className="border-[#E1DFDD]">
+                    <SelectTrigger id="device-type" className="border-[#e8e6dc]">
                       <SelectValue placeholder="Select device type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -282,7 +282,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     </SelectContent>
                   </Select>
                   {validationErrors.deviceType && (
-                    <p className="text-xs text-[#D83B01] mt-1 flex items-center">
+                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceType}
                     </p>
@@ -290,7 +290,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="indication" className="text-[#323130]">
+                  <Label htmlFor="indication" className="text-[#141413]">
                     Intended Use/Indication
                   </Label>
                   <Textarea
@@ -298,16 +298,16 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     value={indication}
                     onChange={e => setIndication(e.target.value)}
                     placeholder="e.g., Treatment of shoulder joint pathologies like osteoarthritis or rotator cuff deficiency"
-                    className="border-[#E1DFDD] min-h-[80px]"
+                    className="border-[#e8e6dc] min-h-[80px]"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="regulatory-framework" className="text-[#323130]">
+                  <Label htmlFor="regulatory-framework" className="text-[#141413]">
                     Regulatory Framework
                   </Label>
                   <Select value={regulatoryFramework} onValueChange={setRegulatoryFramework}>
-                    <SelectTrigger id="regulatory-framework" className="border-[#E1DFDD]">
+                    <SelectTrigger id="regulatory-framework" className="border-[#e8e6dc]">
                       <SelectValue placeholder="Select regulatory framework" />
                     </SelectTrigger>
                     <SelectContent>
@@ -323,7 +323,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 <Button
                   onClick={handleGenerateSOTA}
                   disabled={isGenerating}
-                  className="w-full bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                  className="w-full bg-[#d97757] hover:bg-[#c15f3c] text-white"
                 >
                   {isGenerating ? (
                     <>
@@ -342,18 +342,18 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <TabsContent value="comparative" className="space-y-4 mt-0 cer-tabs-content">
                 {/* Comparative SOTA fields */}
                 <div className="space-y-2">
-                  <Label htmlFor="comp-device-name" className="text-[#323130]">
-                    Device Name <span className="text-[#D83B01]">*</span>
+                  <Label htmlFor="comp-device-name" className="text-[#141413]">
+                    Device Name <span className="text-[#c15f3c]">*</span>
                   </Label>
                   <Input
                     id="comp-device-name"
                     value={deviceName}
                     onChange={e => setDeviceName(e.target.value)}
                     placeholder="e.g., Arthrosurface Shoulder Arthroplasty System"
-                    className="border-[#E1DFDD]"
+                    className="border-[#e8e6dc]"
                   />
                   {validationErrors.deviceName && (
-                    <p className="text-xs text-[#D83B01] mt-1 flex items-center">
+                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceName}
                     </p>
@@ -361,11 +361,11 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="comp-device-type" className="text-[#323130]">
-                    Device Type <span className="text-[#D83B01]">*</span>
+                  <Label htmlFor="comp-device-type" className="text-[#141413]">
+                    Device Type <span className="text-[#c15f3c]">*</span>
                   </Label>
                   <Select value={deviceType} onValueChange={setDeviceType}>
-                    <SelectTrigger id="comp-device-type" className="border-[#E1DFDD]">
+                    <SelectTrigger id="comp-device-type" className="border-[#e8e6dc]">
                       <SelectValue placeholder="Select device type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -377,7 +377,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     </SelectContent>
                   </Select>
                   {validationErrors.deviceType && (
-                    <p className="text-xs text-[#D83B01] mt-1 flex items-center">
+                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceType}
                     </p>
@@ -385,7 +385,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="comp-indication" className="text-[#323130]">
+                  <Label htmlFor="comp-indication" className="text-[#141413]">
                     Intended Use/Indication
                   </Label>
                   <Textarea
@@ -393,19 +393,19 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     value={indication}
                     onChange={e => setIndication(e.target.value)}
                     placeholder="e.g., Treatment of shoulder joint pathologies like osteoarthritis or rotator cuff deficiency"
-                    className="border-[#E1DFDD] min-h-[80px]"
+                    className="border-[#e8e6dc] min-h-[80px]"
                   />
                 </div>
 
                 {/* Competitor Devices */}
                 <div className="space-y-2">
-                  <Label className="text-[#323130]">Competitor Devices</Label>
+                  <Label className="text-[#141413]">Competitor Devices</Label>
                   <div className="flex gap-2">
                     <Input
                       value={newCompetitorDevice}
                       onChange={e => setNewCompetitorDevice(e.target.value)}
                       placeholder="e.g., Zimmer Biomet Comprehensive Shoulder"
-                      className="border-[#E1DFDD] flex-1"
+                      className="border-[#e8e6dc] flex-1"
                     />
                     <Button
                       type="button"
@@ -418,7 +418,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         )
                       }
                       variant="outline"
-                      className="border-[#0F6CBD] text-[#0F6CBD]"
+                      className="border-[#d97757] text-[#d97757]"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -430,14 +430,14 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         <Badge
                           key={index}
                           variant="outline"
-                          className="bg-[#F5F5F5] border-[#E1DFDD] text-[#323130] flex items-center gap-1 px-2 py-1"
+                          className="bg-[#F5F5F5] border-[#e8e6dc] text-[#141413] flex items-center gap-1 px-2 py-1"
                         >
                           {device}
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#D83B01]"
+                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#c15f3c]"
                             onClick={() =>
                               removeItemFromArray(setCompetitorDevices, competitorDevices, index)
                             }
@@ -452,13 +452,13 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
 
                 {/* Manufacturers */}
                 <div className="space-y-2">
-                  <Label className="text-[#323130]">Manufacturers in the Space</Label>
+                  <Label className="text-[#141413]">Manufacturers in the Space</Label>
                   <div className="flex gap-2">
                     <Input
                       value={newManufacturer}
                       onChange={e => setNewManufacturer(e.target.value)}
                       placeholder="e.g., Stryker"
-                      className="border-[#E1DFDD] flex-1"
+                      className="border-[#e8e6dc] flex-1"
                     />
                     <Button
                       type="button"
@@ -471,7 +471,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         )
                       }
                       variant="outline"
-                      className="border-[#0F6CBD] text-[#0F6CBD]"
+                      className="border-[#d97757] text-[#d97757]"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -483,14 +483,14 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         <Badge
                           key={index}
                           variant="outline"
-                          className="bg-[#F5F5F5] border-[#E1DFDD] text-[#323130] flex items-center gap-1 px-2 py-1"
+                          className="bg-[#F5F5F5] border-[#e8e6dc] text-[#141413] flex items-center gap-1 px-2 py-1"
                         >
                           {manufacturer}
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#D83B01]"
+                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#c15f3c]"
                             onClick={() =>
                               removeItemFromArray(setManufacturers, manufacturers, index)
                             }
@@ -505,7 +505,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
 
                 {/* Common Outcome Metrics */}
                 <div className="space-y-2">
-                  <Label className="text-[#323130]">Common Outcome Metrics</Label>
+                  <Label className="text-[#141413]">Common Outcome Metrics</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -517,7 +517,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       />
                       <label
                         htmlFor="safety-profile"
-                        className="text-sm font-medium leading-none text-[#323130] cursor-pointer"
+                        className="text-sm font-medium leading-none text-[#141413] cursor-pointer"
                       >
                         Safety Profile
                       </label>
@@ -532,7 +532,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       />
                       <label
                         htmlFor="efficacy"
-                        className="text-sm font-medium leading-none text-[#323130] cursor-pointer"
+                        className="text-sm font-medium leading-none text-[#141413] cursor-pointer"
                       >
                         Efficacy
                       </label>
@@ -547,7 +547,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       />
                       <label
                         htmlFor="patient-satisfaction"
-                        className="text-sm font-medium leading-none text-[#323130] cursor-pointer"
+                        className="text-sm font-medium leading-none text-[#141413] cursor-pointer"
                       >
                         Patient Satisfaction
                       </label>
@@ -562,7 +562,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       />
                       <label
                         htmlFor="survival-rate"
-                        className="text-sm font-medium leading-none text-[#323130] cursor-pointer"
+                        className="text-sm font-medium leading-none text-[#141413] cursor-pointer"
                       >
                         Survival Rate
                       </label>
@@ -577,7 +577,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       />
                       <label
                         htmlFor="complication-rate"
-                        className="text-sm font-medium leading-none text-[#323130] cursor-pointer"
+                        className="text-sm font-medium leading-none text-[#141413] cursor-pointer"
                       >
                         Complication Rate
                       </label>
@@ -592,7 +592,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       />
                       <label
                         htmlFor="functional-outcomes"
-                        className="text-sm font-medium leading-none text-[#323130] cursor-pointer"
+                        className="text-sm font-medium leading-none text-[#141413] cursor-pointer"
                       >
                         Functional Outcomes
                       </label>
@@ -607,7 +607,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       />
                       <label
                         htmlFor="rehabilitation-time"
-                        className="text-sm font-medium leading-none text-[#323130] cursor-pointer"
+                        className="text-sm font-medium leading-none text-[#141413] cursor-pointer"
                       >
                         Rehabilitation Time
                       </label>
@@ -617,13 +617,13 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
 
                 {/* Custom Outcome Metrics */}
                 <div className="space-y-2">
-                  <Label className="text-[#323130]">Custom Outcome Metrics</Label>
+                  <Label className="text-[#141413]">Custom Outcome Metrics</Label>
                   <div className="flex gap-2">
                     <Input
                       value={newOutcomeMetric}
                       onChange={e => setNewOutcomeMetric(e.target.value)}
                       placeholder="e.g., Range of Motion"
-                      className="border-[#E1DFDD] flex-1"
+                      className="border-[#e8e6dc] flex-1"
                     />
                     <Button
                       type="button"
@@ -636,7 +636,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         )
                       }
                       variant="outline"
-                      className="border-[#0F6CBD] text-[#0F6CBD]"
+                      className="border-[#d97757] text-[#d97757]"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -648,14 +648,14 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         <Badge
                           key={index}
                           variant="outline"
-                          className="bg-[#F5F5F5] border-[#E1DFDD] text-[#323130] flex items-center gap-1 px-2 py-1"
+                          className="bg-[#F5F5F5] border-[#e8e6dc] text-[#141413] flex items-center gap-1 px-2 py-1"
                         >
                           {metric}
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#D83B01]"
+                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#c15f3c]"
                             onClick={() =>
                               removeItemFromArray(setOutcomeMetrics, outcomeMetrics, index)
                             }
@@ -671,7 +671,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 <Button
                   onClick={handleGenerateComparativeSOTA}
                   disabled={isGenerating}
-                  className="w-full bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                  className="w-full bg-[#d97757] hover:bg-[#c15f3c] text-white"
                 >
                   {isGenerating ? (
                     <>
@@ -691,15 +691,15 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
         </Card>
 
         {/* Information panel about SOTA */}
-        <Card className="shadow-sm border-[#E1DFDD] mt-4">
+        <Card className="shadow-sm border-[#e8e6dc] mt-4">
           <CardHeader className="bg-[#F5F5F5] pb-3 pt-3">
-            <CardTitle className="text-[#323130] text-lg">Analysis Guidance</CardTitle>
+            <CardTitle className="text-[#141413] text-lg">Analysis Guidance</CardTitle>
           </CardHeader>
 
           <CardContent className="pt-4">
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="regulatory" className="border-[#E1DFDD]">
-                <AccordionTrigger className="text-[#323130] hover:text-[#0F6CBD] hover:no-underline">
+              <AccordionItem value="regulatory" className="border-[#e8e6dc]">
+                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
                   <span className="text-sm font-medium">Regulatory Requirements</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -715,8 +715,8 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="content" className="border-[#E1DFDD]">
-                <AccordionTrigger className="text-[#323130] hover:text-[#0F6CBD] hover:no-underline">
+              <AccordionItem value="content" className="border-[#e8e6dc]">
+                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
                   <span className="text-sm font-medium">Content Requirements</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -731,8 +731,8 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="comparative" className="border-[#E1DFDD]">
-                <AccordionTrigger className="text-[#323130] hover:text-[#0F6CBD] hover:no-underline">
+              <AccordionItem value="comparative" className="border-[#e8e6dc]">
+                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
                   <span className="text-sm font-medium">Comparative Analysis</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -756,8 +756,8 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="data" className="border-[#E1DFDD]">
-                <AccordionTrigger className="text-[#323130] hover:text-[#0F6CBD] hover:no-underline">
+              <AccordionItem value="data" className="border-[#e8e6dc]">
+                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
                   <span className="text-sm font-medium">Data Sources</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -780,11 +780,11 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
 
       {/* Results panel */}
       <div className="lg:col-span-3">
-        <Card className="shadow-sm border-[#E1DFDD] h-full">
+        <Card className="shadow-sm border-[#e8e6dc] h-full">
           <CardHeader className="bg-[#F5F5F5] pb-3 pt-3 flex-row justify-between items-center">
             <div>
-              <CardTitle className="text-[#323130] text-lg flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-[#0F6CBD]" />
+              <CardTitle className="text-[#141413] text-lg flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-[#d97757]" />
                 {activeTab === 'comparative'
                   ? 'Comparative SOTA Analysis'
                   : 'Standard SOTA Analysis'}
@@ -798,7 +798,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
-                  className="h-8 px-2 text-[#0F6CBD] border-[#0F6CBD] bg-white"
+                  className="h-8 px-2 text-[#d97757] border-[#d97757] bg-white"
                   onClick={() => {
                     const blob = new Blob([sotaContent], { type: 'text/plain' });
                     const fileType =
@@ -819,7 +819,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
           <CardContent className="pt-4 h-[calc(100%-64px)] overflow-auto">
             {isGenerating ? (
               <div className="flex flex-col items-center justify-center h-full space-y-4 text-[#616161]">
-                <RefreshCw className="h-8 w-8 animate-spin text-[#0F6CBD]" />
+                <RefreshCw className="h-8 w-8 animate-spin text-[#d97757]" />
                 <p>
                   Generating {activeTab === 'comparative' ? 'Comparative' : 'State of the Art'}{' '}
                   analysis...
@@ -840,7 +840,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       .replace(/\n#### /g, '</h3><h4>')
                       .replace(
                         /<h(\d)>([^<]+)/g,
-                        '<h$1 class="text-[#323130] font-semibold mb-3 mt-5">$2'
+                        '<h$1 class="text-[#141413] font-semibold mb-3 mt-5">$2'
                       )
                       .replace(/\n/g, '<br/>')
                       .replace(/- ([^\n]+)/g, '<li>$1</li>'),
@@ -851,15 +851,15 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <div className="flex flex-col items-center justify-center h-full space-y-2 text-[#616161]">
                 {activeTab === 'comparative' ? (
                   <>
-                    <GitCompare className="h-16 w-16 text-[#E1DFDD]" />
+                    <GitCompare className="h-16 w-16 text-[#e8e6dc]" />
                     <p className="text-lg">No comparative analysis generated yet</p>
                     <p className="text-sm text-center max-w-md">
                       Enter your device information and competitor details to generate a comparative
                       analysis against standard of care and competitor devices.
                     </p>
-                    <div className="bg-[#F0F8FF] text-[#0F6CBD] border border-[#0F6CBD] p-3 rounded-md mt-4 text-sm">
+                    <div className="bg-[#F0F8FF] text-[#d97757] border border-[#d97757] p-3 rounded-md mt-4 text-sm">
                       <p className="flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2 text-[#0F6CBD]" />
+                        <CheckCircle className="h-4 w-4 mr-2 text-[#d97757]" />
                         <span>
                           Comparative analysis is essential for EU/UK regulatory benefit-risk
                           discussions (BSI Group guidelines).
@@ -869,15 +869,15 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                   </>
                 ) : (
                   <>
-                    <BookMarked className="h-16 w-16 text-[#E1DFDD]" />
+                    <BookMarked className="h-16 w-16 text-[#e8e6dc]" />
                     <p className="text-lg">No SOTA analysis generated yet</p>
                     <p className="text-sm text-center max-w-md">
                       Enter your device information and generate a State of the Art analysis to
                       include in your Clinical Evaluation Report.
                     </p>
-                    <div className="bg-[#F0F8FF] text-[#0F6CBD] border border-[#0F6CBD] p-3 rounded-md mt-4 text-sm">
+                    <div className="bg-[#F0F8FF] text-[#d97757] border border-[#d97757] p-3 rounded-md mt-4 text-sm">
                       <p className="flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2 text-[#0F6CBD]" />
+                        <CheckCircle className="h-4 w-4 mr-2 text-[#d97757]" />
                         <span>
                           The SOTA section is required for regulatory compliance with MEDDEV 2.7/1
                           Rev 4 (Section 8).

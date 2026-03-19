@@ -1,5 +1,5 @@
 """
-Semantic Similarity Module for LumenTrialGuide.AI
+Semantic Similarity Module for Concept2Cure
 
 This module compares raw protocol text to reference CSRs and provides
 overall similarity metrics, with highlighted overlap areas and risk flagging.

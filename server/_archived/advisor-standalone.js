@@ -195,7 +195,7 @@ app.get('/api/health', (req, res) => {
 // Root endpoint with API documentation
 app.get('/', (req, res) => {
   res.json({
-    name: 'TrialSage Advisor API',
+    name: 'Concept2Cure Advisor API',
     version: '1.0.0',
     endpoints: [
       {

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc', '#92a87a'];
 
 interface DeepLearningPanelProps {
   csrs?: any[];
@@ -336,7 +336,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="size" fill="#8884d8" />
+                      <Bar dataKey="size" fill="#6a9bcc" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -366,7 +366,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                         cy="50%"
                         labelLine={false}
                         outerRadius={80}
-                        fill="#8884d8"
+                        fill="#6a9bcc"
                         dataKey="value"
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       >
@@ -407,7 +407,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                         y: coord[1],
                         cluster: kmeans.labels[i],
                       }))}
-                      fill="#8884d8"
+                      fill="#6a9bcc"
                       className="fill-blue-500"
                     />
                   </ScatterChart>
@@ -527,7 +527,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                   />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#8884d8" />
+                  <Bar dataKey="count" fill="#6a9bcc" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -546,7 +546,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill="#6a9bcc"
                     dataKey="value"
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
@@ -587,7 +587,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                     />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#00C49F" />
+                    <Bar dataKey="count" fill="#788c5d" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -611,7 +611,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                     />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#FF8042" />
+                    <Bar dataKey="count" fill="#d97757" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -635,7 +635,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="count" stroke="#8884d8" />
+                  <Line type="monotone" dataKey="count" stroke="#6a9bcc" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -754,7 +754,7 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
                               cx="50%"
                               cy="50%"
                               outerRadius={80}
-                              fill="#8884d8"
+                              fill="#6a9bcc"
                               dataKey="value"
                               label={({ name, percent }) => 
                                 `${name.length > 12 ? name.substring(0, 10) + '...' : name}: ${(percent * 100).toFixed(1)}%`

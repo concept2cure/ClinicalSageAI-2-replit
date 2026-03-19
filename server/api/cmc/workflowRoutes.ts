@@ -408,7 +408,7 @@ router.get('/', async (req, res) => {
     console.error('Error fetching workflows:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -469,7 +469,7 @@ router.post('/', async (req, res) => {
     console.error('Error creating workflow:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -498,7 +498,7 @@ router.get('/:id', async (req, res) => {
     console.error('Error fetching workflow:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -567,7 +567,7 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
     console.error('Error updating task:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -779,7 +779,7 @@ router.post('/ai-command', async (req, res) => {
     console.error('Error executing AI command:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -803,7 +803,7 @@ router.get('/ai-commands', async (req, res) => {
     console.error('Error fetching AI commands:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -826,7 +826,7 @@ router.get('/ai-commands/results', async (req, res) => {
     console.error('Error fetching command results:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -859,7 +859,7 @@ router.get('/download/:id', async (req, res) => {
     console.error('Error downloading file:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -935,7 +935,7 @@ router.get('/analytics/performance', async (req, res) => {
     console.error('Error fetching analytics:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });
@@ -956,7 +956,7 @@ router.get('/templates', async (req, res) => {
     console.error('Error fetching templates:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Operation failed',
     });
   }
 });

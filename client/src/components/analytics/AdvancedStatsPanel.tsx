@@ -12,7 +12,7 @@ import { BarChart, LineChart, XAxis, YAxis, Tooltip, Legend, Bar, Line, Responsi
 import { Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc', '#92a87a'];
 
 interface AdvancedStatsPanelProps {
   trials?: any[];
@@ -422,7 +422,7 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                 <YAxis type="category" dataKey="studyName" width={80} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="effectSize" fill="#8884d8" />
+                <Bar dataKey="effectSize" fill="#6a9bcc" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -542,7 +542,7 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                         <td 
                           key={j} 
                           className="py-2 px-4 border-b text-center" 
-                          style={{backgroundColor: i === j ? '#f3f4f6' : (value > 0.7 ? '#dcfce7' : value < -0.7 ? '#fee2e2' : 'transparent')}}
+                          style={{backgroundColor: i === j ? '#f4f3ee' : (value > 0.7 ? '#dcfce7' : value < -0.7 ? '#fee2e2' : 'transparent')}}
                         >
                           {value.toFixed(2)}
                         </td>
@@ -569,7 +569,7 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="value" fill="#8884d8" />
+                      <Bar dataKey="value" fill="#6a9bcc" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -580,7 +580,7 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                       <XAxis dataKey="name" />
                       <YAxis domain={[0, 1]} />
                       <Tooltip />
-                      <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                      <Line type="monotone" dataKey="value" stroke="#6a9bcc" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -606,7 +606,7 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                         cy="50%"
                         labelLine={false}
                         outerRadius={80}
-                        fill="#8884d8"
+                        fill="#6a9bcc"
                         dataKey="value"
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       >
@@ -723,7 +723,7 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                 <Line
                   type="stepAfter"
                   dataKey="survivalProbability"
-                  stroke="#8884d8"
+                  stroke="#6a9bcc"
                   dot={false}
                   strokeWidth={2}
                 />
@@ -795,9 +795,9 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
                 <XAxis dataKey="index" label={{ value: 'Observation', position: 'insideBottomRight', offset: -5 }} />
                 <YAxis label={{ value: 'Value', angle: -90, position: 'insideLeft' }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="actual" stroke="#8884d8" dot={{ r: 3 }} name="Observed" />
-                <Line type="monotone" dataKey="lowerCI" stroke="#82ca9d" strokeDasharray="3 3" dot={false} name="Lower CI" />
-                <Line type="monotone" dataKey="upperCI" stroke="#82ca9d" strokeDasharray="3 3" dot={false} name="Upper CI" />
+                <Line type="monotone" dataKey="actual" stroke="#6a9bcc" dot={{ r: 3 }} name="Observed" />
+                <Line type="monotone" dataKey="lowerCI" stroke="#92a87a" strokeDasharray="3 3" dot={false} name="Lower CI" />
+                <Line type="monotone" dataKey="upperCI" stroke="#92a87a" strokeDasharray="3 3" dot={false} name="Upper CI" />
                 <Line type="monotone" dataKey="lowerPI" stroke="#ffc658" strokeDasharray="5 5" dot={false} name="Lower PI" />
                 <Line type="monotone" dataKey="upperPI" stroke="#ffc658" strokeDasharray="5 5" dot={false} name="Upper PI" />
               </LineChart>

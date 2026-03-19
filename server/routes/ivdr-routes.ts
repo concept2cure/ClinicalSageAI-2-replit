@@ -15,6 +15,51 @@
 
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
+import { z } from 'zod';
+
+// ─── Zod Schemas for IVDR Input Validation ───────────────────────────────────
+
+const classifySchema = z.object({
+  deviceName: z.string().min(1, 'deviceName is required'),
+  intendedPurpose: z.string().min(1, 'intendedPurpose is required'),
+  isSelfTest: z.boolean().optional(),
+  isNearPatient: z.boolean().optional(),
+  isCompanionDiagnostic: z.boolean().optional(),
+  detectsTransmissibleAgent: z.boolean().optional(),
+  bloodScreening: z.boolean().optional(),
+  detectsCancer: z.boolean().optional(),
+  prenatalScreening: z.boolean().optional(),
+  riskToPatient: z.enum(['low', 'medium', 'high']).optional(),
+  isGeneticTest: z.boolean().optional(),
+  analytes: z.array(z.string()).default([]),
+});
+
+const validationSchema = z.object({
+  deviceName: z.string().min(1),
+  validationType: z.enum(['analytical', 'clinical', 'performance']),
+  analyteName: z.string().min(1),
+  matrixType: z.string().optional(),
+  parameters: z.record(z.unknown()).optional(),
+});
+
+const clinicalEvidenceSchema = z.object({
+  deviceName: z.string().min(1),
+  evidenceType: z.enum(['performance_study', 'clinical_investigation', 'literature_review', 'post_market']),
+  studyTitle: z.string().min(1),
+  sampleSize: z.number().int().positive().optional(),
+  sensitivity: z.number().min(0).max(100).optional(),
+  specificity: z.number().min(0).max(100).optional(),
+  ppv: z.number().min(0).max(100).optional(),
+  npv: z.number().min(0).max(100).optional(),
+});
+
+const cdxWorkflowSchema = z.object({
+  deviceName: z.string().min(1),
+  companionTherapy: z.string().min(1),
+  biomarker: z.string().min(1),
+  therapeuticArea: z.string().optional(),
+  regulatoryStrategy: z.string().optional(),
+});
 
 export default function createIVDRRoutes(pool: Pool): Router {
   const router = Router();
@@ -72,6 +117,26 @@ export default function createIVDRRoutes(pool: Pool): Router {
     });
   }
 
+  // ── GSPR table init guard (avoids DDL on every request) ──────────────────
+  let gsprTableInitialized = false;
+  async function ensureGsprTable(): Promise<void> {
+    if (gsprTableInitialized) return;
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ivdr_gspr_assessments (
+        id SERIAL PRIMARY KEY,
+        organization_id INTEGER NOT NULL,
+        project_id TEXT NOT NULL,
+        device_name TEXT NOT NULL,
+        classification TEXT,
+        requirements JSONB NOT NULL DEFAULT '[]',
+        created_by TEXT NOT NULL DEFAULT 'system',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    gsprTableInitialized = true;
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ANNEX VIII CLASSIFICATION
   // ═══════════════════════════════════════════════════════════════════════════
@@ -91,6 +156,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
         });
       }
 
+      const parsed = classifySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+
       const {
         deviceName,
         intendedPurpose,
@@ -103,19 +173,19 @@ export default function createIVDRRoutes(pool: Pool): Router {
         prenatalScreening,
         riskToPatient,
         isGeneticTest,
-        analytes = [],
-      } = req.body;
+        analytes,
+      } = parsed.data;
 
       // Org from authenticated session — NEVER from req.body
       const orgId = getServerOrgId(req);
 
-      if (!deviceName || !intendedPurpose) {
-        return res.status(400).json({ error: 'deviceName and intendedPurpose are required' });
-      }
-
       // ── Annex VIII Rule Engine ───────────────────────────────────────────
       const ruleTrace: Array<{ rule: string; description: string; matched: boolean }> = [];
       let classResult: 'A' | 'B' | 'C' | 'D' = 'A'; // Default lowest risk
+      const classPriority: Record<string, number> = { A: 1, B: 2, C: 3, D: 4 };
+      const upgradeClass = (target: 'B' | 'C' | 'D') => {
+        if (classPriority[target] > classPriority[classResult]) classResult = target;
+      };
 
       // Rule 1 — Class D: Blood/tissue screening for transmissible agents
       const rule1Match = bloodScreening === true && detectsTransmissibleAgent === true;
@@ -147,7 +217,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended as companion diagnostics — devices essential for the safe and effective use of a corresponding medicinal product, to identify patients most likely to benefit or at increased risk of serious adverse reactions',
         matched: rule3aMatch,
       });
-      if (rule3aMatch && classResult < 'C') classResult = 'C';
+      if (rule3aMatch) upgradeClass('C');
 
       // Rule 3b — Class C: Cancer screening/diagnosis as first-line
       const rule3bMatch = detectsCancer === true;
@@ -157,7 +227,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for screening, diagnosis, or staging of cancer. First-line standalone diagnostic use for detecting cancer markers (CEA, PSA, CA-125, HER2, etc.)',
         matched: rule3bMatch,
       });
-      if (rule3bMatch && classResult < 'C') classResult = 'C';
+      if (rule3bMatch) upgradeClass('C');
 
       // Rule 3c — Class C: Genetic testing with direct patient management impact
       const rule3cMatch = isGeneticTest === true;
@@ -167,7 +237,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended to provide information about genetic predisposition. Human genetic testing whose results directly lead to patient management decisions (pharmacogenomic, hereditary condition screening)',
         matched: rule3cMatch,
       });
-      if (rule3cMatch && classResult < 'C') classResult = 'C';
+      if (rule3cMatch) upgradeClass('C');
 
       // Rule 3d — Class C: Prenatal screening / congenital abnormalities
       const rule3dMatch = prenatalScreening === true;
@@ -177,7 +247,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for prenatal screening of women to determine their immune status, for detecting congenital abnormalities of the foetus, or for determining foetal status where there is an imminent risk to the foetus',
         matched: rule3dMatch,
       });
-      if (rule3dMatch && classResult < 'C') classResult = 'C';
+      if (rule3dMatch) upgradeClass('C');
 
       // Rule 4 — Class B: Self-testing devices
       const rule4Match = isSelfTest === true;
@@ -187,7 +257,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for self-testing — devices intended to be used by lay persons including tests for self-monitoring of chronic conditions (glucose, coagulation, cholesterol self-tests)',
         matched: rule4Match,
       });
-      if (rule4Match && classResult < 'B') classResult = 'B';
+      if (rule4Match) upgradeClass('B');
 
       // Rule 5 — Class B: Near-patient testing
       const rule5Match = isNearPatient === true && !isSelfTest;
@@ -197,7 +267,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs intended for near-patient testing (point-of-care) — devices intended to be used outside a laboratory environment, including in the immediate patient environment (bedside, ambulance, pharmacy, workplace)',
         matched: rule5Match,
       });
-      if (rule5Match && classResult < 'B') classResult = 'B';
+      if (rule5Match) upgradeClass('B');
 
       // Rule 6 — Class B: Devices whose failure poses risk
       const rule6Match = riskToPatient === 'high' || riskToPatient === 'medium';
@@ -207,7 +277,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           'IVDs not covered by higher classes but whose results could pose a medium/high risk to the individual patient or to public health. Includes IVDs measuring analytes used in critical patient management decisions',
         matched: rule6Match,
       });
-      if (rule6Match && classResult < 'B') classResult = 'B';
+      if (rule6Match) upgradeClass('B');
 
       // Rule 7 — Class A: General IVDs / instruments / accessories
       ruleTrace.push({
@@ -309,7 +379,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
         },
       };
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${id}.json"`);
+      const safeId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
+      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
       return res.json(report);
     } catch (error: any) {
       return safeError(res, error, 'IVDR_CLASS_REPORT_ERROR', 'Classification report');
@@ -326,12 +397,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/validations', async (req: Request, res: Response) => {
     try {
-      const { classificationId, deviceName, analyteName, validationType } = req.body;
-      const orgId = getServerOrgId(req);
-
-      if (!deviceName || !analyteName) {
-        return res.status(400).json({ error: 'deviceName and analyteName are required' });
+      const parsed = validationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
       }
+      const { deviceName, analyteName, validationType, matrixType, parameters } = parsed.data;
+      const classificationId = req.body.classificationId || null;
+      const orgId = getServerOrgId(req);
 
       const result = await pool.query(
         `INSERT INTO ivdr_analytical_validations
@@ -530,24 +602,24 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/clinical-evidence', async (req: Request, res: Response) => {
     try {
+      const parsed = clinicalEvidenceSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+      // Extract additional fields not in schema but used by the insert
       const {
         classificationId,
         validationId,
-        studyTitle,
-        studyType, // 'prospective' | 'retrospective' | 'method_comparison' | 'lot_to_lot'
-        registryId, // ISRCTN / ClinicalTrials.gov
-        sampleSize,
+        registryId,
         performanceClaims,
         populationDefinition,
         inclusionCriteria,
         exclusionCriteria,
         sourceDocuments,
       } = req.body;
+      const { studyTitle, sampleSize } = parsed.data;
+      const studyType = parsed.data.evidenceType;
       const orgId = getServerOrgId(req);
-
-      if (!studyTitle || !studyType) {
-        return res.status(400).json({ error: 'studyTitle and studyType are required' });
-      }
 
       const result = await pool.query(
         `INSERT INTO ivdr_clinical_evidence
@@ -735,12 +807,17 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.post('/cdx-workflows', async (req: Request, res: Response) => {
     try {
+      const parsed = cdxWorkflowSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+      }
+      // Map schema fields + extract additional body fields for DB insert
+      const medicinalProductName = parsed.data.companionTherapy;
+      const biomarker = parsed.data.biomarker;
       const {
         classificationId,
-        medicinalProductName,
         activeSubstance,
         therapeuticIndication,
-        biomarker,
         treatmentDecision,
         regulatoryReference,
         notifiedBodyId,
@@ -749,10 +826,6 @@ export default function createIVDRRoutes(pool: Pool): Router {
         clinicalEvidenceIds,
       } = req.body;
       const orgId = getServerOrgId(req);
-
-      if (!medicinalProductName || !biomarker) {
-        return res.status(400).json({ error: 'medicinalProductName and biomarker are required' });
-      }
 
       const result = await pool.query(
         `INSERT INTO ivdr_cdx_workflows
@@ -940,6 +1013,532 @@ export default function createIVDRRoutes(pool: Pool): Router {
       });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_DASHBOARD_ERROR', 'Dashboard');
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GSPR (General Safety and Performance Requirements) CHECKLIST — Annex I
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const GSPR_REQUIREMENTS = [
+    // Chapter I: General requirements (GSPRs 1–9)
+    { id: 'gspr-1', chapter: 'I', number: 1, title: 'Safety and performance in normal conditions', description: 'Devices shall achieve the performance intended by their manufacturer and shall be designed and manufactured in such a way that, during normal conditions of use, they are suitable for their intended purpose.' },
+    { id: 'gspr-2', chapter: 'I', number: 2, title: 'Risk management', description: 'The requirement to reduce risks as far as possible means the reduction of risks as far as possible without adversely affecting the benefit-risk ratio.' },
+    { id: 'gspr-3', chapter: 'I', number: 3, title: 'Risk control measures', description: 'Manufacturers shall establish, implement, document, and maintain a risk management system. Risk control measures adopted shall be such that residual risk and undesirable side-effects are acceptable.' },
+    { id: 'gspr-4', chapter: 'I', number: 4, title: 'Benefit-risk determination', description: 'Devices shall be designed and manufactured in such a way that the risks associated are reduced as far as possible and acceptable when weighed against the evaluated benefits to the patient and/or user.' },
+    { id: 'gspr-5', chapter: 'I', number: 5, title: 'Performance evaluation', description: 'Devices shall achieve the performance claimed by the manufacturer and designed so that they are suitable for the intended purpose. Scientific validity, analytical performance, and clinical performance shall be confirmed.' },
+    { id: 'gspr-6', chapter: 'I', number: 6, title: 'Known and foreseeable risks and undesirable effects', description: 'The known and foreseeable risks and any undesirable effects shall be minimized and acceptable when weighed against the evaluated benefits.' },
+    { id: 'gspr-7', chapter: 'I', number: 7, title: 'Device suitable for intended users', description: 'Devices shall be suitable for the intended users, taking account of their technical knowledge, experience, education, training, and use environment.' },
+    { id: 'gspr-8', chapter: 'I', number: 8, title: 'Device lifetime considerations', description: 'The characteristics and performance of a device shall not be adversely affected during transport and storage, including changes in temperature and humidity.' },
+    { id: 'gspr-9', chapter: 'I', number: 9, title: 'Devices for non-medical purposes', description: 'Devices listed in Annex XVI that are without an intended medical purpose shall fulfil the general safety and performance requirements.' },
+    // Chapter II: Requirements regarding performance, design and manufacture (GSPRs 10–18)
+    { id: 'gspr-10', chapter: 'II', number: 10, title: 'Chemical, physical and biological properties', description: 'Devices shall be designed and manufactured to ensure that the characteristics and performance requirements are fulfilled regarding chemical, physical, and biological properties.' },
+    { id: 'gspr-11', chapter: 'II', number: 11, title: 'Infection and microbial contamination', description: 'Devices and their manufacturing processes shall be designed to eliminate or reduce infection risk to patients, users, and third persons. The design shall allow easy and safe handling.' },
+    { id: 'gspr-12', chapter: 'II', number: 12, title: 'Devices incorporating substances considered to be medicinal products', description: 'Where a device incorporates a substance which, if used separately, may be considered to be a medicinal product, the quality, safety and usefulness of the substance shall be verified.' },
+    { id: 'gspr-13', chapter: 'II', number: 13, title: 'Devices composed of substances or combinations of substances that are absorbed by or locally dispersed in the human body', description: 'Devices composed of substances intended to be introduced into the human body shall comply with relevant requirements for medicinal products.' },
+    { id: 'gspr-14', chapter: 'II', number: 14, title: 'Devices incorporating materials of biological origin', description: 'Devices utilising tissues, cells, and substances of animal or human origin shall be sourced and processed to ensure safety and shall meet requirements for risk minimisation.' },
+    { id: 'gspr-15', chapter: 'II', number: 15, title: 'Construction of devices and interaction with their environment', description: 'Devices shall be designed and manufactured in such a way as to reduce risks linked to their physical features, including ergonomic aspects and the environment of use.' },
+    { id: 'gspr-16', chapter: 'II', number: 16, title: 'Devices with diagnostic or measuring function', description: 'Diagnostic devices and devices with a measuring function shall be designed and manufactured to provide sufficient accuracy, precision, and stability for their intended purpose.' },
+    { id: 'gspr-17', chapter: 'II', number: 17, title: 'Protection against radiation', description: 'Devices shall be designed and manufactured to reduce exposure of patients, users, and other persons to radiation as far as possible while not restricting application of appropriate levels for treatment and diagnosis.' },
+    { id: 'gspr-18', chapter: 'II', number: 18, title: 'Electronic programmable systems and software', description: 'Devices that incorporate electronic programmable systems, including software, or software that are devices in themselves, shall be designed to ensure repeatability, reliability, and performance in line with their intended use.' },
+    // Chapter III: Requirements regarding the information supplied with the device (GSPRs 19–23)
+    { id: 'gspr-19', chapter: 'III', number: 19, title: 'Label and instructions for use — general requirements', description: 'Each device shall be accompanied by the information needed to identify the device and its manufacturer, and by relevant safety and performance information for user and patient.' },
+    { id: 'gspr-20', chapter: 'III', number: 20, title: 'Label', description: 'The label shall bear the information laid down in this section. The information shall be provided on the device itself; if not practicable, on the packaging for each unit or the packaging of multiple devices.' },
+    { id: 'gspr-21', chapter: 'III', number: 21, title: 'Information on the packaging (sales packaging)', description: 'The sterile packaging and sales packaging shall bear the information set out in this section, including trade name, manufacturer, description, lot/serial number, storage conditions, and warnings.' },
+    { id: 'gspr-22', chapter: 'III', number: 22, title: 'Instructions for use', description: 'Each device shall be accompanied by instructions for use. By way of exception, instructions for use shall not be required for Class A and Class B devices if they can be used safely without such instructions.' },
+    { id: 'gspr-23', chapter: 'III', number: 23, title: 'EU declaration of conformity', description: 'The EU declaration of conformity shall state the manufacturer details, product identification, applicable directives, standards, and that the device conforms to the applicable requirements of this Regulation.' },
+  ];
+
+  /**
+   * POST /api/ivdr/gspr-checklist
+   * Create a GSPR assessment for a project. Initializes all Annex I requirements.
+   */
+  router.post('/gspr-checklist', async (req: Request, res: Response) => {
+    try {
+      const orgId = getServerOrgId(req);
+      const { projectId, deviceName, classification } = req.body;
+      const userId = (req as any).userId || 'system';
+
+      if (!projectId || !deviceName) {
+        return res.status(400).json({ error: 'projectId and deviceName are required' });
+      }
+
+      await ensureGsprTable();
+
+      // Check for existing assessment
+      const existing = await pool.query(
+        `SELECT id FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
+        [projectId, orgId]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(409).json({
+          error: 'GSPR assessment already exists for this project',
+          code: 'IVDR_GSPR_EXISTS',
+          existingId: existing.rows[0].id,
+        });
+      }
+
+      // Initialize all requirements with default status
+      const requirements = GSPR_REQUIREMENTS.map((r) => ({
+        ...r,
+        applicable: true,
+        status: 'not_assessed',
+        evidenceLinks: [],
+        notes: '',
+      }));
+
+      const result = await pool.query(
+        `INSERT INTO ivdr_gspr_assessments
+         (organization_id, project_id, device_name, classification, requirements, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [orgId, projectId, deviceName, classification || null, JSON.stringify(requirements), userId]
+      );
+
+      return res.status(201).json({ assessment: result.rows[0] });
+    } catch (error: any) {
+      return safeError(res, error, 'IVDR_GSPR_CREATE_ERROR', 'Create GSPR checklist');
+    }
+  });
+
+  /**
+   * GET /api/ivdr/gspr-checklist/:projectId
+   * Get GSPR checklist with compliance status for a project
+   */
+  router.get('/gspr-checklist/:projectId', async (req: Request, res: Response) => {
+    try {
+      const orgId = getServerOrgId(req);
+      const { projectId } = req.params;
+
+      await ensureGsprTable();
+
+      const result = await pool.query(
+        `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
+        [projectId, orgId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'No GSPR assessment found for this project', code: 'IVDR_GSPR_NOT_FOUND' });
+      }
+
+      const assessment = result.rows[0];
+      const requirements = assessment.requirements || [];
+
+      // Compute compliance summary
+      const summary = {
+        total: requirements.length,
+        compliant: requirements.filter((r: any) => r.status === 'compliant').length,
+        partiallyCompliant: requirements.filter((r: any) => r.status === 'partially_compliant').length,
+        nonCompliant: requirements.filter((r: any) => r.status === 'non_compliant').length,
+        notAssessed: requirements.filter((r: any) => r.status === 'not_assessed').length,
+        notApplicable: requirements.filter((r: any) => r.status === 'not_applicable').length,
+      };
+
+      return res.json({ assessment, complianceSummary: summary });
+    } catch (error: any) {
+      return safeError(res, error, 'IVDR_GSPR_GET_ERROR', 'Get GSPR checklist');
+    }
+  });
+
+  /**
+   * PUT /api/ivdr/gspr-checklist/:projectId/requirements/:reqId
+   * Update a single GSPR requirement's status and evidence links
+   */
+  router.put('/gspr-checklist/:projectId/requirements/:reqId', async (req: Request, res: Response) => {
+    try {
+      const orgId = getServerOrgId(req);
+      const { projectId, reqId } = req.params;
+      const { status, applicable, evidenceLinks, notes } = req.body;
+      const userId = (req as any).userId || 'system';
+
+      const validStatuses = ['not_assessed', 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({
+          error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+        });
+      }
+
+      const result = await pool.query(
+        `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
+        [projectId, orgId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'No GSPR assessment found for this project', code: 'IVDR_GSPR_NOT_FOUND' });
+      }
+
+      const assessment = result.rows[0];
+      const requirements = assessment.requirements || [];
+      const reqIndex = requirements.findIndex((r: any) => r.id === reqId);
+
+      if (reqIndex === -1) {
+        return res.status(404).json({ error: `Requirement ${reqId} not found`, code: 'IVDR_GSPR_REQ_NOT_FOUND' });
+      }
+
+      // Update fields if provided
+      if (status !== undefined) requirements[reqIndex].status = status;
+      if (applicable !== undefined) requirements[reqIndex].applicable = applicable;
+      if (evidenceLinks !== undefined) requirements[reqIndex].evidenceLinks = evidenceLinks;
+      if (notes !== undefined) requirements[reqIndex].notes = notes;
+
+      // Append-only audit: record the change
+      if (!requirements[reqIndex].auditTrail) {
+        requirements[reqIndex].auditTrail = [];
+      }
+      requirements[reqIndex].auditTrail.push({
+        updatedBy: userId,
+        updatedAt: new Date().toISOString(),
+        changes: { status, applicable, evidenceLinks, notes },
+      });
+
+      await pool.query(
+        `UPDATE ivdr_gspr_assessments SET requirements = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
+        [JSON.stringify(requirements), assessment.id, orgId]
+      );
+
+      return res.json({ requirement: requirements[reqIndex] });
+    } catch (error: any) {
+      return safeError(res, error, 'IVDR_GSPR_UPDATE_ERROR', 'Update GSPR requirement');
+    }
+  });
+
+  /**
+   * GET /api/ivdr/gspr-checklist/:projectId/matrix
+   * Get compliance matrix summary grouped by chapter
+   */
+  router.get('/gspr-checklist/:projectId/matrix', async (req: Request, res: Response) => {
+    try {
+      const orgId = getServerOrgId(req);
+      const { projectId } = req.params;
+
+      const result = await pool.query(
+        `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
+        [projectId, orgId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'No GSPR assessment found for this project', code: 'IVDR_GSPR_NOT_FOUND' });
+      }
+
+      const assessment = result.rows[0];
+      const requirements = assessment.requirements || [];
+
+      // Group by chapter
+      const chapters: Record<string, any> = {
+        I: { title: 'Chapter I: General requirements (GSPRs 1-9)', requirements: [], summary: {} },
+        II: { title: 'Chapter II: Requirements regarding performance, design and manufacture (GSPRs 10-18)', requirements: [], summary: {} },
+        III: { title: 'Chapter III: Requirements regarding the information supplied with the device (GSPRs 19-23)', requirements: [], summary: {} },
+      };
+
+      for (const req of requirements) {
+        if (chapters[req.chapter]) {
+          chapters[req.chapter].requirements.push({
+            id: req.id,
+            number: req.number,
+            title: req.title,
+            status: req.status,
+            applicable: req.applicable,
+            hasEvidence: (req.evidenceLinks || []).length > 0,
+          });
+        }
+      }
+
+      // Compute per-chapter summaries
+      for (const key of Object.keys(chapters)) {
+        const reqs = chapters[key].requirements;
+        chapters[key].summary = {
+          total: reqs.length,
+          compliant: reqs.filter((r: any) => r.status === 'compliant').length,
+          partiallyCompliant: reqs.filter((r: any) => r.status === 'partially_compliant').length,
+          nonCompliant: reqs.filter((r: any) => r.status === 'non_compliant').length,
+          notAssessed: reqs.filter((r: any) => r.status === 'not_assessed').length,
+          notApplicable: reqs.filter((r: any) => r.status === 'not_applicable').length,
+        };
+      }
+
+      // Overall compliance percentage (excluding not_applicable)
+      const applicableReqs = requirements.filter((r: any) => r.status !== 'not_applicable');
+      const compliantCount = applicableReqs.filter((r: any) => r.status === 'compliant').length;
+      const overallCompliance = applicableReqs.length > 0
+        ? Math.round((compliantCount / applicableReqs.length) * 100)
+        : 0;
+
+      return res.json({
+        projectId,
+        deviceName: assessment.device_name,
+        classification: assessment.classification,
+        overallCompliancePercent: overallCompliance,
+        chapters,
+      });
+    } catch (error: any) {
+      return safeError(res, error, 'IVDR_GSPR_MATRIX_ERROR', 'GSPR compliance matrix');
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SUBMISSION PACKAGE EXPORT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // In-memory store for submission package generation status (with TTL cleanup)
+  const submissionJobs: Record<string, { status: string; startedAt: string; completedAt?: string; manifest?: any; error?: string }> = {};
+
+  // Periodically clean up completed/failed jobs older than 1 hour
+  const JOB_TTL_MS = 60 * 60 * 1000;
+  setInterval(() => {
+    const cutoff = Date.now() - JOB_TTL_MS;
+    for (const key of Object.keys(submissionJobs)) {
+      const job = submissionJobs[key];
+      if (job.completedAt && new Date(job.completedAt).getTime() < cutoff) {
+        delete submissionJobs[key];
+      } else if (!job.completedAt && new Date(job.startedAt).getTime() < cutoff) {
+        delete submissionJobs[key]; // Stale in-progress job
+      }
+    }
+  }, 10 * 60 * 1000).unref(); // Every 10 minutes, unref so it doesn't keep process alive
+
+  /**
+   * POST /api/ivdr/submission-package/:projectId
+   * Generate a submission package gathering all IVDR data for the project
+   */
+  router.post('/submission-package/:projectId', async (req: Request, res: Response) => {
+    try {
+      const orgId = getServerOrgId(req);
+      const { projectId } = req.params;
+      const userId = (req as any).userId || 'system';
+      const jobKey = `${orgId}-${projectId}`;
+
+      // Mark job as in-progress
+      submissionJobs[jobKey] = { status: 'generating', startedAt: new Date().toISOString() };
+
+      // Gather all IVDR data for the project in parallel
+      const [classifications, validations, evidence, cdxWorkflows, gsprAssessment] = await Promise.all([
+        pool.query(
+          `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
+          [orgId]
+        ).catch(() => ({ rows: [] })),
+        pool.query(
+          `SELECT * FROM ivdr_analytical_validations WHERE organization_id = $1 ORDER BY created_at DESC`,
+          [orgId]
+        ).catch(() => ({ rows: [] })),
+        pool.query(
+          `SELECT * FROM ivdr_clinical_evidence WHERE organization_id = $1 ORDER BY created_at DESC`,
+          [orgId]
+        ).catch(() => ({ rows: [] })),
+        pool.query(
+          `SELECT * FROM ivdr_cdx_workflows WHERE organization_id = $1 ORDER BY created_at DESC`,
+          [orgId]
+        ).catch(() => ({ rows: [] })),
+        pool.query(
+          `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
+          [projectId, orgId]
+        ).catch(() => ({ rows: [] })),
+      ]);
+
+      // Build the structured manifest
+      const manifest = {
+        meta: {
+          packageVersion: '1.0.0',
+          generatedAt: new Date().toISOString(),
+          generatedBy: userId,
+          projectId,
+          organizationId: orgId,
+          regulatoryFramework: 'IVDR EU 2017/746',
+        },
+        sections: {
+          classification: {
+            count: classifications.rows.length,
+            records: classifications.rows,
+          },
+          analyticalValidation: {
+            count: validations.rows.length,
+            records: validations.rows,
+          },
+          clinicalEvidence: {
+            count: evidence.rows.length,
+            records: evidence.rows,
+          },
+          companionDiagnostics: {
+            count: cdxWorkflows.rows.length,
+            records: cdxWorkflows.rows,
+          },
+          gsprChecklist: {
+            available: gsprAssessment.rows.length > 0,
+            assessment: gsprAssessment.rows[0] || null,
+          },
+        },
+        completeness: {
+          hasClassification: classifications.rows.length > 0,
+          hasValidation: validations.rows.length > 0,
+          hasClinicalEvidence: evidence.rows.length > 0,
+          hasGSPR: gsprAssessment.rows.length > 0,
+          sectionsComplete: [
+            classifications.rows.length > 0,
+            validations.rows.length > 0,
+            evidence.rows.length > 0,
+            gsprAssessment.rows.length > 0,
+          ].filter(Boolean).length,
+          totalSections: 4,
+        },
+      };
+
+      submissionJobs[jobKey] = {
+        status: 'completed',
+        startedAt: submissionJobs[jobKey].startedAt,
+        completedAt: new Date().toISOString(),
+        manifest,
+      };
+
+      return res.status(201).json({
+        status: 'completed',
+        projectId,
+        manifest,
+      });
+    } catch (error: any) {
+      const orgId = (() => { try { return getServerOrgId(req); } catch { return 'unknown'; } })();
+      const jobKey = `${orgId}-${req.params.projectId}`;
+      submissionJobs[jobKey] = {
+        status: 'failed',
+        startedAt: submissionJobs[jobKey]?.startedAt || new Date().toISOString(),
+        error: 'Package generation failed',
+      };
+      return safeError(res, error, 'IVDR_SUBMISSION_PKG_ERROR', 'Generate submission package');
+    }
+  });
+
+  /**
+   * GET /api/ivdr/submission-package/:projectId/status
+   * Check generation status of a submission package
+   */
+  router.get('/submission-package/:projectId/status', async (req: Request, res: Response) => {
+    try {
+      const orgId = getServerOrgId(req);
+      const { projectId } = req.params;
+      const jobKey = `${orgId}-${projectId}`;
+
+      const job = submissionJobs[jobKey];
+      if (!job) {
+        return res.status(404).json({
+          error: 'No submission package job found for this project',
+          code: 'IVDR_SUBMISSION_NOT_FOUND',
+        });
+      }
+
+      return res.json({
+        projectId,
+        status: job.status,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt || null,
+        hasManifest: !!job.manifest,
+        error: job.error || null,
+      });
+    } catch (error: any) {
+      return safeError(res, error, 'IVDR_SUBMISSION_STATUS_ERROR', 'Submission package status');
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EUDAMED DATA EXPORT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * GET /api/ivdr/eudamed-export/:projectId
+   * Export EUDAMED-compatible device registration data
+   */
+  router.get('/eudamed-export/:projectId', async (req: Request, res: Response) => {
+    try {
+      const orgId = getServerOrgId(req);
+      const { projectId } = req.params;
+
+      // Gather classification and GSPR data
+      const [classResult, gsprResult, cdxResult, evidenceResult] = await Promise.all([
+        pool.query(
+          `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
+          [orgId]
+        ).catch(() => ({ rows: [] })),
+        pool.query(
+          `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
+          [projectId, orgId]
+        ).catch(() => ({ rows: [] })),
+        pool.query(
+          `SELECT * FROM ivdr_cdx_workflows WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
+          [orgId]
+        ).catch(() => ({ rows: [] })),
+        pool.query(
+          `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'completed') as completed FROM ivdr_clinical_evidence WHERE organization_id = $1`,
+          [orgId]
+        ).catch(() => ({ rows: [{ total: 0, completed: 0 }] })),
+      ]);
+
+      const classification = classResult.rows[0] || null;
+      const gspr = gsprResult.rows[0] || null;
+      const cdx = cdxResult.rows[0] || null;
+      const evidenceSummary = evidenceResult.rows[0] || { total: 0, completed: 0 };
+
+      // Compute GSPR compliance stats if available
+      let gsprCompliancePercent = 0;
+      if (gspr && gspr.requirements) {
+        const reqs = gspr.requirements;
+        const applicable = reqs.filter((r: any) => r.status !== 'not_applicable');
+        const compliant = applicable.filter((r: any) => r.status === 'compliant');
+        gsprCompliancePercent = applicable.length > 0
+          ? Math.round((compliant.length / applicable.length) * 100)
+          : 0;
+      }
+
+      // Build EUDAMED-compatible export
+      const eudamedExport = {
+        exportVersion: '1.0.0',
+        exportDate: new Date().toISOString(),
+        regulatoryFramework: 'IVDR EU 2017/746',
+        deviceIdentification: {
+          basicUdiDi: `IVDR-${orgId}-${projectId}-BUDI`,
+          udiDi: `IVDR-${orgId}-${projectId}-UDI`,
+          deviceName: classification?.device_name || gspr?.device_name || 'Unknown Device',
+          tradeName: classification?.device_name || gspr?.device_name || null,
+          manufacturerSRN: `SRN-ORG-${orgId}`,
+        },
+        manufacturer: {
+          organizationId: orgId,
+          role: 'manufacturer',
+          registrationStatus: 'registered',
+        },
+        classification: {
+          riskClass: classification?.classification || 'Not classified',
+          classificationRule: classification?.rule_trace ? 'Annex VIII' : null,
+          ruleTrace: classification?.rule_trace || [],
+          intendedPurpose: classification?.intended_purpose || null,
+        },
+        riskClass: classification?.classification || 'Not classified',
+        companionDiagnostic: {
+          isCDx: cdx ? true : false,
+          linkedMedicinalProduct: cdx?.therapeutic_area || null,
+          cdxStatus: cdx?.status || null,
+        },
+        certificates: {
+          euDeclarationOfConformity: classification?.classification === 'A' ? 'self-declaration' : 'notified_body_required',
+          notifiedBodyRequired: classification?.classification !== 'A',
+          certificateStatus: 'pending',
+        },
+        clinicalEvidence: {
+          totalStudies: Number(evidenceSummary.total) || 0,
+          completedStudies: Number(evidenceSummary.completed) || 0,
+          performanceEvaluationAvailable: Number(evidenceSummary.total) > 0,
+        },
+        gsprCompliance: {
+          assessmentAvailable: !!gspr,
+          compliancePercent: gsprCompliancePercent,
+          totalRequirements: gspr ? gspr.requirements.length : 23,
+        },
+        postMarketSurveillance: {
+          pmsPlanRequired: true,
+          psurFrequency: classification?.classification === 'D' || classification?.classification === 'C' ? 'annual' : 'biennial',
+          vigilanceSystem: 'required',
+        },
+      };
+
+      return res.json({ eudamedExport });
+    } catch (error: any) {
+      return safeError(res, error, 'IVDR_EUDAMED_EXPORT_ERROR', 'EUDAMED data export');
     }
   });
 

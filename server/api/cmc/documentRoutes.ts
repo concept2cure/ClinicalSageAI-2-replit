@@ -4,6 +4,72 @@ import { z } from 'zod';
 
 const router = express.Router();
 
+// Ensure cmc_documents table exists
+let cmcDocumentsTableInitialized = false;
+async function ensureCmcDocumentsTable() {
+  if (cmcDocumentsTableInitialized) return;
+  const pool = getPool();
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS cmc_documents (
+      id SERIAL PRIMARY KEY,
+      project_id UUID,
+      organization_id INTEGER DEFAULT 1,
+      document_type TEXT NOT NULL DEFAULT 'general',
+      module_section TEXT,
+      title TEXT NOT NULL,
+      content TEXT,
+      section TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      version TEXT DEFAULT '1.0',
+      file_path TEXT,
+      metadata JSONB,
+      compliance_score INTEGER,
+      compliance_metrics JSONB,
+      drug_candidate_id TEXT,
+      study_id TEXT,
+      tenant_id TEXT,
+      created_by TEXT,
+      last_modified_by TEXT,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+      updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )
+  `);
+  // Ensure version tracking table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS cmc_document_versions (
+      id SERIAL PRIMARY KEY,
+      document_id INTEGER REFERENCES cmc_documents(id) ON DELETE CASCADE,
+      version_number TEXT NOT NULL,
+      content TEXT,
+      changes TEXT,
+      author TEXT,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )
+  `);
+  // Ensure links table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS cmc_document_links (
+      id SERIAL PRIMARY KEY,
+      document_id INTEGER NOT NULL,
+      linked_document_id INTEGER NOT NULL,
+      link_type TEXT DEFAULT 'reference',
+      context TEXT,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )
+  `);
+  // Ensure collaborators table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS cmc_document_collaborators (
+      id SERIAL PRIMARY KEY,
+      document_id INTEGER NOT NULL,
+      user_id TEXT,
+      role TEXT DEFAULT 'viewer',
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )
+  `);
+  cmcDocumentsTableInitialized = true;
+}
+
 // Validation schemas
 const createDocumentSchema = z.object({
   module_section: z.string().min(1, 'Module section is required'),
@@ -34,18 +100,21 @@ const linkDocumentSchema = z.object({
 router.get('/', async (req, res) => {
   try {
     const { drug_candidate_id, study_id } = req.query;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const pool = getPool();
+
+    await ensureCmcDocumentsTable();
 
     let query = `
-      SELECT 
+      SELECT
         d.*,
         COUNT(DISTINCT v.id) as version_count,
         COUNT(DISTINCT l.id) as link_count,
         COUNT(DISTINCT c.id) as collaborator_count
-      FROM cmc_docs_main d
-      LEFT JOIN cmc_docs_versions v ON d.id = v.document_id
-      LEFT JOIN cmc_docs_links l ON d.id = l.document_id
-      LEFT JOIN cmc_docs_collaborators c ON d.id = c.document_id
+      FROM cmc_documents d
+      LEFT JOIN cmc_document_versions v ON d.id = v.document_id
+      LEFT JOIN cmc_document_links l ON d.id = l.document_id
+      LEFT JOIN cmc_document_collaborators c ON d.id = c.document_id
       WHERE d.tenant_id = $1
     `;
 
@@ -66,7 +135,6 @@ router.get('/', async (req, res) => {
 
     query += ` GROUP BY d.id ORDER BY d.module_section, d.created_at DESC`;
 
-    const pool = getPool();
     const result = await pool.query(query, params);
 
     console.log(`[CMC Documents] Fetched ${result.rows.length} documents for tenant ${tenantId}`);
@@ -82,7 +150,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -91,10 +159,13 @@ router.get('/', async (req, res) => {
 router.get('/module/:moduleSection', async (req, res) => {
   try {
     const { moduleSection } = req.params;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const pool = getPool();
+
+    await ensureCmcDocumentsTable();
 
     const query = `
-      SELECT 
+      SELECT
         d.*,
         COALESCE(
           json_agg(
@@ -105,11 +176,11 @@ router.get('/module/:moduleSection', async (req, res) => {
               'changes', v.changes,
               'created_at', v.created_at
             )
-          ) FILTER (WHERE v.id IS NOT NULL), 
+          ) FILTER (WHERE v.id IS NOT NULL),
           '[]'::json
         ) as versions
-      FROM cmc_docs_main d
-      LEFT JOIN cmc_docs_versions v ON d.id = v.document_id
+      FROM cmc_documents d
+      LEFT JOIN cmc_document_versions v ON d.id = v.document_id
       WHERE d.tenant_id = $1 AND d.module_section = $2
       GROUP BY d.id
       ORDER BY d.created_at DESC
@@ -133,7 +204,7 @@ router.get('/module/:moduleSection', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch module documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -142,11 +213,14 @@ router.get('/module/:moduleSection', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const pool = getPool();
+
+    await ensureCmcDocumentsTable();
 
     // Get main document
     const documentQuery = `
-      SELECT * FROM cmc_docs_main 
+      SELECT * FROM cmc_documents
       WHERE id = $1 AND tenant_id = $2
     `;
 
@@ -163,8 +237,8 @@ router.get('/:id', async (req, res) => {
 
     // Get version history
     const versionsQuery = `
-      SELECT * FROM cmc_docs_versions 
-      WHERE document_id = $1 
+      SELECT * FROM cmc_document_versions
+      WHERE document_id = $1
       ORDER BY created_at DESC
     `;
 
@@ -172,12 +246,12 @@ router.get('/:id', async (req, res) => {
 
     // Get linked documents
     const linksQuery = `
-      SELECT 
+      SELECT
         l.*,
         d.title as linked_title,
         d.module_section as linked_module
-      FROM cmc_docs_links l
-      JOIN cmc_docs_main d ON l.linked_document_id = d.id
+      FROM cmc_document_links l
+      JOIN cmc_documents d ON l.linked_document_id = d.id
       WHERE l.document_id = $1
     `;
 
@@ -185,7 +259,7 @@ router.get('/:id', async (req, res) => {
 
     // Get collaborators
     const collaboratorsQuery = `
-      SELECT * FROM cmc_docs_collaborators 
+      SELECT * FROM cmc_document_collaborators
       WHERE document_id = $1
     `;
 
@@ -210,7 +284,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -229,11 +303,14 @@ router.post('/', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const pool = getPool();
+
+    await ensureCmcDocumentsTable();
 
     // Insert new document
     const insertQuery = `
-      INSERT INTO cmc_docs_main (
+      INSERT INTO cmc_documents (
         module_section, title, content, status, version,
         drug_candidate_id, study_id, tenant_id, created_by
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -257,7 +334,7 @@ router.post('/', async (req, res) => {
 
     // Create initial version
     const versionQuery = `
-      INSERT INTO cmc_docs_versions (
+      INSERT INTO cmc_document_versions (
         document_id, version_number, content, changes, author
       ) VALUES ($1, $2, $3, $4, $5)
     `;
@@ -285,7 +362,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to create document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -305,11 +382,14 @@ router.put('/:id', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const pool = getPool();
+
+    await ensureCmcDocumentsTable();
 
     // Get current document
     const currentQuery = `
-      SELECT * FROM cmc_docs_main 
+      SELECT * FROM cmc_documents
       WHERE id = $1 AND tenant_id = $2
     `;
 
@@ -363,7 +443,7 @@ router.put('/:id', async (req, res) => {
     values.push(id, tenantId);
 
     const updateQuery = `
-      UPDATE cmc_docs_main 
+      UPDATE cmc_documents
       SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}
       RETURNING *
@@ -376,7 +456,7 @@ router.put('/:id', async (req, res) => {
     const newVersion = data.version || (parseFloat(currentDocument.version) + 0.1).toFixed(1);
 
     const versionQuery = `
-      INSERT INTO cmc_docs_versions (
+      INSERT INTO cmc_document_versions (
         document_id, version_number, content, changes, author
       ) VALUES ($1, $2, $3, $4, $5)
     `;
@@ -414,7 +494,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -434,11 +514,14 @@ router.post('/:id/link', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const pool = getPool();
+
+    await ensureCmcDocumentsTable();
 
     // Verify both documents exist and belong to the tenant
     const verifyQuery = `
-      SELECT id FROM cmc_docs_main 
+      SELECT id FROM cmc_documents
       WHERE id IN ($1, $2) AND tenant_id = $3
     `;
 
@@ -453,7 +536,7 @@ router.post('/:id/link', async (req, res) => {
 
     // Create the link
     const linkQuery = `
-      INSERT INTO cmc_docs_links (
+      INSERT INTO cmc_document_links (
         document_id, linked_document_id, link_type, context
       ) VALUES ($1, $2, $3, $4)
       RETURNING *
@@ -483,7 +566,7 @@ router.post('/:id/link', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to link documents',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });
@@ -492,10 +575,13 @@ router.post('/:id/link', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '7';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const pool = getPool();
+
+    await ensureCmcDocumentsTable();
 
     const deleteQuery = `
-      DELETE FROM cmc_docs_main 
+      DELETE FROM cmc_documents
       WHERE id = $1 AND tenant_id = $2
       RETURNING id, title
     `;
@@ -522,7 +608,7 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete document',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Operation failed',
     });
   }
 });

@@ -18,7 +18,7 @@ function getDbUrl() {
     }
     return url.trim();
   }
-  return 'postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable';
+  return 'postgresql://postgres:postgres@127.0.0.1:5432/concept2cure-ri?sslmode=disable';
 }
 
 const dbUrl = getDbUrl();

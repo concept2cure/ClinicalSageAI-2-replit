@@ -17,14 +17,14 @@ interface ZenAuthLayoutProps {
 
 export const ZenAuthLayout: React.FC<ZenAuthLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-[#FAFAF9] relative overflow-hidden">
+    <div className="min-h-screen bg-[#faf9f5] relative overflow-hidden">
       {/* Subtle animated background patterns */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Gradient orbs - very subtle */}
         <motion.div
           className="absolute top-0 right-0 w-96 h-96 rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(37, 99, 235, 0.03) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(217, 119, 87, 0.03) 0%, transparent 70%)',
           }}
           animate={{
             scale: [1, 1.1, 1],
@@ -39,7 +39,7 @@ export const ZenAuthLayout: React.FC<ZenAuthLayoutProps> = ({ children }) => {
         <motion.div
           className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(106, 155, 204, 0.03) 0%, transparent 70%)',
           }}
           animate={{
             scale: [1.1, 1, 1.1],

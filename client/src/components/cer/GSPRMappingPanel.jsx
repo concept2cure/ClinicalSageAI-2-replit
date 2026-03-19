@@ -751,7 +751,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
   const getStatusColor = status => {
     switch (status) {
       case 'compliant':
-        return 'bg-[#DFF6DD] text-[#107C10] border-[#107C10]';
+        return 'bg-[#e4ebd8] text-[#788c5d] border-[#788c5d]';
       case 'partial':
         return 'bg-[#FFFCE5] text-[#986F0B] border-[#F2C811]';
       case 'pending':
@@ -777,15 +777,15 @@ Compliance is determined based on evidence strength, quality, and clinical relev
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-[#323130]">GSPR Requirements Mapping</h2>
-          <p className="text-[#605E5C] mt-1">
+          <h2 className="text-2xl font-semibold text-[#141413]">GSPR Requirements Mapping</h2>
+          <p className="text-[#6b6963] mt-1">
             Map each selected GSPR to supporting clinical evidence and evaluate compliance
           </p>
         </div>
         <div className="flex space-x-2">
           <Button
             variant="outline"
-            className="border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC]"
+            className="border-[#d97757] text-[#d97757] hover:bg-[#faf0ec]"
             onClick={handleSave}
             disabled={!changes}
           >
@@ -797,7 +797,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
             tooltipPosition="bottom"
           >
             <Button
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
               onClick={handleAddToReport}
             >
               <FileCheck className="h-4 w-4 mr-2" />
@@ -807,12 +807,12 @@ Compliance is determined based on evidence strength, quality, and clinical relev
         </div>
       </div>
 
-      <div className="bg-[#F3F2F1] p-4 rounded border border-[#E1DFDD]">
+      <div className="bg-[#f4f3ee] p-4 rounded border border-[#e8e6dc]">
         <div className="flex items-start space-x-3">
-          <Info className="h-5 w-5 text-[#0F6CBD] mt-0.5" />
+          <Info className="h-5 w-5 text-[#d97757] mt-0.5" />
           <div>
-            <h4 className="text-[#323130] font-medium">GSPR Mapping Guidance</h4>
-            <p className="text-[#605E5C] text-sm">
+            <h4 className="text-[#141413] font-medium">GSPR Mapping Guidance</h4>
+            <p className="text-[#6b6963] text-sm">
               For each selected GSPR, link supporting clinical evidence from your data sources.
               Provide a compliance statement explaining how the evidence demonstrates conformity.
               Identify any gaps and define next steps where needed.
@@ -825,13 +825,13 @@ Compliance is determined based on evidence strength, quality, and clinical relev
         <TabsList className="bg-white border-b border-gray-200 rounded-none w-full flex justify-start gap-2 mb-4">
           <TabsTrigger
             value="mapping"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
           >
             GSPR Mapping
           </TabsTrigger>
           <TabsTrigger
             value="evidence"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
           >
             Evidence Library
           </TabsTrigger>
@@ -840,16 +840,16 @@ Compliance is determined based on evidence strength, quality, and clinical relev
         <TabsContent value="mapping">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
-              <div className="bg-white p-4 rounded border border-[#E1DFDD]">
-                <h3 className="text-[#323130] font-medium mb-3">Selected GSPRs</h3>
+              <div className="bg-white p-4 rounded border border-[#e8e6dc]">
+                <h3 className="text-[#141413] font-medium mb-3">Selected GSPRs</h3>
                 <div className="h-[450px] overflow-y-auto">
                   {selectedGSPRs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                      <Info className="h-6 w-6 text-[#0F6CBD] mb-2" />
-                      <p className="text-[#605E5C] text-sm">No GSPRs selected</p>
+                      <Info className="h-6 w-6 text-[#d97757] mb-2" />
+                      <p className="text-[#6b6963] text-sm">No GSPRs selected</p>
                     </div>
                   ) : (
-                    <ul className="divide-y divide-[#E1DFDD]">
+                    <ul className="divide-y divide-[#e8e6dc]">
                       {selectedGSPRs.map(gsprId => {
                         const gspr = getGsprDetails(gsprId);
                         const mappingData = mapping[gsprId] || {
@@ -861,11 +861,11 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                         return (
                           <li
                             key={gsprId}
-                            className={`p-3 cursor-pointer hover:bg-[#F3F2F1] ${isActive ? 'bg-[#EFF6FC] border-l-2 border-[#0F6CBD]' : ''}`}
+                            className={`p-3 cursor-pointer hover:bg-[#f4f3ee] ${isActive ? 'bg-[#faf0ec] border-l-2 border-[#d97757]' : ''}`}
                             onClick={() => handleSetActiveGspr(gsprId)}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium text-sm text-[#323130]">
+                              <span className="font-medium text-sm text-[#141413]">
                                 {gspr.title}
                               </span>
                               <Badge
@@ -881,7 +881,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                                 </span>
                               </Badge>
                             </div>
-                            <div className="flex items-center mt-1 text-xs text-[#605E5C]">
+                            <div className="flex items-center mt-1 text-xs text-[#6b6963]">
                               <FileText className="h-3 w-3 mr-1" />
                               <span>{mappingData.evidenceSources.length} evidence items</span>
                             </div>
@@ -896,14 +896,14 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
             <div className="md:col-span-1 lg:col-span-2">
               {activeGspr ? (
-                <div className="bg-white p-5 rounded border border-[#E1DFDD]">
+                <div className="bg-white p-5 rounded border border-[#e8e6dc]">
                   {console.log('Rendering GSPR detail panel for:', activeGspr)}
-                  <div className="flex justify-between items-start mb-4 border-b border-[#E1DFDD] pb-4">
+                  <div className="flex justify-between items-start mb-4 border-b border-[#e8e6dc] pb-4">
                     <div>
-                      <h3 className="text-lg font-medium text-[#323130]">
+                      <h3 className="text-lg font-medium text-[#141413]">
                         {getGsprDetails(activeGspr).title}
                       </h3>
-                      <p className="text-sm text-[#605E5C] mt-1">
+                      <p className="text-sm text-[#6b6963] mt-1">
                         {getGsprDetails(activeGspr).description}
                       </p>
                     </div>
@@ -926,15 +926,15 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                     {console.log('Rendering AI Analysis section')}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
                       <div className="flex items-center">
-                        <Shield className="h-4 w-4 text-[#0F6CBD] mr-2" />
-                        <span className="text-sm font-medium text-[#323130]">
+                        <Shield className="h-4 w-4 text-[#d97757] mr-2" />
+                        <span className="text-sm font-medium text-[#141413]">
                           AI-Assisted Regulatory Analysis
                         </span>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex items-center gap-2 border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC] w-full sm:w-auto"
+                        className="flex items-center gap-2 border-[#d97757] text-[#d97757] hover:bg-[#faf0ec] w-full sm:w-auto"
                         onClick={() => generateAIAnalysis(activeGspr)}
                         disabled={isGeneratingAIAnalysis}
                       >
@@ -955,7 +955,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                     {isGeneratingAIAnalysis && aiAnalysisTarget === activeGspr && (
                       <div>
                         <Progress value={aiAnalysisProgress} className="h-2 mb-1" />
-                        <p className="text-xs text-[#605E5C] text-right">
+                        <p className="text-xs text-[#6b6963] text-right">
                           {aiAnalysisProgress < 100
                             ? 'GPT-4o is analyzing evidence and generating regulatory insights...'
                             : 'Analysis complete!'}
@@ -966,7 +966,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <h4 className="text-sm font-medium text-[#323130] mb-2">
+                      <h4 className="text-sm font-medium text-[#141413] mb-2">
                         <span className="flex items-center">
                           Regulatory Interpretation
                           <CerTooltipWrapper
@@ -983,17 +983,17 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                           handleRegulatoryInterpretationChange(activeGspr, e.target.value)
                         }
                         placeholder="Explain how this requirement applies to your device..."
-                        className="border-[#E1DFDD] h-20 text-sm"
+                        className="border-[#e8e6dc] h-20 text-sm"
                       />
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-medium text-[#323130] mb-2">Compliance Status</h4>
+                      <h4 className="text-sm font-medium text-[#141413] mb-2">Compliance Status</h4>
                       <Select
                         value={mapping[activeGspr]?.complianceStatus || 'pending'}
                         onValueChange={value => handleComplianceStatusChange(activeGspr, value)}
                       >
-                        <SelectTrigger className="border-[#E1DFDD] mb-2">
+                        <SelectTrigger className="border-[#e8e6dc] mb-2">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1023,20 +1023,20 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <h4 className="text-sm font-medium text-[#323130] mb-2">
+                      <h4 className="text-sm font-medium text-[#141413] mb-2">
                         Compliance Statement
-                        <span className="text-xs text-[#E3008C] ml-1">*</span>
+                        <span className="text-xs text-[#d97757] ml-1">*</span>
                       </h4>
                       <Textarea
                         value={mapping[activeGspr]?.complianceStatement || ''}
                         onChange={e => handleComplianceStatementChange(activeGspr, e.target.value)}
                         placeholder="Explain how evidence demonstrates compliance..."
-                        className="border-[#E1DFDD] h-20 text-sm"
+                        className="border-[#e8e6dc] h-20 text-sm"
                       />
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-medium text-[#323130] mb-2">
+                      <h4 className="text-sm font-medium text-[#141413] mb-2">
                         <span className="flex items-center">
                           Acceptance Criteria
                           <CerTooltipWrapper
@@ -1051,7 +1051,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                         value={mapping[activeGspr]?.acceptanceCriteria || ''}
                         onChange={e => handleAcceptanceCriteriaChange(activeGspr, e.target.value)}
                         placeholder="Define measurable criteria for considering this GSPR satisfied..."
-                        className="border-[#E1DFDD] h-20 text-sm"
+                        className="border-[#e8e6dc] h-20 text-sm"
                       />
                     </div>
                   </div>
@@ -1059,7 +1059,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                   {mapping[activeGspr]?.gapsIdentified && (
                     <div className="p-3 border border-[#F2C811] bg-[#FFFCE5] rounded mb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-sm font-medium text-[#323130]">Gap Assessment</h4>
+                        <h4 className="text-sm font-medium text-[#141413]">Gap Assessment</h4>
                         <CerTooltipWrapper
                           tooltipContent="Gaps in clinical evidence must be identified and addressed per MDR Annex XIV"
                           whyThisMatters="Notified Bodies will scrutinize your gap management and mitigation plans as part of conformity assessment"
@@ -1070,39 +1070,39 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                         <div>
-                          <label className="text-xs text-[#323130] font-medium mb-1 block">
+                          <label className="text-xs text-[#141413] font-medium mb-1 block">
                             Gap Description
                           </label>
                           <Textarea
                             value={mapping[activeGspr]?.gapStatement || ''}
                             onChange={e => handleGapStatementChange(activeGspr, e.target.value)}
                             placeholder="Describe identified gaps in the clinical evidence..."
-                            className="border-[#E1DFDD] h-16 text-sm"
+                            className="border-[#e8e6dc] h-16 text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-[#323130] font-medium mb-1 block">
+                          <label className="text-xs text-[#141413] font-medium mb-1 block">
                             Gap Impact Assessment
                           </label>
                           <Textarea
                             value={mapping[activeGspr]?.gapImpact || ''}
                             onChange={e => handleGapImpactChange(activeGspr, e.target.value)}
                             placeholder="Assess the impact of these gaps on safety and performance..."
-                            className="border-[#E1DFDD] h-16 text-sm"
+                            className="border-[#e8e6dc] h-16 text-sm"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="text-xs text-[#323130] font-medium mb-1 block">
+                        <label className="text-xs text-[#141413] font-medium mb-1 block">
                           Mitigation Plan & Next Steps
-                          <span className="text-xs text-[#E3008C] ml-1">*</span>
+                          <span className="text-xs text-[#d97757] ml-1">*</span>
                         </label>
                         <Textarea
                           value={mapping[activeGspr]?.nextSteps || ''}
                           onChange={e => handleNextStepsChange(activeGspr, e.target.value)}
                           placeholder="Define concrete actions to address the identified gaps (e.g., PMCF studies, additional literature reviews)..."
-                          className="border-[#E1DFDD] h-16 text-sm"
+                          className="border-[#e8e6dc] h-16 text-sm"
                         />
                       </div>
                     </div>
@@ -1110,11 +1110,11 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
                   <div className="mb-3">
                     <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-sm font-medium text-[#323130]">Linked Evidence</h4>
+                      <h4 className="text-sm font-medium text-[#141413]">Linked Evidence</h4>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs text-[#0F6CBD] hover:bg-[#EFF6FC]"
+                        className="text-xs text-[#d97757] hover:bg-[#faf0ec]"
                         onClick={() => {}}
                       >
                         <Plus className="h-3.5 w-3.5 mr-1" />
@@ -1124,18 +1124,18 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
                     {mapping[activeGspr]?.evidenceSources &&
                     mapping[activeGspr]?.evidenceSources.length > 0 ? (
-                      <div className="border border-[#E1DFDD] rounded overflow-hidden">
+                      <div className="border border-[#e8e6dc] rounded overflow-hidden">
                         <table className="w-full text-sm">
-                          <thead className="bg-[#FAFAFA] text-[#605E5C]">
+                          <thead className="bg-[#faf9f5] text-[#6b6963]">
                             <tr>
                               <th className="text-left px-3 py-2 font-medium">Title</th>
                               <th className="text-left px-3 py-2 font-medium w-24">Type</th>
                               <th className="text-right px-3 py-2 font-medium w-16"></th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#E1DFDD]">
+                          <tbody className="divide-y divide-[#e8e6dc]">
                             {mapping[activeGspr].evidenceSources.slice(0, 3).map(evidence => (
-                              <tr key={evidence.id} className="hover:bg-[#F3F2F1]">
+                              <tr key={evidence.id} className="hover:bg-[#f4f3ee]">
                                 <td className="px-3 py-2 truncate">{evidence.title}</td>
                                 <td className="px-3 py-2">
                                   {EVIDENCE_SOURCES[evidence.type] || evidence.type}
@@ -1144,7 +1144,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 px-2 text-[#A19F9D] hover:text-red-600 hover:bg-red-50"
+                                    className="h-7 px-2 text-[#8a8880] hover:text-red-600 hover:bg-red-50"
                                     onClick={() => handleRemoveEvidence(activeGspr, evidence.id)}
                                   >
                                     Remove
@@ -1155,22 +1155,22 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                           </tbody>
                         </table>
                         {mapping[activeGspr].evidenceSources.length > 3 && (
-                          <div className="px-3 py-2 text-center text-xs text-[#0F6CBD] hover:bg-[#EFF6FC] cursor-pointer">
+                          <div className="px-3 py-2 text-center text-xs text-[#d97757] hover:bg-[#faf0ec] cursor-pointer">
                             Show {mapping[activeGspr].evidenceSources.length - 3} more items
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center border border-dashed border-[#E1DFDD] rounded p-4">
-                        <p className="text-[#605E5C] text-sm">
+                      <div className="flex items-center justify-center border border-dashed border-[#e8e6dc] rounded p-4">
+                        <p className="text-[#6b6963] text-sm">
                           No evidence linked to this requirement yet
                         </p>
                       </div>
                     )}
                   </div>
 
-                  <div className="border-t border-[#E1DFDD] pt-4 mt-4 mb-4">
-                    <h4 className="text-sm font-medium text-[#323130] mb-3">
+                  <div className="border-t border-[#e8e6dc] pt-4 mt-4 mb-4">
+                    <h4 className="text-sm font-medium text-[#141413] mb-3">
                       <span className="flex items-center">
                         Evidence Quality & Strength Assessment
                         <CerTooltipWrapper
@@ -1184,14 +1184,14 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="text-xs text-[#323130] font-medium mb-1 block">
+                        <label className="text-xs text-[#141413] font-medium mb-1 block">
                           Evidence Strength
                         </label>
                         <Select
                           value={mapping[activeGspr]?.evidenceStrength || 'unrated'}
                           onValueChange={value => handleEvidenceStrengthChange(activeGspr, value)}
                         >
-                          <SelectTrigger className="border-[#E1DFDD]">
+                          <SelectTrigger className="border-[#e8e6dc]">
                             <SelectValue placeholder="Select strength" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1204,30 +1204,30 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                       </div>
 
                       <div>
-                        <label className="text-xs text-[#323130] font-medium mb-1 block">
+                        <label className="text-xs text-[#141413] font-medium mb-1 block">
                           Clinical Relevance
                         </label>
                         <Textarea
                           value={mapping[activeGspr]?.clinicalRelevance || ''}
                           onChange={e => handleClinicalRelevanceChange(activeGspr, e.target.value)}
                           placeholder="Explain the clinical relevance of the evidence to this specific requirement..."
-                          className="border-[#E1DFDD] h-20 text-sm"
+                          className="border-[#e8e6dc] h-20 text-sm"
                         />
                       </div>
                     </div>
 
                     <div className="mb-4">
-                      <label className="text-xs text-[#323130] font-medium mb-1 block">
+                      <label className="text-xs text-[#141413] font-medium mb-1 block">
                         Reviewer Comments
                       </label>
                       <Textarea
                         value={mapping[activeGspr]?.reviewerComments || ''}
                         onChange={e => handleReviewerCommentsChange(activeGspr, e.target.value)}
                         placeholder="Add reviewer notes, action items, or comments for peer review..."
-                        className="border-[#E1DFDD] h-16 text-sm"
+                        className="border-[#e8e6dc] h-16 text-sm"
                       />
                       {mapping[activeGspr]?.lastReviewed && (
-                        <p className="text-xs text-[#605E5C] mt-1">
+                        <p className="text-xs text-[#6b6963] mt-1">
                           Last reviewed:{' '}
                           {new Date(mapping[activeGspr].lastReviewed).toLocaleDateString()}
                         </p>
@@ -1238,7 +1238,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                   <div className="flex justify-end">
                     <Button
                       variant="outline"
-                      className="border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC]"
+                      className="border-[#d97757] text-[#d97757] hover:bg-[#faf0ec]"
                       onClick={handleSave}
                       disabled={!changes}
                     >
@@ -1247,10 +1247,10 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded border border-[#E1DFDD] flex flex-col items-center justify-center h-[450px] text-center p-6">
-                  <Info className="h-8 w-8 text-[#0F6CBD] mb-3" />
-                  <h3 className="text-md font-medium text-[#323130] mb-1">Select a GSPR to Map</h3>
-                  <p className="text-sm text-[#605E5C] max-w-md">
+                <div className="bg-white rounded border border-[#e8e6dc] flex flex-col items-center justify-center h-[450px] text-center p-6">
+                  <Info className="h-8 w-8 text-[#d97757] mb-3" />
+                  <h3 className="text-md font-medium text-[#141413] mb-1">Select a GSPR to Map</h3>
+                  <p className="text-sm text-[#6b6963] max-w-md">
                     Choose a requirement from the list to map clinical evidence
                   </p>
                 </div>
@@ -1260,32 +1260,32 @@ Compliance is determined based on evidence strength, quality, and clinical relev
         </TabsContent>
 
         <TabsContent value="evidence">
-          <div className="bg-white p-5 rounded border border-[#E1DFDD]">
+          <div className="bg-white p-5 rounded border border-[#e8e6dc]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-[#323130]">Evidence Library</h3>
+              <h3 className="text-lg font-medium text-[#141413]">Evidence Library</h3>
               <div className="flex space-x-3">
-                <Badge variant="outline" className="bg-[#EFF6FC] text-[#0F6CBD]">
+                <Badge variant="outline" className="bg-[#faf0ec] text-[#d97757]">
                   FAERS: {availableEvidenceCount.FAERS}
                 </Badge>
-                <Badge variant="outline" className="bg-[#EFF6FC] text-[#0F6CBD]">
+                <Badge variant="outline" className="bg-[#faf0ec] text-[#d97757]">
                   Literature: {availableEvidenceCount.LITERATURE}
                 </Badge>
               </div>
             </div>
 
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#605E5C]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6b6963]" />
               <Input
-                className="border-[#E1DFDD] pl-10"
+                className="border-[#e8e6dc] pl-10"
                 placeholder="Search evidence by title, type, or date..."
                 value={evidenceSearchTerm}
                 onChange={e => setEvidenceSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="border border-[#E1DFDD] rounded overflow-hidden">
+            <div className="border border-[#e8e6dc] rounded overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-[#FAFAFA] text-[#605E5C]">
+                <thead className="bg-[#faf9f5] text-[#6b6963]">
                   <tr>
                     <th className="text-left px-4 py-3 font-medium">Title</th>
                     <th className="text-left px-4 py-3 font-medium w-32">Type</th>
@@ -1293,10 +1293,10 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                     <th className="text-right px-4 py-3 font-medium w-32">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E1DFDD]">
+                <tbody className="divide-y divide-[#e8e6dc]">
                   {filteredEvidence.length > 0 ? (
                     filteredEvidence.map(evidence => (
-                      <tr key={evidence.id} className="hover:bg-[#F3F2F1]">
+                      <tr key={evidence.id} className="hover:bg-[#f4f3ee]">
                         <td className="px-4 py-3 truncate max-w-[300px]">{evidence.title}</td>
                         <td className="px-4 py-3">
                           {EVIDENCE_SOURCES[evidence.type] || evidence.type}
@@ -1307,7 +1307,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-3 text-[#0F6CBD] hover:text-[#115EA3] hover:bg-[#EFF6FC]"
+                              className="h-8 px-3 text-[#d97757] hover:text-[#c15f3c] hover:bg-[#faf0ec]"
                               onClick={() => handleAddEvidence(activeGspr, evidence)}
                               disabled={mapping[activeGspr]?.evidenceSources?.some(
                                 e => e.id === evidence.id
@@ -1323,7 +1323,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-4 py-6 text-center text-[#605E5C]">
+                      <td colSpan="4" className="px-4 py-6 text-center text-[#6b6963]">
                         No evidence found. Try adjusting your search or retrieving more data.
                       </td>
                     </tr>

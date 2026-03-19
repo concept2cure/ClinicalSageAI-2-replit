@@ -295,17 +295,24 @@ export class ManufacturingService {
    */
   async updateEquipmentStatus(
     equipmentId: string,
-    status: EquipmentStatus
+    status: EquipmentStatus,
+    tenantId?: string
   ): Promise<ServiceResult<EquipmentRegistry>> {
     const startTime = Date.now();
 
     try {
+      const params: unknown[] = [status, equipmentId];
+      let whereClause = 'WHERE id = $2';
+      if (tenantId) {
+        params.push(tenantId);
+        whereClause += ` AND tenant_id = $${params.length}`;
+      }
       const result = await this.pool.query(
-        `UPDATE ${this.schema}.equipment_registry 
+        `UPDATE ${this.schema}.equipment_registry
          SET status = $1, updated_at = NOW()
-         WHERE id = $2
+         ${whereClause}
          RETURNING *`,
-        [status, equipmentId]
+        params
       );
 
       if (result.rows.length === 0) {
@@ -425,11 +432,11 @@ export class ManufacturingService {
     try {
       const result = await this.pool.query(
         `SELECT * FROM ${this.schema}.equipment_registry 
-         WHERE tenant_id = $1 
-           AND next_calibration_due <= NOW() + INTERVAL '${daysAhead} days'
+         WHERE tenant_id = $1
+           AND next_calibration_due <= NOW() + INTERVAL '1 day' * $2
            AND status = 'operational'
          ORDER BY next_calibration_due`,
-        [tenantId]
+        [tenantId, daysAhead]
       );
 
       return {

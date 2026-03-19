@@ -223,7 +223,7 @@ const AdvancedSimulationTools = ({ results, parameters, simulationSettings }) =>
                 <path
                   d="M0,90 C40,90 40,10 100,10 C160,10 160,90 200,90"
                   fill="none"
-                  stroke="#3b82f6"
+                  stroke="#6a9bcc"
                   strokeWidth="2"
                 />
                 <path
@@ -238,7 +238,7 @@ const AdvancedSimulationTools = ({ results, parameters, simulationSettings }) =>
                   y1="0"
                   x2="100"
                   y2="100"
-                  stroke="#94a3b8"
+                  stroke="#b0aea5"
                   strokeWidth="1"
                   strokeDasharray="4"
                 />

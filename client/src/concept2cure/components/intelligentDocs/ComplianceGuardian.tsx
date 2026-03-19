@@ -293,9 +293,9 @@ const ComplianceScoreRing: React.FC<{
   const offset = circumference - (score / 100) * circumference;
   
   const getColor = (s: number) => {
-    if (s >= 90) return { stroke: '#22c55e', text: 'text-green-500', bg: 'bg-green-50' };
-    if (s >= 70) return { stroke: '#eab308', text: 'text-amber-500', bg: 'bg-amber-50' };
-    return { stroke: '#ef4444', text: 'text-red-500', bg: 'bg-red-50' };
+    if (s >= 90) return { stroke: '#22c55e', text: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' };
+    if (s >= 70) return { stroke: '#eab308', text: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' };
+    return { stroke: '#ef4444', text: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' };
   };
   
   const colors = getColor(score);

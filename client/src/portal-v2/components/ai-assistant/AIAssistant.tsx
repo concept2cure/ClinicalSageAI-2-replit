@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - AI Assistant
+ * Concept2Cure Client Portal V2 - AI Assistant
  *
  * Intelligent regulatory assistant with document analysis,
  * compliance checking, and natural language querying.

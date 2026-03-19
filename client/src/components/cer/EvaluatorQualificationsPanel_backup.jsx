@@ -507,7 +507,7 @@ This clinical evaluation was performed in accordance with MEDDEV 2.7/1 Rev 4 gui
               </div>
 
               <div className="bg-[#F3F9FE] p-3 rounded-md mb-4 border border-[#DEECF9]">
-                <p className="text-xs text-[#0F6CBD]">
+                <p className="text-xs text-[#d97757]">
                   <BadgeCheck className="h-3 w-3 inline-block mr-1 mb-1" />
                   MEDDEV 2.7/1 Rev 4 requires independent review from individuals with appropriate
                   qualifications and experience. The reviewers should not have been involved in the
@@ -719,7 +719,7 @@ This clinical evaluation was performed in accordance with MEDDEV 2.7/1 Rev 4 gui
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-[#F3F9FE] p-3 rounded-md mb-3 border border-[#DEECF9]">
-            <p className="text-sm text-[#0F6CBD]">
+            <p className="text-sm text-[#d97757]">
               <CheckCircle className="h-4 w-4 inline-block mr-1 mb-1" />
               All items below must be checked prior to final CER submission to ensure regulatory
               compliance with EU MDR requirements.
@@ -786,11 +786,11 @@ This clinical evaluation was performed in accordance with MEDDEV 2.7/1 Rev 4 gui
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-4">
-        <h2 className="text-xl font-semibold text-[#323130]">
+        <h2 className="text-xl font-semibold text-[#141413]">
           Evaluator Qualifications & Sign-Off
         </h2>
-        <div className="bg-[#EFF6FC] rounded-md px-3 py-2 text-sm">
-          <p className="text-[#0F6CBD]">
+        <div className="bg-[#faf0ec] rounded-md px-3 py-2 text-sm">
+          <p className="text-[#d97757]">
             <BadgeCheck className="h-4 w-4 inline-block mr-1 mb-1" />
             EU MDR Article 61 and MEDDEV 2.7/1 Rev 4 require that clinical evaluations are performed
             by qualified evaluators with documented expertise
@@ -836,7 +836,7 @@ This clinical evaluation was performed in accordance with MEDDEV 2.7/1 Rev 4 gui
 
         <div className="flex justify-end pt-4">
           <Button
-            className="bg-[#0F6CBD] hover:bg-[#0E5EA5]"
+            className="bg-[#d97757] hover:bg-[#0E5EA5]"
             onClick={handleAddToCER}
             disabled={isLoading}
           >

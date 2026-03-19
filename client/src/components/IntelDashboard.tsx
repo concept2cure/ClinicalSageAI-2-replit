@@ -23,11 +23,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 // Import new components
+import NanoBananaImageGenerator from './NanoBananaImageGenerator';
 import StudyDesignAssistant from './StudyDesignAssistant';
 import ConversationalAssistant from './ConversationalAssistant';
 import KnowledgeBasePanel from './KnowledgeBasePanel';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc', '#92a87a'];
 
 export default function IntelDashboard() {
   const [indication, setIndication] = useState('');
@@ -43,6 +44,7 @@ export default function IntelDashboard() {
   const [successMetrics, setSuccessMetrics] = useState(null);
   const [selectedTab, setSelectedTab] = useState('protocol');
   const [showStudyDesignAssistant, setShowStudyDesignAssistant] = useState(false);
+  const [showNanoBanana, setShowNanoBanana] = useState(false);
   const pdfRef = useRef(null);
 
   useEffect(() => {
@@ -286,7 +288,7 @@ export default function IntelDashboard() {
       html2pdf()
         .set({ 
           margin: 0.5, 
-          filename: `TrialSage_${indication || 'Intelligence'}_Report.pdf`, 
+          filename: `Concept2Cure_${indication || 'Intelligence'}_Report.pdf`, 
           html2canvas: { scale: 2 }, 
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
         })
@@ -367,9 +369,18 @@ export default function IntelDashboard() {
                   <Save className="mr-2 h-4 w-4" />
                   Export Report
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNanoBanana(prev => !prev)}
+                  className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 hover:from-amber-100 hover:to-orange-100"
+                >
+                  <Sparkles className="mr-2 h-4 w-4 text-amber-600" />
+                  AI Visual
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowStudyDesignAssistant(true)}
                   className="bg-gradient-to-r from-blue-100 to-violet-100 border-blue-300 hover:from-blue-200 hover:to-violet-200"
                 >
@@ -485,11 +496,22 @@ export default function IntelDashboard() {
               <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
               <h3 className="text-lg font-medium mb-1">Processing Your Request</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md">
-                TrialSage is leveraging OpenAI and its knowledge database to generate intelligent insights tailored to your query.
+                Concept2Cure is leveraging OpenAI and its knowledge database to generate intelligent insights tailored to your query.
               </p>
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Nano Banana Visual AI Panel */}
+      {showNanoBanana && (
+        <div className="mb-6">
+          <NanoBananaImageGenerator
+            context={indication ? `Study intelligence for ${indication} — trial design, success metrics, and regulatory landscape` : 'Clinical trial intelligence dashboard overview'}
+            mode="infographic"
+            promptSuffix="Professional scientific infographic for regulatory intelligence. Data-rich, publication-ready."
+          />
+        </div>
       )}
 
       <div ref={pdfRef}>
@@ -807,10 +829,10 @@ export default function IntelDashboard() {
                       <XAxis dataKey="name" tick={{fontSize: 12}} />
                       <YAxis tick={{fontSize: 12}} />
                       <Tooltip 
-                        contentStyle={{border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px'}}
+                        contentStyle={{border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px'}}
                         labelStyle={{fontWeight: 'bold', marginBottom: '5px'}}
                       />
-                      <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="count" fill="#c15f3c" radius={[4, 4, 0, 0]}>
                         {formatBarData(metrics.reportsByPhase)?.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
@@ -843,10 +865,10 @@ export default function IntelDashboard() {
                         width={100} 
                       />
                       <Tooltip 
-                        contentStyle={{border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px'}}
+                        contentStyle={{border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px'}}
                         labelStyle={{fontWeight: 'bold', marginBottom: '5px'}}
                       />
-                      <Bar dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]}>
+                      <Bar dataKey="count" fill="#788c5d" radius={[0, 4, 4, 0]}>
                         {metrics.topIndications?.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
@@ -909,10 +931,10 @@ export default function IntelDashboard() {
                       outerRadius="90%" 
                       barSize={12} 
                       data={[
-                        { name: 'Endpoint Selection', value: 87, fill: '#4f46e5' },
-                        { name: 'Sample Size', value: 76, fill: '#10b981' },
+                        { name: 'Endpoint Selection', value: 87, fill: '#c15f3c' },
+                        { name: 'Sample Size', value: 76, fill: '#788c5d' },
                         { name: 'Patient Selection', value: 82, fill: '#eab308' },
-                        { name: 'Protocol Design', value: 92, fill: '#ec4899' },
+                        { name: 'Protocol Design', value: 92, fill: '#d97757' },
                       ]}
                       startAngle={180} 
                       endAngle={0}
@@ -926,7 +948,7 @@ export default function IntelDashboard() {
                         label={{ fill: '#666', position: 'insideStart', fontSize: 10 }}
                       />
                       <Tooltip
-                        contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px' }}
+                        contentStyle={{ border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px' }}
                         formatter={(value) => [`${value}%`, 'Score']}
                       />
                       <Legend 
@@ -966,7 +988,7 @@ export default function IntelDashboard() {
                       <XAxis dataKey="year" tick={{fontSize: 12}} />
                       <YAxis tick={{fontSize: 12}} />
                       <Tooltip 
-                        contentStyle={{border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px'}}
+                        contentStyle={{border: '1px solid #e8e6dc', borderRadius: '6px', padding: '8px'}}
                         formatter={(value) => [`${value}%`, 'Success Rate']}
                       />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
@@ -974,16 +996,16 @@ export default function IntelDashboard() {
                         type="monotone" 
                         dataKey="oncology" 
                         stackId="1"
-                        stroke="#4f46e5" 
-                        fill="#4f46e5" 
+                        stroke="#c15f3c" 
+                        fill="#c15f3c" 
                         fillOpacity={0.8} 
                       />
                       <Area 
                         type="monotone" 
                         dataKey="immunology" 
                         stackId="1"
-                        stroke="#10b981" 
-                        fill="#10b981" 
+                        stroke="#788c5d" 
+                        fill="#788c5d" 
                         fillOpacity={0.6} 
                       />
                       <Area 
@@ -998,8 +1020,8 @@ export default function IntelDashboard() {
                         type="monotone" 
                         dataKey="cardiology" 
                         stackId="1"
-                        stroke="#ec4899" 
-                        fill="#ec4899" 
+                        stroke="#d97757" 
+                        fill="#d97757" 
                         fillOpacity={0.4} 
                       />
                     </AreaChart>

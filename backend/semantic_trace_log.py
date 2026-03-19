@@ -1,5 +1,5 @@
 """
-Semantic Trace Log Module for LumenTrialGuide.AI
+Semantic Trace Log Module for Concept2Cure
 
 This module records how AI made alignment decisions between protocols and CSRs.
 It provides transparency and auditability in the semantic intelligence pipeline.

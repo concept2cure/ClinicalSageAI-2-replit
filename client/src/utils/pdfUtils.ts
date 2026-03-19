@@ -1,7 +1,7 @@
 /**
  * PDF Utility Functions
  *
- * This module provides functions to work with PDF files in the TrialSage application.
+ * This module provides functions to work with PDF files in the Concept2Cure application.
  */
 
 /**

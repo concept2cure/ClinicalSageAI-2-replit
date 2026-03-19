@@ -132,7 +132,7 @@ const WorkflowProgress = ({ project, currentStage = null }) => {
                   animate={{
                     scale: isActive || isCompleted ? 1 : 0.8,
                     opacity: isActive || isCompleted ? 1 : 0.7,
-                    backgroundColor: isCompleted ? '#10b981' : isActive ? '#2563eb' : '#ffffff',
+                    backgroundColor: isCompleted ? '#788c5d' : isActive ? '#5585b3' : '#ffffff',
                   }}
                   whileHover={{ scale: 1.1 }}
                   transition={{ duration: 0.3 }}

@@ -1,4 +1,4 @@
-// TrialSage Frontend Application
+// Concept2Cure Frontend Application
 
 // Global state
 let currentThreadId = null;

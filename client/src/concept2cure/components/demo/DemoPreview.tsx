@@ -83,7 +83,7 @@ const HeroPreview: React.FC = () => (
     <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mb-6 shadow-lg shadow-violet-200">
       <Sparkles className="w-10 h-10 text-white" />
     </div>
-    <h2 className="text-2xl font-bold text-zinc-900 mb-2">ClinicalSageAI</h2>
+    <h2 className="text-2xl font-bold text-zinc-900 mb-2">Concept2Cure.RI</h2>
     <p className="text-sm text-zinc-500 max-w-md">
       The unified regulatory intelligence platform. One AI co-pilot replacing 10-15 disconnected tools.
     </p>
@@ -991,6 +991,96 @@ const CollabAcademyPreview: React.FC = () => (
   </div>
 );
 
+// ─── Nano Banana Visual AI Previews ─────────────────────────────────────────
+
+const NanoBananaOverviewPreview: React.FC = () => (
+  <div className="space-y-4">
+    <div className="text-center mb-6">
+      <div className="text-5xl mb-2">🍌</div>
+      <h3 className="text-lg font-bold text-zinc-900">Nano Banana Visual AI</h3>
+      <p className="text-xs text-zinc-500">Powered by Google Gemini</p>
+    </div>
+    <div className="grid grid-cols-3 gap-3">
+      {[
+        { title: 'Infographics', metric: '4K', desc: 'Publication-ready', color: 'bg-amber-50 border-amber-200' },
+        { title: 'Slide Decks', metric: 'PPTX', desc: 'Auto-generated', color: 'bg-orange-50 border-orange-200' },
+        { title: 'Diagrams', metric: '<12s', desc: 'Per image', color: 'bg-yellow-50 border-yellow-200' },
+      ].map(c => (
+        <div key={c.title} className={cn('rounded-xl border p-3 text-center', c.color)}>
+          <div className="text-lg font-bold text-zinc-900">{c.metric}</div>
+          <div className="text-xs font-medium text-zinc-700">{c.title}</div>
+          <div className="text-[10px] text-zinc-500">{c.desc}</div>
+        </div>
+      ))}
+    </div>
+    <MockCard title="Style Options" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>
+      <div className="flex flex-wrap gap-1.5">
+        {['Infographic', 'Illustration', 'Photorealistic', 'Slide Visual'].map(s => (
+          <span key={s} className="px-2 py-1 text-[10px] font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200">{s}</span>
+        ))}
+      </div>
+    </MockCard>
+    <MockCard title="Platform Integration" icon={<Layers className="w-4 h-4 text-violet-500" />}>
+      {['AnA Chat', 'Report Center', 'Document Builder', 'Program Analytics', 'Training'].map(m => (
+        <div key={m} className="flex items-center gap-2 py-1">
+          <CheckCircle className="w-3 h-3 text-emerald-500" />
+          <span className="text-xs text-zinc-700">{m}</span>
+        </div>
+      ))}
+    </MockCard>
+  </div>
+);
+
+const NanoBananaGeneratePreview: React.FC = () => (
+  <div className="space-y-4">
+    <MockCard title="Image Generation" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>
+      <div className="bg-zinc-50 rounded-lg p-3 mb-3">
+        <div className="text-[10px] text-zinc-400 mb-1">Prompt</div>
+        <div className="text-xs text-zinc-700 italic">"Infographic showing IND submission timeline with Phase 1-3 milestones, FDA review gates, and approval pathway"</div>
+      </div>
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-6 flex items-center justify-center border border-amber-200">
+        <div className="text-center">
+          <div className="text-3xl mb-1">🖼️</div>
+          <div className="text-xs font-medium text-amber-700">4096 x 4096 Generated</div>
+          <div className="text-[10px] text-amber-500">11.4s · SynthID watermarked</div>
+        </div>
+      </div>
+    </MockCard>
+    <MockCard title="Cost Controls" icon={<Shield className="w-4 h-4 text-blue-500" />}>
+      {[
+        { label: 'Rate Limiting', desc: 'Per-user daily caps by tier' },
+        { label: 'Response Caching', desc: 'Same prompt = cached result (1hr TTL)' },
+        { label: 'Resolution Gating', desc: 'Free: 2K · Pro: 4K' },
+      ].map(c => (
+        <div key={c.label} className="flex items-start gap-2 py-1.5">
+          <Lock className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
+          <div>
+            <div className="text-xs font-medium text-zinc-800">{c.label}</div>
+            <div className="text-[10px] text-zinc-500">{c.desc}</div>
+          </div>
+        </div>
+      ))}
+    </MockCard>
+  </div>
+);
+
+const NanoBananaIntegrationsPreview: React.FC = () => (
+  <div className="space-y-4">
+    {[
+      { name: 'AnA Chat', desc: 'Switch to Nano Banana mode, describe what you need', icon: <Bot className="w-4 h-4 text-violet-500" />, color: 'border-violet-200' },
+      { name: 'Report Center', desc: 'Generate visuals alongside readiness briefs & transmittals', icon: <BarChart3 className="w-4 h-4 text-blue-500" />, color: 'border-blue-200' },
+      { name: 'Document Builder', desc: 'Insert AI figures into CSR/CTD sections during review', icon: <FileText className="w-4 h-4 text-emerald-500" />, color: 'border-emerald-200' },
+      { name: 'Program Analytics', desc: 'Export dashboards as infographics or slide decks', icon: <Activity className="w-4 h-4 text-orange-500" />, color: 'border-orange-200' },
+      { name: 'Training Center', desc: 'Auto-generate training materials with regulatory visuals', icon: <BookOpen className="w-4 h-4 text-pink-500" />, color: 'border-pink-200' },
+      { name: 'PPTX Export', desc: 'Any export enhanced with AI cover images automatically', icon: <FolderOpen className="w-4 h-4 text-amber-500" />, color: 'border-amber-200' },
+    ].map(item => (
+      <MockCard key={item.name} title={item.name} icon={item.icon} className={cn('border', item.color)}>
+        <p className="text-xs text-zinc-600">{item.desc}</p>
+      </MockCard>
+    ))}
+  </div>
+);
+
 // ─── PREVIEW MAP ────────────────────────────────────────────────────────────
 
 const PREVIEW_MAP: Record<string, React.FC> = {
@@ -1041,6 +1131,10 @@ const PREVIEW_MAP: Record<string, React.FC> = {
   'collab-reports': CollabReportsPreview,
   'collab-postmarket': CollabPostmarketPreview,
   'collab-academy': CollabAcademyPreview,
+  // Path 9: Nano Banana Visual AI
+  'nano-banana-overview': NanoBananaOverviewPreview,
+  'nano-banana-generate': NanoBananaGeneratePreview,
+  'nano-banana-integrations': NanoBananaIntegrationsPreview,
 };
 
 // ─── Main Component ─────────────────────────────────────────────────────────

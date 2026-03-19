@@ -954,8 +954,8 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
       <Dialog open={isDataAccessDialogOpen} onOpenChange={setIsDataAccessDialogOpen}>
         <DialogContent className="max-w-md md:max-w-xl">
           <DialogHeader>
-            <DialogTitle className="text-[#323130] text-lg font-semibold flex items-center">
-              <Shield className="h-5 w-5 mr-2 text-[#0F6CBD]" />
+            <DialogTitle className="text-[#141413] text-lg font-semibold flex items-center">
+              <Shield className="h-5 w-5 mr-2 text-[#d97757]" />
               Data Access Verification
             </DialogTitle>
             <DialogDescription className="text-[#616161]">
@@ -968,9 +968,9 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
           <div className="space-y-4 my-2">
             {activeDevice && (
-              <Alert variant="outline" className="bg-[#F2F6FB] border-[#0F6CBD]">
+              <Alert variant="outline" className="bg-[#F2F6FB] border-[#d97757]">
                 <div className="flex">
-                  <Info className="h-4 w-4 text-[#0F6CBD] mt-0.5 mr-2" />
+                  <Info className="h-4 w-4 text-[#d97757] mt-0.5 mr-2" />
                   <div>
                     <AlertTitle>Verifying access for {activeDevice.name}</AlertTitle>
                     <AlertDescription className="text-[#616161] text-xs mt-1">
@@ -997,7 +997,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="data-manufacturer" className="text-sm font-medium text-[#323130]">
+                <Label htmlFor="data-manufacturer" className="text-sm font-medium text-[#141413]">
                   Your Manufacturer Name
                 </Label>
                 <Input
@@ -1006,31 +1006,31 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   onChange={e =>
                     setDataAccessInfo({ ...dataAccessInfo, manufacturerName: e.target.value })
                   }
-                  className="h-9 border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD]"
+                  className="h-9 border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]"
                   placeholder="e.g. Your Company, Inc."
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-[#323130] flex items-center">
+                <Label className="text-sm font-medium text-[#141413] flex items-center">
                   Data Access Type
-                  <span className="ml-1 text-[#D83B01] text-xs font-medium">*</span>
+                  <span className="ml-1 text-[#c15f3c] text-xs font-medium">*</span>
                 </Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'direct_contract'
-                        ? 'border-[#0F6CBD] bg-[#F2F6FB]'
-                        : 'border-[#E1DFDD] hover:border-[#0F6CBD] hover:bg-[#F9FAFB]'
+                        ? 'border-[#d97757] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#d97757] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() =>
                       setDataAccessInfo({ ...dataAccessInfo, accessType: 'direct_contract' })
                     }
                   >
-                    <Key className="h-5 w-5 text-[#0F6CBD] mt-0.5 mr-2" />
+                    <Key className="h-5 w-5 text-[#d97757] mt-0.5 mr-2" />
                     <div>
-                      <p className="text-sm font-medium text-[#323130]">Direct Contract</p>
+                      <p className="text-sm font-medium text-[#141413]">Direct Contract</p>
                       <p className="text-xs text-[#616161] mt-1">
                         Contractual agreement with the equivalent device manufacturer
                       </p>
@@ -1041,16 +1041,16 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'published_literature'
-                        ? 'border-[#0F6CBD] bg-[#F2F6FB]'
-                        : 'border-[#E1DFDD] hover:border-[#0F6CBD] hover:bg-[#F9FAFB]'
+                        ? 'border-[#d97757] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#d97757] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() =>
                       setDataAccessInfo({ ...dataAccessInfo, accessType: 'published_literature' })
                     }
                   >
-                    <FileCheck className="h-5 w-5 text-[#0F6CBD] mt-0.5 mr-2" />
+                    <FileCheck className="h-5 w-5 text-[#d97757] mt-0.5 mr-2" />
                     <div>
-                      <p className="text-sm font-medium text-[#323130]">Published Literature</p>
+                      <p className="text-sm font-medium text-[#141413]">Published Literature</p>
                       <p className="text-xs text-[#616161] mt-1">
                         Access through published scientific literature
                       </p>
@@ -1061,16 +1061,16 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'indirect_access'
-                        ? 'border-[#0F6CBD] bg-[#F2F6FB]'
-                        : 'border-[#E1DFDD] hover:border-[#0F6CBD] hover:bg-[#F9FAFB]'
+                        ? 'border-[#d97757] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#d97757] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() =>
                       setDataAccessInfo({ ...dataAccessInfo, accessType: 'indirect_access' })
                     }
                   >
-                    <Fingerprint className="h-5 w-5 text-[#0F6CBD] mt-0.5 mr-2" />
+                    <Fingerprint className="h-5 w-5 text-[#d97757] mt-0.5 mr-2" />
                     <div>
-                      <p className="text-sm font-medium text-[#323130]">Indirect Access</p>
+                      <p className="text-sm font-medium text-[#141413]">Indirect Access</p>
                       <p className="text-xs text-[#616161] mt-1">
                         Access through a third-party service (e.g., greenlight.guru)
                       </p>
@@ -1081,14 +1081,14 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'other'
-                        ? 'border-[#0F6CBD] bg-[#F2F6FB]'
-                        : 'border-[#E1DFDD] hover:border-[#0F6CBD] hover:bg-[#F9FAFB]'
+                        ? 'border-[#d97757] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#d97757] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() => setDataAccessInfo({ ...dataAccessInfo, accessType: 'other' })}
                   >
-                    <BarChart className="h-5 w-5 text-[#0F6CBD] mt-0.5 mr-2" />
+                    <BarChart className="h-5 w-5 text-[#d97757] mt-0.5 mr-2" />
                     <div>
-                      <p className="text-sm font-medium text-[#323130]">Other Method</p>
+                      <p className="text-sm font-medium text-[#141413]">Other Method</p>
                       <p className="text-xs text-[#616161] mt-1">
                         Other forms of access (please specify in details)
                       </p>
@@ -1101,7 +1101,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 <div className="space-y-2">
                   <Label
                     htmlFor="contract-reference"
-                    className="text-sm font-medium text-[#323130]"
+                    className="text-sm font-medium text-[#141413]"
                   >
                     Contract Reference Number
                   </Label>
@@ -1111,7 +1111,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     onChange={e =>
                       setDataAccessInfo({ ...dataAccessInfo, contractReference: e.target.value })
                     }
-                    className="h-9 border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD]"
+                    className="h-9 border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]"
                     placeholder="e.g. CONT-2025-4893"
                   />
                 </div>
@@ -1121,7 +1121,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 <div className="space-y-2">
                   <Label
                     htmlFor="thirdparty-service"
-                    className="text-sm font-medium text-[#323130]"
+                    className="text-sm font-medium text-[#141413]"
                   >
                     Third-Party Service
                   </Label>
@@ -1146,7 +1146,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="data-details" className="text-sm font-medium text-[#323130]">
+                <Label htmlFor="data-details" className="text-sm font-medium text-[#141413]">
                   Access Details
                 </Label>
                 <Textarea
@@ -1155,7 +1155,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   onChange={e =>
                     setDataAccessInfo({ ...dataAccessInfo, accessDetails: e.target.value })
                   }
-                  className="border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD] resize-none"
+                  className="border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757] resize-none"
                   placeholder={
                     dataAccessInfo.accessType === 'indirect_access'
                       ? 'Please provide details including your greenlight.guru subscription level, access date, and any specific agreements in place...'
@@ -1166,8 +1166,8 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               </div>
 
               {/* Data access checklist for EU MDR compliance */}
-              <div className="space-y-3 p-3 border border-[#E1DFDD] rounded-md">
-                <div className="text-sm font-medium text-[#323130]">
+              <div className="space-y-3 p-3 border border-[#e8e6dc] rounded-md">
+                <div className="text-sm font-medium text-[#141413]">
                   EU MDR Article 61(5) Compliance Checklist
                 </div>
 
@@ -1182,7 +1182,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     />
                     <Label
                       htmlFor="check-technical"
-                      className="text-xs text-[#323130] cursor-pointer"
+                      className="text-xs text-[#141413] cursor-pointer"
                     >
                       Access to Technical Characteristics data
                     </Label>
@@ -1198,7 +1198,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     />
                     <Label
                       htmlFor="check-biological"
-                      className="text-xs text-[#323130] cursor-pointer"
+                      className="text-xs text-[#141413] cursor-pointer"
                     >
                       Access to Biological Characteristics data
                     </Label>
@@ -1214,7 +1214,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     />
                     <Label
                       htmlFor="check-clinical"
-                      className="text-xs text-[#323130] cursor-pointer"
+                      className="text-xs text-[#141413] cursor-pointer"
                     >
                       Access to Clinical Characteristics data
                     </Label>
@@ -1230,7 +1230,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     />
                     <Label
                       htmlFor="check-documentation"
-                      className="text-xs text-[#323130] cursor-pointer"
+                      className="text-xs text-[#141413] cursor-pointer"
                     >
                       Documentation of data access is available for Notified Body review
                     </Label>
@@ -1242,7 +1242,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 <div className="mt-4">
                   <div className="flex items-center mb-2">
                     {dataAccessStatus === 'checking' ? (
-                      <Loader2 className="h-4 w-4 text-[#0F6CBD] animate-spin mr-2" />
+                      <Loader2 className="h-4 w-4 text-[#d97757] animate-spin mr-2" />
                     ) : dataAccessStatus === 'compliant' ? (
                       <ShieldCheck className="h-4 w-4 text-green-600 mr-2" />
                     ) : dataAccessStatus === 'non-compliant' ? (
@@ -1255,7 +1255,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                       className={cn(
                         'text-sm font-medium',
                         dataAccessStatus === 'checking'
-                          ? 'text-[#0F6CBD]'
+                          ? 'text-[#d97757]'
                           : dataAccessStatus === 'compliant'
                             ? 'text-green-600'
                             : dataAccessStatus === 'non-compliant'
@@ -1274,7 +1274,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   </div>
 
                   {dataAccessAssessment && (
-                    <div className="text-xs text-[#616161] p-3 bg-[#F9FAFB] border border-[#E1DFDD] rounded max-h-40 overflow-y-auto mt-2">
+                    <div className="text-xs text-[#616161] p-3 bg-[#F9FAFB] border border-[#e8e6dc] rounded max-h-40 overflow-y-auto mt-2">
                       {dataAccessAssessment.split('\n').map((paragraph, index) => (
                         <p key={index} className="mb-2">
                           {paragraph}
@@ -1290,7 +1290,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
           <DialogFooter>
             <Button
               variant="outline"
-              className="text-[#616161] border-[#E1DFDD] hover:bg-[#F9FAFB] hover:text-[#323130]"
+              className="text-[#616161] border-[#e8e6dc] hover:bg-[#F9FAFB] hover:text-[#141413]"
               onClick={() => setIsDataAccessDialogOpen(false)}
             >
               Cancel
@@ -1298,7 +1298,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
             <Button
               variant="default"
-              className="bg-[#0F6CBD] text-white hover:bg-[#0C5AA0]"
+              className="bg-[#d97757] text-white hover:bg-[#0C5AA0]"
               onClick={() => checkDataAccessCompliance(activeDeviceId)}
               disabled={dataAccessStatus === 'checking'}
             >
@@ -1316,12 +1316,12 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
       </Dialog>
 
       {/* Subject Device Section */}
-      <div className="bg-white p-4 border border-[#E1DFDD] rounded">
-        <div className="flex items-center justify-between border-b border-[#E1DFDD] pb-3 mb-3">
-          <h3 className="text-base font-semibold text-[#323130]">Subject Device</h3>
+      <div className="bg-white p-4 border border-[#e8e6dc] rounded">
+        <div className="flex items-center justify-between border-b border-[#e8e6dc] pb-3 mb-3">
+          <h3 className="text-base font-semibold text-[#141413]">Subject Device</h3>
           <Badge
             variant="outline"
-            className="bg-[#E5F2FF] text-[#0F6CBD] text-xs border-[#0F6CBD] px-2 py-0.5"
+            className="bg-[#faf0ec] text-[#d97757] text-xs border-[#d97757] px-2 py-0.5"
           >
             MEDDEV 2.7/1 Rev 4 Compliant
           </Badge>
@@ -1329,53 +1329,53 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="subject-name" className="text-sm font-medium text-[#323130]">
+            <Label htmlFor="subject-name" className="text-sm font-medium text-[#141413]">
               Device Name
             </Label>
             <Input
               id="subject-name"
               value={subjectDevice.name}
               onChange={e => setSubjectDevice({ ...subjectDevice, name: e.target.value })}
-              className="h-9 border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD]"
+              className="h-9 border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]"
               placeholder="e.g. OrthoFlex Medical Implant"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subject-manufacturer" className="text-sm font-medium text-[#323130]">
+            <Label htmlFor="subject-manufacturer" className="text-sm font-medium text-[#141413]">
               Manufacturer
             </Label>
             <Input
               id="subject-manufacturer"
               value={subjectDevice.manufacturer}
               onChange={e => setSubjectDevice({ ...subjectDevice, manufacturer: e.target.value })}
-              className="h-9 border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD]"
+              className="h-9 border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]"
               placeholder="e.g. OrthoFlex Medical, Inc."
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subject-model" className="text-sm font-medium text-[#323130]">
+            <Label htmlFor="subject-model" className="text-sm font-medium text-[#141413]">
               Model/Version
             </Label>
             <Input
               id="subject-model"
               value={subjectDevice.model}
               onChange={e => setSubjectDevice({ ...subjectDevice, model: e.target.value })}
-              className="h-9 border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD]"
+              className="h-9 border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757]"
               placeholder="e.g. OF-2025-A"
             />
           </div>
 
           <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="subject-description" className="text-sm font-medium text-[#323130]">
+            <Label htmlFor="subject-description" className="text-sm font-medium text-[#141413]">
               Brief Description
             </Label>
             <Textarea
               id="subject-description"
               value={subjectDevice.description}
               onChange={e => setSubjectDevice({ ...subjectDevice, description: e.target.value })}
-              className="border-[#E1DFDD] focus:border-[#0F6CBD] focus:ring-1 focus:ring-[#0F6CBD] resize-none"
+              className="border-[#e8e6dc] focus:border-[#d97757] focus:ring-1 focus:ring-[#d97757] resize-none"
               placeholder="Enter a brief description of the device..."
               rows={3}
             />
@@ -1384,20 +1384,20 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
       </div>
 
       {/* Equivalent Devices Section */}
-      <div className="bg-white p-4 border border-[#E1DFDD] rounded">
-        <div className="flex items-center justify-between border-b border-[#E1DFDD] pb-3 mb-3">
-          <h3 className="text-base font-semibold text-[#323130]">Equivalent Devices</h3>
+      <div className="bg-white p-4 border border-[#e8e6dc] rounded">
+        <div className="flex items-center justify-between border-b border-[#e8e6dc] pb-3 mb-3">
+          <h3 className="text-base font-semibold text-[#141413]">Equivalent Devices</h3>
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
-              className="text-xs bg-[#F5F5F5] text-[#616161] border-[#E1DFDD] px-2 py-0.5"
+              className="text-xs bg-[#F5F5F5] text-[#616161] border-[#e8e6dc] px-2 py-0.5"
             >
               {equivalentDevices.length} device{equivalentDevices.length !== 1 ? 's' : ''}
             </Badge>
             <Button
               size="sm"
               variant="outline"
-              className="h-8 text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC] hover:text-[#0F6CBD]"
+              className="h-8 text-[#d97757] border-[#d97757] hover:bg-[#faf0ec] hover:text-[#d97757]"
               onClick={() => {
                 resetEquivalentDeviceForm();
                 setDialogMode('add');
@@ -1411,9 +1411,9 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
         </div>
 
         {equivalentDevices.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-6 bg-[#FAF9F8] rounded border border-[#E1DFDD] text-center">
-            <FileText className="h-8 w-8 text-[#A19F9D] mb-2" />
-            <p className="text-sm text-[#323130] font-medium">No equivalent devices yet</p>
+          <div className="flex flex-col items-center justify-center p-6 bg-[#faf9f5] rounded border border-[#e8e6dc] text-center">
+            <FileText className="h-8 w-8 text-[#8a8880] mb-2" />
+            <p className="text-sm text-[#141413] font-medium">No equivalent devices yet</p>
             <p className="text-xs text-[#616161] mt-1">
               Add equivalent devices to start building the comparison table
             </p>
@@ -1421,15 +1421,15 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
         ) : (
           <div className="space-y-4">
             {/* Device tabs */}
-            <div className="flex flex-wrap gap-2 pb-2 border-b border-[#E1DFDD]">
+            <div className="flex flex-wrap gap-2 pb-2 border-b border-[#e8e6dc]">
               {equivalentDevices.map(device => (
                 <Button
                   key={device.id}
                   variant={activeDeviceId === device.id ? 'default' : 'outline'}
                   className={
                     activeDeviceId === device.id
-                      ? 'bg-[#0F6CBD] hover:bg-[#115EA3] text-white'
-                      : 'text-[#323130] hover:bg-[#F3F2F1]'
+                      ? 'bg-[#d97757] hover:bg-[#c15f3c] text-white'
+                      : 'text-[#141413] hover:bg-[#f4f3ee]'
                   }
                   onClick={() => setActiveDeviceId(device.id)}
                 >
@@ -1449,7 +1449,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h4 className="text-sm font-medium text-[#323130]">{activeDevice.name}</h4>
+                    <h4 className="text-sm font-medium text-[#141413]">{activeDevice.name}</h4>
                     <p className="text-xs text-[#616161]">
                       {activeDevice.manufacturer}{' '}
                       {activeDevice.model ? `• ${activeDevice.model}` : ''}
@@ -1460,7 +1460,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                       size="sm"
                       variant="ghost"
                       onClick={() => editEquivalentDevice(activeDevice)}
-                      className="h-8 text-[#323130] hover:bg-[#F3F2F1]"
+                      className="h-8 text-[#141413] hover:bg-[#f4f3ee]"
                     >
                       <Edit2 className="h-3.5 w-3.5 mr-1.5" />
                       <span>Edit</span>
@@ -1479,18 +1479,18 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
                 {/* Device description */}
                 {activeDevice.description && (
-                  <div className="p-3 bg-[#FAF9F8] rounded border border-[#E1DFDD] mb-4">
-                    <p className="text-sm text-[#323130]">{activeDevice.description}</p>
+                  <div className="p-3 bg-[#faf9f5] rounded border border-[#e8e6dc] mb-4">
+                    <p className="text-sm text-[#141413]">{activeDevice.description}</p>
                   </div>
                 )}
 
                 {/* Features section */}
                 <div className="flex items-center justify-between mb-3">
-                  <h5 className="text-sm font-medium text-[#323130]">Feature Comparison Table</h5>
+                  <h5 className="text-sm font-medium text-[#141413]">Feature Comparison Table</h5>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC] hover:text-[#0F6CBD]"
+                    className="h-8 text-[#d97757] border-[#d97757] hover:bg-[#faf0ec] hover:text-[#d97757]"
                     onClick={() => {
                       resetFeatureForm();
                       setIsFeatureDialogOpen(true);
@@ -1502,16 +1502,16 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 </div>
 
                 {activeDevice.features.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center p-4 bg-[#FAF9F8] rounded border border-[#E1DFDD] text-center">
+                  <div className="flex flex-col items-center justify-center p-4 bg-[#faf9f5] rounded border border-[#e8e6dc] text-center">
                     <p className="text-xs text-[#616161]">
                       No features added yet. Click 'Add Feature' to begin the comparison.
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto border border-[#E1DFDD] rounded">
+                  <div className="overflow-x-auto border border-[#e8e6dc] rounded">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-[#FAF9F8]">
+                        <TableRow className="bg-[#faf9f5]">
                           <TableHead className="w-1/4">Feature</TableHead>
                           <TableHead className="w-1/4">Subject Device</TableHead>
                           <TableHead className="w-1/4">Equivalent Device</TableHead>
@@ -1526,7 +1526,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                               <div className="text-sm font-medium">{feature.name}</div>
                               <Badge
                                 variant="outline"
-                                className="mt-1 text-xs bg-[#F5F5F5] text-[#616161] border-[#E1DFDD]"
+                                className="mt-1 text-xs bg-[#F5F5F5] text-[#616161] border-[#e8e6dc]"
                               >
                                 {featureCategories.find(c => c.value === feature.category)?.label ||
                                   feature.category}
@@ -1557,7 +1557,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                                   size="icon"
                                   variant="ghost"
                                   onClick={() => editFeature(feature)}
-                                  className="h-7 w-7 text-[#323130] hover:bg-[#F3F2F1]"
+                                  className="h-7 w-7 text-[#141413] hover:bg-[#f4f3ee]"
                                 >
                                   <Edit2 className="h-3.5 w-3.5" />
                                 </Button>
@@ -1581,7 +1581,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 {/* Overall Equivalence Rationale */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h5 className="text-sm font-medium text-[#323130]">
+                    <h5 className="text-sm font-medium text-[#141413]">
                       Overall Equivalence Assessment
                     </h5>
                     <Button
@@ -1589,7 +1589,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                       variant="outline"
                       disabled={activeDevice.features.length === 0}
                       onClick={() => generateOverallEquivalence(activeDevice.id)}
-                      className="h-8 text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC] hover:text-[#0F6CBD]"
+                      className="h-8 text-[#d97757] border-[#d97757] hover:bg-[#faf0ec] hover:text-[#d97757]"
                     >
                       <Settings className="h-3.5 w-3.5 mr-1.5" />
                       <span>Generate Assessment</span>
@@ -1621,7 +1621,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   </div>
 
                   {activeDevice.overallRationale ? (
-                    <div className="p-3 bg-[#FAF9F8] rounded border border-[#E1DFDD] text-sm">
+                    <div className="p-3 bg-[#faf9f5] rounded border border-[#e8e6dc] text-sm">
                       {activeDevice.overallRationale.split('\n').map((paragraph, i) => (
                         <p key={i} className="mb-2 last:mb-0">
                           {paragraph}
@@ -1629,7 +1629,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                       ))}
                     </div>
                   ) : (
-                    <div className="p-3 bg-[#FAF9F8] rounded border border-[#E1DFDD] text-center">
+                    <div className="p-3 bg-[#faf9f5] rounded border border-[#e8e6dc] text-center">
                       <p className="text-xs text-[#616161]">
                         {activeDevice.features.length === 0
                           ? 'Add features to enable overall assessment generation'
@@ -1727,7 +1727,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
             </Button>
             <Button
               onClick={dialogMode === 'add' ? addEquivalentDevice : updateEquivalentDevice}
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               {dialogMode === 'add' ? 'Add Device' : 'Save Changes'}
             </Button>
@@ -1918,7 +1918,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     !currentFeature.equivalentValue
                   }
                   onClick={generateFeatureRationale}
-                  className="h-9 border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC] hover:text-[#0F6CBD]"
+                  className="h-9 border-[#d97757] text-[#d97757] hover:bg-[#faf0ec] hover:text-[#d97757]"
                 >
                   {isGeneratingRationale ? (
                     <>
@@ -1959,7 +1959,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
             </Button>
             <Button
               onClick={currentFeature.isEditing ? updateFeature : addFeature}
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               {currentFeature.isEditing ? 'Save Changes' : 'Add Feature'}
             </Button>
@@ -1969,10 +1969,10 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
       {/* Section E.4 Generation Panel */}
       {equivalentDevices.length > 0 && (
-        <div className="mt-8 bg-white p-4 border border-[#E1DFDD] rounded">
-          <div className="flex items-center justify-between border-b border-[#E1DFDD] pb-3 mb-3">
+        <div className="mt-8 bg-white p-4 border border-[#e8e6dc] rounded">
+          <div className="flex items-center justify-between border-b border-[#e8e6dc] pb-3 mb-3">
             <div>
-              <h3 className="text-base font-semibold text-[#323130]">Generate Section E.4</h3>
+              <h3 className="text-base font-semibold text-[#141413]">Generate Section E.4</h3>
               <p className="text-xs text-[#616161]">
                 Creates a fully formatted device equivalence section following MEDDEV 2.7/1 Rev 4
                 requirements
@@ -1982,7 +1982,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               variant="default"
               disabled={isGeneratingSectionE4}
               onClick={generateSectionE4}
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               {isGeneratingSectionE4 ? (
                 <>
@@ -2001,7 +2001,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
           {sectionE4Content ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-[#323130]">
+                <h4 className="text-sm font-medium text-[#141413]">
                   Generated Section E.4: Comparison of Clinical, Technical and Biological
                   Characteristics
                 </h4>
@@ -2025,7 +2025,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 border-[#0F6CBD] text-[#0F6CBD]"
+                    className="h-8 border-[#d97757] text-[#d97757]"
                     onClick={handleAddToCER}
                   >
                     <FileText className="mr-2 h-3.5 w-3.5" />
@@ -2033,7 +2033,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   </Button>
                 </div>
               </div>
-              <div className="p-4 bg-[#FAF9F8] rounded border border-[#E1DFDD] max-h-96 overflow-y-auto">
+              <div className="p-4 bg-[#faf9f5] rounded border border-[#e8e6dc] max-h-96 overflow-y-auto">
                 <div className="prose prose-sm max-w-none">
                   {sectionE4Content.split('\n').map((paragraph, index) => (
                     <p key={index} className="my-2">
@@ -2043,16 +2043,16 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 </div>
               </div>
               <div className="flex items-center pt-2 text-sm">
-                <Info className="h-4 w-4 text-[#0F6CBD] mr-2" />
+                <Info className="h-4 w-4 text-[#d97757] mr-2" />
                 <span className="text-[#616161]">
                   This generated content can be used directly in Section E.4 of your CER.
                 </span>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center p-8 bg-[#FAF9F8] rounded border border-[#E1DFDD] text-center">
-              <FileText className="h-10 w-10 text-[#A19F9D] mb-3" />
-              <p className="text-sm text-[#323130] font-medium">
+            <div className="flex flex-col items-center justify-center p-8 bg-[#faf9f5] rounded border border-[#e8e6dc] text-center">
+              <FileText className="h-10 w-10 text-[#8a8880] mb-3" />
+              <p className="text-sm text-[#141413] font-medium">
                 No E.4 section content generated yet
               </p>
               <p className="text-xs text-[#616161] mt-1 max-w-md">

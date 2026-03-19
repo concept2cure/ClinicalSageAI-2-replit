@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Executive Dashboard
+ * Concept2Cure Client Portal V2 - Executive Dashboard
  *
  * High-level strategic view for executives with portfolio overview,
  * key metrics, and submission timeline tracking.

@@ -27,7 +27,7 @@ export const MODULE_CONFIG = {
   },
   MedicalDevice: {
     name: 'Medical Device',
-    color: '#8B5CF6', // Purple
+    color: '#6a9bcc', // Purple
     icon: 'Activity',
     category: 'device',
   },

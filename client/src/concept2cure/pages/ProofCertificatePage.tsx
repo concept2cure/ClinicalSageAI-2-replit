@@ -128,7 +128,7 @@ export const ProofCertificatePage: React.FC = () => {
 
   if (!workflowRunId) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] p-10">
+      <div className="min-h-screen bg-[#faf9f5] p-10">
         <div className="mx-auto max-w-4xl rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
           Missing workflow run id.
         </div>

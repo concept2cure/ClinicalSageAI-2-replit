@@ -12,7 +12,7 @@
   justify-content: space-between;
   padding: 1rem 1.5rem;
   background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e8e6dc;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   z-index: 10;
 }
@@ -46,7 +46,7 @@
 
 .canvas-tab.active {
   background-color: #f0f4ff;
-  color: var(--color-primary, #5c4dff);
+  color: var(--color-primary, #d97757);
   font-weight: 500;
 }
 

@@ -92,7 +92,7 @@ export default function WelcomeAnimation({ onComplete, skipAnimation = false }) 
                   exit={{ y: -20, opacity: 0 }}
                   transition={{ duration: 0.4 }}
                 >
-                  TrialSage
+                  Concept2Cure
                 </motion.h1>
               )}
             </AnimatePresence>

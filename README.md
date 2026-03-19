@@ -1,8 +1,8 @@
-# ClinicalSageAI
+# Concept2Cure.RI
 
 **The Cognitive Regulatory Ecosystem for Life Sciences**
 
-[![Enterprise GA](https://img.shields.io/badge/status-Enterprise%20GA%20Hardening-blue)](https://github.com/concept2cure/ClinicalSageAI-2-replit)
+[![Enterprise GA](https://img.shields.io/badge/status-Enterprise%20GA%20Hardening-blue)](https://github.com/concept2cure/Concept2Cure.RI-2-replit)
 [![21 CFR Part 11](https://img.shields.io/badge/compliance-21%20CFR%20Part%2011-green)](docs/compliance/)
 [![ISO 14971](https://img.shields.io/badge/risk%20analysis-ISO%2014971-green)](docs/compliance/)
 
@@ -22,7 +22,7 @@
 
 ## Overview
 
-ClinicalSageAI is an enterprise-grade regulatory intelligence platform that transforms how life sciences companies prepare, submit, and manage regulatory documentation.
+Concept2Cure.RI is an enterprise-grade regulatory intelligence platform that transforms how life sciences companies prepare, submit, and manage regulatory documentation.
 
 ### Key Capabilities
 
@@ -58,8 +58,8 @@ ClinicalSageAI is an enterprise-grade regulatory intelligence platform that tran
 
 ```bash
 # Clone repository
-git clone https://github.com/concept2cure/ClinicalSageAI-2-replit.git
-cd ClinicalSageAI-2-replit
+git clone https://github.com/concept2cure/Concept2Cure.RI-2-replit.git
+cd Concept2Cure.RI-2-replit
 
 # Install dependencies
 npm install
@@ -115,7 +115,7 @@ npm run dev
 ## Project Structure
 
 ```
-ClinicalSageAI/
+Concept2Cure.RI/
 ├── client/              # React frontend
 ├── server/              # Express backend
 │   ├── routes/          # API endpoints
@@ -160,7 +160,7 @@ ClinicalSageAI/
 
 ## Compliance
 
-ClinicalSageAI is designed for regulated environments:
+Concept2Cure.RI is designed for regulated environments:
 
 - **21 CFR Part 11** - Electronic records and signatures
 - **EU Annex 11** - Computerized systems
@@ -234,7 +234,7 @@ Proprietary - Concept2Cure, Inc.
 ## Support
 
 - **Documentation:** [docs/](docs/)
-- **Issues:** [GitHub Issues](https://github.com/concept2cure/ClinicalSageAI-2-replit/issues)
+- **Issues:** [GitHub Issues](https://github.com/concept2cure/Concept2Cure.RI-2-replit/issues)
 
 ### Common Issues
 
@@ -249,4 +249,4 @@ If you encounter issues with GitHub Copilot creating `copilot/*` branches or PRs
 
 ---
 
-*ClinicalSageAI - Accelerating the Path from Concept to Cure*
+*Concept2Cure.RI - Accelerating the Path from Concept to Cure*

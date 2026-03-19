@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -395,6 +396,15 @@ export const FullDocumentBuilder: React.FC = () => {
           <button onClick={() => { setBuildResult(null); setStep('type'); }} className="px-4 py-2.5 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">
             Start New
           </button>
+        </div>
+
+        {/* Nano Banana — Generate visuals for this document */}
+        <div className="mt-6 pt-6 border-t border-zinc-200">
+          <NanoBananaImageGenerator
+            context={`${selectedType === 'csr' ? 'Clinical Study Report' : 'CTD submission'} figures for ${studyInfo.indication || 'regulatory document'} — ${studyInfo.phase || ''} ${studyInfo.studyDesign || ''}`}
+            mode="infographic"
+            promptSuffix="Professional regulatory document style. Clean, publication-ready."
+          />
         </div>
       </div>
     );

@@ -8,7 +8,7 @@
  * - Replace unstructured JSON blobs with queryable, indexed columns
  * - Enable cross-study analytics, trend detection, and meta-analysis
  * - Feed proprietary learning/intelligence engines with structured training data
- * - Build a competitive moat: the ClinicalSage proprietary CSR+CTD database
+ * - Build a competitive moat: the Concept2Cure.RI proprietary CSR+CTD database
  *
  * ARCHITECTURE:
  * ┌─────────────────────────────────────────────────────────────────────────┐

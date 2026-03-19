@@ -6,6 +6,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 import {
   BarChart3,
   TrendingUp,
@@ -768,6 +769,21 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           </div>
         </div>
       )}
+
+      {/* ── Nano Banana: Export Dashboard as Visual ── */}
+      <div className="rounded-xl border border-zinc-200 bg-white">
+        <div className="px-4 py-3 border-b border-zinc-100">
+          <h3 className="text-sm font-semibold text-zinc-800">Export as Visual or Deck</h3>
+          <p className="text-xs text-zinc-500 mt-0.5">Use Nano Banana AI to generate infographics or a slide deck from your program analytics.</p>
+        </div>
+        <div className="p-4">
+          <NanoBananaImageGenerator
+            context={`Regulatory program analytics dashboard: ${overallReadiness ? `${overallReadiness.score}% readiness` : ''}, ${riskSummary.openCount} open risks (${Object.entries(riskSummary.bySeverity).map(([k,v]) => `${v} ${k}`).join(', ')}), ${activityCount} recent activities`}
+            mode="infographic"
+            promptSuffix="Dashboard-style infographic for a regulatory affairs executive. Clean, professional, data-rich."
+          />
+        </div>
+      </div>
     </div>
   );
 };

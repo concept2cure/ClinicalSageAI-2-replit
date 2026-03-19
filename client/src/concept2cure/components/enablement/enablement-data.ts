@@ -119,7 +119,7 @@ export const LEARNING_PATHS: LearningPath[] = [
     ],
     certificationIds: ['cert-ana-fundamentals', 'cert-operations-master'],
     icon: 'FileEdit',
-    color: '#6366f1',
+    color: '#d97757',
     aiHighlight:
       'Dr. Sage guides you through document templates and section scaffolding while AnA 1.0 validates regulatory language, cross-references predicate evidence, and flags compliance gaps in real time.',
   },
@@ -142,7 +142,7 @@ export const LEARNING_PATHS: LearningPath[] = [
     ],
     certificationIds: ['cert-intelligence-specialist', 'cert-compliance-champion'],
     icon: 'Target',
-    color: '#8b5cf6',
+    color: '#6a9bcc',
     aiHighlight:
       'AnA 1.0 surfaces predicate device comparisons, literature contradictions, and regulatory precedent while Dr. Sage walks you through strategic gap analysis and submission pathway recommendations.',
   },
@@ -187,7 +187,7 @@ export const LEARNING_PATHS: LearningPath[] = [
     ],
     certificationIds: ['cert-operations-master', 'cert-compliance-champion'],
     icon: 'Activity',
-    color: '#10b981',
+    color: '#788c5d',
     aiHighlight:
       'Dr. Sage orchestrates multi-section audit checklists and readiness workflows while AnA 1.0 continuously monitors trial data integrity, CSR consistency, and regulatory timeline adherence.',
   },
@@ -732,7 +732,7 @@ export const CERTIFICATIONS: Certification[] = [
     competence: 'Platform Navigation & Basic Authoring',
     focus: 'ana',
     requiredModuleIds: ['mod-onboarding-platform', 'mod-authoring-fundamentals', 'mod-governance-basics'],
-    badge: { from: '#6366f1', to: '#818cf8' },
+    badge: { from: '#d97757', to: '#e6957a' },
     unlockCriteria: 'Complete all three foundational modules with passing quiz scores.',
   },
   {
@@ -743,7 +743,7 @@ export const CERTIFICATIONS: Certification[] = [
     competence: 'Evidence Intelligence & Comparative Analysis',
     focus: 'combined',
     requiredModuleIds: ['mod-evidence-fundamentals', 'mod-evidence-advanced', 'mod-review-audit-basics'],
-    badge: { from: '#8b5cf6', to: '#a78bfa' },
+    badge: { from: '#6a9bcc', to: '#8bb4d9' },
     unlockCriteria: 'Complete all evidence intelligence modules and pass the comparative analysis assessment.',
   },
   {
@@ -759,7 +759,7 @@ export const CERTIFICATIONS: Certification[] = [
       'mod-dossier-placement',
       'mod-export-readiness',
     ],
-    badge: { from: '#10b981', to: '#34d399' },
+    badge: { from: '#788c5d', to: '#34d399' },
     unlockCriteria: 'Complete all authoring and export modules and submit a sample dossier section.',
   },
   {
