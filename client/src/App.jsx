@@ -90,6 +90,10 @@ const LumenCortex = lazy(() => import('./pages/LumenCortex'));
 // Import Concept2Cure - Claude.ai-style regulatory interface with ZenRouter
 const ZenRouter = lazy(() => import('./concept2cure/router/ZenRouter'));
 
+// Sales Landing Page and Billing Dashboard
+const SalesLandingPage = lazy(() => import('./pages/SalesLandingPage'));
+const BillingDashboard = lazy(() => import('./pages/billing/BillingDashboard'));
+
 // Admin & Management Pages
 const AdminPage = lazy(() => import('./pages/admin/AdminPage'));
 const AdminProfile = lazy(() => import('./pages/admin/AdminProfile'));
@@ -401,6 +405,21 @@ function MainApp() {
                   <ClientPortalV3 />
                 </Suspense>
               )}
+            </Route>
+            {/* Public Sales Landing Page */}
+            <Route path="/sales">
+              {() => (
+                <Suspense fallback={<LoadingPage />}>
+                  <SalesLandingPage />
+                </Suspense>
+              )}
+            </Route>
+            {/* Billing Dashboard - accessible from /billing shortcut */}
+            <Route path="/billing">
+              {() => <Redirect to="/concept2cure/billing" />}
+            </Route>
+            <Route path="/billing/*">
+              {() => <Redirect to="/concept2cure/billing" />}
             </Route>
             {/* Root and legacy portal routes → redirect to Concept2Cure home */}
             <Route path="/">{() => <Redirect to="/concept2cure" />}</Route>

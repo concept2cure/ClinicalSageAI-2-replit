@@ -32,6 +32,10 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 
+// Lazy-load Billing Dashboard and Sales Landing Page
+const BillingDashboard = lazy(() => import('@/pages/billing/BillingDashboard'));
+const SalesLandingPage = lazy(() => import('@/pages/SalesLandingPage'));
+
 // Lazy-load PasswordReset for the reset-password-via-email flow
 const PasswordResetPage = lazy(
   () => import('@/portal-v2/components/auth/PasswordReset'),
@@ -247,6 +251,9 @@ export const ZenRouter: React.FC = () => {
           {/* Alias: /signup redirects to /concept2cure/signup */}
           <Route path="/signup">{() => <Redirect to="/concept2cure/signup" />}</Route>
 
+          {/* Alias: /billing redirects to /concept2cure/billing */}
+          <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>
+
           {/* Password reset (linked from email) */}
           <Route path="/concept2cure/password-reset">
             {() => (
@@ -295,6 +302,19 @@ export const ZenRouter: React.FC = () => {
               )}
             </Route>
           )}
+
+          {/* Billing Dashboard - protected */}
+          <Route path="/concept2cure/billing">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading billing..." />}>
+                    <BillingDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
 
           {/* Project-scoped hub — ZenApp reads :projectId from route */}
           <Route path="/concept2cure/project/:projectId/:rest*">

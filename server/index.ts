@@ -1273,6 +1273,16 @@ try {
   console.error('❌ Failed to mount Billing routes:', error);
 }
 
+// Mount Billing Dashboard routes (usage tracking, budgets, alerts, invoices)
+try {
+  const billingDashModule = await import('./routes/billing-dashboard.js');
+  const billingDashRouter = billingDashModule.default;
+  app.use('/api/billing', billingDashRouter);
+  console.log('✅ Billing Dashboard routes mounted (Usage, Budgets, Alerts, Invoices)');
+} catch (error) {
+  console.error('❌ Failed to mount Billing Dashboard routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');
