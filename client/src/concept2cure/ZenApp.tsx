@@ -243,6 +243,18 @@ const IntelligentReportGenerator = lazy(() =>
   import('./components/reports/IntelligentReportGenerator')
 );
 
+const AnaDashboardPage = lazy(() =>
+  import('./pages/AnaDashboard')
+);
+
+const SafetyNarrativePage = lazy(() =>
+  import('./pages/SafetyNarrative')
+);
+
+const AnaPlatformControlPage = lazy(() =>
+  import('./pages/AnaPlatformControl')
+);
+
 const ProjectKnowledgePanel = lazy(() =>
   import('./components/workspace/ProjectKnowledgePanel').then(m => ({ default: m.ProjectKnowledgePanel }))
 );
@@ -409,7 +421,10 @@ type LayoutMode =
   | 'document-builder'
   | 'deep-research'
   | 'report-engine'
-  | 'about-training';
+  | 'about-training'
+  | 'ana-dashboard'
+  | 'safety-narrative'
+  | 'ana-platform-control';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1799,6 +1814,15 @@ export const ZenApp: React.FC = () => {
             case 'report-engine':
               setLayoutMode('report-engine');
               break;
+            case 'ana-dashboard':
+              setLayoutMode('ana-dashboard');
+              break;
+            case 'safety-narrative':
+              setLayoutMode('safety-narrative');
+              break;
+            case 'ana-platform-control':
+              setLayoutMode('ana-platform-control');
+              break;
             default:
               break;
           }
@@ -2937,6 +2961,33 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-report-engine">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <IntelligentReportGenerator />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Ana Dashboard — regulatory intelligence, gap analysis, change impact ── */}
+          {!embeddedModule && layoutMode === 'ana-dashboard' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <AnaDashboardPage projectId={activeProjectId} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Safety Narrative — ICH E3 §12 compliant narrative generation ── */}
+          {!embeddedModule && layoutMode === 'safety-narrative' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-safety-narrative">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <SafetyNarrativePage projectId={activeProjectId} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Ana Platform Control — agentic settings, modules, onboarding ── */}
+          {!embeddedModule && layoutMode === 'ana-platform-control' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-platform-control">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <AnaPlatformControlPage />
               </Suspense>
             </div>
           )}
