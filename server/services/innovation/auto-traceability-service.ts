@@ -15,8 +15,8 @@
  */
 
 import { Pool } from 'pg';
+import { ai } from '../../lib/unified-ai-client';
 import { getOpenAIClient } from '../openai-client';
-import type OpenAI from 'openai';
 import crypto from 'crypto';
 
 // Types
@@ -102,7 +102,6 @@ interface RequirementTarget {
 
 export class AutoTraceabilityService {
   private pool: Pool;
-  private openai: OpenAI;
   private embeddingCache: Map<string, number[]>;
   private requirementCache: Map<string, RequirementTarget[]>;
   private static linkCache: AutoTraceLink[] = [];
@@ -110,7 +109,6 @@ export class AutoTraceabilityService {
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
     this.embeddingCache = new Map();
     this.requirementCache = new Map();
   }
@@ -867,7 +865,8 @@ export class AutoTraceabilityService {
     }
 
     try {
-      const response = await this.openai.embeddings.create({
+      const openai = getOpenAIClient();
+      const response = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: text.substring(0, 8000)
       });

@@ -38,3 +38,4 @@ export * from '../schema';
 // import { CDISC_TABLES } from '@shared/schema/cdisc-reference'
 export { CDISC_TABLES, type CdiscTableName } from './cdisc-reference';
 export { CSR_KNOWLEDGE_DB_TABLES, type CsrKnowledgeDbTableName } from './csr-knowledge-db';
+export * from './regulatory-atoms';
