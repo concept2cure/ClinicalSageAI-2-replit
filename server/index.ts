@@ -6124,6 +6124,14 @@ async function startServer() {
   }
 
   try {
+    const aiCompletionRoutes = await import('./routes/ai-completion');
+    app.use('/api', aiCompletionRoutes.default);
+    console.log('✅ AI Completion routes mounted at /api/ai/completion');
+  } catch (error) {
+    console.error('Failed to mount AI completion routes:', error);
+  }
+
+  try {
     const { protocolRoutes } = await import('./routes/protocol_routes');
     app.use('/api/protocol', protocolRoutes);
     console.log('✅ Protocol routes mounted at /api/protocol');

@@ -9,7 +9,7 @@
  * NO change impact reasoning, and NO automated assessment of manufacturing changes.
  */
 
-import OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import { createHash } from 'crypto';
@@ -156,14 +156,6 @@ const SECTION_IMPACT_MAP: Record<string, ImpactedSection[]> = {
 // ============================================================
 
 class CMCComparabilityService {
-  private openai: OpenAI | null = null;
-
-  private getOpenAI(): OpenAI {
-    if (!this.openai) {
-      this.openai = new OpenAI();
-    }
-    return this.openai;
-  }
 
   /**
    * Assess a manufacturing change for regulatory impact.
@@ -250,24 +242,18 @@ class CMCComparabilityService {
       // Table may not exist yet
     }
 
-    const openai = this.getOpenAI();
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      response_format: { type: 'json_object' },
-      messages: [
+    const messages = [
         {
-          role: 'system',
+          role: 'system' as const,
           content: `You are a CMC regulatory scientist. Generate a comparability study protocol based on the manufacturing change assessment provided. Include analytical tests mapped to CQAs, acceptance criteria, statistical approaches, stability requirements, and a reporting plan. Return valid JSON matching: { analyticalTests: [{ testName, method, targetCQA, acceptanceCriteria, statisticalApproach, sampleRequirements }], stabilityRequirements: { conditions: [], timepoints: [], testsPerTimepoint: [] }, reportingPlan: string }`,
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `Generate comparability protocol for this change:\n${JSON.stringify(assessmentData || { note: 'Assessment not found, generate generic protocol for manufacturing change' })}`,
         },
-      ],
-      temperature: 0.2,
-    });
+      ];
 
-    const content = response.choices[0]?.message?.content;
+    const content = await ai.complete(messages, { jsonMode: true, temperature: 0.2 });
     if (!content) {
       return { analyticalTests: [], stabilityRequirements: { conditions: [], timepoints: [], testsPerTimepoint: [] }, reportingPlan: '' };
     }
@@ -356,14 +342,9 @@ class CMCComparabilityService {
     recommendedActions: string[];
     confidence: number;
   }> {
-    const openai = this.getOpenAI();
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      response_format: { type: 'json_object' },
-      messages: [
+    const messages = [
         {
-          role: 'system',
+          role: 'system' as const,
           content: `You are a CMC regulatory intelligence specialist. Classify manufacturing changes according to:
 - FDA: 21 CFR 314.70 (drugs) / 21 CFR 601.12 (biologics): Annual Report, CBE-0, CBE-30, Prior Approval Supplement
 - EMA: Commission Regulation EC No 1234/2008: Type IA, Type IB, Type II variation
@@ -384,7 +365,7 @@ Return valid JSON:
 }`,
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `Assess this manufacturing change:
 Change Name: ${request.changeName}
 Change Type: ${request.changeType}
@@ -396,11 +377,9 @@ Affected Steps: ${request.affectedProcessSteps?.join(', ') || 'Not specified'}
 Known CQAs: ${request.knownCQAs?.join(', ') || 'Not specified'}
 Additional Context: ${request.additionalContext || 'None'}`,
         },
-      ],
-      temperature: 0.2,
-    });
+      ];
 
-    const content = response.choices[0]?.message?.content;
+    const content = await ai.complete(messages, { jsonMode: true, temperature: 0.2 });
     if (!content) {
       return {
         classification: { fdaClassification: 'prior_approval_supplement', emaClassification: 'type_ii', justification: 'Unable to assess — defaulting to most conservative classification' },
@@ -435,17 +414,13 @@ Additional Context: ${request.additionalContext || 'None'}`,
     impactedSections: ImpactedSection[],
     riskLevel: string
   ): Promise<string> {
-    const openai = this.getOpenAI();
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
+    const messages = [
         {
-          role: 'system',
+          role: 'system' as const,
           content: `You are a CMC regulatory writer. Generate a concise comparability assessment narrative (300-500 words) covering: change description, regulatory classification rationale, impacted CQAs, recommended comparability testing approach, and conclusions. Use formal regulatory language.`,
         },
         {
-          role: 'user',
+          role: 'user' as const,
           content: `Write a comparability assessment narrative:
 Change: ${request.changeName} (${request.changeType})
 Material: ${request.materialType} | Product: ${request.productType}
@@ -457,12 +432,9 @@ Impacted Sections: ${impactedSections.map((s) => s.sectionCode).join(', ')}
 Pre-change: ${request.preChangeDescription}
 Post-change: ${request.postChangeDescription}`,
         },
-      ],
-      temperature: 0.3,
-      max_tokens: 1500,
-    });
+      ];
 
-    return response.choices[0]?.message?.content || 'Narrative generation failed.';
+    return await ai.complete(messages, { temperature: 0.3, maxTokens: 1500 }) || 'Narrative generation failed.';
   }
 
   private async persistAssessment(

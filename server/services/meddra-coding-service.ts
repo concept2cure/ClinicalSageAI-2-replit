@@ -12,7 +12,8 @@
 
 import { db } from '../db';
 import { eq, and, ilike, sql } from 'drizzle-orm';
-import OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
+
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -158,24 +159,6 @@ Return valid JSON array:
 // ---------------------------------------------------------------------------
 
 class MedDRACodingService {
-  private openai: OpenAI | null = null;
-
-  /**
-   * Lazily initialise the OpenAI client so the module can be imported even when
-   * OPENAI_API_KEY is not yet set (e.g. during startup or testing).
-   */
-  private getOpenAI(): OpenAI {
-    if (!this.openai) {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          'OPENAI_API_KEY environment variable is required for AI-assisted MedDRA coding'
-        );
-      }
-      this.openai = new OpenAI({ apiKey });
-    }
-    return this.openai;
-  }
 
   // -------------------------------------------------------------------------
   // 1. codeAdverseEvent
@@ -265,23 +248,17 @@ class MedDRACodingService {
       throw new Error('Verbatim term cannot be empty');
     }
 
-    const client = this.getOpenAI();
-
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.1,
-      max_tokens: 1500,
-      messages: [
+    const content = await ai.complete(
+      [
         { role: 'system', content: MEDDRA_SUGGESTION_PROMPT },
         {
           role: 'user',
           content: `Verbatim adverse event term: "${normalizedTerm}"\n\nProvide the top 3 MedDRA PT suggestions.`,
         },
       ],
-      response_format: { type: 'json_object' },
-    });
+      { jsonMode: true, temperature: 0.1, maxTokens: 1500 }
+    );
 
-    const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from AI model during PT suggestion');
     }
@@ -571,28 +548,22 @@ class MedDRACodingService {
   }
 
   /**
-   * AI-assisted coding via OpenAI when no database match is found.
+   * AI-assisted coding via unified AI client when no database match is found.
    * Confidence is capped at 0.7 for AI-only results because there is no
    * authoritative MedDRA reference to validate against.
    */
   private async aiAssistedCoding(term: string): Promise<MedDRACodingResult> {
-    const client = this.getOpenAI();
-
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.0,
-      max_tokens: 1200,
-      messages: [
+    const content = await ai.complete(
+      [
         { role: 'system', content: MEDDRA_CODING_SYSTEM_PROMPT },
         {
           role: 'user',
           content: `Code the following verbatim adverse event term to MedDRA:\n\n"${term}"`,
         },
       ],
-      response_format: { type: 'json_object' },
-    });
+      { jsonMode: true, temperature: 0.0, maxTokens: 1200 }
+    );
 
-    const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error(`AI model returned empty response when coding term: "${term}"`);
     }

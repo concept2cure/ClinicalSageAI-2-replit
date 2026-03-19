@@ -10,7 +10,7 @@
  * defensibility scoring.
  */
 
-import OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 
@@ -146,25 +146,12 @@ interface MultiplicityAssessment {
 // ============================================================
 
 class StatisticalDefensibilityService {
-  private openai: OpenAI | null = null;
-
-  private getOpenAI(): OpenAI {
-    if (!this.openai) {
-      this.openai = new OpenAI();
-    }
-    return this.openai;
-  }
-
   /**
    * Comprehensive defensibility assessment.
    */
   async assessDefensibility(request: DefensibilityRequest): Promise<DefensibilityReport> {
-    const openai = this.getOpenAI();
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      response_format: { type: 'json_object' },
-      messages: [
+    const content = await ai.complete(
+      [
         {
           role: 'system',
           content: `You are a senior biostatistician reviewing a clinical study design for regulatory submission to FDA/EMA. Evaluate the study for statistical defensibility.
@@ -209,11 +196,9 @@ Subgroups: ${(request.subgroupAnalyses || []).join(', ') || 'None'}
 Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
         },
       ],
-      temperature: 0.2,
-      max_tokens: 4000,
-    });
+      { jsonMode: true, temperature: 0.2, maxTokens: 4000 }
+    );
 
-    const content = response.choices[0]?.message?.content;
     if (!content) {
       return this.defaultReport();
     }
@@ -536,12 +521,8 @@ Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
     hasInterimAnalysis: boolean;
     subgroupAnalyses: string[];
   }): Promise<ReviewerRiskAnnotation[]> {
-    const openai = this.getOpenAI();
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      response_format: { type: 'json_object' },
-      messages: [
+    const content = await ai.complete(
+      [
         {
           role: 'system',
           content: `You are an FDA/EMA statistical reviewer. Based on the study design provided, predict specific questions or objections a regulatory reviewer would raise. For each concern, provide severity (high/medium/low), the affected submission section, the likely reviewer question, and a suggested response.
@@ -553,11 +534,9 @@ Return JSON: { "annotations": [{ "concern": "string", "severity": "high|medium|l
           content: `Predict reviewer concerns for this study:\n${JSON.stringify(studyData, null, 2)}`,
         },
       ],
-      temperature: 0.3,
-      max_tokens: 3000,
-    });
+      { jsonMode: true, temperature: 0.3, maxTokens: 3000 }
+    );
 
-    const content = response.choices[0]?.message?.content;
     if (!content) return [];
 
     const parsed = JSON.parse(content);
