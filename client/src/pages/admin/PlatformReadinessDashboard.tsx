@@ -42,7 +42,7 @@ const pageStyle: React.CSSProperties = {
   height: '100vh',
   display: 'flex',
   flexDirection: 'column',
-  fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+  fontFamily: "'Poppins', Arial, sans-serif",
   background: '#f8fafc',
 };
 
@@ -359,7 +359,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
         zIndex: 20,
         overflowY: 'auto',
         padding: 20,
-        fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+        fontFamily: "'Poppins', Arial, sans-serif",
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

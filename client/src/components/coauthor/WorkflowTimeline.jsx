@@ -60,7 +60,7 @@ import {
 // SharePoint colors and styles
 const sharePointColors = {
   primary: '#0078D4',
-  primaryDark: '#106ebe',
+  primaryDark: '#c15f3c',
   primaryLight: '#2B88D8',
   success: '#107C10',
   warning: '#FFB900',
@@ -365,7 +365,7 @@ function SwimlaneColumn({ column, changes, onDrop, onAddNew, onEditChange, onDel
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Circle className="h-3 w-3" style={{ color: column.color, fill: column.color }} />
-            <h3 className="font-semibold text-sm" style={{ fontFamily: 'Segoe UI, system-ui, sans-serif' }}>
+            <h3 className="font-semibold text-sm" style={{ fontFamily: 'Poppins, Arial, sans-serif' }}>
               {column.title}
             </h3>
             <Badge variant="secondary" className="text-xs">
@@ -566,7 +566,7 @@ export function WorkflowTimeline() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col h-full" style={{ fontFamily: 'Segoe UI, system-ui, sans-serif' }}>
+      <div className="flex flex-col h-full" style={{ fontFamily: 'Poppins, Arial, sans-serif' }}>
         {/* Toolbar */}
         <div className="p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between flex-wrap gap-4">

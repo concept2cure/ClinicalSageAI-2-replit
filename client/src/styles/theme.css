@@ -1,18 +1,24 @@
 :root {
-  /* COLORS */
-  --color-bg: #ffffff;
+  /* ANTHROPIC AUTHENTIC COLOR PALETTE */
+  /* Warm, humanistic — NOT cold indigo/purple */
+  --color-bg: #faf9f5;               /* Warm cream background */
   --color-surface: #ffffff;
-  --color-primary: #5c4dff;
-  --color-primary-variant: #3e2dbb;
+  --color-surface-warm: #f4f3ee;      /* Pampas - subtle warm surface */
+  --color-primary: #d97757;           /* Terracotta orange - Anthropic brand */
+  --color-primary-variant: #c15f3c;   /* Crail - deeper terracotta */
   --color-on-primary: #ffffff;
-  --color-success: #28a745;
-  --color-warning: #ffc107;
+  --color-secondary: #6a9bcc;         /* Anthropic blue accent */
+  --color-tertiary: #788c5d;          /* Anthropic green accent */
+  --color-success: #788c5d;           /* Earthy green */
+  --color-warning: #d97706;           /* Warm amber */
   --color-danger: #dc3545;
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #4f4f4f;
+  --color-text-primary: #141413;      /* Anthropic dark */
+  --color-text-secondary: #4a4a46;    /* Warm dark gray */
 
-  /* TYPOGRAPHY */
-  --font-base: 'Inter', sans-serif;
+  /* TYPOGRAPHY — Anthropic authentic */
+  --font-heading: 'Poppins', Arial, sans-serif;
+  --font-base: 'Lora', Georgia, serif;
+  --font-ui: 'Poppins', Arial, sans-serif;  /* For UI elements, buttons, labels */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
@@ -25,15 +31,20 @@
   --space-md: 1rem;
   --space-lg: 1.5rem;
 
-  /* ELEVATION */
-  --elevation-low: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --elevation-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --elevation-high: 0 10px 20px rgba(0, 0, 0, 0.15);
+  /* ELEVATION — Warm, subtle shadows */
+  --elevation-low: 0 1px 3px rgba(20, 20, 19, 0.06);
+  --elevation-medium: 0 4px 12px rgba(20, 20, 19, 0.08);
+  --elevation-high: 0 10px 24px rgba(20, 20, 19, 0.12);
 }
+
 body {
   font-family: var(--font-base);
   background: var(--color-bg);
   color: var(--color-text-primary);
   margin: 0;
   padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
 }

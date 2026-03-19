@@ -82,7 +82,7 @@ const LumenAIAssistantContainer = () => {
       style={{
         display: 'flex',
         height: '100vh',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontFamily: '"Poppins", Arial, sans-serif',
         backgroundColor: '#ffffff',
       }}
     >

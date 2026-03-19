@@ -12,52 +12,52 @@
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Canvas - Background colors */
-  --zen-canvas: #FAFAF9;
-  --zen-canvas-muted: #F5F5F4;
+  /* Canvas - Warm cream backgrounds (Anthropic authentic) */
+  --zen-canvas: #faf9f5;
+  --zen-canvas-muted: #f4f3ee;
   --zen-canvas-elevated: #FFFFFF;
-  --zen-canvas-inverse: #18181B;
+  --zen-canvas-inverse: #141413;
 
-  /* Ink - Text colors */
-  --zen-ink: #18181B;
-  --zen-ink-muted: #71717A;
-  --zen-ink-subtle: #A1A1AA;
-  --zen-ink-disabled: #D4D4D8;
-  --zen-ink-inverse: #FAFAFA;
+  /* Ink - Warm dark text (Anthropic dark) */
+  --zen-ink: #141413;
+  --zen-ink-muted: #6b6963;
+  --zen-ink-subtle: #8a8880;
+  --zen-ink-disabled: #b0aea5;
+  --zen-ink-inverse: #faf9f5;
 
-  /* Accent - Primary action color */
-  --zen-accent: #2563EB;
-  --zen-accent-hover: #1D4ED8;
-  --zen-accent-muted: #DBEAFE;
-  --zen-accent-subtle: #EFF6FF;
+  /* Accent - Terracotta orange (Anthropic primary) */
+  --zen-accent: #d97757;
+  --zen-accent-hover: #c15f3c;
+  --zen-accent-muted: #f5ddd4;
+  --zen-accent-subtle: #faf0ec;
 
-  /* AI - Lumen persona color */
-  --zen-ai: #8B5CF6;
-  --zen-ai-hover: #7C3AED;
-  --zen-ai-muted: #EDE9FE;
-  --zen-ai-glow: rgba(139, 92, 246, 0.1);
+  /* AI - Anthropic blue persona */
+  --zen-ai: #6a9bcc;
+  --zen-ai-hover: #5585b3;
+  --zen-ai-muted: #dce8f3;
+  --zen-ai-glow: rgba(106, 155, 204, 0.1);
 
-  /* Status colors */
-  --zen-success: #059669;
-  --zen-success-muted: #D1FAE5;
-  --zen-warning: #D97706;
-  --zen-warning-muted: #FEF3C7;
-  --zen-error: #DC2626;
-  --zen-error-muted: #FEE2E2;
-  --zen-info: #0284C7;
-  --zen-info-muted: #E0F2FE;
+  /* Status colors - Earthy tones */
+  --zen-success: #788c5d;
+  --zen-success-muted: #e4ebd8;
+  --zen-warning: #d97706;
+  --zen-warning-muted: #fef3c7;
+  --zen-error: #dc3545;
+  --zen-error-muted: #fde2e4;
+  --zen-info: #6a9bcc;
+  --zen-info-muted: #dce8f3;
 
-  /* Borders */
-  --zen-border: #E4E4E7;
-  --zen-border-subtle: #F4F4F5;
-  --zen-border-focus: #2563EB;
+  /* Borders - Warm */
+  --zen-border: #e8e6dc;
+  --zen-border-subtle: #f4f3ee;
+  --zen-border-focus: #d97757;
 
-  /* Shadows - Subtle, layered */
-  --zen-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-  --zen-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
-  --zen-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --zen-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --zen-shadow-glow: 0 0 20px rgb(37 99 235 / 0.1);
+  /* Shadows - Warm, subtle */
+  --zen-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / 0.03);
+  --zen-shadow-sm: 0 1px 3px 0 rgb(20 20 19 / 0.05), 0 1px 2px -1px rgb(20 20 19 / 0.05);
+  --zen-shadow-md: 0 4px 6px -1px rgb(20 20 19 / 0.05), 0 2px 4px -2px rgb(20 20 19 / 0.05);
+  --zen-shadow-lg: 0 10px 15px -3px rgb(20 20 19 / 0.05), 0 4px 6px -4px rgb(20 20 19 / 0.05);
+  --zen-shadow-glow: 0 0 20px rgb(217 119 87 / 0.1);
 
   /* Border radius */
   --zen-radius-sm: 0.375rem;
@@ -87,7 +87,7 @@
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 .zen {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Lora', Georgia, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--zen-canvas);

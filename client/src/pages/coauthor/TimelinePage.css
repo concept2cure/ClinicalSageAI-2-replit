@@ -62,7 +62,7 @@
 }
 
 .phase-button.active {
-  background-color: var(--color-primary, #5c4dff);
+  background-color: var(--color-primary, #d97757);
   color: #fff;
   border-color: var(--color-primary-dark, #4c3dd5);
 }

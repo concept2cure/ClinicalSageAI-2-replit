@@ -21390,7 +21390,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                     padding: '32px 48px',
                     lineHeight: '1.8',
                     fontSize: '16px',
-                    fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif',
+                    fontFamily: '"Lora", Georgia, serif',
                     color: '#333333',
                     letterSpacing: '0.01em',
                     wordSpacing: '0.05em',
