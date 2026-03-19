@@ -347,9 +347,23 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
     setResult(null);
 
     try {
+      const authToken =
+        localStorage.getItem('token') ||
+        localStorage.getItem('authToken') ||
+        localStorage.getItem('auth_token') ||
+        '';
+      const organizationId =
+        localStorage.getItem('organizationId') ||
+        localStorage.getItem('currentOrganizationId') ||
+        '1';
       const response = await fetch('/api/ana/gap-analysis', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'x-organization-id': organizationId,
+        },
+        credentials: 'include',
         body: JSON.stringify({
           submissionType,
           uploadedDocuments: Array.from(selectedDocs),

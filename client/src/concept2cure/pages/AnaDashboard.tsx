@@ -119,7 +119,12 @@ export default function AnaDashboard({ projectId }: AnaDashboardProps) {
         }),
         fetch('/api/ana/gap-analysis', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...((() => { const t = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token'); return t ? { Authorization: `Bearer ${t}` } : {}; })()),
+            'x-organization-id': localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1',
+          },
+          credentials: 'include',
           body: JSON.stringify({ submissionType, projectId }),
         }).then(r => {
           if (!r.ok) throw new Error(`Gaps: ${r.status}`);

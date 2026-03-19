@@ -17807,3 +17807,33 @@ export type EvidenceComplianceScore = InferSelectModel<typeof evidenceCompliance
 export type InsertEvidenceComplianceScore = z.infer<typeof insertEvidenceScoreSchema>;
 export type EvidenceChangeEvent = InferSelectModel<typeof evidenceChangeEvents>;
 export type InsertEvidenceChangeEvent = z.infer<typeof insertEvidenceChangeEventSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GAP ANALYSIS RESULTS TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Persisted gap analysis results for audit trail and trend tracking.
+ * Each row represents one gap analysis run.
+ */
+export const gapAnalysisResults = pgTable('gap_analysis_results', {
+  id: serial('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  userId: text('user_id').notNull(),
+  submissionType: text('submission_type').notNull(),
+  projectId: text('project_id'),
+  overallReadiness: integer('overall_readiness').notNull(),
+  totalRequired: integer('total_required').notNull(),
+  completedCount: integer('completed_count').notNull(),
+  gapsSnapshot: json('gaps_snapshot').notNull(),
+  recommendations: json('recommendations').notNull(),
+  uploadedDocuments: json('uploaded_documents'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertGapAnalysisResultSchema = createInsertSchemaOmit(gapAnalysisResults, {
+  id: true,
+  createdAt: true,
+});
+export type GapAnalysisResult = InferSelectModel<typeof gapAnalysisResults>;
+export type InsertGapAnalysisResult = z.infer<typeof insertGapAnalysisResultSchema>;

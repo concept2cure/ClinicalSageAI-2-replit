@@ -8,8 +8,19 @@
  * 4. AnA Memory (per-project contextual memory)
  */
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import { authenticateToken } from '../middleware/auth';
+import { requireOrganizationContext } from '../middleware/tenantContext';
+import { createRateLimiter } from '../middleware/rateLimiter';
+import { db } from '../db';
+import { gapAnalysisResults } from '../../shared/schema';
 
 const router = Router();
+
+// Rate limiter for analysis endpoints (10 req/min)
+const analysisRateLimiter = createRateLimiter({
+  api: { windowMs: 60 * 1000, maxRequests: 10, message: 'Too many gap analysis requests, please slow down.' },
+});
 
 // ---------------------------------------------------------------------------
 // In-memory stores
@@ -488,25 +499,42 @@ const ectdRequirements: Record<string, GapItem[]> = {
   ],
 };
 
-router.post('/gap-analysis', (req: Request, res: Response) => {
+// Zod schema for gap-analysis request validation
+const gapAnalysisRequestSchema = z.object({
+  submissionType: z
+    .string()
+    .min(1, 'submissionType is required')
+    .transform((val) => val.toUpperCase().replace('-', ''))
+    .refine(
+      (val) => Object.keys(ectdRequirements).includes(val),
+      (val) => ({ message: `Unsupported submission type: ${val}. Supported types: ${Object.keys(ectdRequirements).join(', ')}` })
+    ),
+  uploadedDocuments: z.array(z.string()).default([]),
+  projectId: z.string().optional(),
+});
+
+router.post(
+  '/gap-analysis',
+  authenticateToken,
+  requireOrganizationContext,
+  analysisRateLimiter,
+  async (req: Request, res: Response) => {
   try {
-    const { submissionType, uploadedDocuments = [] } = req.body as {
-      submissionType: string;
-      uploadedDocuments: string[];
-    };
+    const parsed = gapAnalysisRequestSchema.safeParse(req.body);
 
-    if (!submissionType) {
-      return res.status(400).json({ error: 'submissionType is required' });
-    }
-
-    const normalizedType = submissionType.toUpperCase().replace('-', '');
-    const requirements = ectdRequirements[normalizedType];
-
-    if (!requirements) {
+    if (!parsed.success) {
       return res.status(400).json({
-        error: `Unsupported submission type: ${submissionType}. Supported types: ${Object.keys(ectdRequirements).join(', ')}`,
+        success: false,
+        error: parsed.error.errors[0]?.message || 'Invalid request data',
+        details: parsed.error.errors,
       });
     }
+
+    const { submissionType: normalizedType, uploadedDocuments, projectId } = parsed.data;
+    const organizationId = (req as any).tenantContext?.organizationId || (req as any).organizationId;
+    const userId = req.user?.id || req.user?.userId;
+
+    const requirements = ectdRequirements[normalizedType];
 
     // Clone requirements and mark status based on uploaded documents
     const gaps: GapItem[] = requirements.map((r) => {
@@ -599,15 +627,47 @@ router.post('/gap-analysis', (req: Request, res: Response) => {
       );
     }
 
-    res.json({
+    const result = {
+      success: true,
       overallReadiness,
       totalRequired,
       completed,
       gaps,
       recommendations,
-    });
+    };
+
+    // Persist result to database (non-blocking — don't fail the request if DB save fails)
+    try {
+      if (db) {
+        await db.insert(gapAnalysisResults).values({
+          organizationId: String(organizationId),
+          userId: String(userId || 'unknown'),
+          submissionType: normalizedType,
+          projectId: projectId || null,
+          overallReadiness,
+          totalRequired,
+          completedCount: completed,
+          gapsSnapshot: gaps,
+          recommendations,
+          uploadedDocuments,
+        });
+      }
+    } catch (dbError) {
+      // Log but don't fail the response — persistence is best-effort until migration runs
+      console.warn('Gap analysis DB persistence failed (table may not exist yet):', dbError instanceof Error ? dbError.message : dbError);
+    }
+
+    res.json(result);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request data',
+        details: error.errors,
+      });
+    }
     res.status(500).json({
+      success: false,
       error: 'Failed to perform gap analysis',
       details: error instanceof Error ? error.message : String(error),
     });
