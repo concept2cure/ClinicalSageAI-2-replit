@@ -1415,6 +1415,16 @@ try {
   console.error('❌ Failed to mount eCTD Export routes:', error);
 }
 
+// Mount eCTD Submission Agent routes (direct agency submissions — FDA ESG, EMA, PMDA, HC)
+try {
+  const ectdSubmissionModule = await import('./routes/ectd-submission-agent.routes');
+  const ectdSubmissionRoutes = ectdSubmissionModule.default;
+  app.use('/api/ectd-submissions', ectdSubmissionRoutes);
+  console.log('✅ eCTD Submission Agent routes mounted (FDA ESG, EMA, PMDA, HC gateway)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Submission Agent routes:', error);
+}
+
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
 try {
   const indPdfModule = await import('./routes/ind-pdf');
