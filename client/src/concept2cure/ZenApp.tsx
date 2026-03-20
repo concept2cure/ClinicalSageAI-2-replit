@@ -2322,7 +2322,7 @@ export const ZenApp: React.FC = () => {
               </div>
               {/* No-project guard */}
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-50 flex items-center justify-center">
                       <ShieldCheck className="w-8 h-8 text-violet-600" />
@@ -2397,7 +2397,7 @@ export const ZenApp: React.FC = () => {
                 onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
                       <FolderOpen className="w-8 h-8 text-blue-600" />
@@ -2459,7 +2459,7 @@ export const ZenApp: React.FC = () => {
                 onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-50 flex items-center justify-center">
                       <FolderOpen className="w-8 h-8 text-teal-600" />
@@ -2480,8 +2480,8 @@ export const ZenApp: React.FC = () => {
               ) : (
                 <>
                   {/* Module 3 traceability bar */}
-                  <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
-                    <span className="text-xs text-zinc-500 mr-2">Module 3 Actions:</span>
+                  <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
+                    <span className="text-xs font-medium text-zinc-600 mr-3">CTD Module 3 — Quality</span>
                     <button
                       onClick={() => {
                         setPendingEditorContent({
@@ -2500,7 +2500,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
                     >
                       Draft 3.2.S (Drug Substance)
                     </button>
@@ -2523,7 +2523,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
                     >
                       Draft 3.2.P (Drug Product)
                     </button>
@@ -2541,7 +2541,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
                     >
                       Draft 3.2.A (Appendices)
                     </button>
@@ -2656,7 +2656,7 @@ export const ZenApp: React.FC = () => {
                 </span>
               </div>
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
                     <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-violet-400" />
                     <h2 className="text-lg font-semibold text-zinc-900 mb-2">

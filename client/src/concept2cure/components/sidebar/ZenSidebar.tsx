@@ -131,8 +131,8 @@ const NavItem: React.FC<{
   onClick: () => void;
 }> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
   const accentMap = {
-    blue: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
-    violet: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
+    blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
+    violet: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
     emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
   };
   const accent = accentColor && accentMap[accentColor];
@@ -142,7 +142,7 @@ const NavItem: React.FC<{
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-[12px] transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         active
           ? accent
             ? `${accent.bg} ${accent.text} font-medium`
@@ -150,8 +150,7 @@ const NavItem: React.FC<{
           : accent
             ? cn(
                 'text-zinc-600',
-                accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
-                accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
+                accent.bg === 'bg-blue-100' && 'hover:bg-blue-100 hover:text-blue-600',
                 accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
               )
             : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -311,7 +310,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="SnowGlobe"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'snowglobe' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'snowglobe' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Snowflake className="w-4 h-4" />
@@ -331,7 +330,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="Collaboration"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'collaboration-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'collaboration-hub' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Users className="w-4 h-4" />
@@ -341,7 +340,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="Artifacts"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'artifacts' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'artifacts' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Layers className="w-4 h-4" />
@@ -407,7 +406,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[12px] font-medium hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-xs font-medium hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
             New workspace thread
@@ -418,7 +417,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onOpenProjects}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400" />
             My projects
@@ -562,8 +561,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="My Inbox"
               subtitle="Worklist · Approvals · Alerts"
               active={activeNavId === 'user-inbox'}
-              accentColor="amber"
               onClick={() => onNavigate?.('user-inbox')}
+            />
+            <NavItem
               icon={<Activity className="w-3.5 h-3.5" />}
               label="Ana Dashboard"
               subtitle="Intelligence · Gaps · Impact"
@@ -667,15 +667,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'client-onboarding'}
               onClick={() => onNavigate?.('client-onboarding')}
             />
-          </WorkspaceGroup>
-
-          {/* ── About & Training ─────────────────────────────── */}
-          <WorkspaceGroup label="Learn" defaultOpen={false}>
             <NavItem
-              icon={<BookOpen className="w-3.5 h-3.5" />}
-              label="About & Training"
-              active={activeNavId === 'about-training'}
-              onClick={() => onNavigate?.('about-training')}
               icon={<Link2 className="w-3.5 h-3.5" />}
               label="Integrations"
               subtitle="Connectors · APIs · Storage"
@@ -746,16 +738,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="flex-shrink-0 border-t border-zinc-100 p-2">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-bold text-[#C4623F] leading-none">
+              <span className="text-[10px] font-bold text-blue-600 leading-none">
                 {avatarInitial}
               </span>
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-[12px] font-medium text-zinc-700 truncate leading-tight">
+                <p className="text-xs font-medium text-zinc-700 truncate leading-tight">
                   {displayName}
                 </p>
                 {userEmail && (
