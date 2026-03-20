@@ -73,7 +73,98 @@ function requireScope(scope: string) {
   };
 }
 
-// Apply API key auth to all routes
+// ============================================================================
+// PUBLIC ENDPOINTS (no auth required)
+// ============================================================================
+
+router.get('/health', (_req: Request, res: Response) => {
+  return res.json({
+    status: 'healthy',
+    service: 'ClinicalSageAI Public API',
+    version: 'v1',
+    timestamp: new Date().toISOString(),
+    endpoints: 5,
+  });
+});
+
+router.get('/docs', (_req: Request, res: Response) => {
+  return res.json({
+    service: 'ClinicalSageAI Public API',
+    version: 'v1',
+    authentication: {
+      method: 'API Key',
+      header: 'X-API-Key',
+      format: 'csai_<key>',
+      scopes: ['csr:read', 'regulatory:read', 'endpoints:read', 'precedent:read', 'trial-design:read', 'documents:read'],
+    },
+    endpoints: [
+      {
+        path: '/api/v1/csr/search',
+        method: 'GET',
+        scope: 'csr:read',
+        description: 'Search the CSR knowledge base — clinical study reports harvested from global regulatory repositories',
+        parameters: {
+          indication: { type: 'string', description: 'Disease/condition (e.g., "non-small cell lung cancer")' },
+          phase: { type: 'string', description: 'Clinical trial phase (e.g., "Phase 3")' },
+          endpoint: { type: 'string', description: 'Clinical endpoint to filter by' },
+          sponsor: { type: 'string', description: 'Sponsor company name' },
+          limit: { type: 'number', default: 20, description: 'Max results to return' },
+        },
+      },
+      {
+        path: '/api/v1/regulatory/pathways',
+        method: 'GET',
+        scope: 'regulatory:read',
+        description: 'Get regulatory pathway recommendations across global agencies (FDA, EMA, PMDA, NMPA, Health Canada)',
+        parameters: {
+          productType: { type: 'string', enum: ['drug', 'biologic', 'biosimilar', 'device', 'generic', 'combination'], default: 'drug' },
+          indication: { type: 'string', description: 'Target indication' },
+          targetAgencies: { type: 'string', description: 'Comma-separated agency codes (e.g., "FDA,EMA")' },
+        },
+      },
+      {
+        path: '/api/v1/endpoints/recommend',
+        method: 'GET',
+        scope: 'endpoints:read',
+        description: 'Get clinical endpoint recommendations powered by cross-study analytics',
+        parameters: {
+          indication: { type: 'string', description: 'Disease/condition' },
+          phase: { type: 'string', description: 'Trial phase' },
+          therapeuticArea: { type: 'string', description: 'Therapeutic area' },
+        },
+      },
+      {
+        path: '/api/v1/precedent/search',
+        method: 'GET',
+        scope: 'precedent:read',
+        description: 'Search regulatory precedents — historical submission outcomes, approval decisions, and deficiency patterns',
+        parameters: {
+          indication: { type: 'string', description: 'Disease/condition' },
+          agency: { type: 'string', description: 'Regulatory agency' },
+          submissionType: { type: 'string', description: 'Submission type (NDA, BLA, 510k, etc.)' },
+          limit: { type: 'number', default: 10, description: 'Max results to return' },
+        },
+      },
+      {
+        path: '/api/v1/trial-design/suggest',
+        method: 'GET',
+        scope: 'trial-design:read',
+        description: 'Get trial design suggestions combining precedent intelligence with endpoint analytics',
+        parameters: {
+          indication: { type: 'string', description: 'Disease/condition' },
+          phase: { type: 'string', description: 'Trial phase' },
+          primaryEndpoint: { type: 'string', description: 'Primary endpoint under consideration' },
+        },
+      },
+    ],
+    rateLimit: {
+      default: '60 requests/minute per API key',
+      configurable: true,
+    },
+  });
+});
+
+// Apply API key auth to all subsequent routes
 router.use(requireApiKey);
 
 // ============================================================================

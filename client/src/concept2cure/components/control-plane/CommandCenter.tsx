@@ -211,20 +211,75 @@ export default function CommandCenter() {
 // ============================================================================
 
 function OverviewTab() {
-  const metrics = [
-    { label: 'Active Users', value: '—', icon: <Users size={20} /> },
-    { label: 'API Keys', value: '—', icon: <Key size={20} /> },
-    { label: 'Storage Used', value: '—', icon: <Layers size={20} /> },
-    { label: 'Credits Remaining', value: '—', icon: <BarChart3 size={20} /> },
-  ];
+  const [metrics, setMetrics] = useState({
+    apiKeys: '—',
+    creditsUsed: '—',
+    apiRequests: '—',
+    modules: '14',
+  });
+  const [serviceStatus, setServiceStatus] = useState<Array<{ service: string; status: string }>>([
+    { service: 'CSR Knowledge Engine', status: 'checking' },
+    { service: 'Regulatory Intelligence', status: 'checking' },
+    { service: 'Endpoint Recommender', status: 'checking' },
+    { service: 'Precedent Engine', status: 'checking' },
+    { service: 'Document Authoring', status: 'checking' },
+    { service: 'eCTD Navigator', status: 'checking' },
+    { service: 'Trial Design Architect', status: 'checking' },
+    { service: 'Public API', status: 'checking' },
+  ]);
 
-  const systemStatus = [
-    { service: 'CSR Knowledge Engine', status: 'operational' },
-    { service: 'Regulatory Intelligence', status: 'operational' },
-    { service: 'Document Authoring', status: 'operational' },
-    { service: 'eCTD Navigator', status: 'operational' },
-    { service: 'Trial Design Architect', status: 'operational' },
-    { service: 'Knowledge Graph', status: 'operational' },
+  useEffect(() => {
+    // Fetch API key count
+    fetch('/api/api-keys', { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.keys) {
+          const active = data.keys.filter((k: ApiKeyItem) => k.status === 'active');
+          const totalRequests = data.keys.reduce((sum: number, k: ApiKeyItem) => sum + k.requestCount, 0);
+          setMetrics((prev) => ({
+            ...prev,
+            apiKeys: `${active.length}`,
+            apiRequests: totalRequests.toLocaleString(),
+          }));
+        }
+      })
+      .catch(() => {});
+
+    // Fetch usage summary
+    fetch('/api/module-subscriptions/user-intelligence', { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.usage) {
+          const total = data.usage.reduce((sum: number, u: UsageSummary) => sum + u.creditsUsed, 0);
+          setMetrics((prev) => ({ ...prev, creditsUsed: total.toLocaleString() }));
+        }
+      })
+      .catch(() => {});
+
+    // Check public API health
+    fetch('/api/v1/health')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        setServiceStatus((prev) =>
+          prev.map((s) =>
+            s.service === 'Public API'
+              ? { ...s, status: data?.status === 'healthy' ? 'operational' : 'degraded' }
+              : { ...s, status: 'operational' }
+          )
+        );
+      })
+      .catch(() => {
+        setServiceStatus((prev) =>
+          prev.map((s) => ({ ...s, status: s.service === 'Public API' ? 'down' : 'operational' }))
+        );
+      });
+  }, []);
+
+  const metricCards = [
+    { label: 'Active API Keys', value: metrics.apiKeys, icon: <Key size={20} /> },
+    { label: 'API Requests', value: metrics.apiRequests, icon: <BarChart3 size={20} /> },
+    { label: 'Credits Used', value: metrics.creditsUsed, icon: <Layers size={20} /> },
+    { label: 'Active Modules', value: metrics.modules, icon: <Settings size={20} /> },
   ];
 
   return (
@@ -233,7 +288,7 @@ function OverviewTab() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {metrics.map((m) => (
+        {metricCards.map((m) => (
           <div key={m.label} className="bg-white rounded-xl border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400">{m.icon}</span>
@@ -248,12 +303,20 @@ function OverviewTab() {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <h3 className="text-sm font-medium text-gray-900 mb-3">System Status</h3>
         <div className="space-y-2">
-          {systemStatus.map((s) => (
+          {serviceStatus.map((s) => (
             <div key={s.service} className="flex items-center justify-between py-1">
               <span className="text-sm text-gray-700">{s.service}</span>
-              <span className="flex items-center gap-1.5 text-xs text-green-600">
-                <span className="w-2 h-2 bg-green-500 rounded-full" />
-                Operational
+              <span className={`flex items-center gap-1.5 text-xs ${
+                s.status === 'operational' ? 'text-green-600' :
+                s.status === 'checking' ? 'text-gray-400' :
+                s.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  s.status === 'operational' ? 'bg-green-500' :
+                  s.status === 'checking' ? 'bg-gray-300 animate-pulse' :
+                  s.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                }`} />
+                {s.status === 'checking' ? 'Checking...' : s.status.charAt(0).toUpperCase() + s.status.slice(1)}
               </span>
             </div>
           ))}
@@ -480,7 +543,13 @@ function UsageTab({ usage }: { usage: UsageSummary[] }) {
     { id: 'deep_research', label: 'Deep Research', color: 'bg-indigo-500' },
     { id: 'csr_builder', label: 'CSR Builder', color: 'bg-blue-500' },
     { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-teal-500' },
-    { id: 'api_calls', label: 'API Calls', color: 'bg-purple-500' },
+    { id: 'api_csr_search', label: 'API: CSR Search', color: 'bg-purple-500' },
+    { id: 'api_regulatory_pathways', label: 'API: Regulatory Pathways', color: 'bg-violet-500' },
+    { id: 'api_endpoint_recommend', label: 'API: Endpoint Recommender', color: 'bg-fuchsia-500' },
+    { id: 'api_precedent_search', label: 'API: Precedent Search', color: 'bg-pink-500' },
+    { id: 'api_trial_design', label: 'API: Trial Design', color: 'bg-rose-500' },
+    { id: 'ctd_onboarding', label: 'CTD Onboarding', color: 'bg-emerald-500' },
+    { id: 'biologics_intelligence', label: 'Biologics Intelligence', color: 'bg-cyan-500' },
   ];
 
   return (
