@@ -24,7 +24,6 @@ import {
   BarChart3,
   Activity,
   Layers,
-  CheckCircle2,
 } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────

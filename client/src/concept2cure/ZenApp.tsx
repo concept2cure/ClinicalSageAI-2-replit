@@ -113,6 +113,9 @@ import {
   Rocket,
   FileStack,
   Users,
+  Search,
+  BarChart3,
+  GraduationCap,
 } from 'lucide-react';
 
 // Loading fallback — subtle spinner with text
@@ -874,6 +877,9 @@ export const ZenApp: React.FC = () => {
       product: p.product,
       region: p.region,
       lastUpdated: p.updatedAt,
+      createdAt: p.createdAt,
+      status: p.status ?? 'active',
+      submissionType: p.submissionType,
       conversationCount: p.conversations?.length ?? 0,
       starred: p.starred ?? false,
       archived: p.archived ?? false,
@@ -2585,6 +2591,18 @@ export const ZenApp: React.FC = () => {
           {/* ── Enablement Center — Dr. Sage + AnA 1.0 dual-AI hub ── */}
           {!embeddedModule && layoutMode === 'enablement-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-enablement-center">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Academy</span>
+              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -2690,6 +2708,23 @@ export const ZenApp: React.FC = () => {
           {/* ── Intelligence Hub — research, evidence, predictions ── */}
           {!embeddedModule && layoutMode === 'intelligence-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-intelligence-hub">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Search className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-800">Regulatory Intelligence</span>
+                {activeProject && (
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -2707,6 +2742,23 @@ export const ZenApp: React.FC = () => {
           {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
           {!embeddedModule && layoutMode === 'review-readiness' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-readiness">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-xs font-medium text-zinc-800">Review & Compliance</span>
+                {activeProject && (
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -2724,6 +2776,23 @@ export const ZenApp: React.FC = () => {
           {/* ── Command Center — operations, submissions, governance ── */}
           {!embeddedModule && layoutMode === 'command-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-command-center">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <BarChart3 className="w-3.5 h-3.5 text-zinc-500" />
+                <span className="text-xs font-medium text-zinc-800">Operations Center</span>
+                {activeProject && (
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -2744,6 +2813,18 @@ export const ZenApp: React.FC = () => {
               className="flex-1 flex flex-col min-h-0"
               data-testid="workspace-client-intelligence"
             >
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Brain className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Client Intelligence</span>
+              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -3071,15 +3152,33 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Legal Center — IP, contracts, regulatory law ── */}
           {/* Artifacts Gallery — browsable outputs and templates */}
           {!embeddedModule && layoutMode === 'artifacts' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-artifacts">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Layers className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-800">Documents & Artifacts</span>
+                {activeProject && (
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    {activeProject.name}
+                  </span>
+                )}
+              </div>
               <Suspense fallback={<ModuleLoadingFallback />}>
                 <ArtifactsGalleryPage />
               </Suspense>
             </div>
           )}
+
+          {/* ── Legal Center — IP, contracts, regulatory law ── */}
 
           {!embeddedModule && layoutMode === 'legal-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
