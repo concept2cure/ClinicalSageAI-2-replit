@@ -430,13 +430,30 @@ export function validateApiKey(req: Request, res: Response, next: NextFunction) 
     });
   }
 
-  // Hash the key for comparison (never store raw keys)
-  const keyHash = createHash('sha256').update(apiKey).digest('hex');
+  // Validate against API key service (database lookup)
+  try {
+    const { validateApiKey: validateKey } = await import('../services/api-key-service.js');
+    const result = await validateKey(apiKey);
 
-  // TODO: Look up key hash in database
-  // For now, mark request as API key authenticated
-  (req as any).authMethod = 'api_key';
-  (req as any).apiKeyHash = keyHash;
+    if (!result.valid) {
+      return res.status(401).json({
+        error: 'Invalid API key',
+        code: 'INVALID_API_KEY',
+        reason: result.reason,
+      });
+    }
+
+    (req as any).authMethod = 'api_key';
+    (req as any).apiKeyId = result.keyId;
+    (req as any).tenantId = result.organizationId;
+    (req as any).apiScopes = result.scopes;
+    (req as any).apiRateLimit = result.rateLimit;
+  } catch {
+    // If api_keys table doesn't exist yet, fall through gracefully
+    const keyHash = createHash('sha256').update(apiKey).digest('hex');
+    (req as any).authMethod = 'api_key';
+    (req as any).apiKeyHash = keyHash;
+  }
 
   next();
 }

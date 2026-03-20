@@ -1685,6 +1685,51 @@ try {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PLATFORM CONTROL PLANE & EXTERNAL API ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mount API Key Management routes (CRUD for organization API keys)
+try {
+  const apiKeysModule = await import('./routes/api-keys.js');
+  const apiKeysRoutes = apiKeysModule.default;
+  app.use('/api/api-keys', apiKeysRoutes);
+  console.log('✅ API Key Management routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount API Key routes:', error);
+}
+
+// Mount Public API routes (external programmatic access via API keys)
+try {
+  const publicApiModule = await import('./routes/public-api.js');
+  const publicApiRoutes = publicApiModule.default;
+  app.use('/api/v1', publicApiRoutes);
+  console.log('✅ Public API v1 routes mounted (CSR, Regulatory, Endpoints, Precedent, Trial Design)');
+} catch (error) {
+  console.error('❌ Failed to mount Public API routes:', error);
+}
+
+// Mount CTD Onboarding Pipeline routes (client CTD project ingestion)
+try {
+  const ctdOnboardingModule = await import('./routes/ctd-onboarding.js');
+  const ctdOnboardingRoutes = ctdOnboardingModule.default;
+  app.use('/api/ctd', ctdOnboardingRoutes);
+  console.log('✅ CTD Onboarding Pipeline routes mounted (projects, upload, validation, gaps)');
+} catch (error) {
+  console.error('❌ Failed to mount CTD Onboarding routes:', error);
+}
+
+// Mount Biologics Intelligence routes (biologic/biosimilar pathways, comparability)
+try {
+  const biologicsModule = await import('./routes/biologics-routes.js');
+  const biologicsRoutes = biologicsModule.default;
+  app.use('/api/biologics', biologicsRoutes);
+  // Combination product routes are co-mounted under /api/biologics/combination-products
+  console.log('✅ Biologics Intelligence & Combination Product routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Biologics routes:', error);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CORTEX PRIME AI ROUTES - The Unified Intelligence Brain
 // ═══════════════════════════════════════════════════════════════════════════════
 
