@@ -1231,14 +1231,14 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
     }
 
     // Gate 3: Check readiness (compute fresh)
-    const readiness = await computePackageReadiness(db, pkg.id, orgId);
+    const readiness = await computePackageReadiness(orgId, pkg.id);
     const readinessThreshold = 80;
 
-    if (readiness.overallScore < readinessThreshold) {
+    if (readiness.overallReadinessPercent < readinessThreshold) {
       return res.status(409).json({
-        error: `Package readiness score ${readiness.overallScore}% is below the ${readinessThreshold}% threshold`,
+        error: `Package readiness score ${readiness.overallReadinessPercent}% is below the ${readinessThreshold}% threshold`,
         gate: 'readiness',
-        readinessScore: readiness.overallScore,
+        readinessScore: readiness.overallReadinessPercent,
         threshold: readinessThreshold,
         details: readiness,
       });
@@ -1259,8 +1259,8 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       snapshotId: `snap_${randomUUID()}`,
       orgId,
       packageDbId: pkg.id,
-      overallScore: readiness.overallScore,
-      sectionScores: readiness.sectionScores || {},
+      overallScore: readiness.overallReadinessPercent,
+      sectionScores: readiness.sections || {},
       computedAt: new Date(),
       computedById: userId,
     });

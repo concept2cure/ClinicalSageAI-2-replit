@@ -32,6 +32,7 @@ import {
 } from '../services/auth-security-service';
 
 import { config } from '../config/environment';
+import { authMiddleware } from '../auth';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -122,24 +123,15 @@ router.post('/check-email', async (req: Request, res: Response) => {
       .where(eq(users.email, normalizedEmail))
       .limit(1);
 
-    if (!userResult.length) {
-      // User doesn't exist - still return password flow for signup
-      return res.json({
-        exists: false,
-        authFlow: 'password',
-        mfaRequired: false,
-        passwordSet: false,
-        email: normalizedEmail,
-      });
-    }
-
-    const user = userResult[0];
+    // SECURITY: Always return the same shape regardless of user existence
+    // to prevent user enumeration attacks
+    const user = userResult.length ? userResult[0] : null;
 
     res.json({
-      exists: true,
+      exists: true, // Always true — actual validation happens at password step
       authFlow: 'password',
-      mfaRequired: user.mfaEnabled === true,
-      passwordSet: !!user.passwordHash,
+      mfaRequired: user ? user.mfaEnabled === true : false,
+      passwordSet: true, // Always true — prevents account probing
       email: normalizedEmail,
     });
   } catch (error: any) {
@@ -519,7 +511,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
  * POST /electronic-signature
  * Create a 21 CFR Part 11 compliant electronic signature
  */
-router.post('/electronic-signature', async (req: Request, res: Response) => {
+router.post('/electronic-signature', authMiddleware, async (req: Request, res: Response) => {
   try {
     const result = await createElectronicSignature({
       documentId: req.body.documentId,
@@ -559,7 +551,7 @@ router.post('/electronic-signature', async (req: Request, res: Response) => {
  * GET /electronic-signature/:id/verify
  * Verify the integrity of an electronic signature
  */
-router.get('/electronic-signature/:id/verify', async (req: Request, res: Response) => {
+router.get('/electronic-signature/:id/verify', authMiddleware, async (req: Request, res: Response) => {
   try {
     const result = await verifySignatureIntegrity(parseInt(req.params.id));
     res.json(result);

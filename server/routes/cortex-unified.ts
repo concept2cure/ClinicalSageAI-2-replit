@@ -456,6 +456,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       } catch (streamErr: any) {
         logger.warn(`[Chat] AI stream failed, using demo response: ${streamErr.message}`);
         fullContent = generateContextAwareDemoResponse(message, context);
+        res.write(`data: ${JSON.stringify({ type: 'demo_warning', message: 'AI service unavailable — showing pre-generated response' })}\n\n`);
         res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
       }
 
@@ -525,6 +526,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       thread_id: threadId,
       usage,
       model,
+      demo: model === 'lumen-cortex-demo', // Flag demo fallback so UI can warn users
       context: {
         projectName: context.project?.name || null,
         submissionType: context.project?.submissionType || submission_type || null,

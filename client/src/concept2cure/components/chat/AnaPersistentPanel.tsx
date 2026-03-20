@@ -301,6 +301,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             })),
           }),
         });
+        if (!response.ok) {
+          throw new Error(`Request failed (${response.status})`);
+        }
         data = await response.json();
 
         setMessages(prev => [...prev, {
@@ -308,14 +311,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           role: 'assistant',
           content: data.response || data.message || 'I can help with that. Could you share more details?',
           timestamp: new Date(),
+          demo: data.demo || false,
         }]);
       }
-    } catch {
+    } catch (err: any) {
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`,
         role: 'assistant',
-        content: `I understand you'd like help with that. Let me know what specific aspect you'd like to explore and I'll provide guidance.`,
+        content: `Sorry, I encountered an error processing your request. Please try again.`,
         timestamp: new Date(),
+        isError: true,
       }]);
     } finally {
       setIsThinking(false);

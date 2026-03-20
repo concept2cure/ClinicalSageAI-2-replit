@@ -464,27 +464,16 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Direct mount /api/projects here to ensure it works
 app.get('/api/projects', async (req, res) => {
   try {
-    // Check multiple sources for organization/workspace context
+    // SECURITY: Always derive organization from authenticated JWT context
     const client_workspace_id =
       req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    let organization_id = req.query.organization_id || req.headers['x-organization-id'];
+    const organization_id = (req as any).tenantContext?.organizationId
+      || (req as any).organizationId
+      || (req as any).user?.organizationId;
 
-    // Try to get organization from JWT token
     if (!organization_id) {
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.substring(7);
-          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-          organization_id = payload.organizationId;
-        } catch (e) {
-          // Token parsing failed, use default
-        }
-      }
+      return res.status(403).json({ error: 'Organization context required' });
     }
-
-    // Default to org 2 (Concept2Cure) if no org specified
-    organization_id = organization_id || '2';
 
     if (!pool) {
       // Return empty array if database not available

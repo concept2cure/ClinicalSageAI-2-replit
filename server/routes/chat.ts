@@ -814,10 +814,11 @@ router.post('/stream', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Chat Stream] Error:', error.message);
     if (res.headersSent) {
-      res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+      // SECURITY: Don't leak internal error details to client
+      res.write(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`);
       res.end();
     } else {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: 'An error occurred while generating the response' });
     }
   }
 });

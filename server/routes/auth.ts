@@ -432,7 +432,8 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    const { email, password, companyName, industryMode, firstName, lastName } = parsed.data;
+    const { password, companyName, industryMode, firstName, lastName } = parsed.data;
+    const email = parsed.data.email.trim().toLowerCase();
 
     // Enforce enterprise password policy (NIST 800-63B)
     const policyResult = validatePasswordPolicy(password);
@@ -446,9 +447,10 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     if (!requireDb(res)) return;
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existing.length) {
+      // SECURITY: Return generic message to prevent email enumeration
       return res.status(409).json({
         success: false,
-        error: { code: 'AUTH_002', message: 'Email already registered' },
+        error: { code: 'AUTH_002', message: 'Unable to create account. Please try a different email or contact support.' },
       });
     }
 
@@ -528,7 +530,6 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         name: result.org.name,
         uuid: result.org.uuid,
         industryMode: result.org.industryMode,
-        stripeCustomerId: result.org.stripeCustomerId,
       },
       user: {
         id: result.user.id,
