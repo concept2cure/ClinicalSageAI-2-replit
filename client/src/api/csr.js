@@ -182,19 +182,35 @@ export const generateNarrative = async narrativeData => {
  * @returns {Promise<Object>} Detected signals
  */
 export const detectSignals = async signalData => {
-  const response = await fetch('/api/csr/detect-signals', {
+  // Map from frontend field names to backend API schema
+  const payload = {
+    drugName: signalData.drugName,
+    indication: signalData.indication || signalData.drugName,
+  };
+
+  const response = await fetch('/api/csr-builder/safety-signals', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(signalData),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     throw new Error('Failed to detect signals');
   }
 
-  return response.json();
+  const data = await response.json();
+  // Map backend response to expected frontend format
+  return {
+    signals: (data.signals || []).map(s => ({
+      eventTerm: s.term,
+      reportCount: s.relatedStudies || 0,
+      signalStrength: s.disproportionalityScore >= 3 ? 'strong' : s.disproportionalityScore >= 1.5 ? 'moderate' : 'weak',
+      description: `${s.frequency} occurrence, ${s.severity} severity`,
+    })),
+    summary: data.summary,
+  };
 };
 
 /**
@@ -260,5 +276,55 @@ export const advancedSearch = async searchParams => {
     throw new Error('Failed to perform advanced CSR search');
   }
 
+  return response.json();
+};
+
+// ─── CSR Builder APIs ────────────────────────────────────────────────────────
+
+/**
+ * Get ICH E3 section structure
+ */
+export const getICHE3Structure = async () => {
+  const response = await fetch('/api/csr-builder/structure');
+  if (!response.ok) throw new Error('Failed to fetch ICH E3 structure');
+  return response.json();
+};
+
+/**
+ * Launch a full CSR build job with AI-powered drafting
+ */
+export const buildCSR = async (studyInfo) => {
+  const response = await fetch('/api/csr-builder/build', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ studyInfo }),
+  });
+  if (!response.ok) throw new Error('Failed to build CSR');
+  return response.json();
+};
+
+/**
+ * Draft a single CSR section with AI
+ */
+export const draftCSRSection = async (sectionNumber, studyInfo) => {
+  const response = await fetch('/api/csr-builder/draft-section', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sectionNumber, studyInfo }),
+  });
+  if (!response.ok) throw new Error('Failed to draft section');
+  return response.json();
+};
+
+/**
+ * Cross-study comparison — find similar CSRs
+ */
+export const crossStudyCompare = async (indication, phase, endpoint) => {
+  const response = await fetch('/api/csr-builder/compare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ indication, phase, endpoint }),
+  });
+  if (!response.ok) throw new Error('Failed to compare studies');
   return response.json();
 };
