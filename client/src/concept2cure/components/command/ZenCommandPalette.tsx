@@ -491,15 +491,6 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     keywords: ['collaborate', 'thread', 'review', 'team', 'discuss'],
   },
   {
-    id: 'go-review-pulse',
-    title: 'Go to Review Pulse',
-    subtitle: 'PM signals, readiness, risk tracking',
-    icon: <Activity className="w-4 h-4 text-blue-600" />,
-    category: 'tools',
-    action: () => onAction('go-review-pulse'),
-    keywords: ['pulse', 'review', 'signal', 'readiness', 'risk', 'pm'],
-  },
-  {
     id: 'go-intelligence',
     title: 'Go to Intelligence Hub',
     subtitle: 'Evidence, precedents, regulatory alerts',

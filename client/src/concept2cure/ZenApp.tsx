@@ -299,17 +299,7 @@ const IntegrationsPage = lazy(() =>
   import('./pages/IntegrationsPage')
 );
 
-// Agent Hub — Agent Swarm showcase, setup wizard, monitoring
-const AgentShowcasePage = lazy(() =>
-  import('./components/enablement/AgentShowcase').then(m => ({ default: m.AgentShowcase }))
-);
-
-// Review Pulse — PM orchestration, signals, readiness tracking
-const ReviewPulseDashboardPage = lazy(() =>
-  import('./components/workspace/ReviewPulseDashboard').then(m => ({
-    default: m.ReviewPulseDashboard,
-  }))
-);
+// Agent Hub and Review Pulse removed — shell-only modules not demo-ready
 
 // Client Onboarding — setup wizard, configuration
 const OnboardingWizardPage = lazy(
@@ -429,8 +419,6 @@ type LayoutMode =
   | 'templates'
   | 'biostatistics'
   | 'training-center'
-  | 'agent-hub'
-  | 'review-pulse'
   | 'client-onboarding'
   | 'knowledge-base'
   | 'project-knowledge'
@@ -1441,9 +1429,7 @@ export const ZenApp: React.FC = () => {
         'go-collaboration': 'collaboration-hub',
         'go-inbox': 'user-inbox',
         'go-branding': 'client-branding',
-        'go-agents': 'agent-hub',
         'go-snowglobe': 'snowglobe',
-        'go-review-pulse': 'review-pulse',
         'go-intelligence': 'intelligence-hub',
         'go-biostatistics': 'biostatistics',
         'go-review-readiness': 'review-readiness',
@@ -1841,8 +1827,6 @@ export const ZenApp: React.FC = () => {
               'client-branding': 'client-branding',
               biostatistics: 'biostatistics',
               'training-center': 'training-center',
-              'agent-hub': 'agent-hub',
-              'review-pulse': 'review-pulse',
               'client-onboarding': 'client-onboarding',
               'knowledge-base': 'knowledge-base',
               'project-knowledge': 'project-knowledge',
@@ -1985,14 +1969,8 @@ export const ZenApp: React.FC = () => {
             case 'training-center':
               setLayoutMode('training-center');
               break;
-            case 'agent-hub':
-              setLayoutMode('agent-hub');
-              break;
             case 'snowglobe':
               setLayoutMode('snowglobe');
-              break;
-            case 'review-pulse':
-              setLayoutMode('review-pulse');
               break;
             case 'client-onboarding':
               setLayoutMode('client-onboarding');
@@ -3080,9 +3058,6 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
-          {!embeddedModule && layoutMode === 'agent-hub' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
           {/* Enterprise Integrations — connectors & API management */}
           {!embeddedModule && layoutMode === 'integrations' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
@@ -3093,16 +3068,6 @@ export const ZenApp: React.FC = () => {
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Bot className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">AI Agents</span>
-                {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-                  <span>Projects</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Link2 className="w-3.5 h-3.5 text-blue-500" />
@@ -3116,46 +3081,12 @@ export const ZenApp: React.FC = () => {
                     </div>
                   }
                 >
-                  <AgentShowcasePage />
                   <IntegrationsPage />
                 </Suspense>
               </ErrorBoundary>
             </div>
           )}
 
-          {/* ── Review Pulse — PM signals, readiness, risk ── */}
-          {!embeddedModule && layoutMode === 'review-pulse' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-pulse">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Activity className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Review Pulse</span>
-                {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <ReviewPulseDashboardPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
           {/* ── Client Onboarding — setup wizard, configuration ── */}
           {!embeddedModule && layoutMode === 'client-onboarding' && (

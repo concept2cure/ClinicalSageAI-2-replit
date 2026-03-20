@@ -307,16 +307,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Core module icons */}
         <div className="w-8 border-t border-zinc-200 my-1" />
         <button
-          onClick={() => onNavigate?.('agent-hub')}
-          aria-label="AI Agents"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'agent-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <Bot className="w-4 h-4" />
-        </button>
-        <button
           onClick={() => onNavigate?.('snowglobe')}
           aria-label="SnowGlobe"
           className={cn(
@@ -479,27 +469,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           {/* ── AI — agents & intelligence ──────────────────────── */}
           <WorkspaceGroup label="AI Agents">
             <NavItem
-              icon={<Bot className="w-3.5 h-3.5" />}
-              label="Agent Swarm"
-              subtitle="AI Agent Swarm"
-              active={activeNavId === 'agent-hub'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('agent-hub')}
-            />
-            <NavItem
               icon={<Snowflake className="w-3.5 h-3.5" />}
               label="SnowGlobe"
               subtitle="Predictions · Simulations"
               active={activeNavId === 'snowglobe'}
               accentColor="blue"
               onClick={() => onNavigate?.('snowglobe')}
-            />
-            <NavItem
-              icon={<Activity className="w-3.5 h-3.5" />}
-              label="Review Pulse"
-              subtitle="Signals · Readiness · Risk"
-              active={activeNavId === 'review-pulse'}
-              onClick={() => onNavigate?.('review-pulse')}
             />
           </WorkspaceGroup>
 

@@ -61,20 +61,17 @@ const QUICK_ACTIONS = [
   { id: 'copilot', label: 'AI Copilot', subtitle: 'Chat with AnA', icon: Sparkles, color: 'text-violet-600', bg: 'bg-violet-50', action: 'assistant' },
   { id: 'collab', label: 'Collaboration', subtitle: 'Team workspace', icon: Users, color: 'text-amber-600', bg: 'bg-amber-50', action: 'collaboration-hub' },
   { id: 'biostat', label: 'Biostatistics', subtitle: 'Statistical analysis', icon: FlaskConical, color: 'text-teal-600', bg: 'bg-teal-50', action: 'biostatistics' },
-  { id: 'agents', label: 'Agent Swarm', subtitle: 'AI agent fleet', icon: Bot, color: 'text-rose-600', bg: 'bg-rose-50', action: 'agent-hub' },
 ];
 
 const MODULE_CATALOG = [
   { id: 'regulatory-workspace', label: 'Regulatory Workspace', subtitle: 'Full submission environment', icon: FileText, color: 'text-blue-600' },
   { id: 'ectd-coauthor', label: 'eCTD Co-Author', subtitle: 'Document authoring', icon: PenLine, color: 'text-violet-600' },
-  { id: 'review-pulse', label: 'Review Pulse', subtitle: 'PM orchestration', icon: Activity, color: 'text-pink-600' },
   { id: 'intelligence-hub', label: 'Intelligence Hub', subtitle: 'Evidence & insights', icon: Search, color: 'text-blue-600' },
   { id: 'review-readiness', label: 'Review Readiness', subtitle: 'Submission QC', icon: ShieldCheck, color: 'text-emerald-600' },
   { id: 'command-center', label: 'Command Center', subtitle: 'Operations hub', icon: Building2, color: 'text-zinc-700' },
   { id: 'legal-center', label: 'Legal Center', subtitle: 'IP & contracts', icon: Scale, color: 'text-indigo-600' },
   { id: 'biostatistics', label: 'Biostatistics', subtitle: 'Statistical platform', icon: FlaskConical, color: 'text-teal-600' },
   { id: 'training-center', label: 'Training Center', subtitle: 'Courses & certs', icon: GraduationCap, color: 'text-amber-600' },
-  { id: 'agent-hub', label: 'Agent Hub', subtitle: 'AI agent fleet', icon: Bot, color: 'text-rose-600' },
   { id: 'snowglobe', label: 'SnowGlobe', subtitle: 'Cross-platform intel', icon: Snowflake, color: 'text-sky-600' },
   { id: 'collaboration-hub', label: 'Collaboration Hub', subtitle: 'Team threads', icon: Users, color: 'text-amber-600' },
   { id: 'knowledge-base', label: 'Knowledge Base', subtitle: 'Skills & uploads', icon: Upload, color: 'text-violet-600' },
