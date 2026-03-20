@@ -758,7 +758,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
       {/* ── Compact breadcrumb bar ────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-100 bg-white shrink-0">
+      <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-200 bg-white shrink-0">
         <button
           onClick={onBackToProjects}
           className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -878,7 +878,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
       {/* ── Doc-aware header (shown when editing) ─────────────────────────── */}
       {mode === 'edit' && activeArtifact && (
-        <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+        <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
           <FileText className="w-3.5 h-3.5 text-zinc-400" />
           <span className="text-[11px] font-medium text-zinc-700 truncate">
             {activeArtifact.title}
@@ -1005,16 +1005,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       {/* ── 3-pane body ───────────────────────────────────────────────────── */}
       <div className="flex-1 flex min-h-0">
         {/* Left: Tree panel with mode toggle */}
-        <div className="w-[180px] 2xl:w-[220px] border-r border-zinc-100 shrink-0 flex flex-col bg-white">
+        <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
           {/* Mode toggle tabs */}
-          <div className="flex border-b border-zinc-100 shrink-0 bg-zinc-50/40">
+          <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
             {[
               { key: 'files' as LeftRailMode, icon: Files, label: 'Files', disabled: false },
               { key: 'dossier' as LeftRailMode, icon: BookOpen, label: 'Dossier', disabled: false },
               {
                 key: 'templates' as LeftRailMode,
                 icon: Layers,
-                label: 'Templates',
+                label: 'Tmpl',
                 disabled: false,
               },
               {
@@ -1029,17 +1029,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 onClick={() => !tab.disabled && setLeftRailMode(tab.key)}
                 disabled={tab.disabled}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors',
+                  'flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors',
                   leftRailMode === tab.key
-                    ? 'text-blue-700 bg-white border-b-2 border-blue-600'
+                    ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
                     : tab.disabled
                       ? 'text-zinc-300 cursor-not-allowed'
-                      : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50'
+                      : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
                 )}
                 data-testid={`rail-mode-${tab.key}`}
                 title={tab.disabled ? 'Open a document to use Outline' : tab.label}
               >
-                <tab.icon className="w-3 h-3" />
+                <tab.icon className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
@@ -1048,11 +1048,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           {/* ── Active document context band ──────────────────────────────── */}
           {activeArtifact && (
             <div
-              className="border-b border-zinc-100 bg-zinc-50/40 px-2 py-1.5 shrink-0"
+              className="border-b border-zinc-200 bg-zinc-50/60 px-2.5 py-2 shrink-0"
               data-testid="active-doc-context"
             >
-              <div className="flex items-center gap-1 mb-0.5">
-                <FileText className="w-3 h-3 text-zinc-400 shrink-0" />
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                 <span className="text-[11px] font-medium text-zinc-700 truncate flex-1">
                   {activeArtifact.title}
                 </span>
@@ -1159,18 +1159,18 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           )}
 
           {/* Project-level Review Pulse button */}
-          <div className="shrink-0 border-t border-zinc-100 p-2">
+          <div className="shrink-0 border-t border-zinc-200 p-2">
             <button
               onClick={openReviewPulse}
               className={cn(
-                'w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[11px] font-medium transition-colors',
+                'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-[11px] font-medium transition-colors',
                 phase4Panel === 'pulse'
                   ? 'text-rose-700 bg-rose-50'
                   : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50'
               )}
               title="Review Pulse — project-wide review status"
             >
-              <Activity className="w-3 h-3" />
+              <Activity className="w-3.5 h-3.5" />
               Review Pulse
             </button>
           </div>
@@ -1180,7 +1180,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
           {/* New document input strip */}
           {showNewDoc && (
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50/40 shrink-0">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
               <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
               <input
                 type="text"
@@ -1430,8 +1430,8 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
   const [showChildren, setShowChildren] = useState(false);
 
   return (
-    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-100 shrink-0 flex flex-col bg-white overflow-y-auto">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/40">
+    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-200 shrink-0 flex flex-col bg-white overflow-y-auto">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/40">
         <div className="flex items-center gap-1.5">
           <Info className="w-3 h-3 text-blue-600" />
           <span className="text-[11px] font-semibold text-zinc-700">Section Requirements</span>
