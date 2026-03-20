@@ -46,6 +46,7 @@ import {
   Shield,
   Globe,
   Key,
+  Inbox,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -323,6 +324,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <Snowflake className="w-4 h-4" />
         </button>
         <button
+          onClick={() => onNavigate?.('user-inbox')}
+          aria-label="My Inbox"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'user-inbox' ? 'bg-amber-50 text-amber-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Inbox className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => onNavigate?.('collaboration-hub')}
           aria-label="Collaboration"
           className={cn(
@@ -566,6 +577,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── MANAGE — operations & governance ──────────────────── */}
           <WorkspaceGroup label="Manage">
+            <NavItem
+              icon={<Inbox className="w-3.5 h-3.5" />}
+              label="My Inbox"
+              subtitle="Worklist · Approvals · Alerts"
+              active={activeNavId === 'user-inbox'}
+              accentColor="amber"
+              onClick={() => onNavigate?.('user-inbox')}
+            />
             <NavItem
               icon={<Building2 className="w-3.5 h-3.5" />}
               label="Client Intelligence"

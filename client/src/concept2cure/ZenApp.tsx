@@ -265,6 +265,9 @@ const CollaborationHubPage = lazy(() =>
   import('./pages/MissionControl/CollaborationHub').then(m => ({ default: m.default }))
 );
 
+// User Inbox — personal command center with worklist, approvals, alerts
+const UserInboxPage = lazy(() => import('./pages/UserInbox'));
+
 // Biostatistics Platform — statistical analysis, power calculations, endpoints
 const BiostatPlatformDashboard = lazy(
   () => import('@/components/biostat/BiostatPlatformDashboard')
@@ -419,7 +422,8 @@ type LayoutMode =
   | 'document-builder'
   | 'deep-research'
   | 'report-engine'
-  | 'about-training';
+  | 'about-training'
+  | 'user-inbox';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1409,6 +1413,7 @@ export const ZenApp: React.FC = () => {
         'go-author': 'author',
         'go-document-sherpa': 'document-sherpa',
         'go-collaboration': 'collaboration-hub',
+        'go-inbox': 'user-inbox',
         'go-agents': 'agent-hub',
         'go-snowglobe': 'snowglobe',
         'go-review-pulse': 'review-pulse',
@@ -1805,6 +1810,7 @@ export const ZenApp: React.FC = () => {
               'enablement-center': 'enablement-center',
               'client-intelligence': 'client-intelligence',
               'collaboration-hub': 'collaboration-hub',
+              'user-inbox': 'user-inbox',
               biostatistics: 'biostatistics',
               'training-center': 'training-center',
               'agent-hub': 'agent-hub',
@@ -1930,6 +1936,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'collaboration-hub':
               setLayoutMode('collaboration-hub');
+              break;
+            case 'user-inbox':
+              setLayoutMode('user-inbox');
               break;
             case 'biostatistics':
               setLayoutMode('biostatistics');
@@ -2852,6 +2861,23 @@ export const ZenApp: React.FC = () => {
                   <CollaborationHubPage
                     programId={activeProjectId ? Number(activeProjectId) : null}
                   />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── User Inbox — personal command center with worklist, approvals, alerts ── */}
+          {!embeddedModule && layoutMode === 'user-inbox' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-user-inbox">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <UserInboxPage />
                 </Suspense>
               </ErrorBoundary>
             </div>
