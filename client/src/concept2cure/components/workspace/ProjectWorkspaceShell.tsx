@@ -1091,16 +1091,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
           {/* Tree content based on mode */}
           {loading && artifacts.length === 0 ? (
-            <div className="flex-1 flex flex-col gap-2 p-3">
+            <div className="flex-1 flex flex-col gap-2.5 p-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center gap-2 animate-pulse">
-                  <div className="w-3 h-3 rounded bg-zinc-200" />
+                <div key={i} className="flex items-center gap-2.5 animate-pulse">
+                  <div className="w-3.5 h-3.5 rounded bg-zinc-200" />
                   <div
-                    className="h-3 rounded bg-zinc-200"
+                    className="h-3.5 rounded bg-zinc-100"
                     style={{ width: `${60 + (i % 3) * 20}%` }}
                   />
                 </div>
               ))}
+              <span className="text-xs text-zinc-400 mt-1">Loading files...</span>
             </div>
           ) : leftRailMode === 'files' ? (
             <ProjectFileTree
@@ -1329,8 +1330,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                  <div className="flex-1 flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                    <span className="text-sm text-zinc-400">Loading editor...</span>
                   </div>
                 }
               >

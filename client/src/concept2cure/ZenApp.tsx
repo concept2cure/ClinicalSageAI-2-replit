@@ -115,10 +115,11 @@ import {
   Users,
 } from 'lucide-react';
 
-// Minimal loading fallback — no spinner, just a white screen to avoid flash
+// Loading fallback — subtle spinner with text
 const ModuleLoadingFallback = () => (
-  <div className="flex-1 flex items-center justify-center bg-white">
-    <div className="w-6 h-6 rounded-full border-2 border-zinc-200 border-t-zinc-400 animate-spin" />
+  <div className="flex-1 flex flex-col items-center justify-center bg-white gap-3">
+    <div className="w-5 h-5 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
+    <span className="text-sm text-zinc-400">Loading module...</span>
   </div>
 );
 
@@ -555,8 +556,9 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
         <ErrorBoundary>
           <Suspense
             fallback={
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+              <div className="flex flex-col items-center justify-center h-full gap-3">
+                <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                <span className="text-sm text-zinc-400">Loading...</span>
               </div>
             }
           >
