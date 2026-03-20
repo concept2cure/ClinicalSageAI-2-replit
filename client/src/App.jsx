@@ -246,6 +246,8 @@ function AppContent() {
     location === '/signup' ||
     location === '/concept2cure' ||
     location.startsWith('/concept2cure/');
+  const isConcept2CurePublicRoute =
+    location === '/' || location === '/concept2cure' || location.startsWith('/concept2cure/');
 
   if (isPublicRoute) {
     return <MainApp />;
