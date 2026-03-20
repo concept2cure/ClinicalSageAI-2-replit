@@ -1361,34 +1361,46 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
       </div>
 
-      {/* ── Ribbon toolbar — categorized inspector panels ──────────────────── */}
-      <div className="flex items-center gap-0.5 h-9 px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto">
+      {/* ── Ribbon toolbar — categorized inspector panels with group labels ── */}
+      <div className="flex items-stretch px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto">
         {/* AI & Intelligence */}
-        <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-zinc-200">
-          <button data-testid="ribbon-intelligence" onClick={() => toggleInspector('intelligence')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'intelligence' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Brain className="w-3.5 h-3.5" />AI Intelligence</button>
-          <button data-testid="ribbon-batch-ai" onClick={() => toggleInspector('batch-ai')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'batch-ai' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Layers className="w-3.5 h-3.5" />Batch AI</button>
-          <button data-testid="ribbon-health" onClick={() => toggleInspector('health')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'health' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Doc Health</button>
+        <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
+          <div className="flex items-center gap-0.5">
+            <button data-testid="ribbon-intelligence" onClick={() => toggleInspector('intelligence')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'intelligence' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Brain className="w-3.5 h-3.5" />Intelligence</button>
+            <button data-testid="ribbon-batch-ai" onClick={() => toggleInspector('batch-ai')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'batch-ai' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Layers className="w-3.5 h-3.5" />Batch AI</button>
+            <button data-testid="ribbon-health" onClick={() => toggleInspector('health')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'health' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Health</button>
+          </div>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">AI</span>
         </div>
 
         {/* Review & Collaboration */}
-        <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-zinc-200">
-          <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments</button>
-          <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review Mode</button>
-          <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Version History</button>
-          <button data-testid="ribbon-compare" onClick={() => toggleInspector('compare')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compare' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Compare</button>
+        <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
+          <div className="flex items-center gap-0.5">
+            <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments</button>
+            <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review</button>
+            <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />History</button>
+            <button data-testid="ribbon-compare" onClick={() => toggleInspector('compare')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compare' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Compare</button>
+          </div>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Review</span>
         </div>
 
         {/* Compliance & References */}
-        <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-zinc-200">
-          <button data-testid="ribbon-crossref" onClick={() => toggleInspector('crossref')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'crossref' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Link2 className="w-3.5 h-3.5" />Cross-Refs</button>
-          <button data-testid="ribbon-inconsistency" onClick={() => toggleInspector('inconsistency')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'inconsistency' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Zap className="w-3.5 h-3.5" />Inconsistencies</button>
-          <button data-testid="ribbon-dataroom" onClick={() => toggleInspector('dataroom')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'dataroom' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Database className="w-3.5 h-3.5" />Data Room</button>
+        <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
+          <div className="flex items-center gap-0.5">
+            <button data-testid="ribbon-crossref" onClick={() => toggleInspector('crossref')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'crossref' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Link2 className="w-3.5 h-3.5" />Cross-Refs</button>
+            <button data-testid="ribbon-inconsistency" onClick={() => toggleInspector('inconsistency')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'inconsistency' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Zap className="w-3.5 h-3.5" />Issues</button>
+            <button data-testid="ribbon-dataroom" onClick={() => toggleInspector('dataroom')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'dataroom' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Database className="w-3.5 h-3.5" />Data Room</button>
+          </div>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Compliance</span>
         </div>
 
         {/* Audit & Provenance */}
-        <div className="flex items-center gap-0.5">
-          <button data-testid="ribbon-provenance" onClick={() => toggleInspector('provenance')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'provenance' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Provenance</button>
-          <button data-testid="ribbon-audit" onClick={() => toggleInspector('audit')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'audit' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ClipboardList className="w-3.5 h-3.5" />Audit Trail</button>
+        <div className="flex flex-col items-center py-1">
+          <div className="flex items-center gap-0.5">
+            <button data-testid="ribbon-provenance" onClick={() => toggleInspector('provenance')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'provenance' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Provenance</button>
+            <button data-testid="ribbon-audit" onClick={() => toggleInspector('audit')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'audit' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ClipboardList className="w-3.5 h-3.5" />Audit Trail</button>
+          </div>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Audit</span>
         </div>
       </div>
 
