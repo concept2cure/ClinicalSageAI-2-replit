@@ -463,7 +463,14 @@ export const ProjectsSidebar: React.FC = () => {
           </TooltipProvider>
         </div>
 
-        <NewProjectModal open={showNewProjectModal} onClose={() => setShowNewProjectModal(false)} />
+        <NewProjectModal
+          open={showNewProjectModal}
+          onClose={() => setShowNewProjectModal(false)}
+          onProjectCreated={(projectId) => {
+            setActiveProject(projectId);
+            setShowNewProjectModal(false);
+          }}
+        />
       </div>
     );
   }
