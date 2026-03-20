@@ -19,6 +19,57 @@ import {
 const router = Router();
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Module-level AI client (shared across routes, avoids repeated dynamic imports)
+// ─────────────────────────────────────────────────────────────────────────────
+let aiClient: { complete: (messages: unknown[], options?: Record<string, unknown>) => Promise<string> } | null = null;
+try {
+  const mod = await import('../lib/unified-ai-client.js');
+  aiClient = mod.ai;
+} catch {
+  console.warn('[CSR Builder Routes] AI client not available — narrative/benefit-risk will use templates');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Extract auth context from request (populated by auth middleware). */
+function getAuthContext(req: Request) {
+  const authUser = (req as Record<string, unknown>).user as Record<string, unknown> | undefined;
+  const tenantCtx = (req as Record<string, unknown>).tenantContext as Record<string, unknown> | undefined;
+  const organizationId = Number(tenantCtx?.organizationId || authUser?.organizationId) || 1;
+  const userId = Number(authUser?.id || authUser?.userId) || 1;
+  return { organizationId, userId };
+}
+
+/** Safe error message for client — never leak stack traces or internal details. */
+function safeErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message && !err.message.includes('at ') && err.message.length < 200) {
+    return err.message;
+  }
+  return fallback;
+}
+
+/**
+ * Parse a JSON object from an AI response string.
+ * Uses a non-greedy regex and validates the result is a plain object.
+ */
+function parseJsonFromAIResponse(response: string): Record<string, unknown> | null {
+  // Find first balanced { ... } block (non-greedy inner match)
+  const jsonMatch = response.match(/\{[\s\S]*?\}(?=[^}]*$)|\{[\s\S]*\}/);
+  if (!jsonMatch) return null;
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch { /* invalid JSON */ }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Validation schemas
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -30,6 +81,8 @@ const VALID_SECTION_NUMBERS = [
   '10', '10.1', '10.2', '11', '11.1', '11.2', '11.3', '11.4',
   '12', '12.1', '12.2', '12.3', '12.4', '12.5', '13', '14', '15', '16',
 ] as const;
+
+const validSectionSet = new Set<string>(VALID_SECTION_NUMBERS);
 
 const studyInfoSchema = z.object({
   title: z.string().min(1).max(500),
@@ -48,9 +101,12 @@ const studyInfoSchema = z.object({
 });
 
 const buildRequestSchema = z.object({
-  projectId: z.number().optional(),
+  projectId: z.number().int().positive().optional(),
   studyInfo: studyInfoSchema,
-  sectionsToGenerate: z.array(z.string()).optional(),
+  sectionsToGenerate: z.array(z.string()).max(50).optional().refine(
+    (sections) => !sections || sections.every(s => validSectionSet.has(s)),
+    { message: 'sectionsToGenerate contains invalid ICH E3 section numbers' }
+  ),
 });
 
 const draftSectionSchema = z.object({
@@ -69,6 +125,21 @@ const safetySchema = z.object({
   indication: z.string().min(1).max(500),
 });
 
+const narrativeSchema = z.object({
+  studyId: z.string().max(100).optional(),
+  patientId: z.string().max(100).optional(),
+  eventDescription: z.string().min(1).max(2000),
+  medicalHistory: z.string().max(5000).optional(),
+  concomitantMeds: z.string().max(2000).optional(),
+});
+
+const benefitRiskSchema = z.object({
+  drugName: z.string().min(1).max(300),
+  indication: z.string().min(1).max(500),
+  efficacyData: z.string().max(5000).optional(),
+  safetyData: z.string().max(5000).optional(),
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Routes
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,10 +149,11 @@ const safetySchema = z.object({
  * Returns the full ICH E3 section hierarchy.
  */
 router.get('/structure', (_req: Request, res: Response) => {
+  const structure = getICHE3Structure();
   res.json({
     success: true,
-    structure: getICHE3Structure(),
-    totalSections: getICHE3Structure().reduce(
+    structure,
+    totalSections: structure.reduce(
       (count, s) => count + 1 + (s.childSections?.length || 0),
       0
     ),
@@ -99,11 +171,7 @@ router.post('/build', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
     }
 
-    // Use auth context for org/user IDs instead of user-supplied values
-    const authUser = (req as any).user || {};
-    const tenantCtx = (req as any).tenantContext || {};
-    const organizationId = tenantCtx.organizationId || authUser.organizationId || 1;
-    const userId = authUser.id || authUser.userId || 1;
+    const { organizationId, userId } = getAuthContext(req);
 
     const job = await launchCSRBuild({
       organizationId,
@@ -123,9 +191,9 @@ router.post('/build', async (req: Request, res: Response) => {
       },
       sections: job.sections,
     });
-  } catch (err: any) {
-    console.error('[CSR Builder] Build failed:', err.message);
-    res.status(500).json({ error: 'CSR build failed', details: err.message });
+  } catch (err) {
+    console.error('[CSR Builder] Build failed:', err);
+    res.status(500).json({ error: safeErrorMessage(err, 'CSR build failed') });
   }
 });
 
@@ -150,9 +218,9 @@ router.post('/draft-section', async (req: Request, res: Response) => {
       isAI: result.isAI,
       provider: result.isAI ? 'claude-ai-gateway' : 'template',
     });
-  } catch (err: any) {
-    console.error('[CSR Builder] Section draft failed:', err.message);
-    res.status(500).json({ error: 'Section draft failed', details: err.message });
+  } catch (err) {
+    console.error('[CSR Builder] Section draft failed:', err);
+    res.status(500).json({ error: safeErrorMessage(err, 'Section draft failed') });
   }
 });
 
@@ -167,8 +235,9 @@ router.post('/compare', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
     }
 
+    const { organizationId } = getAuthContext(req);
     const { indication, phase, endpoint } = validation.data;
-    const comparisons = await compareWithExistingCSRs(indication, phase, endpoint);
+    const comparisons = await compareWithExistingCSRs(indication, phase, endpoint, organizationId);
 
     res.json({
       success: true,
@@ -176,9 +245,9 @@ router.post('/compare', async (req: Request, res: Response) => {
       matchCount: comparisons.length,
       comparisons,
     });
-  } catch (err: any) {
-    console.error('[CSR Builder] Comparison failed:', err.message);
-    res.status(500).json({ error: 'Comparison failed', details: err.message });
+  } catch (err) {
+    console.error('[CSR Builder] Comparison failed:', err);
+    res.status(500).json({ error: safeErrorMessage(err, 'Comparison failed') });
   }
 });
 
@@ -204,9 +273,9 @@ router.post('/safety-signals', async (req: Request, res: Response) => {
       signals: result.signals,
       summary: result.summary,
     });
-  } catch (err: any) {
-    console.error('[CSR Builder] Safety analysis failed:', err.message);
-    res.status(500).json({ error: 'Safety analysis failed', details: err.message });
+  } catch (err) {
+    console.error('[CSR Builder] Safety analysis failed:', err);
+    res.status(500).json({ error: safeErrorMessage(err, 'Safety analysis failed') });
   }
 });
 
@@ -216,47 +285,50 @@ router.post('/safety-signals', async (req: Request, res: Response) => {
  */
 router.post('/generate-narrative', async (req: Request, res: Response) => {
   try {
-    const { studyId, patientId, eventDescription, medicalHistory, concomitantMeds } = req.body;
-
-    if (!eventDescription) {
-      return res.status(400).json({ error: 'eventDescription is required' });
+    const validation = narrativeSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
     }
 
-    // Try AI narrative generation
+    const { studyId, patientId, eventDescription, medicalHistory, concomitantMeds } = validation.data;
+
     let narrative = '';
     let isAI = false;
 
-    try {
-      const mod = await import('../lib/unified-ai-client.js');
-      const aiClient = mod.ai;
-
-      narrative = await aiClient.complete(
-        [
-          {
-            role: 'system',
-            content: `You are an expert medical writer drafting patient case narratives for Clinical Study Reports per ICH E3 Section 12.3.
+    if (aiClient) {
+      try {
+        narrative = await aiClient.complete(
+          [
+            {
+              role: 'system',
+              content: `You are an expert medical writer drafting patient case narratives for Clinical Study Reports per ICH E3 Section 12.3.
 Write professional, factual narratives using passive voice and regulatory terminology.
 Include: patient demographics (if known), relevant medical history, event onset, clinical course, outcome, and investigator causality assessment.`,
-          },
-          {
-            role: 'user',
-            content: `Draft a patient case narrative for inclusion in a CSR safety section:
+            },
+            {
+              role: 'user',
+              content: `Draft a patient case narrative for inclusion in a CSR safety section:
 Study: ${studyId || '[Study ID]'}
 Patient: ${patientId || '[Patient ID]'}
 Event: ${eventDescription}
 Medical History: ${medicalHistory || 'Not provided'}
 Concomitant Medications: ${concomitantMeds || 'Not provided'}`,
-          },
-        ],
-        {
-          taskType: 'document_drafting',
-          maxTokens: 2048,
-          temperature: 0.3,
-          callerModule: 'csr-builder/narrative',
-        }
-      );
-      isAI = true;
-    } catch {
+            },
+          ],
+          {
+            taskType: 'document_drafting',
+            maxTokens: 2048,
+            temperature: 0.3,
+            callerModule: 'csr-builder/narrative',
+          }
+        );
+        isAI = true;
+      } catch {
+        // AI failed — fall through to template
+      }
+    }
+
+    if (!isAI) {
       narrative = `PATIENT NARRATIVE — ${patientId || 'Subject [ID]'}\n\nA [age]-year-old [sex] patient (${patientId || 'Subject [ID]'}) enrolled in study ${studyId || '[Study ID]'} experienced ${eventDescription}.\n\nMedical History: ${medicalHistory || '[To be documented]'}\nConcomitant Medications: ${concomitantMeds || '[To be documented]'}\n\n[Onset, clinical course, treatment actions, and outcome to be completed from source data]`;
     }
 
@@ -264,11 +336,12 @@ Concomitant Medications: ${concomitantMeds || 'Not provided'}`,
       success: true,
       narrative,
       isAI,
-      studyId,
-      patientId,
+      studyId: studyId || null,
+      patientId: patientId || null,
     });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Narrative generation failed', details: err.message });
+  } catch (err) {
+    console.error('[CSR Builder] Narrative generation failed:', err);
+    res.status(500).json({ error: safeErrorMessage(err, 'Narrative generation failed') });
   }
 });
 
@@ -278,52 +351,48 @@ Concomitant Medications: ${concomitantMeds || 'Not provided'}`,
  */
 router.post('/analyze-benefit-risk', async (req: Request, res: Response) => {
   try {
-    const { drugName, indication, efficacyData, safetyData } = req.body;
-
-    if (!drugName || !indication) {
-      return res.status(400).json({ error: 'drugName and indication are required' });
+    const validation = benefitRiskSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
     }
+
+    const { drugName, indication, efficacyData, safetyData } = validation.data;
 
     let result: Record<string, unknown> = {};
     let isAI = false;
 
-    try {
-      const mod = await import('../lib/unified-ai-client.js');
-      const aiClient = mod.ai;
-
-      const response = await aiClient.complete(
-        [
-          {
-            role: 'system',
-            content: `You are a regulatory affairs expert specializing in benefit-risk assessments for FDA submissions.
+    if (aiClient) {
+      try {
+        const response = await aiClient.complete(
+          [
+            {
+              role: 'system',
+              content: `You are a regulatory affairs expert specializing in benefit-risk assessments for FDA submissions.
 Generate a structured benefit-risk analysis suitable for ICH E3 Section 13 (Discussion and Overall Conclusions).
 Return JSON with: { "benefitSummary": "...", "riskSummary": "...", "overallAssessment": "...", "recommendations": ["..."] }`,
-          },
+            },
+            {
+              role: 'user',
+              content: `Analyze benefit-risk for ${drugName} in ${indication}.\n\nEfficacy Data: ${efficacyData || 'Not yet available'}\nSafety Data: ${safetyData || 'Not yet available'}`,
+            },
+          ],
           {
-            role: 'user',
-            content: `Analyze benefit-risk for ${drugName} in ${indication}.\n\nEfficacy Data: ${efficacyData || 'Not yet available'}\nSafety Data: ${safetyData || 'Not yet available'}`,
-          },
-        ],
-        {
-          taskType: 'regulatory_review',
-          maxTokens: 4096,
-          temperature: 0.3,
-          callerModule: 'csr-builder/benefit-risk',
-        }
-      );
+            taskType: 'regulatory_review',
+            maxTokens: 4096,
+            temperature: 0.3,
+            callerModule: 'csr-builder/benefit-risk',
+          }
+        );
 
-      try {
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          result = JSON.parse(jsonMatch[0]);
-        } else {
-          result = { overallAssessment: response };
-        }
+        const parsed = parseJsonFromAIResponse(response);
+        result = parsed || { overallAssessment: response };
+        isAI = true;
       } catch {
-        result = { overallAssessment: response };
+        // AI failed — fall through to template
       }
-      isAI = true;
-    } catch {
+    }
+
+    if (!isAI) {
       result = {
         benefitSummary: `[Efficacy benefits of ${drugName} in ${indication} to be summarized from study data]`,
         riskSummary: `[Safety risks of ${drugName} to be summarized from adverse event data]`,
@@ -338,8 +407,9 @@ Return JSON with: { "benefitSummary": "...", "riskSummary": "...", "overallAsses
     }
 
     res.json({ success: true, isAI, ...result });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Benefit-risk analysis failed', details: err.message });
+  } catch (err) {
+    console.error('[CSR Builder] Benefit-risk analysis failed:', err);
+    res.status(500).json({ error: safeErrorMessage(err, 'Benefit-risk analysis failed') });
   }
 });
 

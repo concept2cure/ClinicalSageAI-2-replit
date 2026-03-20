@@ -589,7 +589,7 @@ const CSRPage = () => {
                     />
                   </div>
 
-                  <Button onClick={handleGenerateNarrative} disabled={loading} className="w-full">
+                  <Button onClick={handleGenerateNarrative} disabled={loading || !narrativeInput.eventDescription.trim()} className="w-full">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -683,7 +683,7 @@ const CSRPage = () => {
                     </select>
                   </div>
 
-                  <Button onClick={handleDetectSignals} disabled={loading} className="w-full">
+                  <Button onClick={handleDetectSignals} disabled={loading || !signalInput.drugName.trim()} className="w-full">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -814,7 +814,7 @@ const CSRPage = () => {
                     />
                   </div>
 
-                  <Button onClick={handleBenefitRiskAnalysis} disabled={loading} className="w-full">
+                  <Button onClick={handleBenefitRiskAnalysis} disabled={loading || !benefitRiskInput.drugName.trim() || !benefitRiskInput.indication.trim()} className="w-full">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

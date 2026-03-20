@@ -409,7 +409,20 @@ Return a JSON object with this structure:
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0]);
+        // Validate expected shape
+        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.signals)) {
+          return {
+            signals: parsed.signals.map((s: Record<string, unknown>) => ({
+              term: String(s.term || ''),
+              frequency: String(s.frequency || 'unknown'),
+              severity: String(s.severity || 'unknown'),
+              relatedStudies: Number(s.relatedStudies) || 0,
+              disproportionalityScore: Number(s.disproportionalityScore) || 0,
+            })),
+            summary: String(parsed.summary || ''),
+          };
+        }
       }
     } catch { /* fall through */ }
 
