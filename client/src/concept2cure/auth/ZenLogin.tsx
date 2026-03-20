@@ -215,7 +215,7 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
             onKeyDown={e => handleKeyDown(index, e)}
             onPaste={handlePaste}
             className={`
-              w-12 h-14 text-center text-2xl font-medium
+              w-12 h-12 text-center text-xl font-medium
               border-2 rounded-xl
               transition-all duration-200
               focus:outline-none focus:ring-0
@@ -585,7 +585,7 @@ export const ZenLogin: React.FC = () => {
           text-base font-semibold text-white
           bg-zinc-900
           hover:bg-zinc-800
-          shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
+          shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30
           rounded-xl
           transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
@@ -601,7 +601,7 @@ export const ZenLogin: React.FC = () => {
           <div className="w-full border-t border-zinc-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-zinc-400 text-xs uppercase tracking-wider">
+          <span className="px-4 bg-white text-zinc-400 text-sm">
             or continue with
           </span>
         </div>
@@ -665,8 +665,8 @@ export const ZenLogin: React.FC = () => {
               >
                 <span className="text-lg">{persona.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-zinc-900 truncate">{persona.name}</div>
-                  <div className="text-xs text-zinc-500 truncate">{persona.title}</div>
+                  <div className="text-sm font-medium text-zinc-900 truncate">{persona.name}</div>
+                  <div className="text-[13px] text-zinc-500 truncate">{persona.title}</div>
                 </div>
                 <span className={`
                   text-xs font-medium px-2 py-0.5 rounded-full
@@ -839,7 +839,7 @@ export const ZenLogin: React.FC = () => {
           text-base font-semibold text-white
           bg-zinc-900
           hover:bg-zinc-800
-          shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
+          shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30
           rounded-xl
           transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed

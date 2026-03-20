@@ -908,7 +908,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 Clear
               </button>
             )}
-            <span className="text-[10px] text-zinc-400 ml-auto">
+            <span className="text-[11px] text-zinc-400 ml-auto">
               {filtered.length} of {artifacts.length}
             </span>
           </div>
@@ -999,13 +999,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 >
                   {/* Title row */}
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-[13px] font-semibold text-zinc-800 leading-snug line-clamp-2">
+                    <span className="text-sm font-semibold text-zinc-800 leading-snug line-clamp-2">
                       {a.title}
                     </span>
                     <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                       <span
                         className={cn(
-                          'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide',
+                          'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide',
                           a.status === 'approved'
                             ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
                             : a.status === 'locked'
@@ -1022,17 +1022,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     </div>
                   </div>
                   {/* Metadata row */}
-                  <div className="flex items-center gap-1.5 mt-1">
+                  <div className="flex items-center gap-1.5 mt-1.5">
                     {a.ctdSection && (
-                      <span className="inline-flex items-center px-1.5 py-px rounded bg-violet-50 text-violet-600 text-[10px] font-semibold ring-1 ring-violet-200/60 tracking-wide">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 text-[11px] font-semibold ring-1 ring-violet-200/60 tracking-wide">
                         CTD {a.ctdSection}
                       </span>
                     )}
-                    <span className="text-[10px] text-zinc-400">{a.type?.replace(/_/g, ' ')}</span>
+                    <span className="text-[11px] text-zinc-400">{a.type?.replace(/_/g, ' ')}</span>
                     <span className="text-zinc-300">&middot;</span>
-                    <span className="text-[10px] text-zinc-400 tabular-nums">v{a.version}</span>
+                    <span className="text-[11px] text-zinc-400 tabular-nums">v{a.version}</span>
                     <span className="text-zinc-300">&middot;</span>
-                    <span className="text-[10px] text-zinc-400 tabular-nums">
+                    <span className="text-[11px] text-zinc-400 tabular-nums">
                       {new Date(a.updatedAt || a.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -1048,8 +1048,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Editor view — Document Focus ─────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* ── Compact toolbar — 32px, document-first ───────────────────────── */}
-      <div className="flex items-center h-8 px-2 border-b border-zinc-100 bg-white shrink-0 gap-1">
+      {/* ── Document toolbar ───────────────────────────────────────────── */}
+      <div className="flex items-center h-10 px-3 border-b border-zinc-200 bg-white shrink-0 gap-2">
         {/* Left: back + title + status */}
         <button
           onClick={() => {
@@ -1057,18 +1057,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             setShowArtifactList(true);
             setAiResult(null);
           }}
-          className="text-[11px] text-zinc-400 hover:text-zinc-700 shrink-0 px-1 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
+          className="text-xs text-zinc-400 hover:text-zinc-700 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           ← Docs
         </button>
-        <span className="text-zinc-200 text-[10px]">/</span>
-        <span className="text-[12px] font-semibold text-zinc-900 truncate max-w-[220px]">
+        <span className="text-zinc-300 text-xs">/</span>
+        <span className="text-sm font-semibold text-zinc-900 truncate max-w-[260px]">
           {activeArtifact?.title}
         </span>
         {activeArtifact?.ctdSection && (
           <button
             onClick={() => setShowCtdInput(prev => !prev)}
-            className="text-[9px] px-1 py-px rounded bg-violet-50 text-violet-600 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
+            className="text-[11px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
             title="Edit CTD section placement"
           >
             CTD {activeArtifact.ctdSection}
@@ -1076,37 +1076,37 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         <span
           className={cn(
-            'text-[9px] px-1 py-px rounded font-semibold shrink-0 uppercase tracking-wide',
+            'text-[11px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wide',
             activeArtifact?.status === 'approved'
               ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200'
               : activeArtifact?.status === 'locked'
                 ? 'bg-red-50 text-red-600 ring-1 ring-red-200'
                 : activeArtifact?.status === 'review'
                   ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-200'
-                  : 'bg-zinc-50 text-zinc-400'
+                  : 'bg-zinc-100 text-zinc-500'
           )}
         >
           {activeArtifact?.status || 'draft'}
         </span>
         {saveStatus === 'saved' && (
-          <span className="flex items-center gap-0.5 text-[9px] text-emerald-600 font-medium shrink-0 animate-in fade-in duration-200">
-            <Check className="w-2.5 h-2.5" />
+          <span className="flex items-center gap-0.5 text-[11px] text-emerald-600 font-medium shrink-0 animate-in fade-in duration-200">
+            <Check className="w-3 h-3" />
             Saved
           </span>
         )}
         {saveStatus === 'error' && (
-          <span className="flex items-center gap-0.5 text-[9px] text-red-600 font-medium shrink-0">
-            <AlertCircle className="w-2.5 h-2.5" />
+          <span className="flex items-center gap-0.5 text-[11px] text-red-600 font-medium shrink-0">
+            <AlertCircle className="w-3 h-3" />
             Error
           </span>
         )}
 
         {/* Trust indicators strip — clickable pills */}
         {activeArtifact && (
-          <div className="flex items-center gap-1.5 ml-1.5">
+          <div className="flex items-center gap-1.5 ml-1">
             <button
               onClick={() => toggleInspector('compare')}
-              className="text-[9px] text-zinc-400 tabular-nums font-medium hover:text-blue-600 transition-colors cursor-pointer"
+              className="text-[11px] text-zinc-400 tabular-nums font-medium hover:text-blue-600 transition-colors cursor-pointer"
               title="Open version compare"
             >
               v{activeArtifact.version}
@@ -1114,7 +1114,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             {signatures.length > 0 && (
               <button
                 onClick={() => toggleInspector('audit')}
-                className="text-[9px] px-1 py-px rounded bg-emerald-50 text-emerald-600 font-semibold ring-1 ring-emerald-200/60 tabular-nums hover:bg-emerald-100 transition-colors cursor-pointer"
+                className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-semibold ring-1 ring-emerald-200/60 tabular-nums hover:bg-emerald-100 transition-colors cursor-pointer"
                 title="View signatures in audit trail"
               >
                 {signatures.length} sig{signatures.length !== 1 ? 's' : ''}
@@ -1123,7 +1123,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             {provenanceCount > 0 && (
               <button
                 onClick={() => toggleInspector('provenance')}
-                className="text-[9px] px-1 py-px rounded bg-blue-50 text-blue-600 font-semibold ring-1 ring-blue-200/60 tabular-nums hover:bg-blue-100 transition-colors cursor-pointer"
+                className="text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-semibold ring-1 ring-blue-200/60 tabular-nums hover:bg-blue-100 transition-colors cursor-pointer"
                 title="Open provenance timeline"
               >
                 {provenanceCount} event{provenanceCount !== 1 ? 's' : ''}
@@ -1132,7 +1132,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             {integrityVerified !== null && (
               <button
                 onClick={() => toggleInspector('audit')}
-                className={`text-[9px] px-1 py-px rounded font-semibold ring-1 cursor-pointer transition-colors ${integrityVerified ? 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100' : 'bg-red-50 text-red-600 ring-red-200/60 hover:bg-red-100'}`}
+                className={`text-[11px] px-1.5 py-0.5 rounded font-semibold ring-1 cursor-pointer transition-colors ${integrityVerified ? 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100' : 'bg-red-50 text-red-600 ring-red-200/60 hover:bg-red-100'}`}
                 title={
                   integrityVerified
                     ? 'Integrity verified — view audit'
@@ -1147,8 +1147,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         <div className="flex-1" />
 
-        {/* Right: PINNED inspector toggles (always visible) + overflow */}
-        <div className="flex items-center gap-0.5">
+        {/* Right: PINNED inspector toggles + overflow */}
+        <div className="flex items-center gap-1">
           {(
             [
               { id: 'intelligence' as const, icon: Brain, label: 'Intel' },
@@ -1164,28 +1164,28 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               data-testid={`inspector-${id}`}
               onClick={() => toggleInspector(id)}
               className={cn(
-                'px-1.5 py-0.5 text-[10px] rounded transition-colors flex items-center gap-0.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                'px-2 py-1 text-[11px] rounded-md transition-colors flex items-center gap-1 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                 activeInspector === id
-                  ? 'bg-blue-50 text-blue-700 font-semibold'
-                  : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+                  ? 'bg-blue-100 text-blue-700 font-semibold'
+                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
               )}
             >
-              <Icon className="w-3 h-3 shrink-0" />
-              {label}
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden lg:inline">{label}</span>
             </button>
           ))}
 
-          <span className="w-px h-3 bg-zinc-100 mx-0.5" />
+          <span className="w-px h-4 bg-zinc-200 mx-0.5" />
 
-          {/* Overflow: Save, Export, Sign, Review, AI, CTD, Audit export */}
+          {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
           <div className="relative">
             <button
               onClick={() => setOverflowOpen(!overflowOpen)}
               aria-label="More actions"
               aria-expanded={overflowOpen}
-              className="px-1 py-0.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+              className="px-1.5 py-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             >
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="w-3.5 h-3.5" />
             </button>
             {overflowOpen && (
               <div
@@ -1211,7 +1211,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   Save
                 </button>
                 {/* Export submenu */}
-                <div className="px-3 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Export</div>
+                <div className="px-3 py-1 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Export</div>
                 <button
                   role="menuitem"
                   onClick={() => { handleExportDocx(); setOverflowOpen(false); }}
@@ -1278,20 +1278,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   </button>
                 )}
                 <div className="border-t border-zinc-100 my-1" />
-                {AI_ACTIONS.map(a => (
-                  <button
-                    key={a.id}
-                    onClick={() => {
-                      handleAIEdit(a.id);
-                      setOverflowOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700"
-                  >
-                    <Sparkles className="w-3 h-3 inline mr-1.5 text-violet-500" />
-                    {a.label}
-                  </button>
-                ))}
-                <div className="border-t border-zinc-100 my-1" />
                 <button
                   onClick={() => {
                     handleClaimCheck();
@@ -1329,48 +1315,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         </div>
       </div>
-
-      {/* ── Controlled record micro-bar ──────────────────────────────────── */}
-      {activeArtifact && (
-        <div className="flex items-center h-5 px-2 border-b border-zinc-50 bg-zinc-50/40 shrink-0 gap-2 text-[9px] text-zinc-400">
-          <ShieldCheck className="w-2.5 h-2.5 text-zinc-300" />
-          <span className="font-medium">Controlled Record</span>
-          <span className="text-zinc-200">·</span>
-          <span className="tabular-nums">
-            {new Date(activeArtifact.updatedAt || activeArtifact.createdAt).toLocaleString(
-              undefined,
-              { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
-            )}
-          </span>
-          {(activeArtifact as Artifact & { templateId?: string }).templateId && (
-            <>
-              <span className="text-zinc-200">·</span>
-              <span className="text-violet-400">from template</span>
-            </>
-          )}
-          {claimStatus === 'checking' && (
-            <>
-              <span className="text-zinc-200">·</span>
-              <span className="text-blue-400 flex items-center gap-0.5">
-                <Loader2 className="w-2 h-2 animate-spin" /> checking claims
-              </span>
-            </>
-          )}
-          {claimStatus === 'supported' && (
-            <>
-              <span className="text-zinc-200">·</span>
-              <span className="text-emerald-500 font-medium">✓ claims supported</span>
-            </>
-          )}
-          {claimStatus === 'needs-evidence' && (
-            <>
-              <span className="text-zinc-200">·</span>
-              <span className="text-amber-500 font-medium">⚠ needs evidence</span>
-            </>
-          )}
-          <span className="ml-auto text-zinc-300 hidden sm:inline">⌘S save</span>
-        </div>
-      )}
 
       {/* ── Contextual banners (only when relevant) ──────────────────────── */}
       {aiResult && (
@@ -1437,7 +1381,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           )}
           Claim Check — {claimResult.supported ? 'Supported by Precedents' : 'Needs Evidence'}
           {claimResult.warnings?.length > 0 && (
-            <span className="text-[10px] opacity-70">({claimResult.warnings.length} warnings)</span>
+            <span className="text-[11px] opacity-70">({claimResult.warnings.length} warnings)</span>
           )}
           <button
             onClick={() => setClaimResult(null)}
@@ -1475,9 +1419,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
-      {/* ── Document Lifecycle Pipeline (Sprint 3A) ───────────────────── */}
+      {/* ── Document Lifecycle Pipeline ──────────────────────────────── */}
       {activeArtifact && (
-        <div className="flex items-center gap-1 px-3 py-1.5 border-b border-zinc-100 bg-gradient-to-r from-zinc-50/50 to-white">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/30">
           {(['draft', 'review', 'approved', 'locked'] as const).map((stage, idx, arr) => {
             const currentStatus = activeArtifact.status || 'draft';
             const stageOrder = { draft: 0, review: 1, approved: 2, locked: 3 };
@@ -1487,12 +1431,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             const isCurrent = stage === currentStatus;
             const stageLabels: Record<string, string> = {
               draft: 'Draft',
-              review: 'In Review',
+              review: 'Review',
               approved: 'Approved',
               locked: 'Published',
             };
             const stageColors: Record<string, string> = {
-              draft: 'bg-zinc-200 text-zinc-600',
+              draft: 'bg-zinc-200 text-zinc-700',
               review: 'bg-amber-100 text-amber-700',
               approved: 'bg-emerald-100 text-emerald-700',
               locked: 'bg-blue-100 text-blue-700',
@@ -1507,7 +1451,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   }}
                   disabled={changingStatus}
                   className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all',
+                    'flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all',
                     isCurrent
                       ? `${stageColors[stage]} ring-1 ring-current/20 shadow-sm`
                       : isCompleted
@@ -1525,11 +1469,35 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   {stageLabels[stage]}
                 </button>
                 {idx < arr.length - 1 && (
-                  <ArrowRight className={cn('w-3 h-3', isCompleted ? 'text-emerald-400' : 'text-zinc-300')} />
+                  <ArrowRight className={cn('w-3 h-3', isCompleted ? 'text-emerald-400' : 'text-zinc-200')} />
                 )}
               </React.Fragment>
             );
           })}
+          {/* Claim status + last updated (merged from old micro-bar) */}
+          <div className="flex items-center gap-2 ml-auto text-[11px] text-zinc-400">
+            {claimStatus === 'checking' && (
+              <span className="text-blue-500 flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Checking claims
+              </span>
+            )}
+            {claimStatus === 'supported' && (
+              <span className="text-emerald-600 font-medium flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" /> Claims supported
+              </span>
+            )}
+            {claimStatus === 'needs-evidence' && (
+              <span className="text-amber-600 font-medium flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> Needs evidence
+              </span>
+            )}
+            <span className="tabular-nums">
+              {new Date(activeArtifact.updatedAt || activeArtifact.createdAt).toLocaleString(
+                undefined,
+                { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+              )}
+            </span>
+          </div>
         </div>
       )}
 
@@ -1581,11 +1549,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             submissionType={submissionType}
             showCompliance={false}
             showTraceability={false}
+            embedded
             isReadOnly={activeArtifact?.status === 'locked'}
             onSave={handleSave}
             onAIAction={(action, selectedText) => {
               if (action === 'link-source') {
-                // Slash command triggered source link — just notify
                 pushToast('Select text first, then use Link to Source in the bubble menu', 'info');
                 return;
               }
@@ -1599,7 +1567,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Single inspector drawer — only one at a time */}
         {activeInspector === 'intelligence' && (
-          <div className="w-72 shrink-0 border-l border-zinc-100">
+          <div className="w-80 shrink-0 border-l border-zinc-200">
             <RegulatoryIntelligencePanel
               submissionType={submissionType}
               indication={activeArtifact?.title}
@@ -1639,7 +1607,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'provenance' && projectId && activeArtifact && (
-          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
             <DocumentProvenancePanel
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -1662,7 +1630,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'audit' && projectId && activeArtifact && (
-          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
             <DocumentAuditReport
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -1676,7 +1644,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Sprint 2A: Data Room Panel */}
         {activeInspector === 'dataroom' && projectId && (
-          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
             <DataRoomPanel
               projectId={projectId}
               onSourceSelect={(source) => {
@@ -1690,7 +1658,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Sprint 2C: Inconsistency Intelligence Panel */}
         {activeInspector === 'inconsistency' && projectId && activeArtifact && (
-          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
             <InconsistencyPanel
               projectId={projectId}
               activeArtifactId={activeArtifact.id}

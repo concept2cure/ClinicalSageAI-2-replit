@@ -138,6 +138,8 @@ export interface UnifiedDocumentEditorProps {
   isReadOnly?: boolean;
   showTraceability?: boolean;
   showCompliance?: boolean;
+  /** Hide the document header bar (title/type/panel toggles) when embedded in EditorPanel which provides its own */
+  embedded?: boolean;
   onSave?: (content: string, metadata: Record<string, unknown>) => Promise<void>;
   onLinkSource?: (selectedText: string, range: { from: number; to: number }) => void;
   onVersionChange?: (version: DocumentVersion) => void;
@@ -243,6 +245,8 @@ interface ToolbarProps {
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, onToggleLock, onAIAction, showFindReplace, onToggleFindReplace }) => {
+  const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
+
   if (!editor) return null;
 
   const ToolButton: React.FC<{
@@ -256,7 +260,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`p-2 rounded hover:bg-zinc-200 transition-colors
+      className={`p-1.5 rounded hover:bg-zinc-200 transition-colors
         ${isActive ? 'bg-zinc-200 text-blue-600' : 'text-zinc-600'}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
@@ -265,7 +269,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
   );
 
   return (
-    <div className="flex items-center gap-1 p-2 border-b border-zinc-200 bg-zinc-50 flex-wrap">
+    <div className="flex items-center gap-0.5 px-2 py-1 border-b border-zinc-200 bg-zinc-50/80">
       {/* History */}
       <ToolButton
         onClick={() => editor.chain().focus().undo().run()}
@@ -282,7 +286,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         <Redo className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-6 bg-zinc-300 mx-1" />
+      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
 
       {/* Headings */}
       <ToolButton
@@ -307,7 +311,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         <Heading3 className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-6 bg-zinc-300 mx-1" />
+      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
 
       {/* Text Formatting */}
       <ToolButton
@@ -336,12 +340,12 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         isActive={editor.isActive('highlight')}
         title="Highlight"
       >
-        <span className="w-4 h-4 bg-yellow-300 rounded text-xs flex items-center justify-center font-bold">
+        <span className="w-4 h-4 bg-yellow-300 rounded text-[10px] flex items-center justify-center font-bold">
           H
         </span>
       </ToolButton>
 
-      <div className="w-px h-6 bg-zinc-300 mx-1" />
+      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
 
       {/* Lists */}
       <ToolButton
@@ -366,7 +370,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         <FileCheck className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-6 bg-zinc-300 mx-1" />
+      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
 
       {/* Block Elements */}
       <ToolButton
@@ -392,7 +396,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         <TableIcon className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-6 bg-zinc-300 mx-1" />
+      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
 
       {/* Find & Replace toggle */}
       <ToolButton
@@ -402,6 +406,46 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
       >
         <Search className="w-4 h-4" />
       </ToolButton>
+
+      {/* AI Actions dropdown — replaces separate SmartToolbar row */}
+      {onAIAction && (
+        <div className="relative">
+          <button
+            onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
+            disabled={isLocked}
+            className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+              aiDropdownOpen
+                ? 'bg-purple-100 text-purple-700'
+                : 'text-purple-600 hover:bg-purple-50'
+            } ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+            title="AI Actions"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AI</span>
+            <ChevronDown className="w-3 h-3" />
+          </button>
+          {aiDropdownOpen && (
+            <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+              {AI_TOOLBAR_ACTIONS.map(action => (
+                <button
+                  key={action.id}
+                  onClick={() => {
+                    onAIAction(action.id, '');
+                    setAiDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-purple-50 text-sm text-zinc-700 flex items-center gap-2.5 transition-colors"
+                >
+                  <action.icon className="w-4 h-4 text-purple-500 shrink-0" />
+                  <div>
+                    <div className="font-medium text-xs">{action.label}</div>
+                    <div className="text-[11px] text-zinc-400">{action.description}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1" />
 
@@ -416,9 +460,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
       <button
         onClick={onSave}
         disabled={isSaving}
-        className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
       >
-        <Save className="w-4 h-4" />
+        <Save className="w-3.5 h-3.5" />
         {isSaving ? 'Saving...' : 'Save'}
       </button>
     </div>
@@ -445,7 +489,7 @@ interface SmartToolbarProps {
 const SmartToolbar: React.FC<SmartToolbarProps> = ({ onAIAction, disabled }) => (
   <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-200 bg-gradient-to-r from-purple-50/50 to-blue-50/50">
     <Sparkles className="w-3.5 h-3.5 text-purple-500 mr-1" />
-    <span className="text-[10px] font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
+    <span className="text-[11px] font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
     {AI_TOOLBAR_ACTIONS.map(action => (
       <button
         key={action.id}
@@ -518,7 +562,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
           if (e.key === 'Escape') onClose();
         }}
       />
-      <span className="text-[10px] text-zinc-500 min-w-[50px]">
+      <span className="text-[11px] text-zinc-500 min-w-[50px]">
         {results.length > 0 ? `${currentIndex + 1}/${results.length}` : 'No results'}
       </span>
       <button onClick={() => (editor?.commands as Record<string, () => boolean>)?.prevMatch?.()} className="p-1 hover:bg-zinc-200 rounded" title="Previous">
@@ -536,10 +580,10 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         placeholder="Replace..."
         className="w-32 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
       />
-      <button onClick={handleReplace} className="px-2 py-1 text-[10px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+      <button onClick={handleReplace} className="px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
         Replace
       </button>
-      <button onClick={handleReplaceAll} className="px-2 py-1 text-[10px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+      <button onClick={handleReplaceAll} className="px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
         All
       </button>
       <button onClick={onClose} className="p-1 hover:bg-zinc-200 rounded ml-auto">
@@ -581,7 +625,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
           <X className="w-3 h-3 text-zinc-400" />
         </button>
       </div>
-      <div className="flex items-center gap-2 text-[10px] text-zinc-500 mb-2">
+      <div className="flex items-center gap-2 text-[11px] text-zinc-500 mb-2">
         <span className="px-1.5 py-0.5 bg-zinc-100 rounded">{source.documentType}</span>
         <span>v{source.version}</span>
         <span className="flex items-center gap-1">
@@ -590,14 +634,14 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
         </span>
       </div>
       {source.excerpt && (
-        <p className="text-[10px] text-zinc-600 bg-zinc-50 p-2 rounded mb-2 line-clamp-3">
+        <p className="text-xs text-zinc-600 bg-zinc-50 p-2 rounded mb-2 line-clamp-3">
           {source.excerpt}
         </p>
       )}
       <div className="flex items-center gap-2">
         <button
           onClick={() => onOpenSource?.(source.id)}
-          className="flex items-center gap-1 px-2 py-1 text-[10px] text-blue-600 hover:bg-blue-50 rounded"
+          className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded"
         >
           <ExternalLink className="w-3 h-3" />
           Open full source
@@ -624,7 +668,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
   const readingTime = Math.max(1, Math.ceil(words / 200));
 
   return (
-    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-[10px] text-zinc-500">
+    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-[11px] text-zinc-500">
       <span>{words.toLocaleString()} words</span>
       <span>{chars.toLocaleString()} chars</span>
       <span className="flex items-center gap-1">
@@ -973,6 +1017,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   isReadOnly = false,
   showTraceability = true,
   showCompliance = true,
+  embedded = false,
   onSave,
   onLinkSource,
   onVersionChange,
@@ -1211,101 +1256,103 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
   return (
     <div className={`flex flex-col h-full bg-white ${className}`}>
-      {/* Document Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-200 bg-zinc-50">
-        <div className="flex items-center gap-3">
-          <FileText className="w-5 h-5 text-blue-500" />
-          <div>
-            <h1 className="font-semibold text-zinc-800">{documentTitle}</h1>
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <span className="px-2 py-0.5 bg-zinc-200 rounded">
-                {documentType}
-              </span>
-              {submissionType && (
-                <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
-                  {submissionType}
+      {/* Document Header — hidden when embedded in EditorPanel (which provides its own) */}
+      {!embedded && (
+        <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-200 bg-zinc-50">
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-blue-500" />
+            <div>
+              <h1 className="font-semibold text-zinc-800">{documentTitle}</h1>
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <span className="px-2 py-0.5 bg-zinc-200 rounded">
+                  {documentType}
                 </span>
-              )}
+                {submissionType && (
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
+                    {submissionType}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Template/Content Toggle (Weave-inspired) */}
-          {templateStructure && templateStructure.length > 0 && (
-            <div className="flex items-center bg-zinc-100 rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode('content')}
-                className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors ${
-                  viewMode === 'content'
-                    ? 'bg-white text-zinc-800 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-700'
-                }`}
-              >
-                <Eye className="w-3 h-3 inline mr-1" />
-                Content
-              </button>
-              <button
-                onClick={() => setViewMode('template')}
-                className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors ${
-                  viewMode === 'template'
-                    ? 'bg-white text-zinc-800 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-700'
-                }`}
-              >
-                <Layers className="w-3 h-3 inline mr-1" />
-                Template
-              </button>
-            </div>
-          )}
-          {/* Collaborator Avatars */}
-          {collaborators && collaborators.length > 0 && (
-            <div className="flex -space-x-1.5 mr-1">
-              {collaborators.slice(0, 3).map(c => (
-                <div
-                  key={c.id}
-                  title={c.name}
-                  className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white"
-                  style={{ backgroundColor: c.color }}
+          <div className="flex items-center gap-2">
+            {/* Template/Content Toggle (Weave-inspired) */}
+            {templateStructure && templateStructure.length > 0 && (
+              <div className="flex items-center bg-zinc-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => setViewMode('content')}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                    viewMode === 'content'
+                      ? 'bg-white text-zinc-800 shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-700'
+                  }`}
                 >
-                  {c.name.charAt(0).toUpperCase()}
-                </div>
-              ))}
-              {collaborators.length > 3 && (
-                <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[9px] font-bold text-zinc-600">
-                  +{collaborators.length - 3}
-                </div>
-              )}
-            </div>
-          )}
-          {/* Panel Toggles */}
-          {showTraceability && (
-            <button
-              onClick={() => setActivePanel(activePanel === 'traceability' ? null : 'traceability')}
-              className={`p-2 rounded transition-colors ${
-                activePanel === 'traceability'
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'hover:bg-zinc-100 text-zinc-600'
-              }`}
-              title="Traceability Links"
-            >
-              <BookOpen className="w-5 h-5" />
-            </button>
-          )}
-          {showCompliance && (
-            <button
-              onClick={() => setActivePanel(activePanel === 'compliance' ? null : 'compliance')}
-              className={`p-2 rounded transition-colors ${
-                activePanel === 'compliance'
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'hover:bg-zinc-100 text-zinc-600'
-              }`}
-              title="Compliance Score"
-            >
-              <FileCheck className="w-5 h-5" />
-            </button>
-          )}
+                  <Eye className="w-3.5 h-3.5 inline mr-1" />
+                  Content
+                </button>
+                <button
+                  onClick={() => setViewMode('template')}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                    viewMode === 'template'
+                      ? 'bg-white text-zinc-800 shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-700'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5 inline mr-1" />
+                  Template
+                </button>
+              </div>
+            )}
+            {/* Collaborator Avatars */}
+            {collaborators && collaborators.length > 0 && (
+              <div className="flex -space-x-1.5 mr-1">
+                {collaborators.slice(0, 3).map(c => (
+                  <div
+                    key={c.id}
+                    title={c.name}
+                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
+                    style={{ backgroundColor: c.color }}
+                  >
+                    {c.name.charAt(0).toUpperCase()}
+                  </div>
+                ))}
+                {collaborators.length > 3 && (
+                  <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[10px] font-bold text-zinc-600">
+                    +{collaborators.length - 3}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Panel Toggles */}
+            {showTraceability && (
+              <button
+                onClick={() => setActivePanel(activePanel === 'traceability' ? null : 'traceability')}
+                className={`p-2 rounded transition-colors ${
+                  activePanel === 'traceability'
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'hover:bg-zinc-100 text-zinc-600'
+                }`}
+                title="Traceability Links"
+              >
+                <BookOpen className="w-5 h-5" />
+              </button>
+            )}
+            {showCompliance && (
+              <button
+                onClick={() => setActivePanel(activePanel === 'compliance' ? null : 'compliance')}
+                className={`p-2 rounded transition-colors ${
+                  activePanel === 'compliance'
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'hover:bg-zinc-100 text-zinc-600'
+                }`}
+                title="Compliance Score"
+              >
+                <FileCheck className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Formatting Toolbar */}
       <Toolbar
@@ -1318,9 +1365,6 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         showFindReplace={showFindReplace}
         onToggleFindReplace={() => setShowFindReplace(prev => !prev)}
       />
-
-      {/* AI Smart Actions Row */}
-      <SmartToolbar onAIAction={onAIAction} disabled={isLocked} />
 
       {/* Find & Replace Bar */}
       {showFindReplace && (
@@ -1402,7 +1446,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="Link to Source"
               >
                 <Link className="w-3.5 h-3.5" />
-                <span className="text-[10px]">Source</span>
+                <span className="text-[11px]">Source</span>
               </button>
               <div className="w-px h-4 bg-zinc-600 mx-0.5" />
               {/* AI Actions on selection */}
@@ -1416,7 +1460,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="AI Rewrite Selection"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-[10px]">Rewrite</span>
+                <span className="text-[11px]">Rewrite</span>
               </button>
               <button
                 onClick={() => {
@@ -1437,7 +1481,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="Add Comment"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span className="text-[10px]">Comment</span>
+                <span className="text-[11px]">Comment</span>
               </button>
             </BubbleMenu>
           )}
@@ -1483,7 +1527,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         <div className="flex-1">
                           <span className="text-sm font-medium text-zinc-800">{section.label}</span>
                           {section.required && (
-                            <span className="ml-2 text-[10px] text-red-500 font-medium">Required</span>
+                            <span className="ml-2 text-[11px] text-red-500 font-medium">Required</span>
                           )}
                         </div>
                         {!isFilled && (
@@ -1492,7 +1536,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                               e.stopPropagation();
                               onAIAction?.('generate-section', section.label);
                             }}
-                            className="flex items-center gap-1 px-2 py-1 text-[10px] bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
+                            className="flex items-center gap-1 px-2 py-1 text-[11px] bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
                           >
                             <Sparkles className="w-3 h-3" />
                             Generate

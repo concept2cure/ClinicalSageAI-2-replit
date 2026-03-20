@@ -217,7 +217,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
         <div className="flex items-center gap-2 mb-2">
           <Database className="w-4 h-4 text-emerald-600" />
           <span className="font-semibold text-sm text-zinc-800">Data Room</span>
-          <span className="ml-auto text-[10px] text-zinc-500">
+          <span className="ml-auto text-[11px] text-zinc-500">
             {sources.length} source{sources.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -245,7 +245,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'flex items-center gap-1 px-2 py-1 text-[10px] rounded border transition-colors',
+              'flex items-center gap-1 px-2 py-1 text-[11px] rounded border transition-colors',
               showFilters
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                 : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
@@ -256,7 +256,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           </button>
           <button
             onClick={onUpload}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50 ml-auto"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50 ml-auto"
           >
             <Upload className="w-3 h-3" />
             Upload Source
@@ -268,7 +268,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             <button
               onClick={() => setFilterType('all')}
               className={cn(
-                'px-2 py-0.5 text-[10px] rounded-full border',
+                'px-2 py-0.5 text-[11px] rounded-full border',
                 filterType === 'all'
                   ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
                   : 'border-zinc-200 text-zinc-500'
@@ -281,7 +281,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                 key={t}
                 onClick={() => setFilterType(t)}
                 className={cn(
-                  'px-2 py-0.5 text-[10px] rounded-full border',
+                  'px-2 py-0.5 text-[11px] rounded-full border',
                   filterType === t
                     ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
                     : 'border-zinc-200 text-zinc-500'
@@ -343,15 +343,15 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                         {source.title}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 rounded text-zinc-500">
+                        <span className="text-[11px] px-1.5 py-0.5 bg-zinc-100 rounded text-zinc-500">
                           {source.type}
                         </span>
-                        <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                        <span className="text-[11px] text-zinc-400 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
                           {formatDate(source.uploadedAt)}
                         </span>
                         {source.size && (
-                          <span className="text-[10px] text-zinc-400">
+                          <span className="text-[11px] text-zinc-400">
                             {formatFileSize(source.size)}
                           </span>
                         )}
@@ -379,7 +379,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                   {isExpanded && (
                     <div className="px-3 pb-3 border-t border-zinc-100">
                       {source.excerpt && (
-                        <p className="text-[10px] text-zinc-500 mt-2 line-clamp-3">
+                        <p className="text-[11px] text-zinc-500 mt-2 line-clamp-3">
                           {source.excerpt}
                         </p>
                       )}
@@ -389,21 +389,21 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                           {source.metadata.studyType && (
                             <div className="flex items-center gap-1">
                               <Tag className="w-3 h-3 text-zinc-400" />
-                              <span className="text-[10px] text-zinc-600">
+                              <span className="text-[11px] text-zinc-600">
                                 {source.metadata.studyType}
                               </span>
                             </div>
                           )}
                           {source.metadata.endpoints && source.metadata.endpoints.length > 0 && (
                             <div>
-                              <span className="text-[10px] font-medium text-zinc-600">
+                              <span className="text-[11px] font-medium text-zinc-600">
                                 Endpoints:
                               </span>
                               <div className="flex flex-wrap gap-1 mt-0.5">
                                 {source.metadata.endpoints.map((ep, i) => (
                                   <span
                                     key={i}
-                                    className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded"
+                                    className="text-[11px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded"
                                   >
                                     {ep}
                                   </span>
@@ -413,18 +413,18 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                           )}
                           {source.metadata.keyFindings && source.metadata.keyFindings.length > 0 && (
                             <div>
-                              <span className="text-[10px] font-medium text-zinc-600">
+                              <span className="text-[11px] font-medium text-zinc-600">
                                 Key Findings:
                               </span>
                               {source.metadata.keyFindings.map((f, i) => (
-                                <p key={i} className="text-[10px] text-zinc-500 ml-2">
+                                <p key={i} className="text-[11px] text-zinc-500 ml-2">
                                   {f}
                                 </p>
                               ))}
                             </div>
                           )}
                           {source.metadata.sampleSize && (
-                            <div className="text-[10px] text-zinc-600">
+                            <div className="text-[11px] text-zinc-600">
                               N = {source.metadata.sampleSize}
                             </div>
                           )}
@@ -436,7 +436,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                             handleExtractMetadata(source.id);
                           }}
                           disabled={extracting === source.id}
-                          className="mt-2 flex items-center gap-1 text-[10px] text-purple-600 hover:text-purple-700"
+                          className="mt-2 flex items-center gap-1 text-[11px] text-purple-600 hover:text-purple-700"
                         >
                           {extracting === source.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
@@ -453,12 +453,12 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                             e.stopPropagation();
                             onSourceSelect?.(source);
                           }}
-                          className="text-[10px] text-zinc-600 hover:text-blue-600 flex items-center gap-1"
+                          className="text-[11px] text-zinc-600 hover:text-blue-600 flex items-center gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Open
                         </button>
-                        <span className="text-[10px] text-zinc-400">
+                        <span className="text-[11px] text-zinc-400">
                           Drag into editor to cite
                         </span>
                       </div>
