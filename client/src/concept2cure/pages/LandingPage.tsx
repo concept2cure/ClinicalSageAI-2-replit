@@ -118,7 +118,7 @@ const CONSOLIDATION_TOOLS = [
 
 const FEATURES = [
   {
-    title: 'Deep Research Engine',
+    title: 'AnA Research Engine',
     description: 'Automated intelligence from ClinicalTrials.gov, PubMed, FDA, EMA, PMDA, and NMPA. Veeva Vault & Medidata connectors auto-populate your workspace.',
     icon: 'search',
     stat: '50,000+',
@@ -166,7 +166,7 @@ const PLATFORM_MODULES = [
   {
     category: 'Research & Intelligence',
     modules: [
-      { name: 'Deep Research Engine', desc: 'AI-powered search across PubMed, ClinicalTrials.gov, FDA, EMA, PMDA databases. Auto-extract endpoints, populations, safety signals, and evidence.' },
+      { name: 'AnA Research', desc: 'AI-powered search across PubMed, ClinicalTrials.gov, FDA, EMA, PMDA databases. Auto-extract endpoints, populations, safety signals, and evidence.' },
       { name: 'Predicate Intelligence', desc: '510(k) predicate device analysis with substantial equivalence mapping, MAUDE adverse event mining, recall tracking, and competitive landscape.' },
       { name: 'CSR Intelligence', desc: 'Search, compare, and cluster Clinical Study Reports. AI extracts findings, endpoints, and statistical results across thousands of studies.' },
       { name: 'Regulatory Intelligence Hub', desc: 'Real-time monitoring of guidances, approvals, CRLs, advisory committees, enforcement actions, and warning letters across all agencies.' },
@@ -178,7 +178,7 @@ const PLATFORM_MODULES = [
     modules: [
       { name: 'eCTD Co-Author', desc: 'AI-assisted authoring for CTD Modules 1-5 with SmartTags, claim verification, AI-generated citations, tracked changes, and redline alerts.' },
       { name: 'CSR Builder', desc: 'Full ICH E3-compliant Clinical Study Report generation. AI drafts sections, auto-generates tables/figures, and validates cross-references.' },
-      { name: 'Document Sherpa', desc: 'AI guide that anticipates needs during authoring — proactive warnings about gaps, blocker detection, and journey progress tracking.' },
+      { name: 'AnA Guided Authoring', desc: 'AI guide that anticipates needs during authoring — proactive warnings about gaps, blocker detection, and journey progress tracking.' },
       { name: 'Collaboration Hub', desc: 'Real-time co-editing with team presence, @mentions, task assignments, review workflows, and timezone-aware global coordination.' },
       { name: 'DOCX Factory', desc: 'One-click export to Word with agency-specific formatting, headers, TOC, appendices, and regulatory-compliant templates.' },
     ],
@@ -206,12 +206,12 @@ const PLATFORM_MODULES = [
   {
     category: 'AI Agents & Automation',
     modules: [
-      { name: 'Agent Swarm', desc: 'Orchestrated multi-agent system: Coordinator, Drafter, Researcher, Statistician, QC Agent, and Compliance Agent working in parallel on submissions.' },
-      { name: 'AnA SnowGlobe', desc: 'Prediction engine for regulatory outcomes — submission success modeling, pathway simulations, what-if analysis, and knowledge graphs.' },
+      { name: 'AnA Agents', desc: 'Orchestrated multi-agent system: Coordinator, Drafter, Researcher, Statistician, QC Agent, and Compliance Agent working in parallel on submissions.' },
+      { name: 'AnA Predictions', desc: 'Prediction engine for regulatory outcomes — submission success modeling, pathway simulations, what-if analysis, and knowledge graphs.' },
       { name: 'Convergent Canvas', desc: 'Adaptive command center with Morning Briefings, Council Threads (multi-agent advisory), and industry-specific workspaces for every role.' },
       { name: 'Review Pulse', desc: 'Real-time review orchestration: activity tracking, blocker identification, artifact readiness, and workload distribution across teams.' },
       { name: 'Compliance Guardian', desc: 'Real-time regulatory compliance monitoring within documents — checks guideline adherence as you write and flags non-compliant language.' },
-      { name: 'Nano Banana Visual AI', desc: 'Google Gemini-powered 4K image generation for regulatory infographics, study diagrams, slide decks, and publication-ready figures. Text-accurate rendering for medical/scientific content.' },
+      { name: 'AnA Visual', desc: 'Google Gemini-powered 4K image generation for regulatory infographics, study diagrams, slide decks, and publication-ready figures. Text-accurate rendering for medical/scientific content.' },
     ],
   },
   {
@@ -239,7 +239,7 @@ const AI_CAPABILITIES = [
   { name: 'Risk Scorer', desc: 'Real-time regulatory risk scoring across your portfolio' },
   { name: 'Morning Briefing', desc: 'Daily intelligence digest of regulatory changes affecting your programs' },
   { name: 'Audit Sentinel', desc: 'Continuous monitoring of 21 CFR Part 11 compliance across all activities' },
-  { name: 'Nano Banana Visual AI', desc: 'Generate 4K infographics, regulatory diagrams, slide decks, and publication-ready figures on demand via Google Gemini' },
+  { name: 'AnA Visual', desc: 'Generate 4K infographics, regulatory diagrams, slide decks, and publication-ready figures on demand via Google Gemini' },
 ];
 
 const SOLUTIONS_BY_PERSONA = [
@@ -308,7 +308,7 @@ const PRICING_TIERS = [
     description: 'Emerging biotechs building their first regulatory dossier',
     features: [
       'Up to 5 users', '10 projects', '50 research queries/month',
-      'Full CSR builder', 'Deep Research (CT.gov + PubMed)',
+      'Full CSR builder', 'AnA Research (CT.gov + PubMed)',
       'eCTD authoring', 'Intelligence hub', 'Email support',
     ],
     cta: 'Start 14-Day Trial',
@@ -485,7 +485,7 @@ function PlatformMockup() {
               <span className="text-sm font-semibold">Concept2Cure</span>
             </div>
             <div className="space-y-1 text-xs">
-              {['Mission Control', 'Deep Research', 'CSR Builder', 'CTD Builder', 'eCTD Export', 'Intelligence Hub', 'CMC Platform', 'Audit Trail'].map((item, i) => (
+              {['Mission Control', 'AnA Research', 'CSR Builder', 'CTD Builder', 'eCTD Export', 'Intelligence Hub', 'CMC Platform', 'Audit Trail'].map((item, i) => (
                 <div key={item} className={`px-3 py-2 rounded-lg ${i === 0 ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}>
                   {item}
                 </div>
@@ -1133,7 +1133,7 @@ export const LandingPage: React.FC = () => {
                     </svg>
                   </div>
                   <div>
-                    <div className="font-semibold text-sm">AnA SnowGlobe</div>
+                    <div className="font-semibold text-sm">AnA Predictions</div>
                     <div className="text-xs text-indigo-300">Predictive Intelligence Engine</div>
                   </div>
                 </div>
@@ -1173,7 +1173,7 @@ export const LandingPage: React.FC = () => {
               <span className="text-sm font-medium text-amber-700">Powered by Google Gemini</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
-              Nano Banana Visual AI
+              AnA Visual
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
               Generate publication-ready infographics, regulatory diagrams, and slide decks

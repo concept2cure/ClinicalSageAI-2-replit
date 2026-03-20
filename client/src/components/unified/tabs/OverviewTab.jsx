@@ -114,7 +114,7 @@ export default function OverviewTab({ setActiveTab, dashboardMetrics, regulatory
                 },
                 {
                   icon: Brain,
-                  title: 'ForesightAI Analysis',
+                  title: 'AnA Predictions Analysis',
                   desc: 'Dose escalation complete',
                   time: '6 hours ago',
                   color: 'text-purple-500',

@@ -41,7 +41,7 @@ export default function InsightsTab() {
             Business Value
           </TabsTrigger>
           <TabsTrigger value="foresight-ai" className="rounded-lg" data-testid="tab-foresight">
-            ForesightAI
+            AnA Predictions
           </TabsTrigger>
           <TabsTrigger value="dose-escalation" className="rounded-lg" data-testid="tab-dose">
             Dose Escalation

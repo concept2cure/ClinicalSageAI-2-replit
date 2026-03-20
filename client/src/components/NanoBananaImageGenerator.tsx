@@ -198,7 +198,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
             <ImageIcon className="w-4 h-4 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900">Nano Banana AI</h3>
+            <h3 className="text-sm font-semibold text-zinc-900">AnA Visual</h3>
             <p className="text-[11px] text-zinc-500">Powered by Google Gemini</p>
           </div>
         </div>

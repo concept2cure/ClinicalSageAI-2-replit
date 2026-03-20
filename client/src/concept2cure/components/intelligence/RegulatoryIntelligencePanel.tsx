@@ -537,7 +537,7 @@ export function RegulatoryIntelligencePanel({
                 <div className="flex items-center gap-1.5 mb-1">
                   <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
                   <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
-                    Foresight Prediction
+                    AnA Predictions
                   </span>
                 </div>
                 <ScoreBar

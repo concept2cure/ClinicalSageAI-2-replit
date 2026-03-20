@@ -40,7 +40,7 @@ const defaultMessages = [
     id: 1,
     role: 'assistant',
     content:
-      "Hello! I'm your Lumen AI Regulatory Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
+      "Hello! I'm your AnA RI Regulatory Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
     timestamp: new Date(),
     source: 'system',
   },
@@ -438,7 +438,7 @@ export default function LumenChatPane({ contextId, projectId }) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center">
           <Bot className="h-5 w-5 mr-2 text-primary" />
-          Lumen AI Assistant
+          AnA RI Assistant
           {contextId && (
             <span className="ml-2 text-xs text-muted-foreground font-normal">
               Section {contextId}
@@ -598,7 +598,7 @@ export default function LumenChatPane({ contextId, projectId }) {
         </div>
       </CardContent>
       <CardFooter className="pt-0 px-4 pb-4 border-t flex justify-between items-center text-xs text-muted-foreground">
-        <span>{aiModel ? `Powered by ${aiModel}` : 'Powered by Lumen Cortex AI'}</span>
+        <span>{aiModel ? `Powered by ${aiModel}` : 'Powered by AnA RI'}</span>
         <div className="flex space-x-2">
           <Button variant="ghost" size="sm" className="h-7 px-2">
             <Image className="h-3 w-3 mr-1" />

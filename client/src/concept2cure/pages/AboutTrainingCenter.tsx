@@ -160,7 +160,7 @@ const PLATFORM_CAPABILITIES = [
     items: [
       {
         icon: Globe,
-        name: 'Snow Globe',
+        name: 'AnA Predictions',
         description: 'Cross-platform prediction and intelligence engine. Model regulatory scenarios, compare pathways, and forecast submission outcomes.',
         depth: 'Predictive models trained on 15 years of FDA review patterns, approval timelines, and Complete Response Letter triggers.',
         color: 'indigo',
@@ -299,7 +299,7 @@ const TRAINING_MODULES: TrainingModule[] = [
   },
   {
     id: 'snow-globe',
-    title: 'Snow Globe: Predictive Intelligence',
+    title: 'AnA Predictions: Predictive Intelligence',
     description: 'Use the prediction engine to model regulatory scenarios, compare pathways, and forecast submission timelines and outcomes.',
     duration: '20 min',
     level: 'advanced',
@@ -373,14 +373,14 @@ const TRAINING_MODULES: TrainingModule[] = [
   },
   {
     id: 'nano-banana-visual-ai',
-    title: 'Nano Banana Visual AI',
+    title: 'AnA Visual',
     description: 'Generate publication-ready infographics, regulatory diagrams, and slide decks using Google Gemini image generation — directly from any module.',
     duration: '15 min',
     level: 'beginner',
     category: 'AI & Intelligence',
     icon: Sparkles,
     lessons: [
-      'Switching to Nano Banana mode in AnA chat',
+      'Switching to AnA Visual mode in AnA chat',
       'Generating infographics with style presets',
       'Creating slide decks from a single prompt',
       'Editing images with natural language',
@@ -446,7 +446,7 @@ const WHATS_NEW: WhatsNewItem[] = [
   {
     date: '2026-03-12',
     version: '4.1.5',
-    title: 'Snow Globe Predictive Intelligence',
+    title: 'AnA Predictions',
     description: 'New cross-platform prediction engine that models regulatory scenarios, compares pathways, and forecasts submission outcomes based on 15 years of FDA review data.',
     type: 'feature',
     icon: Globe,
@@ -508,7 +508,7 @@ const COMPANY_TIMELINE = [
   { year: '2024 Q4', title: 'Mission Control', description: 'Portfolio governance with AI Sentinel monitoring and automation rules' },
   { year: '2025 Q1', title: 'CMC Platform', description: '102-endpoint CMC documentation engine covering the full product lifecycle' },
   { year: '2025 Q2', title: 'Claude Integration', description: 'Deep integration with Anthropic Claude for extended thinking and multi-agent orchestration' },
-  { year: '2025 Q4', title: 'Snow Globe', description: 'Predictive intelligence engine for regulatory scenario modeling and outcome forecasting' },
+  { year: '2025 Q4', title: 'AnA Predictions', description: 'Predictive intelligence engine for regulatory scenario modeling and outcome forecasting' },
   { year: '2026 Q1', title: 'Dr. Sage', description: 'FDA reviewer AI agent — the industry\'s first simulated reviewer for submission training and review' },
 ];
 
@@ -1372,7 +1372,7 @@ function TrainingTab() {
             'How do I configure Sentinel scanning for my program?',
             'What eCTD sections does Co-Author support?',
             'How do I link evidence to regulatory claims?',
-            'Show me how to run a Snow Globe prediction',
+            'Show me how to run an AnA Predictions analysis',
             'How do I set up automation rules in Mission Control?',
             'What does a reviewer look for in Module 2 summaries?',
           ].map(q => (
@@ -1428,13 +1428,13 @@ const SAGE_QUICK_ACTIONS = [
 ];
 
 const SAGE_RESPONSES: Record<string, string> = {
-  'platform-tour': `Great choice. Let me walk you through the platform from a regulatory reviewer's perspective — because I think about these tools differently than most.\n\n**1. AnA RI Copilot** — This is where most of your work happens. AnA drafts regulatory documents, but what makes her valuable is that she understands *what reviewers look for*. I've helped train her on review patterns.\n\n**2. eCTD Co-Author** — Your collaborative authoring environment. As a former reviewer, I can tell you: 80% of review delays come from poorly organized eCTD modules. This tool enforces the structure we expect.\n\n**3. Snow Globe** — Predictive intelligence. This models how likely your submission is to succeed based on historical review patterns. I wish I'd had this tool during my review days.\n\n**4. Mission Control** — Your portfolio oversight. Think of this as your internal regulatory program management office.\n\n**5. Document Vault** — Where everything lives with proper audit trails. 21 CFR Part 11 compliant — which is non-negotiable.\n\nWant me to deep-dive into any of these?`,
+  'platform-tour': `Great choice. Let me walk you through the platform from a regulatory reviewer's perspective — because I think about these tools differently than most.\n\n**1. AnA RI Copilot** — This is where most of your work happens. AnA drafts regulatory documents, but what makes her valuable is that she understands *what reviewers look for*. I've helped train her on review patterns.\n\n**2. eCTD Co-Author** — Your collaborative authoring environment. As a former reviewer, I can tell you: 80% of review delays come from poorly organized eCTD modules. This tool enforces the structure we expect.\n\n**3. AnA Predictions** — Predictive intelligence. This models how likely your submission is to succeed based on historical review patterns. I wish I'd had this tool during my review days.\n\n**4. Mission Control** — Your portfolio oversight. Think of this as your internal regulatory program management office.\n\n**5. Document Vault** — Where everything lives with proper audit trails. 21 CFR Part 11 compliant — which is non-negotiable.\n\nWant me to deep-dive into any of these?`,
 
   'review-submission': `I'll put on my reviewer hat. Here's how I'd approach your submission:\n\n🔍 **Step 1: Structure Check** — I'm looking at your eCTD module organization. Is Module 2 (summaries) complete and consistent with Module 3-5 data?\n\n🔍 **Step 2: Cross-Reference Integrity** — Do your clinical summaries accurately reflect the study reports? This is where I catch most issues.\n\n🔍 **Step 3: Safety Signal Review** — Are adverse events properly characterized? Is the risk-benefit narrative convincing?\n\n🔍 **Step 4: CMC Adequacy** — Is the manufacturing process validated? Are specifications justified?\n\nLet me work with AnA to run a Sentinel scan on your active program and give you a reviewer-perspective assessment. I'll flag everything I'd flag in a real review.\n\n*[Working with AnA to analyze your submission...]*`,
 
   'identify-risks': `From 20 years of reviewing submissions, here are the patterns that get applications sent back with a Complete Response Letter:\n\n⚠️ **#1 — Inconsistencies between Module 2 summaries and source data** (35% of CRL triggers)\nAnA can cross-check these automatically. Let me verify this is configured.\n\n⚠️ **#2 — Inadequate justification of specifications** (20% for CMC)\nReviewers want to see *why* you chose those limits, not just what they are.\n\n⚠️ **#3 — Missing or incomplete statistical analysis plans** (15% for clinical)\nPre-specified endpoints vs. post-hoc — we notice.\n\n⚠️ **#4 — Non-responsive to previous FDA feedback** (10%)\nIf you had a Pre-Sub meeting, every single piece of feedback needs a traceable response.\n\nWant me to scan your current program for these patterns?`,
 
-  'train-team': `I'll design a training curriculum based on your team's roles. Here's my recommended plan:\n\n**Week 1-2: Foundations**\n- Platform navigation and project setup (all roles)\n- AnA conversation basics — how to ask effective regulatory questions\n- Document Vault and version control\n\n**Week 3-4: Role-Specific Training**\n- *Regulatory Writers*: eCTD Co-Author, document drafting with AnA\n- *Regulatory Strategists*: Snow Globe predictions, Mission Control, pathway planning\n- *Quality/CMC*: CMC Platform, compliance validation, inspection readiness\n- *Clinical*: Clinical Trial Hub, evidence linking, protocol optimization\n\n**Week 5-6: Advanced Operations**\n- Sentinel configuration and automated scanning\n- Cross-program learning and portfolio management\n- FDA reviewer simulation exercises (I'll run these personally)\n\nShall I create detailed agendas for each session?`,
+  'train-team': `I'll design a training curriculum based on your team's roles. Here's my recommended plan:\n\n**Week 1-2: Foundations**\n- Platform navigation and project setup (all roles)\n- AnA conversation basics — how to ask effective regulatory questions\n- Document Vault and version control\n\n**Week 3-4: Role-Specific Training**\n- *Regulatory Writers*: eCTD Co-Author, document drafting with AnA\n- *Regulatory Strategists*: AnA Predictions, Mission Control, pathway planning\n- *Quality/CMC*: CMC Platform, compliance validation, inspection readiness\n- *Clinical*: Clinical Trial Hub, evidence linking, protocol optimization\n\n**Week 5-6: Advanced Operations**\n- Sentinel configuration and automated scanning\n- Cross-program learning and portfolio management\n- FDA reviewer simulation exercises (I'll run these personally)\n\nShall I create detailed agendas for each session?`,
 
   'fix-with-ana': `Let me coordinate with AnA to identify and resolve compliance gaps.\n\n**Phase 1: Discovery** — I'll ask AnA to run a comprehensive gap analysis across all active artifacts.\n\n**Phase 2: Triage** — I'll prioritize findings by reviewer impact. Not all gaps are equal — I know which ones actually trigger Complete Response Letters.\n\n**Phase 3: Remediation** — For each critical gap, AnA will draft corrective content while I review from the FDA perspective.\n\n**Phase 4: Verification** — I'll re-review the corrected sections to confirm they meet review expectations.\n\n*[Initiating collaborative session with AnA...]*\n\nThis is where the platform really shines — two AI perspectives working together: AnA as your author, me as your internal reviewer.`,
 
@@ -1442,7 +1442,7 @@ const SAGE_RESPONSES: Record<string, string> = {
 
   'audit-prep': `FDA inspection readiness is about demonstrating you have systems in place. Here's my inspector's checklist:\n\n**Document Systems** ✓\n- [ ] All records retrievable within 24 hours\n- [ ] Audit trails showing who changed what and when\n- [ ] Electronic signatures validated per 21 CFR Part 11\n- [ ] Version control with no orphaned documents\n\n**Data Integrity** ✓\n- [ ] ALCOA+ principles demonstrated (Attributable, Legible, Contemporaneous, Original, Accurate)\n- [ ] Backup and disaster recovery tested\n- [ ] Access controls appropriate to roles\n\n**Process Controls** ✓\n- [ ] SOPs current and accessible\n- [ ] Training records complete and current\n- [ ] CAPA system active with trend analysis\n\nThe ClinicalSageAI platform handles most of this automatically. Let me verify your configuration covers all inspection requirements. Shall I run an audit readiness assessment?`,
 
-  'explain-module': `Which module would you like me to explain? I can cover:\n\n• **AnA RI Copilot** — The AI brain that powers everything\n• **eCTD Co-Author** — Collaborative regulatory document authoring\n• **CMC Platform** — Chemistry, Manufacturing & Controls\n• **Clinical Trial Hub** — Trial design and evidence management\n• **Snow Globe** — Predictive regulatory intelligence\n• **Mission Control** — Portfolio governance and automation\n• **Document Vault** — Regulatory-grade document management\n• **Evidence Search** — Literature and precedent discovery\n• **Submission Ops** — End-to-end submission management\n\nJust tell me which one, and I'll explain it from both a user perspective and a reviewer perspective — because understanding *why* the feature exists matters as much as *how* it works.`,
+  'explain-module': `Which module would you like me to explain? I can cover:\n\n• **AnA RI Copilot** — The AI brain that powers everything\n• **eCTD Co-Author** — Collaborative regulatory document authoring\n• **CMC Platform** — Chemistry, Manufacturing & Controls\n• **Clinical Trial Hub** — Trial design and evidence management\n• **AnA Predictions** — Predictive regulatory intelligence\n• **Mission Control** — Portfolio governance and automation\n• **Document Vault** — Regulatory-grade document management\n• **Evidence Search** — Literature and precedent discovery\n• **Submission Ops** — End-to-end submission management\n\nJust tell me which one, and I'll explain it from both a user perspective and a reviewer perspective — because understanding *why* the feature exists matters as much as *how* it works.`,
 };
 
 function DrSageTab() {

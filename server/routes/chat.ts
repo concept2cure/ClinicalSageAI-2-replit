@@ -226,7 +226,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Thread ownership check failed:', e.message);
+          console.warn('[AnA RI] Thread ownership check failed:', e.message);
       }
     }
 
@@ -240,7 +240,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01') throw e;
-        console.warn('[Lumen Cortex] ai_threads table missing — provenance disabled');
+        console.warn('[AnA RI] ai_threads table missing — provenance disabled');
       }
     }
 
@@ -255,7 +255,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] ai_messages insert failed:', e.message);
+          console.warn('[AnA RI] ai_messages insert failed:', e.message);
       }
     }
 
@@ -273,7 +273,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
       const embeddingService = getEmbeddingService(pool);
       // Bail early if org UUID is provided but clearly invalid
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[Lumen Cortex] Invalid org UUID, skipping retrieval');
+        console.warn('[AnA RI] Invalid org UUID, skipping retrieval');
       } else {
         const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
         sources = searchResults.map(r => ({
@@ -346,13 +346,13 @@ router.post('/send-message', async (req: Request, res: Response) => {
             }
           } catch (e: any) {
             if (e?.code !== '42P01')
-              console.warn('[Lumen Cortex] Retrieval persist failed:', e.message);
+              console.warn('[AnA RI] Retrieval persist failed:', e.message);
           }
         }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
-      console.warn('[Lumen Cortex] Source retrieval failed:', srcErr.message);
+      console.warn('[AnA RI] Source retrieval failed:', srcErr.message);
     }
 
     // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
@@ -398,7 +398,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
       ];
 
       console.log(
-        `[Lumen Cortex] Sending through AI Gateway (${sources.length} sources retrieved)...`
+        `[AnA RI] Sending through AI Gateway (${sources.length} sources retrieved)...`
       );
 
       const gwResponse: GatewayResponse = await gw.route({
@@ -424,10 +424,10 @@ router.post('/send-message', async (req: Request, res: Response) => {
       latencyMs = gwResponse.latencyMs;
 
       console.log(
-        `[Lumen Cortex] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+        `[AnA RI] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
     } catch (gwError: any) {
-      console.error('[Lumen Cortex] AI Gateway call failed:', gwError.message);
+      console.error('[AnA RI] AI Gateway call failed:', gwError.message);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
@@ -471,7 +471,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Generation persist failed:', e.message);
+          console.warn('[AnA RI] Generation persist failed:', e.message);
       }
     }
 
@@ -577,7 +577,7 @@ router.post('/send-message', async (req: Request, res: Response) => {
           });
           continue; // skip fallback below
         } catch (e: any) {
-          if (e?.code !== '42P01') console.warn('[Lumen Cortex] Claim persist failed:', e.message);
+          if (e?.code !== '42P01') console.warn('[AnA RI] Claim persist failed:', e.message);
         }
       }
 

@@ -125,7 +125,7 @@ const PhaseJourneyNavigator: React.FC = () => {
       {/* Header with Success Score */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">ForesightAI™ Phase Journey</h2>
+          <h2 className="text-3xl font-bold tracking-tight">AnA Predictions™ Phase Journey</h2>
           <p className="text-muted-foreground mt-1">
             Translational intelligence predicting clinical success across all phases
           </p>

@@ -260,7 +260,7 @@ const SubMeetingsPreview: React.FC = () => (
 
 const ResSearchPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Deep Research Engine" icon={<Search className="w-4 h-4 text-blue-500" />}>
+    <MockCard title="AnA Research" icon={<Search className="w-4 h-4 text-blue-500" />}>
       <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50 rounded-lg text-xs mb-3">
         <Brain className="w-3 h-3 text-violet-500" />
         <span className="text-zinc-600">"What are the latest Phase 3 trials for GLP-1 agonists in obesity?"</span>
@@ -448,7 +448,7 @@ const DocVaultPreview: React.FC = () => (
 
 const DocSherpaPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Document Sherpa" icon={<Eye className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="AnA Guided Authoring" icon={<Eye className="w-4 h-4 text-violet-500" />}>
       <div className="space-y-2">
         {[
           { check: 'Cross-reference validation', status: '2 issues found', icon: <AlertTriangle className="w-3 h-3 text-amber-500" /> },
@@ -565,7 +565,7 @@ const CMCReadinessPreview: React.FC = () => (
 
 const AISwarmPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Agent Swarm — Active" icon={<Bot className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="AnA Agents — Active" icon={<Bot className="w-4 h-4 text-violet-500" />}>
       <div className="grid grid-cols-3 gap-2">
         {[
           { name: 'Predicate Researcher', status: 'Complete', phase: 'Planning' },
