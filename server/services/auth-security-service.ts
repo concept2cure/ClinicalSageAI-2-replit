@@ -1,4 +1,6 @@
-// @ts-nocheck
+// @ts-nocheck — Required: Drizzle schema types lag behind DB columns
+// (failedLoginAttempts, mfaSecret, mfaEnabled, mfaBackupCodes, etc.)
+// TODO: Sync shared/schema users table with actual DB columns to remove this
 /**
  * Enterprise Authentication Security Service
  *

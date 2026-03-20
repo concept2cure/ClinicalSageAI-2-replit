@@ -108,7 +108,13 @@ function getEncryptionKey(): Buffer {
     return crypto.createHash('sha256').update(envKey).digest();
   }
   // Fallback: derive from JWT secret (not ideal, but functional)
-  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'trialsage-mfa-default-key';
+  if (process.env.NODE_ENV === 'production') {
+    console.error('[mfa] CRITICAL: MFA_ENCRYPTION_KEY not set in production. MFA secrets may be at risk.');
+  }
+  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+  if (!jwtSecret) {
+    throw new Error('MFA_ENCRYPTION_KEY or JWT_SECRET must be set for MFA functionality');
+  }
   console.warn('[mfa] MFA_ENCRYPTION_KEY not set — deriving from JWT_SECRET. Set MFA_ENCRYPTION_KEY for production.');
   return crypto.createHash('sha256').update(jwtSecret).digest();
 }

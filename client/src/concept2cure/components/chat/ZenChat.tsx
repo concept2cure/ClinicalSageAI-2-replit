@@ -1318,7 +1318,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 userInitials={userInitials}
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
-                onFeedback={() => {}}
+                onFeedback={(positive: boolean) => {
+                  console.info(`[chat-feedback] messageId=${message.id} positive=${positive}`);
+                }}
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}
                 onExportDocxArtifact={handleExportDocxArtifact}

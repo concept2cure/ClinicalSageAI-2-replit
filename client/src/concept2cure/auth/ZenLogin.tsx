@@ -460,19 +460,20 @@ export const ZenLogin: React.FC = () => {
   }, [email, validateEmail]);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Demo / Quick access login
+  // Demo / Quick access login (dev-only)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const demoPersonas = [
+  const demoPersonas = import.meta.env.DEV ? [
     { email: 'jm.smith@concept2cure.pro', name: 'JM Smith', role: 'Admin', title: 'Founder', icon: '👤' },
     { email: 'sarah.chen@concept2cure.pro', name: 'Sarah Chen', role: 'Editor', title: 'Regulatory Affairs Director', icon: '📋' },
     { email: 'mike.torres@concept2cure.pro', name: 'Mike Torres', role: 'Member', title: 'Clinical Data Analyst', icon: '📊' },
     { email: 'demo@concept2cure.pro', name: 'Demo User', role: 'Member', title: 'Demo Account', icon: '⚡' },
-  ];
+  ] : [];
 
   const [showPersonas, setShowPersonas] = useState(false);
 
   const handleDemoLogin = useCallback(async (demoEmail = 'jm.smith@concept2cure.pro') => {
+    if (!import.meta.env.DEV) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -506,10 +507,7 @@ export const ZenLogin: React.FC = () => {
       console.log(`SSO login with ${provider}`);
 
       // In dev, call the dev SSO helper callback endpoint directly to simulate provider
-      const isDev =
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-      if (isDev) {
+      if (import.meta.env.DEV) {
         try {
           const resp = await fetch(`/api/auth/sso/${provider}/callback?code=dev-sso-code`);
           if (resp.ok) {
@@ -646,8 +644,8 @@ export const ZenLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Demo Access */}
-      <div className="space-y-2">
+      {/* Quick Demo Access (dev-only) */}
+      {import.meta.env.DEV && <div className="space-y-2">
         <button
           onClick={() => setShowPersonas(!showPersonas)}
           disabled={isLoading}
@@ -720,7 +718,7 @@ export const ZenLogin: React.FC = () => {
             <p className="text-xs text-center text-zinc-400 pt-1">Password: demo123</p>
           </motion.div>
         )}
-      </div>
+      </div>}
 
       {/* SSO Buttons */}
       <div className="grid grid-cols-2 gap-3">
