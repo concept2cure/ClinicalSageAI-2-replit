@@ -84,16 +84,20 @@ const getJwtSecret = (): string => {
   const secret = process.env[envVar];
 
   if (!secret) {
-    // Fall back to generic JWT_SECRET before using hardcoded default
+    // Fall back to generic JWT_SECRET
     if (process.env.JWT_SECRET) {
       return process.env.JWT_SECRET;
     }
-    // In development, use a default secret to avoid blocking the app
-    if (ENV === 'development') {
-      console.warn(`${envVar} not found, using default development secret`);
-      return 'trialsage-dev-secret-key-change-in-production';
+    if (ENV === 'production') {
+      throw new Error(`[FATAL] Missing required JWT secret in production. Set ${envVar} or JWT_SECRET.`);
     }
-    throw new Error(`Missing required environment variable: ${envVar}`);
+    // Development/staging: generate a random ephemeral secret and warn loudly
+    const ephemeral = require('crypto').randomBytes(48).toString('base64url');
+    console.warn(
+      `⚠️  ${envVar} not found — using random ephemeral JWT secret. ` +
+      `Sessions will NOT survive restarts. Set JWT_SECRET to fix.`
+    );
+    return ephemeral;
   }
 
   return secret;

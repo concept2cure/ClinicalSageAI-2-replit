@@ -105,31 +105,29 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
 
     // 2. Fallback to DEV_API_KEY (for automated tools / CI)
-    // SECURITY: Only allow in non-production environments to prevent auth bypass
-    const devApiKey = process.env.DEV_API_KEY;
-    if (devApiKey && apiKey === devApiKey) {
-      if (process.env.NODE_ENV === 'production') {
-        logger.warn('DEV_API_KEY authentication attempted in production — rejected');
-        return res.status(401).json({ error: 'Invalid token or API key' });
+    // SECURITY: Completely blocked in production. In dev, requires explicit env var.
+    if (process.env.NODE_ENV !== 'production') {
+      const devApiKey = process.env.DEV_API_KEY;
+      if (devApiKey && devApiKey.length >= 32 && apiKey === devApiKey) {
+        req.userId = 1;
+        req.userRole = 'admin';
+        req.userEmail = 'dev@example.com';
+        req.tenantId = 1;
+        req.user = {
+          id: 1,
+          userId: 1,
+          email: 'dev@example.com',
+          role: 'admin',
+          organizationId: '1',
+        };
+        req.tenantContext = {
+          organizationId: 1,
+          userId: 1,
+          role: 'admin',
+        };
+        logger.debug('Authenticated via DEV_API_KEY (non-production)');
+        return next();
       }
-      req.userId = 1;
-      req.userRole = 'admin';
-      req.userEmail = 'dev@example.com';
-      req.tenantId = 1;
-      req.user = {
-        id: 1,
-        userId: 1,
-        email: 'dev@example.com',
-        role: 'admin',
-        organizationId: '1',
-      };
-      req.tenantContext = {
-        organizationId: 1,
-        userId: 1,
-        role: 'admin',
-      };
-      logger.debug('Authenticated via DEV_API_KEY (non-production)');
-      return next();
     }
 
     // No valid authentication

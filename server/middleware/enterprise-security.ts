@@ -33,30 +33,37 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV === 'development',
 
-  // CORS
+  // CORS — production origins always included; localhost only in dev
   allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .filter(Boolean)
     .concat([
-      'http://localhost:5000',
-      'http://localhost:3000',
       'https://trialsage.com',
       'https://www.trialsage.com',
       'https://app.trialsage.com',
       'https://clinicalsage.ai',
       'https://app.clinicalsage.ai',
-    ]),
+    ])
+    .concat(
+      process.env.NODE_ENV !== 'production'
+        ? ['http://localhost:5000', 'http://localhost:3000']
+        : []
+    ),
 
-  // Rate Limits - relaxed for development
-  rateLimits: {
-    global: { windowMs: 60_000, max: 10000 }, // 10000/min global (dev)
-    api: { windowMs: 60_000, max: 1000 }, // 1000/min per IP (dev)
-    ai: { windowMs: 60_000, max: 100 }, // 100/min for AI endpoints (dev)
-    auth: { windowMs: 60_000, max: 100 }, // 100 auth attempts per minute (dev - was 5/15min)
-    write: { windowMs: 60_000, max: 500 }, // 500 writes/min (dev)
-    upload: { windowMs: 60_000, max: 100 }, // 100 uploads/min (dev)
-    export: { windowMs: 60_000, max: 50 }, // 50 exports/min (dev)
-  },
+  // Rate Limits - production-safe defaults, relaxed in dev via multiplier
+  rateLimits: (() => {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const m = isDev ? 10 : 1; // 10x multiplier in development only
+    return {
+      global: { windowMs: 60_000, max: 1000 * m },    // 1000/min prod, 10000/min dev
+      api: { windowMs: 60_000, max: 200 * m },         // 200/min prod, 2000/min dev
+      ai: { windowMs: 60_000, max: 20 * m },           // 20/min prod, 200/min dev
+      auth: { windowMs: 15 * 60_000, max: isDev ? 100 : 5 }, // 5/15min prod, 100/15min dev
+      write: { windowMs: 60_000, max: 100 * m },       // 100/min prod, 1000/min dev
+      upload: { windowMs: 60_000, max: 20 * m },       // 20/min prod, 200/min dev
+      export: { windowMs: 60_000, max: 10 * m },       // 10/min prod, 100/min dev
+    };
+  })(),
 
   // Request Size Limits
   maxBodySize: '50mb',
