@@ -20,6 +20,8 @@ import {
   Copy,
   ChevronRight,
   Layers,
+  Search,
+  X,
 } from 'lucide-react';
 import { getSectionLabel } from '../../models/ctdHierarchy';
 import type { PlacementOperation } from './PlacementDialog';
@@ -78,6 +80,15 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
   className,
 }) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Filtered documents
+  const filteredDocs = documents.filter(doc => {
+    const matchesSearch = !searchQuery || doc.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || (doc.status || 'draft') === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const toggleRow = (id: string) => {
     setExpandedRows(prev => {
@@ -97,7 +108,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
       <div className="flex items-center justify-between px-4 h-11 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
         <div className="flex items-baseline gap-2">
           <h3 className="text-sm font-semibold text-zinc-800">{folderLabel}</h3>
-          <span className="text-xs text-zinc-400 tabular-nums">{documents.length}</span>
+          <span className="text-xs text-zinc-400 tabular-nums">{filteredDocs.length} of {documents.length}</span>
         </div>
         {onCreateNew && (
           <button
@@ -109,14 +120,53 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
         )}
       </div>
 
+      {/* Search + Filter bar */}
+      {documents.length > 0 && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-white shrink-0">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search documents..."
+              className="w-full pl-8 pr-7 py-1.5 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-300"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          >
+            <option value="all">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="review">In Review</option>
+            <option value="approved">Approved</option>
+            <option value="locked">Locked</option>
+          </select>
+        </div>
+      )}
+
       {/* Table */}
       <div className="flex-1 overflow-y-auto zen-scroll">
-        {documents.length === 0 ? (
+        {filteredDocs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <FileText className="w-8 h-8 text-zinc-200 mb-3" />
-            <p className="text-sm font-medium text-zinc-500 mb-1">No documents in this folder</p>
+            <p className="text-sm font-medium text-zinc-500 mb-1">
+              {documents.length === 0 ? 'No documents in this folder' : 'No matching documents'}
+            </p>
             <p className="text-xs text-zinc-400 max-w-[260px]">
-              Documents will appear here once created or moved into this category.
+              {documents.length === 0
+                ? 'Documents will appear here once created or moved into this category.'
+                : 'Try adjusting your search or filter criteria.'}
             </p>
           </div>
         ) : (
@@ -141,7 +191,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
-              {documents.map(doc => {
+              {filteredDocs.map(doc => {
                 const isExpanded = expandedRows.has(doc.id);
                 return (
                   <React.Fragment key={doc.id}>

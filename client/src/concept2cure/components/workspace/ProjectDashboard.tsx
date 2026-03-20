@@ -24,6 +24,7 @@ import {
   BarChart3,
   Activity,
   Layers,
+  CheckCircle2,
 } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -203,6 +204,39 @@ export function ProjectDashboard({
       </button>
     );
   }
+
+  // ── Project-type-specific guidance ─────────────────────────────────────────
+
+  const typeGuidance = useMemo(() => {
+    const t = (projectType || submissionType || 'IND').toUpperCase();
+    const guides: Record<string, { steps: string[]; focusModules: string[] }> = {
+      IND: {
+        steps: ['Upload source CSR and preclinical data', 'Draft Module 2 summaries (Clinical Overview, Nonclinical Overview)', 'Complete Module 3 CMC documentation', 'Build Module 5 clinical study reports', 'Run compliance check and submit for review'],
+        focusModules: ['2', '3', '5'],
+      },
+      NDA: {
+        steps: ['Compile all Phase I-III clinical data', 'Draft Integrated Summary of Safety (ISS)', 'Draft Integrated Summary of Efficacy (ISE)', 'Complete prescribing information and labeling', 'Assemble full eCTD package for submission'],
+        focusModules: ['1', '2', '5'],
+      },
+      '510K': {
+        steps: ['Define predicate device and substantial equivalence', 'Draft device description and indications for use', 'Complete performance testing and biocompatibility data', 'Prepare eSTAR submission format', 'Run FDA readiness check'],
+        focusModules: ['1', '2', '3'],
+      },
+      BLA: {
+        steps: ['Compile biologics manufacturing data (Module 3)', 'Draft Clinical Overview and Summary (Module 2)', 'Complete nonclinical pharmacology/toxicology studies', 'Assemble Module 5 clinical study reports', 'Prepare regional administrative documents'],
+        focusModules: ['2', '3', '5'],
+      },
+      PMA: {
+        steps: ['Define device classification and intended use', 'Compile clinical study data and analysis', 'Draft manufacturing and design controls documentation', 'Prepare risk analysis and biocompatibility reports', 'Assemble PMA submission package'],
+        focusModules: ['1', '3', '5'],
+      },
+      MAA: {
+        steps: ['Prepare IMPD (Investigational Medicinal Product Dossier)', 'Draft Module 2 EU-specific summaries', 'Complete Module 3 quality documentation', 'Compile clinical and nonclinical study reports', 'Run EMA compliance validation'],
+        focusModules: ['2', '3', '5'],
+      },
+    };
+    return guides[t] || guides['IND'];
+  }, [projectType, submissionType]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -456,6 +490,35 @@ export function ProjectDashboard({
         </div>
       </section>
 
+      {/* ── 3B. Getting Started — type-specific workflow guidance ──────────── */}
+      {stats.total < 5 && (
+        <section className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/60 to-white p-6 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-blue-600">
+            {(projectType || submissionType || 'IND').toUpperCase()} Submission Workflow
+          </h2>
+          <ol className="space-y-2.5">
+            {typeGuidance.steps.map((step, i) => {
+              const isCompleted = i < Math.floor(stats.total / 2); // approximate progress
+              return (
+                <li key={i} className="flex items-start gap-3">
+                  <span className={cn(
+                    'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                    isCompleted
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-blue-100 text-blue-600'
+                  )}>
+                    {isCompleted ? <CheckCircle2 size={14} /> : i + 1}
+                  </span>
+                  <span className={cn('text-sm', isCompleted ? 'text-zinc-400 line-through' : 'text-zinc-700')}>
+                    {step}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
       {/* ── 4. Document Health Overview — CTD Coverage ──────────────────────── */}
       <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-zinc-500">
@@ -466,21 +529,27 @@ export function ProjectDashboard({
           {CTD_MODULES.map((mod) => {
             const docs = stats.ctdMap[mod.key] || [];
             const docCount = docs.length;
-            // Compute an approximate coverage bar based on fraction of total docs
-            // Cap at 100% for visual purposes
             const pct = stats.total > 0 ? Math.min(Math.round((docCount / Math.max(stats.total * 0.3, 1)) * 100), 100) : 0;
             const hasContent = docCount > 0;
+            const isFocusModule = typeGuidance.focusModules.includes(mod.key);
 
             return (
               <div key={mod.key} className="flex items-center gap-4">
                 {/* Module label */}
                 <div className="w-44 flex-shrink-0">
-                  <p className={cn(
-                    'text-sm font-medium',
-                    hasContent ? 'text-zinc-900' : 'text-zinc-400',
-                  )}>
-                    {mod.label}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className={cn(
+                      'text-sm font-medium',
+                      hasContent ? 'text-zinc-900' : 'text-zinc-400',
+                    )}>
+                      {mod.label}
+                    </p>
+                    {isFocusModule && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                        Key
+                      </span>
+                    )}
+                  </div>
                   <p className={cn(
                     'text-xs',
                     hasContent ? 'text-zinc-500' : 'text-zinc-300',
