@@ -25,6 +25,16 @@ import { precedentEngine } from '../services/precedent-engine.js';
 // In-memory sliding window rate limiter per API key
 const rateLimitWindows = new Map<number, { count: number; resetAt: number }>();
 
+// Periodic cleanup of expired rate limit windows (every 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [keyId, window] of rateLimitWindows) {
+    if (now >= window.resetAt) {
+      rateLimitWindows.delete(keyId);
+    }
+  }
+}, 300_000);
+
 const router = Router();
 
 // ============================================================================

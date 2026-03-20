@@ -146,6 +146,81 @@ function seedDemoData() {
     });
   });
 
+  // Collaboration threads — realistic regulatory review discussions
+  const collabTemplates = [
+    {
+      targetType: 'artifact', targetId: 5, // ART-001 Cover Letter
+      type: 'comment', body: 'Cover letter has been updated to reflect the revised formulation change in Module 3. Ready for final RA review.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 6, // ART-002 Quality Overall Summary
+      type: 'review_note', body: 'QOS Section 2.3.S — Drug substance characterization references outdated batch data. Please update to reflect Q3 2025 stability results.',
+      author: 'Dr. James Whitfield', role: 'CMC Reviewer', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 6,
+      type: 'comment', body: 'Updated per review note. Stability data now reflects 36-month ICH conditions. Tables 2.3.S.7 and 2.3.S.8 revised.',
+      author: 'Maria Gonzalez', role: 'CMC Author', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 7, // ART-003 Clinical Overview
+      type: 'question', body: 'Should we include the post-hoc subgroup analysis from Study 201 in the Clinical Overview, or reserve it for the Clinical Summary?',
+      author: 'Dr. Raj Patel', role: 'Medical Writer', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 7,
+      type: 'comment', body: 'Include a brief summary in the Overview and the detailed analysis in Module 2.7 Clinical Summary. This is consistent with FDA expectations for NDA-level submissions.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 8, // ART-004 Clinical Summary
+      type: 'change_request', body: 'Requesting addition of Kaplan-Meier survival curves for the ITT population. The current draft only includes the per-protocol analysis.',
+      author: 'Dr. Emily Nakamura', role: 'Biostatistician', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 10, // ART-006 Drug Product
+      type: 'review_note', body: 'Dissolution profile data in Section 3.2.P.5.3 shows batch-to-batch variability exceeding 15%. Flag for CMC team.',
+      author: 'Dr. James Whitfield', role: 'CMC Reviewer', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 14, // ART-010 IB
+      type: 'escalation', body: 'IB review has exceeded the 10-day SLA by 8 days. Escalating to Program Director for resolution. Three reviewer comments remain unaddressed.',
+      author: 'Michael Torres', role: 'Program Manager', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 16, // ART-012 Risk Management Plan
+      type: 'question', body: 'Does the Division expect a REMS proposal with the initial NDA submission, or can we defer to the post-marketing commitment?',
+      author: 'Dr. Aisha Williams', role: 'Pharmacovigilance Lead', visibility: 'sponsor', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 5,
+      type: 'comment', body: 'Final RA review complete. Cover letter is approved for assembly. No further edits required.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 11, // ART-007 Study 301 CSR
+      type: 'comment', body: 'Study 301 CSR has been finalized and locked. All TLFs verified against SAP specifications. QC sign-off obtained.',
+      author: 'Dr. Raj Patel', role: 'Medical Writer', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 7,
+      type: 'change_request', body: 'FDA Oncology Division guidance from 2025 recommends including patient-reported outcomes (PRO) summary in Clinical Overview. Adding Section 2.5.4.7.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+  ];
+
+  collabTemplates.forEach((tpl, i) => {
+    const cid = nextId();
+    store.collaboration.set(cid, {
+      id: cid, organizationId: 1, programId: p1, ...tpl,
+      status: tpl.type === 'escalation' ? 'open' : (i % 3 === 0 ? 'resolved' : 'open'),
+      resolvedAt: i % 3 === 0 ? new Date(Date.now() - 86400000) : null,
+      createdAt: new Date(Date.now() - ((collabTemplates.length - i) * 7200000)),
+      updatedAt: new Date(Date.now() - ((collabTemplates.length - i) * 7200000)),
+    });
+  });
+
   // Provenance entries
   const provenanceEntries = [
     { entityType: 'artifact', action: 'approved', changeDescription: 'Module 1.0 Cover Letter approved by Regulatory Lead' },
