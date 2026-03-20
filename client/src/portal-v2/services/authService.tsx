@@ -66,7 +66,7 @@ export interface DeviceInfo {
 }
 
 export interface MfaMethod {
-  type: 'totp' | 'sms' | 'email' | 'hardware_key' | 'biometric';
+  type: 'totp' | 'sms' | 'email' | 'hardware_key' | 'biometric' | 'backup_code';
   isEnabled: boolean;
   isPrimary: boolean;
   lastUsedAt?: Date;

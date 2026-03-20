@@ -400,7 +400,7 @@ export const ZenLogin: React.FC = () => {
     setIsLoading(true);
     try {
       const result = await verifyMfa({
-        method: 'recovery_code',
+        method: 'backup_code',
         code,
       });
 
