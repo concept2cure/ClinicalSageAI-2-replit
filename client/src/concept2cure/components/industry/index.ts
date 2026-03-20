@@ -224,7 +224,7 @@ export const ROLE_WORKSPACE_MAP = {
  * THE SHERPA TEAM - Maps components to their Sherpa roles
  */
 export const SHERPA_ROLES = {
-  ConvergentCanvas: 'The Expedition Leader (Lumen Cortex)',
+  ConvergentCanvas: 'The Expedition Leader (AnA RI)',
   eCTDCoAuthor: 'The Heavy Lifter (Document Porter)',
   CMCWizard: 'The Gear Master (Equipment Check)',
   MedicalDeviceDashboard: 'The Pathfinder (CERV2 Scout)',

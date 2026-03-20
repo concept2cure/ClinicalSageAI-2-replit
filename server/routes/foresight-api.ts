@@ -1,5 +1,5 @@
 /**
- * ForesightAI™ Core API Routes
+ * AnA Predictions™ Core API Routes
  *
  * Provides predictive scoring, pattern analysis, and recommendations
  * for clinical trial success across all phases (0/I through IV)

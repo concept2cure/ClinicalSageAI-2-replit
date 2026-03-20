@@ -186,7 +186,7 @@ export default function DoseEscalationEngine({ studyId = "STUDY001", phase = "0/
       <Alert className="border-purple-200 bg-purple-50">
         <Brain className="h-4 w-4" />
         <AlertDescription>
-          <strong>ForesightAI™ Prediction:</strong> Based on preclinical PK/PD, recommended starting dose is {currentDose}mg 
+          <strong>AnA Predictions™ Prediction:</strong> Based on preclinical PK/PD, recommended starting dose is {currentDose}mg 
           with 3+3 escalation. Predicted MTD: {mtdPrediction()}mg (CI: {Math.round(mtdPrediction() * 0.8)}-{Math.round(mtdPrediction() * 1.2)}mg)
         </AlertDescription>
       </Alert>

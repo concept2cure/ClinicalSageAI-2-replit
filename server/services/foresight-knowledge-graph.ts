@@ -1,5 +1,5 @@
 /**
- * ForesightAI™ Knowledge Graph Assembler Service
+ * AnA Predictions™ Knowledge Graph Assembler Service
  * 
  * Builds and manages the translational knowledge graph connecting:
  * - Preclinical biomarkers to clinical endpoints

@@ -45,6 +45,8 @@ import DocumentVersionCompare from '../provenance/DocumentVersionCompare';
 import DocumentAuditReport from '../provenance/DocumentAuditReport';
 import DataRoomPanel from './DataRoomPanel';
 import InconsistencyPanel from './InconsistencyPanel';
+import { DocumentHealth } from './DocumentHealth';
+import { VersionTimeline } from './VersionTimeline';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -146,7 +148,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -1178,6 +1180,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {(
             [
               { id: 'intelligence' as const, icon: Brain, label: 'Intel' },
+              { id: 'health' as const, icon: ShieldCheck, label: 'Health' },
+              { id: 'versions' as const, icon: GitCompare, label: 'History' },
               { id: 'dataroom' as const, icon: Database, label: 'Data' },
               { id: 'inconsistency' as const, icon: Zap, label: 'Impact' },
               { id: 'provenance' as const, icon: ShieldCheck, label: 'Prov' },
@@ -1769,6 +1773,40 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   pushToast(`Navigated to: ${target.title}`, 'info');
                 }
               }}
+            />
+          </div>
+        )}
+        {/* Document Health Panel */}
+        {activeInspector === 'health' && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <DocumentHealth
+              content={activeArtifact.content || ''}
+              documentType={activeArtifact.type}
+              submissionType={submissionType}
+              ctdSection={activeArtifact.ctdSection}
+              onFixIssue={(dimId, idx) => {
+                pushToast(`Fixing ${dimId} issue #${idx + 1}...`, 'info');
+              }}
+            />
+          </div>
+        )}
+        {/* Version History Timeline */}
+        {activeInspector === 'versions' && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <VersionTimeline
+              versions={(activeArtifact.versions || []).map((v, i) => ({
+                id: `v-${v.version || i}`,
+                version: v.version || i + 1,
+                content: v.content || '',
+                createdAt: v.createdAt || activeArtifact.createdAt,
+              }))}
+              currentContent={activeArtifact.content || ''}
+              currentVersion={activeArtifact.version || 1}
+              onRestore={(version) => {
+                setActiveArtifact(prev => prev ? { ...prev, content: version.content } : null);
+                pushToast(`Restored to version ${version.version}`, 'success');
+              }}
+              onClose={() => setActiveInspector(null)}
             />
           </div>
         )}

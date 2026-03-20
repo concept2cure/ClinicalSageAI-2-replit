@@ -1,5 +1,5 @@
 /**
- * ForesightAI™ Advanced AI Engine
+ * AnA Predictions™ Advanced AI Engine
  * Leverages GPT-5 and cutting-edge transformer models for predictive clinical intelligence
  * Production-ready service for pharmaceutical companies
  */
@@ -59,7 +59,7 @@ const openai = {
             };
           }
         } catch (e) {
-          console.warn('[Foresight AI] Gateway call failed, trying direct OpenAI:', e);
+          console.warn('[AnA Predictions] Gateway call failed, trying direct OpenAI:', e);
         }
         // Fallback to direct OpenAI if gateway fails
         const directClient = new (require('openai').default)({ apiKey: process.env.OPENAI_API_KEY || '' });

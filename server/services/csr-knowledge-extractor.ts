@@ -2,7 +2,7 @@
  * CSR Knowledge Extraction Service
  * 
  * This service extracts structured clinical data from CSR reports and converts them
- * into ForesightAI-compatible formats for predictive intelligence.
+ * into AnA Predictions-compatible formats for predictive intelligence.
  */
 
 import { db } from '../db';
@@ -365,7 +365,7 @@ export class CSRKnowledgeExtractor {
   }
 
   /**
-   * Store extracted data in ForesightAI tables
+   * Store extracted data in AnA Predictions tables
    */
   async storeInForesightTables(
     csrId: string,
@@ -536,9 +536,9 @@ export class CSRKnowledgeExtractor {
         }
       }
 
-      console.log(`Successfully stored CSR ${csrId} data in ForesightAI tables`);
+      console.log(`Successfully stored CSR ${csrId} data in AnA Predictions tables`);
     } catch (error) {
-      console.error('Error storing data in ForesightAI tables:', error);
+      console.error('Error storing data in AnA Predictions tables:', error);
       throw error;
     }
   }

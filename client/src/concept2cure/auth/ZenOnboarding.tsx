@@ -210,7 +210,7 @@ const TOUR_FEATURES = [
     icon: '👥',
   },
   {
-    title: 'Nano Banana Visual AI',
+    title: 'AnA Visual',
     description:
       'Generate infographics, regulatory diagrams, and slide decks on demand — powered by Google Gemini.',
     icon: '🍌',

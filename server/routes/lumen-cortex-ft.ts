@@ -550,7 +550,7 @@ Requirements:
 
 /**
  * GET /models
- * List all registered Lumen Cortex model versions
+ * List all registered AnA RI model versions
  */
 router.get('/models', (_req: Request, res: Response) => {
   const models = registry.getAllModels();
@@ -615,7 +615,7 @@ router.post('/training/start', async (req: Request, res: Response) => {
 
   const model: LumenCortexModel = {
     id: `lumen-cortex-${uuidv4().split('-')[0]}`,
-    name: `Lumen Cortex Fine-Tune ${new Date().toISOString().split('T')[0]}`,
+    name: `AnA RI Fine-Tune ${new Date().toISOString().split('T')[0]}`,
     version: '0.1.0-training',
     baseModel,
     finetuneType: finetuneType || 'lora',
@@ -711,7 +711,7 @@ router.get('/benchmarks', (_req: Request, res: Response) => {
 
 /**
  * GET /health
- * Health check for Lumen Cortex service
+ * Health check for AnA RI service
  */
 router.get('/health', (_req: Request, res: Response) => {
   const model = registry.getActiveModel();

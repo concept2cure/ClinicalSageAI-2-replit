@@ -1256,7 +1256,7 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
                       </li>
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></div>
-                        <strong>ForesightAI:</strong> Predictive analytics & AI-powered regulatory insights
+                        <strong>AnA Predictions:</strong> Predictive analytics & AI-powered regulatory insights
                       </li>
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></div>

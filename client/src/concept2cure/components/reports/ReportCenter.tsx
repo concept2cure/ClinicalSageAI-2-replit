@@ -140,7 +140,7 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
           AI Visuals & Presentations
         </h2>
         <p className="text-xs text-zinc-500 mb-3">
-          Generate infographics, regulatory diagrams, or full slide decks from any report context using Nano Banana (Gemini).
+          Generate infographics, regulatory diagrams, or full slide decks from any report context using AnA Visual (Gemini).
         </p>
         <NanoBananaImageGenerator
           context={projectId ? `Regulatory submission status for project ${projectId}` : 'Regulatory readiness overview'}

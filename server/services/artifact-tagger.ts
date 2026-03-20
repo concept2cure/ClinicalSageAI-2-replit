@@ -1,7 +1,7 @@
 /**
  * Artifact → CTD Section Auto-Tagging Service
  *
- * When Lumen Cortex generates or updates a document, this service
+ * When AnA RI generates or updates a document, this service
  * automatically tags it with the correct CTD section code so that
  * the INDWorkspace live status tiles reflect real document progress.
  *

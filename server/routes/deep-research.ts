@@ -1,5 +1,5 @@
 /**
- * @fileoverview Deep Research API Routes
+ * @fileoverview AnA Research API Routes
  * @module server/routes/deep-research
  *
  * REST + SSE endpoints for deep research jobs, connector management,

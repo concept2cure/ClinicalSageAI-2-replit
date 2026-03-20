@@ -258,7 +258,7 @@ export default function EnrollmentStratifier({ studyId = "STUDY001", phase = "II
         <Alert className="border-blue-200 bg-blue-50">
           <Brain className="h-4 w-4" />
           <AlertDescription>
-            <strong>ForesightAI™ Prediction:</strong> With {selectedSites.length} selected sites, 
+            <strong>AnA Predictions™ Prediction:</strong> With {selectedSites.length} selected sites, 
             enrollment of {targetEnrollment} patients will complete in {enrollmentPrediction.months} months
             ({enrollmentPrediction.weeklyRate} patients/week). 
             Confidence: {(enrollmentPrediction.confidence * 100).toFixed(0)}%

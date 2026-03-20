@@ -1,5 +1,5 @@
 /**
- * ForesightAI™ Mock Data Generation Script
+ * AnA Predictions™ Mock Data Generation Script
  * Generates realistic pharmaceutical data for testing all modules
  */
 
@@ -251,7 +251,7 @@ async function generatePredictiveSuccessScore(organizationId: string, studyId: s
 }
 
 async function generateComprehensiveMockData() {
-  console.log('🚀 Starting ForesightAI™ Mock Data Generation...\n');
+  console.log('🚀 Starting AnA Predictions™ Mock Data Generation...\n');
   
   // Use test organization ID (you should replace with actual org ID from your database)
   const organizationId = '7'; // Default test organization
@@ -278,7 +278,7 @@ async function generateComprehensiveMockData() {
     const successScore = await generatePredictiveSuccessScore(organizationId, doseStudy.id);
     
     console.log('\n' + '=' .repeat(60));
-    console.log('✨ ForesightAI™ Mock Data Generation Complete!');
+    console.log('✨ AnA Predictions™ Mock Data Generation Complete!');
     console.log('=' .repeat(60));
     console.log('\n📊 Summary:');
     console.log('  • Dose Escalation Study: Active');

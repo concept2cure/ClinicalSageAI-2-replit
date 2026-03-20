@@ -31,6 +31,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import { SearchAndReplace } from './extensions/SearchAndReplace';
 import { createSlashCommandExtension } from './extensions/SlashCommandMenu';
 import { CommentMark, type CommentThread } from './extensions/CommentMark';
+import { AIAutocomplete } from './extensions/AIAutocomplete';
 import {
   Bold,
   Italic,
@@ -1078,6 +1079,16 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       CommentMark,
       SearchAndReplace,
       slashCommandExt,
+      AIAutocomplete.configure({
+        delay: 1500,
+        maxTokens: 80,
+        enabled: true,
+        context: {
+          documentType: documentType,
+          submissionType: submissionType,
+          ctdSection: undefined,
+        },
+      }),
     ],
     content: initialContent,
     editable: !isLocked,

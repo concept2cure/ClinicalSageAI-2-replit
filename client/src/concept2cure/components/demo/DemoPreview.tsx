@@ -591,7 +591,7 @@ const AISwarmPreview: React.FC = () => (
 
 const AISnowglobePreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="SnowGlobe — Scenario Modeling" icon={<Brain className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="AnA Predictions — Scenario Modeling" icon={<Brain className="w-4 h-4 text-violet-500" />}>
       <div className="grid grid-cols-2 gap-3">
         {[
           { scenario: 'Baseline Filing', probability: '72%', timeline: '10 months', risk: 'Medium' },
@@ -997,7 +997,7 @@ const NanoBananaOverviewPreview: React.FC = () => (
   <div className="space-y-4">
     <div className="text-center mb-6">
       <div className="text-5xl mb-2">🍌</div>
-      <h3 className="text-lg font-bold text-zinc-900">Nano Banana Visual AI</h3>
+      <h3 className="text-lg font-bold text-zinc-900">AnA Visual</h3>
       <p className="text-xs text-zinc-500">Powered by Google Gemini</p>
     </div>
     <div className="grid grid-cols-3 gap-3">
@@ -1067,7 +1067,7 @@ const NanoBananaGeneratePreview: React.FC = () => (
 const NanoBananaIntegrationsPreview: React.FC = () => (
   <div className="space-y-4">
     {[
-      { name: 'AnA Chat', desc: 'Switch to Nano Banana mode, describe what you need', icon: <Bot className="w-4 h-4 text-violet-500" />, color: 'border-violet-200' },
+      { name: 'AnA Chat', desc: 'Switch to AnA Visual mode, describe what you need', icon: <Bot className="w-4 h-4 text-violet-500" />, color: 'border-violet-200' },
       { name: 'Report Center', desc: 'Generate visuals alongside readiness briefs & transmittals', icon: <BarChart3 className="w-4 h-4 text-blue-500" />, color: 'border-blue-200' },
       { name: 'Document Builder', desc: 'Insert AI figures into CSR/CTD sections during review', icon: <FileText className="w-4 h-4 text-emerald-500" />, color: 'border-emerald-200' },
       { name: 'Program Analytics', desc: 'Export dashboards as infographics or slide decks', icon: <Activity className="w-4 h-4 text-orange-500" />, color: 'border-orange-200' },

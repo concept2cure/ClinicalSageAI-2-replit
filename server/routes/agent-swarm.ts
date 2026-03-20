@@ -1,6 +1,6 @@
 /**
  * =============================================================================
- * LangGraph Multi-Agent Swarm Orchestrator
+ * AnA Agents — LangGraph Multi-Agent Orchestrator
  * =============================================================================
  * End-to-end submission automation via multi-agent swarm architecture:
  * - Agent types: Drafter, Reviewer, QC, Compiler, Validator, Coordinator

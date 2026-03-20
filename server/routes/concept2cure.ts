@@ -1622,6 +1622,125 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AI AUTOCOMPLETE (Sprint 1A — Copilot-style inline completions)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/autocomplete
+ * Returns a short inline completion for the editor ghost text.
+ * Low latency, low temperature, max ~80 tokens.
+ */
+router.post('/ai/autocomplete', async (req: Request, res: Response) => {
+  try {
+    const { textBefore, context, maxTokens = 80 } = req.body;
+    if (!textBefore || typeof textBefore !== 'string' || textBefore.length < 10) {
+      return sendError(res, 400, 'textBefore is required (min 10 chars)');
+    }
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured');
+    }
+
+    const systemPrompt = [
+      'You are an inline autocomplete engine for regulatory document authoring.',
+      'Given the text so far, predict the NEXT 1-2 sentences the author is likely to write.',
+      'Match the tone, style, and formality of the existing text.',
+      'Use precise regulatory language appropriate for FDA/EMA submissions.',
+      context?.submissionType ? `Submission type: ${context.submissionType}.` : '',
+      context?.ctdSection ? `CTD Section: ${context.ctdSection}.` : '',
+      context?.documentType ? `Document type: ${context.documentType}.` : '',
+      'Return ONLY the completion text — no explanation, no quotes, no preamble.',
+      'If you cannot predict a useful continuation, return an empty string.',
+    ].filter(Boolean).join(' ');
+
+    const gwResponse = await gw.route({
+      taskType: 'document_drafting',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: textBefore },
+      ],
+      temperature: 0.3,
+      maxTokens: Math.min(maxTokens, 150),
+      callerModule: 'concept2cure/ai-autocomplete',
+    });
+
+    const completion = (gwResponse.content || '').trim();
+    return sendSuccess(res, { completion });
+  } catch (error: any) {
+    logger.error('AI autocomplete failed', { error: error.message });
+    return sendError(res, 500, 'Autocomplete failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI COMPLIANCE SCAN (Sprint 1C — real-time regulatory scanning)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/compliance-scan
+ * Deep AI-powered compliance scan of document content.
+ * Returns structured issues with severity, rule, and suggested fix.
+ */
+router.post('/ai/compliance-scan', async (req: Request, res: Response) => {
+  try {
+    const { content, documentType, submissionType, ctdSection } = req.body;
+    if (!content || typeof content !== 'string') {
+      return sendError(res, 400, 'content is required');
+    }
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured');
+    }
+
+    const systemPrompt = [
+      'You are an FDA/EMA regulatory compliance reviewer. Analyze the document content and identify compliance issues.',
+      'For each issue, provide: type (error/warning/info), rule (regulation reference), message (what is wrong), and suggestion (how to fix).',
+      submissionType ? `Submission type: ${submissionType}.` : '',
+      ctdSection ? `CTD Section: ${ctdSection}.` : '',
+      documentType ? `Document type: ${documentType}.` : '',
+      'Return a JSON array of issues: [{"type": "error|warning|info", "rule": "21 CFR 314.50(d)", "message": "...", "suggestion": "..."}]',
+      'Focus on: missing required content, regulatory language violations, formatting issues, and cross-reference gaps.',
+      'Return ONLY valid JSON array, no other text.',
+    ].filter(Boolean).join(' ');
+
+    // Use only first 3000 chars to keep latency low
+    const truncated = content.replace(/<[^>]+>/g, ' ').slice(0, 3000);
+
+    const gwResponse = await gw.route({
+      taskType: 'document_analysis',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: truncated },
+      ],
+      temperature: 0.2,
+      maxTokens: 2000,
+      callerModule: 'concept2cure/ai-compliance-scan',
+    });
+
+    let issues = [];
+    try {
+      const raw = (gwResponse.content || '').trim();
+      // Extract JSON array from response
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (match) {
+        issues = JSON.parse(match[0]);
+      }
+    } catch {
+      issues = [];
+    }
+
+    return sendSuccess(res, { issues, scannedLength: truncated.length });
+  } catch (error: any) {
+    logger.error('Compliance scan failed', { error: error.message });
+    return sendError(res, 500, 'Compliance scan failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INCONSISTENCY INTELLIGENCE (Sprint 2C — ARTOS-inspired)
 // ─────────────────────────────────────────────────────────────────────────────
 

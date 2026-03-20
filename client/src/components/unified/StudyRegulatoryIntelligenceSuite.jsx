@@ -249,7 +249,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
         suggestions: [
           'Check ICH E6(R3) compliance',
           'Review regulatory gaps',
-          'Get Lumen AI guidance',
+          'Get AnA RI guidance',
         ],
       },
     };
@@ -266,7 +266,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
     if (!lumenQuery.trim()) {
       toast({
         title: 'Query Required',
-        description: 'Please enter a query for Lumen AI',
+        description: 'Please enter a query for AnA RI',
         variant: 'destructive',
       });
       return;

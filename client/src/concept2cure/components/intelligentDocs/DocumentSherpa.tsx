@@ -204,7 +204,7 @@ const NextBestActionCard: React.FC<{
         </div>
         <div>
           <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">
-            Your Sherpa Recommends
+            AnA Guided Authoring Recommends
           </span>
           <h3 className="font-semibold text-zinc-800">
             {guidance.title}

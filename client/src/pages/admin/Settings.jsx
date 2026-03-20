@@ -567,7 +567,7 @@ const Settings = () => {
                             </div>
                             <div className="flex items-center space-x-2">
                               <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                              <span className="text-xs">ForesightAI</span>
+                              <span className="text-xs">AnA Predictions</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <div className="h-2 w-2 rounded-full bg-green-500"></div>

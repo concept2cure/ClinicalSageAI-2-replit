@@ -1,10 +1,10 @@
 /**
- * @fileoverview Lumen Cortex Instruction Engine
+ * @fileoverview AnA RI Instruction Engine
  * @module server/services/lumen-instruction-engine
  * @version 1.0.0
  *
  * @description
- * The Instruction Engine gives Lumen Cortex the ability to accept, understand,
+ * The Instruction Engine gives AnA RI the ability to accept, understand,
  * and execute complex multi-step instructions from users. This includes:
  *
  * 1. Generating tables, figures, and entire CTD sections from source data

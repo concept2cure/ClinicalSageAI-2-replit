@@ -174,7 +174,7 @@ export function ForesightAIProtocolWidget({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-purple-500" />
-              <CardTitle className="text-sm">ForesightAI™ Predictions</CardTitle>
+              <CardTitle className="text-sm">AnA Predictions™ Predictions</CardTitle>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </div>
@@ -210,7 +210,7 @@ export function ForesightAIProtocolWidget({
             <div className="flex items-center gap-2">
               <Brain className="w-6 h-6 text-purple-500" />
               <div>
-                <CardTitle>ForesightAI™ Protocol Intelligence</CardTitle>
+                <CardTitle>AnA Predictions™ Protocol Intelligence</CardTitle>
                 <CardDescription>
                   Translational predictions for Phase {phase} {indication} study
                 </CardDescription>

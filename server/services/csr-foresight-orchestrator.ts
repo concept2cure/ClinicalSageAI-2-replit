@@ -1,7 +1,7 @@
 /**
- * CSR-to-ForesightAI Orchestrator Service
- * 
- * Orchestrates the integration between CSR Intelligence Library and ForesightAI,
+ * CSR-to-AnA Predictions Orchestrator Service
+ *
+ * Orchestrates the integration between CSR Intelligence Library and AnA Predictions,
  * converting CSR data into predictive intelligence and recalibrating models.
  */
 
@@ -66,7 +66,7 @@ export class CSRForesightOrchestrator {
   }
 
   /**
-   * Process CSR and integrate with ForesightAI
+   * Process CSR and integrate with AnA Predictions
    */
   async ingestCSR(csrId: string, organizationId: string): Promise<CSRIngestionResult> {
     const startTime = Date.now();
@@ -83,7 +83,7 @@ export class CSRForesightOrchestrator {
         ${efficacyOutcomes.length} efficacy outcomes, ${biomarkerCorrelations.length} biomarkers, 
         ${doseRelationships.length} dose relationships`);
 
-      // Step 2: Store extracted data in ForesightAI tables
+      // Step 2: Store extracted data in AnA Predictions tables
       await csrKnowledgeExtractor.storeInForesightTables(
         csrId,
         organizationId,
@@ -282,7 +282,7 @@ export class CSRForesightOrchestrator {
   }
 
   /**
-   * Recalibrate ForesightAI predictions based on CSR data
+   * Recalibrate AnA Predictions predictions based on CSR data
    */
   async recalibratePredictions(
     organizationId: string, 

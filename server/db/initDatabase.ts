@@ -50,18 +50,18 @@ export async function initializeDatabase() {
       console.log('Literature discovery features are disabled');
     }
 
-    // Initialize Lumen Cortex intelligence core tables
-    console.log('Initializing Lumen Cortex intelligence core...');
+    // Initialize AnA RI intelligence core tables
+    console.log('Initializing AnA RI intelligence core...');
     try {
       const lumenCortexSetup = await setupLumenCortex.initializeLumenCortexDatabase();
       if (lumenCortexSetup) {
-        console.log('Lumen Cortex initialized successfully');
+        console.log('AnA RI initialized successfully');
       } else {
-        console.warn('Lumen Cortex tables could not be set up. Cortex features may be limited.');
+        console.warn('AnA RI tables could not be set up. AnA RI features may be limited.');
       }
     } catch (error) {
-      console.error('Error initializing Lumen Cortex:', error);
-      console.warn('Lumen Cortex features may be limited or unavailable');
+      console.error('Error initializing AnA RI:', error);
+      console.warn('AnA RI features may be limited or unavailable');
     }
 
     console.log('Database initialization complete');

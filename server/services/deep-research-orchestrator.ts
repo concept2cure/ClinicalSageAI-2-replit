@@ -1,5 +1,5 @@
 /**
- * @fileoverview Deep Research Orchestrator
+ * @fileoverview AnA Research Orchestrator
  * @module server/services/deep-research-orchestrator
  *
  * Coordinates multi-source research jobs. Fans out queries to connectors,
@@ -76,8 +76,8 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
   if (!quota.allowed) {
     throw new Error(
       quota.upgradeRequired
-        ? `Deep Research requires ${quota.upgradeRequired} tier or higher`
-        : `Deep Research quota exceeded (${quota.remaining} remaining)`
+        ? `AnA Research requires ${quota.upgradeRequired} tier or higher`
+        : `AnA Research quota exceeded (${quota.remaining} remaining)`
     );
   }
 
@@ -217,7 +217,7 @@ async function generateSynthesis(
 ): Promise<string> {
   // Build a structured summary without calling external LLM (can be enhanced with OpenAI)
   const lines: string[] = [];
-  lines.push(`## Deep Research Report: ${query.indication}`);
+  lines.push(`## AnA Research Report: ${query.indication}`);
   lines.push('');
   lines.push(`**Query:** ${query.indication}${query.phase ? ` | Phase ${query.phase}` : ''}${query.therapeuticArea ? ` | ${query.therapeuticArea}` : ''}`);
   lines.push(`**Total sources analyzed:** ${results.totalResults}`);

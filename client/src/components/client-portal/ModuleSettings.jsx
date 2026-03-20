@@ -78,7 +78,7 @@ const ModuleSettings = () => {
     },
     {
       id: 'foresight-ai',
-      name: 'ForesightAI™ Journey Navigator',
+      name: 'AnA Predictions™ Journey Navigator',
       icon: <Brain className="h-5 w-5" />,
       description: 'Translational Intelligence Engine',
       enabled: true,
