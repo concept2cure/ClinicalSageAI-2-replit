@@ -491,6 +491,55 @@ export function requireJwtSecret(): void {
 }
 
 // ============================================================================
+// CSRF PROTECTION (Origin / Referer validation)
+// ============================================================================
+
+/**
+ * For JWT Bearer-token SPAs, CSRF risk is inherently low because
+ * Authorization headers are not auto-sent by browsers. This middleware
+ * adds defense-in-depth by validating Origin/Referer on state-changing
+ * requests in production.
+ */
+export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+  // Only check state-changing methods
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+
+  // Skip for non-production (dev/test tooling needs flexibility)
+  if (!config.isProduction) {
+    return next();
+  }
+
+  // Skip for API-key authenticated requests (server-to-server)
+  if ((req as any).authMethod === 'api_key') {
+    return next();
+  }
+
+  const origin = req.headers.origin;
+  const referer = req.headers.referer;
+
+  // At least one must be present and match an allowed origin
+  const source = origin || (referer ? new URL(referer).origin : null);
+
+  if (!source) {
+    // No origin/referer — could be server-to-server or curl; allow if has Bearer token
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+      return next();
+    }
+    console.warn(`[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`);
+    return res.status(403).json({ error: 'Forbidden', code: 'CSRF_VALIDATION_FAILED' });
+  }
+
+  if (!config.allowedOrigins.includes(source)) {
+    console.warn(`[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`);
+    return res.status(403).json({ error: 'Forbidden', code: 'CSRF_ORIGIN_MISMATCH' });
+  }
+
+  next();
+}
+
+// ============================================================================
 // COMBINED SECURITY MIDDLEWARE STACK
 // ============================================================================
 
@@ -523,6 +572,9 @@ export function applySecurityMiddleware(app: any) {
 
   // Input sanitization
   app.use(sanitizeInput);
+
+  // CSRF protection (origin/referer validation for state-changing requests)
+  app.use(csrfProtection);
 
   // Tenant isolation
   app.use(validateTenantContext);

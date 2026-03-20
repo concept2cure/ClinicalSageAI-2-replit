@@ -190,6 +190,15 @@ export const featureFlags: Record<string, FeatureFlag> = {
     enabled: true,
   },
 
+  // Early Access modules — using sample data, not production-ready
+  ENABLE_EARLY_ACCESS_MODULES: {
+    id: 'ENABLE_EARLY_ACCESS_MODULES',
+    name: 'Early Access Modules',
+    description: 'Enables modules still using sample data: Inspection Readiness, Post-Market Surveillance, CAPA Management, SOP Management. Disable for production release.',
+    defaultValue: false,
+    enabled: false,
+  },
+
   // Shell embedding — render modules inside the Concept2Cure shell frame
   EMBED_MODULES_IN_SHELL: {
     id: 'EMBED_MODULES_IN_SHELL',

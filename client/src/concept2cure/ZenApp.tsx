@@ -318,10 +318,15 @@ const ArtifactsGalleryPage = lazy(() => import('./pages/ArtifactsGallery'));
 import { ProjectSidebar } from './components/workspace/ProjectSidebar';
 
 // Map panel keys to lazy components
+// Early-access modules (capa, pms, inspection) gated behind feature flag
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
-  capa: CAPAManagementPanel,
-  pms: PostMarketSurveillancePanel,
-  inspection: InspectionReadinessPanel,
+  ...(isFeatureEnabled('ENABLE_EARLY_ACCESS_MODULES')
+    ? {
+        capa: CAPAManagementPanel,
+        pms: PostMarketSurveillancePanel,
+        inspection: InspectionReadinessPanel,
+      }
+    : {}),
   ectd: ECTDNavigatorPanel,
   intelligence: RegulatoryIntelligenceFullPanel,
   'doc-editor': EditorPanel,
