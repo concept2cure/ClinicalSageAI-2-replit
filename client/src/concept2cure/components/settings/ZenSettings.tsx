@@ -129,46 +129,55 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description }) => 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ProfileSection: React.FC = () => {
-  const [name, setName] = useState('John Doe');
-  const [email] = useState('john.doe@company.com');
-  const [role, setRole] = useState('Regulatory Affairs Lead');
-  const [objectives, setObjectives] = useState('Submission readiness, evidence alignment');
-  const [criteria, setCriteria] = useState('Risk reduction, audit readiness');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [title, setTitle] = useState('');
+  const [department, setDepartment] = useState('');
+  const [bio, setBio] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
-    try {
-      const savedProfile = localStorage.getItem('concept2cure_user_profile');
-      if (savedProfile) {
-        const parsed = JSON.parse(savedProfile) as {
-          role?: string;
-          objectives?: string[];
-          criteria?: string[];
-        };
-        if (parsed.role) setRole(parsed.role);
-        if (parsed.objectives?.length) setObjectives(parsed.objectives.join(', '));
-        if (parsed.criteria?.length) setCriteria(parsed.criteria.join(', '));
-      }
-    } catch (error) {
-      console.warn('Unable to load profile settings', error);
-    }
+    fetch('/api/users/me', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setName(data.displayName || data.name || '');
+          setEmail(data.email || '');
+          setTitle(data.title || '');
+          setDepartment(data.department || '');
+          setBio(data.bio || '');
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const handleSave = () => {
-    const normalizeList = (value: string) =>
-      value
-        .split(/\n|,/)
-        .map(item => item.trim())
-        .filter(Boolean);
-
-    const profile = {
-      role,
-      objectives: normalizeList(objectives),
-      criteria: normalizeList(criteria),
-      updatedAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveStatus('idle');
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, title, department, bio }),
+      });
+      if (res.ok) {
+        setSaveStatus('saved');
+        // Also sync to localStorage for ZenApp profile context
+        const profile = { role: title, objectives: [], criteria: [], updatedAt: new Date().toISOString() };
+        localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } else {
+        setSaveStatus('error');
+      }
+    } catch {
+      setSaveStatus('error');
+    }
+    setSaving(false);
   };
+
+  const initials = name.split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '??';
 
   return (
     <div>
@@ -181,15 +190,15 @@ const ProfileSection: React.FC = () => {
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-100">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
-            JD
+            {initials}
           </div>
           <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors">
             <Camera className="w-4 h-4 text-zinc-600" />
           </button>
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-zinc-900">{name}</h3>
-          <p className="text-sm text-zinc-500">{role}</p>
+          <h3 className="text-lg font-semibold text-zinc-900">{name || 'Your Name'}</h3>
+          <p className="text-sm text-zinc-500">{title || 'Your Title'}</p>
         </div>
       </div>
 
@@ -217,42 +226,52 @@ const ProfileSection: React.FC = () => {
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Role</label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Title / Role</label>
           <input
             type="text"
-            value={role}
-            onChange={e => setRole(e.target.value)}
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="e.g., Regulatory Affairs Lead"
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Objectives</label>
-          <textarea
-            value={objectives}
-            onChange={e => setObjectives(e.target.value)}
-            rows={3}
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Department</label>
+          <input
+            type="text"
+            value={department}
+            onChange={e => setDepartment(e.target.value)}
+            placeholder="e.g., Regulatory, Clinical, CMC"
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-            placeholder="Comma or new-line separated"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Success criteria</label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Bio</label>
           <textarea
-            value={criteria}
-            onChange={e => setCriteria(e.target.value)}
+            value={bio}
+            onChange={e => setBio(e.target.value)}
             rows={3}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-            placeholder="What must be true for success"
+            placeholder="A short bio visible to your team"
           />
         </div>
       </div>
 
-      <button
-        onClick={handleSave}
-        className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-      >
-        Save Changes
-      </button>
+      <div className="flex items-center gap-3 mt-6">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+        {saveStatus === 'saved' && (
+          <span className="text-sm text-green-600 font-medium">Saved</span>
+        )}
+        {saveStatus === 'error' && (
+          <span className="text-sm text-red-600 font-medium">Failed to save</span>
+        )}
+      </div>
     </div>
   );
 };
@@ -311,37 +330,86 @@ const OrganizationSection: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const NotificationsSection: React.FC = () => {
-  const [emailDigest, setEmailDigest] = useState(true);
-  const [projectUpdates, setProjectUpdates] = useState(true);
-  const [mentionAlerts, setMentionAlerts] = useState(true);
-  const [weeklyReport, setWeeklyReport] = useState(false);
-  const [regulatoryAlerts, setRegulatoryAlerts] = useState(true);
+  const [prefs, setPrefs] = useState({
+    emailMentions: true,
+    emailApprovals: true,
+    emailCompliance: true,
+    emailSystem: true,
+    emailDigest: 'weekly' as string,
+    inAppMentions: true,
+    inAppApprovals: true,
+    inAppCompliance: true,
+    inAppSystem: true,
+    toastEnabled: true,
+    soundEnabled: false,
+  });
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/users/me/notifications', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setPrefs(p => ({ ...p, ...data })); })
+      .catch(() => {});
+  }, []);
+
+  const toggle = (key: string) => {
+    setPrefs(p => ({ ...p, [key]: !p[key as keyof typeof p] }));
+    setDirty(true);
+  };
+
+  const save = () => {
+    fetch('/api/users/me/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(prefs),
+    }).then(() => setDirty(false)).catch(() => {});
+  };
 
   return (
     <div>
       <SectionHeader title="Notifications" description="Choose what notifications you receive" />
 
-      <div className="bg-white rounded-xl border border-zinc-200">
-        <SettingRow label="Email Digest" description="Daily summary of your activity">
-          <ToggleSwitch enabled={emailDigest} onChange={setEmailDigest} />
+      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Email</h3>
+      <div className="bg-white rounded-xl border border-zinc-200 mb-4">
+        <SettingRow label="Mentions" description="When someone @mentions you">
+          <ToggleSwitch enabled={prefs.emailMentions} onChange={() => toggle('emailMentions')} />
         </SettingRow>
-
-        <SettingRow label="Project Updates" description="When projects you're part of change">
-          <ToggleSwitch enabled={projectUpdates} onChange={setProjectUpdates} />
+        <SettingRow label="Approvals" description="Approval requests and decisions">
+          <ToggleSwitch enabled={prefs.emailApprovals} onChange={() => toggle('emailApprovals')} />
         </SettingRow>
-
-        <SettingRow label="Mentions" description="When someone mentions you in a chat">
-          <ToggleSwitch enabled={mentionAlerts} onChange={setMentionAlerts} />
+        <SettingRow label="Compliance Alerts" description="Regulatory deadlines and changes">
+          <ToggleSwitch enabled={prefs.emailCompliance} onChange={() => toggle('emailCompliance')} />
         </SettingRow>
-
-        <SettingRow label="Weekly Reports" description="Weekly summary sent every Monday">
-          <ToggleSwitch enabled={weeklyReport} onChange={setWeeklyReport} />
-        </SettingRow>
-
-        <SettingRow label="Regulatory Alerts" description="New guidance and deadline reminders">
-          <ToggleSwitch enabled={regulatoryAlerts} onChange={setRegulatoryAlerts} />
+        <SettingRow label="System Updates" description="Platform maintenance and new features">
+          <ToggleSwitch enabled={prefs.emailSystem} onChange={() => toggle('emailSystem')} />
         </SettingRow>
       </div>
+
+      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">In-App</h3>
+      <div className="bg-white rounded-xl border border-zinc-200 mb-4">
+        <SettingRow label="Mentions" description="In-app mention notifications">
+          <ToggleSwitch enabled={prefs.inAppMentions} onChange={() => toggle('inAppMentions')} />
+        </SettingRow>
+        <SettingRow label="Approvals" description="In-app approval notifications">
+          <ToggleSwitch enabled={prefs.inAppApprovals} onChange={() => toggle('inAppApprovals')} />
+        </SettingRow>
+        <SettingRow label="Toast Popups" description="Show floating notification popups">
+          <ToggleSwitch enabled={prefs.toastEnabled} onChange={() => toggle('toastEnabled')} />
+        </SettingRow>
+        <SettingRow label="Sound" description="Play sound on new notifications">
+          <ToggleSwitch enabled={prefs.soundEnabled} onChange={() => toggle('soundEnabled')} />
+        </SettingRow>
+      </div>
+
+      {dirty && (
+        <button
+          onClick={save}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+        >
+          Save Notification Preferences
+        </button>
+      )}
     </div>
   );
 };

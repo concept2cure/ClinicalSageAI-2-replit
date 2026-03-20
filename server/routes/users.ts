@@ -11,7 +11,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
-import { users, organizations } from '../../shared/schema';
+import { users, organizations, notificationPreferences } from '../../shared/schema';
 
 import { config } from '../config/environment';
 
@@ -151,16 +151,21 @@ router.get('/me', async (req: Request, res: Response) => {
       lastName: userData.lastName || '',
       displayName:
         `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      title: userData.title || '',
+      department: userData.department || '',
+      bio: userData.bio || '',
+      avatar: userData.avatar || null,
+      preferences: userData.preferences || {},
       roles: ['user'],
       permissions: [],
       organizationId: decoded.organizationId || '2',
       organizationName: orgName,
-      mfaEnabled: false,
+      mfaEnabled: userData.mfaEnabled || false,
       mfaMethods: [],
-      mustChangePassword: false,
-      avatarUrl: null,
+      mustChangePassword: userData.mustChangePassword || false,
+      avatarUrl: userData.avatar || null,
       createdAt: userData.createdAt?.toISOString() || new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
+      lastLoginAt: userData.lastLogin?.toISOString() || new Date().toISOString(),
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
@@ -176,6 +181,164 @@ router.get('/me', async (req: Request, res: Response) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to get user profile' },
     });
+  }
+});
+
+/**
+ * PATCH /api/users/me
+ * Update current user profile
+ */
+router.patch('/me', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json({ success: true, message: 'Profile updated (dev mode)' });
+    }
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const userId = parseInt(decoded.userId);
+
+    const { name, title, department, bio, avatar, preferences } = req.body;
+
+    const updateFields: Record<string, unknown> = { updatedAt: new Date() };
+    if (name !== undefined) updateFields.name = name;
+    if (title !== undefined) updateFields.title = title;
+    if (department !== undefined) updateFields.department = department;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (avatar !== undefined) updateFields.avatar = avatar;
+    if (preferences !== undefined) updateFields.preferences = preferences;
+
+    const [updated] = await db
+      .update(users)
+      .set(updateFields)
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: updated.id.toString(),
+        email: updated.email,
+        name: updated.name,
+        title: updated.title,
+        department: updated.department,
+        bio: updated.bio,
+        avatar: updated.avatar,
+        preferences: updated.preferences,
+      },
+    });
+  } catch (error: unknown) {
+    console.error('[users] Update profile error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update profile' } });
+  }
+});
+
+/**
+ * GET /api/users/me/notifications
+ * Get notification preferences for current user
+ */
+router.get('/me/notifications', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json({ emailMentions: true, emailApprovals: true, inAppMentions: true, inAppApprovals: true, toastEnabled: true, soundEnabled: false });
+    }
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const userId = parseInt(decoded.userId);
+
+    const prefs = await db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId))
+      .limit(1);
+
+    if (!prefs.length) {
+      return res.json({
+        emailMentions: true,
+        emailApprovals: true,
+        emailCompliance: true,
+        emailSystem: true,
+        emailDigest: 'weekly',
+        inAppMentions: true,
+        inAppApprovals: true,
+        inAppCompliance: true,
+        inAppSystem: true,
+        toastEnabled: true,
+        toastDuration: 5000,
+        soundEnabled: false,
+        timezone: 'America/New_York',
+      });
+    }
+
+    res.json(prefs[0]);
+  } catch (error: unknown) {
+    console.error('[users] Get notifications error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to get notification preferences' } });
+  }
+});
+
+/**
+ * PATCH /api/users/me/notifications
+ * Update notification preferences
+ */
+router.patch('/me/notifications', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json({ success: true, message: 'Notification preferences updated (dev mode)' });
+    }
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const userId = parseInt(decoded.userId);
+
+    const updates = req.body;
+    updates.updatedAt = new Date();
+
+    // Upsert notification preferences
+    const existing = await db
+      .select({ id: notificationPreferences.id })
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId))
+      .limit(1);
+
+    if (existing.length) {
+      await db
+        .update(notificationPreferences)
+        .set(updates)
+        .where(eq(notificationPreferences.userId, userId));
+    } else {
+      await db
+        .insert(notificationPreferences)
+        .values({ userId, ...updates });
+    }
+
+    res.json({ success: true, message: 'Notification preferences updated' });
+  } catch (error: unknown) {
+    console.error('[users] Update notifications error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update notification preferences' } });
   }
 });
 
