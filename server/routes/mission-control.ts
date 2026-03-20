@@ -43,6 +43,7 @@ const store = {
   reviewCycles: new Map<number, any>(),
   riskSignals: new Map<number, any>(),
   collaboration: new Map<number, any>(),
+  approvalRequests: new Map<number, any>(),
   authorityInteractions: new Map<number, any>(),
   provenance: [] as any[],
   nextId: 1,
@@ -218,6 +219,75 @@ function seedDemoData() {
       resolvedAt: i % 3 === 0 ? new Date(Date.now() - 86400000) : null,
       createdAt: new Date(Date.now() - ((collabTemplates.length - i) * 7200000)),
       updatedAt: new Date(Date.now() - ((collabTemplates.length - i) * 7200000)),
+    });
+  });
+
+  // Approval requests — manager authorization workflow
+  const approvalTemplates = [
+    {
+      artifactId: 6, // ART-002 Quality Overall Summary
+      requestType: 'document_approval',
+      title: 'Approve Module 2.3 QOS for submission assembly',
+      description: 'Quality Overall Summary has completed CMC review cycle. Requires Regulatory Lead sign-off before submission gate.',
+      requestedBy: 'Maria Gonzalez', requestedByRole: 'CMC Author',
+      assignedTo: 'Sarah Chen', assignedToRole: 'Regulatory Lead',
+      priority: 'high', status: 'pending',
+      dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 14, // ART-010 IB
+      requestType: 'escalation_approval',
+      title: 'Authorize extended IB review timeline',
+      description: 'IB v4.2 review has exceeded SLA by 8 days. Requesting Program Director authorization to extend review period by 5 business days.',
+      requestedBy: 'Michael Torres', requestedByRole: 'Program Manager',
+      assignedTo: 'Dr. Patricia Wells', assignedToRole: 'Program Director',
+      priority: 'critical', status: 'pending',
+      dueDate: new Date(Date.now() + 1 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 7, // ART-003 Clinical Overview
+      requestType: 'change_approval',
+      title: 'Approve addition of PRO summary to Clinical Overview',
+      description: 'Per new FDA Oncology Division guidance, proposing to add patient-reported outcomes (PRO) section 2.5.4.7. Requires Clinical Lead authorization.',
+      requestedBy: 'Sarah Chen', requestedByRole: 'Regulatory Lead',
+      assignedTo: 'Dr. Raj Patel', assignedToRole: 'Clinical Lead',
+      priority: 'medium', status: 'pending',
+      dueDate: new Date(Date.now() + 5 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 10, // ART-006 Drug Product
+      requestType: 'deviation_approval',
+      title: 'Approve dissolution variability deviation report',
+      description: 'Batch-to-batch dissolution variability in 3.2.P.5.3 exceeds 15% threshold. CMC team proposes tightened manufacturing controls. QA Head sign-off required.',
+      requestedBy: 'Dr. James Whitfield', requestedByRole: 'CMC Reviewer',
+      assignedTo: 'Dr. Linda Park', assignedToRole: 'QA Head',
+      priority: 'high', status: 'approved',
+      decision: 'approved', decisionBy: 'Dr. Linda Park',
+      decisionComment: 'Approved with condition: manufacturing controls must be implemented and validated before next production batch.',
+      decisionAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      dueDate: new Date(Date.now() - 1 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 16, // ART-012 Risk Management Plan
+      requestType: 'document_approval',
+      title: 'Authorize REMS strategy deferral to post-marketing',
+      description: 'Pharmacovigilance recommends deferring full REMS proposal to post-marketing Phase IV commitment. Requires Regulatory Affairs VP authorization.',
+      requestedBy: 'Dr. Aisha Williams', requestedByRole: 'Pharmacovigilance Lead',
+      assignedTo: 'Dr. Robert Kinsey', assignedToRole: 'VP Regulatory Affairs',
+      priority: 'high', status: 'rejected',
+      decision: 'rejected', decisionBy: 'Dr. Robert Kinsey',
+      decisionComment: 'Rejected: Division has historically required REMS proposal at NDA submission for oncology products with known hepatotoxicity. Revise to include preliminary REMS framework.',
+      decisionAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+      dueDate: new Date(Date.now() - 3 * 86400000).toISOString(),
+    },
+  ];
+
+  approvalTemplates.forEach(tpl => {
+    const aid = nextId();
+    store.approvalRequests.set(aid, {
+      id: aid, organizationId: 1, programId: p1, ...tpl,
+      createdAt: new Date(Date.now() - (5 - approvalTemplates.indexOf(tpl)) * 86400000),
+      updatedAt: new Date(),
     });
   });
 
@@ -787,6 +857,117 @@ router.put('/collaboration/:id', (req: Request, res: Response) => {
     item.resolvedAt = new Date();
   }
   store.collaboration.set(id, item);
+  res.json({ data: item });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APPROVAL REQUESTS — Accept/Deny/Delegate authorization chains
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/approval-requests', (req: Request, res: Response) => {
+  const { programId, status } = req.query;
+  let items = Array.from(store.approvalRequests.values())
+    .filter(a => a.organizationId === getOrgId(req));
+  if (programId) items = items.filter(a => a.programId === parseInt(programId as string));
+  if (status) items = items.filter(a => a.status === status);
+  // Sort pending first, then by priority
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  items.sort((a, b) => {
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (a.status !== 'pending' && b.status === 'pending') return 1;
+    return (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3);
+  });
+  res.json({ data: items });
+});
+
+router.post('/approval-requests', (req: Request, res: Response) => {
+  const id = nextId();
+  const item = {
+    id,
+    organizationId: getOrgId(req),
+    requestedById: getUserId(req),
+    ...req.body,
+    status: 'pending',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  store.approvalRequests.set(id, item);
+  logProvenance(getOrgId(req), item.programId, 'approval', id, 'requested', getUserId(req));
+  res.status(201).json({ data: item });
+});
+
+router.post('/approval-requests/:id/decide', (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const item = store.approvalRequests.get(id);
+  if (!item) return res.status(404).json({ error: 'Approval request not found' });
+  if (item.status !== 'pending') {
+    return res.status(400).json({ error: `Request already ${item.status}` });
+  }
+
+  const { decision, comment } = req.body;
+  if (!decision || !['approved', 'rejected'].includes(decision)) {
+    return res.status(400).json({ error: 'decision must be "approved" or "rejected"' });
+  }
+
+  item.status = decision;
+  item.decision = decision;
+  item.decisionBy = req.body.decisionBy || `User ${getUserId(req)}`;
+  item.decisionComment = comment || '';
+  item.decisionAt = new Date().toISOString();
+  item.updatedAt = new Date();
+
+  store.approvalRequests.set(id, item);
+  logProvenance(getOrgId(req), item.programId, 'approval', id, decision, getUserId(req), { comment });
+
+  // Also add a collaboration thread for the decision
+  const collabId = nextId();
+  store.collaboration.set(collabId, {
+    id: collabId,
+    organizationId: item.organizationId,
+    programId: item.programId,
+    targetType: 'artifact',
+    targetId: item.artifactId,
+    type: decision === 'approved' ? 'comment' : 'change_request',
+    body: `[${decision.toUpperCase()}] ${item.title}\n\n${comment || 'No comment provided.'}`,
+    author: item.decisionBy,
+    role: item.assignedToRole,
+    visibility: 'internal',
+    priority: decision === 'rejected' ? 'high' : 'normal',
+    status: 'open',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  res.json({ data: item });
+});
+
+router.post('/approval-requests/:id/delegate', (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const item = store.approvalRequests.get(id);
+  if (!item) return res.status(404).json({ error: 'Approval request not found' });
+  if (item.status !== 'pending') {
+    return res.status(400).json({ error: `Request already ${item.status}` });
+  }
+
+  const { delegateTo, delegateToRole, reason } = req.body;
+  if (!delegateTo) {
+    return res.status(400).json({ error: 'delegateTo is required' });
+  }
+
+  const previousAssignee = item.assignedTo;
+  item.assignedTo = delegateTo;
+  item.assignedToRole = delegateToRole || item.assignedToRole;
+  item.delegatedFrom = previousAssignee;
+  item.delegationReason = reason;
+  item.updatedAt = new Date();
+
+  store.approvalRequests.set(id, item);
+  logProvenance(getOrgId(req), item.programId, 'approval', id, 'delegated', getUserId(req), {
+    from: previousAssignee,
+    to: delegateTo,
+    reason,
+  });
+
   res.json({ data: item });
 });
 

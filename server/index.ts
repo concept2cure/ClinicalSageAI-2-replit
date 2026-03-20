@@ -6476,6 +6476,17 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // APPROVAL WORKFLOW — Accept/deny/delegate approval chains
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const approvalWorkflowRoutes = await import('./routes/approval-workflow');
+    app.use('/api/approval-workflows', approvalWorkflowRoutes.default);
+    console.log('✅ Approval Workflow routes mounted at /api/approval-workflows');
+  } catch (error) {
+    console.error('❌ Failed to mount Approval Workflow routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
   // Must be registered BEFORE the catch-all 404 handler
   // ──────────────────────────────────────────────────────────────────────────
