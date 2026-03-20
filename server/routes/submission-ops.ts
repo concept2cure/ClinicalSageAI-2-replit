@@ -445,7 +445,23 @@ router.post('/policies', async (req: Request, res: Response) => {
 router.put('/policies/:policyId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const { ...updates } = req.body;
+    // SECURITY: Whitelist allowed update fields to prevent field injection
+    const {
+      packageFamily, sectionKey, documentFamily, ownerFunction, reviewerClass,
+      ownershipType, reviewDueHours, dueSoonThresholdHours, overdueThresholdHours,
+      escalationThresholdHours, fallbackRole, requiredReviewerClasses, requiredApprovals,
+      blockOnOpenCritical, blockPublishOnOpenCritical, requireSectionReadyForGate,
+      ruleDescription, priority, enabled,
+    } = req.body;
+    const updates = Object.fromEntries(
+      Object.entries({
+        packageFamily, sectionKey, documentFamily, ownerFunction, reviewerClass,
+        ownershipType, reviewDueHours, dueSoonThresholdHours, overdueThresholdHours,
+        escalationThresholdHours, fallbackRole, requiredReviewerClasses, requiredApprovals,
+        blockOnOpenCritical, blockPublishOnOpenCritical, requireSectionReadyForGate,
+        ruleDescription, priority, enabled,
+      }).filter(([, v]) => v !== undefined)
+    );
 
     const [updated] = await db
       .update(c2cSubmissionPolicies)

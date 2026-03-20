@@ -21,8 +21,9 @@ const router = Router();
 router.get('/active', async (req: Request, res: Response) => {
   try {
     const sessionId = req.headers['x-session-id'] as string;
-    const organizationId = parseInt(req.headers['x-organization-id'] as string) || 1;
-    const userId = parseInt(req.headers['x-user-id'] as string) || 1;
+    // SECURITY: Derive org and user from authenticated JWT context, not headers
+    const organizationId = (req as any).organizationId ?? (req as any).user?.organizationId ?? (req as any).organizationId ?? (req as any).user?.organizationId ?? 1;
+    const userId = (req as any).user?.id ?? (req as any).userId ?? (req as any).user?.id ?? (req as any).userId ?? 1;
     
     logger.info('Fetching active submission', { sessionId, organizationId, userId });
     
@@ -127,8 +128,8 @@ router.get('/:submissionId', async (req: Request, res: Response) => {
  */
 router.post('/create', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string) || 1;
-    const userId = parseInt(req.headers['x-user-id'] as string) || 1;
+    const organizationId = (req as any).organizationId ?? (req as any).user?.organizationId ?? 1;
+    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
     const sessionId = req.headers['x-session-id'] as string || `SESSION-${generateUUID()}`;
     
     const {
@@ -197,7 +198,7 @@ router.post('/create', async (req: Request, res: Response) => {
 router.put('/:submissionId', async (req: Request, res: Response) => {
   try {
     const { submissionId } = req.params;
-    const userId = parseInt(req.headers['x-user-id'] as string) || 1;
+    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
     const updates = req.body;
     
     // Add last modified by
@@ -235,7 +236,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
   try {
     const { submissionId } = req.params;
     const { stepNumber, stepData, completed = false } = req.body;
-    const userId = parseInt(req.headers['x-user-id'] as string) || 1;
+    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
     
     // Get current submission
     const submission = await storage.getIndSubmission(submissionId);
@@ -322,7 +323,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
 router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Response) => {
   try {
     const { submissionId } = req.params;
-    const userId = parseInt(req.headers['x-user-id'] as string) || 1;
+    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
     
     const submission = await storage.getIndSubmission(submissionId);
     if (!submission) {

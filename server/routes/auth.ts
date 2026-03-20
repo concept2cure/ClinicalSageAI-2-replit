@@ -271,7 +271,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           code: 'AUTH_002',
           message: 'Account temporarily locked due to too many failed attempts. Try again later.',
         },
-        lockedUntil: lockStatus.lockedUntil?.toISOString(),
+        // SECURITY: Don't leak exact lockout timestamp
       });
     }
 
@@ -290,8 +290,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
-        remainingAttempts: failResult.remainingAttempts,
-        accountLocked: failResult.locked,
+        // SECURITY: Don't leak remainingAttempts or locked status (enables enumeration)
       });
     }
 

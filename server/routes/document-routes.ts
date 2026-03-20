@@ -36,7 +36,28 @@ const multerStorage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: multerStorage });
+// SECURITY: Restrict file types and enforce size limits for regulatory submissions
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/xml', 'text/xml',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'text/plain', 'text/csv',
+  'image/png', 'image/jpeg', 'image/tiff',
+]);
+
+const upload = multer({
+  storage: multerStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max per FDA ESG guidelines
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type "${file.mimetype}" is not allowed. Accepted: PDF, DOCX, XLSX, XML, CSV, TXT, PNG, JPEG, TIFF.`));
+    }
+  },
+});
 
 // Get all documents with optional filtering
 router.get('/', async (req, res) => {

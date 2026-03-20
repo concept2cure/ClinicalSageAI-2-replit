@@ -100,7 +100,7 @@ router.get('/check-sso-domain', async (req: Request, res: Response) => {
  * POST /check-email
  * Step 1: Check if email exists and determine authentication flow
  */
-router.post('/check-email', async (req: Request, res: Response) => {
+router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
@@ -185,8 +185,8 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     if (lockStatus.locked) {
       return res.status(423).json({
         error: 'ACCOUNT_LOCKED',
-        message: `Account is temporarily locked. Try again after ${lockStatus.lockedUntil?.toISOString()}`,
-        lockedUntil: lockStatus.lockedUntil,
+        message: 'Account is temporarily locked due to too many failed attempts. Try again later.',
+        // SECURITY: Don't leak exact lockout timestamp
       });
     }
 
@@ -202,8 +202,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
-        remainingAttempts: failResult.remainingAttempts,
-        accountLocked: failResult.locked,
+        // SECURITY: Don't leak remainingAttempts or locked status
       });
     }
 
