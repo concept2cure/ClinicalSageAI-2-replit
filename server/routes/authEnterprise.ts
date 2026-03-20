@@ -33,6 +33,8 @@ import {
 
 import { config } from '../config/environment';
 import { authMiddleware } from '../auth';
+import * as emailOtpService from '../services/emailOtpService';
+import { sendLoginOtpEmail } from '../services/emailService';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -130,7 +132,7 @@ router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Res
     res.json({
       exists: true, // Always true — actual validation happens at password step
       authFlow: 'password',
-      mfaRequired: user ? user.mfaEnabled === true : false,
+      mfaRequired: true, // All users have email-based 2FA
       passwordSet: true, // Always true — prevents account probing
       email: normalizedEmail,
     });
@@ -212,92 +214,55 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     // Check if password has expired
     const passwordExpired = await isPasswordExpired(user.id);
 
-    // Check if MFA is required
-    const mfaRequired = user.mfaEnabled === true;
-
-    if (mfaRequired) {
-      if (!user.defaultOrganizationId) {
-        return res.status(403).json({
-          error: 'NO_ORGANIZATION',
-          message: 'No organization assigned to this account',
-        });
-      }
-
-      // Don't issue full token yet — require MFA step
-      const partialToken = jwt.sign(
-        {
-          userId: user.id.toString(),
-          email: user.email,
-          organizationId: user.defaultOrganizationId.toString(),
-          role: 'pending_mfa', // Restricted token — only valid for MFA verification
-          mfaPending: true,
-        },
-        config.jwt.secret,
-        { expiresIn: '5m' } // Short-lived — only valid for MFA step
-      );
-
-      return res.json({
-        success: true,
-        requiresMfa: true,
-        requiresOrgSelection: false,
-        partialToken,
-        passwordExpired,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.name?.split(' ')[0] || 'User',
-          lastName: user.name?.split(' ').slice(1).join(' ') || '',
-          displayName: user.name || user.email,
-        },
-      });
-    }
-
-    // No MFA required — issue full token with actual role
-    const orgId = user.defaultOrganizationId || null;
-
-    if (!orgId) {
+    // Always require 2FA — email OTP for all users, TOTP for those who set it up
+    if (!user.defaultOrganizationId) {
       return res.status(403).json({
         error: 'NO_ORGANIZATION',
         message: 'No organization assigned to this account',
       });
     }
 
-    // Parallel: fetch role + org name concurrently
-    const [actualRole, [orgRow]] = await Promise.all([
-      lookupOrgRole(user.id, orgId),
-      db.select({ name: organizations.name })
-        .from(organizations)
-        .where(eq(organizations.id, orgId))
-        .limit(1),
-    ]);
-    const verifyOrgName = orgRow?.name || 'Organization';
-
-    const token = jwt.sign(
+    // Issue partial token for MFA step
+    const partialToken = jwt.sign(
       {
         userId: user.id.toString(),
         email: user.email,
-        organizationId: orgId.toString(),
-        role: actualRole,
+        organizationId: user.defaultOrganizationId.toString(),
+        role: 'pending_mfa',
+        mfaPending: true,
       },
       config.jwt.secret,
-      { expiresIn: '24h' }
+      { expiresIn: '5m' }
     );
 
-    res.json({
+    const mfaMethod = (user as any).mfaMethod || 'email';
+    const hasTotpSetup = user.mfaEnabled === true && mfaMethod === 'totp';
+    let maskedEmail: string | undefined;
+
+    if (!hasTotpSetup) {
+      // Email OTP — generate and send
+      const otp = await emailOtpService.createEmailOtp(user.id);
+      const [local, domain] = user.email.split('@');
+      maskedEmail = `${local.slice(0, 2)}${'*'.repeat(Math.max(0, local.length - 2))}@${domain}`;
+      sendLoginOtpEmail(user.email, otp).catch(err => {
+        console.error('[enterprise-auth] Failed to send login OTP email:', err);
+      });
+    }
+
+    return res.json({
       success: true,
-      requiresMfa: false,
+      requiresMfa: true,
       requiresOrgSelection: false,
+      partialToken,
       passwordExpired,
-      token,
+      mfaMethod: hasTotpSetup ? 'totp' : 'email',
+      maskedEmail,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.name?.split(' ')[0] || 'User',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
-        role: actualRole,
-        organizationId: orgId.toString(),
-        organizationName: verifyOrgName,
       },
     });
   } catch (error: any) {
@@ -347,12 +312,21 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
 
     // Verify the MFA code using speakeasy
     const userId = parseInt(decoded.userId);
-    const mfaResult = await verifyMFACode(userId, code);
 
-    if (!mfaResult.valid) {
+    // Try email OTP first, then fall back to TOTP
+    let isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    let verifiedMethod = 'email';
+
+    if (!isValid) {
+      const mfaResult = await verifyMFACode(userId, code);
+      isValid = mfaResult.valid;
+      verifiedMethod = mfaResult.method || 'totp';
+    }
+
+    if (!isValid) {
       return res.status(401).json({
         error: 'INVALID_MFA_CODE',
-        message: 'Invalid verification code. Please try again.',
+        message: 'Invalid or expired verification code. Please try again.',
       });
     }
 
@@ -383,7 +357,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
 
     res.json({
       success: true,
-      mfaMethod: mfaResult.method,
+      mfaMethod: verifiedMethod,
       token,
       user: {
         id: user?.id || userId,

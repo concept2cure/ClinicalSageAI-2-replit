@@ -256,8 +256,10 @@ export const ZenLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
-  const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('totp');
+  const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('email');
   const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
+  const [maskedEmail, setMaskedEmail] = useState<string>('');
+  const [resendCountdown, setResendCountdown] = useState(0);
   const [rememberMe, setRememberMe] = useState(false);
 
   // UI state
@@ -269,6 +271,13 @@ export const ZenLogin: React.FC = () => {
   useEffect(() => {
     setError(null);
   }, [email, password, mfaCode]);
+
+  // Resend countdown timer
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Email validation
@@ -329,8 +338,12 @@ export const ZenLogin: React.FC = () => {
 
       if (result.data?.mfaRequired) {
         setAvailableMfaMethods(result.data.methods || []);
-        const preferredMethod = result.data.methods?.[0]?.type || 'totp';
+        const preferredMethod = result.data.methods?.[0]?.type || 'email';
         setMfaMethod(preferredMethod);
+        if (result.data.maskedEmail) {
+          setMaskedEmail(result.data.maskedEmail);
+        }
+        setResendCountdown(60); // 60s before first resend allowed
         setStep('mfa');
         return;
       }
@@ -389,6 +402,21 @@ export const ZenLogin: React.FC = () => {
       setIsLoading(false);
     }
   }, [mfaCode, mfaMethod, setLocation, verifyMfa]);
+
+  const handleResendOtp = useCallback(async () => {
+    if (resendCountdown > 0) return;
+    try {
+      const result = await authService.resendLoginOtp();
+      if (result.success) {
+        setResendCountdown(60);
+        setError(null);
+      } else {
+        setError({ message: result.error?.message || 'Failed to resend code. Please try logging in again.' });
+      }
+    } catch {
+      setError({ message: 'Failed to resend code.' });
+    }
+  }, [resendCountdown]);
 
   const handleRecoveryCodeVerify = useCallback(async () => {
     const code = recoveryCode.trim();
@@ -910,35 +938,16 @@ export const ZenLogin: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-2">
           <ShieldIcon />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-900">Two-factor authentication</h3>
-        <p className="text-sm text-zinc-600">Enter the 6-digit code from your authenticator app</p>
+        <h3 className="text-lg font-semibold text-zinc-900">Check your email</h3>
+        {mfaMethod === 'email' ? (
+          <p className="text-sm text-zinc-600">
+            We sent a 6-digit verification code to{' '}
+            <span className="font-medium text-zinc-800">{maskedEmail || email}</span>
+          </p>
+        ) : (
+          <p className="text-sm text-zinc-600">Enter the 6-digit code from your authenticator app</p>
+        )}
       </div>
-
-      {availableMfaMethods.length > 0 && (
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700">Verification method</label>
-          <div className="flex flex-wrap gap-2">
-            {availableMfaMethods.map(method => (
-              <button
-                key={method.type}
-                type="button"
-                onClick={() => setMfaMethod(method.type)}
-                className={`
-                  px-3 py-1.5 text-sm rounded-full border
-                  transition-all duration-200
-                  ${
-                    mfaMethod === method.type
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
-                  }
-                `}
-              >
-                {method.type.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       <MfaCodeInput
         value={mfaCode}
@@ -963,15 +972,34 @@ export const ZenLogin: React.FC = () => {
         {isLoading ? <SpinnerIcon /> : 'Verify'}
       </button>
 
-      <p className="text-center text-sm text-zinc-500">
-        Having trouble?{' '}
-        <button
-          onClick={() => { setError(null); setStep('mfa-recovery'); }}
-          className="text-blue-600 hover:text-blue-700 font-medium"
-        >
-          Use a recovery code
-        </button>
-      </p>
+      {mfaMethod === 'email' ? (
+        <div className="text-center space-y-2">
+          <p className="text-sm text-zinc-500">
+            Didn't receive the code?{' '}
+            {resendCountdown > 0 ? (
+              <span className="text-zinc-400">Resend in {resendCountdown}s</span>
+            ) : (
+              <button
+                onClick={handleResendOtp}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Resend code
+              </button>
+            )}
+          </p>
+          <p className="text-xs text-zinc-400">Check your spam folder if you don't see it</p>
+        </div>
+      ) : (
+        <p className="text-center text-sm text-zinc-500">
+          Having trouble?{' '}
+          <button
+            onClick={() => { setError(null); setStep('mfa-recovery'); }}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Use a recovery code
+          </button>
+        </p>
+      )}
     </motion.div>
   );
 
